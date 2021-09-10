@@ -81,6 +81,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			expectedDetail:    expected_detail_reconcile_options,
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-3-",
 		},
+		{
+			testName:          "create package (with values)",
+			repoUrl:           "https://stefanprodan.github.io/podinfo",
+			request:           create_request_with_values,
+			expectedDetail:    expected_detail_with_values,
+			expectedPodPrefix: "@TARGET_NS@-my-podinfo-4-",
+		},
 	}
 
 	if up, err := isLocalKindClusterUp(t); err != nil || !up {
@@ -120,8 +127,8 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				} else if i == maxWait-1 {
 					t.Fatalf("Timed out waiting for available package [%s], last error: [%v]", availablePackageRef, err)
 				} else {
-					t.Logf("waiting 500ms for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
-					time.Sleep(500 * time.Millisecond)
+					t.Logf("waiting 1s for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
+					time.Sleep(1 * time.Second)
 				}
 			}
 
@@ -651,4 +658,55 @@ var expected_detail_reconcile_options = &corev1.InstalledPackageDetail{
 		},
 		Plugin: fluxPlugin,
 	},
+}
+
+var create_request_with_values = &corev1.CreateInstalledPackageRequest{
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo-4/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+	},
+	Name: "my-podinfo-4",
+	TargetContext: &corev1.Context{
+		Namespace: "test-4",
+	},
+	Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+}
+
+var expected_detail_with_values = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "kubeapps",
+		},
+		Identifier: "my-podinfo-4",
+		Plugin:     fluxPlugin,
+	},
+	Name: "my-podinfo-4",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "6.0.0",
+		AppVersion: "6.0.0",
+	},
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "*",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      true,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
+	},
+	PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+		"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+		"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-4 8080:9898\n",
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo-4/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+		Plugin: fluxPlugin,
+	},
+	ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 }

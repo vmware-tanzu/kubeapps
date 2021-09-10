@@ -701,6 +701,30 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedResponse:   create_installed_package_resp_my_podinfo,
 			expectedRelease:    flux_helm_release_reconcile_options,
 		},
+		{
+			name: "create package (values override)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "podinfo/podinfo",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+				Name: "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   create_installed_package_resp_my_podinfo,
+			expectedRelease:    flux_helm_release_values,
+		},
 	}
 
 	// currently needed for CreateInstalledPackage func
@@ -1595,6 +1619,35 @@ var flux_helm_release_reconcile_options = map[string]interface{}{
 		"serviceAccountName": "foo",
 		"suspend":            false,
 		"targetNamespace":    "test",
+	},
+}
+
+var flux_helm_release_values = map[string]interface{}{
+	"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+	"kind":       "HelmRelease",
+	"metadata": map[string]interface{}{
+		"name":      "my-podinfo",
+		"namespace": "kubeapps",
+	},
+	"spec": map[string]interface{}{
+		"chart": map[string]interface{}{
+			"spec": map[string]interface{}{
+				"chart": "podinfo",
+				"sourceRef": map[string]interface{}{
+					"kind":      "HelmRepository",
+					"name":      "podinfo",
+					"namespace": "namespace-1",
+				},
+			},
+		},
+		"install": map[string]interface{}{
+			"createNamespace": true,
+		},
+		"interval":        "1m",
+		"targetNamespace": "test",
+		"values": map[string]interface{}{
+			"ui": map[string]interface{}{"message": "what we do in the shadows"},
+		},
 	},
 }
 

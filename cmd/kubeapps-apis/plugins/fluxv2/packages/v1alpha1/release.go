@@ -34,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -315,7 +316,7 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 	return release, nil
 }
 
-func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values string) (*corev1.InstalledPackageReference, error) {
+func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
 	// HACK: just for now assume HelmRelease CRD will live in the kubeapps namespace
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
 	resourceIfc, err := s.getReleasesResourceInterface(ctx, kubeappsNamespace)
@@ -340,13 +341,16 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	// TODO: values
-	// // An optional serialized values string to be included when templating a package
-	// in the format expected by the plugin. Included when the backend format doesn't
-	// use secrets or configmaps for values or supports both. These values are layered
-	// on top of any values refs above, when relevant.
+	var values map[string]interface{}
+	if valuesString != "" {
+		values = make(map[string]interface{})
+		err = yaml.Unmarshal([]byte(valuesString), &values)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	fluxHelmRelease := newFluxHelmRelease(chart, kubeappsNamespace, targetName, versionRef, reconcile)
+	fluxHelmRelease := newFluxHelmRelease(chart, kubeappsNamespace, targetName, versionRef, reconcile, values)
 	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -473,7 +477,7 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 // 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
 // 2. metadata.namespace, where this HelmRelease CRD will exist
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
-func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions) *unstructured.Unstructured {
+func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) *unstructured.Unstructured {
 	unstructuredRel := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
@@ -497,7 +501,6 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 					"createNamespace": true,
 				},
 				"targetNamespace": targetName.Namespace,
-				// TODO: values
 			},
 		},
 	}
@@ -514,6 +517,10 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 			unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName")
 		}
 	}
+	if values != nil {
+		unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values")
+	}
+
 	// required fields, without which flux controller will fail to create the CRD
 	unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval")
 	return &unstructuredRel
