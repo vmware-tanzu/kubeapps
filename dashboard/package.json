@@ -16,7 +16,7 @@
     "fast-json-patch": "^3.1.0",
     "fstream": "^1.0.12",
     "google-protobuf": "^3.17.3",
-    "history": "^4.10.1",
+    "history": "^5.0.1",
     "immutable": "^4.0.0-rc.14",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
