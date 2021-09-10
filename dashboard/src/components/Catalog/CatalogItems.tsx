@@ -11,7 +11,7 @@ interface ICatalogItemsProps {
   cluster: string;
   namespace: string;
   page: number;
-  isFetching: boolean;
+  hasLoadedFirstPage: boolean;
   hasFinishedFetching: boolean;
 }
 
@@ -21,7 +21,7 @@ export default function CatalogItems({
   cluster,
   namespace,
   page,
-  isFetching,
+  hasLoadedFirstPage,
   hasFinishedFetching,
 }: ICatalogItemsProps) {
   const chartItems: ICatalogItemProps[] = useMemo(
@@ -82,7 +82,7 @@ export default function CatalogItems({
   );
 
   const sortedItems =
-    isFetching && page === 1
+    !hasLoadedFirstPage && page === 1
       ? []
       : chartItems
           .concat(crdItems)
