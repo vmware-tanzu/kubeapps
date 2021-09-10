@@ -28,8 +28,55 @@ const (
 	globalPackagingNamespace = "kubeapps"
 )
 
-var mock1 = MakeDefaultTestPackagingPlugin("mock1")
-var mock2 = MakeDefaultTestPackagingPlugin("mock2")
+var mockedPackagingPlugin1 = makeDefaultTestPackagingPlugin("mock1")
+var mockedPackagingPlugin2 = makeDefaultTestPackagingPlugin("mock2")
+var mockedFailingPackagingPlugin = makeFailingTestPackagingPlugin("bad-plugin")
+
+var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
+	corev1.AvailablePackageDetail{},
+	corev1.AvailablePackageReference{},
+	corev1.AvailablePackageSummary{},
+	corev1.Context{},
+	corev1.GetAvailablePackageDetailResponse{},
+	corev1.GetAvailablePackageSummariesResponse{},
+	corev1.GetAvailablePackageVersionsResponse{},
+	corev1.GetInstalledPackageDetailResponse{},
+	corev1.GetInstalledPackageSummariesResponse{},
+	corev1.InstalledPackageDetail{},
+	corev1.InstalledPackageReference{},
+	corev1.InstalledPackageStatus{},
+	corev1.InstalledPackageSummary{},
+	corev1.Maintainer{},
+	corev1.PackageAppVersion{},
+	corev1.VersionReference{},
+	plugins.Plugin{},
+)
+
+func makeDefaultTestPackagingPlugin(pluginName string) *PkgsPluginWithServer {
+	plugin := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
+	availablePackageSummaries := []*corev1.AvailablePackageSummary{
+		MakeAvailablePackageSummary("pkg-1", plugin),
+		MakeAvailablePackageSummary("pkg-2", plugin),
+	}
+	availablePackageDetail := MakeAvailablePackageDetail("pkg-1", plugin)
+	installedPackageSummaries := []*corev1.InstalledPackageSummary{
+		MakeInstalledPackageSummary("pkg-1", plugin),
+		MakeInstalledPackageSummary("pkg-2", plugin),
+	}
+	installedPackageDetail := MakeInstalledPackageDetail("pkg-1", plugin)
+	packageAppVersions := []*corev1.PackageAppVersion{
+		MakePackageAppVersion(defaultAppVersion, defaultPkgUpdateVersion),
+		MakePackageAppVersion(defaultAppVersion, defaultPkgVersion),
+	}
+	nextPageToken := "1"
+	categories := []string{defaultCategory}
+	return MakeTestPackagingPlugin(plugin, availablePackageSummaries, availablePackageDetail, installedPackageSummaries, installedPackageDetail, packageAppVersions, nextPageToken, categories, codes.OK)
+}
+
+func makeFailingTestPackagingPlugin(pluginName string) *PkgsPluginWithServer {
+	plugin := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
+	return MakeTestPackagingPlugin(plugin, nil, nil, nil, nil, nil, "", nil, codes.NotFound)
+}
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
@@ -42,8 +89,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		{
 			name: "it should successfully call the core GetAvailablePackageSummaries operation",
 			configuredPlugins: []*PkgsPluginWithServer{
-				mock1,
-				mock2,
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
@@ -54,14 +101,33 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					MakeAvailablePackageSummary("pkg-1", mock1.plugin),
-					MakeAvailablePackageSummary("pkg-2", mock1.plugin),
-					MakeAvailablePackageSummary("pkg-1", mock2.plugin),
-					MakeAvailablePackageSummary("pkg-2", mock2.plugin),
+					MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
-				Categories: []string{"cat-1", "cat-1"},
+				Categories: []string{"cat-1"},
 			},
 			statusCode: codes.OK,
+		},
+		{
+			name: "it should fail when calling the core GetAvailablePackageSummaries operation with one of the plugin failing",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedFailingPackagingPlugin,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+				Categories:                []string{""},
+			},
+			statusCode: codes.NotFound,
 		},
 	}
 
@@ -77,7 +143,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+				opt1 := ignoreUnexportedOpts
 				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -97,8 +163,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		{
 			name: "it should successfully call the core GetAvailablePackageDetail operation",
 			configuredPlugins: []*PkgsPluginWithServer{
-				mock1,
-				mock2,
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
 			},
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -107,18 +173,36 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "pkg-1",
-					Plugin: &plugins.Plugin{
-						Name:    "mock1",
-						Version: "v1alpha1",
-					},
+					Plugin:     mockedPackagingPlugin1.plugin,
 				},
 				PkgVersion: "",
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageDetailResponse{
-				AvailablePackageDetail: MakeAvailablePackageDetail("pkg-1", mock1.plugin),
+				AvailablePackageDetail: MakeAvailablePackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
 			},
 			statusCode: codes.OK,
+		},
+		{
+			name: "it should fail when calling the core GetAvailablePackageDetail operation with one of the plugin failing",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedFailingPackagingPlugin,
+			},
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Cluster:   "",
+						Namespace: globalPackagingNamespace,
+					},
+					Identifier: "pkg-1",
+					Plugin:     mockedFailingPackagingPlugin.plugin,
+				},
+				PkgVersion: "",
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageDetailResponse{},
+			statusCode:       codes.NotFound,
 		},
 	}
 
@@ -134,7 +218,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+				opt1 := ignoreUnexportedOpts
 				if got, want := availablePackageDetail, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -154,8 +238,8 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name: "it should successfully call the core GetInstalledPackageSummaries operation",
 			configuredPlugins: []*PkgsPluginWithServer{
-				mock1,
-				mock2,
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
 			},
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{
@@ -166,13 +250,31 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					MakeInstalledPackageSummary("pkg-1", mock1.plugin),
-					MakeInstalledPackageSummary("pkg-2", mock1.plugin),
-					MakeInstalledPackageSummary("pkg-1", mock2.plugin),
-					MakeInstalledPackageSummary("pkg-2", mock2.plugin),
+					MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 			},
 			statusCode: codes.OK,
+		},
+		{
+			name: "it should fail when calling the core GetInstalledPackageSummaries operation with one of the plugin failing",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedFailingPackagingPlugin,
+			},
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+			},
+
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{},
+			},
+			statusCode: codes.NotFound,
 		},
 	}
 
@@ -188,7 +290,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+				opt1 := ignoreUnexportedOpts
 				if got, want := installedPackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -208,8 +310,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		{
 			name: "it should successfully call the core GetInstalledPackageDetail operation",
 			configuredPlugins: []*PkgsPluginWithServer{
-				mock1,
-				mock2,
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
 			},
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -218,17 +320,34 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "pkg-1",
-					Plugin: &plugins.Plugin{
-						Name:    "mock1",
-						Version: "v1alpha1",
-					},
+					Plugin:     mockedPackagingPlugin1.plugin,
 				},
 			},
 
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: MakeInstalledPackageDetail("pkg-1", mock1.plugin),
+				InstalledPackageDetail: MakeInstalledPackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
 			},
 			statusCode: codes.OK,
+		},
+		{
+			name: "it should fail when calling the core GetInstalledPackageDetail operation with one of the plugin failing",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedFailingPackagingPlugin,
+			},
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "",
+						Namespace: globalPackagingNamespace,
+					},
+					Identifier: "pkg-1",
+					Plugin:     mockedFailingPackagingPlugin.plugin,
+				},
+			},
+
+			expectedResponse: &corev1.GetInstalledPackageDetailResponse{},
+			statusCode:       codes.NotFound,
 		},
 	}
 
@@ -244,7 +363,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+				opt1 := ignoreUnexportedOpts
 				if got, want := installedPackageDetail, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -264,8 +383,8 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		{
 			name: "it should successfully call the core GetAvailablePackageVersions operation",
 			configuredPlugins: []*PkgsPluginWithServer{
-				mock1,
-				mock2,
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
 			},
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -274,26 +393,39 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "test",
-					Plugin: &plugins.Plugin{
-						Name:    "mock1",
-						Version: "v1alpha1",
-					},
+					Plugin:     mockedPackagingPlugin1.plugin,
 				},
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
 				PackageAppVersions: []*corev1.PackageAppVersion{
-					{
-						PkgVersion: "2.0.0",
-						AppVersion: defaultAppVersion,
-					},
-					{
-						PkgVersion: "1.0.0",
-						AppVersion: defaultAppVersion,
-					},
+					MakePackageAppVersion(defaultAppVersion, defaultPkgUpdateVersion),
+					MakePackageAppVersion(defaultAppVersion, defaultPkgVersion),
 				},
 			},
 			statusCode: codes.OK,
+		},
+		{
+			name: "it should fail when calling the core GetAvailablePackageSummaGetAvailablePackageVersionsries operation with one of the plugin failing",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedFailingPackagingPlugin,
+			},
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Cluster:   "",
+						Namespace: globalPackagingNamespace,
+					},
+					Identifier: "test",
+					Plugin:     mockedFailingPackagingPlugin.plugin,
+				},
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
+				PackageAppVersions: []*corev1.PackageAppVersion{},
+			},
+			statusCode: codes.NotFound,
 		},
 	}
 
@@ -309,7 +441,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.InstalledPackageStatus{}, corev1.VersionReference{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.Maintainer{}, corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageReference{}, corev1.AvailablePackageSummary{}, corev1.InstalledPackageDetail{}, corev1.GetInstalledPackageDetailResponse{}, corev1.GetInstalledPackageSummariesResponse{}, corev1.AvailablePackageDetail{}, corev1.GetAvailablePackageDetailResponse{}, corev1.GetAvailablePackageSummariesResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+				opt1 := ignoreUnexportedOpts
 				if got, want := AvailablePackageVersions, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
