@@ -28,19 +28,22 @@ const (
 	globalPackagingNamespace = "kubeapps"
 )
 
+var mock1 = MakeDefaultTestPackagingPlugin("mock1")
+var mock2 = MakeDefaultTestPackagingPlugin("mock2")
+
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetAvailablePackageSummariesRequest
 		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
-				makeTestPackagingPlugin("mock1"),
-				makeTestPackagingPlugin("mock2"),
+			configuredPlugins: []*PkgsPluginWithServer{
+				mock1,
+				mock2,
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
@@ -51,12 +54,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					makeAvailablePackageSummary("pkg-1", makeTestPackagingPlugin("mock1").plugin),
-					makeAvailablePackageSummary("pkg-2", makeTestPackagingPlugin("mock1").plugin),
-					makeAvailablePackageSummary("pkg-1", makeTestPackagingPlugin("mock2").plugin),
-					makeAvailablePackageSummary("pkg-2", makeTestPackagingPlugin("mock2").plugin),
+					MakeAvailablePackageSummary("pkg-1", mock1.plugin),
+					MakeAvailablePackageSummary("pkg-2", mock1.plugin),
+					MakeAvailablePackageSummary("pkg-1", mock2.plugin),
+					MakeAvailablePackageSummary("pkg-2", mock2.plugin),
 				},
-				Categories: []string{"cat1", "cat1"},
+				Categories: []string{"cat-1", "cat-1"},
 			},
 			statusCode: codes.OK,
 		},
@@ -86,16 +89,16 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetAvailablePackageDetailRequest
 		expectedResponse  *corev1.GetAvailablePackageDetailResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageDetail operation",
-			configuredPlugins: []*pkgsPluginWithServer{
-				makeTestPackagingPlugin("mock1"),
-				makeTestPackagingPlugin("mock2"),
+			configuredPlugins: []*PkgsPluginWithServer{
+				mock1,
+				mock2,
 			},
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -113,7 +116,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageDetailResponse{
-				AvailablePackageDetail: makeAvailablePackageDetail("pkg-1", makeTestPackagingPlugin("mock1").plugin),
+				AvailablePackageDetail: MakeAvailablePackageDetail("pkg-1", mock1.plugin),
 			},
 			statusCode: codes.OK,
 		},
@@ -143,16 +146,16 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetInstalledPackageSummariesRequest
 		expectedResponse  *corev1.GetInstalledPackageSummariesResponse
 	}{
 		{
 			name: "it should successfully call the core GetInstalledPackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
-				makeTestPackagingPlugin("mock1"),
-				makeTestPackagingPlugin("mock2"),
+			configuredPlugins: []*PkgsPluginWithServer{
+				mock1,
+				mock2,
 			},
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{
@@ -163,10 +166,10 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					makeInstalledPackageSummary("pkg-1", makeTestPackagingPlugin("mock1").plugin),
-					makeInstalledPackageSummary("pkg-2", makeTestPackagingPlugin("mock1").plugin),
-					makeInstalledPackageSummary("pkg-1", makeTestPackagingPlugin("mock2").plugin),
-					makeInstalledPackageSummary("pkg-2", makeTestPackagingPlugin("mock2").plugin),
+					MakeInstalledPackageSummary("pkg-1", mock1.plugin),
+					MakeInstalledPackageSummary("pkg-2", mock1.plugin),
+					MakeInstalledPackageSummary("pkg-1", mock2.plugin),
+					MakeInstalledPackageSummary("pkg-2", mock2.plugin),
 				},
 			},
 			statusCode: codes.OK,
@@ -197,16 +200,16 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 func TestGetInstalledPackageDetail(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetInstalledPackageDetailRequest
 		expectedResponse  *corev1.GetInstalledPackageDetailResponse
 	}{
 		{
 			name: "it should successfully call the core GetInstalledPackageDetail operation",
-			configuredPlugins: []*pkgsPluginWithServer{
-				makeTestPackagingPlugin("mock1"),
-				makeTestPackagingPlugin("mock2"),
+			configuredPlugins: []*PkgsPluginWithServer{
+				mock1,
+				mock2,
 			},
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -223,7 +226,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			},
 
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: makeInstalledPackageDetail("pkg-1", makeTestPackagingPlugin("mock1").plugin),
+				InstalledPackageDetail: MakeInstalledPackageDetail("pkg-1", mock1.plugin),
 			},
 			statusCode: codes.OK,
 		},
@@ -253,16 +256,16 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 func TestGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetAvailablePackageVersionsRequest
 		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageVersions operation",
-			configuredPlugins: []*pkgsPluginWithServer{
-				makeTestPackagingPlugin("mock1"),
-				makeTestPackagingPlugin("mock2"),
+			configuredPlugins: []*PkgsPluginWithServer{
+				mock1,
+				mock2,
 			},
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -281,15 +284,11 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
 				PackageAppVersions: []*corev1.PackageAppVersion{
 					{
-						PkgVersion: "3.0.0/mock1",
+						PkgVersion: "2.0.0",
 						AppVersion: defaultAppVersion,
 					},
 					{
-						PkgVersion: "2.0.0/mock1",
-						AppVersion: defaultAppVersion,
-					},
-					{
-						PkgVersion: "1.0.0/mock1",
+						PkgVersion: "1.0.0",
 						AppVersion: defaultAppVersion,
 					},
 				},

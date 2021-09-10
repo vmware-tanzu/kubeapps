@@ -22,23 +22,45 @@ import (
 
 const (
 	globalPackagingCluster  = "default"
-	defaultNs               = "ns"
-	defaultId               = "repo-1/chart-id"
-	defaultPkgVersion       = "1.0.0"
 	defaultAppVersion       = "1.2.6"
-	defaultChartDescription = "default chart description"
-	defaultChartIconURL     = "https://example.com/chart.svg"
-	defaultChartCategory    = "cat1"
-	releaseNamespace        = "my-namespace-1"
-	releaseName             = "my-release-1"
-	releaseVersion          = "1.2.3"
-	releaseValues           = "{\"value\":\"new\"}"
-	releaseNotes            = "some notes"
+	defaultCategory         = "cat-1"
+	defaultIconURL          = "https://example.com/package.svg"
+	defaultHomeURL          = "https://example.com/home"
+	defaultRepoURL          = "https://example.com/repo"
+	defaultDescription      = "description"
+	defaultId               = "repo-1/package-id"
+	defaultNamespace        = "my-namespace-1"
+	defaultPkgVersion       = "1.0.0"
+	defaultPkgUpdateVersion = "2.0.0"
+	defaultRepo             = "my-repo-1"
+	defaultReleaseName      = "my-release-1"
+	defaultReleaseNamespace = "my-release-namespace-1"
+	defaultReleaseNotes     = "some notes"
+	defaultReleaseValues    = "{\"value\":\"new\"}"
+	defaultReleaseVersion   = "1.2.3"
+	defaultValuesSchema     = "\"$schema\": \"http://json-schema.org/schema#\""
+	defaultReadme           = "#readme"
+	defaultValues           = "key: value"
+	defaultMaintainerName   = "me"
+	defaultMaintainerEmail  = "me@example.com"
 )
+
+var defaultInstalledPackageStatus = &corev1.InstalledPackageStatus{
+	Ready:      true,
+	Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+	UserReason: "ReconciliationSucceeded",
+}
 
 type TestPackagingPlugin struct {
 	packages.UnimplementedPackagesServiceServer
-	plugin *plugins.Plugin
+	plugin                    *plugins.Plugin
+	availablePackageSummaries []*corev1.AvailablePackageSummary
+	availablePackageDetail    *corev1.AvailablePackageDetail
+	installedPackageSummaries []*corev1.InstalledPackageSummary
+	installedPackageDetail    *corev1.InstalledPackageDetail
+	packageAppVersions        []*corev1.PackageAppVersion
+	categories                []string
+	nextPageToken             string
 }
 
 func NewTestPackagingPlugin(plugin *plugins.Plugin) *TestPackagingPlugin {
@@ -47,20 +69,53 @@ func NewTestPackagingPlugin(plugin *plugins.Plugin) *TestPackagingPlugin {
 	}
 }
 
-func makeTestPackagingPlugin(pluginName string) *pkgsPluginWithServer {
-	pluginDetails := &plugins.Plugin{
-		Name:    pluginName,
-		Version: "v1alpha1",
+func MakeDefaultTestPackagingPlugin(pluginName string) *PkgsPluginWithServer {
+	plugin := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
+	availablePackageSummaries := []*corev1.AvailablePackageSummary{
+		MakeAvailablePackageSummary("pkg-1", plugin),
+		MakeAvailablePackageSummary("pkg-2", plugin),
 	}
-	return &pkgsPluginWithServer{
-		plugin: pluginDetails,
+	availablePackageDetail := MakeAvailablePackageDetail("pkg-1", plugin)
+	installedPackageSummaries := []*corev1.InstalledPackageSummary{
+		MakeInstalledPackageSummary("pkg-1", plugin),
+		MakeInstalledPackageSummary("pkg-2", plugin),
+	}
+	installedPackageDetail := MakeInstalledPackageDetail("pkg-1", plugin)
+	packageAppVersions := []*corev1.PackageAppVersion{
+		MakePackageAppVersion(defaultAppVersion, defaultPkgUpdateVersion),
+		MakePackageAppVersion(defaultAppVersion, defaultPkgVersion),
+	}
+	nextPageToken := "1"
+	categories := []string{defaultCategory}
+	return MakeTestPackagingPlugin(plugin, availablePackageSummaries, availablePackageDetail, installedPackageSummaries, installedPackageDetail, packageAppVersions, nextPageToken, categories)
+}
+
+func MakeTestPackagingPlugin(
+	plugin *plugins.Plugin,
+	availablePackageSummaries []*corev1.AvailablePackageSummary,
+	availablePackageDetail *corev1.AvailablePackageDetail,
+	installedPackageSummaries []*corev1.InstalledPackageSummary,
+	installedPackageDetail *corev1.InstalledPackageDetail,
+	packageAppVersions []*corev1.PackageAppVersion,
+	nextPageToken string,
+	categories []string,
+) *PkgsPluginWithServer {
+	return &PkgsPluginWithServer{
+		plugin: plugin,
 		server: &TestPackagingPlugin{
-			plugin: pluginDetails,
+			plugin:                    plugin,
+			availablePackageSummaries: availablePackageSummaries,
+			availablePackageDetail:    availablePackageDetail,
+			installedPackageSummaries: installedPackageSummaries,
+			installedPackageDetail:    installedPackageDetail,
+			packageAppVersions:        packageAppVersions,
+			categories:                categories,
+			nextPageToken:             nextPageToken,
 		},
 	}
 }
 
-func makeAvailablePackageSummary(name string, plugin *plugins.Plugin) *corev1.AvailablePackageSummary {
+func MakeAvailablePackageSummary(name string, plugin *plugins.Plugin) *corev1.AvailablePackageSummary {
 	return &corev1.AvailablePackageSummary{
 		Name:        name,
 		DisplayName: name,
@@ -68,28 +123,28 @@ func makeAvailablePackageSummary(name string, plugin *plugins.Plugin) *corev1.Av
 			PkgVersion: defaultPkgVersion,
 			AppVersion: defaultAppVersion,
 		},
-		IconUrl:          defaultChartIconURL,
-		Categories:       []string{defaultChartCategory},
-		ShortDescription: defaultChartDescription,
+		IconUrl:          defaultIconURL,
+		Categories:       []string{defaultCategory},
+		ShortDescription: defaultDescription,
 		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: defaultNs},
+			Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: defaultNamespace},
 			Identifier: defaultId,
 			Plugin:     plugin,
 		},
 	}
 }
 
-func makeInstalledPackageSummary(name string, plugin *plugins.Plugin) *corev1.InstalledPackageSummary {
+func MakeInstalledPackageSummary(name string, plugin *plugins.Plugin) *corev1.InstalledPackageSummary {
 	return &corev1.InstalledPackageSummary{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: defaultNs,
+				Namespace: defaultNamespace,
 			},
 			Identifier: name,
 			Plugin:     plugin,
 		},
 		Name:    name,
-		IconUrl: defaultChartIconURL,
+		IconUrl: defaultIconURL,
 		PkgVersionReference: &corev1.VersionReference{
 			Version: defaultPkgVersion,
 		},
@@ -98,12 +153,8 @@ func makeInstalledPackageSummary(name string, plugin *plugins.Plugin) *corev1.In
 			AppVersion: defaultAppVersion,
 		},
 		PkgDisplayName:   name,
-		ShortDescription: "short description",
-		Status: &corev1.InstalledPackageStatus{
-			Ready:      true,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-			UserReason: "ReconciliationSucceeded",
-		},
+		ShortDescription: defaultDescription,
+		Status:           defaultInstalledPackageStatus,
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: defaultPkgVersion,
 			AppVersion: defaultAppVersion,
@@ -111,10 +162,10 @@ func makeInstalledPackageSummary(name string, plugin *plugins.Plugin) *corev1.In
 	}
 }
 
-func makeAvailablePackageDetail(name string, plugin *plugins.Plugin) *corev1.AvailablePackageDetail {
+func MakeAvailablePackageDetail(name string, plugin *plugins.Plugin) *corev1.AvailablePackageDetail {
 	return &corev1.AvailablePackageDetail{
 		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: defaultNs},
+			Context:    &corev1.Context{Cluster: globalPackagingCluster, Namespace: defaultNamespace},
 			Identifier: defaultId,
 			Plugin:     plugin,
 		},
@@ -123,118 +174,97 @@ func makeAvailablePackageDetail(name string, plugin *plugins.Plugin) *corev1.Ava
 			PkgVersion: defaultPkgVersion,
 			AppVersion: defaultAppVersion,
 		},
-		RepoUrl:          "https://example.com/repo",
-		IconUrl:          defaultChartIconURL,
-		HomeUrl:          "https://example.com/home",
+		RepoUrl:          defaultRepoURL,
+		IconUrl:          defaultIconURL,
+		HomeUrl:          defaultHomeURL,
 		DisplayName:      name,
-		Categories:       []string{"cat1"},
-		ShortDescription: "short description",
-		Readme:           "readme",
-		DefaultValues:    "values",
-		ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
-		SourceUrls:       []string{"https://example.com/source", "https://example.com/home"},
-		Maintainers: []*corev1.Maintainer{
-			{
-				Name:  "me",
-				Email: "me@example.com",
-			},
-		},
+		Categories:       []string{defaultCategory},
+		ShortDescription: defaultDescription,
+		Readme:           defaultReadme,
+		DefaultValues:    defaultValues,
+		ValuesSchema:     defaultValuesSchema,
+		SourceUrls:       []string{defaultHomeURL},
+		Maintainers:      []*corev1.Maintainer{{Name: defaultMaintainerName, Email: defaultMaintainerEmail}},
 	}
 }
 
-func makeInstalledPackageDetail(name string, plugin *plugins.Plugin) *corev1.InstalledPackageDetail {
+func MakeInstalledPackageDetail(name string, plugin *plugins.Plugin) *corev1.InstalledPackageDetail {
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: releaseNamespace,
+				Namespace: defaultReleaseNamespace,
 				Cluster:   globalPackagingCluster,
 			},
-			Identifier: releaseName,
+			Identifier: defaultReleaseName,
 		},
 		PkgVersionReference: &corev1.VersionReference{
-			Version: releaseVersion,
+			Version: defaultReleaseVersion,
 		},
-		Name: releaseName,
+		Name: defaultReleaseName,
 		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: releaseVersion,
+			PkgVersion: defaultReleaseVersion,
 			AppVersion: defaultAppVersion,
 		},
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: releaseVersion,
+			PkgVersion: defaultReleaseVersion,
 			AppVersion: defaultAppVersion,
 		},
-		ValuesApplied:         releaseValues,
-		PostInstallationNotes: releaseNotes,
-		Status: &corev1.InstalledPackageStatus{
-			Ready:      true,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-			UserReason: "deployed",
-		},
+		ValuesApplied:         defaultReleaseValues,
+		PostInstallationNotes: defaultReleaseNotes,
+		Status:                defaultInstalledPackageStatus,
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Context: &corev1.Context{
-				Namespace: releaseNamespace,
+				Namespace: defaultReleaseNamespace,
 				Cluster:   globalPackagingCluster,
 			},
-			Identifier: "myrepo/" + name,
+			Identifier: defaultId,
 			Plugin:     plugin,
 		},
 		CustomDetail: nil,
 	}
 }
 
+func MakePackageAppVersion(appVersion, pkgVersion string) *corev1.PackageAppVersion {
+	return &corev1.PackageAppVersion{
+		AppVersion: appVersion,
+		PkgVersion: pkgVersion,
+	}
+}
+
 // GetAvailablePackages returns the packages based on the request.
 func (s TestPackagingPlugin) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
 	return &packages.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-			makeAvailablePackageSummary("pkg-1", s.plugin),
-			makeAvailablePackageSummary("pkg-2", s.plugin),
-		},
-		Categories:    []string{"cat1"},
-		NextPageToken: "1",
+		AvailablePackageSummaries: s.availablePackageSummaries,
+		Categories:                s.categories,
+		NextPageToken:             s.nextPageToken,
 	}, nil
 }
 
 // GetAvailablePackageDetail returns the package details based on the request.
 func (s TestPackagingPlugin) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
 	return &packages.GetAvailablePackageDetailResponse{
-		AvailablePackageDetail: makeAvailablePackageDetail("pkg-1", s.plugin),
+		AvailablePackageDetail: s.availablePackageDetail,
 	}, nil
 }
 
 // GetInstalledPackageSummaries returns the installed package summaries based on the request.
 func (s TestPackagingPlugin) GetInstalledPackageSummaries(ctx context.Context, request *packages.GetInstalledPackageSummariesRequest) (*packages.GetInstalledPackageSummariesResponse, error) {
 	return &packages.GetInstalledPackageSummariesResponse{
-		InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-			makeInstalledPackageSummary("pkg-1", s.plugin),
-			makeInstalledPackageSummary("pkg-2", s.plugin),
-		},
-		NextPageToken: "1",
+		InstalledPackageSummaries: s.installedPackageSummaries,
+		NextPageToken:             s.nextPageToken,
 	}, nil
 }
 
 // GetInstalledPackageDetail returns the package versions based on the request.
 func (s TestPackagingPlugin) GetInstalledPackageDetail(ctx context.Context, request *packages.GetInstalledPackageDetailRequest) (*packages.GetInstalledPackageDetailResponse, error) {
 	return &packages.GetInstalledPackageDetailResponse{
-		InstalledPackageDetail: makeInstalledPackageDetail("pkg-1", s.plugin),
+		InstalledPackageDetail: s.installedPackageDetail,
 	}, nil
 }
 
 // GetAvailablePackageVersions returns the package versions based on the request.
 func (s TestPackagingPlugin) GetAvailablePackageVersions(ctx context.Context, request *packages.GetAvailablePackageVersionsRequest) (*packages.GetAvailablePackageVersionsResponse, error) {
 	return &packages.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: []*corev1.PackageAppVersion{
-			{
-				PkgVersion: "3.0.0/" + s.plugin.Name,
-				AppVersion: defaultAppVersion,
-			},
-			{
-				PkgVersion: "2.0.0/" + s.plugin.Name,
-				AppVersion: defaultAppVersion,
-			},
-			{
-				PkgVersion: "1.0.0/" + s.plugin.Name,
-				AppVersion: defaultAppVersion,
-			},
-		},
+		PackageAppVersions: s.packageAppVersions,
 	}, nil
 }

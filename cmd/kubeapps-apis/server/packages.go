@@ -31,10 +31,10 @@ type packagesServer struct {
 
 	// plugins is a slice of all registered plugins which satisfy the core.packages.v1alpha1
 	// interface.
-	plugins []*pkgsPluginWithServer
+	plugins []*PkgsPluginWithServer
 }
 
-func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
+func NewPackagesServer(plugins []*PkgsPluginWithServer) *packagesServer {
 	return &packagesServer{
 		plugins: plugins,
 	}
@@ -259,7 +259,7 @@ func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request
 
 // getPluginWithServer returns the *pkgsPluginWithServer from a given packagesServer
 // matching the plugin name
-func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgsPluginWithServer {
+func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *PkgsPluginWithServer {
 	for _, p := range s.plugins {
 		if plugin.Name == p.plugin.Name {
 			return p
