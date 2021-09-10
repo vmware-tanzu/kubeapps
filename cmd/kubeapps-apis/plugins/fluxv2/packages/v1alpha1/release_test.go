@@ -644,16 +644,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 				repoIndex:     "testdata/podinfo-index.yaml",
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.CreateInstalledPackageResponse{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "my-podinfo",
-					Plugin:     fluxPlugin,
-				},
-			},
-			expectedRelease: flux_helm_release_basic,
+			expectedResponse:   create_installed_package_resp_my_podinfo,
+			expectedRelease:    flux_helm_release_basic,
 		},
 		{
 			name: "create package (semver constraint)",
@@ -678,16 +670,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 				repoIndex:     "testdata/podinfo-index.yaml",
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.CreateInstalledPackageResponse{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "my-podinfo",
-					Plugin:     fluxPlugin,
-				},
-			},
-			expectedRelease: flux_helm_release_semver_constraint,
+			expectedResponse:   create_installed_package_resp_my_podinfo,
+			expectedRelease:    flux_helm_release_semver_constraint,
 		},
 		{
 			name: "create package (reconcile options)",
@@ -714,16 +698,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 				repoIndex:     "testdata/podinfo-index.yaml",
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.CreateInstalledPackageResponse{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "my-podinfo",
-					Plugin:     fluxPlugin,
-				},
-			},
-			expectedRelease: flux_helm_release_reconcile_options,
+			expectedResponse:   create_installed_package_resp_my_podinfo,
+			expectedRelease:    flux_helm_release_reconcile_options,
 		},
 	}
 
@@ -1619,5 +1595,15 @@ var flux_helm_release_reconcile_options = map[string]interface{}{
 		"serviceAccountName": "foo",
 		"suspend":            false,
 		"targetNamespace":    "test",
+	},
+}
+
+var create_installed_package_resp_my_podinfo = &corev1.CreateInstalledPackageResponse{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "kubeapps",
+		},
+		Identifier: "my-podinfo",
+		Plugin:     fluxPlugin,
 	},
 }

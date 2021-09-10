@@ -364,31 +364,23 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 }
 
 // returns 3 things:
-// - complete whether the operation was completed
-// - success (only applicable when complete == true) whether the operation was successful or failed
-// - reason, if present
+// - ready:  whether the HelmRelease object is in a ready state
+// - reason: one of SUCCESS/FAILURE/PENDING/UNKNOWN, if present
+// - userReason: textual description of why the object is in current state, if present
 // docs:
 // 1. https://fluxcd.io/docs/components/helm/helmreleases/#examples
-// 2. discussion on https://vmware.slack.com/archives/C4HEXCX3N/p1630907107078800. The upshot of which is
-//    I cannot rely on status.conditions.type.Ready field to tell when a task is complete
-//     (or "ready" in our terminology). In both use cases (PENDING described in previous scenario
-//	    and outright FAILURE in this one) it is set to false. So, we'll use this logic:
-//     - status.conditions.type.Released == true means ready = true and reason = success
-//     - status.conditions.type.Released == false means ready = false, and reason = faliure
-//     - otherwise, it's ready = false and reason = pending
-func isHelmReleaseReady(unstructuredObj map[string]interface{}) (complete bool, success bool, reason string) {
+// 2. discussion on https://vmware.slack.com/archives/C4HEXCX3N/p1630907107078800.
+func isHelmReleaseReady(unstructuredObj map[string]interface{}) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
 	if !checkGeneration(unstructuredObj) {
-		return false, false, ""
+		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
 	}
 
 	conditions, found, err := unstructured.NestedSlice(unstructuredObj, "status", "conditions")
 	if err != nil || !found {
-		return false, false, ""
+		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
 	}
 
-	// testing shows that flux is not very consistent about the way status conditions are set on a
-	// HelmRelease so the goal of the code below is to extract as much information as possible from
-	// different conditions in HelmRelease and return it in a consistent way to the caller
+	isInstallFailed := false
 
 	for _, conditionUnstructured := range conditions {
 		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
@@ -397,7 +389,10 @@ func isHelmReleaseReady(unstructuredObj map[string]interface{}) (complete bool, 
 				// "reason": "InstallFailed"
 				// i.e. not super-useful
 				if reasonString, ok := conditionAsMap["reason"]; ok {
-					reason = fmt.Sprintf("%v", reasonString)
+					userReason = fmt.Sprintf("%v", reasonString)
+					if reasonString == "InstallFailed" {
+						isInstallFailed = true
+					}
 				}
 				// whereas this could be something like:
 				// "message": 'Helm install failed: unable to build kubernetes objects from
@@ -406,54 +401,31 @@ func isHelmReleaseReady(unstructuredObj map[string]interface{}) (complete bool, 
 				// io.k8s.api.apps.v1.DeploymentSpec.replicas: got "string", expected "integer"'
 				// i.e. a little more useful, so we'll just return them both
 				if messageString, ok := conditionAsMap["message"]; ok {
-					reason += fmt.Sprintf(": %v", messageString)
+					userReason += fmt.Sprintf(": %v", messageString)
 				}
 				if statusString, ok := conditionAsMap["status"]; ok {
 					if statusString == "True" {
-						return true, true, reason
+						return true, corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED, userReason
+					} else if isInstallFailed {
+						return false, corev1.InstalledPackageStatus_STATUS_REASON_FAILED, userReason
+					} else {
+						return false, corev1.InstalledPackageStatus_STATUS_REASON_PENDING, userReason
 					}
 				}
-			}
-
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Released" {
-				if reason == "" {
-					if reasonString, ok := conditionAsMap["reason"]; ok {
-						reason = fmt.Sprintf("%v", reasonString)
-					}
-					if messageString, ok := conditionAsMap["message"]; ok {
-						reason += fmt.Sprintf(": %v", messageString)
-					}
-				}
-				if statusString, ok := conditionAsMap["status"]; ok {
-					if statusString == "True" {
-						return true, true, reason
-					} else if statusString == "False" {
-						return true, false, reason
-					}
-					// statusString == "Unknown" falls in here
-				}
-				break
 			}
 		}
 	}
-	// this is a catch-all that basically means "pending"
-	return false, false, reason
+	// catch all: unless we know something else, install is pending
+	return false, corev1.InstalledPackageStatus_STATUS_REASON_PENDING, userReason
 }
 
 func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
-	complete, success, reason := isHelmReleaseReady(unstructuredRelease)
-	status := &corev1.InstalledPackageStatus{
-		Ready:      complete && success,
-		UserReason: reason,
+	ready, reason, userReason := isHelmReleaseReady(unstructuredRelease)
+	return &corev1.InstalledPackageStatus{
+		Ready:      ready,
+		Reason:     reason,
+		UserReason: userReason,
 	}
-	if complete && success {
-		status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
-	} else if complete && !success {
-		status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_FAILED
-	} else {
-		status.Reason = corev1.InstalledPackageStatus_STATUS_REASON_PENDING
-	}
-	return status
 }
 
 func installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.ReconciliationOptions {

@@ -120,7 +120,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				} else if i == maxWait-1 {
 					t.Fatalf("Timed out waiting for available package [%s], last error: [%v]", availablePackageRef, err)
 				} else {
-					t.Logf("waiting 500ms for repository [%s] to be indexed [%d/%d]...", idParts[0], i, maxWait)
+					t.Logf("waiting 500ms for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
 					time.Sleep(500 * time.Millisecond)
 				}
 			}
@@ -138,6 +138,9 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				})
 			}
 
+			// generate a unique target namespace for each test to avoid situations when tests are
+			// run multiple times in a row and they fail due to the fact that the specified namespace
+			// in in 'Terminating' state
 			if tc.request.TargetContext.Namespace != "" {
 				tc.request.TargetContext.Namespace += "-" + randSeq(4)
 			}
@@ -176,15 +179,15 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
-				if resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_PENDING && i < maxWait-1 {
-					t.Logf("current state: [%s], waiting 500ms for installation to complete [%d/%d]...",
-						resp2.InstalledPackageDetail.Status.UserReason, i, maxWait)
-					time.Sleep(500 * time.Millisecond)
-				} else if resp2.InstalledPackageDetail.Status.Ready == true && resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED {
+
+				if resp2.InstalledPackageDetail.Status.Ready == true &&
+					resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED {
 					actualDetail = resp2.InstalledPackageDetail
 					break
 				} else {
-					t.Fatalf("Unexpected response: [%v]", resp2)
+					t.Logf("waiting 500ms due to: [%s], userReason: [%s], attempt [%d/%d]...",
+						resp2.InstalledPackageDetail.Status.Reason, resp2.InstalledPackageDetail.Status.UserReason, i+1, maxWait)
+					time.Sleep(500 * time.Millisecond)
 				}
 			}
 			tc.expectedDetail.PostInstallationNotes = strings.ReplaceAll(
