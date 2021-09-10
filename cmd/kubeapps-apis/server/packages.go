@@ -86,21 +86,34 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 		pkgs = append(pkgs, pluginPkgs...)
 	}
 
-	pkgsR := []*packages.AvailablePackageSummary{}
+	// Delete duplicate categories and sort by name
+	From(categories).Distinct().OrderBy(func(i interface{}) interface{} { return i }).ToSlice(&categories)
 
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
 	if pageSize > 0 {
 		// Using https://github.com/ahmetb/go-linq for simplicity
-		From(pkgs).Skip(pageOffset*int(pageSize) - 1).Take(int(pageSize)).ToSlice(&pkgsR)
-		if len(pkgsR) == int(pageSize) {
+		From(pkgs).
+			// Order by package name, regardless of the plugin
+			OrderBy(func(pkg interface{}) interface{} {
+				return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
+			}).
+			Skip(pageOffset*int(pageSize) - 1).
+			Take(int(pageSize)).
+			ToSlice(&pkgs)
+
+		if len(pkgs) == int(pageSize) {
 			nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 		}
-		pkgs = pkgsR
+	} else {
+		From(pkgs).
+			// Order by package name, regardless of the plugin
+			OrderBy(func(pkg interface{}) interface{} {
+				return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
+			}).ToSlice(&pkgs)
 	}
 
-	// TODO: Sort via default sort order or that specified in request.
 	return &packages.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: pkgs,
 		Categories:                categories,
@@ -173,8 +186,14 @@ func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, reques
 		pkgs = append(pkgs, pluginPkgs...)
 	}
 
+	From(pkgs).
+		// Order by package name, regardless of the plugin
+		OrderBy(func(pkg interface{}) interface{} {
+			return pkg.(*packages.InstalledPackageSummary).Name + pkg.(*packages.InstalledPackageSummary).InstalledPackageRef.Plugin.Name
+		}).
+		ToSlice(&pkgs)
+
 	// Build the response
-	// TODO: Sort via default sort order or that specified in request.
 	return &packages.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: pkgs,
 	}, nil
