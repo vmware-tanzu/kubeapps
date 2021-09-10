@@ -68,24 +68,28 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.plugins {
-		response, err := p.server.GetAvailablePackageSummaries(ctx, requestN)
-		if err != nil {
-			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetAvailablePackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
-		}
+		log.Infof("Items now: %d/%d", len(pkgs), (pageOffset*int(pageSize) + int(pageSize)))
+		if pageSize == 0 || len(pkgs) <= (pageOffset*int(pageSize)+int(pageSize)) {
+			log.Infof("Should enter")
 
-		categories = append(categories, response.Categories...)
-
-		// Add the plugin for the pkgs
-		pluginPkgs := response.AvailablePackageSummaries
-		for _, r := range pluginPkgs {
-			if r.AvailablePackageRef == nil {
-				r.AvailablePackageRef = &packages.AvailablePackageReference{}
+			response, err := p.server.GetAvailablePackageSummaries(ctx, requestN)
+			if err != nil {
+				return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetAvailablePackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
 			}
-			r.AvailablePackageRef.Plugin = p.plugin
-		}
-		pkgs = append(pkgs, pluginPkgs...)
-	}
 
+			categories = append(categories, response.Categories...)
+
+			// Add the plugin for the pkgs
+			pluginPkgs := response.AvailablePackageSummaries
+			for _, r := range pluginPkgs {
+				if r.AvailablePackageRef == nil {
+					r.AvailablePackageRef = &packages.AvailablePackageReference{}
+				}
+				r.AvailablePackageRef.Plugin = p.plugin
+			}
+			pkgs = append(pkgs, pluginPkgs...)
+		}
+	}
 	// Delete duplicate categories and sort by name
 	From(categories).Distinct().OrderBy(func(i interface{}) interface{} { return i }).ToSlice(&categories)
 
