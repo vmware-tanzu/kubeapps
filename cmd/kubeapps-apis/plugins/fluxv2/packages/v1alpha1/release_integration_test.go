@@ -47,8 +47,17 @@ import (
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 //    Didn't want to spend cycles writing port-forwarding code programmatically like https://github.com/anthhub/forwarder
 //    at this point.
+// 3) run ./kind-cluster-setup.sh once prior to these tests
 
-// if one or more of the above pre-requisites is not satisfied, the tests are simply skipped
+// if (1) or (2) of the above pre-requisites is not satisfied, the tests are simply skipped
+
+const (
+	// the only repo this test uses so far. Enough for this test. This is local copy of what was on
+	// "https://stefanprodan.github.io/podinfo" on Sept 10 2021.
+	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
+	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/kind-cluster-setup.sh
+	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80"
+)
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
@@ -59,31 +68,29 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		expectedPodPrefix string
 	}{
 		{
-			testName: "create test (simplest case)",
-			// TODO: (gfichtenholt) stand up a pod that serves podinfo-index.yaml within the cluster
-			// instead of relying on github.io
-			repoUrl:           "https://stefanprodan.github.io/podinfo",
+			testName:          "create test (simplest case)",
+			repoUrl:           podinfo_repo_url,
 			request:           create_request_basic,
 			expectedDetail:    expected_detail_basic,
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
 		},
 		{
 			testName:          "create package (semver constraint)",
-			repoUrl:           "https://stefanprodan.github.io/podinfo",
+			repoUrl:           podinfo_repo_url,
 			request:           create_request_semver_constraint,
 			expectedDetail:    expected_detail_semver_constraint,
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-2-",
 		},
 		{
 			testName:          "create package (reconcile options)",
-			repoUrl:           "https://stefanprodan.github.io/podinfo",
+			repoUrl:           podinfo_repo_url,
 			request:           create_request_reconcile_options,
 			expectedDetail:    expected_detail_reconcile_options,
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-3-",
 		},
 		{
 			testName:          "create package (with values)",
-			repoUrl:           "https://stefanprodan.github.io/podinfo",
+			repoUrl:           podinfo_repo_url,
 			request:           create_request_with_values,
 			expectedDetail:    expected_detail_with_values,
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-4-",
@@ -118,13 +125,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 
 			// need to wait until repo is index by flux plugin
 			const maxWait = 25
-			for i := 0; i < maxWait; i++ {
+			for i := 0; i <= maxWait; i++ {
 				_, err := fluxPluginClient.GetAvailablePackageDetail(
 					context.TODO(),
 					&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 				if err == nil {
 					break
-				} else if i == maxWait-1 {
+				} else if i == maxWait {
 					t.Fatalf("Timed out waiting for available package [%s], last error: [%v]", availablePackageRef, err)
 				} else {
 					t.Logf("waiting 1s for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
@@ -179,7 +186,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			})
 
 			var actualDetail *corev1.InstalledPackageDetail
-			for i := 0; i < maxWait; i++ {
+			for i := 0; i <= maxWait; i++ {
 				resp2, err := fluxPluginClient.GetInstalledPackageDetail(
 					context.TODO(),
 					&corev1.GetInstalledPackageDetailRequest{InstalledPackageRef: installedPackageRef})
@@ -192,7 +199,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 					actualDetail = resp2.InstalledPackageDetail
 					break
 				} else {
-					t.Logf("waiting 500ms due to: [%s], userReason: [%s], attempt [%d/%d]...",
+					t.Logf("waiting 500ms due to: [%s], userReason: [%s], attempt: [%d/%d]...",
 						resp2.InstalledPackageDetail.Status.Reason, resp2.InstalledPackageDetail.Status.UserReason, i+1, maxWait)
 					time.Sleep(500 * time.Millisecond)
 				}
