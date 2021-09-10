@@ -55,13 +55,13 @@ var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 func makeDefaultTestPackagingPlugin(pluginName string) *PkgsPluginWithServer {
 	plugin := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
 	availablePackageSummaries := []*corev1.AvailablePackageSummary{
-		MakeAvailablePackageSummary("pkg-1", plugin),
 		MakeAvailablePackageSummary("pkg-2", plugin),
+		MakeAvailablePackageSummary("pkg-1", plugin),
 	}
 	availablePackageDetail := MakeAvailablePackageDetail("pkg-1", plugin)
 	installedPackageSummaries := []*corev1.InstalledPackageSummary{
-		MakeInstalledPackageSummary("pkg-1", plugin),
 		MakeInstalledPackageSummary("pkg-2", plugin),
+		MakeInstalledPackageSummary("pkg-1", plugin),
 	}
 	installedPackageDetail := MakeInstalledPackageDetail("pkg-1", plugin)
 	packageAppVersions := []*corev1.PackageAppVersion{
@@ -107,6 +107,99 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories: []string{"cat-1"},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it should successfully call and paginate (first page) the core GetAvailablePackageSummaries operation",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				PaginationOptions: &corev1.PaginationOptions{PageToken: "0", PageSize: 1},
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+				},
+				Categories:    []string{"cat-1"},
+				NextPageToken: "1",
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it should successfully call and paginate (proper PageSize) the core GetAvailablePackageSummaries operation",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				PaginationOptions: &corev1.PaginationOptions{PageToken: "0", PageSize: 4},
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+				},
+				Categories:    []string{"cat-1"},
+				NextPageToken: "1",
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it should successfully call and paginate (last page+1) the core GetAvailablePackageSummaries operation",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				PaginationOptions: &corev1.PaginationOptions{PageToken: "5", PageSize: 1},
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+				Categories:                []string{"cat-1"},
+				NextPageToken:             "",
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it should successfully call and paginate (last page) the core GetAvailablePackageSummaries operation",
+			configuredPlugins: []*PkgsPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				PaginationOptions: &corev1.PaginationOptions{PageToken: "4", PageSize: 1},
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+				},
+				Categories:    []string{"cat-1"},
+				NextPageToken: "5",
 			},
 			statusCode: codes.OK,
 		},
