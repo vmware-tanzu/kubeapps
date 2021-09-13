@@ -24,7 +24,7 @@ import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import AppNotes from "./AppNotes/AppNotes";
 import AppView from "./AppView";
 import ChartInfo from "./ChartInfo/ChartInfo";
-import CustomAppView from "./CustomAppView/CustomAppView";
+import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 
 const routeParams = {
@@ -74,6 +74,7 @@ describe("AppView", () => {
     valuesApplied: "test",
     availablePackageRef: {
       identifier: "apache/1",
+      plugin: { name: "helm.packages" },
       context: { cluster: "", namespace: "chart-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as AvailablePackageReference,
@@ -150,7 +151,15 @@ describe("AppView", () => {
     const wrapper = mountWrapper(
       getStore({
         apps: { selected: { ...installedPackage } },
-        config: { customAppViews: ["apache/1"] },
+        config: {
+          customAppViews: [
+            {
+              name: "1",
+              plugin: "helm.packages",
+              repository: "apache",
+            },
+          ],
+        },
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -161,11 +170,19 @@ describe("AppView", () => {
     expect(wrapper.find(CustomAppView)).toExist();
   });
 
-  it("does not renders a custom component when chart is not in customAppViews", () => {
+  it("does not render a custom component when chart is not in customAppViews", () => {
     const wrapper = mountWrapper(
       getStore({
         apps: { selected: { ...installedPackage } },
-        config: { customAppViews: ["foo"] },
+        config: {
+          customAppViews: [
+            {
+              name: "demo-chart",
+              plugin: "helm.packages",
+              repository: "demo-repo",
+            },
+          ],
+        },
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>

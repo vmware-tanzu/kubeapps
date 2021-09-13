@@ -1,4 +1,7 @@
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageDetail,
+  InstalledPackageDetail,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { CustomComponent } from "RemoteComponent";
@@ -8,9 +11,10 @@ import { IAppViewResourceRefs } from "../AppView";
 export interface ICustomAppViewProps {
   resourceRefs: IAppViewResourceRefs;
   app: InstalledPackageDetail;
+  appDetails: AvailablePackageDetail;
 }
 
-function CustomAppView({ resourceRefs, app }: ICustomAppViewProps) {
+function CustomAppView({ resourceRefs, app, appDetails }: ICustomAppViewProps) {
   const {
     config: { remoteComponentsUrl },
   } = useSelector((state: IStoreState) => state);
@@ -20,8 +24,10 @@ function CustomAppView({ resourceRefs, app }: ICustomAppViewProps) {
     : `${window.location.origin}/custom_components.js`;
 
   return useMemo(
-    () => <CustomComponent url={url} resourceRefs={resourceRefs} app={app} />,
-    [resourceRefs, app, url],
+    () => (
+      <CustomComponent url={url} resourceRefs={resourceRefs} appDetails={appDetails} app={app} />
+    ),
+    [resourceRefs, app, appDetails, url],
   );
 }
 

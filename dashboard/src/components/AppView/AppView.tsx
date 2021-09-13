@@ -210,11 +210,15 @@ export default function AppView() {
 
   // If the package identifier matches the current list of loaded customAppViews,
   // then load the custom view from external bundle instead of the default one.
+  const appRepo = app?.availablePackageRef?.identifier.split("/")[0];
+  const appName = app?.availablePackageRef?.identifier.split("/")[1];
+  const appPlugin = app?.availablePackageRef?.plugin?.name;
   if (
-    app?.availablePackageRef?.identifier &&
-    customAppViews.includes(app.availablePackageRef.identifier)
+    customAppViews.some(
+      entry => entry.name === appName && entry.plugin === appPlugin && entry.repository === appRepo,
+    )
   ) {
-    return <CustomAppView resourceRefs={resourceRefs} app={app} />;
+    return <CustomAppView resourceRefs={resourceRefs} app={app!} appDetails={appDetails!} />;
   }
 
   return (

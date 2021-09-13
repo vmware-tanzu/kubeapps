@@ -1,4 +1,7 @@
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  InstalledPackageDetail,
+  AvailablePackageDetail,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import CustomAppView from ".";
 import { CustomComponent } from "../../../RemoteComponent";
@@ -53,6 +56,7 @@ const defaultProps = {
     ],
     secrets: [],
   } as unknown as IAppViewResourceRefs,
+  appDetails: {} as AvailablePackageDetail,
 };
 
 it("should render a custom app view", () => {
