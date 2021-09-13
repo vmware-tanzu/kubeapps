@@ -18,23 +18,35 @@ test("Upgrades an application", async () => {
 
   let latestChartVersion = "";
 
-  await utils.retryAndRefresh(page, 3, async () => {
-    await new Promise(r => setTimeout(r, 1000));
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await new Promise(r => setTimeout(r, 1000));
 
-    const chartVersionElement = await expect(page).toMatchElement('select[name="chart-versions"]');
-    const chartVersionElementContent = await chartVersionElement.getProperty("textContent");
-    const chartVersionValue = await chartVersionElementContent.jsonValue();
-    latestChartVersion = chartVersionValue.split(" ")[0];
-    expect(latestChartVersion).not.toBe("");
-  }, testName);
+      const chartVersionElement = await expect(page).toMatchElement(
+        'select[name="chart-versions"]',
+      );
+      const chartVersionElementContent = await chartVersionElement.getProperty("textContent");
+      const chartVersionValue = await chartVersionElementContent.jsonValue();
+      latestChartVersion = chartVersionValue.split(" ")[0];
+      expect(latestChartVersion).not.toBe("");
+    },
+    testName,
+  );
 
   await expect(page).toSelect('select[name="chart-versions"]', "8.6.2");
 
   await new Promise(r => setTimeout(r, 500));
 
-  await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("8.6.2");
-  }, testName);
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toMatch("8.6.2");
+    },
+    testName,
+  );
 
   await expect(page).toMatchElement("input[type='number']");
   // Increase the number of replicas
@@ -53,34 +65,49 @@ test("Upgrades an application", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await utils.retryAndRefresh(page, 2, async () => {
-    await expect(page).toMatch("Update Now", { timeout: 60000 });
-  }, testName);
+  await utils.retryAndRefresh(
+    page,
+    2,
+    async () => {
+      await expect(page).toMatch("Update Now", { timeout: 60000 });
+    },
+    testName,
+  );
 
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
   await new Promise(r => setTimeout(r, 1000));
 
   // Verify that the form contains the old version
-  await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("8.6.2");
-  }, testName);
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toMatch("8.6.2");
+    },
+    testName,
+  );
 
   await expect(page).toMatchElement("input[type='number']", { value: 2 });
 
-  await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toSelect('select[name="chart-versions"]', latestChartVersion);
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toSelect('select[name="chart-versions"]', latestChartVersion);
 
-    await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 1000));
 
-    // Ensure that the new value is selected
-    const chartVersionElement = await expect(page).toMatchElement(
-      '.upgrade-form-version-selector select[name="chart-versions"]',
-    );
-    const chartVersionElementContent = await chartVersionElement.getProperty("value");
-    const chartVersionValue = await chartVersionElementContent.jsonValue();
-    expect(chartVersionValue).toEqual(latestChartVersion);
-  }, testName);
+      // Ensure that the new value is selected
+      const chartVersionElement = await expect(page).toMatchElement(
+        '.upgrade-form-version-selector select[name="chart-versions"]',
+      );
+      const chartVersionElementContent = await chartVersionElement.getProperty("value");
+      const chartVersionValue = await chartVersionElementContent.jsonValue();
+      expect(chartVersionValue).toEqual(latestChartVersion);
+    },
+    testName,
+  );
 
   await expect(page).toMatchElement("input[type='number']", { value: 2 });
 

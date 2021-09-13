@@ -22,8 +22,8 @@ The kubeapps-apis service uses the standard [go plugin package](https://golang.o
 
 Each plugin consists of 2 source files (and some generated files):
 
-* A `.proto` file defining the service that uses the messages defined in relevant part of kubeappsapis.core, in `./proto/kubeappsapis/plugins/<plugin-name>`,
-* A `main.go` that compiles to an .so file for that plugin. This `main.go` has two public functions: one to register the plugin with a GRPC server and one to register the plugin for the http handler as well as the implementation for the server. This may be split into further modules as the complexity of the plugin grows. This file is under `./plugins/<plugin-name>`
+- A `.proto` file defining the service that uses the messages defined in relevant part of kubeappsapis.core, in `./proto/kubeappsapis/plugins/<plugin-name>`,
+- A `main.go` that compiles to an .so file for that plugin. This `main.go` has two public functions: one to register the plugin with a GRPC server and one to register the plugin for the http handler as well as the implementation for the server. This may be split into further modules as the complexity of the plugin grows. This file is under `./plugins/<plugin-name>`
 
 With this structure, the kubeapps-apis' main.go simply loads the `.so` files from the specified plugin dirs and register them when starting. You can see this in the [kubeapps-apis/server/server.go](server/server.go) file.
 
@@ -161,6 +161,7 @@ curl -s http://localhost:8080/core/packages/v1alpha1/packagerepositories | jq .
 ```
 
 Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available ([example](https://github.com/vmware-tanzu/carvel-kapp-controller/tree/develop/examples/packaging-with-repo)) in your cluster.
+
 ## Hacking
 
 A few extra tools will be needed to contribute to the development of this service.
@@ -169,13 +170,14 @@ A few extra tools will be needed to contribute to the development of this servic
 
 Make sure your GOPATH environment variable is set.
 You can use the value of command
+
 ```bash
 go env GOPATH
 ```
 
 ### Install go cli deps
 
-You should be able to install the exact versions of the various go CLI dependencies into your $GOPATH/bin with the following, after ensuring `$GOPATH/bin` is included in your `$PATH`:
+You should be able to install the exact versions of the various go CLI dependencies into your $GOPATH/bin with the following, after ensuring `$GOPATH/bin`is included in your`$PATH`:
 
 ```bash
 make cli-dependencies
