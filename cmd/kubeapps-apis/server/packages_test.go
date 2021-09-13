@@ -220,7 +220,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it should successfully call and paginate (last page+1) the core GetAvailablePackageSummaries operation",
+			name: "it should successfully call and paginate (last page + 1) the core GetAvailablePackageSummaries operation",
 			configuredPlugins: []*pkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
@@ -241,7 +241,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it should fail when calling the core GetAvailablePackageSummaries operation with one of the plugin failing",
+			name: "it should fail when calling the core GetAvailablePackageSummaries operation when the package is not present in a plugin",
 			configuredPlugins: []*pkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
@@ -273,9 +273,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := ignoreUnexportedOpts
-				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
 		})
@@ -314,7 +313,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it should fail when calling the core GetAvailablePackageDetail operation with one of the plugin failing",
+			name: "it should fail when calling the core GetAvailablePackageDetail operation when the package is not present in a plugin",
 			configuredPlugins: []*pkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
@@ -348,9 +347,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := ignoreUnexportedOpts
-				if got, want := availablePackageDetail, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				if got, want := availablePackageDetail, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
 		})
@@ -389,7 +387,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it should fail when calling the core GetInstalledPackageSummaries operation with one of the plugin failing",
+			name: "it should fail when calling the core GetInstalledPackageSummaries operation when the package is not present in a plugin",
 			configuredPlugins: []*pkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
@@ -420,9 +418,8 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := ignoreUnexportedOpts
-				if got, want := installedPackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				if got, want := installedPackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
 		})
@@ -460,7 +457,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it should fail when calling the core GetInstalledPackageDetail operation with one of the plugin failing",
+			name: "it should fail when calling the core GetInstalledPackageDetail operation when the package is not present in a plugin",
 			configuredPlugins: []*pkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
@@ -493,9 +490,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := ignoreUnexportedOpts
-				if got, want := installedPackageDetail, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				if got, want := installedPackageDetail, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
 		})
@@ -536,7 +532,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name: "it should fail when calling the core GetAvailablePackageSummaGetAvailablePackageVersionsries operation with one of the plugin failing",
+			name: "it should fail when calling the core GetAvailablePackageVersions operation when the package is not present in a plugin",
 			configuredPlugins: []*pkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
@@ -571,9 +567,8 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := ignoreUnexportedOpts
-				if got, want := AvailablePackageVersions, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				if got, want := AvailablePackageVersions, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
 		})
