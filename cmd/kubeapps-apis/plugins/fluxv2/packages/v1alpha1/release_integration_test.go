@@ -18,6 +18,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -41,6 +42,7 @@ import (
 )
 
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
+// To run these tests, enable ENABLE_FLUX_INTEGRATION_TESTS variable
 // pre-requisites for these tests to run:
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080, e.g.
@@ -49,9 +51,10 @@ import (
 //    at this point.
 // 3) run ./kind-cluster-setup.sh once prior to these tests
 
-// if (1) or (2) of the above pre-requisites is not satisfied, the tests are simply skipped
-
 const (
+	// EnvvarFluxIntegrationTests enables tests that run against a local kind cluster
+	envVarFluxIntegrationTests = "ENABLE_FLUX_INTEGRATION_TESTS"
+
 	// the only repo this test uses so far. Enough for this test. This is local copy of what was on
 	// "https://stefanprodan.github.io/podinfo" on Sept 10 2021.
 	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
@@ -60,6 +63,8 @@ const (
 )
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
+	fluxPluginClient := checkEnv(t)
+
 	testCases := []struct {
 		testName          string
 		repoUrl           string
@@ -97,22 +102,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	if up, err := isLocalKindClusterUp(t); err != nil || !up {
-		t.Skipf("skipping tests because due to failure to find local kind cluster: [%v]", err)
-	}
-	var fluxPluginClient fluxplugin.FluxV2PackagesServiceClient
-	var err error
-	if fluxPluginClient, err = getFluxPluginClient(t); err != nil {
-		t.Skipf("skipping tests due to failure to get fluxv2 plugin: [%v]", err)
-	}
-
 	rand.Seed(time.Now().UnixNano())
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			availablePackageRef := tc.request.AvailablePackageRef
 			idParts := strings.Split(availablePackageRef.Identifier, "/")
-			err = kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
+			err := kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -237,6 +233,33 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			}
 		})
 	}
+}
+
+func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
+	enableEnvVar := os.Getenv(envVarFluxIntegrationTests)
+	runTests := false
+	if enableEnvVar != "" {
+		var err error
+		runTests, err = strconv.ParseBool(enableEnvVar)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
+
+	if !runTests {
+		t.Skipf("skipping flux plugin integration tests as %q not set to be true", envVarFluxIntegrationTests)
+	} else {
+		if up, err := isLocalKindClusterUp(t); err != nil || !up {
+			t.Fatalf("Failed to find local kind cluster due to: [%v]", err)
+		}
+		var fluxPluginClient fluxplugin.FluxV2PackagesServiceClient
+		var err error
+		if fluxPluginClient, err = getFluxPluginClient(t); err != nil {
+			t.Fatalf("Failed to get fluxv2 plugin due to: [%v]", err)
+		}
+		return fluxPluginClient
+	}
+	return nil
 }
 
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {

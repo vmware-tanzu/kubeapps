@@ -28,6 +28,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -214,7 +215,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q due to: %v", name, err)
 	}
 
-	log.Infof("installedPackageDetail:\n[%s]", prettyPrintMap(unstructuredRelease.Object))
+	log.V(4).Infof("installedPackageDetail:\n[%s]", prettyPrintMap(unstructuredRelease.Object))
 
 	obj := unstructuredRelease.Object
 	var pkgVersionRef *corev1.VersionReference
@@ -255,11 +256,16 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	// to invoke helm layer yet
 	if err == nil && release != nil {
 		// a couple of fields currrently only available via helm API
-		appVersion = release.Chart.AppVersion()
+		if release.Chart != nil {
+			appVersion = release.Chart.AppVersion()
+		}
 		if release.Info != nil {
 			postInstallNotes = release.Info.Notes
 		}
+	} else if err != nil && !errors.IsNotFound(err) {
+		log.Warningf("Failed to get helm release due to %v", err)
 	}
+
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{

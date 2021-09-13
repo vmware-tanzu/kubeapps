@@ -6,7 +6,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-TAG=0.0.3
+TAG=0.0.5
 
 function deploy {
   docker build -t kubeapps/fluxv2plugin-testdata:$TAG .
@@ -25,13 +25,13 @@ function portforward {
   kubectl -n default port-forward svc/fluxv2plugin-testdata-svc 8081:80 --context kind-kubeapps 
 }
 
-function exec {
-  kubectl exec --stdin --tty fluxv2plugin-testdata-app-74766cf559-695qg -- /bin/bash
+function shell {
+  kubectl exec --stdin --tty fluxv2plugin-testdata-app-74766cf559-695qg -- /bin/bash --context kind-kubeapps 
 }
 
 if [ $# -lt 1 ]
 then
-  echo "Usage : $0 deploy|undeploy"
+  echo "Usage : $0 deploy|undeploy|portforward|shell"
   exit
 fi
 
@@ -42,7 +42,7 @@ undeploy) undeploy
     ;;
 portforward) portforward
     ;;
-exec) exec
+shell) shell
     ;;
 *) echo "Invalid option"
    ;;
