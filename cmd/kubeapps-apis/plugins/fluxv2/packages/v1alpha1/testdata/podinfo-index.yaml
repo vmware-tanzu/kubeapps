@@ -15,5 +15,5 @@ entries:
     sources:
     - https://github.com/stefanprodan/podinfo
     urls:
-    - https://stefanprodan.github.io/podinfo/podinfo-6.0.0.tgz
+    - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-6.0.0.tgz
     version: 6.0.0
