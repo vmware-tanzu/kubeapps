@@ -42,11 +42,7 @@ func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
 
 // GetAvailablePackages returns the packages based on the request.
 func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
-	contextMsg := ""
-	if request.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
 
 	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
@@ -127,14 +123,10 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 // GetAvailablePackageDetail returns the package details based on the request.
 func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
-	contextMsg := ""
-	if request.AvailablePackageRef != nil && request.AvailablePackageRef.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
 	log.Infof("+core GetAvailablePackageDetail %s", contextMsg)
 
-	if request.AvailablePackageRef == nil || request.AvailablePackageRef.Plugin == nil {
+	if request.GetAvailablePackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
@@ -151,7 +143,7 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 	}
 
 	// Validate the plugin response
-	if response.AvailablePackageDetail == nil || response.AvailablePackageDetail.AvailablePackageRef == nil {
+	if response.GetAvailablePackageDetail().GetAvailablePackageRef() == nil {
 		return nil, status.Errorf(codes.Internal, "Invalid GetAvailablePackageDetail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
 	}
 
@@ -163,11 +155,7 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 
 // GetInstalledPackageSummaries returns the installed package summaries based on the request.
 func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, request *packages.GetInstalledPackageSummariesRequest) (*packages.GetInstalledPackageSummariesResponse, error) {
-	contextMsg := ""
-	if request.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+core GetInstalledPackageSummaries %s", contextMsg)
 
 	// Aggregate the response for each plugin
@@ -205,14 +193,10 @@ func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, reques
 
 // GetInstalledPackageDetail returns the package versions based on the request.
 func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *packages.GetInstalledPackageDetailRequest) (*packages.GetInstalledPackageDetailResponse, error) {
-	contextMsg := ""
-	if request.InstalledPackageRef != nil && request.InstalledPackageRef.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.InstalledPackageRef.Context.Cluster, request.InstalledPackageRef.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetInstalledPackageRef().GetContext().GetCluster(), request.GetInstalledPackageRef().GetContext().GetNamespace())
 	log.Infof("+core GetInstalledPackageDetail %s", contextMsg)
 
-	if request.InstalledPackageRef == nil || request.InstalledPackageRef.Plugin == nil {
+	if request.GetInstalledPackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
 	}
 
@@ -229,7 +213,7 @@ func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *
 	}
 
 	// Validate the plugin response
-	if response.InstalledPackageDetail == nil {
+	if response.GetInstalledPackageDetail() == nil {
 		return nil, status.Errorf(codes.Internal, "Invalid GetInstalledPackageDetail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
 	}
 
@@ -241,14 +225,10 @@ func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *
 
 // GetAvailablePackageVersions returns the package versions based on the request.
 func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request *packages.GetAvailablePackageVersionsRequest) (*packages.GetAvailablePackageVersionsResponse, error) {
-	contextMsg := ""
-	if request.AvailablePackageRef != nil && request.AvailablePackageRef.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
 	log.Infof("+core GetAvailablePackageVersions %s", contextMsg)
 
-	if request.AvailablePackageRef == nil || request.AvailablePackageRef.Plugin == nil {
+	if request.GetAvailablePackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
