@@ -18,9 +18,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	_test "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/_test"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugin_test"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -56,22 +56,22 @@ var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 func makeDefaultTestPackagingPlugin(pluginName string) *pkgsPluginWithServer {
 	plugin := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
 	availablePackageSummaries := []*corev1.AvailablePackageSummary{
-		_test.MakeAvailablePackageSummary("pkg-2", plugin),
-		_test.MakeAvailablePackageSummary("pkg-1", plugin),
+		plugin_test.MakeAvailablePackageSummary("pkg-2", plugin),
+		plugin_test.MakeAvailablePackageSummary("pkg-1", plugin),
 	}
-	availablePackageDetail := _test.MakeAvailablePackageDetail("pkg-1", plugin)
+	availablePackageDetail := plugin_test.MakeAvailablePackageDetail("pkg-1", plugin)
 	installedPackageSummaries := []*corev1.InstalledPackageSummary{
-		_test.MakeInstalledPackageSummary("pkg-2", plugin),
-		_test.MakeInstalledPackageSummary("pkg-1", plugin),
+		plugin_test.MakeInstalledPackageSummary("pkg-2", plugin),
+		plugin_test.MakeInstalledPackageSummary("pkg-1", plugin),
 	}
-	installedPackageDetail := _test.MakeInstalledPackageDetail("pkg-1", plugin)
+	installedPackageDetail := plugin_test.MakeInstalledPackageDetail("pkg-1", plugin)
 	packageAppVersions := []*corev1.PackageAppVersion{
-		_test.MakePackageAppVersion(_test.DefaultAppVersion, _test.DefaultPkgUpdateVersion),
-		_test.MakePackageAppVersion(_test.DefaultAppVersion, _test.DefaultPkgVersion),
+		plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgUpdateVersion),
+		plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgVersion),
 	}
 	nextPageToken := "1"
-	categories := []string{_test.DefaultCategory}
-	obj := _test.MakeTestPackagingPlugin(plugin, availablePackageSummaries, availablePackageDetail, installedPackageSummaries, installedPackageDetail, packageAppVersions, nextPageToken, categories, codes.OK)
+	categories := []string{plugin_test.DefaultCategory}
+	obj := plugin_test.MakeTestPackagingPlugin(plugin, availablePackageSummaries, availablePackageDetail, installedPackageSummaries, installedPackageDetail, packageAppVersions, nextPageToken, categories, codes.OK)
 	return &pkgsPluginWithServer{
 		plugin: obj.Plugin,
 		server: obj.Server,
@@ -80,7 +80,7 @@ func makeDefaultTestPackagingPlugin(pluginName string) *pkgsPluginWithServer {
 
 func makeFailingTestPackagingPlugin(pluginName string) *pkgsPluginWithServer {
 	plugin := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
-	obj := _test.MakeTestPackagingPlugin(plugin, nil, nil, nil, nil, nil, "", nil, codes.NotFound)
+	obj := plugin_test.MakeTestPackagingPlugin(plugin, nil, nil, nil, nil, nil, "", nil, codes.NotFound)
 	return &pkgsPluginWithServer{
 		plugin: obj.Plugin,
 		server: obj.Server,
@@ -110,10 +110,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories: []string{"cat-1"},
 			},
@@ -135,7 +135,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "1",
@@ -158,10 +158,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "1",
@@ -184,7 +184,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "4",
@@ -207,7 +207,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "4",
@@ -304,7 +304,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageDetailResponse{
-				AvailablePackageDetail: _test.MakeAvailablePackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
+				AvailablePackageDetail: plugin_test.MakeAvailablePackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
 			},
 			statusCode: codes.OK,
 		},
@@ -375,10 +375,10 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 			},
 			statusCode: codes.OK,
@@ -450,7 +450,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			},
 
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: _test.MakeInstalledPackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
+				InstalledPackageDetail: plugin_test.MakeInstalledPackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
 			},
 			statusCode: codes.OK,
 		},
@@ -524,8 +524,8 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
 				PackageAppVersions: []*corev1.PackageAppVersion{
-					_test.MakePackageAppVersion(_test.DefaultAppVersion, _test.DefaultPkgUpdateVersion),
-					_test.MakePackageAppVersion(_test.DefaultAppVersion, _test.DefaultPkgVersion),
+					plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgUpdateVersion),
+					plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgVersion),
 				},
 			},
 			statusCode: codes.OK,
