@@ -48,16 +48,12 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
 
 	pkgs := []*packages.AvailablePackageSummary{}
-	categories := []string{}
-
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.plugins {
 		response, err := p.server.GetAvailablePackageSummaries(ctx, request)
 		if err != nil {
 			return nil, err
 		}
-
-		categories = append(categories, response.Categories...)
 
 		// Add the plugin for the pkgs
 		pluginPkgs := response.AvailablePackageSummaries
@@ -73,7 +69,6 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	// TODO: Sort via default sort order or that specified in request.
 	return &packages.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: pkgs,
-		Categories:                categories,
 	}, nil
 }
 
@@ -103,13 +98,13 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.AvailablePackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", pluginWithServer.plugin.Name)
 	}
 
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.GetAvailablePackageDetail(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the GetAvailablePackageDetail from the plugin %v: %v", request.AvailablePackageRef.Plugin, err)
+		return nil, status.Errorf(codes.Internal, "Unable get the GetAvailablePackageDetail from the plugin %v: %v", pluginWithServer.plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -120,134 +115,6 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 	// Build the response
 	return &packages.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: response.AvailablePackageDetail,
-	}, nil
-}
-
-// GetInstalledPackageSummaries returns the installed package summaries based on the request.
-func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, request *packages.GetInstalledPackageSummariesRequest) (*packages.GetInstalledPackageSummariesResponse, error) {
-	contextMsg := ""
-	if request.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
-	}
-
-	log.Infof("+core GetInstalledPackageSummaries %s", contextMsg)
-
-	// Aggregate the response for each plugin
-	pkgs := []*packages.InstalledPackageSummary{}
-	// TODO: We can do these in parallel in separate go routines.
-	for _, p := range s.plugins {
-		response, err := p.server.GetInstalledPackageSummaries(ctx, request)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Invalid GetInstalledPackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
-		}
-
-		// Add the plugin for the pkgs
-		pluginPkgs := response.InstalledPackageSummaries
-		for _, r := range pluginPkgs {
-			if r.InstalledPackageRef == nil {
-				r.InstalledPackageRef = &packages.InstalledPackageReference{}
-			}
-			r.InstalledPackageRef.Plugin = p.plugin
-		}
-		pkgs = append(pkgs, pluginPkgs...)
-	}
-
-	// Build the response
-	// TODO: Sort via default sort order or that specified in request.
-	return &packages.GetInstalledPackageSummariesResponse{
-		InstalledPackageSummaries: pkgs,
-	}, nil
-}
-
-// GetInstalledPackageDetail returns the package versions based on the request.
-func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *packages.GetInstalledPackageDetailRequest) (*packages.GetInstalledPackageDetailResponse, error) {
-	contextMsg := ""
-	if request.InstalledPackageRef != nil && request.InstalledPackageRef.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.InstalledPackageRef.Context.Cluster, request.InstalledPackageRef.Context.Namespace)
-	}
-
-	log.Infof("+core GetInstalledPackageDetail %s", contextMsg)
-
-	// Check prerequsites
-	if request.InstalledPackageRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the available package reference (missing InstalledPackageRef)")
-	}
-	if request.InstalledPackageRef.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the context (missing InstalledPackageRef.Context)")
-	}
-	if request.InstalledPackageRef.Identifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the identifier (missing InstalledPackageRef.Identifier)")
-	}
-	if request.InstalledPackageRef.Plugin == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
-	}
-
-	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
-	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", pluginWithServer.plugin.Name)
-	}
-
-	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.GetInstalledPackageDetail(ctx, request)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the GetInstalledPackageDetail from the plugin %v: %v", pluginWithServer.plugin.Name, err)
-	}
-
-	// Validate the plugin response
-	if response.InstalledPackageDetail == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid GetInstalledPackageDetail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
-	}
-
-	// Build the response
-	return &packages.GetInstalledPackageDetailResponse{
-		InstalledPackageDetail: response.InstalledPackageDetail,
-	}, nil
-}
-
-// GetAvailablePackageVersions returns the package versions based on the request.
-func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request *packages.GetAvailablePackageVersionsRequest) (*packages.GetAvailablePackageVersionsResponse, error) {
-	contextMsg := ""
-	if request.AvailablePackageRef != nil && request.AvailablePackageRef.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
-	}
-
-	log.Infof("+core GetAvailablePackageVersions %s", contextMsg)
-
-	// Check prerequsites
-	if request.AvailablePackageRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the available package reference (missing AvailablePackageRef)")
-	}
-	if request.AvailablePackageRef.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the context (missing AvailablePackageRef.Context)")
-	}
-	if request.AvailablePackageRef.Identifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the identifier (missing AvailablePackageRef.Identifier)")
-	}
-	if request.AvailablePackageRef.Plugin == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
-	}
-
-	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
-	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", pluginWithServer.plugin.Name)
-	}
-
-	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.GetAvailablePackageVersions(ctx, request)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the GetAvailablePackageVersions from the plugin %v: %v", pluginWithServer.plugin.Name, err)
-	}
-
-	// Validate the plugin response
-	if response.PackageAppVersions == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid GetAvailablePackageVersions response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
-	}
-
-	// Build the response
-	return &packages.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: response.PackageAppVersions,
 	}, nil
 }
 
