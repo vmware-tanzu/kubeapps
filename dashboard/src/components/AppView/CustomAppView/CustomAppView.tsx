@@ -25,7 +25,14 @@ function CustomAppView({ resourceRefs, app, appDetails }: ICustomAppViewProps) {
 
   return useMemo(
     () => (
-      <CustomComponent url={url} resourceRefs={resourceRefs} appDetails={appDetails} app={app} />
+      <CustomComponent
+        url={url}
+        resourceRefs={resourceRefs}
+        appDetails={appDetails}
+        app={app}
+        componentType="AppView"
+        appId={app.availablePackageRef?.identifier}
+      />
     ),
     [resourceRefs, app, appDetails, url],
   );
