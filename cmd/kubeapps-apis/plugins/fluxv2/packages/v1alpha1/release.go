@@ -375,11 +375,19 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 
 // returns 3 things:
 // - ready:  whether the HelmRelease object is in a ready state
-// - reason: one of SUCCESS/FAILURE/PENDING/UNKNOWN, if present
+// - reason: one of SUCCESS/FAILURE/PENDING/UNSPECIFIED,
 // - userReason: textual description of why the object is in current state, if present
 // docs:
 // 1. https://fluxcd.io/docs/components/helm/helmreleases/#examples
-// 2. discussion on https://vmware.slack.com/archives/C4HEXCX3N/p1630907107078800.
+// 2. discussion on private slack channel. Summary:
+//    - "ready" field: - it's not indicating that the resource has completed (i.e. whether the task
+//      completed with install or failure), but rather just whether the resource is ready or not.
+//      So it can be false because of either a final state (failure) or a pending state
+//      (reconciliation in progress or whatever). That means the ready flag will only be set to true
+//       when install completes with success
+//    - "reason" field: failure only when flux returns "InstallFailed" reason
+//       otherwise pending or unspecified when there are no status conditions to go by
+//
 func isHelmReleaseReady(unstructuredObj map[string]interface{}) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
 	if !checkGeneration(unstructuredObj) {
 		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""

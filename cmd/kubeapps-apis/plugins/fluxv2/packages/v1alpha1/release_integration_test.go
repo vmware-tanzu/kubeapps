@@ -100,6 +100,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			expectedDetail:    expected_detail_with_values,
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-4-",
 		},
+		// TODO: (gfichtenholt) negative case
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -130,7 +131,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				} else if i == maxWait {
 					t.Fatalf("Timed out waiting for available package [%s], last error: [%v]", availablePackageRef, err)
 				} else {
-					t.Logf("waiting 1s for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
+					t.Logf("Waiting 1s for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
 					time.Sleep(1 * time.Second)
 				}
 			}
