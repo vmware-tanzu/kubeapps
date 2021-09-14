@@ -15,7 +15,9 @@ package server
 import (
 	"context"
 	"fmt"
+	"strconv"
 
+	. "github.com/ahmetb/go-linq/v3"
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
@@ -40,75 +42,108 @@ func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
 
 // GetAvailablePackages returns the packages based on the request.
 func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
-	contextMsg := ""
-	if request.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=%q, namespace=%q)", request.Context.Cluster, request.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
 
-	pkgs := []*packages.AvailablePackageSummary{}
-	// TODO: We can do these in parallel in separate go routines.
-	for _, p := range s.plugins {
-		response, err := p.server.GetAvailablePackageSummaries(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		// Add the plugin for the pkgs
-		pluginPkgs := response.AvailablePackageSummaries
-		for _, r := range pluginPkgs {
-			if r.AvailablePackageRef == nil {
-				r.AvailablePackageRef = &packages.AvailablePackageReference{}
-			}
-			r.AvailablePackageRef.Plugin = p.plugin
-		}
-		pkgs = append(pkgs, pluginPkgs...)
+	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
 	}
 
-	// TODO: Sort via default sort order or that specified in request.
+	// TODO(agamez): temporarily fetching all the results (size=0) and then paginate them
+	// ideally, paginate each plugin request and then aggregate results.
+	requestN := request
+	requestN.PaginationOptions = &packages.PaginationOptions{
+		PageToken: "0",
+		PageSize:  0,
+	}
+
+	pkgs := []*packages.AvailablePackageSummary{}
+	categories := []string{}
+
+	// TODO: We can do these in parallel in separate go routines.
+	for _, p := range s.plugins {
+		log.Infof("Items now: %d/%d", len(pkgs), (pageOffset*int(pageSize) + int(pageSize)))
+		if pageSize == 0 || len(pkgs) <= (pageOffset*int(pageSize)+int(pageSize)) {
+			log.Infof("Should enter")
+
+			response, err := p.server.GetAvailablePackageSummaries(ctx, requestN)
+			if err != nil {
+				return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetAvailablePackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
+			}
+
+			categories = append(categories, response.Categories...)
+
+			// Add the plugin for the pkgs
+			pluginPkgs := response.AvailablePackageSummaries
+			for _, r := range pluginPkgs {
+				if r.AvailablePackageRef == nil {
+					r.AvailablePackageRef = &packages.AvailablePackageReference{}
+				}
+				r.AvailablePackageRef.Plugin = p.plugin
+			}
+			pkgs = append(pkgs, pluginPkgs...)
+		}
+	}
+	// Delete duplicate categories and sort by name
+	From(categories).Distinct().OrderBy(func(i interface{}) interface{} { return i }).ToSlice(&categories)
+
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 {
+		// Using https://github.com/ahmetb/go-linq for simplicity
+		From(pkgs).
+			// Order by package name, regardless of the plugin
+			OrderBy(func(pkg interface{}) interface{} {
+				return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
+			}).
+			Skip(pageOffset * int(pageSize)).
+			Take(int(pageSize)).
+			ToSlice(&pkgs)
+
+		if len(pkgs) == int(pageSize) {
+			nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+		}
+	} else {
+		From(pkgs).
+			// Order by package name, regardless of the plugin
+			OrderBy(func(pkg interface{}) interface{} {
+				return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
+			}).ToSlice(&pkgs)
+	}
+
 	return &packages.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: pkgs,
+		Categories:                categories,
+		NextPageToken:             nextPageToken,
 	}, nil
 }
 
 // GetAvailablePackageDetail returns the package details based on the request.
 func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
-	contextMsg := ""
-	if request.AvailablePackageRef != nil && request.AvailablePackageRef.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=%q, namespace=%q)", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
 	log.Infof("+core GetAvailablePackageDetail %s", contextMsg)
 
-	// Check prerequsites
-	if request.AvailablePackageRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the available package reference (missing AvailablePackageRef)")
-	}
-	if request.AvailablePackageRef.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the context (missing AvailablePackageRef.Context)")
-	}
-	if request.AvailablePackageRef.Identifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the identifier (missing AvailablePackageRef.Identifier)")
-	}
-	if request.AvailablePackageRef.Plugin == nil {
+	if request.GetAvailablePackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", pluginWithServer.plugin.Name)
+		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.AvailablePackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.GetAvailablePackageDetail(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the GetAvailablePackageDetail from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable get the GetAvailablePackageDetail from the plugin %v: %v", request.AvailablePackageRef.Plugin, err)
 	}
 
 	// Validate the plugin response
-	if response.AvailablePackageDetail == nil || response.AvailablePackageDetail.AvailablePackageRef == nil {
+	if response.GetAvailablePackageDetail().GetAvailablePackageRef() == nil {
 		return nil, status.Errorf(codes.Internal, "Invalid GetAvailablePackageDetail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
 	}
 
@@ -117,6 +152,113 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 		AvailablePackageDetail: response.AvailablePackageDetail,
 	}, nil
 }
+
+// GetInstalledPackageSummaries returns the installed package summaries based on the request.
+func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, request *packages.GetInstalledPackageSummariesRequest) (*packages.GetInstalledPackageSummariesResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
+	log.Infof("+core GetInstalledPackageSummaries %s", contextMsg)
+
+	// Aggregate the response for each plugin
+	pkgs := []*packages.InstalledPackageSummary{}
+	// TODO: We can do these in parallel in separate go routines.
+	for _, p := range s.plugins {
+		response, err := p.server.GetInstalledPackageSummaries(ctx, request)
+		if err != nil {
+			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetInstalledPackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
+		}
+
+		// Add the plugin for the pkgs
+		pluginPkgs := response.InstalledPackageSummaries
+		for _, r := range pluginPkgs {
+			if r.InstalledPackageRef == nil {
+				r.InstalledPackageRef = &packages.InstalledPackageReference{}
+			}
+			r.InstalledPackageRef.Plugin = p.plugin
+		}
+		pkgs = append(pkgs, pluginPkgs...)
+	}
+
+	From(pkgs).
+		// Order by package name, regardless of the plugin
+		OrderBy(func(pkg interface{}) interface{} {
+			return pkg.(*packages.InstalledPackageSummary).Name + pkg.(*packages.InstalledPackageSummary).InstalledPackageRef.Plugin.Name
+		}).
+		ToSlice(&pkgs)
+
+	// Build the response
+	return &packages.GetInstalledPackageSummariesResponse{
+		InstalledPackageSummaries: pkgs,
+	}, nil
+}
+
+// GetInstalledPackageDetail returns the package versions based on the request.
+func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *packages.GetInstalledPackageDetailRequest) (*packages.GetInstalledPackageDetailResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetInstalledPackageRef().GetContext().GetCluster(), request.GetInstalledPackageRef().GetContext().GetNamespace())
+	log.Infof("+core GetInstalledPackageDetail %s", contextMsg)
+
+	if request.GetInstalledPackageRef().GetPlugin() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
+	}
+
+	// Retrieve the plugin with server matching the requested plugin name
+	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
+	if pluginWithServer == nil {
+		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.InstalledPackageRef.Plugin)
+	}
+
+	// Get the response from the requested plugin
+	response, err := pluginWithServer.server.GetInstalledPackageDetail(ctx, request)
+	if err != nil {
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable get the GetInstalledPackageDetail from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	// Validate the plugin response
+	if response.GetInstalledPackageDetail() == nil {
+		return nil, status.Errorf(codes.Internal, "Invalid GetInstalledPackageDetail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	// Build the response
+	return &packages.GetInstalledPackageDetailResponse{
+		InstalledPackageDetail: response.InstalledPackageDetail,
+	}, nil
+}
+
+// GetAvailablePackageVersions returns the package versions based on the request.
+func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request *packages.GetAvailablePackageVersionsRequest) (*packages.GetAvailablePackageVersionsResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
+	log.Infof("+core GetAvailablePackageVersions %s", contextMsg)
+
+	if request.GetAvailablePackageRef().GetPlugin() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
+	}
+
+	// Retrieve the plugin with server matching the requested plugin name
+	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
+	if pluginWithServer == nil {
+		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.AvailablePackageRef.Plugin)
+	}
+
+	// Get the response from the requested plugin
+	response, err := pluginWithServer.server.GetAvailablePackageVersions(ctx, request)
+	if err != nil {
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable get the GetAvailablePackageVersions from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	// Validate the plugin response
+	if response.PackageAppVersions == nil {
+		return nil, status.Errorf(codes.Internal, "Invalid GetAvailablePackageVersions response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	// Build the response
+	return &packages.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: response.PackageAppVersions,
+	}, nil
+}
+
+// TODO(agamez): implement CreateInstalledPackage core api operation too
+// func (s packagesServer) CreateInstalledPackage(ctx context.Context, request *packages.CreateInstalledPackageRequest) (*packages.CreateInstalledPackageResponse, error) {
+// 	return nil, nil
+// }
 
 // getPluginWithServer returns the *pkgsPluginWithServer from a given packagesServer
 // matching the plugin name
@@ -127,4 +269,22 @@ func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgsPlugin
 		}
 	}
 	return nil
+}
+
+// pageOffsetFromPageToken converts a page token to an integer offset
+// representing the page of results.
+// TODO(mnelson): When aggregating results from different plugins, we'll
+// need to update the actual query in GetPaginatedChartListWithFilters to
+// use a row offset rather than a page offset (as not all rows may be consumed
+// for a specific plugin when combining).
+func pageOffsetFromPageToken(pageToken string) (int, error) {
+	if pageToken == "" {
+		return 0, nil
+	}
+	offset, err := strconv.ParseUint(pageToken, 10, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(offset), nil
 }
