@@ -1,6 +1,7 @@
 import {
   AvailablePackageDetail,
   InstalledPackageDetail,
+  InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
@@ -92,22 +93,54 @@ describe("delete applications", () => {
     App.delete = deleteAppOrig;
   });
   it("delete an application", async () => {
-    await store.dispatch(actions.apps.deleteApp("default-c", "default-ns", "foo", false));
+    await store.dispatch(
+      actions.apps.deleteApp(
+        {
+          context: { cluster: "default-c", namespace: "default-ns" },
+          identifier: "foo",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as InstalledPackageReference,
+        false,
+      ),
+    );
     const expectedActions = [
       { type: getType(actions.apps.requestDeleteApp) },
       { type: getType(actions.apps.receiveDeleteApp) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(deleteAppMock.mock.calls[0]).toEqual(["default-c", "default-ns", "foo", false]);
+    expect(deleteAppMock.mock.calls[0]).toEqual([
+      {
+        context: { cluster: "default-c", namespace: "default-ns" },
+        identifier: "foo",
+        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      } as InstalledPackageReference,
+      false,
+    ]);
   });
   it("delete and purge an application", async () => {
-    await store.dispatch(actions.apps.deleteApp("default-c", "default-ns", "foo", true));
+    await store.dispatch(
+      actions.apps.deleteApp(
+        {
+          context: { cluster: "default-c", namespace: "default-ns" },
+          identifier: "foo",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as InstalledPackageReference,
+        true,
+      ),
+    );
     const expectedActions = [
       { type: getType(actions.apps.requestDeleteApp) },
       { type: getType(actions.apps.receiveDeleteApp) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(deleteAppMock.mock.calls[0]).toEqual(["default-c", "default-ns", "foo", true]);
+    expect(deleteAppMock.mock.calls[0]).toEqual([
+      {
+        context: { cluster: "default-c", namespace: "default-ns" },
+        identifier: "foo",
+        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      } as InstalledPackageReference,
+      true,
+    ]);
   });
   it("delete and throw an error", async () => {
     const error = new Error("something went wrong!");
@@ -119,7 +152,16 @@ describe("delete applications", () => {
       throw error;
     });
     expect(
-      await store.dispatch(actions.apps.deleteApp("default-c", "default-ns", "foo", true)),
+      await store.dispatch(
+        actions.apps.deleteApp(
+          {
+            context: { cluster: "default-c", namespace: "default-ns" },
+            identifier: "foo",
+            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
+          true,
+        ),
+      ),
     ).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -187,11 +229,14 @@ describe("deploy chart", () => {
 
 describe("upgradeApp", () => {
   const provisionCMD = actions.apps.upgradeApp(
-    "default-c",
-    "kubeapps-ns",
-    "my-version" as any,
+    {
+      context: { cluster: "default-c", namespace: "default-ns" },
+      identifier: "my-release",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    } as InstalledPackageReference,
+
+    {} as AvailablePackageDetail,
     "kubeapps",
-    "my-release",
   );
 
   it("calls ServiceBinding.delete and returns true if no error", async () => {
@@ -205,11 +250,13 @@ describe("upgradeApp", () => {
     ];
     expect(store.getActions()).toEqual(expectedActions);
     expect(App.upgrade).toHaveBeenCalledWith(
-      "default-c",
-      "kubeapps-ns",
-      "my-release",
+      {
+        context: { cluster: "default-c", namespace: "default-ns" },
+        identifier: "my-release",
+        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      } as InstalledPackageReference,
       "kubeapps",
-      "my-version" as any,
+      {} as AvailablePackageDetail,
       undefined,
     );
   });
@@ -234,11 +281,13 @@ describe("upgradeApp", () => {
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema", async () => {
     const res = await store.dispatch(
       actions.apps.upgradeApp(
-        "default-c",
-        "kubeapps-ns",
-        "my-version" as any,
-        "default",
-        "my-release",
+        {
+          context: { cluster: "default-c", namespace: "default-ns" },
+          identifier: "my-release",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as InstalledPackageReference,
+        {} as AvailablePackageDetail,
+        "kubeapps",
         "foo: 1",
         {
           properties: { foo: { type: "string" } },
@@ -261,10 +310,14 @@ describe("upgradeApp", () => {
 });
 
 describe("rollbackApp", () => {
-  const provisionCMD = actions.apps.rollbackApp("default-c", "default-ns", "my-release", 1, {
-    name: "my.plugin",
-    version: "0.0.1",
-  });
+  const provisionCMD = actions.apps.rollbackApp(
+    {
+      context: { cluster: "default-c", namespace: "default-ns" },
+      identifier: "my-release",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    } as InstalledPackageReference,
+    1,
+  );
 
   it("success and re-request apps info", async () => {
     const installedPackageDetail = {
@@ -308,8 +361,19 @@ describe("rollbackApp", () => {
     ];
 
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.rollback).toHaveBeenCalledWith("default-c", "default-ns", "my-release", 1);
-    expect(App.getRelease).toHaveBeenCalledWith("default-c", "default-ns", "my-release");
+    expect(App.rollback).toHaveBeenCalledWith(
+      {
+        context: { cluster: "default-c", namespace: "default-ns" },
+        identifier: "my-release",
+        plugin: { name: "my.plugin", version: "0.0.1" },
+      },
+      1,
+    );
+    expect(App.getRelease).toHaveBeenCalledWith({
+      context: { cluster: "default-c", namespace: "default-ns" },
+      identifier: "my-release",
+      plugin: { name: "my.plugin", version: "0.0.1" },
+    });
   });
 
   it("dispatches an error", async () => {

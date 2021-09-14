@@ -1,5 +1,6 @@
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
   AvailablePackageSummary,
   Context,
   GetAvailablePackageDetailResponse,
@@ -338,13 +339,20 @@ describe("fetchChartVersions", () => {
       { type: getType(actions.charts.requestCharts) },
       { type: getType(actions.charts.receiveChartVersions), payload: availableVersionsResponse },
     ];
-    await store.dispatch(actions.charts.fetchChartVersions(cluster, namespace, "foo", plugin));
+    await store.dispatch(
+      actions.charts.fetchChartVersions({
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(mockGetAvailablePackageVersions.mock.calls[0]).toEqual([
-      cluster,
-      namespace,
-      "foo",
-      plugin,
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference,
     ]);
   });
 });
@@ -371,14 +379,22 @@ describe("fetchChartVersion", () => {
       },
     ];
     await store.dispatch(
-      actions.charts.fetchChartVersion(cluster, namespace, "foo", plugin, "1.0.0"),
+      actions.charts.fetchChartVersion(
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: plugin,
+        } as AvailablePackageReference,
+        "1.0.0",
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
-      cluster,
-      namespace,
-      "foo",
-      plugin,
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference,
       "1.0.0",
     ]);
   });
@@ -394,19 +410,22 @@ describe("fetchChartVersion", () => {
     ];
     await store.dispatch(
       actions.charts.fetchChartVersion(
-        cluster,
-        namespace,
-        "foo",
-        plugin,
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: plugin,
+        } as AvailablePackageReference,
         "1.0.0-alpha+1.2.3-beta2",
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
-      cluster,
-      namespace,
-      "foo",
-      plugin,
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference,
+
       "1.0.0-alpha+1.2.3-beta2",
     ]);
   });
@@ -420,7 +439,14 @@ describe("fetchChartVersion", () => {
       { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
     ];
     await store.dispatch(
-      actions.charts.fetchChartVersion(cluster, namespace, "foo", plugin, "1.0.0"),
+      actions.charts.fetchChartVersion(
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: plugin,
+        } as AvailablePackageReference,
+        "1.0.0",
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -452,20 +478,22 @@ describe("getDeployedChartVersion", () => {
 
     await store.dispatch(
       actions.charts.getDeployedChartVersion(
-        cluster,
-        namespace,
-        "foo",
-        { name: "my.plugin", version: "0.0.1" } as Plugin,
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as AvailablePackageReference,
         "1.0.0",
       ),
     );
 
     expect(store.getActions()).toEqual(expectedActions);
     expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
-      cluster,
-      namespace,
-      "foo",
-      { name: "my.plugin", version: "0.0.1" } as Plugin,
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      } as AvailablePackageReference,
       "1.0.0",
     ]);
   });

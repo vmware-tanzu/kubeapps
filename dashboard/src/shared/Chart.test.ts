@@ -1,4 +1,5 @@
 import {
+  AvailablePackageReference,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
@@ -124,18 +125,21 @@ describe("App", () => {
         jest
           .spyOn(Chart, "getAvailablePackageVersions")
           .mockImplementation(mockGetAvailablePackageVersions);
-        const availablePackageVersions = await Chart.getAvailablePackageVersions(
-          t.args.cluster,
-          t.args.namespace,
-          t.args.id,
-          t.args.plugin,
-        );
+        const availablePackageVersions = await Chart.getAvailablePackageVersions({
+          context: { cluster: t.args.cluster, namespace: t.args.namespace },
+          identifier: t.args.id,
+          plugin: t.args.plugin,
+        } as AvailablePackageReference);
         expect(availablePackageVersions).toStrictEqual({
           packageAppVersions: [
             { appVersion: "10.0.0", pkgVersion: "1.0.0" },
           ] as PackageAppVersion[],
         } as GetAvailablePackageVersionsResponse);
-        expect(mockGetAvailablePackageVersions).toHaveBeenCalledWith(...Object.values(t.args));
+        expect(mockGetAvailablePackageVersions).toHaveBeenCalledWith({
+          context: { cluster: t.args.cluster, namespace: t.args.namespace },
+          identifier: t.args.id,
+          plugin: t.args.plugin,
+        } as AvailablePackageReference);
       });
     });
   });
@@ -172,16 +176,24 @@ describe("App", () => {
           .spyOn(Chart, "getAvailablePackageDetail")
           .mockImplementation(mockGetAvailablePackageDetail);
         const availablePackageDetail = await Chart.getAvailablePackageDetail(
-          t.args.cluster,
-          t.args.namespace,
-          t.args.id,
-          t.args.plugin,
+          {
+            context: { cluster: t.args.cluster, namespace: t.args.namespace },
+            identifier: t.args.id,
+            plugin: t.args.plugin,
+          } as AvailablePackageReference,
           t.args.version,
         );
         expect(availablePackageDetail).toStrictEqual({
           availablePackageDetail: { name: "foo" },
         } as GetAvailablePackageDetailResponse);
-        expect(mockGetAvailablePackageDetail).toHaveBeenCalledWith(...Object.values(t.args));
+        expect(mockGetAvailablePackageDetail).toHaveBeenCalledWith(
+          {
+            context: { cluster: t.args.cluster, namespace: t.args.namespace },
+            identifier: t.args.id,
+            plugin: t.args.plugin,
+          } as AvailablePackageReference,
+          t.args.version,
+        );
       });
     });
   });

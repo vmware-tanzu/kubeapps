@@ -116,11 +116,13 @@ it("renders the repo selection form if not introduced when the app is loaded", (
     repos: {
       repos: [repo1],
     } as IAppRepositoryState,
+    apps: { selected: { name: "foo" }, isFetching: false, error: undefined } as IAppState,
   };
   const wrapper = mountWrapper(
     getStore({
       ...defaultStore,
       repos: { ...state.repos },
+      apps: { ...state.apps },
     }),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
@@ -164,11 +166,13 @@ describe("when an error exists", () => {
       repos: {
         repos: [] as IAppRepository[],
       } as IAppRepositoryState,
+      apps: { selected: { name: "foo" }, isFetching: false, error: undefined } as IAppState,
     };
     const wrapper = mountWrapper(
       getStore({
         ...defaultStore,
         repos: { ...state.repos },
+        apps: { ...state.apps },
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -291,10 +295,11 @@ describe("when receiving new props", () => {
     );
 
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
-      defaultProps.cluster,
-      defaultProps.repoNamespace,
-      "stable/bar",
-      defaultProps.plugin,
+      {
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
+        identifier: "stable/bar",
+        plugin: defaultProps.plugin,
+      } as AvailablePackageReference,
       "1.0.0",
     );
   });
@@ -326,10 +331,11 @@ describe("when receiving new props", () => {
       </MemoryRouter>,
     );
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
-      defaultProps.cluster,
-      defaultProps.repoNamespace,
-      "stable/bar",
-      defaultProps.plugin,
+      {
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
+        identifier: "stable/bar",
+        plugin: defaultProps.plugin,
+      } as AvailablePackageReference,
       "1.0.0",
     );
   });

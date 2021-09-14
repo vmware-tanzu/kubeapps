@@ -3,6 +3,7 @@ import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
@@ -62,10 +63,11 @@ it("fetches the available versions", () => {
   );
 
   expect(fetchChartVersions).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    `${defaultProps.repo}/${defaultProps.pkgName}`,
-    defaultProps.plugin,
+    {
+      context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
+      identifier: `${defaultProps.repo}/${defaultProps.pkgName}`,
+      plugin: defaultProps.plugin,
+    } as AvailablePackageReference,
     undefined,
   );
 });

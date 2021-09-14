@@ -20,9 +20,9 @@ const defaultProps = {
     name: "foo",
     pkgDisplayName: "foo",
     installedPackageRef: {
-      identifier: "apache/1",
+      identifier: "foo",
       pkgVersion: "1.0.0",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "default", namespace: "chart-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference,
     status: {
@@ -44,12 +44,14 @@ it("renders an app item", () => {
   expect(card.props()).toMatchObject({
     description: defaultProps.app.shortDescription,
     icon: "placeholder.png",
-    link: app.apps.get(
-      defaultProps.cluster,
-      defaultProps.app.installedPackageRef?.context?.namespace ?? "",
-      defaultProps.app.name,
-      { name: "my.plugin", version: "0.0.1" } as Plugin,
-    ),
+    link: app.apps.get({
+      context: {
+        cluster: defaultProps.cluster,
+        namespace: defaultProps.app.installedPackageRef?.context?.namespace ?? "",
+      },
+      identifier: defaultProps.app.name,
+      plugin: { name: "my.plugin", version: "0.0.1" },
+    } as InstalledPackageReference),
     tag1Class: "label-success",
     tag1Content: "deployed",
     title: defaultProps.app.name,

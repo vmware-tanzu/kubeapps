@@ -3,7 +3,9 @@ import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
   Context,
+  InstalledPackageReference,
   Maintainer,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -86,8 +88,11 @@ const defaultProps = {
   repo: "my-repo",
   repoNamespace: "kubeapps",
   error: undefined,
+  apps: { isFetching: false },
+  charts: { isFetching: false },
   selected: {
-    versions: [],
+    versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
+    availablePackageDetail: { name: "test" } as AvailablePackageDetail,
   } as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
@@ -158,12 +163,11 @@ it("fetches the available versions", () => {
   const getAvailablePackageVersions = jest.fn();
   Chart.getAvailablePackageVersions = getAvailablePackageVersions;
   mountWrapper(defaultStore, <UpgradeForm {...defaultProps} />);
-  expect(getAvailablePackageVersions).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.repoNamespace,
-    defaultProps.packageId,
-    defaultProps.plugin,
-  );
+  expect(getAvailablePackageVersions).toHaveBeenCalledWith({
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
+    identifier: defaultProps.packageId,
+    plugin: defaultProps.plugin,
+  } as AvailablePackageReference);
 });
 
 it("fetches the current chart version even if there is already one in the state", () => {
@@ -188,10 +192,11 @@ it("fetches the current chart version even if there is already one in the state"
     <UpgradeForm {...defaultProps} selected={selected} deployed={deployed} />,
   );
   expect(getAvailablePackageDetail).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.repoNamespace,
-    defaultProps.packageId,
-    defaultProps.plugin,
+    {
+      context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
+      identifier: defaultProps.packageId,
+      plugin: defaultProps.plugin,
+    } as AvailablePackageReference,
     deployed.chartVersion.version?.pkgVersion,
   );
 });
@@ -199,10 +204,10 @@ it("fetches the current chart version even if there is already one in the state"
 describe("renders an error", () => {
   it("renders an alert if the deployment failed", () => {
     const selected = {
-      availablePackageDetail: undefined,
-      pkgVersion: "",
-      appVersion: "",
-      versions: [],
+      availablePackageDetail: { name: "foo" } as AvailablePackageDetail,
+      pkgVersion: "10.0.0",
+      appVersion: "1.2.3",
+      versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
       schema: schema as any,
       error: new FetchError("wrong format!"),
     };
@@ -258,21 +263,24 @@ it("triggers an upgrade when submitting the form", async () => {
     });
   });
   expect(upgradeApp).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    namespace,
+    {
+      context: { cluster: defaultProps.cluster, namespace: namespace },
+      identifier: releaseName,
+      plugin: { name: "my.plugin", version: "0.0.1" },
+    } as InstalledPackageReference,
     availablePkgDetails[0],
     "kubeapps",
-    releaseName,
     appValues,
     schema,
   );
   expect(mockDispatch).toHaveBeenCalledWith({
     payload: {
       args: [
-        url.app.apps.get(defaultProps.cluster, namespace, releaseName, {
-          name: "my.plugin",
-          version: "0.0.1",
-        }),
+        url.app.apps.get({
+          context: { cluster: defaultProps.cluster, namespace: namespace },
+          identifier: releaseName,
+          plugin: { name: "my.plugin", version: "0.0.1" },
+        } as InstalledPackageReference),
       ],
       method: "push",
     },

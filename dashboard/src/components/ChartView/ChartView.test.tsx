@@ -2,6 +2,7 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
   Context,
   Maintainer,
   PackageAppVersion,
@@ -145,12 +146,11 @@ it("triggers the fetchChartVersions when mounting", () => {
       </Route>
     </Router>,
   );
-  expect(spy).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.chartNamespace,
-    "testrepo/test",
-    defaultProps.plugin,
-  );
+  expect(spy).toHaveBeenCalledWith({
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.chartNamespace },
+    identifier: `${defaultProps.repo}/${defaultProps.id}`,
+    plugin: defaultProps.plugin,
+  } as AvailablePackageReference);
 });
 
 describe("when receiving new props", () => {
@@ -166,10 +166,11 @@ describe("when receiving new props", () => {
       </Router>,
     );
     expect(spy).toHaveBeenCalledWith(
-      defaultProps.cluster,
-      defaultProps.chartNamespace,
-      "testrepo/test",
-      defaultProps.plugin,
+      {
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.chartNamespace },
+        identifier: "testrepo/test",
+        plugin: defaultProps.plugin,
+      } as AvailablePackageReference,
       undefined,
     );
   });
