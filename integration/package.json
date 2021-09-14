@@ -14,7 +14,7 @@
     "axios": "^0.21.4",
     "expect-puppeteer": "^5.0.4",
     "jest": "^27.1.1",
-    "jest-circus": "^27.1.1",
+    "jest-circus": "^27.2.0",
     "jest-puppeteer": "^5.0.4",
     "puppeteer": "^10.2.0",
     "wait-on": "^6.0.0"
