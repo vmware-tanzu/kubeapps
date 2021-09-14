@@ -247,11 +247,15 @@ func (c NamespacedResourceWatcherCache) resync() (string, error) {
 	}
 
 	// TODO: (gfichtenholt) RBAC check whether I list and watch specified GVR?
+	// Currently you'll need to run with the unsafe dev-only service account, since the plugin sets
+	// up background jobs that are running outside of requests from the user (ie. we're not using the
+	// users' token for those). Longer term, the plan is to create a separate RBAC yaml specific to
+	// the plugin that will need to be applied for using the plugin (nice and explicit),
+	// granting additional RBAC privs to the service account used by kubeapps-apis
 
-	// this will list resources from all namespaces.
 	// Notice, we are not setting resourceVersion in ListOptions, which means
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
-	// For get and list, the semantics of resource version unset are to get the most recent
+	// For Get() and List(), the semantics of resource version unset are to get the most recent
 	// version
 	listItems, err := dynamicClient.Resource(c.config.gvr).Namespace(apiv1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
