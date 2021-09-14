@@ -2,6 +2,7 @@ import {
   AvailablePackageReference,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
@@ -11,7 +12,6 @@ import Secret from "shared/Secret";
 import { IAppRepository, NotFoundError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 
 const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);
