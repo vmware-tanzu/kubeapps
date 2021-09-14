@@ -23,18 +23,33 @@ test("Deploys an application with the values by default", async () => {
   await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 60000 });
   await expect(page).toClick("a", { text: "Apache HTTP Server" });
 
-  await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toClick("cds-button", { text: "Deploy" });
-  }, testName);
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toClick("cds-button", { text: "Deploy" });
+    },
+    testName,
+  );
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
   await page.type("#releaseName", utils.getRandomName("my-app"));
 
-  await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toClick("cds-button", { text: "Deploy" });
-  }, testName);
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toClick("cds-button", { text: "Deploy" });
+    },
+    testName,
+  );
 
-  await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatch("Ready", { timeout: 60000 });
-  }, testName);
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toMatch("Ready", { timeout: 60000 });
+    },
+    testName,
+  );
 });

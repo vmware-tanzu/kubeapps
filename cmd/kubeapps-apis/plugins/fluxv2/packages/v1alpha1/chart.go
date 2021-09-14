@@ -192,17 +192,15 @@ func (s *Server) fetchChartFromCache(repo types.NamespacedName, chartName string
 	return nil, nil
 }
 
-// the main goal of this func is to answer whether or not to stop waiting for chart reconciliation
-// which is different from answering whether the chart was pulled successfully
-// TODO (gfichtenholt): As above, hopefully this func isn't required if we can only list charts that we know are ready.
-func isChartPullComplete(unstructuredChart map[string]interface{}) (complete, success bool, reason string) {
-	// see docs at https://fluxcd.io/docs/components/source/helmcharts/
-	// Confirm the state we are observing is for the current generation
-	if !checkGeneration(unstructuredChart) {
-		return false, false, ""
-	} else {
-		return checkStatusReady(unstructuredChart)
-	}
+// returns 3 things:
+// - complete whether the operation was completed
+// - success (only applicable when complete == true) whether the operation was successful or failed
+// - reason, if present
+// docs:
+// 1. https://fluxcd.io/docs/components/source/helmcharts/#status-examples
+func isHelmChartReady(unstructuredObj map[string]interface{}) (complete bool, success bool, reason string) {
+	// same format and logic, so just re-use the code
+	return isHelmRepositoryReady(unstructuredObj)
 }
 
 // TODO (gfichtenholt):
@@ -235,7 +233,7 @@ func waitUntilChartPullComplete(ctx context.Context, watcher watch.Interface) (s
 				return "", status.Errorf(codes.Internal, "could not cast to unstructured.Unstructured")
 			}
 
-			done, success, reason := isChartPullComplete(unstructuredChart.Object)
+			done, success, reason := isHelmChartReady(unstructuredChart.Object)
 			if done {
 				if success {
 					url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
@@ -300,7 +298,7 @@ func findUrlForChartInList(chartList *unstructured.UnstructuredList, repoName, c
 		thisRepoName, found2, err2 := unstructured.NestedString(unstructuredChart.Object, "spec", "sourceRef", "name")
 
 		if err == nil && err2 == nil && found && found2 && repoName == thisRepoName && chartName == thisChartName {
-			if done, success, reason := isChartPullComplete(unstructuredChart.Object); done {
+			if done, success, reason := isHelmChartReady(unstructuredChart.Object); done {
 				if success {
 					if url, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url"); err != nil || !found {
 						return "", status.Errorf(codes.Internal, "expected field status.url not found on HelmChart: %v:\n%v", err, unstructuredChart)
