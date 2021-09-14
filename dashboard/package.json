@@ -51,7 +51,7 @@
     "redux-thunk": "^2.3.0",
     "remark-gfm": "^2.0.0",
     "seamless-immutable": "^7.1.4",
-    "swagger-ui-react": "^3.52.1",
+    "swagger-ui-react": "^3.52.2",
     "typesafe-actions": "^5.1.0",
     "yaml": "^1.10.2"
   },

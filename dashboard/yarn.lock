@@ -12556,7 +12556,7 @@ react-switch@^6.0.0:
   dependencies:
     prop-types "^15.7.2"
 
-react-syntax-highlighter@^15.4.3:
+react-syntax-highlighter@^15.4.4:
   version "15.4.4"
   resolved "https://registry.yarnpkg.com/react-syntax-highlighter/-/react-syntax-highlighter-15.4.4.tgz#dc9043f19e7bd063ff3ea78986d22a6eaa943b2a"
   integrity sha512-PsOFHNTzkb3OroXdoR897eKN5EZ6grht1iM+f1lJSq7/L0YVnkJaNVwC3wEUYPOAmeyl5xyer1DjL6MrumO6Zw==
@@ -14289,10 +14289,10 @@ swagger-client@^3.16.1:
     traverse "~0.6.6"
     url "~0.11.0"
 
-swagger-ui-react@^3.52.1:
-  version "3.52.1"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-3.52.1.tgz#ed5c69b99a6efd5ab779db1390e3c3d78cc8e3d3"
-  integrity sha512-aBhmSmWmAvxKWQbyqslWa3e2s3nMKo9KVZH4gaitvc8IF9p3cdgS24Unh7b0TY8nDMMsJAlXlAxz9lBw1GzvJQ==
+swagger-ui-react@^3.52.2:
+  version "3.52.2"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-3.52.2.tgz#f0b4e9e7bf5ca763867d6c978e7343cee1a98e2d"
+  integrity sha512-TMGf+HEQGtELafdT2Zp7F9EGF1WPqkYb5kVdEi2+Q9C8pF265XCPPXXt16sU4NOPB9JoRZc+YDtA1PQ7BmPSIA==
   dependencies:
     "@babel/runtime-corejs3" "^7.14.7"
     "@braintree/sanitize-url" "^5.0.2"
@@ -14318,7 +14318,7 @@ swagger-ui-react@^3.52.1:
     react-inspector "^2.3.0"
     react-motion "^0.5.2"
     react-redux "=4.4.10"
-    react-syntax-highlighter "^15.4.3"
+    react-syntax-highlighter "^15.4.4"
     redux "=3.7.2"
     redux-immutable "3.1.0"
     remarkable "^2.0.1"
@@ -14326,7 +14326,7 @@ swagger-ui-react@^3.52.1:
     serialize-error "^8.1.0"
     sha.js "^2.4.11"
     swagger-client "^3.16.1"
-    url-parse "^1.5.1"
+    url-parse "^1.5.2"
     xml-but-prettier "^1.0.1"
     zenscroll "^4.0.2"
 
@@ -15045,7 +15045,7 @@ url-loader@4.1.1:
     mime-types "^2.1.27"
     schema-utils "^3.0.0"
 
-url-parse@^1.4.3, url-parse@^1.4.4, url-parse@^1.5.1, url-parse@^1.5.3:
+url-parse@^1.4.3, url-parse@^1.4.4, url-parse@^1.5.2, url-parse@^1.5.3:
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/url-parse/-/url-parse-1.5.3.tgz#71c1303d38fb6639ade183c2992c8cc0686df862"
   integrity sha512-IIORyIQD9rvj0A4CLWsHkBBJuNqWpFQe224b6j9t/ABmquIS0qDU2pY6kl6AuOrL5OkCXHMCFNe1jBcuAggjvQ==
