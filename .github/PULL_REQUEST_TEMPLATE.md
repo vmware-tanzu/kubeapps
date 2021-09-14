@@ -23,7 +23,8 @@
 ### Applicable issues
 
 <!-- Enter any applicable Issues here (You can reference an issue using #) -->
-  - fixes #
+
+- fixes #
 
 ### Additional information
 

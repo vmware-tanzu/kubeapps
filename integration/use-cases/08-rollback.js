@@ -35,19 +35,24 @@ test("Rolls back an application", async () => {
   await expect(page).toClick("cds-button", { text: "Upgrade" });
 
   // Increase the number of replicas
-  await utils.retryAndRefresh(page, 3, async () => {
-    await expect(page).toMatchElement("input[type='number']");
-    // Increase the number of replicas
-    await page.focus("input[type='number']");
-    await page.keyboard.press("Backspace");
-    await page.keyboard.type("2");
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toMatchElement("input[type='number']");
+      // Increase the number of replicas
+      await page.focus("input[type='number']");
+      await page.keyboard.press("Backspace");
+      await page.keyboard.type("2");
 
-    await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 500));
 
-    // Check that the Changes tab reflects the change
-    await expect(page).toClick("li", { text: "Changes" });
-    await expect(page).toMatch("replicaCount: 2");
-  }, testName);
+      // Check that the Changes tab reflects the change
+      await expect(page).toClick("li", { text: "Changes" });
+      await expect(page).toMatch("replicaCount: 2");
+    },
+    testName,
+  );
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
