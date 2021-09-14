@@ -2,6 +2,7 @@ import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { IServiceBroker } from "./ServiceCatalog";
 import { IRepo } from "./types";
+import { getStringFromPlugin } from "./utils";
 
 export const app = {
   apps: {
@@ -18,14 +19,16 @@ export const app = {
       // TODO(agamez): get the repo name once available
       // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
       const repoName =
-        availablePackageDetail.availablePackageRef?.identifier.split("/")[0] ?? globalNamespace;
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${plugin.name}-${
-        plugin.version
-      }/${encodeURIComponent(availablePackageDetail.name)}/versions/${version}`;
+        availablePackageDetail.availablePackageRef?.identifier.split("/")?.[0] ?? globalNamespace;
+      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${encodeURI(
+        getStringFromPlugin(plugin),
+      )}/${encodeURIComponent(availablePackageDetail.name)}/versions/${version}`;
     },
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (cluster: string, namespace: string, releaseName: string, plugin: Plugin) =>
-      `${app.apps.list(cluster, namespace)}/${plugin.name}-${plugin.version}/${releaseName}`,
+      `${app.apps.list(cluster, namespace)}/${encodeURI(
+        getStringFromPlugin(plugin),
+      )}/${releaseName}`,
     upgrade: (cluster: string, namespace: string, releaseName: string, plugin: Plugin) =>
       `${app.apps.get(cluster, namespace, releaseName, plugin)}/upgrade`,
   },
@@ -40,9 +43,9 @@ export const app = {
       plugin: Plugin,
     ) => {
       const chartsSegment = globalNamespace === repo.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${plugin.name}-${
-        plugin.version
-      }/${encodeURIComponent(chartName)}`;
+      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${encodeURI(
+        getStringFromPlugin(plugin),
+      )}/${encodeURIComponent(chartName)}`;
     },
   },
   operators: {

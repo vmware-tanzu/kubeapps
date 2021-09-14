@@ -13,6 +13,7 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError } from "shared/types";
+import { getStringFromPlugin } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
 
@@ -24,7 +25,9 @@ const defaultProps = {
   releaseName: "my-release",
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.repo}/${defaultProps.plugin.name}-${defaultProps.plugin.version}/${defaultProps.pkgName}/versions/`;
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${
+  defaultProps.repo
+}/${getStringFromPlugin(defaultProps.plugin)}/${defaultProps.pkgName}/versions/`;
 const routePath = "/c/:cluster/ns/:namespace/apps/new/:repo/:plugin/:id/versions";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
@@ -207,7 +210,7 @@ describe("renders an error", () => {
     );
 
     expect(history.location.pathname).toBe(
-      "/c/default/ns/default/apps/new/repo/my.plugin-0.0.1/foo/versions/",
+      "/c/default/ns/default/apps/new/repo/my.plugin+0.0.1/foo/versions/",
     );
   });
 });

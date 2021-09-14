@@ -3,7 +3,6 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { assignWith } from "lodash";
 import { useEffect, useState } from "react";
@@ -19,6 +18,7 @@ import {
   IResource,
   IStoreState,
 } from "shared/types";
+import { getPluginFromString } from "shared/utils";
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -143,10 +143,7 @@ export default function AppView() {
     kube: { kinds },
   } = useSelector((state: IStoreState) => state);
 
-  const [pluginObj] = useState({
-    name: plugin?.split("-")[0],
-    version: plugin?.split("-")[1],
-  } as Plugin);
+  const [pluginObj] = useState(getPluginFromString(plugin));
 
   useEffect(() => {
     dispatch(actions.apps.getApp(cluster, namespace, releaseName, pluginObj));

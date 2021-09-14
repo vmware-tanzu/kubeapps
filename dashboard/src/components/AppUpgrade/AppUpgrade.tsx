@@ -1,13 +1,13 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { FetchError, IAppRepository, IChartState, IStoreState, UpgradeError } from "shared/types";
+import { getPluginFromString } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
@@ -51,8 +51,7 @@ function AppUpgrade() {
   const repoNamespace = repo?.metadata?.namespace || app?.availablePackageRef?.context?.namespace;
 
   const [pluginObj] = useState(
-    selected.availablePackageDetail?.availablePackageRef?.plugin ??
-      ({ name: plugin?.split("-")[0], version: plugin?.split("-")[1] } as Plugin),
+    selected.availablePackageDetail?.availablePackageRef?.plugin ?? getPluginFromString(plugin),
   );
 
   useEffect(() => {

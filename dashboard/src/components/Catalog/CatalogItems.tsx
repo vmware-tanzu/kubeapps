@@ -1,10 +1,10 @@
 import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useMemo } from "react";
 import { getIcon } from "shared/Operators";
 import { IClusterServiceVersion, IRepo } from "shared/types";
+import { getPluginFromString, getStringFromPlugin } from "shared/utils";
+import placeholder from "../../placeholder.png";
 import CatalogItem, { ICatalogItemProps } from "./CatalogItem";
-
 interface ICatalogItemsProps {
   charts: AvailablePackageSummary[];
   csvs: IClusterServiceVersion[];
@@ -28,15 +28,13 @@ export default function CatalogItems({
     () =>
       charts.map(c => {
         return {
-          type: `${c.availablePackageRef?.plugin?.name ?? "helm.packages"}-${
-            c.availablePackageRef?.plugin?.version ?? "v1alpha1"
-          }`,
+          type: `${getStringFromPlugin(c.availablePackageRef?.plugin)}`,
           id: `chart/${c.availablePackageRef?.identifier}`,
           item: {
-            plugin: c.availablePackageRef?.plugin ?? ({ name: "", version: "" } as Plugin),
+            plugin: c.availablePackageRef?.plugin ?? getPluginFromString(),
             id: `chart/${c.availablePackageRef?.identifier}/${c.latestVersion?.pkgVersion}`,
             name: c.displayName,
-            icon: c.iconUrl,
+            icon: c.iconUrl ?? placeholder,
             version: c.latestVersion?.pkgVersion ?? "",
             description: c.shortDescription,
             // TODO(agamez): get the repo name once available

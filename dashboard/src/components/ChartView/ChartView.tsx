@@ -7,7 +7,6 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import { push } from "connected-react-router";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -16,6 +15,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
+import { getPluginFromString } from "shared/utils";
 import ChartHeader from "./ChartHeader";
 import ChartReadme from "./ChartReadme";
 
@@ -53,10 +53,7 @@ export default function ChartView() {
 
   const location = ReactRouter.useLocation();
 
-  const [pluginObj] = useState({
-    name: plugin?.split("-")[0],
-    version: plugin?.split("-")[1],
-  } as Plugin);
+  const [pluginObj] = useState(getPluginFromString(plugin));
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
@@ -75,10 +72,12 @@ export default function ChartView() {
   // Fetch all versions
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId, {
-        name: plugin?.split("-")[0],
-        version: plugin?.split("-")[1],
-      }),
+      actions.charts.fetchChartVersions(
+        chartCluster,
+        chartNamespace,
+        packageId,
+        getPluginFromString(plugin),
+      ),
     );
   }, [dispatch, packageId, chartNamespace, chartCluster, plugin]);
 
