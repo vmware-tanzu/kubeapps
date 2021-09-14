@@ -169,7 +169,7 @@ func (s *Server) GetManager() (utils.AssetManager, error) {
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+helm GetAvailablePackageSummaries %s", contextMsg)
 
 	namespace := request.GetContext().GetNamespace()
@@ -324,7 +324,7 @@ func getUnescapedChartID(chartID string) (string, error) {
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
 	log.Infof("+helm GetAvailablePackageDetail %s", contextMsg)
 
 	if request.GetAvailablePackageRef().GetContext() == nil {
@@ -394,7 +394,7 @@ func fileIDForChart(id, version string) string {
 
 // GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
 	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
 
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
@@ -583,7 +583,7 @@ func isValidChart(chart *models.Chart) (bool, error) {
 
 // GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+helm GetInstalledPackageSummaries %s", contextMsg)
 
 	namespace := request.GetContext().GetNamespace()
@@ -704,7 +704,7 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 
 // GetInstalledPackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetInstalledPackageRef().GetContext().GetCluster(), request.GetInstalledPackageRef().GetContext().GetNamespace())
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetInstalledPackageRef().GetContext().GetCluster(), request.GetInstalledPackageRef().GetContext().GetNamespace())
 	log.Infof("+helm GetInstalledPackageDetail %s", contextMsg)
 
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
@@ -819,7 +819,7 @@ func splitChartIdentifier(chartID string) (repoName, chartName string, err error
 
 // CreateInstalledPackage creates an installed package.
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
 	log.Infof("+helm CreateInstalledPackage %s", contextMsg)
 
 	// Get the AppRepository for the available package.
