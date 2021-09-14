@@ -1,9 +1,9 @@
 import {
+  AvailablePackageReference,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class Chart {
@@ -28,34 +28,20 @@ export default class Chart {
   }
 
   public static async getAvailablePackageVersions(
-    cluster: string,
-    namespace: string,
-    id: string,
-    plugin: Plugin,
+    availablePackageReference?: AvailablePackageReference,
   ): Promise<GetAvailablePackageVersionsResponse> {
     return await this.client().GetAvailablePackageVersions({
-      availablePackageRef: {
-        context: { cluster: cluster, namespace: namespace },
-        identifier: id,
-        plugin: plugin,
-      },
+      availablePackageRef: availablePackageReference,
     });
   }
 
   public static async getAvailablePackageDetail(
-    cluster: string,
-    namespace: string,
-    id: string,
-    plugin: Plugin,
+    availablePackageReference?: AvailablePackageReference,
     version?: string,
   ): Promise<GetAvailablePackageDetailResponse> {
     return await this.client().GetAvailablePackageDetail({
       pkgVersion: version,
-      availablePackageRef: {
-        context: { cluster: cluster, namespace: namespace },
-        identifier: id,
-        plugin: plugin,
-      },
+      availablePackageRef: availablePackageReference,
     });
   }
 }

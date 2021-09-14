@@ -1,4 +1,7 @@
-import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageDetail,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { IServiceBroker } from "./ServiceCatalog";
 import { IRepo } from "./types";
@@ -24,13 +27,12 @@ export const app = {
         getStringFromPlugin(plugin),
       )}/${encodeURIComponent(availablePackageDetail.name)}/versions/${version}`;
     },
-    list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
-    get: (cluster: string, namespace: string, releaseName: string, plugin: Plugin) =>
-      `${app.apps.list(cluster, namespace)}/${encodeURI(
-        getStringFromPlugin(plugin),
-      )}/${releaseName}`,
-    upgrade: (cluster: string, namespace: string, releaseName: string, plugin: Plugin) =>
-      `${app.apps.get(cluster, namespace, releaseName, plugin)}/upgrade`,
+    list: (cluster?: string, namespace?: string) => `/c/${cluster}/ns/${namespace}/apps`,
+    get: (ref?: InstalledPackageReference) =>
+      `${app.apps.list(ref?.context?.cluster, ref?.context?.namespace)}/${encodeURI(
+        getStringFromPlugin(ref?.plugin),
+      )}/${ref?.identifier}`,
+    upgrade: (ref?: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
   },
   catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
   charts: {

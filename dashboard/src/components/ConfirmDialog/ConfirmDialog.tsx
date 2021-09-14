@@ -1,5 +1,6 @@
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import Alert from "components/js/Alert";
+import { DeleteError, FetchWarning } from "shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./ConfirmDialog.css";
 
@@ -33,7 +34,18 @@ function ConfirmDialog({
       {modalIsOpen && (
         <CdsModal size={size || "default"} closable={true} onCloseChange={closeModal}>
           {headerText && <CdsModalHeader>{headerText}</CdsModalHeader>}
-          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+          {error &&
+            (error.constructor === FetchWarning ? (
+              <Alert theme="warning">
+                There is a problem with this package: {error["message"]}
+              </Alert>
+            ) : error.constructor === DeleteError ? (
+              <Alert theme="danger">
+                Unable to delete the application. Received: {error["message"]}
+              </Alert>
+            ) : (
+              <Alert theme="danger">An error occurred: {error["message"]}</Alert>
+            ))}
           {loading === true ? (
             <div className="center">
               <CdsModalContent>

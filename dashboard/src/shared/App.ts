@@ -1,5 +1,7 @@
-import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import {
+  AvailablePackageDetail,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
@@ -20,18 +22,9 @@ export class App {
     });
   }
 
-  public static async GetInstalledPackageDetail(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    plugin: Plugin,
-  ) {
+  public static async GetInstalledPackageDetail(installedPackageRef?: InstalledPackageReference) {
     return await this.client().GetInstalledPackageDetail({
-      installedPackageRef: {
-        identifier: releaseName,
-        context: { cluster: cluster, namespace: namespace },
-        plugin: plugin,
-      },
+      installedPackageRef: installedPackageRef,
     });
   }
 
@@ -59,33 +52,34 @@ export class App {
   }
 
   public static async upgrade(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
+    installedPackageRef: InstalledPackageReference,
     chartNamespace: string,
     availablePackageDetail: AvailablePackageDetail,
     values?: string,
   ) {
-    const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
+    const endpoint = url.kubeops.releases.get(
+      installedPackageRef.context?.cluster ?? "",
+      installedPackageRef.context?.namespace ?? "",
+      installedPackageRef.identifier,
+    );
     const { data } = await axiosWithAuth.put(endpoint, {
       appRepositoryResourceName:
         availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
       appRepositoryResourceNamespace: chartNamespace,
       chartName: decodeURIComponent(availablePackageDetail.name),
-      releaseName,
+      releaseName: installedPackageRef.identifier,
       values,
       version: availablePackageDetail.version?.pkgVersion,
     });
     return data;
   }
 
-  public static async rollback(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    revision: number,
-  ) {
-    const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
+  public static async rollback(installedPackageRef: InstalledPackageReference, revision: number) {
+    const endpoint = url.kubeops.releases.get(
+      installedPackageRef.context?.cluster ?? "",
+      installedPackageRef.context?.namespace ?? "",
+      installedPackageRef.identifier,
+    );
     const { data } = await axiosWithAuth.put(
       endpoint,
       {},
@@ -99,13 +93,12 @@ export class App {
     return data;
   }
 
-  public static async delete(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    purge: boolean,
-  ) {
-    let endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
+  public static async delete(installedPackageRef: InstalledPackageReference, purge: boolean) {
+    let endpoint = url.kubeops.releases.get(
+      installedPackageRef.context?.cluster ?? "",
+      installedPackageRef.context?.namespace ?? "",
+      installedPackageRef.identifier,
+    );
     if (purge) {
       endpoint += "?purge=true";
     }
@@ -114,9 +107,13 @@ export class App {
   }
 
   // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
-  public static async getRelease(cluster: string, namespace: string, name: string) {
+  public static async getRelease(installedPackageRef?: InstalledPackageReference) {
     const { data } = await axiosWithAuth.get<{ data: { manifest: any } }>(
-      url.kubeops.releases.get(cluster, namespace, name),
+      url.kubeops.releases.get(
+        installedPackageRef?.context?.cluster ?? "",
+        installedPackageRef?.context?.namespace ?? "",
+        installedPackageRef?.identifier ?? "",
+      ),
     );
     return data.data;
   }

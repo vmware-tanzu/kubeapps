@@ -36,6 +36,8 @@ export class InternalServerError extends CustomError {}
 
 export class FetchError extends CustomError {}
 
+export class FetchWarning extends CustomError {}
+
 export class CreateError extends CustomError {}
 
 export class UpgradeError extends CustomError {}

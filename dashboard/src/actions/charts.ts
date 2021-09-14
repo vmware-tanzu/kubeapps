@@ -1,8 +1,8 @@
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
   GetAvailablePackageVersionsResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, deprecated } from "typesafe-actions";
 import Chart from "../shared/Chart";
@@ -88,15 +88,12 @@ export function fetchCharts(
 }
 
 export function fetchChartVersions(
-  cluster: string,
-  namespace: string,
-  id: string,
-  plugin: Plugin,
+  availablePackageReference?: AvailablePackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     try {
-      const response = await Chart.getAvailablePackageVersions(cluster, namespace, id, plugin);
+      const response = await Chart.getAvailablePackageVersions(availablePackageReference);
       dispatch(receiveChartVersions(response));
     } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
@@ -105,21 +102,12 @@ export function fetchChartVersions(
 }
 
 export function fetchChartVersion(
-  cluster: string,
-  namespace: string,
-  id: string,
-  plugin: Plugin,
+  availablePackageReference?: AvailablePackageReference,
   version?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      const response = await Chart.getAvailablePackageDetail(
-        cluster,
-        namespace,
-        id,
-        plugin,
-        version,
-      );
+      const response = await Chart.getAvailablePackageDetail(availablePackageReference, version);
       if (response.availablePackageDetail?.version?.pkgVersion) {
         dispatch(selectChartVersion(response.availablePackageDetail));
       } else {
@@ -132,22 +120,13 @@ export function fetchChartVersion(
 }
 
 export function getDeployedChartVersion(
-  cluster: string,
-  namespace: string,
-  id: string,
-  plugin: Plugin,
-  version: string,
+  availablePackageReference?: AvailablePackageReference,
+  version?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
       dispatch(requestDeployedChartVersion());
-      const response = await Chart.getAvailablePackageDetail(
-        cluster,
-        namespace,
-        id,
-        plugin,
-        version,
-      );
+      const response = await Chart.getAvailablePackageDetail(availablePackageReference, version);
       if (response.availablePackageDetail) {
         dispatch(
           receiveDeployedChartVersion(

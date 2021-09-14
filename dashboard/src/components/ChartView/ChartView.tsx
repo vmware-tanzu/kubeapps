@@ -7,6 +7,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import { push } from "connected-react-router";
+import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -59,10 +60,11 @@ export default function ChartView() {
   useEffect(() => {
     dispatch(
       actions.charts.fetchChartVersion(
-        chartCluster,
-        chartNamespace,
-        packageId,
-        pluginObj,
+        {
+          context: { cluster: chartCluster, namespace: chartNamespace },
+          plugin: pluginObj,
+          identifier: packageId,
+        } as AvailablePackageReference,
         queryVersion,
       ),
     );
@@ -72,12 +74,11 @@ export default function ChartView() {
   // Fetch all versions
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersions(
-        chartCluster,
-        chartNamespace,
-        packageId,
-        getPluginFromString(plugin),
-      ),
+      actions.charts.fetchChartVersions({
+        context: { cluster: chartCluster, namespace: chartNamespace },
+        plugin: getPluginFromString(plugin),
+        identifier: packageId,
+      } as AvailablePackageReference),
     );
   }, [dispatch, packageId, chartNamespace, chartCluster, plugin]);
 

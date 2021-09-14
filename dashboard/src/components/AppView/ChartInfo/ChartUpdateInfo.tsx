@@ -1,38 +1,38 @@
 import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { Link } from "react-router-dom";
 import { app as appURL } from "shared/url";
 interface IChartInfoProps {
-  cluster: string;
-  app: InstalledPackageDetail;
-  plugin: Plugin;
+  installedPackageDetail: InstalledPackageDetail;
 }
 
-export default function ChartUpdateInfo({ app, cluster, plugin }: IChartInfoProps) {
-  const namespace = app.installedPackageRef?.context?.namespace || "";
+export default function ChartUpdateInfo({ installedPackageDetail }: IChartInfoProps) {
   let alertContent;
   if (
-    app.latestVersion?.appVersion &&
-    app.currentVersion?.appVersion &&
-    app.currentVersion?.appVersion !== app.latestVersion?.appVersion
+    installedPackageDetail.latestVersion?.appVersion &&
+    installedPackageDetail.currentVersion?.appVersion &&
+    installedPackageDetail.currentVersion?.appVersion !==
+      installedPackageDetail.latestVersion?.appVersion
   ) {
     // There is a new application version
     alertContent = (
       <>
-        A new app version is available: <strong>{app.latestVersion?.appVersion}</strong>.{" "}
+        A new app version is available:{" "}
+        <strong>{installedPackageDetail.latestVersion?.appVersion}</strong>.{" "}
       </>
     );
   } else if (
-    app.latestVersion?.pkgVersion &&
-    app.currentVersion?.pkgVersion &&
-    app.latestVersion?.pkgVersion !== app.currentVersion?.pkgVersion
+    installedPackageDetail.latestVersion?.pkgVersion &&
+    installedPackageDetail.currentVersion?.pkgVersion &&
+    installedPackageDetail.latestVersion?.pkgVersion !==
+      installedPackageDetail.currentVersion?.pkgVersion
   ) {
     // There is a new package version
     alertContent = (
       <>
-        A new package version is available: <strong>{app.latestVersion?.pkgVersion}</strong>.{" "}
+        A new package version is available:{" "}
+        <strong>{installedPackageDetail.latestVersion?.pkgVersion}</strong>.{" "}
       </>
     );
   }
@@ -40,7 +40,7 @@ export default function ChartUpdateInfo({ app, cluster, plugin }: IChartInfoProp
   return alertContent ? (
     <Alert>
       {alertContent}
-      <Link to={appURL.apps.upgrade(cluster, namespace, app.name, plugin)}>Update Now</Link>
+      <Link to={appURL.apps.upgrade(installedPackageDetail.installedPackageRef)}>Update Now</Link>
     </Alert>
   ) : (
     <div className="color-icon-success">

@@ -5,6 +5,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
+import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -58,7 +59,13 @@ export default function DeploymentForm() {
   );
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId, pluginObj));
+    dispatch(
+      actions.charts.fetchChartVersions({
+        context: { cluster: chartCluster, namespace: chartNamespace },
+        plugin: pluginObj,
+        identifier: packageId,
+      } as AvailablePackageReference),
+    );
   }, [dispatch, chartCluster, chartNamespace, packageId, pluginObj]);
 
   useEffect(() => {
@@ -70,10 +77,11 @@ export default function DeploymentForm() {
   useEffect(() => {
     dispatch(
       actions.charts.fetchChartVersion(
-        chartCluster,
-        chartNamespace,
-        packageId,
-        pluginObj,
+        {
+          context: { cluster: chartCluster, namespace: chartNamespace },
+          plugin: pluginObj,
+          identifier: packageId,
+        } as AvailablePackageReference,
         chartVersion,
       ),
     );
@@ -107,7 +115,15 @@ export default function DeploymentForm() {
       );
       setDeploying(false);
       if (deployed) {
-        dispatch(push(url.app.apps.get(cluster, namespace, releaseName, pluginObj)));
+        dispatch(
+          push(
+            url.app.apps.get({
+              context: { cluster: cluster, namespace: namespace },
+              plugin: pluginObj,
+              identifier: releaseName,
+            } as AvailablePackageReference),
+          ),
+        );
       }
     }
   };

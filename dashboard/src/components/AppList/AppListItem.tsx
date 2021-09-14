@@ -1,6 +1,5 @@
 import Tooltip from "components/js/Tooltip";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getPluginIcon } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
@@ -13,10 +12,9 @@ export interface IAppListItemProps {
 }
 
 function AppListItem(props: IAppListItemProps) {
-  const { app, cluster } = props;
+  const { app } = props;
   const icon = app.iconUrl ?? placeholder;
   const appStatus = app.status?.userReason?.toLocaleLowerCase();
-  const pluginObj = app?.installedPackageRef?.plugin ?? ({ name: "", version: "" } as Plugin);
   let tooltipContent;
 
   if (
@@ -60,12 +58,7 @@ function AppListItem(props: IAppListItemProps) {
   return (
     <InfoCard
       key={app.installedPackageRef?.identifier}
-      link={url.app.apps.get(
-        cluster,
-        app.installedPackageRef?.context?.namespace || "",
-        app.name,
-        pluginObj,
-      )}
+      link={url.app.apps.get(app?.installedPackageRef)}
       title={app.name}
       icon={icon}
       info={

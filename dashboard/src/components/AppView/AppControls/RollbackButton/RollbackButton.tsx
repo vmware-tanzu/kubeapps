@@ -1,7 +1,9 @@
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
-import { InstalledPackageStatus } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import {
+  InstalledPackageReference,
+  InstalledPackageStatus,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -11,21 +13,17 @@ import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 import RollbackDialog from "./RollbackDialog";
 
 export interface IRollbackButtonProps {
-  cluster: string;
-  namespace: string;
-  releaseName: string;
+  installedPackageRef: InstalledPackageReference;
   revision: number;
   releaseStatus: InstalledPackageStatus | undefined | null;
-  plugin: Plugin;
+  disabled?: boolean;
 }
 
 function RollbackButton({
-  cluster,
-  namespace,
-  releaseName,
+  installedPackageRef,
   revision,
   releaseStatus,
-  plugin,
+  disabled,
 }: IRollbackButtonProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,15 +33,26 @@ function RollbackButton({
   const closeModal = () => setModalOpen(false);
   const handleRollback = async (r: number) => {
     setLoading(true);
-    const success = await dispatch(
-      actions.apps.rollbackApp(cluster, namespace, releaseName, r, plugin),
-    );
+    const success = await dispatch(actions.apps.rollbackApp(installedPackageRef, r));
     setLoading(false);
     if (success) {
       closeModal();
     }
   };
-  return (
+  const button = (
+    <StatusAwareButton
+      status="primary"
+      onClick={openModal}
+      releaseStatus={releaseStatus}
+      id="rollback-button"
+      disabled={disabled}
+    >
+      <CdsIcon shape="rewind" /> Rollback
+    </StatusAwareButton>
+  );
+  return disabled ? (
+    <>{button}</>
+  ) : (
     <>
       <RollbackDialog
         modalIsOpen={modalIsOpen}
@@ -53,14 +62,7 @@ function RollbackButton({
         currentRevision={revision}
         error={error}
       />
-      <StatusAwareButton
-        status="primary"
-        onClick={openModal}
-        releaseStatus={releaseStatus}
-        id="rollback-button"
-      >
-        <CdsIcon shape="rewind" /> Rollback
-      </StatusAwareButton>
+      {button}
     </>
   );
 }

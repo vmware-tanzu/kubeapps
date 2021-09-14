@@ -1,6 +1,10 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageReference,
+  InstalledPackageDetail,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -55,33 +59,33 @@ function AppUpgrade() {
   );
 
   useEffect(() => {
-    dispatch(actions.apps.getApp(cluster, namespace, releaseName, pluginObj));
+    dispatch(
+      actions.apps.getApp({
+        context: { cluster: cluster, namespace: namespace },
+        identifier: releaseName,
+        plugin: pluginObj,
+      } as InstalledPackageReference),
+    );
   }, [dispatch, cluster, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
-    if (
-      repoNamespace &&
-      app?.availablePackageRef?.identifier &&
-      app?.currentVersion?.pkgVersion &&
-      app?.availablePackageRef?.plugin
-    ) {
-      dispatch(
-        actions.charts.getDeployedChartVersion(
-          cluster,
-          repoNamespace,
-          app.availablePackageRef.identifier,
-          app.availablePackageRef.plugin,
-          app.currentVersion.pkgVersion,
-        ),
-      );
-    }
+    dispatch(
+      actions.charts.getDeployedChartVersion(
+        {
+          context: { cluster: cluster, namespace: repoNamespace ?? "" },
+          identifier: app?.availablePackageRef?.identifier ?? "",
+          plugin: app?.availablePackageRef?.plugin,
+        } as AvailablePackageReference,
+        app?.currentVersion?.pkgVersion,
+      ),
+    );
   }, [dispatch, app, repoName, repoNamespace, cluster]);
 
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
   }
 
-  if (appsIsFetching) {
+  if (appsIsFetching || !app) {
     return (
       <LoadingWrapper
         loadingText={`Fetching ${releaseName}...`}

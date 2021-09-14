@@ -3,6 +3,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import { InstalledPackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as yaml from "js-yaml";
 import { assignWith } from "lodash";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ import { ThunkDispatch } from "redux-thunk";
 import {
   DeleteError,
   FetchError,
+  FetchWarning,
   IK8sList,
   IKubeState,
   IResource,
@@ -146,7 +148,13 @@ export default function AppView() {
   const [pluginObj] = useState(getPluginFromString(plugin));
 
   useEffect(() => {
-    dispatch(actions.apps.getApp(cluster, namespace, releaseName, pluginObj));
+    dispatch(
+      actions.apps.getApp({
+        context: { cluster: cluster, namespace: namespace },
+        identifier: releaseName,
+        plugin: pluginObj,
+      } as InstalledPackageReference),
+    );
   }, [cluster, dispatch, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
@@ -195,82 +203,96 @@ export default function AppView() {
     resourceRefs;
   const revision = app?.revision ?? 0;
   const icon = appDetails?.iconUrl ?? placeholder;
+
   return (
-    <section>
-      <PageHeader
-        title={releaseName}
-        titleSize="md"
-        helm={true}
-        icon={icon}
-        buttons={[
-          <UpgradeButton
-            key="upgrade-button"
-            cluster={cluster}
-            namespace={namespace}
-            releaseName={releaseName}
-            releaseStatus={app?.status}
-            plugin={pluginObj}
-          />,
-          <RollbackButton
-            key="rollback-button"
-            cluster={cluster}
-            namespace={namespace}
-            releaseName={releaseName}
-            revision={revision}
-            releaseStatus={app?.status}
-            plugin={pluginObj}
-          />,
-          <DeleteButton
-            key="delete-button"
-            cluster={cluster}
-            namespace={namespace}
-            releaseName={releaseName}
-            releaseStatus={app?.status}
-          />,
-        ]}
-      />
-      {error &&
-        (error.constructor === DeleteError ? (
-          <Alert theme="danger">Unable to delete the application. Received: {error.message}</Alert>
-        ) : (
-          <Alert theme="danger">An error occurred: {error.message}</Alert>
-        ))}
-      {!app || !app?.status?.userReason ? (
-        <LoadingWrapper loadingText={`Loading ${releaseName}...`} />
+    <LoadingWrapper loaded={!!app} loadingText="Retrieving application..." className="margin-t-xl">
+      {!app || !app?.installedPackageRef ? (
+        <Alert theme="danger">There is a problem with this package</Alert>
       ) : (
-        <Row>
-          <Column span={3}>
-            <ChartInfo app={app} appDetails={appDetails!} cluster={cluster} plugin={pluginObj} />
-          </Column>
-          <Column span={9}>
-            <div className="appview-separator">
-              <div className="appview-first-row">
-                <ApplicationStatus
-                  deployRefs={deployments}
-                  statefulsetRefs={statefulsets}
-                  daemonsetRefs={daemonsets}
-                  info={app}
-                />
-                <AccessURLTable serviceRefs={services} ingressRefs={ingresses} />
-                <AppSecrets secretRefs={secrets} />
-              </div>
-            </div>
-            <div className="appview-separator">
-              <AppNotes notes={app?.postInstallationNotes} />
-            </div>
-            <div className="appview-separator">
-              <ResourceTabs
-                {...{ deployments, statefulsets, daemonsets, secrets, services, otherResources }}
-              />
-            </div>
-            <div className="appview-separator">
-              <AppValues
-                values={app?.valuesApplied ? yaml.dump(yaml.load(app.valuesApplied)) : ""}
-              />
-            </div>
-          </Column>
-        </Row>
+        <section>
+          <PageHeader
+            title={releaseName}
+            titleSize="md"
+            helm={true}
+            icon={icon}
+            buttons={[
+              <UpgradeButton
+                key="upgrade-button"
+                installedPackageRef={app.installedPackageRef}
+                releaseStatus={app?.status}
+                disabled={error !== undefined}
+              />,
+              <RollbackButton
+                key="rollback-button"
+                installedPackageRef={app.installedPackageRef}
+                revision={revision}
+                releaseStatus={app?.status}
+                disabled={error !== undefined}
+              />,
+              <DeleteButton
+                key="delete-button"
+                installedPackageRef={app.installedPackageRef}
+                releaseStatus={app?.status}
+              />,
+            ]}
+          />
+          {error &&
+            (error.constructor === FetchWarning ? (
+              <Alert theme="warning">
+                There is a problem with this package: {error["message"]}
+              </Alert>
+            ) : error.constructor === DeleteError ? (
+              <Alert theme="danger">
+                Unable to delete the application. Received: {error["message"]}
+              </Alert>
+            ) : (
+              <Alert theme="danger">An error occurred: {error["message"]}</Alert>
+            ))}
+          {!app || !app?.status?.userReason ? (
+            <LoadingWrapper loadingText={`Loading ${releaseName}...`} />
+          ) : (
+            <Row>
+              <Column span={3}>
+                <ChartInfo installedPackageDetail={app} availablePackageDetail={appDetails!} />
+              </Column>
+              <Column span={9}>
+                <div className="appview-separator">
+                  <div className="appview-first-row">
+                    <ApplicationStatus
+                      deployRefs={deployments}
+                      statefulsetRefs={statefulsets}
+                      daemonsetRefs={daemonsets}
+                      info={app}
+                    />
+                    <AccessURLTable serviceRefs={services} ingressRefs={ingresses} />
+                    <AppSecrets secretRefs={secrets} />
+                  </div>
+                </div>
+                <div className="appview-separator">
+                  <AppNotes notes={app?.postInstallationNotes} />
+                </div>
+                <div className="appview-separator">
+                  <ResourceTabs
+                    {...{
+                      deployments,
+                      statefulsets,
+                      daemonsets,
+                      secrets,
+                      services,
+                      otherResources,
+                    }}
+                  />
+                </div>
+                <div className="appview-separator">
+                  <AppValues
+                    values={app?.valuesApplied ? yaml.dump(yaml.load(app.valuesApplied)) : ""}
+                  />
+                </div>
+              </Column>
+            </Row>
+          )}
+        </section>
       )}
-    </section>
+    </LoadingWrapper>
   );
 }

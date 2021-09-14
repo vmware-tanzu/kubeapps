@@ -1,4 +1,7 @@
-import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageDetail,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
 import { App, KUBEOPS_ROOT_URL } from "./App";
@@ -66,9 +69,11 @@ describe("App", () => {
       moxios.stubRequest(/.*/, { response: "ok", status: 200 });
       expect(
         await App.upgrade(
-          "default-c",
-          "default-ns",
-          "absent-ant",
+          {
+            context: { cluster: "default-c", namespace: "default-ns" },
+            identifier: "absent-ant",
+            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
           "kubeapps",
           availablePackageDetail,
         ),
@@ -103,22 +108,47 @@ describe("App", () => {
     ].forEach(t => {
       it(t.description, async () => {
         moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-        expect(await App.delete("default-c", "default-ns", "foo", t.purge)).toBe("ok");
+        expect(
+          await App.delete(
+            {
+              context: { cluster: "default-c", namespace: "default-ns" },
+              identifier: "foo",
+              plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+            } as InstalledPackageReference,
+            t.purge,
+          ),
+        ).toBe("ok");
         expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
       });
     });
     it("throws an error if returns an error 404", async () => {
       moxios.stubRequest(/.*/, { status: 404 });
-      await expect(App.delete("default-c", "default-ns", "foo", false)).rejects.toThrow(
-        "Request failed with status code 404",
-      );
+      await expect(
+        App.delete(
+          {
+            context: { cluster: "default-c", namespace: "default-ns" },
+            identifier: "foo",
+            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
+          false,
+        ),
+      ).rejects.toThrow("Request failed with status code 404");
     });
   });
 
   describe("rollback", () => {
     it("should rollback an application", async () => {
       axiosWithAuth.put = jest.fn().mockReturnValue({ data: "ok" });
-      expect(await App.rollback("default-c", "default-ns", "foo", 1)).toBe("ok");
+      expect(
+        await App.rollback(
+          {
+            context: { cluster: "default-c", namespace: "default-ns" },
+            identifier: "foo",
+            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
+          1,
+        ),
+      ).toBe("ok");
       expect(axiosWithAuth.put).toBeCalledWith(
         "api/kubeops/v1/clusters/default-c/namespaces/default-ns/releases/foo",
         {},
