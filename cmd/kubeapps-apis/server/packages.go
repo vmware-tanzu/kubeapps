@@ -42,7 +42,7 @@ func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
 func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
 	contextMsg := ""
 	if request.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
+		contextMsg = fmt.Sprintf("(cluster=%q, namespace=%q)", request.Context.Cluster, request.Context.Namespace)
 	}
 
 	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
@@ -76,7 +76,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
 	contextMsg := ""
 	if request.AvailablePackageRef != nil && request.AvailablePackageRef.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
+		contextMsg = fmt.Sprintf("(cluster=%q, namespace=%q)", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
 	}
 
 	log.Infof("+core GetAvailablePackageDetail %s", contextMsg)
