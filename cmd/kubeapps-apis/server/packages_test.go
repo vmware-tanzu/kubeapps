@@ -57,22 +57,22 @@ func makeDefaultTestPackagingPlugin(pluginName string) *pkgsPluginWithServer {
 	pluginDetails := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
 	packagingPluginServer := &plugin_test.TestPackagingPluginServer{Plugin: pluginDetails}
 
-	packagingPluginServer.SetAvailablePackageSummaries([]*corev1.AvailablePackageSummary{
+	packagingPluginServer.AvailablePackageSummaries = []*corev1.AvailablePackageSummary{
 		plugin_test.MakeAvailablePackageSummary("pkg-2", pluginDetails),
 		plugin_test.MakeAvailablePackageSummary("pkg-1", pluginDetails),
-	})
-	packagingPluginServer.SetAvailablePackageDetail(plugin_test.MakeAvailablePackageDetail("pkg-1", pluginDetails))
-	packagingPluginServer.SetInstalledPackageSummary([]*corev1.InstalledPackageSummary{
+	}
+	packagingPluginServer.AvailablePackageDetail = plugin_test.MakeAvailablePackageDetail("pkg-1", pluginDetails)
+	packagingPluginServer.InstalledPackageSummaries = []*corev1.InstalledPackageSummary{
 		plugin_test.MakeInstalledPackageSummary("pkg-2", pluginDetails),
 		plugin_test.MakeInstalledPackageSummary("pkg-1", pluginDetails),
-	})
-	packagingPluginServer.SetInstalledPackageDetail(plugin_test.MakeInstalledPackageDetail("pkg-1", pluginDetails))
-	packagingPluginServer.SetPackageAppVersion([]*corev1.PackageAppVersion{
+	}
+	packagingPluginServer.InstalledPackageDetail = plugin_test.MakeInstalledPackageDetail("pkg-1", pluginDetails)
+	packagingPluginServer.PackageAppVersions = []*corev1.PackageAppVersion{
 		plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgUpdateVersion),
 		plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgVersion),
-	})
-	packagingPluginServer.SetNextPageToken("1")
-	packagingPluginServer.SetCategories([]string{plugin_test.DefaultCategory})
+	}
+	packagingPluginServer.NextPageToken = "1"
+	packagingPluginServer.Categories = []string{plugin_test.DefaultCategory}
 
 	return &pkgsPluginWithServer{
 		plugin: pluginDetails,
@@ -84,7 +84,7 @@ func makeOnlyStatusTestPackagingPlugin(pluginName string, statusCode codes.Code)
 	pluginDetails := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
 	packagingPluginServer := &plugin_test.TestPackagingPluginServer{Plugin: pluginDetails}
 
-	packagingPluginServer.SetStatus(statusCode)
+	packagingPluginServer.Status = statusCode
 
 	return &pkgsPluginWithServer{
 		plugin: pluginDetails,

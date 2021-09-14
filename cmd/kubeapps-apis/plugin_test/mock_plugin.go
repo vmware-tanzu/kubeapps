@@ -25,39 +25,14 @@ import (
 type TestPackagingPluginServer struct {
 	packages.UnimplementedPackagesServiceServer
 	Plugin                    *plugins.Plugin
-	availablePackageSummaries []*corev1.AvailablePackageSummary
-	availablePackageDetail    *corev1.AvailablePackageDetail
-	installedPackageSummaries []*corev1.InstalledPackageSummary
-	installedPackageDetail    *corev1.InstalledPackageDetail
-	packageAppVersions        []*corev1.PackageAppVersion
-	categories                []string
-	nextPageToken             string
-	status                    codes.Code
-}
-
-func (s *TestPackagingPluginServer) SetAvailablePackageSummaries(availablePackageSummaries []*corev1.AvailablePackageSummary) {
-	s.availablePackageSummaries = availablePackageSummaries
-}
-func (s *TestPackagingPluginServer) SetAvailablePackageDetail(availablePackageDetail *corev1.AvailablePackageDetail) {
-	s.availablePackageDetail = availablePackageDetail
-}
-func (s *TestPackagingPluginServer) SetInstalledPackageSummary(installedPackageSummaries []*corev1.InstalledPackageSummary) {
-	s.installedPackageSummaries = installedPackageSummaries
-}
-func (s *TestPackagingPluginServer) SetInstalledPackageDetail(installedPackageDetail *corev1.InstalledPackageDetail) {
-	s.installedPackageDetail = installedPackageDetail
-}
-func (s *TestPackagingPluginServer) SetPackageAppVersion(packageAppVersions []*corev1.PackageAppVersion) {
-	s.packageAppVersions = packageAppVersions
-}
-func (s *TestPackagingPluginServer) SetCategories(categories []string) {
-	s.categories = categories
-}
-func (s *TestPackagingPluginServer) SetNextPageToken(nextPageToken string) {
-	s.nextPageToken = nextPageToken
-}
-func (s *TestPackagingPluginServer) SetStatus(status codes.Code) {
-	s.status = status
+	AvailablePackageSummaries []*corev1.AvailablePackageSummary
+	AvailablePackageDetail    *corev1.AvailablePackageDetail
+	InstalledPackageSummaries []*corev1.InstalledPackageSummary
+	InstalledPackageDetail    *corev1.InstalledPackageDetail
+	PackageAppVersions        []*corev1.PackageAppVersion
+	Categories                []string
+	NextPageToken             string
+	Status                    codes.Code
 }
 
 func NewTestPackagingPlugin(plugin *plugins.Plugin) *TestPackagingPluginServer {
@@ -68,53 +43,53 @@ func NewTestPackagingPlugin(plugin *plugins.Plugin) *TestPackagingPluginServer {
 
 // GetAvailablePackages returns the packages based on the request.
 func (s TestPackagingPluginServer) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
-	if s.status != codes.OK {
-		return nil, status.Errorf(s.status, "Non-OK response")
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
 	}
 	return &packages.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: s.availablePackageSummaries,
-		Categories:                s.categories,
-		NextPageToken:             s.nextPageToken,
+		AvailablePackageSummaries: s.AvailablePackageSummaries,
+		Categories:                s.Categories,
+		NextPageToken:             s.NextPageToken,
 	}, nil
 }
 
 // GetAvailablePackageDetail returns the package details based on the request.
 func (s TestPackagingPluginServer) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
-	if s.status != codes.OK {
-		return nil, status.Errorf(s.status, "Non-OK response")
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
 	}
 	return &packages.GetAvailablePackageDetailResponse{
-		AvailablePackageDetail: s.availablePackageDetail,
+		AvailablePackageDetail: s.AvailablePackageDetail,
 	}, nil
 }
 
 // GetInstalledPackageSummaries returns the installed package summaries based on the request.
 func (s TestPackagingPluginServer) GetInstalledPackageSummaries(ctx context.Context, request *packages.GetInstalledPackageSummariesRequest) (*packages.GetInstalledPackageSummariesResponse, error) {
-	if s.status != codes.OK {
-		return nil, status.Errorf(s.status, "Non-OK response")
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
 	}
 	return &packages.GetInstalledPackageSummariesResponse{
-		InstalledPackageSummaries: s.installedPackageSummaries,
-		NextPageToken:             s.nextPageToken,
+		InstalledPackageSummaries: s.InstalledPackageSummaries,
+		NextPageToken:             s.NextPageToken,
 	}, nil
 }
 
 // GetInstalledPackageDetail returns the package versions based on the request.
 func (s TestPackagingPluginServer) GetInstalledPackageDetail(ctx context.Context, request *packages.GetInstalledPackageDetailRequest) (*packages.GetInstalledPackageDetailResponse, error) {
-	if s.status != codes.OK {
-		return nil, status.Errorf(s.status, "Non-OK response")
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
 	}
 	return &packages.GetInstalledPackageDetailResponse{
-		InstalledPackageDetail: s.installedPackageDetail,
+		InstalledPackageDetail: s.InstalledPackageDetail,
 	}, nil
 }
 
 // GetAvailablePackageVersions returns the package versions based on the request.
 func (s TestPackagingPluginServer) GetAvailablePackageVersions(ctx context.Context, request *packages.GetAvailablePackageVersionsRequest) (*packages.GetAvailablePackageVersionsResponse, error) {
-	if s.status != codes.OK {
-		return nil, status.Errorf(s.status, "Non-OK response")
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
 	}
 	return &packages.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: s.packageAppVersions,
+		PackageAppVersions: s.PackageAppVersions,
 	}, nil
 }
