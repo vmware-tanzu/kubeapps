@@ -94,7 +94,7 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toSelect('select[name="chart-versions"]', latestChartVersion);
+      await expect(page).toSelect('select[name="chart-versions"]', latestChartVersion, { delay: 3000 });
 
       await new Promise(r => setTimeout(r, 1000));
 
