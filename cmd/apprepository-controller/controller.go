@@ -430,6 +430,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1b
 			Name:            cronJobName(apprepo.Namespace, apprepo.Name),
 			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
 			Labels:          jobLabels(apprepo),
+			Annotations:     apprepo.Annotations,
 		},
 		Spec: batchv1beta1.CronJobSpec{
 			Schedule: config.Crontab,
@@ -438,6 +439,10 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1b
 			// https://github.com/kubernetes/kubernetes/issues/54870
 			ConcurrencyPolicy: "Replace",
 			JobTemplate: batchv1beta1.JobTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      jobLabels(apprepo),
+					Annotations: apprepo.Annotations,
+				},
 				Spec: syncJobSpec(apprepo, config),
 			},
 		},
@@ -451,6 +456,8 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName:    cronJobName(apprepo.Namespace, apprepo.Name) + "-",
 			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
+			Labels:          jobLabels(apprepo),
+			Annotations:     apprepo.Annotations,
 		},
 		Spec: syncJobSpec(apprepo, config),
 	}
@@ -484,8 +491,17 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	if len(podTemplateSpec.ObjectMeta.Labels) == 0 {
 		podTemplateSpec.ObjectMeta.Labels = map[string]string{}
 	}
+	// Append the default labels (+inherited) to the user-defined ones (if any)
 	for k, v := range jobLabels(apprepo) {
 		podTemplateSpec.ObjectMeta.Labels[k] = v
+	}
+	// Add annotations
+	if len(podTemplateSpec.ObjectMeta.Annotations) == 0 {
+		podTemplateSpec.ObjectMeta.Annotations = map[string]string{}
+	}
+	// Append the default annotations (+inherited) to the user-defined ones (if any)
+	for k, v := range apprepo.ObjectMeta.Annotations {
+		podTemplateSpec.ObjectMeta.Annotations[k] = v
 	}
 	// If there's an issue, will restart pod until successful or replaced
 	// by another instance of the job scheduled by the cronjob
@@ -562,10 +578,16 @@ func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
 
 // jobLabels returns the labels for the job and cronjob resources
 func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
-	return map[string]string{
+	// Adding the default labels
+	labels := map[string]string{
 		LabelRepoName:      apprepo.GetName(),
 		LabelRepoNamespace: apprepo.GetNamespace(),
 	}
+	// Inherit the labels from the AppRepository
+	for k, v := range apprepo.Labels {
+		labels[k] = v
+	}
+	return labels
 }
 
 // ttlLifetimeJobs return time to live set by user otherwise return nil
