@@ -107,21 +107,14 @@ func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	contextMsg := ""
-	if request.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+kapp_controller GetAvailablePackageSummaries %s", contextMsg)
 
-	namespace := ""
-	if request.Context != nil {
-		if request.Context.Cluster != "" {
-			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
-		}
-		if request.Context.Namespace != "" {
-			namespace = request.Context.Namespace
-		}
+	namespace := request.GetContext().GetNamespace()
+	cluster := request.GetContext().GetCluster()
+
+	if cluster != "" {
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
 	}
 
 	client, err := s.getDynamicClient(ctx)
@@ -170,21 +163,20 @@ func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*co
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	contextMsg := ""
-	if request.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+kapp_controller GetPackageRepositories %s", contextMsg)
 
-	namespace := globalPackagingNamespace
-	if request.Context != nil {
-		if request.Context.Cluster != "" {
-			return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
-		}
-		if request.Context.Namespace != "" {
-			namespace = request.Context.Namespace
-		}
+	namespace := request.GetContext().GetNamespace()
+	cluster := request.GetContext().GetCluster()
+
+	if cluster != "" {
+		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
+	}
+
+	// If the request is for available packages on another cluster, we only
+	// return the global packages (ie. kubeapps namespace)
+	if cluster != "" && cluster != globalPackagingNamespace {
+		namespace = globalPackagingNamespace
 	}
 
 	client, err := s.getDynamicClient(ctx)

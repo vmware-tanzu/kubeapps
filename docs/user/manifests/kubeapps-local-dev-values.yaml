@@ -20,9 +20,9 @@ ingress:
   hostname: localhost
   tls: true
   extraTls:
-  - hosts:
-    - localhost
-    secretName: localhost-tls
+    - hosts:
+        - localhost
+      secretName: localhost-tls
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     # Required for ingress-nginx 1.0.0 for a valid ingress.
