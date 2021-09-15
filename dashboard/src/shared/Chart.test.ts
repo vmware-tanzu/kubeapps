@@ -1,9 +1,11 @@
 import {
+  AvailablePackageReference,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
 import { axiosWithAuth } from "./AxiosInstance";
 import Chart from "./Chart";
@@ -108,6 +110,7 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           id: "mypackage",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         },
       },
     ].forEach(t => {
@@ -122,17 +125,21 @@ describe("App", () => {
         jest
           .spyOn(Chart, "getAvailablePackageVersions")
           .mockImplementation(mockGetAvailablePackageVersions);
-        const availablePackageVersions = await Chart.getAvailablePackageVersions(
-          t.args.cluster,
-          t.args.namespace,
-          t.args.id,
-        );
+        const availablePackageVersions = await Chart.getAvailablePackageVersions({
+          context: { cluster: t.args.cluster, namespace: t.args.namespace },
+          identifier: t.args.id,
+          plugin: t.args.plugin,
+        } as AvailablePackageReference);
         expect(availablePackageVersions).toStrictEqual({
           packageAppVersions: [
             { appVersion: "10.0.0", pkgVersion: "1.0.0" },
           ] as PackageAppVersion[],
         } as GetAvailablePackageVersionsResponse);
-        expect(mockGetAvailablePackageVersions).toHaveBeenCalledWith(...Object.values(t.args));
+        expect(mockGetAvailablePackageVersions).toHaveBeenCalledWith({
+          context: { cluster: t.args.cluster, namespace: t.args.namespace },
+          identifier: t.args.id,
+          plugin: t.args.plugin,
+        } as AvailablePackageReference);
       });
     });
   });
@@ -144,6 +151,7 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           id: "mypackage",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
           version: "v1",
         },
       },
@@ -153,6 +161,7 @@ describe("App", () => {
           cluster: clusterName,
           namespace: namespaceName,
           id: "mypackage",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
           version: undefined,
         },
       },
@@ -167,15 +176,24 @@ describe("App", () => {
           .spyOn(Chart, "getAvailablePackageDetail")
           .mockImplementation(mockGetAvailablePackageDetail);
         const availablePackageDetail = await Chart.getAvailablePackageDetail(
-          t.args.cluster,
-          t.args.namespace,
-          t.args.id,
+          {
+            context: { cluster: t.args.cluster, namespace: t.args.namespace },
+            identifier: t.args.id,
+            plugin: t.args.plugin,
+          } as AvailablePackageReference,
           t.args.version,
         );
         expect(availablePackageDetail).toStrictEqual({
           availablePackageDetail: { name: "foo" },
         } as GetAvailablePackageDetailResponse);
-        expect(mockGetAvailablePackageDetail).toHaveBeenCalledWith(...Object.values(t.args));
+        expect(mockGetAvailablePackageDetail).toHaveBeenCalledWith(
+          {
+            context: { cluster: t.args.cluster, namespace: t.args.namespace },
+            identifier: t.args.id,
+            plugin: t.args.plugin,
+          } as AvailablePackageReference,
+          t.args.version,
+        );
       });
     });
   });

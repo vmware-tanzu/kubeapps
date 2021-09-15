@@ -1,8 +1,9 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import {
-  InstalledPackageStatus_StatusReason,
+  InstalledPackageReference,
   InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as ReactRedux from "react-redux";
 import ReactTooltip from "react-tooltip";
@@ -10,9 +11,11 @@ import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import UpgradeButton from "./UpgradeButton";
 
 const defaultProps = {
-  cluster: "default",
-  namespace: "kubeapps",
-  releaseName: "foo",
+  installedPackageRef: {
+    context: { cluster: "default", namespace: "kubeapps" },
+    identifier: "foo",
+    plugin: { name: "my.plugin", version: "0.0.1" },
+  } as InstalledPackageReference,
   releaseStatus: null,
 };
 

@@ -1,6 +1,5 @@
-import Enzyme from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
-
+import Enzyme from "enzyme";
 import "jest-enzyme";
 import { WebSocket } from "mock-socket";
 import "raf/polyfill"; // polyfill for requestAnimationFrame

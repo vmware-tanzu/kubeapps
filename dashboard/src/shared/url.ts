@@ -1,6 +1,11 @@
-import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageDetail,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { IServiceBroker } from "./ServiceCatalog";
 import { IRepo } from "./types";
+import { getStringFromPlugin } from "./utils";
 
 export const app = {
   apps: {
@@ -10,22 +15,24 @@ export const app = {
       availablePackageDetail: AvailablePackageDetail,
       version: string,
       globalNamespace: string,
+      plugin: Plugin,
     ) => {
       const repoNamespace = availablePackageDetail.availablePackageRef?.context?.namespace;
       const newSegment = globalNamespace !== repoNamespace ? "new" : "new-from-global";
       // TODO(agamez): get the repo name once available
       // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
       const repoName =
-        availablePackageDetail.availablePackageRef?.identifier.split("/")[0] ?? globalNamespace;
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${encodeURIComponent(
-        availablePackageDetail.name,
-      )}/versions/${version}`;
+        availablePackageDetail.availablePackageRef?.identifier.split("/")?.[0] ?? globalNamespace;
+      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${encodeURI(
+        getStringFromPlugin(plugin),
+      )}/${encodeURIComponent(availablePackageDetail.name)}/versions/${version}`;
     },
-    list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
-    get: (cluster: string, namespace: string, releaseName: string) =>
-      `${app.apps.list(cluster, namespace)}/${releaseName}`,
-    upgrade: (cluster: string, namespace: string, releaseName: string) =>
-      `${app.apps.get(cluster, namespace, releaseName)}/upgrade`,
+    list: (cluster?: string, namespace?: string) => `/c/${cluster}/ns/${namespace}/apps`,
+    get: (ref?: InstalledPackageReference) =>
+      `${app.apps.list(ref?.context?.cluster, ref?.context?.namespace)}/${encodeURI(
+        getStringFromPlugin(ref?.plugin),
+      )}/${ref?.identifier}`,
+    upgrade: (ref?: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
   },
   catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
   charts: {
@@ -35,11 +42,12 @@ export const app = {
       chartName: string,
       repo: IRepo,
       globalNamespace: string,
+      plugin: Plugin,
     ) => {
       const chartsSegment = globalNamespace === repo.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${encodeURIComponent(
-        chartName,
-      )}`;
+      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${encodeURI(
+        getStringFromPlugin(plugin),
+      )}/${encodeURIComponent(chartName)}`;
     },
   },
   operators: {

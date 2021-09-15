@@ -4,6 +4,7 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import React from "react";
 import { act } from "react-dom/test-utils";
@@ -48,6 +49,7 @@ const availablePkgSummary1: AvailablePackageSummary = {
   availablePackageRef: {
     identifier: "foo/foo",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
 const availablePkgSummary2: AvailablePackageSummary = {
@@ -60,6 +62,7 @@ const availablePkgSummary2: AvailablePackageSummary = {
   availablePackageRef: {
     identifier: "bar/bar",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
 const csv = {

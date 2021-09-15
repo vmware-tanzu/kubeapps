@@ -1,8 +1,7 @@
 import { useSelector } from "react-redux";
 import { IRepo, IStoreState } from "shared/types";
 import * as url from "shared/url";
-import { trimDescription } from "shared/utils";
-import helmIcon from "../../icons/helm.svg";
+import { getPluginIcon, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard";
 import { IChartCatalogItem } from "./CatalogItem";
@@ -20,8 +19,9 @@ export default function ChartCatalogItem(props: IChartCatalogItem) {
     name,
     repo || ({} as IRepo),
     kubeappsNamespace,
+    props.plugin,
   );
-  const bgIcon = helmIcon;
+  const bgIcon = getPluginIcon(props.plugin);
 
   return (
     <InfoCard

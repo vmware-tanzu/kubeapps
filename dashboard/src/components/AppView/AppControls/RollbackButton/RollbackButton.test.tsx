@@ -3,9 +3,11 @@ import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
+  InstalledPackageReference,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import ReactTooltip from "react-tooltip";
@@ -14,11 +16,14 @@ import { RollbackError } from "shared/types";
 import RollbackButton from "./RollbackButton";
 
 const defaultProps = {
-  cluster: "default",
-  namespace: "kubeapps",
-  releaseName: "foo",
+  installedPackageRef: {
+    context: { cluster: "default", namespace: "kubeapps" },
+    identifier: " foo",
+    plugin: { name: "my.plugin", version: "0.0.1" },
+  } as InstalledPackageReference,
   revision: 3,
   releaseStatus: null,
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -58,12 +63,7 @@ it("rolls back an application", async () => {
         .prop("onClick") as any
     )();
   });
-  expect(rollbackApp).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.releaseName,
-    1,
-  );
+  expect(rollbackApp).toHaveBeenCalledWith(defaultProps.installedPackageRef, 1);
 });
 
 it("renders an error", async () => {

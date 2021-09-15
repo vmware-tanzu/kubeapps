@@ -4,6 +4,7 @@ import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds
 import { CdsSelect } from "@cds/react/select";
 import Alert from "components/js/Alert";
 import { useEffect, useState } from "react";
+import { DeleteError, FetchWarning } from "shared/types";
 import LoadingWrapper from "../../../LoadingWrapper/LoadingWrapper";
 import "./RollbackDialog.css";
 
@@ -53,7 +54,18 @@ function RollbackDialog({
         <CdsModal closable={false} onCloseChange={closeModal}>
           <CdsModalHeader>Rollback application</CdsModalHeader>
           <CdsModalContent>
-            {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+            {error &&
+              (error.constructor === FetchWarning ? (
+                <Alert theme="warning">
+                  There is a problem with this package: {error["message"]}
+                </Alert>
+              ) : error.constructor === DeleteError ? (
+                <Alert theme="danger">
+                  Unable to delete the application. Received: {error["message"]}
+                </Alert>
+              ) : (
+                <Alert theme="danger">An error occurred: {error["message"]}</Alert>
+              ))}
             <LoadingWrapper className="center" loadingText="Loading, please wait" loaded={!loading}>
               {disableRollback ? (
                 <p>The application has not been upgraded, it's not possible to rollback.</p>

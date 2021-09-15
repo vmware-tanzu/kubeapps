@@ -1,3 +1,7 @@
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import helmIcon from "../icons/helm.svg";
+import olmIcon from "../icons/operator-framework.svg";
+import placeholder from "../placeholder.png";
 import ResourceRef from "./ResourceRef";
 import { IK8sList, IKubeItem, IResource, ISecret } from "./types";
 
@@ -56,4 +60,42 @@ export function flattenResources(
     }
   });
   return result;
+}
+
+export function getPluginFromString(pluginString?: string) {
+  // Fallback to the helm plugin
+  if (!pluginString) pluginString = "helm.packages+v1alpha1";
+  const splitChar = "+";
+  const splitStr = pluginString?.split(splitChar);
+  return { name: splitStr?.[0], version: splitStr?.[1] } as Plugin;
+}
+
+export function getStringFromPlugin(plugin?: Plugin) {
+  // Fallback to the helm plugin
+  if (!plugin) return "helm.packages+v1alpha1";
+  const splitChar = "+";
+  return `${plugin?.name + splitChar + plugin?.version}`;
+}
+
+export function getPluginIcon(plugin: Plugin | string) {
+  // Temporary case while operators are not supported as kubeapps apis plugin
+  if (typeof plugin === "string") {
+    switch (plugin) {
+      case "chart":
+        return helmIcon;
+      case "helm":
+        return helmIcon;
+      case "operator":
+        return olmIcon;
+      default:
+        return placeholder;
+    }
+  } else {
+    switch (plugin.name) {
+      case "helm.packages":
+        return helmIcon;
+      default:
+        return placeholder;
+    }
+  }
 }

@@ -1,6 +1,5 @@
 import { shallow } from "enzyme";
 import { Maintainer } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 
 const tests: Array<{

@@ -1,4 +1,6 @@
+import InfoCard from "components/InfoCard";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IClusterServiceVersion } from "shared/types";
 import CatalogItem from "./CatalogItem";
@@ -14,6 +16,7 @@ const chartItem: AvailablePackageSummary = {
   availablePackageRef: {
     identifier: "foo/foo",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
 const chartItem2: AvailablePackageSummary = {
@@ -26,6 +29,7 @@ const chartItem2: AvailablePackageSummary = {
   availablePackageRef: {
     identifier: "bar/bar",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
 const csv = {
@@ -54,7 +58,7 @@ const defaultProps = {
   csvs: [],
   cluster: "default",
   namespace: "default",
-  isFetching: false,
+  hasLoadedFirstPage: true,
   page: 1,
   hasFinishedFetching: true,
 };
@@ -65,19 +69,25 @@ const populatedProps = {
 };
 
 it("shows nothing if no items are passed but it's still fetching", () => {
-  const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} isFetching={true} />);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <CatalogItems {...defaultProps} hasLoadedFirstPage={false} />,
+  );
   expect(wrapper).toIncludeText("");
 });
 
 it("shows a message if no items are passed and it stopped fetching", () => {
-  const wrapper = mountWrapper(defaultStore, <CatalogItems {...defaultProps} isFetching={false} />);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <CatalogItems {...defaultProps} hasLoadedFirstPage={true} />,
+  );
   expect(wrapper).toIncludeText("No application matches the current filter");
 });
 
 it("no items if it's fetching and it's the first page (prevents showing incomplete list during the first render)", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <CatalogItems {...populatedProps} isFetching={true} page={1} />,
+    <CatalogItems {...populatedProps} hasLoadedFirstPage={false} page={1} />,
   );
   const items = wrapper.find(CatalogItem);
   expect(items).toHaveLength(0);
@@ -86,7 +96,7 @@ it("no items if it's fetching and it's the first page (prevents showing incomple
 it("show items if it's fetching but it is NOT the first page (allow pagination without scrolling issues)", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <CatalogItems {...populatedProps} isFetching={true} page={2} />,
+    <CatalogItems {...populatedProps} hasLoadedFirstPage={false} page={2} />,
   );
   const items = wrapper.find(CatalogItem);
   expect(items).toHaveLength(3);
@@ -96,4 +106,52 @@ it("order elements by name", () => {
   const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
   const items = wrapper.find(CatalogItem).map(i => i.prop("item").name);
   expect(items).toEqual(["bar", "foo", "foo-cluster"]);
+});
+
+it("changes the bgIcon based on the plugin name - default", () => {
+  const pluginName = "my.plugin";
+  const populatedProps = {
+    ...defaultProps,
+    charts: [
+      {
+        ...chartItem,
+        availablePackageRef: {
+          ...chartItem.availablePackageRef,
+          plugin: { ...chartItem.availablePackageRef?.plugin, name: pluginName },
+        },
+      } as AvailablePackageSummary,
+    ],
+  };
+
+  const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
+  expect(
+    wrapper
+      .find(InfoCard)
+      .findWhere(s => s.prop("link")?.includes(pluginName))
+      .prop("bgIcon"),
+  ).toBe("placeholder.png");
+});
+
+it("changes the bgIcon based on the plugin name - helm", () => {
+  const pluginName = "helm.packages";
+  const populatedProps = {
+    ...defaultProps,
+    charts: [
+      {
+        ...chartItem,
+        availablePackageRef: {
+          ...chartItem.availablePackageRef,
+          plugin: { ...chartItem.availablePackageRef?.plugin, name: pluginName },
+        },
+      } as AvailablePackageSummary,
+    ],
+  };
+
+  const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
+  expect(
+    wrapper
+      .find(InfoCard)
+      .findWhere(s => s.prop("link")?.includes(pluginName))
+      .prop("bgIcon"),
+  ).toBe("helm.svg");
 });

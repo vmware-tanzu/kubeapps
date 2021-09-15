@@ -2,7 +2,10 @@ import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import { push } from "connected-react-router";
-import { InstalledPackageStatus } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  InstalledPackageReference,
+  InstalledPackageStatus,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -12,17 +15,15 @@ import { app } from "shared/url";
 import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 
 interface IDeleteButtonProps {
-  cluster: string;
-  namespace: string;
-  releaseName: string;
+  installedPackageRef: InstalledPackageReference;
   releaseStatus: InstalledPackageStatus | undefined | null;
+  disabled?: boolean;
 }
 
 export default function DeleteButton({
-  cluster,
-  namespace,
-  releaseName,
+  installedPackageRef,
   releaseStatus,
+  disabled,
 }: IDeleteButtonProps) {
   const [modalIsOpen, setModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -34,10 +35,17 @@ export default function DeleteButton({
   const handleDeleteClick = async () => {
     setDeleting(true);
     // Purge the release in any case
-    const deleted = await dispatch(actions.apps.deleteApp(cluster, namespace, releaseName, true));
+    const deleted = await dispatch(actions.apps.deleteApp(installedPackageRef, true));
     setDeleting(false);
     if (deleted) {
-      dispatch(push(app.apps.list(cluster, namespace)));
+      dispatch(
+        push(
+          app.apps.list(
+            installedPackageRef.context?.cluster,
+            installedPackageRef.context?.namespace,
+          ),
+        ),
+      );
     }
   };
 
@@ -48,6 +56,7 @@ export default function DeleteButton({
         onClick={openModal}
         releaseStatus={releaseStatus}
         id="delete-button"
+        disabled={disabled}
       >
         <CdsIcon shape="trash" /> Delete
       </StatusAwareButton>

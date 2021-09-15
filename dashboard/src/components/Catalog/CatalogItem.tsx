@@ -1,3 +1,4 @@
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { IRepo } from "shared/types";
 import ChartCatalogItem from "./ChartCatalogItem";
 import OperatorCatalogItem from "./OperatorCatalogItem";
@@ -15,6 +16,7 @@ export interface ICatalogItem {
 export interface IChartCatalogItem extends ICatalogItem {
   id: string;
   repo: IRepo;
+  plugin: Plugin;
 }
 
 export interface IOperatorCatalogItem extends ICatalogItem {
