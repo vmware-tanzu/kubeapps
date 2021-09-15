@@ -437,3 +437,14 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		InstalledPackageRef: installedRef,
 	}, nil
 }
+
+// UpdateInstalledPackage updates an installed package based on the request.
+func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
+	log.Infof("+fluxv2 UpdateInstalledPackage [%v]", request)
+
+	if request == nil || request.InstalledPackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+	}
+
+	return &corev1.UpdateInstalledPackageResponse{}, nil
+}

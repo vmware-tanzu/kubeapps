@@ -377,6 +377,40 @@
         "tags": [
           "PackagesService"
         ]
+      },
+      "patch": {
+        "operationId": "PackagesService_UpdateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
       }
     },
     "/core/packages/v1alpha1/installedpackagesummaries": {
@@ -799,6 +833,41 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1alpha1CreateInstalledPackageRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      },
+      "patch": {
+        "summary": "UpdateInstalledPackage updates an installed package based on the request.",
+        "operationId": "FluxV2PackagesService_UpdateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
             }
           }
         ],
@@ -1250,6 +1319,41 @@
         "tags": [
           "HelmPackagesService"
         ]
+      },
+      "patch": {
+        "summary": "UpdateInstalledPackage updates an installed package based on the request.",
+        "operationId": "HelmPackagesService_UpdateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
+            }
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
       }
     },
     "/plugins/helm/packages/v1alpha1/installedpackagesummaries": {
@@ -1646,6 +1750,41 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1alpha1CreateInstalledPackageRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      },
+      "patch": {
+        "summary": "UpdateInstalledPackage updates an installed package based on the request.",
+        "operationId": "KappControllerPackagesService_UpdateInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
             }
           }
         ],
@@ -2530,6 +2669,34 @@
       },
       "description": "ReconciliationOptions enable specifying standard fields for backends that continuously\nreconcile a package install as new matching versions are released. Most of the naming\nis from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's\nInstalledPackage.",
       "title": "ReconciliationOptions"
+    },
+    "v1alpha1UpdateInstalledPackageRequest": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
+          "title": "A reference uniquely identifying the installed package being updated.\nThe only required field"
+        },
+        "pkgVersionReference": {
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "description": "For helm this will be the exact version in VersionReference.version\nFor other plugins we can extend the VersionReference as needed."
+        },
+        "values": {
+          "type": "string",
+          "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when \nrelevant."
+        },
+        "reconciliationOptions": {
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+        }
+      },
+      "description": "Request for UpdateInstalledPackage. Partial resource updates are supported. \nFor example, to change the package version one only needs to specify the version reference. \nSimilarly to update the values, one only needs to specify that field",
+      "title": "UpdateInstalledPackageRequest"
+    },
+    "v1alpha1UpdateInstalledPackageResponse": {
+      "type": "object",
+      "description": "Response for UpdateInstalledPackage",
+      "title": "UpdateInstalledPackageResponse"
     },
     "v1alpha1VersionReference": {
       "type": "object",
