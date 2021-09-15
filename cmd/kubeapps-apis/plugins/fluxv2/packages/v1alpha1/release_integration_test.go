@@ -66,11 +66,12 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 	fluxPluginClient := checkEnv(t)
 
 	testCases := []struct {
-		testName          string
-		repoUrl           string
-		request           *corev1.CreateInstalledPackageRequest
-		expectedDetail    *corev1.InstalledPackageDetail
-		expectedPodPrefix string
+		testName             string
+		repoUrl              string
+		request              *corev1.CreateInstalledPackageRequest
+		expectedDetail       *corev1.InstalledPackageDetail
+		expectedPodPrefix    string
+		expectInstallFailure bool
 	}{
 		{
 			testName:          "create test (simplest case)",
@@ -100,7 +101,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			expectedDetail:    expected_detail_with_values,
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-4-",
 		},
-		// TODO: (gfichtenholt) negative case
+		{
+			testName:             "install fails",
+			repoUrl:              podinfo_repo_url,
+			request:              create_request_install_fails,
+			expectedDetail:       expected_detail_install_fails,
+			expectInstallFailure: true,
+		},
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -191,16 +198,28 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 					t.Fatalf("%+v", err)
 				}
 
-				if resp2.InstalledPackageDetail.Status.Ready == true &&
-					resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED {
-					actualDetail = resp2.InstalledPackageDetail
-					break
+				if !tc.expectInstallFailure {
+					if resp2.InstalledPackageDetail.Status.Ready == true &&
+						resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED {
+						actualDetail = resp2.InstalledPackageDetail
+						break
+					}
 				} else {
-					t.Logf("waiting 500ms due to: [%s], userReason: [%s], attempt: [%d/%d]...",
-						resp2.InstalledPackageDetail.Status.Reason, resp2.InstalledPackageDetail.Status.UserReason, i+1, maxWait)
-					time.Sleep(500 * time.Millisecond)
+					if resp2.InstalledPackageDetail.Status.Ready == false &&
+						resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_FAILED {
+						actualDetail = resp2.InstalledPackageDetail
+						break
+					}
 				}
+				t.Logf("Waiting 1s due to: [%s], userReason: [%s], attempt: [%d/%d]...",
+					resp2.InstalledPackageDetail.Status.Reason, resp2.InstalledPackageDetail.Status.UserReason, i+1, maxWait)
+				time.Sleep(1 * time.Second)
 			}
+
+			if actualDetail == nil {
+				t.Fatalf("Timed out waiting for task to complete")
+			}
+
 			tc.expectedDetail.PostInstallationNotes = strings.ReplaceAll(
 				tc.expectedDetail.PostInstallationNotes, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 
@@ -219,18 +238,20 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
-			// check artifacts in target namespace:
-			tc.expectedPodPrefix = strings.ReplaceAll(
-				tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
-			pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
-			if len(pods) != 1 {
-				t.Errorf("expected 1 pod, got: %s", pods)
-			} else if !strings.HasPrefix(pods[0], tc.expectedPodPrefix) {
-				t.Errorf("expected pod with prefix [%s] not found in namespace [%s], pods found: [%v]",
-					tc.expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
+			if !tc.expectInstallFailure {
+				// check artifacts in target namespace:
+				tc.expectedPodPrefix = strings.ReplaceAll(
+					tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
+				pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				if len(pods) != 1 {
+					t.Errorf("expected 1 pod, got: %s", pods)
+				} else if !strings.HasPrefix(pods[0], tc.expectedPodPrefix) {
+					t.Errorf("expected pod with prefix [%s] not found in namespace [%s], pods found: [%v]",
+						tc.expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
+				}
 			}
 		})
 	}
@@ -740,4 +761,51 @@ var expected_detail_with_values = &corev1.InstalledPackageDetail{
 		Plugin: fluxPlugin,
 	},
 	ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
+}
+
+var create_request_install_fails = &corev1.CreateInstalledPackageRequest{
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo-5/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+	},
+	Name: "my-podinfo-5",
+	TargetContext: &corev1.Context{
+		Namespace: "test-5",
+	},
+	Values: "{\"replicaCount\": \"what we do in the shadows\" }",
+}
+
+var expected_detail_install_fails = &corev1.InstalledPackageDetail{
+	InstalledPackageRef: &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "kubeapps",
+		},
+		Identifier: "my-podinfo-5",
+		Plugin:     fluxPlugin,
+	},
+	Name: "my-podinfo-5",
+	CurrentVersion: &corev1.PackageAppVersion{
+		PkgVersion: "6.0.0",
+	},
+	PkgVersionReference: &corev1.VersionReference{
+		Version: "*",
+	},
+	ReconciliationOptions: &corev1.ReconciliationOptions{
+		Interval: 60,
+	},
+	Status: &corev1.InstalledPackageStatus{
+		Ready:      false,
+		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+		UserReason: "InstallFailed: install retries exhausted",
+	},
+	AvailablePackageRef: &corev1.AvailablePackageReference{
+		Identifier: "podinfo-5/podinfo",
+		Context: &corev1.Context{
+			Namespace: "default",
+		},
+		Plugin: fluxPlugin,
+	},
+	ValuesApplied: "{\"replicaCount\":\"what we do in the shadows\"}",
 }
