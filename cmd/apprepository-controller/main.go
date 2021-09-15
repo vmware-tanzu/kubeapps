@@ -69,7 +69,7 @@ func parseFlags(progname string, args []string) (config *Config, output string, 
 
 	flagSet.StringVar(&conf.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flagSet.StringVar(&conf.MasterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	flagSet.StringVar(&conf.RepoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
+	flagSet.StringVar(&conf.RepoSyncImage, "repo-sync-image", "docker.io/kubeapps/asset-syncer:latest", "container repo/image to use in CronJobs")
 	flagSet.StringSliceVar(&conf.RepoSyncImagePullSecrets, "repo-sync-image-pullsecrets", nil, "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
 	flagSet.StringVar(&conf.RepoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
 	flagSet.StringVar(&conf.KubeappsNamespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")

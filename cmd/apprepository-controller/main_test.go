@@ -20,7 +20,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			Config{
 				Kubeconfig:               "",
 				MasterURL:                "",
-				RepoSyncImage:            "quay.io/helmpack/chart-repo:latest",
+				RepoSyncImage:            "docker.io/kubeapps/asset-syncer:latest",
 				RepoSyncImagePullSecrets: nil,
 				RepoSyncCommand:          "/chart-repo",
 				KubeappsNamespace:        "kubeapps",
@@ -45,7 +45,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			Config{
 				Kubeconfig:               "",
 				MasterURL:                "",
-				RepoSyncImage:            "quay.io/helmpack/chart-repo:latest",
+				RepoSyncImage:            "docker.io/kubeapps/asset-syncer:latest",
 				RepoSyncImagePullSecrets: []string{"s1", " s2", " s3"},
 				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: " s2"}, {Name: " s3"}},
 				RepoSyncCommand:          "/chart-repo",
