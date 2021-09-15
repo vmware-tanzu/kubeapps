@@ -10,13 +10,12 @@ module.exports = {
         break;
       } catch (e) {
         testName = testName || "unknown";
-        let screenshotFilename = `../../${screenshotsFolder}/${testName}-${retries - retriesLeft}.png`;
+        let screenshotFilename = `../../${screenshotsFolder}/${testName}-${
+          retries - retriesLeft
+        }.png`;
         console.log(`Saving screenshot to ${screenshotFilename}`);
         await page.screenshot({
-          path: path.join(
-            __dirname,
-            screenshotFilename
-          ),
+          path: path.join(__dirname, screenshotFilename),
         });
         if (retriesLeft === 1) {
           // Unable to get it done

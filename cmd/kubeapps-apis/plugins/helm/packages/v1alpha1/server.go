@@ -169,20 +169,12 @@ func (s *Server) GetManager() (utils.AssetManager, error) {
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	contextMsg := ""
-	if request.Context != nil {
-		contextMsg = fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.Context.Cluster, request.Context.Namespace)
-	}
-
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+helm GetAvailablePackageSummaries %s", contextMsg)
 
-	// Check the request context (namespace and cluster)
-	cluster := ""
-	namespace := ""
-	if request.Context != nil {
-		namespace = request.Context.Namespace
-		cluster = request.Context.Cluster
-	}
+	namespace := request.GetContext().GetNamespace()
+	cluster := request.GetContext().GetCluster()
+
 	// Check the requested namespace: if any, return "everything a user can read";
 	// otherwise, first check if the user can access the requested ns
 	if namespace == "" {
@@ -332,15 +324,16 @@ func getUnescapedChartID(chartID string) (string, error) {
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	if request.AvailablePackageRef == nil || request.AvailablePackageRef.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef.Context provided")
-	}
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.AvailablePackageRef.Context.Cluster, request.AvailablePackageRef.Context.Namespace)
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
 	log.Infof("+helm GetAvailablePackageDetail %s", contextMsg)
 
-	// Retrieve namespace, chartID, version from the request
-	namespace := request.AvailablePackageRef.Context.Namespace
-	cluster := request.AvailablePackageRef.Context.Cluster
+	if request.GetAvailablePackageRef().GetContext() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef.Context provided")
+	}
+
+	// Retrieve namespace, cluster, version from the request
+	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	version := request.PkgVersion
 
 	// Currently we support available packages on the kubeapps cluster only.
@@ -401,6 +394,8 @@ func fileIDForChart(id, version string) string {
 
 // GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
+	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
 
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	if namespace == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
@@ -411,9 +406,6 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	if cluster != "" && cluster != s.globalPackagingCluster {
 		return nil, status.Errorf(codes.InvalidArgument, "Requests for versions of available packages on clusters other than %q not supported. Requested cluster was %q.", s.globalPackagingCluster, cluster)
 	}
-
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, request.AvailablePackageRef.Context.Namespace)
-	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
 	if err := s.hasAccessToNamespace(ctx, cluster, namespace); err != nil {
@@ -591,10 +583,12 @@ func isValidChart(chart *models.Chart) (bool, error) {
 
 // GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
+	log.Infof("+helm GetInstalledPackageSummaries %s", contextMsg)
+
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, namespace)
-	log.Infof("+helm GetInstalledPackageSummaries %s", contextMsg)
+
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
 	}
@@ -710,11 +704,13 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 
 // GetInstalledPackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetInstalledPackageRef().GetContext().GetCluster(), request.GetInstalledPackageRef().GetContext().GetNamespace())
+	log.Infof("+helm GetInstalledPackageDetail %s", contextMsg)
+
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	identifier := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", cluster, namespace)
-	log.Infof("+helm GetInstalledPackageDetail %s, id: %q", contextMsg, identifier)
+
 	actionConfig, err := s.actionConfigGetter(ctx, cluster, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
@@ -823,8 +819,9 @@ func splitChartIdentifier(chartID string) (repoName, chartName string, err error
 
 // CreateInstalledPackage creates an installed package.
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=[%s], namespace=[%s])", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
 	log.Infof("+helm CreateInstalledPackage %s", contextMsg)
+
 	// Get the AppRepository for the available package.
 	// TODO: currently app repositories are only supported on the cluster on
 	// which Kubeapps is installed. #1982
@@ -844,7 +841,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 
 	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 
-	log.Infof("+helm CreateInstalledPackage fetching chart %q with user-agent %q", chartID, userAgentString)
+	log.Infof("fetching chart %q with user-agent %q", chartID, userAgentString)
 
 	// Grab the chart itself
 	ch, err := handlerutil.GetChart(
