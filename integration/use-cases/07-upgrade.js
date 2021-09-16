@@ -34,17 +34,17 @@ test("Upgrades an application", async () => {
       // TODO(agamez): since we have installed a repo, it fetches the latest version from there,
       // however, it should get it from the repo it was installed with.
       // https://github.com/kubeapps/kubeapps/issues/3339
-      if (latestChartVersion !== "8.6.3") {
+      if (latestChartVersion !== "8.6.5") {
         console.log(
           `Unexpected latestChartVersion '${latestChartVersion}'. It happens due to https://github.com/kubeapps/kubeapps/issues/3339`,
         );
-        latestChartVersion = "8.6.3";
+        latestChartVersion = "8.6.5";
       }
     },
     testName,
   );
 
-  await expect(page).toSelect('select[name="chart-versions"]', "8.6.2");
+  await expect(page).toSelect('select[name="chart-versions"]', "8.6.3");
 
   await new Promise(r => setTimeout(r, 500));
 
@@ -52,7 +52,7 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch("8.6.2");
+      await expect(page).toMatch("8.6.3");
     },
     testName,
   );
@@ -92,7 +92,7 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch("8.6.2");
+      await expect(page).toMatch("8.6.3");
     },
     testName,
   );
