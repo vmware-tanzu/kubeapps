@@ -316,17 +316,13 @@ func local_request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx co
 
 }
 
+var (
+	filter_KappControllerPackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+)
+
 func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	var (
 		val string
@@ -334,6 +330,16 @@ func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.
 		err error
 		_   = err
 	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
 
 	val, ok = pathParams["installed_package_ref.context.namespace"]
 	if !ok {
@@ -353,6 +359,13 @@ func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.
 	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_KappControllerPackagesService_DeleteInstalledPackage_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.DeleteInstalledPackage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -364,20 +377,22 @@ func local_request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx co
 	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	var (
 		val string
 		ok  bool
 		err error
 		_   = err
 	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
 
 	val, ok = pathParams["installed_package_ref.context.namespace"]
 	if !ok {
@@ -397,6 +412,13 @@ func local_request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx co
 	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_KappControllerPackagesService_DeleteInstalledPackage_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := server.DeleteInstalledPackage(ctx, &protoReq)
@@ -600,7 +622,7 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller.packages/v1alpha1/installedpackages/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller.packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -822,7 +844,7 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller.packages/v1alpha1/installedpackages/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller.packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -858,7 +880,7 @@ var (
 
 	pattern_KappControllerPackagesService_UpdateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackages"}, ""))
 
-	pattern_KappControllerPackagesService_DeleteInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"plugins", "kapp_controller.packages", "v1alpha1", "installedpackages", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
+	pattern_KappControllerPackagesService_DeleteInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7, 1, 0, 4, 1, 5, 8}, []string{"plugins", "kapp_controller.packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
 )
 
 var (
