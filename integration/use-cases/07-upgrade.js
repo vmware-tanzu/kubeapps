@@ -17,6 +17,7 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   let latestChartVersion = "";
+  let previousChartVersion = "";
 
   await utils.retryAndRefresh(
     page,
@@ -31,20 +32,13 @@ test("Upgrades an application", async () => {
       const chartVersionValue = await chartVersionElementContent.jsonValue();
       latestChartVersion = chartVersionValue.split(" ")[0];
       expect(latestChartVersion).not.toBe("");
-      // TODO(agamez): since we have installed a repo, it fetches the latest version from there,
-      // however, it should get it from the repo it was installed with.
-      // https://github.com/kubeapps/kubeapps/issues/3339
-      if (latestChartVersion !== "8.6.3") {
-        console.log(
-          `Unexpected latestChartVersion '${latestChartVersion}'. It happens due to https://github.com/kubeapps/kubeapps/issues/3339`,
-        );
-        latestChartVersion = "8.6.3";
-      }
+      previousChartVersion = chartVersionValue.split(" ")[1];
+      expect(latestChartVersion).not.toBe("");
     },
     testName,
   );
 
-  await expect(page).toSelect('select[name="chart-versions"]', "8.6.2");
+  await expect(page).toSelect('select[name="chart-versions"]', previousChartVersion);
 
   await new Promise(r => setTimeout(r, 500));
 
@@ -52,7 +46,7 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch("8.6.2");
+      await expect(page).toMatch(previousChartVersion);
     },
     testName,
   );
@@ -92,7 +86,7 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch("8.6.2");
+      await expect(page).toMatch(previousChartVersion);
     },
     testName,
   );
