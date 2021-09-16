@@ -29,16 +29,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestCreateInstalledPackage(t *testing.T) {
+func TestUpdateInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
+		existingReleases   []releaseStub
 		request            *corev1.CreateInstalledPackageRequest
 		expectedResponse   *corev1.CreateInstalledPackageResponse
 		expectedStatusCode codes.Code
 		expectedRelease    *release.Release
 	}{
 		{
-			name: "creates the installed package from repo without credentials",
+			name: "updates the installed package from repo without credentials",
+			existingReleases: []releaseStub{
+				{
+					name:         "my-apache",
+					namespace:    "default",
+					chartVersion: "1.18.3",
+					status:       release.StatusDeployed,
+				},
+			},
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
@@ -46,14 +55,15 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Identifier: "bitnami/apache",
 				},
+				// Temporarily use the targetContext and name instead of
+				// installed package ref.
 				TargetContext: &corev1.Context{
 					Namespace: "default",
 				},
-				Name: "my-apache",
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1.18.3",
+					Version: "1.18.4",
 				},
-				Values: "{\"foo\": \"bar\"}",
+				Values: "{\"foo\": \"baz\"}",
 			},
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -69,17 +79,17 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedRelease: &release.Release{
 				Name: "my-apache",
 				Info: &release.Info{
-					Description: "Install complete",
+					Description: "Upgrade complete",
 					Status:      release.StatusDeployed,
 				},
 				Chart: &chart.Chart{
 					Metadata: &chart.Metadata{
 						Name:    "apache",
-						Version: "1.18.3",
+						Version: "1.18.4",
 					},
 					Values: map[string]interface{}{},
 				},
-				Config:    map[string]interface{}{"foo": "bar"},
+				Config:    map[string]interface{}{"foo": "baz"},
 				Version:   1,
 				Namespace: "default",
 			},
@@ -109,7 +119,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), nil)
+			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), tc.existingReleases)
 			server, _, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "bitnami",
@@ -118,7 +128,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			})
 			defer cleanup()
 
-			response, err := server.CreateInstalledPackage(context.Background(), tc.request)
+			response, err := server.UpdateInstalledPackage(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -131,7 +141,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 			if tc.expectedRelease != nil {
 				// Verify the expected request was made to Helm (our contract to the helm lib).
-				releases, err := actionConfig.Releases.Driver.List(func(*release.Release) bool { return true })
+				deployedFilter := func(r *release.Release) bool {
+					return r.Info.Status == release.StatusDeployed
+				}
+				releases, err := actionConfig.Releases.Driver.List(deployedFilter)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}

@@ -855,6 +855,10 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		caCertSecret, authSecret,
 		s.chartClientFactory.New(appRepo.Spec.Type, userAgentString),
 	)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to fetch chart %q from repo %q: %v", chartName, appRepo.Name, err)
+	}
+	log.Errorf("got chart: %+v", ch.Metadata)
 
 	// Create an action config for the target namespace.
 	namespace := request.GetTargetContext().GetNamespace()
@@ -879,7 +883,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 
 	release, err := agent.CreateRelease(actionConfig, request.GetName(), namespace, request.GetValues(), ch, registrySecrets)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create helm release %q in the namespace %q: %v", request.GetName(), appRepo.Namespace, err)
+		return nil, status.Errorf(codes.Internal, "Unable to create helm release %q in the namespace %q: %v", request.GetName(), namespace, err)
 	}
 
 	return &corev1.CreateInstalledPackageResponse{
@@ -943,4 +947,90 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, appRepoName, a
 	}
 
 	return &appRepo, caCertSecret, authSecret, nil
+}
+
+// UpdateInstalledPackage updates an installed package.
+func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
+	// Until Greg pushes a PR with the new messages, just hard-code installed package ref.
+	installedRef := &corev1.InstalledPackageReference{
+		Context:    request.GetTargetContext(),
+		Identifier: request.GetName(),
+		Plugin:     GetPluginDetail(),
+	}
+	releaseName := "my-apache"
+	// END hard-coded stuff
+
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), installedRef.GetContext().GetNamespace())
+	log.Infof("+helm UpdateInstalledPackage %s", contextMsg)
+
+	// Get the AppRepository for the available package.
+	// TODO: currently app repositories are only supported on the cluster on
+	// which Kubeapps is installed. #1982
+	chartID := request.GetAvailablePackageRef().GetIdentifier()
+	repoNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	repoName, chartName, err := splitChartIdentifier(chartID)
+	chartVersion := request.GetPkgVersionReference().GetVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
+	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, repoName, repoNamespace)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to fetch app repo %q from namespace %q: %v", repoName, repoNamespace, err)
+	}
+
+	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
+
+	log.Infof("fetching chart %q with user-agent %q", chartID, userAgentString)
+
+	// Grab the chart itself
+	ch, err := handlerutil.GetChart(
+		&chart.Details{
+			AppRepositoryResourceName:      appRepo.Name,
+			AppRepositoryResourceNamespace: appRepo.Namespace,
+			ChartName:                      chartName,
+			Version:                        chartVersion,
+		},
+		appRepo,
+		caCertSecret, authSecret,
+		s.chartClientFactory.New(appRepo.Spec.Type, userAgentString),
+	)
+
+	// Create an action config for the target namespace.
+	namespace := installedRef.GetContext().GetNamespace()
+	cluster := installedRef.GetContext().GetCluster()
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+	actionConfig, err := s.actionConfigGetter(ctx, cluster, namespace)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+
+	// We currently get app repositories on the kubeapps cluster only.
+	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
+	}
+	registrySecrets, err := chart.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, typedClient)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to fetch registry secrets from the namespace %q: %v", appRepo.Namespace, err)
+	}
+
+	release, err := agent.UpgradeRelease(actionConfig, releaseName, request.GetValues(), ch, registrySecrets)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to upgrade helm release %q in the namespace %q: %v", releaseName, namespace, err)
+	}
+
+	return &corev1.CreateInstalledPackageResponse{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Cluster:   cluster,
+				Namespace: release.Namespace,
+			},
+			Identifier: release.Name,
+			Plugin:     GetPluginDetail(),
+		},
+	}, nil
 }
