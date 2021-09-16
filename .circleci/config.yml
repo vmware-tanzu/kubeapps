@@ -174,12 +174,12 @@ workflows:
             - local_e2e_tests
       - sync_chart_to_bitnami:
           <<: *build_always
-          requires:
-            - local_e2e_tests
-            - GKE_1_20_MASTER
-            - GKE_1_20_LATEST_RELEASE
-            - GKE_1_19_MASTER
-            - GKE_1_19_LATEST_RELEASE
+          # requires:
+          #   - local_e2e_tests
+          #   - GKE_1_20_MASTER
+          #   - GKE_1_20_LATEST_RELEASE
+          #   - GKE_1_19_MASTER
+          #   - GKE_1_19_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
