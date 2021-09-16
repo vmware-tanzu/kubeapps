@@ -93,6 +93,59 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			},
 		},
 		{
+			name: "populates the cluster in the returned context if not set in request",
+			existingReleases: []releaseStub{
+				{
+					name:           "my-apache",
+					namespace:      "default",
+					chartID:        "bitnami/apache",
+					chartVersion:   "1.18.3",
+					chartNamespace: globalPackagingNamespace,
+					status:         release.StatusDeployed,
+				},
+			},
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1.18.4",
+				},
+				Values: "{\"foo\": \"baz\"}",
+			},
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+					Plugin:     GetPluginDetail(),
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedRelease: &release.Release{
+				Name: "my-apache",
+				Info: &release.Info{
+					Description: "Upgrade complete",
+					Status:      release.StatusDeployed,
+				},
+				Chart: &chart.Chart{
+					Metadata: &chart.Metadata{
+						Name:    "apache",
+						Version: "1.18.4",
+					},
+					Values: map[string]interface{}{},
+				},
+				Config:    map[string]interface{}{"foo": "baz"},
+				Version:   1,
+				Namespace: "default",
+			},
+		},
+		{
 			name: "returns invalid if installed package doesn't exist",
 			request: &corev1.UpdateInstalledPackageRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{

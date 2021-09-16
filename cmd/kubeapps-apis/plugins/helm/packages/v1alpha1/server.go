@@ -881,7 +881,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	// Determine the chart used for this installed package.
 	// We may want to include the AvailablePackageRef in the request, given
 	// that it can be ambiguous, but we dont yet have a UI that allows the
-	// user to select which chart to use, so until then.
+	// user to select which chart to use, so until then, we're fetching the
+	// available package ref via the detail (bit of a short-cut, could query
+	// for the ref directly).
 	detailResponse, err := s.GetInstalledPackageDetail(ctx, &corev1.GetInstalledPackageDetailRequest{
 		InstalledPackageRef: installedRef,
 	})
@@ -922,10 +924,15 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.Internal, "Unable to upgrade helm release %q in the namespace %q: %v", releaseName, installedRef.GetContext().GetNamespace(), err)
 	}
 
+	cluster := installedRef.GetContext().GetCluster()
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+
 	return &corev1.UpdateInstalledPackageResponse{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Cluster:   installedRef.GetContext().GetCluster(),
+				Cluster:   cluster,
 				Namespace: release.Namespace,
 			},
 			Identifier: release.Name,
