@@ -28,6 +28,7 @@ plugins:
     out: gen
     opt:
       - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+      - allow_delete_body=true
   # Consider migrating to openapiv3 once ready
   # https://github.com/grpc-ecosystem/grpc-gateway/pull/2147
   - name: openapiv2
@@ -37,6 +38,7 @@ plugins:
       - allow_merge=true
       - merge_file_name=kubeapps-apis
       - allow_repeated_fields_in_body=true
+      - allow_delete_body=true
       # - generate_unbound_methods=true # have to re-check it
       # - json_names_for_fields=false # have to re-check it
   # ts_proto plugin generates the typescript grpc-web compliant client for each operation

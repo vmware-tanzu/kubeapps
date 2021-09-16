@@ -9,12 +9,16 @@ import {
   GetInstalledPackageSummariesRequest,
   GetInstalledPackageDetailRequest,
   CreateInstalledPackageRequest,
+  UpdateInstalledPackageRequest,
+  DeleteInstalledPackageRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
   GetInstalledPackageSummariesResponse,
   GetInstalledPackageDetailResponse,
   CreateInstalledPackageResponse,
+  UpdateInstalledPackageResponse,
+  DeleteInstalledPackageResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { BrowserHeaders } from "browser-headers";
 
@@ -132,6 +136,16 @@ export interface HelmPackagesService {
     request: DeepPartial<CreateInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<CreateInstalledPackageResponse>;
+  /** UpdateInstalledPackage updates an installed package based on the request. */
+  UpdateInstalledPackage(
+    request: DeepPartial<UpdateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdateInstalledPackageResponse>;
+  /** DeleteInstalledPackage deletes an installed package based on the request. */
+  DeleteInstalledPackage(
+    request: DeepPartial<DeleteInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeleteInstalledPackageResponse>;
 }
 
 export class HelmPackagesServiceClientImpl implements HelmPackagesService {
@@ -145,6 +159,8 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
+    this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
+    this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -209,6 +225,28 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     return this.rpc.unary(
       HelmPackagesServiceCreateInstalledPackageDesc,
       CreateInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  UpdateInstalledPackage(
+    request: DeepPartial<UpdateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdateInstalledPackageResponse> {
+    return this.rpc.unary(
+      HelmPackagesServiceUpdateInstalledPackageDesc,
+      UpdateInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  DeleteInstalledPackage(
+    request: DeepPartial<DeleteInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeleteInstalledPackageResponse> {
+    return this.rpc.unary(
+      HelmPackagesServiceDeleteInstalledPackageDesc,
+      DeleteInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -342,6 +380,50 @@ export const HelmPackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitio
     deserializeBinary(data: Uint8Array) {
       return {
         ...CreateInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmPackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "UpdateInstalledPackage",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return UpdateInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...UpdateInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmPackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "DeleteInstalledPackage",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return DeleteInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...DeleteInstalledPackageResponse.decode(data),
         toObject() {
           return this;
         },

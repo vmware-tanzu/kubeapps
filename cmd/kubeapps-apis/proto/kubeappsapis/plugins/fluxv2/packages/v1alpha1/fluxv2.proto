@@ -62,6 +62,19 @@ service FluxV2PackagesService {
       body: "*"
     };
   }
+
+  // DeleteInstalledPackage deletes an installed package based on the request.
+  rpc DeleteInstalledPackage(kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse) {
+    option (google.api.http) = {
+      // Example:
+      // /plugins/fluxv2.packages/v1alpha1/installedpackages/ns/my-ns/release-identifier
+      delete: "/plugins/fluxv2.packages/v1alpha1/installedpackages/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+      // We allow a body for the delete request so that we can support multi-cluster
+      // environments, where the context.cluster is also set, without requiring the
+      // cluster in the URL.
+      body: "*"
+    };
+  }
 }
 
 // Specific messages used by the 'fluxv2' plugin

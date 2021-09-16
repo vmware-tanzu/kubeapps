@@ -55,12 +55,17 @@ service PackagesService {
       };
   }
 
-  // TODO: remaining operations yet to be defined
-  // rpc DeleteInstalledPackage(DeleteInstalledPackageRequest) returns (DeleteInstalledPackageResponse) {
-  //   option (google.api.http) = {
-  //     delete: "/core/packages/v1alpha1/installedpackages"
-  //   };
-  // }
+  rpc DeleteInstalledPackage(DeleteInstalledPackageRequest) returns (DeleteInstalledPackageResponse) {
+    option (google.api.http) = {
+      // Example:
+      // /core/packages/v1alpha1/installedpackages/plugin/helm.packages/v1alpha1/ns/my-ns/release-identifier
+      delete: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+      // We allow a body for the delete request so that we can support multi-cluster
+      // environments, where the context.cluster is also set, without requiring the
+      // cluster in the URL.
+      body: "*"
+    };
+  }
 }
 
 // Standard request and response messages for each required function are defined
@@ -161,8 +166,8 @@ message CreateInstalledPackageRequest {
 
 // UpdateInstalledPackageRequest
 //
-// Request for UpdateInstalledPackage. Partial resource updates are supported. 
-// For example, to change the package version one only needs to specify the version reference. 
+// Request for UpdateInstalledPackage. Partial resource updates are supported.
+// For example, to change the package version one only needs to specify the version reference.
 // Similarly to update the values, one only needs to specify that field
 message UpdateInstalledPackageRequest {
   // A reference uniquely identifying the installed package being updated.
@@ -176,13 +181,21 @@ message UpdateInstalledPackageRequest {
   // An optional serialized values string to be included when templating a
   // package in the format expected by the plugin. Included when the backend
   // format doesn't use secrets or configmaps for values or supports both.
-  // These values are layered on top of any values refs above, when 
-  // relevant. 
+  // These values are layered on top of any values refs above, when
+  // relevant.
   string values = 3;
 
   // An optional field for specifying data common to systems that reconcile
-  // the package on the cluster. 
+  // the package on the cluster.
   ReconciliationOptions reconciliation_options = 4;
+}
+
+// DeleteInstalledPackageRequest
+//
+// Request for DeleteInstalledPackage
+message DeleteInstalledPackageRequest {
+  // A reference to uniquely identify the installed package to be deleted.
+  InstalledPackageReference installed_package_ref = 1;
 }
 
 // -- Start definitions of the response messages --
@@ -316,6 +329,13 @@ message UpdateInstalledPackageResponse {
   // };
 
   InstalledPackageReference installed_package_ref = 1;
+}
+
+// DeleteInstalledPackageResponse
+//
+// Response for DeleteInstalledPackage
+message DeleteInstalledPackageResponse {
+  // For future extensibility only.
 }
 
 // -- Start definitions used in the responses  --
@@ -490,8 +510,8 @@ message InstalledPackageSummary {
   //
   // The current version of the package being reconciled, which may be
   // in one of these states:
-  //  - has been successfully installed/upgraded or 
-  //  - is currently being installed/upgraded or 
+  //  - has been successfully installed/upgraded or
+  //  - is currently being installed/upgraded or
   //  - has failed to install/upgrade
   PackageAppVersion current_version = 4;
 

@@ -316,6 +316,94 @@ func local_request_FluxV2PackagesService_UpdateInstalledPackage_0(ctx context.Co
 
 }
 
+func request_FluxV2PackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
+
+	msg, err := client.DeleteInstalledPackage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_FluxV2PackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
+
+	msg, err := server.DeleteInstalledPackage(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 // RegisterFluxV2PackagesServiceHandlerServer registers the http handlers for service FluxV2PackagesService to "mux".
 // UnaryRPC     :call FluxV2PackagesServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -503,6 +591,29 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 		}
 
 		forward_FluxV2PackagesService_UpdateInstalledPackage_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("DELETE", pattern_FluxV2PackagesService_DeleteInstalledPackage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2.packages/v1alpha1/installedpackages/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_FluxV2PackagesService_DeleteInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_FluxV2PackagesService_DeleteInstalledPackage_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -707,6 +818,26 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 
 	})
 
+	mux.Handle("DELETE", pattern_FluxV2PackagesService_DeleteInstalledPackage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2.packages/v1alpha1/installedpackages/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_FluxV2PackagesService_DeleteInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_FluxV2PackagesService_DeleteInstalledPackage_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -726,6 +857,8 @@ var (
 	pattern_FluxV2PackagesService_CreateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages"}, ""))
 
 	pattern_FluxV2PackagesService_UpdateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages"}, ""))
+
+	pattern_FluxV2PackagesService_DeleteInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"plugins", "fluxv2.packages", "v1alpha1", "installedpackages", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
 )
 
 var (
@@ -744,4 +877,6 @@ var (
 	forward_FluxV2PackagesService_CreateInstalledPackage_0 = runtime.ForwardResponseMessage
 
 	forward_FluxV2PackagesService_UpdateInstalledPackage_0 = runtime.ForwardResponseMessage
+
+	forward_FluxV2PackagesService_DeleteInstalledPackage_0 = runtime.ForwardResponseMessage
 )
