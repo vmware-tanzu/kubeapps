@@ -950,24 +950,33 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, appRepoName, a
 }
 
 // UpdateInstalledPackage updates an installed package.
-func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
-	// Until Greg pushes a PR with the new messages, just hard-code installed package ref.
-	installedRef := &corev1.InstalledPackageReference{
-		Context:    request.GetTargetContext(),
-		Identifier: request.GetName(),
-		Plugin:     GetPluginDetail(),
-	}
-	releaseName := "my-apache"
-	// END hard-coded stuff
-
+func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
+	installedRef := request.GetInstalledPackageRef()
+	releaseName := installedRef.GetIdentifier()
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), installedRef.GetContext().GetNamespace())
 	log.Infof("+helm UpdateInstalledPackage %s", contextMsg)
+
+	// Determine the chart used for this installed package.
+	// We may want to include the AvailablePackageRef in the request, given
+	// that it can be ambiguous, but we dont yet have a UI that allows the
+	// user to select which chart to use, so until then.
+	detailResponse, err := s.GetInstalledPackageDetail(ctx, &corev1.GetInstalledPackageDetailRequest{
+		InstalledPackageRef: installedRef,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	availablePkgRef := detailResponse.GetInstalledPackageDetail().GetAvailablePackageRef()
+	if availablePkgRef == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "Unable to find the available package used to deploy %q in the namespace %q.", releaseName, installedRef.GetContext().GetNamespace())
+	}
 
 	// Get the AppRepository for the available package.
 	// TODO: currently app repositories are only supported on the cluster on
 	// which Kubeapps is installed. #1982
-	chartID := request.GetAvailablePackageRef().GetIdentifier()
-	repoNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	chartID := availablePkgRef.GetIdentifier()
+	repoNamespace := availablePkgRef.GetContext().GetNamespace()
 	repoName, chartName, err := splitChartIdentifier(chartID)
 	chartVersion := request.GetPkgVersionReference().GetVersion()
 	if err != nil {
@@ -1023,7 +1032,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.Internal, "Unable to upgrade helm release %q in the namespace %q: %v", releaseName, namespace, err)
 	}
 
-	return &corev1.CreateInstalledPackageResponse{
+	return &corev1.UpdateInstalledPackageResponse{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
 				Cluster:   cluster,
