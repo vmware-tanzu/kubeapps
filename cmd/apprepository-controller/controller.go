@@ -429,7 +429,8 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1b
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            cronJobName(apprepo.Namespace, apprepo.Name),
 			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
-			Labels:          jobLabels(apprepo),
+			Labels:          jobLabels(apprepo, config),
+			Annotations:     config.ParsedCustomAnnotations,
 		},
 		Spec: batchv1beta1.CronJobSpec{
 			Schedule: config.Crontab,
@@ -451,6 +452,8 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName:    cronJobName(apprepo.Namespace, apprepo.Name) + "-",
 			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
+			Annotations:     config.ParsedCustomLabels,
+			Labels:          config.ParsedCustomAnnotations,
 		},
 		Spec: syncJobSpec(apprepo, config),
 	}
@@ -484,9 +487,10 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	if len(podTemplateSpec.ObjectMeta.Labels) == 0 {
 		podTemplateSpec.ObjectMeta.Labels = map[string]string{}
 	}
-	for k, v := range jobLabels(apprepo) {
+	for k, v := range jobLabels(apprepo, config) {
 		podTemplateSpec.ObjectMeta.Labels[k] = v
 	}
+	podTemplateSpec.ObjectMeta.Annotations = config.ParsedCustomAnnotations
 	// If there's an issue, will restart pod until successful or replaced
 	// by another instance of the job scheduled by the cronjob
 	// see: cronJobSpec.concurrencyPolicy
@@ -521,6 +525,8 @@ func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config)
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: deleteJobName(repoNamespace, name) + "-",
 			Namespace:    kubeappsNamespace,
+			Annotations:  config.ParsedCustomAnnotations,
+			Labels:       config.ParsedCustomLabels,
 		},
 		Spec: cleanupJobSpec(repoNamespace, name, config),
 	}
@@ -561,11 +567,17 @@ func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
 }
 
 // jobLabels returns the labels for the job and cronjob resources
-func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
-	return map[string]string{
+func jobLabels(apprepo *apprepov1alpha1.AppRepository, config Config) map[string]string {
+	// Adding the default labels
+	labels := map[string]string{
 		LabelRepoName:      apprepo.GetName(),
 		LabelRepoNamespace: apprepo.GetNamespace(),
 	}
+	// Add the custom labels from the config
+	for k, v := range config.ParsedCustomLabels {
+		labels[k] = v
+	}
+	return labels
 }
 
 // ttlLifetimeJobs return time to live set by user otherwise return nil

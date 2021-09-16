@@ -33,6 +33,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "",
 				Crontab:                  "*/10 * * * *",
 				TTLSecondsAfterFinished:  "3600",
+				CustomAnnotations:        []string{""},
+				CustomLabels:             []string{""},
+				ParsedCustomAnnotations:  map[string]string{},
+				ParsedCustomLabels:       map[string]string{},
 				Args:                     []string{},
 			},
 		},
@@ -59,6 +63,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "",
 				Crontab:                  "*/10 * * * *",
 				TTLSecondsAfterFinished:  "3600",
+				CustomAnnotations:        []string{""},
+				CustomLabels:             []string{""},
+				ParsedCustomAnnotations:  map[string]string{},
+				ParsedCustomLabels:       map[string]string{},
 				Args:                     []string{},
 			},
 		},
@@ -80,6 +88,9 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--database-secret-key", "foo10",
 				"--user-agent-comment", "foo11",
 				"--crontab", "foo12",
+				"--custom-annotations", "foo13=bar13,foo13x=bar13x",
+				"--custom-annotations", "extra13=extra13",
+				"--custom-labels", "foo14=bar14,foo14x=bar14x",
 			},
 			Config{
 				Kubeconfig:               "foo01",
@@ -98,6 +109,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "foo11",
 				Crontab:                  "foo12",
 				TTLSecondsAfterFinished:  "3600",
+				CustomAnnotations:        []string{"foo13=bar13", "foo13x=bar13x", "extra13=extra13"},
+				CustomLabels:             []string{"foo14=bar14", "foo14x=bar14x"},
+				ParsedCustomAnnotations:  map[string]string{"foo13": "bar13", "foo13x": "bar13x", "extra13": "extra13"},
+				ParsedCustomLabels:       map[string]string{"foo14": "bar14", "foo14x": "bar14x"},
 				Args:                     []string{},
 			},
 		},
@@ -107,6 +122,9 @@ func TestParseFlagsCorrect(t *testing.T) {
 		t.Run(strings.Join(tt.args, " "), func(t *testing.T) {
 			conf, output, err := parseFlags("program", tt.args)
 			conf.ImagePullSecretsRefs = getImagePullSecretsRefs(conf.RepoSyncImagePullSecrets)
+
+			conf.ParsedCustomAnnotations = parseLabelsAnnotations(conf.CustomAnnotations)
+			conf.ParsedCustomLabels = parseLabelsAnnotations(conf.CustomLabels)
 
 			if err != nil {
 				t.Errorf("err got:\n%v\nwant nil", err)

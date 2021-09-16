@@ -1,0 +1,1913 @@
+Release "kubeapps" has been upgraded. Happy Helming!
+NAME: kubeapps
+LAST DEPLOYED: Thu Sep 16 19:28:40 2021
+NAMESPACE: kubeapps
+STATUS: pending-upgrade
+REVISION: 2
+TEST SUITE: None
+HOOKS:
+MANIFEST:
+---
+# Source: kubeapps/templates/apprepository/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubeapps-internal-apprepository-controller
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+---
+# Source: kubeapps/templates/kubeops/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubeapps-internal-kubeops
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+---
+# Source: kubeapps/charts/postgresql/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubeapps-postgresql
+  labels:
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-10.9.4
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+  namespace: kubeapps
+type: Opaque
+data:
+  postgresql-password: "bFo4dm1jdmxzVQ=="
+  postgresql-replication-password: "cmVwbF9wYXNzd29yZA=="
+---
+# Source: kubeapps/templates/dashboard/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubeapps-internal-dashboard-config
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: dashboard
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+data:
+  vhost.conf: |-
+    server {
+      listen 8080;
+      large_client_header_buffers 4 32k;
+      server_name _;
+
+      gzip on;
+      gzip_static  on;
+
+      location /custom_style.css {
+        root /app/custom-css/;
+      }
+
+      location /custom_locale.json {
+        root /app/custom-locale/;
+      }
+
+      location /custom_components.js {
+        root /app/custom-components/;
+      }
+
+      location / {
+        # Redirects are required to be relative otherwise the internal hostname will be exposed
+        absolute_redirect off;
+
+        # Trailing / is required in the path for the React app to be loaded correctly
+        # The rewrite rule adds a trailing "/" to any path that does not contain "." neither "/".
+        # i.e kubeapps => kubeapps/
+        rewrite ^([^.]*[^/])$ $1/ permanent;
+
+        # Support for ingress prefixes maintaining compatibility with the default /
+        # 1 - Exactly two fragment URLs for files existing inside of the public/ dir
+        # i.e /[prefix]/config.json => /config.json
+        rewrite ^/[^/]+/([^/]+)$ /$1 break;
+
+        # 2 - Any static files bundled by webpack referenced by 3 or more URL segments
+        # i.e /[prefix]/static/main.js => static/main.js
+        rewrite ^/[^/]+/static/(.*) /static/$1 break;
+
+        try_files $uri /index.html;
+      }
+    }
+  custom_style.css: |-
+    
+  custom_components.js: |-
+    
+  custom_locale.json: |-
+    ""
+  config.json: |-
+    {
+      "kubeappsCluster": "default",
+      "kubeappsNamespace": "kubeapps",
+      "appVersion": "vDEVEL",
+      "authProxyEnabled": false,
+      "oauthLoginURI": "/oauth2/start",
+      "oauthLogoutURI": "/oauth2/sign_out",
+      "authProxySkipLoginPage": false,
+      "featureFlags": {"invalidateCache":true,"kubeappsAPIsServer":true},
+      "clusters": ["default"],
+      "theme": "",
+      "remoteComponentsUrl": ""
+    }
+---
+# Source: kubeapps/templates/frontend/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubeapps-frontend-config
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: frontend
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+data:
+  k8s-api-proxy.conf: |-
+    # Disable buffering for log streaming
+    proxy_buffering off;
+    # Hide Www-Authenticate to prevent it triggering a basic auth prompt in
+    # the browser with some clusters
+    proxy_hide_header Www-Authenticate;
+
+    # Keep the connection open with the API server even if idle (the default is 60 seconds)
+    # Setting it to 1 hour which should be enough for our current use case of deploying/upgrading apps
+    # If we enable other use-cases in the future we might need to bump this value
+    # More info here https://github.com/kubeapps/kubeapps/issues/766
+    proxy_read_timeout 1h;
+  vhost.conf: |-
+    # Retain the default nginx handling of requests without a "Connection" header
+    map $http_upgrade $connection_upgrade {
+      default upgrade;
+      ''      close;
+    }
+
+    # Allow websocket connections
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+
+    server {
+      listen 8080;
+      large_client_header_buffers 4 32k;
+      server_name _;
+
+      location /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "healthy\n";
+      }
+
+      # Ensure each cluster can be reached (should only be
+      # used with an auth-proxy where k8s credentials never leave
+      # the cluster). See clusters option.
+      location ~* /api/clusters/default {
+    
+        rewrite /api/clusters/default/(.*) /$1 break;
+        rewrite /api/clusters/default / break;
+
+    
+        # Otherwise we route directly through to the clusters with existing credentials.
+        proxy_pass https://kubernetes.default;
+        include "./server_blocks/k8s-api-proxy.conf";
+      }
+
+      # Forward '/api/assetsvc' to '/assetsvc'
+      # but preserving the encoding (eg. '%2F' is not converted to '/')
+      # see https://serverfault.com/a/906479
+      # Ex: from "/api/assetsvc/what$2Fever?param=value"
+      #     it matches as $1="/what$2Fever" and $args="param=value"
+      #     downstream services will receive "/assetsvc/what$2Fever?param=value"
+      location ~* /api/assetsvc {
+        rewrite ^ $request_uri; # pass the encoded url downstream as is,
+        rewrite /api/assetsvc([^?]*) /assetsvc$1?$args break;
+
+        proxy_pass http://kubeapps-internal-kubeops:8080;
+      }
+
+      location ~* /api/kubeops {
+        # Keep the connection open with the API server even if idle (the default is 60 seconds)
+        # Setting it to 10 minutes which should be enough for our current use case of deploying/upgrading/deleting apps
+        proxy_read_timeout 10m;
+        rewrite /api/kubeops/(.*) /$1 break;
+        rewrite /api/kubeops / break;
+
+        proxy_pass http://kubeapps-internal-kubeops:8080;
+      }
+      location ~* /apis {
+        rewrite ^ $request_uri; # pass the encoded url downstream as is,
+        rewrite /apis/([^?]*) /$1 break;
+        rewrite /apis / break;
+
+        proxy_pass http://kubeapps-internal-kubeappsapis:8080;
+      }
+
+      # The route for the Kubeapps backend API is not prefixed.
+      location ~* /api/ {
+        rewrite /api/(.*) /backend/$1 break;
+        rewrite /api/ /backend break;
+
+        proxy_pass http://kubeapps-internal-kubeops:8080;
+      }
+
+      location / {
+        # Add the Authorization header if exists
+        add_header Authorization $http_authorization;
+
+        proxy_pass http://kubeapps-internal-dashboard:8080;
+      }
+    }
+---
+# Source: kubeapps/templates/shared/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubeapps-clusters-config
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+data:
+  clusters.conf: |-
+    [
+      {
+        "domain": "cluster.local",
+        "name": "default"
+      }
+    ]
+---
+# Source: kubeapps/templates/apprepository/rbac.yaml
+# The Kubeapps app repository controller can read and watch its own
+# AppRepository resources cluster-wide. The read and write cluster-roles can
+# also be bound to users in specific namespaces as required.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "kubeapps:kubeapps:apprepositories-read"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - kubeapps.com
+    resources:
+      - apprepositories
+      - apprepositories/finalizers
+    verbs:
+      - get
+      - list
+      - watch
+---
+# Source: kubeapps/templates/apprepository/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "kubeapps:kubeapps:apprepositories-write"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - kubeapps.com
+    resources:
+      - apprepositories
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - '*'
+---
+# Source: kubeapps/templates/apprepository/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "kubeapps:kubeapps:apprepositories-refresh"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - kubeapps.com
+    resources:
+      - apprepositories
+    verbs:
+      - get
+      - update
+---
+# Source: kubeapps/templates/kubeappsapis/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "kubeapps:controller:kubeapps-apis-dev-kubeapps"
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeappsapis
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - "packageinstalls.packaging.carvel.dev"
+      - "packagerepositories.packaging.carvel.dev"
+  # TODO (gfichtenholt) possibly surround this with if "fluxv2 plugin is enabled"
+      - "source.toolkit.fluxcd.io"
+      - "helm.toolkit.fluxcd.io"
+    resources: ['*']
+    verbs: ['*']
+  # So that our dev user is seen as having access to a namespace.
+  # We'll need to add rbac for our dev user to install later as well.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  # needed by fluxv2 plug-in to check whether flux CRDs have been installed
+  # TODO (gfichtenholt) possibly surround this with "if fluxv2 plugin is enabled"
+  - apiGroups: ["apiextensions.k8s.io"] 
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list"]
+---
+# Source: kubeapps/templates/kubeops/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "kubeapps:controller:kubeops-ns-discovery-kubeapps"
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - list
+---
+# Source: kubeapps/templates/kubeops/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "kubeapps:controller:kubeops-operators-kubeapps"
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - packages.operators.coreos.com
+    resources:
+      - packagemanifests/icon
+    verbs:
+      - get
+---
+# Source: kubeapps/templates/apprepository/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "kubeapps:controller:kubeapps:apprepositories-read"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: "kubeapps:kubeapps:apprepositories-read"
+subjects:
+  - kind: ServiceAccount
+    name: kubeapps-internal-apprepository-controller
+    namespace: kubeapps
+---
+# Source: kubeapps/templates/kubeops/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "kubeapps:controller:kubeops-ns-discovery-kubeapps"
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: "kubeapps:controller:kubeops-ns-discovery-kubeapps"
+subjects:
+  - kind: ServiceAccount
+    name: kubeapps-internal-kubeops
+    namespace: kubeapps
+---
+# Source: kubeapps/templates/kubeops/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "kubeapps:controller:kubeops-operators-kubeapps"
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: "kubeapps:controller:kubeops-operators-kubeapps"
+subjects:
+  - kind: ServiceAccount
+    name: kubeapps-internal-kubeops
+    namespace: kubeapps
+---
+# Source: kubeapps/templates/apprepository/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubeapps-internal-apprepository-controller
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+    verbs:
+      - create
+      - get
+      - list
+      - update
+      - watch
+      - delete
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - create
+  - apiGroups:
+      - kubeapps.com
+    resources:
+      - apprepositories
+      - apprepositories/finalizers
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+---
+# Source: kubeapps/templates/apprepository/rbac.yaml
+# Define role, but no binding, so users can be bound to this role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubeapps-repositories-read
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - kubeapps.com
+    resources:
+      - apprepositories
+    verbs:
+      - list
+      - get
+---
+# Source: kubeapps/templates/apprepository/rbac.yaml
+# Define role, but no binding, so users can be bound to this role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubeapps-repositories-write
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - kubeapps.com
+    resources:
+      - apprepositories
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+---
+# Source: kubeapps/templates/kubeops/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubeapps-internal-kubeops
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - create
+      - delete
+  - apiGroups:
+      - "kubeapps.com"
+    resources:
+      - apprepositories
+    verbs:
+      - get
+      - list
+---
+# Source: kubeapps/templates/apprepository/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubeapps-internal-apprepository-controller
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubeapps-internal-apprepository-controller
+subjects:
+  - kind: ServiceAccount
+    name: kubeapps-internal-apprepository-controller
+    namespace: kubeapps
+---
+# Source: kubeapps/templates/kubeops/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubeapps-internal-kubeops
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubeapps-internal-kubeops
+subjects:
+  - kind: ServiceAccount
+    name: kubeapps-internal-kubeops
+    namespace: kubeapps
+---
+# Source: kubeapps/charts/postgresql/templates/svc-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeapps-postgresql-headless
+  labels:
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-10.9.4
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    # Use this annotation in addition to the actual publishNotReadyAddresses
+    # field below because the annotation will stop being respected soon but the
+    # field is broken in some versions of Kubernetes:
+    # https://github.com/kubernetes/kubernetes/issues/58662
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+  namespace: kubeapps
+spec:
+  type: ClusterIP
+  clusterIP: None
+  # We want all pods in the StatefulSet to have their addresses published for
+  # the sake of the other Postgresql pods even before they're ready, since they
+  # have to be able to talk to each other in order to become ready.
+  publishNotReadyAddresses: true
+  ports:
+    - name: tcp-postgresql
+      port: 5432
+      targetPort: tcp-postgresql
+  selector:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: kubeapps
+---
+# Source: kubeapps/charts/postgresql/templates/svc-read.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeapps-postgresql-read
+  labels:
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-10.9.4
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+  namespace: kubeapps
+spec:
+  type: ClusterIP
+  ports:
+    - name: tcp-postgresql
+      port:  5432
+      targetPort: tcp-postgresql
+  selector:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: kubeapps
+    role: read
+---
+# Source: kubeapps/charts/postgresql/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeapps-postgresql
+  labels:
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-10.9.4
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+  namespace: kubeapps
+spec:
+  type: ClusterIP
+  ports:
+    - name: tcp-postgresql
+      port: 5432
+      targetPort: tcp-postgresql
+  selector:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: kubeapps
+    role: primary
+---
+# Source: kubeapps/templates/assetsvc/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeapps-internal-assetsvc
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: assetsvc
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: kubeapps
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/component: assetsvc
+---
+# Source: kubeapps/templates/dashboard/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeapps-internal-dashboard
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: dashboard
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: kubeapps
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/component: dashboard
+---
+# Source: kubeapps/templates/frontend/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeapps
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: frontend
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      nodePort: null
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: kubeapps
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/component: frontend
+---
+# Source: kubeapps/templates/kubeappsapis/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeapps-internal-kubeappsapis
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeappsapis
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: grpc-http
+      protocol: TCP
+      name: grpc-http
+  selector:
+    app.kubernetes.io/name: kubeapps
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/component: kubeappsapis
+---
+# Source: kubeapps/templates/kubeops/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeapps-internal-kubeops
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: kubeapps
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/component: kubeops
+---
+# Source: kubeapps/templates/apprepository/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeapps-internal-apprepository-controller
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: apprepository
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubeapps
+      app.kubernetes.io/instance: kubeapps
+      app.kubernetes.io/component: apprepository
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubeapps
+        helm.sh/chart: kubeapps-7.4.1-dev0
+        app.kubernetes.io/instance: kubeapps
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: apprepository
+    spec:      
+      serviceAccountName: kubeapps-internal-apprepository-controller
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: kubeapps
+                    app.kubernetes.io/instance: kubeapps
+                    app.kubernetes.io/component: apprepository
+                namespaces:
+                  - "kubeapps"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+      containers:
+        - name: controller
+          image: docker.io/kubeapps/apprepository-controller:latest
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+          command:
+            - /apprepository-controller
+          args:
+            - --user-agent-comment=kubeapps/DEVEL
+            - --repo-sync-image=$(REPO_SYNC_IMAGE)
+            - --repo-sync-cmd=/asset-syncer
+            - --namespace=kubeapps
+            - --database-secret-name=kubeapps-postgresql
+            - --database-secret-key=postgresql-password
+            - --database-url=kubeapps-postgresql:5432
+            - --database-user=postgres
+            - --database-name=assets
+            - --repos-per-namespace=true
+            -  --custom-annotations="foo.annotation=foo-value"
+            -  --custom-annotations="kapp.k14s.io/app=kubeapps-rocks-annotation"
+            -  --custom-labels="foo.label=foo-value"
+            -  --custom-labels="kapp.k14s.io/app=kubeapps-rocks-label"
+          env:
+            - name: REPO_SYNC_IMAGE
+              value: docker.io/kubeapps/asset-syncer:latest
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
+---
+# Source: kubeapps/templates/assetsvc/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeapps-internal-assetsvc
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: assetsvc
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubeapps
+      app.kubernetes.io/instance: kubeapps
+      app.kubernetes.io/component: assetsvc
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubeapps
+        helm.sh/chart: kubeapps-7.4.1-dev0
+        app.kubernetes.io/instance: kubeapps
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: assetsvc
+    spec:      
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: kubeapps
+                    app.kubernetes.io/instance: kubeapps
+                    app.kubernetes.io/component: assetsvc
+                namespaces:
+                  - "kubeapps"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+      containers:
+        - name: assetsvc
+          image: docker.io/kubeapps/assetsvc:latest
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+          command:
+            - /assetsvc
+          args:
+            - --database-user=postgres
+            - --database-name=assets
+            - --database-url=kubeapps-postgresql-headless:5432
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-password
+                  name: kubeapps-postgresql
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PORT
+              value: "8080"
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /live
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+---
+# Source: kubeapps/templates/dashboard/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeapps-internal-dashboard
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: dashboard
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubeapps
+      app.kubernetes.io/instance: kubeapps
+      app.kubernetes.io/component: dashboard
+  template:
+    metadata:
+      annotations:
+        checksum/config: 1fbc805e5c1ce3bb552d2e5f9d5e10239d69e8d41f36b9044054f722d8842bb5
+      labels:
+        app.kubernetes.io/name: kubeapps
+        helm.sh/chart: kubeapps-7.4.1-dev0
+        app.kubernetes.io/instance: kubeapps
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: dashboard
+    spec:      
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: kubeapps
+                    app.kubernetes.io/instance: kubeapps
+                    app.kubernetes.io/component: dashboard
+                namespaces:
+                  - "kubeapps"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+      containers:
+        - name: dashboard
+          image: docker.io/kubeapps/dashboard:latest
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
+          volumeMounts:
+            - name: vhost
+              mountPath: /opt/bitnami/nginx/conf/server_blocks
+            - name: config
+              mountPath: /app/config.json
+              subPath: config.json
+            - mountPath: /app/custom-css
+              name: custom-css
+            - mountPath: /app/custom-locale
+              name: custom-locale
+            - mountPath: /app/custom-components
+              name: custom-components
+      volumes:
+        - name: vhost
+          configMap:
+            name: kubeapps-internal-dashboard-config
+            items:
+              - key: vhost.conf
+                path: vhost.conf
+        - name: config
+          configMap:
+            name: kubeapps-internal-dashboard-config
+            items:
+              - key: config.json
+                path: config.json
+        - name: custom-css
+          configMap:
+            name: kubeapps-internal-dashboard-config
+            items:
+              - key: custom_style.css
+                path: custom_style.css
+        - name: custom-locale
+          configMap:
+            name: kubeapps-internal-dashboard-config
+            items:
+              - key: custom_locale.json
+                path: custom_locale.json
+        - name: custom-components
+          configMap:
+            name: kubeapps-internal-dashboard-config
+            items:
+              - key: custom_components.js
+                path: custom_components.js
+---
+# Source: kubeapps/templates/frontend/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeapps
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: frontend
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubeapps
+      app.kubernetes.io/instance: kubeapps
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      annotations:
+        checksum/config: 5cc949f8288ad4768f9f1de0826c160c54be845346ce211bae4b021e7aacc9ca
+      labels:
+        app.kubernetes.io/name: kubeapps
+        helm.sh/chart: kubeapps-7.4.1-dev0
+        app.kubernetes.io/instance: kubeapps
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: frontend
+    spec:      
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: kubeapps
+                    app.kubernetes.io/instance: kubeapps
+                    app.kubernetes.io/component: frontend
+                namespaces:
+                  - "kubeapps"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+      containers:
+        - name: nginx
+          image: docker.io/bitnami/nginx:1.21.2-debian-10-r1
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: 250m
+              memory: 128Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
+          volumeMounts:
+            - name: vhost
+              mountPath: /opt/bitnami/nginx/conf/server_blocks
+      volumes:
+        - name: vhost
+          configMap:
+            name: kubeapps-frontend-config
+---
+# Source: kubeapps/templates/kubeappsapis/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeapps-internal-kubeappsapis
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/component: kubeappsapis
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubeapps
+      app.kubernetes.io/instance: kubeapps
+      app.kubernetes.io/component: kubeappsapis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubeapps
+        helm.sh/chart: kubeapps-7.4.1-dev0
+        app.kubernetes.io/instance: kubeapps
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: kubeappsapis
+    spec:      
+      # Increase termination timeout to let remaining operations to finish before killing the pods
+      # This is because new releases/upgrades/deletions are synchronous operations
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: kubeapps
+                    app.kubernetes.io/instance: kubeapps
+                    app.kubernetes.io/component: kubeappsapis
+                namespaces:
+                  - "kubeapps"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+      terminationGracePeriodSeconds: 300
+      containers:
+        - name: kubeappsapis
+          image: docker.io/kubeapps/kubeapps-apis:latest
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+          command:
+            - /kubeapps-apis
+          args:
+            - --plugin-dir
+            - /plugins/helm
+            - --clusters-config-path=/config/clusters.conf
+          env:
+            - name: PORT
+              value: "50051"
+            # TODO(agamez): pass this configuration using a separated config file
+            # These env vars are currently (and temporarily) required by the 'helm' plugin
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: ASSET_SYNCER_DB_URL
+              value: kubeapps-postgresql-headless:5432
+            - name: ASSET_SYNCER_DB_NAME
+              value: assets
+            - name: ASSET_SYNCER_DB_USERNAME
+              value: postgres
+            - name: ASSET_SYNCER_DB_USERPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-password
+                  name: kubeapps-postgresql
+          ports:
+            - name: grpc-http
+              containerPort: 50051
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /core/plugins/v1alpha1/configured-plugins
+              port: 50051
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /core/plugins/v1alpha1/configured-plugins
+              port: 50051
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 250m
+              memory: 256Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
+          volumeMounts:
+            - name: clusters-config
+              mountPath: /config
+            - name: ca-certs
+              mountPath: /etc/additional-clusters-cafiles
+      volumes:
+        - name: clusters-config
+          configMap:
+            name: kubeapps-clusters-config
+        - name: ca-certs
+          emptyDir: {}
+---
+# Source: kubeapps/templates/kubeops/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeapps-internal-kubeops
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/component: kubeops
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubeapps
+      app.kubernetes.io/instance: kubeapps
+      app.kubernetes.io/component: kubeops
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubeapps
+        helm.sh/chart: kubeapps-7.4.1-dev0
+        app.kubernetes.io/instance: kubeapps
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: kubeops
+    spec:      
+      serviceAccountName: kubeapps-internal-kubeops
+      # Increase termination timeout to let remaining operations to finish before killing the pods
+      # This is because new releases/upgrades/deletions are synchronous operations
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: kubeapps
+                    app.kubernetes.io/instance: kubeapps
+                    app.kubernetes.io/component: kubeops
+                namespaces:
+                  - "kubeapps"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+      terminationGracePeriodSeconds: 300
+      containers:
+        - name: kubeops
+          image: docker.io/kubeapps/kubeops:latest
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+          command:
+            - /kubeops
+          args:
+            - --user-agent-comment=kubeapps/DEVEL
+            - --assetsvc-url=http://kubeapps-internal-assetsvc:8080
+            - --clusters-config-path=/config/clusters.conf
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PORT
+              value: "8080"
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /live
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 250m
+              memory: 256Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
+          volumeMounts:
+            - name: clusters-config
+              mountPath: /config
+            - name: ca-certs
+              mountPath: /etc/additional-clusters-cafiles
+      volumes:
+        - name: clusters-config
+          configMap:
+            name: kubeapps-clusters-config
+        - name: ca-certs
+          emptyDir: {}
+---
+# Source: kubeapps/charts/postgresql/templates/statefulset-readreplicas.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "kubeapps-postgresql-read"
+  labels:
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-10.9.4
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: read
+  annotations:
+  namespace: kubeapps
+spec:
+  serviceName: kubeapps-postgresql-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/instance: kubeapps
+      role: read
+  template:
+    metadata:
+      name: kubeapps-postgresql
+      labels:
+        app.kubernetes.io/name: postgresql
+        helm.sh/chart: postgresql-10.9.4
+        app.kubernetes.io/instance: kubeapps
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: read
+        role: read
+    spec:      
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: postgresql
+                    app.kubernetes.io/instance: kubeapps
+                    app.kubernetes.io/component: read
+                namespaces:
+                  - "kubeapps"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      automountServiceAccountToken: false
+      containers:
+        - name: kubeapps-postgresql
+          image: docker.io/bitnami/postgresql:11.13.0-debian-10-r12
+          imagePullPolicy: "IfNotPresent"
+          resources:
+            limits: {}
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            runAsUser: 1001
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: POSTGRESQL_VOLUME_DIR
+              value: "/bitnami/postgresql"
+            - name: POSTGRESQL_PORT_NUMBER
+              value: "5432"
+            - name: PGDATA
+              value: "/bitnami/postgresql/data"
+            - name: POSTGRES_REPLICATION_MODE
+              value: "slave"
+            - name: POSTGRES_REPLICATION_USER
+              value: "repl_user"
+            - name: POSTGRES_REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubeapps-postgresql
+                  key: postgresql-replication-password
+            - name: POSTGRES_CLUSTER_APP_NAME
+              value: my_application
+            - name: POSTGRES_MASTER_HOST
+              value: kubeapps-postgresql
+            - name: POSTGRES_MASTER_PORT_NUMBER
+              value: "5432"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubeapps-postgresql
+                  key: postgresql-password
+            - name: POSTGRESQL_ENABLE_TLS
+              value: "no"
+            - name: POSTGRESQL_LOG_HOSTNAME
+              value: "false"
+            - name: POSTGRESQL_LOG_CONNECTIONS
+              value: "false"
+            - name: POSTGRESQL_LOG_DISCONNECTIONS
+              value: "false"
+            - name: POSTGRESQL_PGAUDIT_LOG_CATALOG
+              value: "off"
+            - name: POSTGRESQL_CLIENT_MIN_MESSAGES
+              value: "error"
+            - name: POSTGRESQL_SHARED_PRELOAD_LIBRARIES
+              value: "pgaudit"
+          ports:
+            - name: tcp-postgresql
+              containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "postgres" -d "dbname=assets" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - -e
+                - |
+                  exec pg_isready -U "postgres" -d "dbname=assets" -h 127.0.0.1 -p 5432
+                  [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+        - name: data
+          emptyDir: {}
+  updateStrategy:
+    type: RollingUpdate
+---
+# Source: kubeapps/charts/postgresql/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kubeapps-postgresql-primary
+  labels:
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-10.9.4
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: primary
+  annotations:
+  namespace: kubeapps
+spec:
+  serviceName: kubeapps-postgresql-headless
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+      app.kubernetes.io/instance: kubeapps
+      role: primary
+  template:
+    metadata:
+      name: kubeapps-postgresql
+      labels:
+        app.kubernetes.io/name: postgresql
+        helm.sh/chart: postgresql-10.9.4
+        app.kubernetes.io/instance: kubeapps
+        app.kubernetes.io/managed-by: Helm
+        role: primary
+        app.kubernetes.io/component: primary
+    spec:      
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: postgresql
+                    app.kubernetes.io/instance: kubeapps
+                    app.kubernetes.io/component: primary
+                namespaces:
+                  - "kubeapps"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      automountServiceAccountToken: false
+      containers:
+        - name: kubeapps-postgresql
+          image: docker.io/bitnami/postgresql:11.13.0-debian-10-r12
+          imagePullPolicy: "IfNotPresent"
+          resources:
+            limits: {}
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            runAsUser: 1001
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: POSTGRESQL_PORT_NUMBER
+              value: "5432"
+            - name: POSTGRESQL_VOLUME_DIR
+              value: "/bitnami/postgresql"
+            - name: PGDATA
+              value: "/bitnami/postgresql/data"
+            - name: POSTGRES_REPLICATION_MODE
+              value: "master"
+            - name: POSTGRES_REPLICATION_USER
+              value: "repl_user"
+            - name: POSTGRES_REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubeapps-postgresql
+                  key: postgresql-replication-password
+            - name: POSTGRES_CLUSTER_APP_NAME
+              value: my_application
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kubeapps-postgresql
+                  key: postgresql-password
+            - name: POSTGRES_DB
+              value: "assets"
+            - name: POSTGRESQL_ENABLE_LDAP
+              value: "no"
+            - name: POSTGRESQL_ENABLE_TLS
+              value: "no"
+            - name: POSTGRESQL_LOG_HOSTNAME
+              value: "false"
+            - name: POSTGRESQL_LOG_CONNECTIONS
+              value: "false"
+            - name: POSTGRESQL_LOG_DISCONNECTIONS
+              value: "false"
+            - name: POSTGRESQL_PGAUDIT_LOG_CATALOG
+              value: "off"
+            - name: POSTGRESQL_CLIENT_MIN_MESSAGES
+              value: "error"
+            - name: POSTGRESQL_SHARED_PRELOAD_LIBRARIES
+              value: "pgaudit"
+          ports:
+            - name: tcp-postgresql
+              containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U "postgres" -d "dbname=assets" -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - -e
+                - |
+                  exec pg_isready -U "postgres" -d "dbname=assets" -h 127.0.0.1 -p 5432
+                  [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: data
+          emptyDir: {}
+---
+# Source: kubeapps/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubeapps
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  rules:
+    - host: localhost
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: kubeapps
+                port:
+                  name: http
+---
+# Source: kubeapps/templates/apprepository/apprepositories.yaml
+apiVersion: kubeapps.com/v1alpha1
+kind: AppRepository
+metadata:
+  name: bitnami
+  namespace: "kubeapps"
+  labels:
+    app.kubernetes.io/name: kubeapps
+    helm.sh/chart: kubeapps-7.4.1-dev0
+    app.kubernetes.io/instance: kubeapps
+    app.kubernetes.io/managed-by: Helm
+    kapp.k14s.io/app: kubeapps-rocks-label
+  annotations:
+    kapp.k14s.io/app: kubeapps-rocks-annotation
+spec:
+  type: helm
+  url: https://charts.bitnami.com/bitnami
+  syncJobPodTemplate:
+    spec:
+      securityContext:
+        runAsUser: 1001
+
+NOTES:
+** Please be patient while the chart is being deployed **
+
+Tip:
+
+  Watch the deployment status using the command: kubectl get pods -w --namespace kubeapps
+
+Kubeapps can be accessed via port 80 on the following DNS name from within your cluster:
+
+   kubeapps.kubeapps.svc.cluster.local
+
+To access Kubeapps from outside your K8s cluster, follow the steps below:
+
+1. Get the Kubeapps URL and associate Kubeapps hostname to your cluster external IP:
+
+   export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
+   echo "Kubeapps URL: http://localhost/"
+   echo "$CLUSTER_IP  localhost" | sudo tee -a /etc/hosts
+
+2. Open a browser and access Kubeapps using the obtained URL.
+
+##########################################################################################################
+### WARNING: You did not provide a value for the postgresqlPassword so one has been generated randomly ###
+##########################################################################################################

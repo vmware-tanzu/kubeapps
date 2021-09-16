@@ -62,6 +62,7 @@ func Test_newCronJob(t *testing.T) {
 						LabelRepoName:      "my-charts",
 						LabelRepoNamespace: "kubeapps",
 					},
+					Annotations: map[string]string{},
 				},
 				Spec: batchv1beta1.CronJobSpec{
 					Schedule:          "*/10 * * * *",
@@ -75,6 +76,7 @@ func Test_newCronJob(t *testing.T) {
 										LabelRepoName:      "my-charts",
 										LabelRepoNamespace: "kubeapps",
 									},
+									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
 									RestartPolicy: "OnFailure",
@@ -154,6 +156,7 @@ func Test_newCronJob(t *testing.T) {
 						LabelRepoName:      "my-charts",
 						LabelRepoNamespace: "kubeapps",
 					},
+					Annotations: map[string]string{},
 				},
 				Spec: batchv1beta1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
@@ -167,6 +170,7 @@ func Test_newCronJob(t *testing.T) {
 										LabelRepoName:      "my-charts",
 										LabelRepoNamespace: "kubeapps",
 									},
+									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
 									RestartPolicy: "OnFailure",
@@ -243,6 +247,7 @@ func Test_newCronJob(t *testing.T) {
 						LabelRepoName:      "my-charts-in-otherns",
 						LabelRepoNamespace: "otherns",
 					},
+					Annotations: map[string]string{},
 				},
 				Spec: batchv1beta1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
@@ -256,6 +261,7 @@ func Test_newCronJob(t *testing.T) {
 										LabelRepoName:      "my-charts-in-otherns",
 										LabelRepoNamespace: "otherns",
 									},
+									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
 									RestartPolicy: "OnFailure",
@@ -308,7 +314,7 @@ func Test_newCronJob(t *testing.T) {
 			config.UserAgentComment = tt.userAgentComment
 
 			result := newCronJob(tt.apprepo, config)
-			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
+			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -356,6 +362,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -365,6 +373,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -424,6 +433,8 @@ func Test_newSyncJob(t *testing.T) {
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "apprepo-my-other-namespace-sync-my-charts-",
+					Annotations:  map[string]string{},
+					Labels:       map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -433,6 +444,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "my-other-namespace",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -506,6 +518,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -515,6 +529,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -595,6 +610,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -604,6 +621,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -695,6 +713,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -704,6 +724,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -797,6 +818,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -806,6 +829,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -868,6 +892,7 @@ func Test_newSyncJob(t *testing.T) {
 							Labels: map[string]string{
 								"foo": "bar",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							Affinity: &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
@@ -897,6 +922,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -907,6 +934,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoNamespace: "kubeapps",
 								"foo":              "bar",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
@@ -979,6 +1007,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -988,6 +1018,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -1061,6 +1092,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -1070,6 +1103,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -1144,6 +1178,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -1153,6 +1189,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -1228,6 +1265,8 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						),
 					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -1237,6 +1276,7 @@ func Test_newSyncJob(t *testing.T) {
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
+							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -1282,7 +1322,7 @@ func Test_newSyncJob(t *testing.T) {
 			config.UserAgentComment = tt.userAgentComment
 
 			result := newSyncJob(tt.apprepo, config)
-			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
+			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -1304,6 +1344,8 @@ func Test_newCleanupJob(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-cleanup-my-charts-",
 					Namespace:    "kubeapps",
+					Annotations:  map[string]string{},
+					Labels:       map[string]string{},
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
@@ -1343,7 +1385,7 @@ func Test_newCleanupJob(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := newCleanupJob("kubeapps", tt.repoNamespace, tt.repoName, makeDefaultConfig())
-			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
+			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -1424,5 +1466,10 @@ func makeDefaultConfig() Config {
 		DBSecretKey:              "postgresql-root-password",
 		UserAgentComment:         "",
 		TTLSecondsAfterFinished:  "3600",
-		Crontab:                  "*/10 * * * *"}
+		Crontab:                  "*/10 * * * *",
+		CustomAnnotations:        []string{},
+		CustomLabels:             []string{},
+		ParsedCustomLabels:       map[string]string{},
+		ParsedCustomAnnotations:  map[string]string{},
+	}
 }

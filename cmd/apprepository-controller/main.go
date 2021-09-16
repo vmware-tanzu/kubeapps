@@ -19,6 +19,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"strings"
 
 	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
@@ -53,6 +54,10 @@ type Config struct {
 	Crontab                  string
 	TTLSecondsAfterFinished  string
 	ReposPerNamespace        bool
+	CustomAnnotations        []string
+	CustomLabels             []string
+	ParsedCustomAnnotations  map[string]string
+	ParsedCustomLabels       map[string]string
 
 	// Args are the positional (non-flag) command-line arguments.
 	Args []string
@@ -85,6 +90,8 @@ func parseFlags(progname string, args []string) (config *Config, output string, 
 	// The support for this is currently alpha in K8s itself, requiring a feature gate being set to enable
 	// it. See https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
 	flagSet.StringVar(&conf.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h) ")
+	flagSet.StringSliceVar(&conf.CustomAnnotations, "custom-annotations", []string{""}, "xxxxxxxxxxxxx")
+	flagSet.StringSliceVar(&conf.CustomLabels, "custom-labels", []string{""}, "xxxxxxxxxxxxx")
 
 	err = flagSet.Parse(args)
 	if err != nil {
@@ -119,6 +126,8 @@ func main() {
 		"user-agent-comment":             conf.UserAgentComment,
 		"crontab":                        conf.Crontab,
 		"ttl-lifetime-afterfinished-job": conf.TTLSecondsAfterFinished,
+		"custom-annotations":             conf.CustomAnnotations,
+		"custom-labels":                  conf.CustomLabels,
 	}).Info("apprepository-controller configured with these args:")
 
 	// set up signals so we handle the first shutdown signal gracefully
@@ -151,6 +160,9 @@ func main() {
 
 	conf.ImagePullSecretsRefs = getImagePullSecretsRefs(conf.RepoSyncImagePullSecrets)
 
+	conf.ParsedCustomAnnotations = parseLabelsAnnotations(conf.CustomAnnotations)
+	conf.ParsedCustomLabels = parseLabelsAnnotations(conf.CustomLabels)
+
 	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory, conf)
 
 	go kubeInformerFactory.Start(stopCh)
@@ -171,4 +183,19 @@ func getImagePullSecretsRefs(imagePullSecretsRefsArr []string) []corev1.LocalObj
 		imagePullSecretsRefs = append(imagePullSecretsRefs, corev1.LocalObjectReference{Name: imagePullSecretName})
 	}
 	return imagePullSecretsRefs
+}
+
+// parseLabelsAnnotations transform an array of string "foo=bar" into a map["foo"]="bar"
+func parseLabelsAnnotations(textArr []string) map[string]string {
+	textMap := map[string]string{}
+	for _, text := range textArr {
+		if text != "" {
+			parts := strings.Split(text, "=")
+			if len(parts) != 2 {
+				log.Fatalf("Cannot parse '%s'", text)
+			}
+			textMap[parts[0]] = parts[1]
+		}
+	}
+	return textMap
 }
