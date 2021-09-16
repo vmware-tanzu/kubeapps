@@ -33,6 +33,8 @@ type FluxV2PackagesServiceClient interface {
 	GetInstalledPackageDetail(ctx context.Context, in *v1alpha1.GetInstalledPackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageDetailResponse, error)
 	// CreateInstalledPackage creates an installed package based on the request.
 	CreateInstalledPackage(ctx context.Context, in *v1alpha1.CreateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.CreateInstalledPackageResponse, error)
+	// UpdateInstalledPackage updates an installed package based on the request.
+	UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error)
 }
 
 type fluxV2PackagesServiceClient struct {
@@ -106,6 +108,15 @@ func (c *fluxV2PackagesServiceClient) CreateInstalledPackage(ctx context.Context
 	return out, nil
 }
 
+func (c *fluxV2PackagesServiceClient) UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error) {
+	out := new(v1alpha1.UpdateInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/UpdateInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FluxV2PackagesServiceServer is the server API for FluxV2PackagesService service.
 // All implementations should embed UnimplementedFluxV2PackagesServiceServer
 // for forward compatibility
@@ -124,6 +135,8 @@ type FluxV2PackagesServiceServer interface {
 	GetInstalledPackageDetail(context.Context, *v1alpha1.GetInstalledPackageDetailRequest) (*v1alpha1.GetInstalledPackageDetailResponse, error)
 	// CreateInstalledPackage creates an installed package based on the request.
 	CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error)
+	// UpdateInstalledPackage updates an installed package based on the request.
+	UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error)
 }
 
 // UnimplementedFluxV2PackagesServiceServer should be embedded to have forward compatible implementations.
@@ -150,6 +163,9 @@ func (UnimplementedFluxV2PackagesServiceServer) GetInstalledPackageDetail(contex
 }
 func (UnimplementedFluxV2PackagesServiceServer) CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateInstalledPackage not implemented")
+}
+func (UnimplementedFluxV2PackagesServiceServer) UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateInstalledPackage not implemented")
 }
 
 // UnsafeFluxV2PackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -289,6 +305,24 @@ func _FluxV2PackagesService_CreateInstalledPackage_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FluxV2PackagesService_UpdateInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.UpdateInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2PackagesServiceServer).UpdateInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/UpdateInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2PackagesServiceServer).UpdateInstalledPackage(ctx, req.(*v1alpha1.UpdateInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FluxV2PackagesService_ServiceDesc is the grpc.ServiceDesc for FluxV2PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -323,6 +357,10 @@ var FluxV2PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateInstalledPackage",
 			Handler:    _FluxV2PackagesService_CreateInstalledPackage_Handler,
+		},
+		{
+			MethodName: "UpdateInstalledPackage",
+			Handler:    _FluxV2PackagesService_UpdateInstalledPackage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

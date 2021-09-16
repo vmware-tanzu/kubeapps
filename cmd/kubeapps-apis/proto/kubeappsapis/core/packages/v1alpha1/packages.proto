@@ -48,12 +48,14 @@ service PackagesService {
     };
   }
 
+  rpc UpdateInstalledPackage(UpdateInstalledPackageRequest) returns (UpdateInstalledPackageResponse) {
+     option (google.api.http) = {
+       patch: "/core/packages/v1alpha1/installedpackages"
+       body: "*"
+      };
+  }
+
   // TODO: remaining operations yet to be defined
-  // rpc UpdateInstalledPackage(UpdateInstalledPackageRequest) returns (UpdateInstalledPackageResponse) {
-  //   option (google.api.http) = {
-  //     put: "/core/packages/v1alpha1/installedpackages"
-  //   };
-  // }
   // rpc DeleteInstalledPackage(DeleteInstalledPackageRequest) returns (DeleteInstalledPackageResponse) {
   //   option (google.api.http) = {
   //     delete: "/core/packages/v1alpha1/installedpackages"
@@ -155,6 +157,32 @@ message CreateInstalledPackageRequest {
   // An optional field for specifying data common to systems that reconcile
   // the package on the cluster.
   ReconciliationOptions reconciliation_options = 6;
+}
+
+// UpdateInstalledPackageRequest
+//
+// Request for UpdateInstalledPackage. Partial resource updates are supported. 
+// For example, to change the package version one only needs to specify the version reference. 
+// Similarly to update the values, one only needs to specify that field
+message UpdateInstalledPackageRequest {
+  // A reference uniquely identifying the installed package being updated.
+  // Required
+  InstalledPackageReference installed_package_ref = 1;
+
+  // For helm this will be the exact version in VersionReference.version
+  // For other plugins we can extend the VersionReference as needed. Optional
+  VersionReference pkg_version_reference = 2;
+
+  // An optional serialized values string to be included when templating a
+  // package in the format expected by the plugin. Included when the backend
+  // format doesn't use secrets or configmaps for values or supports both.
+  // These values are layered on top of any values refs above, when 
+  // relevant. 
+  string values = 3;
+
+  // An optional field for specifying data common to systems that reconcile
+  // the package on the cluster. 
+  ReconciliationOptions reconciliation_options = 4;
 }
 
 // -- Start definitions of the response messages --
@@ -270,6 +298,18 @@ message GetInstalledPackageDetailResponse {
 //
 // Response for CreateInstalledPackage
 message CreateInstalledPackageResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"installed_package_ref": {}}'
+  // };
+
+  InstalledPackageReference installed_package_ref = 1;
+}
+
+// UpdateInstalledPackageResponse
+//
+// Response for UpdateInstalledPackage
+message UpdateInstalledPackageResponse {
   // TODO: add example for API docs
   // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
   //   example: '{"installed_package_ref": {}}'

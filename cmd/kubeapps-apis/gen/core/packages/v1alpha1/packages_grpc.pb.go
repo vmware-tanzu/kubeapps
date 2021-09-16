@@ -24,6 +24,7 @@ type PackagesServiceClient interface {
 	GetInstalledPackageSummaries(ctx context.Context, in *GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*GetInstalledPackageSummariesResponse, error)
 	GetInstalledPackageDetail(ctx context.Context, in *GetInstalledPackageDetailRequest, opts ...grpc.CallOption) (*GetInstalledPackageDetailResponse, error)
 	CreateInstalledPackage(ctx context.Context, in *CreateInstalledPackageRequest, opts ...grpc.CallOption) (*CreateInstalledPackageResponse, error)
+	UpdateInstalledPackage(ctx context.Context, in *UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*UpdateInstalledPackageResponse, error)
 }
 
 type packagesServiceClient struct {
@@ -88,6 +89,15 @@ func (c *packagesServiceClient) CreateInstalledPackage(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *packagesServiceClient) UpdateInstalledPackage(ctx context.Context, in *UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*UpdateInstalledPackageResponse, error) {
+	out := new(UpdateInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.PackagesService/UpdateInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PackagesServiceServer is the server API for PackagesService service.
 // All implementations should embed UnimplementedPackagesServiceServer
 // for forward compatibility
@@ -98,6 +108,7 @@ type PackagesServiceServer interface {
 	GetInstalledPackageSummaries(context.Context, *GetInstalledPackageSummariesRequest) (*GetInstalledPackageSummariesResponse, error)
 	GetInstalledPackageDetail(context.Context, *GetInstalledPackageDetailRequest) (*GetInstalledPackageDetailResponse, error)
 	CreateInstalledPackage(context.Context, *CreateInstalledPackageRequest) (*CreateInstalledPackageResponse, error)
+	UpdateInstalledPackage(context.Context, *UpdateInstalledPackageRequest) (*UpdateInstalledPackageResponse, error)
 }
 
 // UnimplementedPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -121,6 +132,9 @@ func (UnimplementedPackagesServiceServer) GetInstalledPackageDetail(context.Cont
 }
 func (UnimplementedPackagesServiceServer) CreateInstalledPackage(context.Context, *CreateInstalledPackageRequest) (*CreateInstalledPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateInstalledPackage not implemented")
+}
+func (UnimplementedPackagesServiceServer) UpdateInstalledPackage(context.Context, *UpdateInstalledPackageRequest) (*UpdateInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateInstalledPackage not implemented")
 }
 
 // UnsafePackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -242,6 +256,24 @@ func _PackagesService_CreateInstalledPackage_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PackagesService_UpdateInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PackagesServiceServer).UpdateInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.core.packages.v1alpha1.PackagesService/UpdateInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PackagesServiceServer).UpdateInstalledPackage(ctx, req.(*UpdateInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PackagesService_ServiceDesc is the grpc.ServiceDesc for PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -272,6 +304,10 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateInstalledPackage",
 			Handler:    _PackagesService_CreateInstalledPackage_Handler,
+		},
+		{
+			MethodName: "UpdateInstalledPackage",
+			Handler:    _PackagesService_UpdateInstalledPackage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

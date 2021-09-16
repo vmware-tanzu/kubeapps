@@ -31,6 +31,8 @@ type HelmPackagesServiceClient interface {
 	GetInstalledPackageDetail(ctx context.Context, in *v1alpha1.GetInstalledPackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageDetailResponse, error)
 	// CreateInstalledPackage creates an installed package based on the request.
 	CreateInstalledPackage(ctx context.Context, in *v1alpha1.CreateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.CreateInstalledPackageResponse, error)
+	// UpdateInstalledPackage updates an installed package based on the request.
+	UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error)
 }
 
 type helmPackagesServiceClient struct {
@@ -95,6 +97,15 @@ func (c *helmPackagesServiceClient) CreateInstalledPackage(ctx context.Context, 
 	return out, nil
 }
 
+func (c *helmPackagesServiceClient) UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error) {
+	out := new(v1alpha1.UpdateInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/UpdateInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HelmPackagesServiceServer is the server API for HelmPackagesService service.
 // All implementations should embed UnimplementedHelmPackagesServiceServer
 // for forward compatibility
@@ -111,6 +122,8 @@ type HelmPackagesServiceServer interface {
 	GetInstalledPackageDetail(context.Context, *v1alpha1.GetInstalledPackageDetailRequest) (*v1alpha1.GetInstalledPackageDetailResponse, error)
 	// CreateInstalledPackage creates an installed package based on the request.
 	CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error)
+	// UpdateInstalledPackage updates an installed package based on the request.
+	UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error)
 }
 
 // UnimplementedHelmPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -134,6 +147,9 @@ func (UnimplementedHelmPackagesServiceServer) GetInstalledPackageDetail(context.
 }
 func (UnimplementedHelmPackagesServiceServer) CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateInstalledPackage not implemented")
+}
+func (UnimplementedHelmPackagesServiceServer) UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateInstalledPackage not implemented")
 }
 
 // UnsafeHelmPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -255,6 +271,24 @@ func _HelmPackagesService_CreateInstalledPackage_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HelmPackagesService_UpdateInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.UpdateInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HelmPackagesServiceServer).UpdateInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/UpdateInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HelmPackagesServiceServer).UpdateInstalledPackage(ctx, req.(*v1alpha1.UpdateInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HelmPackagesService_ServiceDesc is the grpc.ServiceDesc for HelmPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -285,6 +319,10 @@ var HelmPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateInstalledPackage",
 			Handler:    _HelmPackagesService_CreateInstalledPackage_Handler,
+		},
+		{
+			MethodName: "UpdateInstalledPackage",
+			Handler:    _HelmPackagesService_UpdateInstalledPackage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

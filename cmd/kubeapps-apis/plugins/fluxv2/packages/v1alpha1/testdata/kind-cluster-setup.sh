@@ -6,7 +6,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-TAG=0.0.5
+TAG=0.0.6
 
 function deploy {
   docker build -t kubeapps/fluxv2plugin-testdata:$TAG .

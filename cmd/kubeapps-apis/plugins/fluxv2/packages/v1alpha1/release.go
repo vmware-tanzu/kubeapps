@@ -325,6 +325,9 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
 	// HACK: just for now assume HelmRelease CRD will live in the kubeapps namespace
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	if kubeappsNamespace == "" {
+		return nil, status.Errorf(codes.FailedPrecondition, "POD_NAMESPACE not specified")
+	}
 	resourceIfc, err := s.getReleasesResourceInterface(ctx, kubeappsNamespace)
 	if err != nil {
 		return nil, err
@@ -371,6 +374,16 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		Identifier: name.Name,
 		Plugin:     GetPluginDetail(),
 	}, nil
+}
+
+func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) error {
+	_, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
+	if err != nil {
+		return err
+	}
+
+	// TODO (gfichtenholt) implement
+	return nil
 }
 
 // returns 3 things:

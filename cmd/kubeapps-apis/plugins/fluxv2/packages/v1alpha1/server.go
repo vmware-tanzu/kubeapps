@@ -421,19 +421,37 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 
 	name := types.NamespacedName{Name: request.Name, Namespace: request.TargetContext.Namespace}
 
-	installedRef, err := s.newRelease(
+	if installedRef, err := s.newRelease(
 		ctx,
 		request.AvailablePackageRef,
 		name,
 		request.PkgVersionReference,
 		request.ReconciliationOptions,
-		request.Values,
-	)
-	if err != nil {
+		request.Values); err != nil {
 		return nil, err
+	} else {
+		return &corev1.CreateInstalledPackageResponse{
+			InstalledPackageRef: installedRef,
+		}, nil
+	}
+}
+
+// UpdateInstalledPackage updates an installed package based on the request.
+func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
+	log.Infof("+fluxv2 UpdateInstalledPackage [%v]", request)
+
+	if request == nil || request.InstalledPackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 
-	return &corev1.CreateInstalledPackageResponse{
-		InstalledPackageRef: installedRef,
-	}, nil
+	if err := s.updateRelease(
+		ctx,
+		request.InstalledPackageRef,
+		request.PkgVersionReference,
+		request.ReconciliationOptions,
+		request.Values); err != nil {
+		return nil, err
+	} else {
+		return &corev1.UpdateInstalledPackageResponse{}, nil
+	}
 }
