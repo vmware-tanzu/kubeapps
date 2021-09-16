@@ -4,12 +4,11 @@ import {
   AvailablePackageDetail,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CustomComponent } from "RemoteComponent";
 import { IStoreState } from "shared/types";
-import { IAppViewResourceRefs, IRouteParams } from "../AppView";
-import * as ReactRouter from "react-router";
+import { IAppViewResourceRefs } from "../AppView";
 import * as urls from "../../../shared/url";
 
 export interface ICustomAppViewProps {
@@ -24,20 +23,15 @@ function CustomAppView({ resourceRefs, app, appDetails }: ICustomAppViewProps) {
   } = useSelector((state: IStoreState) => state);
 
   const dispatch = useDispatch();
-  const { cluster, namespace, releaseName } = ReactRouter.useParams() as IRouteParams;
-
-  useEffect(() => {
-    dispatch(actions.apps.getApp(cluster, namespace, releaseName));
-  }, [cluster, dispatch, namespace, releaseName]);
 
   const handleDelete = useCallback(
-    () => dispatch(actions.apps.deleteApp(cluster, namespace, releaseName, true)),
-    [dispatch, cluster, namespace, releaseName],
+    () => dispatch(actions.apps.deleteApp(app.installedPackageRef!, true)),
+    [dispatch, app.installedPackageRef],
   );
 
   const handleRollback = useCallback(
-    () => dispatch(actions.apps.rollbackApp(cluster, namespace, releaseName, 1)),
-    [dispatch, cluster, namespace, releaseName],
+    () => dispatch(actions.apps.rollbackApp(app.installedPackageRef!, 1)),
+    [dispatch, app.installedPackageRef],
   );
 
   const handleRedirect = useCallback(url => dispatch(push(url)), [dispatch]);

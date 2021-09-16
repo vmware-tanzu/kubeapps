@@ -76,7 +76,6 @@ describe("AppView", () => {
       identifier: "apache/1",
       plugin: { name: "helm.packages" },
       context: { cluster: "", namespace: "chart-namespace" } as Context,
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as AvailablePackageReference,
     currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
     installedPackageRef: {
