@@ -93,21 +93,21 @@ workflows:
   kubeapps:
     jobs:
       - test_go:
-          <<: *build_always
+          <<: *build_on_tag
       - test_dashboard:
-          <<: *build_always
+          <<: *build_on_tag
       - test_pinniped_proxy:
-          <<: *build_always
+          <<: *build_on_tag
       - test_chart_render:
-          <<: *build_always
+          <<: *build_on_tag
       - build_go_images:
-          <<: *build_always
+          <<: *build_on_tag
       - build_dashboard:
-          <<: *build_always
+          <<: *build_on_tag
       - build_pinniped_proxy:
-          <<: *build_always
+          <<: *build_on_tag
       - local_e2e_tests:
-          <<: *build_always
+          <<: *build_on_tag
           matrix:
             parameters:
               # Enable the line below to do bundle builds to debug CI issues
@@ -169,11 +169,11 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - push_images:
-          <<: *build_on_master
+          <<: *build_on_tag
           requires:
             - local_e2e_tests
       - sync_chart_to_bitnami:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - local_e2e_tests
             - GKE_1_20_MASTER
