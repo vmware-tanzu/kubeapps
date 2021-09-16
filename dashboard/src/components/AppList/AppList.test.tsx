@@ -11,6 +11,7 @@ import {
   PackageAppVersion,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import qs from "qs";
 import React from "react";
@@ -206,6 +207,7 @@ context("when apps available", () => {
           identifier: "bar/foo",
           pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "foobar" } as Context,
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         } as InstalledPackageReference,
         status: {
           ready: true,
@@ -238,6 +240,7 @@ context("when apps available", () => {
           identifier: "foo/bar",
           pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "foobar" } as Context,
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         } as InstalledPackageReference,
         status: {
           ready: true,
@@ -255,6 +258,7 @@ context("when apps available", () => {
           identifier: "foobar/bar",
           pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "foobar" } as Context,
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         } as InstalledPackageReference,
         status: {
           ready: true,

@@ -54,6 +54,14 @@ service FluxV2PackagesService {
       body: "*"
     };
   }
+
+  // UpdateInstalledPackage updates an installed package based on the request.
+  rpc UpdateInstalledPackage(kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse) {
+    option (google.api.http) = {
+      patch: "/plugins/fluxv2/packages/v1alpha1/installedpackages"
+      body: "*"
+    };
+  }
 }
 
 // Specific messages used by the 'fluxv2' plugin

@@ -3,3 +3,4 @@
 FROM nginx
 COPY ./podinfo-index.yaml /usr/share/nginx/html/index.yaml
 COPY ./podinfo-6.0.0.tgz /usr/share/nginx/html/
+COPY ./podinfo-5.2.1.tgz /usr/share/nginx/html/

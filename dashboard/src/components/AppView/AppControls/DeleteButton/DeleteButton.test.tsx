@@ -3,6 +3,7 @@ import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import Alert from "components/js/Alert";
 import {
+  InstalledPackageReference,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -14,9 +15,11 @@ import { DeleteError } from "shared/types";
 import DeleteButton from "./DeleteButton";
 
 const defaultProps = {
-  cluster: "default",
-  namespace: "kubeapps",
-  releaseName: "foo",
+  installedPackageRef: {
+    context: { cluster: "default", namespace: "kubeapps" },
+    identifier: " foo",
+    plugin: { name: "my.plugin", version: "0.0.1" },
+  } as InstalledPackageReference,
   releaseStatus: null,
 };
 
@@ -53,12 +56,7 @@ it("deletes an application", async () => {
         .prop("onClick") as any
     )();
   });
-  expect(deleteApp).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.releaseName,
-    true,
-  );
+  expect(deleteApp).toHaveBeenCalledWith(defaultProps.installedPackageRef, true);
 });
 
 it("renders an error", async () => {

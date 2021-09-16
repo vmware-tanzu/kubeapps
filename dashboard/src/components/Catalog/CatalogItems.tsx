@@ -2,15 +2,16 @@ import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1
 import { useMemo } from "react";
 import { getIcon } from "shared/Operators";
 import { IClusterServiceVersion, IRepo } from "shared/types";
+import { getPluginFromString, getStringFromPlugin } from "shared/utils";
+import placeholder from "../../placeholder.png";
 import CatalogItem, { ICatalogItemProps } from "./CatalogItem";
-
 interface ICatalogItemsProps {
   charts: AvailablePackageSummary[];
   csvs: IClusterServiceVersion[];
   cluster: string;
   namespace: string;
   page: number;
-  isFetching: boolean;
+  hasLoadedFirstPage: boolean;
   hasFinishedFetching: boolean;
 }
 
@@ -20,19 +21,20 @@ export default function CatalogItems({
   cluster,
   namespace,
   page,
-  isFetching,
+  hasLoadedFirstPage,
   hasFinishedFetching,
 }: ICatalogItemsProps) {
   const chartItems: ICatalogItemProps[] = useMemo(
     () =>
       charts.map(c => {
         return {
-          type: "chart",
+          type: `${getStringFromPlugin(c.availablePackageRef?.plugin)}`,
           id: `chart/${c.availablePackageRef?.identifier}`,
           item: {
+            plugin: c.availablePackageRef?.plugin ?? getPluginFromString(),
             id: `chart/${c.availablePackageRef?.identifier}/${c.latestVersion?.pkgVersion}`,
             name: c.displayName,
-            icon: c.iconUrl,
+            icon: c.iconUrl ?? placeholder,
             version: c.latestVersion?.pkgVersion ?? "",
             description: c.shortDescription,
             // TODO(agamez): get the repo name once available
@@ -78,7 +80,7 @@ export default function CatalogItems({
   );
 
   const sortedItems =
-    isFetching && page === 1
+    !hasLoadedFirstPage && page === 1
       ? []
       : chartItems
           .concat(crdItems)

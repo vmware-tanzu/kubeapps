@@ -8,13 +8,14 @@ import ReactTooltip from "react-tooltip";
 export interface IStatusAwareButtonProps {
   id: string;
   releaseStatus: InstalledPackageStatus | undefined | null;
+  disabled?: boolean;
 }
 
 export default function StatusAwareButton<T extends IStatusAwareButtonProps>(props: T) {
-  const { id, releaseStatus, ...otherProps } = props;
+  const { id, releaseStatus, disabled, ...otherProps } = props;
   // Disable the button if: the status code is undefined or null OR the status code is (uninstalled or pending)
-  const disabled =
-    releaseStatus?.reason == null
+  const isDisabled =
+    disabled || releaseStatus?.reason == null
       ? true
       : [
           InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
@@ -32,7 +33,7 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
   const tooltip = releaseStatus?.reason ? tooltips[releaseStatus.reason] : undefined;
   return (
     <>
-      <CdsButton {...otherProps} disabled={disabled} data-for={id} data-tip={true} />
+      <CdsButton {...otherProps} disabled={isDisabled} data-for={id} data-tip={true} />
       {tooltip && (
         <ReactTooltip id={id} effect="solid" place="bottom">
           {tooltip}

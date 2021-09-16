@@ -421,7 +421,7 @@ export default function Catalog() {
                       cluster={cluster}
                       namespace={namespace}
                       page={page}
-                      isFetching={isFetching}
+                      hasLoadedFirstPage={hasLoadedFirstPage}
                       hasFinishedFetching={hasFinishedFetching}
                     />
                     {!hasFinishedFetching &&

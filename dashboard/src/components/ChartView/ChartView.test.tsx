@@ -2,20 +2,23 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
   Context,
   Maintainer,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router";
 import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { getStringFromPlugin } from "shared/utils";
 import { IChartState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 import ChartView from "./ChartView";
 
-const props = {
+const defaultProps = {
   chartID: "testrepo/test",
   chartNamespace: "kubeapps-namespace",
   isFetching: false,
@@ -26,6 +29,7 @@ const props = {
   kubeappsNamespace: "kubeapps",
   repo: "testrepo",
   id: "test",
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
 const testVersion: PackageAppVersion = {
@@ -46,6 +50,7 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
   availablePackageRef: {
     identifier: "foo/foo",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
   valuesSchema: "test",
   defaultValues: "test",
@@ -70,6 +75,7 @@ const emptyAvailablePkg: AvailablePackageDetail = {
   availablePackageRef: {
     identifier: "foo/foo",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
   valuesSchema: "",
   defaultValues: "",
@@ -123,8 +129,10 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-const routePathParam = `/c/${props.cluster}/ns/${props.chartNamespace}/charts/${props.repo}/${props.id}`;
-const routePath = "/c/:cluster/ns/:namespace/charts/:repo/:id";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.chartNamespace}/charts/${
+  defaultProps.repo
+}/${getStringFromPlugin(defaultProps.plugin)}/${defaultProps.id}`;
+const routePath = "/c/:cluster/ns/:namespace/charts/:repo/:plugin/:id";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("triggers the fetchChartVersions when mounting", () => {
@@ -138,7 +146,11 @@ it("triggers the fetchChartVersions when mounting", () => {
       </Route>
     </Router>,
   );
-  expect(spy).toHaveBeenCalledWith(props.cluster, props.chartNamespace, "testrepo/test");
+  expect(spy).toHaveBeenCalledWith({
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.chartNamespace },
+    identifier: `${defaultProps.repo}/${defaultProps.id}`,
+    plugin: defaultProps.plugin,
+  } as AvailablePackageReference);
 });
 
 describe("when receiving new props", () => {
@@ -154,9 +166,11 @@ describe("when receiving new props", () => {
       </Router>,
     );
     expect(spy).toHaveBeenCalledWith(
-      props.cluster,
-      props.chartNamespace,
-      "testrepo/test",
+      {
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.chartNamespace },
+        identifier: "testrepo/test",
+        plugin: defaultProps.plugin,
+      } as AvailablePackageReference,
       undefined,
     );
   });

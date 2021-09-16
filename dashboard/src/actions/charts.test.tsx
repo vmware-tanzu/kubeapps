@@ -1,11 +1,13 @@
 import {
-  AvailablePackageSummary,
   AvailablePackageDetail,
-  GetAvailablePackageDetailResponse,
-  GetAvailablePackageVersionsResponse,
+  AvailablePackageReference,
+  AvailablePackageSummary,
   Context,
+  GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
+  GetAvailablePackageVersionsResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import Chart from "shared/Chart";
@@ -22,6 +24,7 @@ const cluster = "default";
 const repos = "foo";
 const defaultPage = 1;
 const defaultSize = 0;
+const plugin = { name: "my.plugin", version: "0.0.1" } as Plugin;
 
 const defaultAvailablePackageSummary: AvailablePackageSummary = {
   name: "foo",
@@ -33,6 +36,7 @@ const defaultAvailablePackageSummary: AvailablePackageSummary = {
   availablePackageRef: {
     identifier: "foo/foo",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: plugin,
   },
 };
 
@@ -49,6 +53,7 @@ const defaultAvailablePackageDetail: AvailablePackageDetail = {
   availablePackageRef: {
     identifier: "foo/foo",
     context: { cluster: "", namespace: "chart-namespace" } as Context,
+    plugin: plugin,
   },
   valuesSchema: "",
   defaultValues: "",
@@ -334,9 +339,21 @@ describe("fetchChartVersions", () => {
       { type: getType(actions.charts.requestCharts) },
       { type: getType(actions.charts.receiveChartVersions), payload: availableVersionsResponse },
     ];
-    await store.dispatch(actions.charts.fetchChartVersions(cluster, namespace, "foo"));
+    await store.dispatch(
+      actions.charts.fetchChartVersions({
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference),
+    );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(mockGetAvailablePackageVersions.mock.calls[0]).toEqual([cluster, namespace, "foo"]);
+    expect(mockGetAvailablePackageVersions.mock.calls[0]).toEqual([
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference,
+    ]);
   });
 });
 
@@ -361,12 +378,23 @@ describe("fetchChartVersion", () => {
         },
       },
     ];
-    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
+    await store.dispatch(
+      actions.charts.fetchChartVersion(
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: plugin,
+        } as AvailablePackageReference,
+        "1.0.0",
+      ),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
-      cluster,
-      namespace,
-      "foo",
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference,
       "1.0.0",
     ]);
   });
@@ -381,13 +409,23 @@ describe("fetchChartVersion", () => {
       },
     ];
     await store.dispatch(
-      actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
+      actions.charts.fetchChartVersion(
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: plugin,
+        } as AvailablePackageReference,
+        "1.0.0-alpha+1.2.3-beta2",
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
     expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
-      cluster,
-      namespace,
-      "foo",
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference,
+
       "1.0.0-alpha+1.2.3-beta2",
     ]);
   });
@@ -400,7 +438,16 @@ describe("fetchChartVersion", () => {
     const expectedActions = [
       { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
     ];
-    await store.dispatch(actions.charts.fetchChartVersion(cluster, namespace, "foo", "1.0.0"));
+    await store.dispatch(
+      actions.charts.fetchChartVersion(
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: plugin,
+        } as AvailablePackageReference,
+        "1.0.0",
+      ),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -430,14 +477,23 @@ describe("getDeployedChartVersion", () => {
     ];
 
     await store.dispatch(
-      actions.charts.getDeployedChartVersion(cluster, namespace, "foo", "1.0.0"),
+      actions.charts.getDeployedChartVersion(
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as AvailablePackageReference,
+        "1.0.0",
+      ),
     );
 
     expect(store.getActions()).toEqual(expectedActions);
     expect(mockGetAvailablePackageDetail.mock.calls[0]).toEqual([
-      cluster,
-      namespace,
-      "foo",
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      } as AvailablePackageReference,
       "1.0.0",
     ]);
   });

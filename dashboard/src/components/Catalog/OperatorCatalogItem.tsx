@@ -1,6 +1,5 @@
 import { app } from "shared/url";
-import { trimDescription } from "shared/utils";
-import operatorIcon from "../../icons/operator-framework.svg";
+import { getPluginIcon, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard";
 import { IOperatorCatalogItem } from "./CatalogItem";
@@ -12,7 +11,7 @@ export default function OperatorCatalogItem(props: IOperatorCatalogItem) {
   const csvName = props.csv.split(".")[0];
   const tag1 = <span>{csvName}</span>;
   const link = app.operatorInstances.new(cluster, namespace, csv, id);
-  const bgIcon = operatorIcon;
+  const bgIcon = getPluginIcon("operator");
   return (
     <InfoCard
       key={id}

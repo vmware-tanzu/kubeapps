@@ -2,6 +2,7 @@ import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IAppRepository } from "shared/types";
@@ -16,6 +17,7 @@ const installedPackageDetail = {
   availablePackageRef: {
     context: { cluster: "default", namespace: "default" },
     identifier: "bitnami/my-chart",
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 } as InstalledPackageDetail;
 

@@ -1,11 +1,11 @@
 import { mount } from "enzyme";
-import ChartHeader from "./ChartHeader";
 import {
   AvailablePackageDetail,
   Context,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import ChartHeader from "./ChartHeader";
 const testProps: any = {
   chartAttrs: {
     shortDescription: "A Test Chart",
@@ -20,6 +20,7 @@ const testProps: any = {
     availablePackageRef: {
       identifier: "testrepo/foo",
       context: { cluster: "default", namespace: "kubeapps" } as Context,
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
     valuesSchema: "",
     defaultValues: "",

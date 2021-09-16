@@ -17,3 +17,18 @@ entries:
       urls:
         - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-6.0.0.tgz
       version: 6.0.0
+    - apiVersion: v1
+      appVersion: 5.2.1
+      created: "2021-05-13T12:57:54.003168505Z"
+      description: Podinfo Helm chart for Kubernetes
+      digest: 6c3cc3b955bce1686036ae6822ee2ca0ef6ecb994e3f2d19eaf3ec03dcba84b3
+      home: https://github.com/stefanprodan/podinfo
+      maintainers:
+      - email: stefanprodan@users.noreply.github.com
+        name: stefanprodan
+      name: podinfo
+      sources:
+      - https://github.com/stefanprodan/podinfo
+      urls:
+      - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-5.2.1.tgz
+      version: 5.2.1

@@ -1,4 +1,7 @@
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageReference,
+  InstalledPackageDetail,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
@@ -359,14 +362,15 @@ export function findPackageInRepo(
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async dispatch => {
     dispatch(requestRepo());
-    if (app?.availablePackageRef?.context?.namespace && app?.availablePackageRef?.identifier) {
+    // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
+    if (app?.availablePackageRef?.identifier && app?.availablePackageRef?.plugin) {
       const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
       try {
-        await Chart.getAvailablePackageVersions(
-          cluster,
-          repoNamespace,
-          app.availablePackageRef.identifier,
-        );
+        await Chart.getAvailablePackageVersions({
+          context: { cluster: cluster, namespace: repoNamespace },
+          plugin: app.availablePackageRef.plugin,
+          identifier: app.availablePackageRef.identifier,
+        } as AvailablePackageReference);
         dispatch(receiveRepo(appRepository));
         return true;
       } catch (e: any) {

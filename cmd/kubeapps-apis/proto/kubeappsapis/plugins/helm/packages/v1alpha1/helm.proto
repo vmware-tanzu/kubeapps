@@ -50,6 +50,14 @@ service HelmPackagesService {
       body: "*"
     };
   }
+
+   // UpdateInstalledPackage updates an installed package based on the request.
+   rpc UpdateInstalledPackage(kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse) {
+    option (google.api.http) = {
+      patch: "/plugins/helm/packages/v1alpha1/installedpackages"
+      body: "*"
+    };
+  }
 }
 
 // InstalledPackageDetailCustomDataHelm

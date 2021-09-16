@@ -1,7 +1,7 @@
 import { findOwnedKind, getIcon } from "shared/Operators";
 import { IClusterServiceVersion, IResource } from "shared/types";
 import { app } from "shared/url";
-import operatorIcon from "../../icons/operator-framework.svg";
+import { getPluginIcon } from "shared/utils";
 import InfoCard from "../InfoCard/InfoCard";
 import Alert from "../js/Alert";
 
@@ -42,7 +42,7 @@ function CustomResourceListItem(props: ICustomResourceListItemProps) {
           <div>Operator: {csv.spec.version || "-"}</div>
         </>
       }
-      bgIcon={operatorIcon}
+      bgIcon={getPluginIcon("operator")}
     />
   );
 }
