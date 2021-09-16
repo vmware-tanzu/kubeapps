@@ -505,7 +505,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		manager:                  manager,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
-		actionConfigGetter: func(context.Context, string, string) (*action.Configuration, error) {
+		actionConfigGetter: func(context.Context, *corev1.Context) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},

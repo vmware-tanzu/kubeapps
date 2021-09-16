@@ -53,6 +53,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			request: &corev1.UpdateInstalledPackageRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
+						Cluster:   "default",
 						Namespace: "default",
 					},
 					Identifier: "my-apache",
