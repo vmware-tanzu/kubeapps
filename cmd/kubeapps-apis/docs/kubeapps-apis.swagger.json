@@ -2675,11 +2675,15 @@
       "properties": {
         "installedPackageRef": {
           "$ref": "#/definitions/v1alpha1InstalledPackageReference",
-          "title": "A reference uniquely identifying the installed package being updated.\nThe only required field"
+          "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+        },
+        "targetContext": {
+          "$ref": "#/definitions/v1alpha1Context",
+          "title": "The target context where the package is intended to be installed. Optional"
         },
         "pkgVersionReference": {
           "$ref": "#/definitions/v1alpha1VersionReference",
-          "description": "For helm this will be the exact version in VersionReference.version\nFor other plugins we can extend the VersionReference as needed."
+          "title": "For helm this will be the exact version in VersionReference.version\nFor other plugins we can extend the VersionReference as needed. Optional"
         },
         "values": {
           "type": "string",
@@ -2695,6 +2699,11 @@
     },
     "v1alpha1UpdateInstalledPackageResponse": {
       "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference"
+        }
+      },
       "description": "Response for UpdateInstalledPackage",
       "title": "UpdateInstalledPackageResponse"
     },

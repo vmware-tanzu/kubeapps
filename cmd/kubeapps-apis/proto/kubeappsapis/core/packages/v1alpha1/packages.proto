@@ -166,23 +166,26 @@ message CreateInstalledPackageRequest {
 // Similarly to update the values, one only needs to specify that field
 message UpdateInstalledPackageRequest {
   // A reference uniquely identifying the installed package being updated.
-  // The only required field
+  // Required
   InstalledPackageReference installed_package_ref = 1;
 
+  // The target context where the package is intended to be installed. Optional
+  Context target_context = 2;
+
   // For helm this will be the exact version in VersionReference.version
-  // For other plugins we can extend the VersionReference as needed.
-  VersionReference pkg_version_reference = 2;
+  // For other plugins we can extend the VersionReference as needed. Optional
+  VersionReference pkg_version_reference = 3;
 
   // An optional serialized values string to be included when templating a
   // package in the format expected by the plugin. Included when the backend
   // format doesn't use secrets or configmaps for values or supports both.
   // These values are layered on top of any values refs above, when 
-  // relevant.
-  string values = 3;
+  // relevant. 
+  string values = 4;
 
   // An optional field for specifying data common to systems that reconcile
-  // the package on the cluster.
-  ReconciliationOptions reconciliation_options = 4;
+  // the package on the cluster. 
+  ReconciliationOptions reconciliation_options = 5;
 }
 
 // -- Start definitions of the response messages --
@@ -310,7 +313,12 @@ message CreateInstalledPackageResponse {
 //
 // Response for UpdateInstalledPackage
 message UpdateInstalledPackageResponse {
-  // nothing for now. Will add fields as needed
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"installed_package_ref": {}}'
+  // };
+
+  InstalledPackageReference installed_package_ref = 1;
 }
 
 // -- Start definitions used in the responses  --
