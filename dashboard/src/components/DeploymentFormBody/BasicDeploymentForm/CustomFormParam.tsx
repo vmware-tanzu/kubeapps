@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
+import { useSelector } from "react-redux";
 import { IBasicFormParam, IStoreState } from "shared/types";
 import { CustomComponent } from "../../../RemoteComponent";
-import { useSelector } from "react-redux";
 export interface ICustomParamProps {
   param: IBasicFormParam;
   handleBasicFormParamChange: (

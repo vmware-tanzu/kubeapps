@@ -3,41 +3,39 @@ import {
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import ChartUpdateInfo from "./ChartUpdateInfo";
-
 interface IChartInfoProps {
-  app: InstalledPackageDetail;
-  appDetails?: AvailablePackageDetail;
-  cluster: string;
+  installedPackageDetail: InstalledPackageDetail;
+  availablePackageDetail?: AvailablePackageDetail;
 }
 
-function ChartInfo({ app, appDetails, cluster }: IChartInfoProps) {
+function ChartInfo({ installedPackageDetail, availablePackageDetail }: IChartInfoProps) {
   return (
     <section className="left-menu">
-      {app && (
+      {installedPackageDetail && (
         <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
           <h5 className="left-menu-subsection-title" id="chartinfo-versions">
             Versions
           </h5>
           <div>
-            {app.currentVersion?.appVersion && (
+            {installedPackageDetail.currentVersion?.appVersion && (
               <div>
-                App Version: <strong>{app.currentVersion?.appVersion}</strong>
+                App Version: <strong>{installedPackageDetail.currentVersion?.appVersion}</strong>
               </div>
             )}
             <span>
-              Package Version: <strong>{app.currentVersion?.pkgVersion}</strong>
+              Package Version: <strong>{installedPackageDetail.currentVersion?.pkgVersion}</strong>
             </span>
           </div>
-          <ChartUpdateInfo app={app} cluster={cluster} />
+          <ChartUpdateInfo installedPackageDetail={installedPackageDetail} />
         </section>
       )}
-      {appDetails && (
+      {availablePackageDetail && (
         <>
           <section className="left-menu-subsection" aria-labelledby="chartinfo-description">
             <h5 className="left-menu-subsection-title" id="chartinfo-description">
               Description
             </h5>
-            <span>{appDetails.shortDescription}</span>
+            <span>{availablePackageDetail.shortDescription}</span>
           </section>
         </>
       )}

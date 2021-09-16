@@ -3,8 +3,10 @@ import ChartHeader from "components/ChartView/ChartHeader";
 import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -12,6 +14,7 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError } from "shared/types";
+import { getStringFromPlugin } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
 
@@ -21,9 +24,12 @@ const defaultProps = {
   namespace: "default",
   repo: "repo",
   releaseName: "my-release",
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.repo}/${defaultProps.pkgName}/versions/`;
-const routePath = "/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${
+  defaultProps.repo
+}/${getStringFromPlugin(defaultProps.plugin)}/${defaultProps.pkgName}/versions/`;
+const routePath = "/c/:cluster/ns/:namespace/apps/new/:repo/:plugin/:id/versions";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -57,9 +63,11 @@ it("fetches the available versions", () => {
   );
 
   expect(fetchChartVersions).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    `${defaultProps.repo}/${defaultProps.pkgName}`,
+    {
+      context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
+      identifier: `${defaultProps.repo}/${defaultProps.pkgName}`,
+      plugin: defaultProps.plugin,
+    } as AvailablePackageReference,
     undefined,
   );
 });
@@ -163,7 +171,7 @@ describe("renders an error", () => {
       getStore({ charts: { selected: selected } }),
 
       <Router history={history}>
-        <Route path="/c/:cluster/ns/:namespace/apps/new/:repo/:id/versions">
+        <Route path={routePath}>
           <DeploymentForm />
         </Route>
       </Router>,
@@ -203,6 +211,8 @@ describe("renders an error", () => {
       schema,
     );
 
-    expect(history.location.pathname).toBe("/c/default/ns/default/apps/new/repo/foo/versions/");
+    expect(history.location.pathname).toBe(
+      "/c/default/ns/default/apps/new/repo/my.plugin+0.0.1/foo/versions/",
+    );
   });
 });

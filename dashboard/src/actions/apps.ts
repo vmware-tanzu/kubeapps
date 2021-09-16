@@ -2,6 +2,7 @@ import { JSONSchemaType } from "ajv";
 import {
   AvailablePackageDetail,
   InstalledPackageDetail,
+  InstalledPackageReference,
   InstalledPackageSummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
@@ -10,6 +11,7 @@ import {
   CreateError,
   DeleteError,
   FetchError,
+  FetchWarning,
   IStoreState,
   RollbackError,
   UnprocessableEntity,
@@ -75,41 +77,37 @@ const allActions = [
 export type AppsAction = ActionType<typeof allActions[number]>;
 
 export function getApp(
-  cluster: string,
-  namespace: string,
-  releaseName: string,
+  installedPackageRef?: InstalledPackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestApps());
     try {
       // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
-      const legacyResponse = await App.getRelease(cluster, namespace, releaseName);
+      const legacyResponse = await App.getRelease(installedPackageRef);
       // Get the details of an installed package
-      const { installedPackageDetail } = await App.GetInstalledPackageDetail(
-        cluster,
-        namespace,
-        releaseName,
-      );
+      const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
       // For local packages with no references to any available packages (eg.a local chart for development)
       // we aren't able to get the details, but still want to display the available data so far
       let availablePackageDetail;
-      if (installedPackageDetail) {
-        if (installedPackageDetail?.availablePackageRef?.identifier) {
-          // Get the details of the available package that corresponds to the installed package
-          const resp = await Chart.getAvailablePackageDetail(
-            installedPackageDetail.availablePackageRef.context?.cluster ?? cluster,
-            installedPackageDetail.availablePackageRef.context?.namespace ?? namespace,
-            installedPackageDetail.availablePackageRef.identifier,
-            installedPackageDetail.currentVersion?.pkgVersion,
-          );
-          availablePackageDetail = resp.availablePackageDetail;
-        }
-        dispatch(
-          selectApp(installedPackageDetail, legacyResponse?.manifest, availablePackageDetail),
+      try {
+        // Get the details of the available package that corresponds to the installed package
+        const resp = await Chart.getAvailablePackageDetail(
+          installedPackageDetail?.availablePackageRef,
+          installedPackageDetail?.currentVersion?.pkgVersion,
         );
-      } else {
-        dispatch(errorApp(new FetchError("Package not found")));
+        availablePackageDetail = resp.availablePackageDetail;
+      } catch (e: any) {
+        dispatch(
+          errorApp(
+            new FetchWarning(
+              "this package has missing information, some actions might not be available.",
+            ),
+          ),
+        );
       }
+      dispatch(
+        selectApp(installedPackageDetail!, legacyResponse?.manifest, availablePackageDetail),
+      );
     } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
     }
@@ -117,15 +115,13 @@ export function getApp(
 }
 
 export function deleteApp(
-  cluster: string,
-  namespace: string,
-  releaseName: string,
+  installedPackageRef: InstalledPackageReference,
   purge: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestDeleteApp());
     try {
-      await App.delete(cluster, namespace, releaseName, purge);
+      await App.delete(installedPackageRef, purge);
       dispatch(receiveDeleteApp());
       return true;
     } catch (e: any) {
@@ -138,13 +134,13 @@ export function deleteApp(
 // fetchApps returns a list of apps for other actions to compose on top of it
 export function fetchApps(
   cluster: string,
-  ns?: string,
+  namespace?: string,
 ): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(listApps());
     let installedPackageSummaries;
     try {
-      const res = await App.GetInstalledPackageSummaries(cluster, ns);
+      const res = await App.GetInstalledPackageSummaries(cluster, namespace);
       installedPackageSummaries = res?.installedPackageSummaries;
       dispatch(receiveAppList(installedPackageSummaries));
       return installedPackageSummaries;
@@ -190,11 +186,9 @@ export function deployChart(
 }
 
 export function upgradeApp(
-  cluster: string,
-  namespace: string,
-  chartVersion: AvailablePackageDetail,
+  installedPackageRef: InstalledPackageReference,
+  availablePackageDetail: AvailablePackageDetail,
   chartNamespace: string,
-  releaseName: string,
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
@@ -212,7 +206,7 @@ export function upgradeApp(
           );
         }
       }
-      await App.upgrade(cluster, namespace, releaseName, chartNamespace, chartVersion, values);
+      await App.upgrade(installedPackageRef, chartNamespace, availablePackageDetail, values);
       dispatch(receiveUpgradeApp());
       return true;
     } catch (e: any) {
@@ -223,17 +217,15 @@ export function upgradeApp(
 }
 
 export function rollbackApp(
-  cluster: string,
-  namespace: string,
-  releaseName: string,
+  installedPackageRef: InstalledPackageReference,
   revision: number,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestRollbackApp());
     try {
-      await App.rollback(cluster, namespace, releaseName, revision);
+      await App.rollback(installedPackageRef, revision);
       dispatch(receiveRollbackApp());
-      dispatch(getApp(cluster, namespace, releaseName));
+      dispatch(getApp(installedPackageRef));
       return true;
     } catch (e: any) {
       dispatch(errorApp(new RollbackError(e.message)));

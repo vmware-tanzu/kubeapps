@@ -7,6 +7,11 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
+import {
+  AvailablePackageReference,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,6 +23,7 @@ import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./UpgradeForm.css";
+
 export interface IUpgradeFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
@@ -30,6 +36,7 @@ export interface IUpgradeFormProps {
   error?: Error;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
+  plugin: Plugin;
 }
 
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
@@ -60,6 +67,7 @@ function UpgradeForm({
   error,
   selected,
   deployed,
+  plugin,
 }: IUpgradeFormProps) {
   const [appValues, setAppValues] = useState(appCurrentValues || "");
   const [isDeploying, setIsDeploying] = useState(false);
@@ -78,10 +86,17 @@ function UpgradeForm({
     charts: { isFetching: chartsFetching },
   } = useSelector((state: IStoreState) => state);
   const isFetching = appsFetching || chartsFetching;
+  const pluginObj = plugin ?? selected.availablePackageDetail?.availablePackageRef?.plugin;
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(cluster, repoNamespace, packageId));
-  }, [dispatch, cluster, repoNamespace, packageId]);
+    dispatch(
+      actions.charts.fetchChartVersions({
+        context: { cluster: cluster, namespace: repoNamespace },
+        plugin: pluginObj,
+        identifier: packageId,
+      } as AvailablePackageReference),
+    );
+  }, [dispatch, cluster, repoNamespace, packageId, pluginObj]);
 
   useEffect(() => {
     if (deployed.values && !modifications) {
@@ -106,13 +121,22 @@ function UpgradeForm({
   useEffect(() => {
     dispatch(
       actions.charts.fetchChartVersion(
-        cluster,
-        repoNamespace,
-        packageId,
+        {
+          context: { cluster: cluster, namespace: repoNamespace },
+          plugin: pluginObj,
+          identifier: packageId,
+        } as AvailablePackageReference,
         deployed.chartVersion?.version?.pkgVersion,
       ),
     );
-  }, [dispatch, cluster, repoNamespace, packageId, deployed.chartVersion]);
+  }, [
+    dispatch,
+    cluster,
+    repoNamespace,
+    packageId,
+    deployed.chartVersion?.version?.pkgVersion,
+    pluginObj,
+  ]);
 
   useEffect(() => {
     if (!valuesModified && values) {
@@ -134,7 +158,14 @@ function UpgradeForm({
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      actions.charts.fetchChartVersion(cluster, repoNamespace, packageId, e.currentTarget.value),
+      actions.charts.fetchChartVersion(
+        {
+          context: { cluster: cluster, namespace: repoNamespace },
+          plugin: pluginObj,
+          identifier: packageId,
+        } as AvailablePackageReference,
+        e.currentTarget.value,
+      ),
     );
   };
 
@@ -144,102 +175,96 @@ function UpgradeForm({
     if (availablePackageDetail) {
       const deployedSuccess = await dispatch(
         actions.apps.upgradeApp(
-          cluster,
-          namespace,
+          {
+            context: { cluster: cluster, namespace: namespace },
+            identifier: releaseName,
+            plugin: pluginObj,
+          } as InstalledPackageReference,
           availablePackageDetail,
           repoNamespace,
-          releaseName,
           appValues,
           schema,
         ),
       );
       setIsDeploying(false);
       if (deployedSuccess) {
-        dispatch(push(url.app.apps.get(cluster, namespace, releaseName)));
+        dispatch(
+          push(
+            url.app.apps.get({
+              context: { cluster: cluster, namespace: namespace },
+              plugin: pluginObj,
+              identifier: releaseName,
+            } as AvailablePackageReference),
+          ),
+        );
       }
     }
   };
 
-  if (error && (versions.length === 0 || !availablePackageDetail)) {
-    return (
-      <>
-        <LoadingWrapper>
-          <Alert theme="danger">An error occurred: {error.message}</Alert>
-        </LoadingWrapper>
-      </>
-    );
-  }
-
-  if (error || selected?.error) {
-    return (
-      <Alert theme="danger">
-        An error occurred: {error ? error.message : selected.error?.message}
-      </Alert>
-    );
-  }
-
-  if (versions?.length === 0 || !availablePackageDetail) {
-    return (
-      <LoadingWrapper
-        className="margin-t-xxl"
-        loadingText={`Fetching ${packageId}...`}
-        loaded={false}
-      />
-    );
-  }
-
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
-      <LoadingWrapper loaded={!isFetching}>
-        <ChartHeader
-          releaseName={releaseName}
-          chartAttrs={availablePackageDetail}
-          versions={versions}
-          onSelect={selectVersion}
-          currentVersion={deployed.chartVersion?.version?.pkgVersion}
-          selectedVersion={pkgVersion}
-        />
-        {isDeploying && (
-          <h3 className="center" style={{ marginBottom: "1.2rem" }}>
-            The application is being upgraded, please wait...
-          </h3>
+      {isDeploying && (
+        <h3 className="center" style={{ marginBottom: "1.2rem" }}>
+          The application is being upgraded, please wait...
+        </h3>
+      )}
+      {!isFetching && error && <Alert theme="danger">An error occurred: {error?.message}</Alert>}
+      <LoadingWrapper
+        loaded={!isDeploying && !isFetching && versions?.length > 0 && !!availablePackageDetail}
+      >
+        {(!isFetching && versions?.length === 0) || !availablePackageDetail ? (
+          <></>
+        ) : (
+          <>
+            <ChartHeader
+              releaseName={releaseName}
+              chartAttrs={availablePackageDetail}
+              versions={versions}
+              onSelect={selectVersion}
+              currentVersion={deployed.chartVersion?.version?.pkgVersion}
+              selectedVersion={pkgVersion}
+            />
+            <LoadingWrapper
+              loaded={
+                !isDeploying && !isFetching && versions?.length > 0 && !!availablePackageDetail
+              }
+            >
+              <Row>
+                <Column span={3}>
+                  <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
+                </Column>
+                <Column span={9}>
+                  <form onSubmit={handleDeploy}>
+                    <div className="upgrade-form-version-selector">
+                      <label className="centered deployment-form-label deployment-form-label-text-param">
+                        Upgrade to Version
+                      </label>
+                      <ChartVersionSelector
+                        versions={versions}
+                        selectedVersion={pkgVersion}
+                        onSelect={selectVersion}
+                        currentVersion={appCurrentVersion}
+                        chartAttrs={availablePackageDetail}
+                      />
+                    </div>
+                    <DeploymentFormBody
+                      deploymentEvent="upgrade"
+                      packageId={packageId}
+                      chartVersion={appCurrentVersion}
+                      deployedValues={deployedValues}
+                      chartsIsFetching={chartsIsFetching}
+                      selected={selected}
+                      setValues={handleValuesChange}
+                      appValues={appValues}
+                      setValuesModified={setValuesModifiedTrue}
+                    />
+                  </form>
+                </Column>
+              </Row>
+            </LoadingWrapper>
+          </>
         )}
-        <LoadingWrapper loaded={!isDeploying}>
-          {error && <Alert theme="danger">An error occurred: {error}</Alert>}
-          <Row>
-            <Column span={3}>
-              <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
-            </Column>
-            <Column span={9}>
-              <form onSubmit={handleDeploy}>
-                <div className="upgrade-form-version-selector">
-                  <label className="centered deployment-form-label deployment-form-label-text-param">
-                    Upgrade to Version
-                  </label>
-                  <ChartVersionSelector
-                    versions={versions}
-                    selectedVersion={pkgVersion}
-                    onSelect={selectVersion}
-                    currentVersion={appCurrentVersion}
-                    chartAttrs={availablePackageDetail}
-                  />
-                </div>
-                <DeploymentFormBody
-                  deploymentEvent="upgrade"
-                  packageId={packageId}
-                  chartVersion={appCurrentVersion}
-                  deployedValues={deployedValues}
-                  chartsIsFetching={chartsIsFetching}
-                  selected={selected}
-                  setValues={handleValuesChange}
-                  appValues={appValues}
-                  setValuesModified={setValuesModifiedTrue}
-                />
-              </form>
-            </Column>
-          </Row>
-        </LoadingWrapper>
       </LoadingWrapper>
     </section>
   );

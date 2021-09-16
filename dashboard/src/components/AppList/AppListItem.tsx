@@ -1,6 +1,6 @@
 import Tooltip from "components/js/Tooltip";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import helmIcon from "../../icons/helm.svg";
+import { getPluginIcon } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
@@ -12,7 +12,7 @@ export interface IAppListItemProps {
 }
 
 function AppListItem(props: IAppListItemProps) {
-  const { app, cluster } = props;
+  const { app } = props;
   const icon = app.iconUrl ?? placeholder;
   const appStatus = app.status?.userReason?.toLocaleLowerCase();
   let tooltipContent;
@@ -58,7 +58,7 @@ function AppListItem(props: IAppListItemProps) {
   return (
     <InfoCard
       key={app.installedPackageRef?.identifier}
-      link={url.app.apps.get(cluster, app.installedPackageRef?.context?.namespace || "", app.name)}
+      link={url.app.apps.get(app?.installedPackageRef)}
       title={app.name}
       icon={icon}
       info={
@@ -77,7 +77,7 @@ function AppListItem(props: IAppListItemProps) {
       tag1Content={appStatus}
       tag1Class={appStatus === "deployed" ? "label-success" : "label-warning"}
       tooltip={tooltip}
-      bgIcon={helmIcon}
+      bgIcon={getPluginIcon(app.installedPackageRef?.plugin ?? "chart")}
     />
   );
 }

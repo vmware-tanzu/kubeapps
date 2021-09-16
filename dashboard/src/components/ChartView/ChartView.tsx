@@ -7,7 +7,8 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import { push } from "connected-react-router";
-import { useEffect } from "react";
+import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
@@ -15,6 +16,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
+import { getPluginFromString } from "shared/utils";
 import ChartHeader from "./ChartHeader";
 import ChartReadme from "./ChartReadme";
 
@@ -23,6 +25,7 @@ interface IRouteParams {
   namespace: string;
   repo: string;
   global: string;
+  plugin: string;
   id: string;
   version?: string;
 }
@@ -34,6 +37,7 @@ export default function ChartView() {
     namespace,
     repo,
     global,
+    plugin,
     id,
     version: queryVersion,
   } = ReactRouter.useParams() as IRouteParams;
@@ -50,18 +54,33 @@ export default function ChartView() {
 
   const location = ReactRouter.useLocation();
 
+  const [pluginObj] = useState(getPluginFromString(plugin));
+
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersion(chartCluster, chartNamespace, packageId, queryVersion),
+      actions.charts.fetchChartVersion(
+        {
+          context: { cluster: chartCluster, namespace: chartNamespace },
+          plugin: pluginObj,
+          identifier: packageId,
+        } as AvailablePackageReference,
+        queryVersion,
+      ),
     );
     return;
-  }, [dispatch, packageId, chartNamespace, chartCluster, queryVersion]);
+  }, [dispatch, packageId, chartNamespace, chartCluster, queryVersion, pluginObj]);
 
   // Fetch all versions
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId));
-  }, [dispatch, packageId, chartNamespace, chartCluster]);
+    dispatch(
+      actions.charts.fetchChartVersions({
+        context: { cluster: chartCluster, namespace: chartNamespace },
+        plugin: getPluginFromString(plugin),
+        identifier: packageId,
+      } as AvailablePackageReference),
+    );
+  }, [dispatch, packageId, chartNamespace, chartCluster, plugin]);
 
   // Select version handler
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -97,6 +116,7 @@ export default function ChartView() {
                 availablePackageDetail,
                 pkgVersion!,
                 kubeappsNamespace,
+                pluginObj,
               )}
             >
               <CdsButton status="primary">
@@ -123,6 +143,7 @@ export default function ChartView() {
                   availablePackageDetail,
                   pkgVersion!,
                   kubeappsNamespace,
+                  pluginObj,
                 )}
               >
                 <CdsButton status="primary">

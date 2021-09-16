@@ -1,12 +1,17 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { useEffect } from "react";
+import {
+  AvailablePackageReference,
+  InstalledPackageDetail,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { FetchError, IAppRepository, IChartState, IStoreState, UpgradeError } from "shared/types";
+import { getPluginFromString } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
@@ -34,11 +39,12 @@ interface IRouteParams {
   cluster: string;
   namespace: string;
   releaseName: string;
+  plugin: string;
 }
 
 function AppUpgrade() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName } = ReactRouter.useParams() as IRouteParams;
+  const { cluster, namespace, releaseName, plugin } = ReactRouter.useParams() as IRouteParams;
   const {
     apps: { selected: app, isFetching: appsIsFetching, error },
     charts: { isFetching: chartsIsFetching, selected, deployed },
@@ -48,28 +54,38 @@ function AppUpgrade() {
   const repoName = repo?.metadata?.name || app?.availablePackageRef?.context?.namespace;
   const repoNamespace = repo?.metadata?.namespace || app?.availablePackageRef?.context?.namespace;
 
-  useEffect(() => {
-    dispatch(actions.apps.getApp(cluster, namespace, releaseName));
-  }, [dispatch, cluster, namespace, releaseName]);
+  const [pluginObj] = useState(
+    selected.availablePackageDetail?.availablePackageRef?.plugin ?? getPluginFromString(plugin),
+  );
 
   useEffect(() => {
-    if (repoNamespace && app?.availablePackageRef?.identifier && app?.currentVersion?.pkgVersion) {
-      dispatch(
-        actions.charts.getDeployedChartVersion(
-          cluster,
-          repoNamespace,
-          app.availablePackageRef.identifier,
-          app.currentVersion.pkgVersion,
-        ),
-      );
-    }
+    dispatch(
+      actions.apps.getApp({
+        context: { cluster: cluster, namespace: namespace },
+        identifier: releaseName,
+        plugin: pluginObj,
+      } as InstalledPackageReference),
+    );
+  }, [dispatch, cluster, namespace, releaseName, pluginObj]);
+
+  useEffect(() => {
+    dispatch(
+      actions.charts.getDeployedChartVersion(
+        {
+          context: { cluster: cluster, namespace: repoNamespace ?? "" },
+          identifier: app?.availablePackageRef?.identifier ?? "",
+          plugin: app?.availablePackageRef?.plugin,
+        } as AvailablePackageReference,
+        app?.currentVersion?.pkgVersion,
+      ),
+    );
   }, [dispatch, app, repoName, repoNamespace, cluster]);
 
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
   }
 
-  if (appsIsFetching) {
+  if (appsIsFetching || !app) {
     return (
       <LoadingWrapper
         loadingText={`Fetching ${releaseName}...`}
@@ -103,6 +119,7 @@ function AppUpgrade() {
           selected={selected}
           deployed={deployed}
           error={error}
+          plugin={pluginObj}
         />
       </div>
     );

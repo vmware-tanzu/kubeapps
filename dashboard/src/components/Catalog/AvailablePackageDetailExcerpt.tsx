@@ -2,7 +2,7 @@ import AvailablePackageMaintainers from "components/ChartView/AvailablePackageMa
 import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 interface AvailablePackageDetailExcerptProps {
-  pkg: AvailablePackageDetail;
+  pkg?: AvailablePackageDetail;
 }
 
 function isKubernetesCharts(repoURL: string) {
@@ -15,7 +15,7 @@ function isKubernetesCharts(repoURL: string) {
 export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageDetailExcerptProps) {
   return (
     <div className="left-menu">
-      {pkg.version?.appVersion && (
+      {pkg?.version?.appVersion && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-appversion"
@@ -26,7 +26,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           <div>{pkg.version?.appVersion}</div>
         </section>
       )}
-      {pkg.version?.pkgVersion && (
+      {pkg?.version?.pkgVersion && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-pkgversion"
@@ -37,7 +37,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           <div>{pkg.version?.pkgVersion}</div>
         </section>
       )}
-      {pkg.categories?.length > 0 && pkg.categories[0] !== "" && (
+      {pkg?.categories && pkg?.categories?.length > 0 && pkg?.categories[0] !== "" && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-categories"
@@ -54,7 +54,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           </div>
         </section>
       )}
-      {pkg.homeUrl && (
+      {pkg?.homeUrl && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-home"
@@ -69,7 +69,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           </div>
         </section>
       )}
-      {pkg.maintainers?.length > 0 && (
+      {pkg?.maintainers && pkg?.maintainers?.length > 0 && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-maintainers"
@@ -85,7 +85,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           </div>
         </section>
       )}
-      {pkg.sourceUrls?.length > 0 && (
+      {pkg?.sourceUrls && pkg?.sourceUrls?.length > 0 && (
         <section
           className="left-menu-subsection"
           aria-labelledby="availablePackageDetailExcerpt-sources"

@@ -1,4 +1,5 @@
 import {
+  AvailablePackageReference,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
@@ -6,8 +7,7 @@ import {
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class Chart {
-  // TODO(agamez): move to the core 'PackagesServiceClientImpl' when pagination is ready there
-  private static client = () => new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
+  private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
 
   public static async getAvailablePackageSummaries(
     cluster: string,
@@ -28,30 +28,20 @@ export default class Chart {
   }
 
   public static async getAvailablePackageVersions(
-    cluster: string,
-    namespace: string,
-    id: string,
+    availablePackageReference?: AvailablePackageReference,
   ): Promise<GetAvailablePackageVersionsResponse> {
     return await this.client().GetAvailablePackageVersions({
-      availablePackageRef: {
-        context: { cluster: cluster, namespace: namespace },
-        identifier: id,
-      },
+      availablePackageRef: availablePackageReference,
     });
   }
 
   public static async getAvailablePackageDetail(
-    cluster: string,
-    namespace: string,
-    id: string,
+    availablePackageReference?: AvailablePackageReference,
     version?: string,
   ): Promise<GetAvailablePackageDetailResponse> {
     return await this.client().GetAvailablePackageDetail({
       pkgVersion: version,
-      availablePackageRef: {
-        context: { cluster: cluster, namespace: namespace },
-        identifier: id,
-      },
+      availablePackageRef: availablePackageReference,
     });
   }
 }

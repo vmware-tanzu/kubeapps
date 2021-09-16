@@ -1,4 +1,8 @@
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageReference,
+  InstalledPackageDetail,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
@@ -1009,6 +1013,7 @@ describe("findPackageInRepo", () => {
     availablePackageRef: {
       context: { cluster: "default", namespace: "my-ns" },
       identifier: "my-repo/my-chart",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   } as InstalledPackageDetail;
   it("dispatches requestRepo and receivedRepo if no error", async () => {
@@ -1031,11 +1036,11 @@ describe("findPackageInRepo", () => {
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.getAvailablePackageVersions).toBeCalledWith(
-      "default",
-      "other-namespace",
-      "my-repo/my-chart",
-    );
+    expect(Chart.getAvailablePackageVersions).toBeCalledWith({
+      context: { cluster: "default", namespace: "other-namespace" },
+      identifier: "my-repo/my-chart",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    } as AvailablePackageReference);
   });
 
   it("dispatches requestRepo and errorChart if error fetching", async () => {
@@ -1064,11 +1069,11 @@ describe("findPackageInRepo", () => {
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.getAvailablePackageVersions).toBeCalledWith(
-      "default",
-      "other-namespace",
-      "my-repo/my-chart",
-    );
+    expect(Chart.getAvailablePackageVersions).toBeCalledWith({
+      context: { cluster: "default", namespace: "other-namespace" },
+      identifier: "my-repo/my-chart",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    } as AvailablePackageReference);
   });
 });
 

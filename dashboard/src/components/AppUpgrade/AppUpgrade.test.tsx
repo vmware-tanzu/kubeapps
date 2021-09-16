@@ -10,6 +10,7 @@ import {
   PackageAppVersion,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route } from "react-router";
@@ -22,6 +23,7 @@ import {
   IAppState,
   UpgradeError,
 } from "shared/types";
+import { getStringFromPlugin } from "shared/utils";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 import AppUpgrade from "./AppUpgrade";
@@ -33,6 +35,7 @@ const defaultProps = {
   repoNamespace: "stable",
   repo: "repo",
   releaseName: "my-release",
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
 const installedPackage1 = {
@@ -42,12 +45,14 @@ const installedPackage1 = {
   availablePackageRef: {
     identifier: "stable/bar",
     context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   } as AvailablePackageReference,
   currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   installedPackageRef: {
     identifier: "stable/bar",
     pkgVersion: "1.0.0",
     context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   } as InstalledPackageReference,
   latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -84,8 +89,10 @@ afterEach(() => {
   spyOnUseHistory.mockRestore();
 });
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/${defaultProps.releaseName}/upgrade`;
-const routePath = "/c/:cluster/ns/:namespace/apps/:releaseName/upgrade";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${
+  defaultProps.namespace
+}/apps/${getStringFromPlugin(defaultProps.plugin)}/${defaultProps.releaseName}/upgrade`;
+const routePath = "/c/:cluster/ns/:namespace/apps/:plugin/:releaseName/upgrade";
 
 it("renders the repo selection form if not introduced", () => {
   const state = {
@@ -95,7 +102,11 @@ it("renders the repo selection form if not introduced", () => {
   };
   const wrapper = mountWrapper(
     getStore({ ...defaultStore, apps: { ...state.apps } }),
-    <AppUpgrade />,
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <AppUpgrade />,
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
@@ -105,13 +116,19 @@ it("renders the repo selection form if not introduced when the app is loaded", (
     repos: {
       repos: [repo1],
     } as IAppRepositoryState,
+    apps: { selected: { name: "foo" }, isFetching: false, error: undefined } as IAppState,
   };
   const wrapper = mountWrapper(
     getStore({
       ...defaultStore,
       repos: { ...state.repos },
+      apps: { ...state.apps },
     }),
-    <AppUpgrade />,
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <AppUpgrade />,
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(SelectRepoForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
@@ -130,7 +147,11 @@ describe("when an error exists", () => {
         ...defaultStore,
         apps: { ...state.apps },
       }),
-      <AppUpgrade />,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppUpgrade />,
+        </Route>
+      </MemoryRouter>,
     );
 
     expect(wrapper.find(Alert)).toExist();
@@ -145,13 +166,19 @@ describe("when an error exists", () => {
       repos: {
         repos: [] as IAppRepository[],
       } as IAppRepositoryState,
+      apps: { selected: { name: "foo" }, isFetching: false, error: undefined } as IAppState,
     };
     const wrapper = mountWrapper(
       getStore({
         ...defaultStore,
         repos: { ...state.repos },
+        apps: { ...state.apps },
       }),
-      <AppUpgrade />,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppUpgrade />,
+        </Route>
+      </MemoryRouter>,
     );
     expect(wrapper.find(SelectRepoForm).find(Alert)).toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
@@ -268,9 +295,11 @@ describe("when receiving new props", () => {
     );
 
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
-      defaultProps.cluster,
-      defaultProps.repoNamespace,
-      "stable/bar",
+      {
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
+        identifier: "stable/bar",
+        plugin: defaultProps.plugin,
+      } as AvailablePackageReference,
       "1.0.0",
     );
   });
@@ -302,9 +331,11 @@ describe("when receiving new props", () => {
       </MemoryRouter>,
     );
     expect(getDeployedChartVersion).toHaveBeenCalledWith(
-      defaultProps.cluster,
-      defaultProps.repoNamespace,
-      "stable/bar",
+      {
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
+        identifier: "stable/bar",
+        plugin: defaultProps.plugin,
+      } as AvailablePackageReference,
       "1.0.0",
     );
   });

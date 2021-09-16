@@ -5,6 +5,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
+import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -13,6 +14,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
+import { getPluginFromString } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 
@@ -22,6 +24,7 @@ interface IRouteParams {
   repo: string;
   global: string;
   id: string;
+  plugin: string;
   version?: any;
 }
 
@@ -33,6 +36,7 @@ export default function DeploymentForm() {
     repo,
     global,
     id,
+    plugin,
     version: chartVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
@@ -50,10 +54,19 @@ export default function DeploymentForm() {
   const [releaseName, setReleaseName] = useState("");
   const [appValues, setAppValues] = useState(values || "");
   const [valuesModified, setValuesModified] = useState(false);
+  const [pluginObj] = useState(
+    selected.availablePackageDetail?.availablePackageRef?.plugin ?? getPluginFromString(plugin),
+  );
 
   useEffect(() => {
-    dispatch(actions.charts.fetchChartVersions(chartCluster, chartNamespace, packageId));
-  }, [dispatch, chartCluster, chartNamespace, packageId]);
+    dispatch(
+      actions.charts.fetchChartVersions({
+        context: { cluster: chartCluster, namespace: chartNamespace },
+        plugin: pluginObj,
+        identifier: packageId,
+      } as AvailablePackageReference),
+    );
+  }, [dispatch, chartCluster, chartNamespace, packageId, pluginObj]);
 
   useEffect(() => {
     if (!valuesModified) {
@@ -63,9 +76,16 @@ export default function DeploymentForm() {
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersion(chartCluster, chartNamespace, packageId, chartVersion),
+      actions.charts.fetchChartVersion(
+        {
+          context: { cluster: chartCluster, namespace: chartNamespace },
+          plugin: pluginObj,
+          identifier: packageId,
+        } as AvailablePackageReference,
+        chartVersion,
+      ),
     );
-  }, [chartCluster, chartNamespace, packageId, chartVersion, dispatch]);
+  }, [chartCluster, chartNamespace, packageId, chartVersion, dispatch, pluginObj]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
@@ -95,7 +115,15 @@ export default function DeploymentForm() {
       );
       setDeploying(false);
       if (deployed) {
-        dispatch(push(url.app.apps.get(cluster, namespace, releaseName)));
+        dispatch(
+          push(
+            url.app.apps.get({
+              context: { cluster: cluster, namespace: namespace },
+              plugin: pluginObj,
+              identifier: releaseName,
+            } as AvailablePackageReference),
+          ),
+        );
       }
     }
   };
@@ -109,6 +137,7 @@ export default function DeploymentForm() {
           availablePackageDetail!,
           e.currentTarget.value,
           kubeappsNamespace,
+          pluginObj,
         ),
       ),
     );
