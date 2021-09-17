@@ -30,7 +30,7 @@ var (
 	serveOpts server.ServeOptions
 	// This Version var is updated during the build
 	// see the -ldflags option in the cmd/kubeops/Dockerfile
-	version = "devzzzel"
+	version = "devel"
 )
 
 // rootCmd represents the base command when called without any subcommands
