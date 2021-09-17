@@ -16,35 +16,41 @@ test("Upgrades an application", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  let latestChartVersion = "";
+  let initialPackageVersion = "";
+  let currentPackageVersion = "";
 
   await utils.retryAndRefresh(
     page,
     3,
     async () => {
-      await new Promise(r => setTimeout(r, 1000));
-
-      const chartVersionElement = await expect(page).toMatchElement(
-        'select[name="chart-versions"]',
+      // get the latest pkg version (the first one)
+      const latestPackageVersionElements = await page.$$('select[name="chart-versions"] option', {
+        delay: 2000,
+      });
+      const latestPackageVersionElementContent = await latestPackageVersionElements[0].getProperty(
+        "textContent",
       );
-      const chartVersionElementContent = await chartVersionElement.getProperty("textContent");
-      const chartVersionValue = await chartVersionElementContent.jsonValue();
-      latestChartVersion = chartVersionValue.split(" ")[0];
-      expect(latestChartVersion).not.toBe("");
-      // TODO(agamez): since we have installed a repo, it fetches the latest version from there,
-      // however, it should get it from the repo it was installed with.
-      // https://github.com/kubeapps/kubeapps/issues/3339
-      if (latestChartVersion !== "8.6.5") {
-        console.log(
-          `Unexpected latestChartVersion '${latestChartVersion}'. It happens due to https://github.com/kubeapps/kubeapps/issues/3339`,
-        );
-        latestChartVersion = "8.6.5";
-      }
+      const latestPackageVersionValue = await latestPackageVersionElementContent.jsonValue();
+      latestPackageVersion = latestPackageVersionValue.split(" ")[0];
+
+      // get an older version to be installed (the second one)
+      const initialPackageVersionElements = await page.$$('select[name="chart-versions"] option', {
+        delay: 2000,
+      });
+      const initialPackageVersionElementContent =
+        await initialPackageVersionElements[1].getProperty("textContent");
+      const initialPackageVersionValue = await initialPackageVersionElementContent.jsonValue();
+      initialPackageVersion = initialPackageVersionValue.split(" ")[0];
+
+      expect(initialPackageVersion).not.toBe("");
     },
     testName,
   );
 
-  await expect(page).toSelect('select[name="chart-versions"]', "8.6.3");
+  // select the initialPackageVersion
+  await expect(page).toSelect('select[name="chart-versions"]', initialPackageVersion, {
+    delay: 2000,
+  });
 
   await new Promise(r => setTimeout(r, 500));
 
@@ -52,7 +58,8 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch("8.6.3");
+      // Check if the page contains the selected version
+      await expect(page).toMatch(initialPackageVersion);
     },
     testName,
   );
@@ -78,6 +85,7 @@ test("Upgrades an application", async () => {
     page,
     2,
     async () => {
+      // Since we installed an older version, an update message should appear
       await expect(page).toMatch("Update Now", { timeout: 60000 });
     },
     testName,
@@ -92,7 +100,7 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch("8.6.3");
+      await expect(page).toMatch(initialPackageVersion);
     },
     testName,
   );
@@ -103,18 +111,23 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toSelect('select[name="chart-versions"]', latestChartVersion, {
+      // Select the latest pkg version
+      await expect(page).toSelect('select[name="chart-versions"]', latestPackageVersion, {
         delay: 3000,
       });
-      await new Promise(r => setTimeout(r, 1000));
 
-      // Ensure that the new value is selected
-      const chartVersionElement = await expect(page).toMatchElement(
-        '.upgrade-form-version-selector select[name="chart-versions"]',
+      // get the current pkg version (the selected one after being upgraded)
+      const upgradedPackageVersionElement = await expect(page).toMatchElement(
+        'select[name="chart-versions"] option:checked',
       );
-      const chartVersionElementContent = await chartVersionElement.getProperty("value");
-      const chartVersionValue = await chartVersionElementContent.jsonValue();
-      expect(chartVersionValue).toEqual(latestChartVersion);
+      const upgradedPackageVersionElementContent = await upgradedPackageVersionElement.getProperty(
+        "textContent",
+      );
+      const upgradedPackageVersionValue = await upgradedPackageVersionElementContent.jsonValue();
+      upgradedPackageVersion = upgradedPackageVersionValue.split(" ")[0];
+
+      // If the upgrade was successful, the upgraded version should match the latest version
+      expect(upgradedPackageVersion).toEqual(latestPackageVersion);
     },
     testName,
   );
