@@ -16,41 +16,40 @@ test("Upgrades an application", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
+  let initialPackageVersion = "";
   let currentPackageVersion = "";
 
   await utils.retryAndRefresh(
     page,
     3,
     async () => {
-      // wait to load every pkg version and get the current version
-      await new Promise(r => setTimeout(r, 3000));
-
-      // get the current pkg version (the selected one)
-      const currentPackageVersionElement = await expect(page).toMatchElement(
-        'select[name="chart-versions"] option:checked',
-      );
-      const currentPackageVersionElementContent = await currentPackageVersionElement.getProperty(
-        "textContent",
-      );
-      const currentPackageVersionValue = await currentPackageVersionElementContent.jsonValue();
-      currentPackageVersion = currentPackageVersionValue.split(" ")[0];
-
       // get the latest pkg version (the first one)
-      const latestPackageVersionElements = await page.$$('select[name="chart-versions"] option');
+      const latestPackageVersionElements = await page.$$('select[name="chart-versions"] option', {
+        delay: 2000,
+      });
       const latestPackageVersionElementContent = await latestPackageVersionElements[0].getProperty(
         "textContent",
       );
       const latestPackageVersionValue = await latestPackageVersionElementContent.jsonValue();
       latestPackageVersion = latestPackageVersionValue.split(" ")[0];
 
-      expect(currentPackageVersion).not.toBe("");
+      // get an older version to be installed (the second one)
+      const initialPackageVersionElements = await page.$$('select[name="chart-versions"] option', {
+        delay: 2000,
+      });
+      const initialPackageVersionElementContent =
+        await initialPackageVersionElements[1].getProperty("textContent");
+      const initialPackageVersionValue = await initialPackageVersionElementContent.jsonValue();
+      initialPackageVersion = initialPackageVersionValue.split(" ")[0];
+
+      expect(initialPackageVersion).not.toBe("");
     },
     testName,
   );
 
-  // select the same pkg version
-  await expect(page).toSelect('select[name="chart-versions"]', currentPackageVersion, {
-    delay: 3000,
+  // select the initialPackageVersion
+  await expect(page).toSelect('select[name="chart-versions"]', initialPackageVersion, {
+    delay: 2000,
   });
 
   await new Promise(r => setTimeout(r, 500));
@@ -59,7 +58,8 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch(currentPackageVersion);
+      // Check if the page contains the selected version
+      await expect(page).toMatch(initialPackageVersion);
     },
     testName,
   );
@@ -85,6 +85,7 @@ test("Upgrades an application", async () => {
     page,
     2,
     async () => {
+      // Since we installed an older version, an update message should appear
       await expect(page).toMatch("Update Now", { timeout: 60000 });
     },
     testName,
@@ -99,7 +100,7 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch(currentPackageVersion);
+      await expect(page).toMatch(initialPackageVersion);
     },
     testName,
   );
@@ -110,12 +111,10 @@ test("Upgrades an application", async () => {
     page,
     3,
     async () => {
-      // select the latest pkg version
-      await expect(page).toSelect('select[name="chart-versions"]', latestChartVersion, {
+      // Select the latest pkg version
+      await expect(page).toSelect('select[name="chart-versions"]', latestPackageVersion, {
         delay: 3000,
       });
-      // wait to load every pkg version and get the current version
-      await new Promise(r => setTimeout(r, 3000));
 
       // get the current pkg version (the selected one after being upgraded)
       const upgradedPackageVersionElement = await expect(page).toMatchElement(
@@ -125,8 +124,10 @@ test("Upgrades an application", async () => {
         "textContent",
       );
       const upgradedPackageVersionValue = await upgradedPackageVersionElementContent.jsonValue();
-      currentPackageVersion = upgradedPackageVersionValue.split(" ")[0];
-      expect(upgradedPackageVersionValue).toEqual(latestPackageVersion);
+      upgradedPackageVersion = upgradedPackageVersionValue.split(" ")[0];
+
+      // If the upgrade was successful, the upgraded version should match the latest version
+      expect(upgradedPackageVersion).toEqual(latestPackageVersion);
     },
     testName,
   );
