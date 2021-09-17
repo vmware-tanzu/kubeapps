@@ -13,7 +13,6 @@ import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router";
 import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { getStringFromPlugin } from "shared/utils";
 import { IChartState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 import ChartView from "./ChartView";
@@ -129,10 +128,8 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.chartNamespace}/charts/${
-  defaultProps.repo
-}/${getStringFromPlugin(defaultProps.plugin)}/${defaultProps.id}`;
-const routePath = "/c/:cluster/ns/:namespace/charts/:repo/:plugin/:id";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.chartNamespace}/charts/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
+const routePath = "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("triggers the fetchChartVersions when mounting", () => {

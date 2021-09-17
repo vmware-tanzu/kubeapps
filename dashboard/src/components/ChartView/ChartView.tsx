@@ -8,6 +8,7 @@ import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import { push } from "connected-react-router";
 import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -16,7 +17,6 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { getPluginFromString } from "shared/utils";
 import ChartHeader from "./ChartHeader";
 import ChartReadme from "./ChartReadme";
 
@@ -25,7 +25,8 @@ interface IRouteParams {
   namespace: string;
   repo: string;
   global: string;
-  plugin: string;
+  pluginName: string;
+  pluginVersion: string;
   id: string;
   version?: string;
 }
@@ -37,7 +38,8 @@ export default function ChartView() {
     namespace,
     repo,
     global,
-    plugin,
+    pluginName,
+    pluginVersion,
     id,
     version: queryVersion,
   } = ReactRouter.useParams() as IRouteParams;
@@ -54,7 +56,7 @@ export default function ChartView() {
 
   const location = ReactRouter.useLocation();
 
-  const [pluginObj] = useState(getPluginFromString(plugin));
+  const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
@@ -76,11 +78,11 @@ export default function ChartView() {
     dispatch(
       actions.charts.fetchChartVersions({
         context: { cluster: chartCluster, namespace: chartNamespace },
-        plugin: getPluginFromString(plugin),
+        plugin: { name: pluginName, version: pluginVersion } as Plugin,
         identifier: packageId,
       } as AvailablePackageReference),
     );
-  }, [dispatch, packageId, chartNamespace, chartCluster, plugin]);
+  }, [dispatch, packageId, chartNamespace, chartCluster, pluginName, pluginVersion]);
 
   // Select version handler
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {

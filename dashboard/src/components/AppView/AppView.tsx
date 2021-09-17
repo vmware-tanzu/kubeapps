@@ -4,6 +4,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
 import { InstalledPackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { assignWith } from "lodash";
 import { useEffect, useState } from "react";
@@ -20,7 +21,6 @@ import {
   IResource,
   IStoreState,
 } from "shared/types";
-import { getPluginFromString } from "shared/utils";
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -125,12 +125,14 @@ interface IRouteParams {
   cluster: string;
   namespace: string;
   releaseName: string;
-  plugin: string;
+  pluginName: string;
+  pluginVersion: string;
 }
 
 export default function AppView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName, plugin } = ReactRouter.useParams() as IRouteParams;
+  const { cluster, namespace, releaseName, pluginName, pluginVersion } =
+    ReactRouter.useParams() as IRouteParams;
   const [resourceRefs, setResourceRefs] = useState({
     ingresses: [],
     deployments: [],
@@ -145,7 +147,7 @@ export default function AppView() {
     kube: { kinds },
   } = useSelector((state: IStoreState) => state);
 
-  const [pluginObj] = useState(getPluginFromString(plugin));
+  const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
   useEffect(() => {
     dispatch(

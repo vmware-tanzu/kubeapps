@@ -23,7 +23,6 @@ import {
   IAppState,
   UpgradeError,
 } from "shared/types";
-import { getStringFromPlugin } from "shared/utils";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 import AppUpgrade from "./AppUpgrade";
@@ -89,10 +88,8 @@ afterEach(() => {
   spyOnUseHistory.mockRestore();
 });
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${
-  defaultProps.namespace
-}/apps/${getStringFromPlugin(defaultProps.plugin)}/${defaultProps.releaseName}/upgrade`;
-const routePath = "/c/:cluster/ns/:namespace/apps/:plugin/:releaseName/upgrade";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.releaseName}/upgrade`;
+const routePath = "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName/upgrade";
 
 it("renders the repo selection form if not introduced", () => {
   const state = {
