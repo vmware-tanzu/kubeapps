@@ -377,12 +377,49 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 }
 
 func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) error {
-	_, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
+	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
 	if err != nil {
 		return err
 	}
 
-	// TODO (gfichtenholt) implement
+	// we'll use types.MergePatchType, since
+	// 1) JSONPatch requires existing value for 'replace' to exist, yuck
+	// 2) JSONMergePatch doesn't support setting values to nil
+	patchMap := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"chart": map[string]interface{}{
+				"spec": map[string]interface{}{},
+			},
+		},
+	}
+
+	if versionRef.GetVersion() != "" {
+		unstructured.SetNestedField(patchMap, versionRef.GetVersion(), "spec", "chart", "spec", "version")
+	}
+
+	if valuesString != "" {
+		values := make(map[string]interface{})
+		if err = yaml.Unmarshal([]byte(valuesString), &values); err != nil {
+			return err
+		}
+		unstructured.SetNestedMap(patchMap, values, "spec", "values")
+	}
+
+	if reconcile != nil {
+		
+	}
+
+	bytes, err := json.Marshal(patchMap)
+	if err != nil {
+		return err
+	}
+
+	patchedRel, err := ifc.Patch(ctx, packageRef.Identifier, types.MergePatchType, bytes, metav1.PatchOptions{})
+	if err != nil {
+		return err
+	}
+
+	log.V(4).Infof("Patched release: %s", prettyPrintMap(patchedRel.Object))
 	return nil
 }
 
@@ -531,8 +568,8 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 			},
 		},
 	}
-	if versionRef != nil && versionRef.Version != "" {
-		unstructured.SetNestedField(unstructuredRel.Object, versionRef.Version, "spec", "chart", "spec", "version")
+	if versionRef.GetVersion() != "" {
+		unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version")
 	}
 	reconcileInterval := "1m" // unless explictly specified
 	if reconcile != nil {

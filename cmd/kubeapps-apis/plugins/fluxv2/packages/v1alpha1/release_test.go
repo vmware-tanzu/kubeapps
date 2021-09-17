@@ -390,7 +390,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		targetNamespace    string // this is where installation would actually place artifacts
 		existingHelmStubs  []helmReleaseStub
 		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetInstalledPackageDetailResponse
+		expectedDetail     *corev1.InstalledPackageDetail
 	}{
 		{
 			name: "returns installed package detail when install fails",
@@ -410,9 +410,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				redis_existing_stub_failed,
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: redis_detail_failed,
-			},
+			expectedDetail:     redis_detail_failed,
 		},
 		{
 			name: "returns installed package detail when install is in progress",
@@ -432,9 +430,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				redis_existing_stub_pending,
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: redis_detail_pending,
-			},
+			expectedDetail:     redis_detail_pending,
 		},
 		{
 			name: "returns installed package detail when install is successful",
@@ -454,9 +450,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				redis_existing_stub_completed,
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: redis_detail_completed,
-			},
+			expectedDetail:     redis_detail_completed,
 		},
 		{
 			name: "returns a 404 if the installed package is not found",
@@ -492,9 +486,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				redis_existing_stub_completed,
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: redis_detail_completed_with_values_and_reconciliation_options,
-			},
+			expectedDetail:     redis_detail_completed_with_values_and_reconciliation_options,
 		},
 	}
 
@@ -586,20 +578,11 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(
-				corev1.GetInstalledPackageDetailResponse{},
-				corev1.InstalledPackageDetail{},
-				corev1.InstalledPackageReference{},
-				corev1.Context{},
-				corev1.VersionReference{},
-				corev1.InstalledPackageStatus{},
-				corev1.PackageAppVersion{},
-				plugins.Plugin{},
-				corev1.ReconciliationOptions{},
-				corev1.AvailablePackageReference{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			expectedResp := &corev1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: tc.expectedDetail,
 			}
+
+			compareActualVsExpectedGetInstalledPackageDetailResponse(t, response, expectedResp)
 
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
@@ -797,6 +780,23 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
+	}
+}
+
+func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actualResp *corev1.GetInstalledPackageDetailResponse, expectedResp *corev1.GetInstalledPackageDetailResponse) {
+	opts := cmpopts.IgnoreUnexported(
+		corev1.GetInstalledPackageDetailResponse{},
+		corev1.InstalledPackageDetail{},
+		corev1.InstalledPackageReference{},
+		corev1.Context{},
+		corev1.VersionReference{},
+		corev1.InstalledPackageStatus{},
+		corev1.PackageAppVersion{},
+		plugins.Plugin{},
+		corev1.ReconciliationOptions{},
+		corev1.AvailablePackageReference{})
+	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 	}
 }
 
