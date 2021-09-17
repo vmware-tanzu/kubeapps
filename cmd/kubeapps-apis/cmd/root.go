@@ -30,6 +30,9 @@ import (
 var (
 	cfgFile   string
 	serveOpts server.ServeOptions
+	// This version var is updated during the build
+	// see the -ldflags option in the Dockerfile
+	version = "devel"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -43,6 +46,7 @@ The api service serves both gRPC and HTTP requests for the configured APIs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		server.Serve(serveOpts)
 	},
+	Version: "devel",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -53,6 +57,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	rootCmd.SetVersionTemplate(version)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kubeapps-apis.yaml)")
 
