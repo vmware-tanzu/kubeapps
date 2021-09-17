@@ -90,8 +90,8 @@ func parseFlags(progname string, args []string) (config *Config, output string, 
 	// The support for this is currently alpha in K8s itself, requiring a feature gate being set to enable
 	// it. See https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
 	flagSet.StringVar(&conf.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h) ")
-	flagSet.StringSliceVar(&conf.CustomAnnotations, "custom-annotations", []string{""}, "xxxxxxxxxxxxx")
-	flagSet.StringSliceVar(&conf.CustomLabels, "custom-labels", []string{""}, "xxxxxxxxxxxxx")
+	flagSet.StringSliceVar(&conf.CustomAnnotations, "custom-annotations", []string{""}, "optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
+	flagSet.StringSliceVar(&conf.CustomLabels, "custom-labels", []string{""}, "optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
 
 	err = flagSet.Parse(args)
 	if err != nil {
