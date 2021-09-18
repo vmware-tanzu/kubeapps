@@ -7,7 +7,7 @@
     "@cds/city": "^1.1.0",
     "@cds/core": "^5.5.4",
     "@cds/react": "^5.5.4",
-    "@clr/ui": "^12.0.3",
+    "@clr/ui": "^12.0.4",
     "@improbable-eng/grpc-web": "^0.14.1",
     "@paciolan/remote-component": "^2.11.0",
     "ajv": "^8.6.3",
@@ -135,7 +135,7 @@
     "stylelint-config-recommended-scss": "^4.3.0",
     "stylelint-scss": "^3.21.0",
     "ts-jest": "^27.0.5",
-    "ts-proto": "^1.83.0",
+    "ts-proto": "^1.83.1",
     "typescript": "^4.4.3"
   },
   "resolutions": {
