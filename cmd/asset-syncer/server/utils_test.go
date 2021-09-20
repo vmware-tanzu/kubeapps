@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 The Helm Authors
+Copyright 2021 VMware. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package server
 
 import (
 	"bytes"
@@ -209,7 +209,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, &goodHTTPClient{})
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, &goodHTTPClient{}, "my-user-agent")
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
@@ -235,33 +235,34 @@ func Test_parseFilters(t *testing.T) {
 
 func Test_fetchRepoIndex(t *testing.T) {
 	tests := []struct {
-		name string
-		url  string
+		name      string
+		url       string
+		userAgent string
 	}{
-		{"valid HTTP URL", "http://my.examplerepo.com"},
-		{"valid HTTPS URL", "https://my.examplerepo.com"},
-		{"valid trailing URL", "https://my.examplerepo.com/"},
-		{"valid subpath URL", "https://subpath.test/subpath/"},
-		{"valid URL with trailing spaces", "https://subpath.test/subpath/  "},
-		{"valid URL with leading spaces", "  https://subpath.test/subpath/"},
+		{"valid HTTP URL", "http://my.examplerepo.com", "my-user-agent"},
+		{"valid HTTPS URL", "https://my.examplerepo.com", "my-user-agent"},
+		{"valid trailing URL", "https://my.examplerepo.com/", "my-user-agent"},
+		{"valid subpath URL", "https://subpath.test/subpath/", "my-user-agent"},
+		{"valid URL with trailing spaces", "https://subpath.test/subpath/  ", "my-user-agent"},
+		{"valid URL with leading spaces", "  https://subpath.test/subpath/", "my-user-agent"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			netClient := &goodHTTPClient{}
-			_, err := fetchRepoIndex(tt.url, "", netClient)
+			_, err := fetchRepoIndex(tt.url, "", netClient, tt.userAgent)
 			assert.NoErr(t, err)
 		})
 	}
 
 	t.Run("authenticated request", func(t *testing.T) {
 		netClient := &authenticatedHTTPClient{}
-		_, err := fetchRepoIndex("https://my.examplerepo.com", "Bearer ThisSecretAccessTokenAuthenticatesTheClient", netClient)
+		_, err := fetchRepoIndex("https://my.examplerepo.com", "Bearer ThisSecretAccessTokenAuthenticatesTheClient", netClient, "my-user-agent")
 		assert.NoErr(t, err)
 	})
 
 	t.Run("failed request", func(t *testing.T) {
 		netClient := &badHTTPClient{}
-		_, err := fetchRepoIndex("https://my.examplerepo.com", "", netClient)
+		_, err := fetchRepoIndex("https://my.examplerepo.com", "", netClient, "my-user-agent")
 		assert.ExistsErr(t, err, "failed request")
 	})
 }
@@ -275,22 +276,17 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 	}{
 		{"default user agent", "", "", "asset-syncer/devel"},
 		{"custom version no app", "1.0", "", "asset-syncer/1.0"},
-		{"custom version and app", "1.0", "monocular/1.2", "asset-syncer/1.0 (monocular/1.2)"},
+		{"custom version and app", "1.0", "foo/1.2", "asset-syncer/1.0 (foo/1.2)"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Override global variables used to generate the userAgent
-			if tt.version != "" {
-				version = tt.version
-			}
 
-			if tt.userAgentComment != "" {
-				userAgentComment = tt.userAgentComment
-			}
+			userAgent := GetUserAgent(tt.version, tt.userAgentComment)
 
 			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, tt.expectedUserAgent, req.Header.Get("User-Agent"), "expected user agent")
+				assert.Equal(t, req.Header.Get("User-Agent"), tt.expectedUserAgent, "expected user agent")
 				rw.Write([]byte(validRepoIndexYAML))
 			}))
 			// Close the server when test finishes
@@ -298,7 +294,7 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 
 			netClient := server.Client()
 
-			_, err := fetchRepoIndex(server.URL, "", netClient)
+			_, err := fetchRepoIndex(server.URL, "", netClient, userAgent)
 			assert.NoErr(t, err)
 		})
 	}
@@ -397,7 +393,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		defer cleanup()
 		c := models.Chart{ID: "test/acs-engine-autoscaler"}
 		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
 	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
@@ -407,7 +403,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		defer cleanup()
 		netClient := &badHTTPClient{}
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [500]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
+		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [500]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
@@ -416,7 +412,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		netClient := &badIconClient{}
 		c := charts[0]
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, repo))
+		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
@@ -429,7 +425,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repo))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
 	})
 
 	t.Run("valid SVG icon", func(t *testing.T) {
@@ -447,7 +443,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (not passing through the auth header by default)", func(t *testing.T) {
@@ -456,7 +452,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		netClient := &goodAuthenticatedHTTPClient{}
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
+		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (not passing through the auth header)", func(t *testing.T) {
@@ -465,8 +461,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		netClient := &goodAuthenticatedHTTPClient{}
 
 		fImporter := fileImporter{pgManager, netClient}
-		passCredentials = false
-		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo))
+		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (passing through the auth header if same domain)", func(t *testing.T) {
@@ -479,7 +474,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (passing through the auth header)", func(t *testing.T) {
@@ -492,8 +487,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
 		fImporter := fileImporter{pgManager, netClient}
-		passCredentials = true
-		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", true))
 	})
 }
 
@@ -519,7 +513,7 @@ func (r *fakeRepo) Charts(shallow bool) ([]models.Chart, error) {
 	return r.charts, nil
 }
 
-func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
+func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
 		models.ValuesKey: r.chartFiles.Values,
 		models.ReadmeKey: r.chartFiles.Readme,
@@ -561,7 +555,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			RepoInternal: repo,
 			netClient:    netClient,
 		}
-		assert.Err(t, fmt.Errorf("GET request to [https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz] failed due to status [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion))
+		assert.Err(t, fmt.Errorf("GET request to [https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz] failed due to status [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
@@ -593,7 +587,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			RepoInternal: repo,
 			netClient:    netClient,
 		}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false)
 		assert.NoErr(t, err)
 	})
 
@@ -619,7 +613,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			content:      []byte{},
 			netClient:    netClient,
 		}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion, "my-user-agent", true)
 		assert.NoErr(t, err)
 	})
 
@@ -637,7 +631,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		netClient := &goodTarballClient{c: charts[0]}
 		fImporter := fileImporter{pgManager, netClient}
 
-		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion, "my-user-agent", false)
 		assert.NoErr(t, err)
 	})
 
@@ -650,7 +644,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(`true`))
 
 		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion, "my-user-agent", false)
 		assert.NoErr(t, err)
 	})
 }
@@ -700,7 +694,7 @@ func Test_ociAPICli(t *testing.T) {
 				errMsg: "forbidden",
 			},
 		}
-		_, err := apiCli.TagList("apache")
+		_, err := apiCli.TagList("apache", "my-user-agent")
 		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]: forbidden"), err)
 	})
 
@@ -711,7 +705,7 @@ func Test_ociAPICli(t *testing.T) {
 				response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
 			},
 		}
-		result, err := apiCli.TagList("apache")
+		result, err := apiCli.TagList("apache", "my-user-agent")
 		assert.NoErr(t, err)
 		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
 		if !cmp.Equal(result, expectedTagList) {
@@ -725,7 +719,7 @@ func Test_ociAPICli(t *testing.T) {
 			authHeader: "Bearer wrong",
 			netClient:  &authenticatedOCIAPIHTTPClient{},
 		}
-		_, err := apiCli.TagList("apache")
+		_, err := apiCli.TagList("apache", "my-user-agent")
 		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]"), err)
 	})
 
@@ -737,7 +731,7 @@ func Test_ociAPICli(t *testing.T) {
 				response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
 			},
 		}
-		result, err := apiCli.TagList("apache")
+		result, err := apiCli.TagList("apache", "my-user-agent")
 		assert.NoErr(t, err)
 		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
 		if !cmp.Equal(result, expectedTagList) {
@@ -750,7 +744,7 @@ func Test_ociAPICli(t *testing.T) {
 			url:       url,
 			netClient: &badHTTPClient{},
 		}
-		_, err := apiCli.IsHelmChart("apache", "7.5.1")
+		_, err := apiCli.IsHelmChart("apache", "7.5.1", "my-user-agent")
 		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/manifests/7.5.1] failed due to status [500]"), err)
 	})
 
@@ -765,12 +759,12 @@ func Test_ociAPICli(t *testing.T) {
 				},
 			},
 		}
-		is751, err := apiCli.IsHelmChart("test/apache", "7.5.1")
+		is751, err := apiCli.IsHelmChart("test/apache", "7.5.1", "my-user-agent")
 		assert.NoErr(t, err)
 		if is751 {
 			t.Errorf("Tag 7.5.1 should not be a helm chart")
 		}
-		is811, err := apiCli.IsHelmChart("test/apache", "8.1.1")
+		is811, err := apiCli.IsHelmChart("test/apache", "8.1.1", "my-user-agent")
 		assert.NoErr(t, err)
 		if !is811 {
 			t.Errorf("Tag 8.1.1 should be a helm chart")
@@ -783,11 +777,11 @@ type fakeOCIAPICli struct {
 	err     error
 }
 
-func (o *fakeOCIAPICli) TagList(appName string) (*TagList, error) {
+func (o *fakeOCIAPICli) TagList(appName, userAgent string) (*TagList, error) {
 	return o.tagList, o.err
 }
 
-func (o *fakeOCIAPICli) IsHelmChart(appName, tag string) (bool, error) {
+func (o *fakeOCIAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 	return true, o.err
 }
 
@@ -1075,7 +1069,7 @@ version: 1.0.0
 			Values: files["values"],
 			Readme: files["readme"],
 			Schema: files["schema"],
-		})
+		}, "my-user-agent", false)
 		assert.NoErr(t, err)
 		assert.Equal(t, result, files, "expected files")
 	})
