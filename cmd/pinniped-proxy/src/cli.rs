@@ -1,7 +1,7 @@
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(version = env!("PINNIPED_PROXY_BUILD_VERSION"))]
+#[structopt(version = env!("PINNIPED_PROXY_VERSION"))]
 /// A proxy server which converts k8s API server requests with bearer tokens to
 /// requests with short-lived X509 certs exchanged by pinniped.
 ///
