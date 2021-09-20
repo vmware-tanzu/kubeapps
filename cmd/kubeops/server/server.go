@@ -18,6 +18,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -57,11 +58,11 @@ const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
 
 // Serve is the root command that is run when no other sub-commands are present.
 // It runs the gRPC service, registering the configured plugins.
-func Serve(serveOpts ServeOptions) {
+func Serve(serveOpts ServeOptions) error {
 
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
 	if kubeappsNamespace == "" {
-		log.Fatal("POD_NAMESPACE should be defined")
+		return fmt.Errorf("POD_NAMESPACE should be defined")
 	}
 
 	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
@@ -71,7 +72,7 @@ func Serve(serveOpts ServeOptions) {
 		var cleanupCAFiles func()
 		clustersConfig, cleanupCAFiles, err = kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
 		if err != nil {
-			log.Fatalf("unable to parse additional clusters config: %+v", err)
+			return fmt.Errorf("unable to parse additional clusters config: %+v", err)
 		}
 		defer cleanupCAFiles()
 	}
@@ -118,7 +119,7 @@ func Serve(serveOpts ServeOptions) {
 	// Backend routes unrelated to kubeops functionality.
 	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
 	if err != nil {
-		log.Fatalf("Unable to setup backend routes: %+v", err)
+		return fmt.Errorf("Unable to setup backend routes: %+v", err)
 	}
 
 	// assetsvc reverse proxy
@@ -128,7 +129,7 @@ func Serve(serveOpts ServeOptions) {
 	authGate := auth.AuthGate(clustersConfig, kubeappsNamespace)
 	parsedAssetsvcURL, err := url.Parse(serveOpts.AssetsvcURL)
 	if err != nil {
-		log.Fatalf("Unable to parse the assetsvc URL: %v", err)
+		return fmt.Errorf("Unable to parse the assetsvc URL: %v", err)
 	}
 	assetsvcProxy := httputil.NewSingleHostReverseProxy(parsedAssetsvcURL)
 	assetsvcPrefix := "/assetsvc"
@@ -178,8 +179,12 @@ func Serve(serveOpts ServeOptions) {
 	defer cancel()
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
-	srv.Shutdown(ctx)
+	err = srv.Shutdown(ctx)
+	if err != nil {
+		return fmt.Errorf("Error while shutting down: %v", err)
+	}
 	log.Info("All requests have been served. Exiting")
 	os.Exit(0)
 
+	return nil
 }
