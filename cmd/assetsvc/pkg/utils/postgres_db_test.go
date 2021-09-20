@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Bitnami
+Copyright 2021 VMware. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 // Run the local postgres with
 // docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.13.0-debian-10-r0
 // in another terminal.
-package main
+package utils
 
 import (
 	"database/sql"
@@ -27,16 +27,15 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
 	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest/pgtest"
 	_ "github.com/lib/pq"
 )
 
-func getInitializedManager(t *testing.T) (*utils.PostgresAssetManager, func()) {
+func getInitializedManager(t *testing.T) (*PostgresAssetManager, func()) {
 	pam, cleanup := pgtest.GetInitializedManager(t)
-	return &utils.PostgresAssetManager{pam}, cleanup
+	return &PostgresAssetManager{pam}, cleanup
 }
 
 func TestGetChart(t *testing.T) {
@@ -135,7 +134,7 @@ func TestGetVersion(t *testing.T) {
 			chartId:          "chart-1",
 			namespace:        "namespace-1",
 			requestedVersion: "doesnt-exist",
-			expectedErr:      utils.ErrChartVersionNotFound,
+			expectedErr:      ErrChartVersionNotFound,
 		},
 		{
 			name: "it returns an error if the chart version does not exist in that namespace",
@@ -388,7 +387,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 				}
 			}
 
-			charts, numPages, err := pam.GetPaginatedChartListWithFilters(utils.ChartQuery{Namespace: tc.namespace, Repos: []string{tc.repo}}, 1, 10)
+			charts, numPages, err := pam.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tc.namespace, Repos: []string{tc.repo}}, 1, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("In '"+tc.name+"': "+"got err: %+v, want: %+v", got, want)
@@ -510,7 +509,7 @@ func TestGetChartsWithFilters(t *testing.T) {
 				}
 			}
 
-			charts, _, err := pam.GetPaginatedChartListWithFilters(utils.ChartQuery{Namespace: tc.namespace, ChartName: tc.chartName, Version: tc.chartVersion, AppVersion: tc.appVersion}, 1, 0)
+			charts, _, err := pam.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tc.namespace, ChartName: tc.chartName, Version: tc.chartVersion, AppVersion: tc.appVersion}, 1, 0)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
