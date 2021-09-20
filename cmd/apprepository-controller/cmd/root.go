@@ -37,15 +37,6 @@ var (
 )
 
 // rootCmd represents the base command when called without any subcommands
-// var rootCmd = &cobra.Command{
-// 	Use:   "apprepository-controller",
-// 	Short: "Apprepository-controller is zzzzzzzzzzzzzzzzzzz",
-// 	Long:  "Apprepository-controller is zzzzzzzzzzzzzzzzzzz",
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		server.Serve(serveOpts)
-// 	},
-// 	Version: "devel",
-// }
 var rootCmd *cobra.Command
 
 func newRootCmd() *cobra.Command {
