@@ -1,10 +1,29 @@
-package main
+/*
+Copyright 2021 VMware. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package cmd
 
 import (
+	"bytes"
 	"strings"
+
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -12,15 +31,15 @@ func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
 		name string
 		args []string
-		conf Config
+		conf server.Config
 	}{
 		{
 			"no arguments returns default flag values",
 			[]string{},
-			Config{
+			server.Config{
 				Kubeconfig:               "",
 				MasterURL:                "",
-				RepoSyncImage:            "quay.io/helmpack/chart-repo:latest",
+				RepoSyncImage:            "docker.io/kubeapps/asset-syncer:latest",
 				RepoSyncImagePullSecrets: nil,
 				RepoSyncCommand:          "/chart-repo",
 				KubeappsNamespace:        "kubeapps",
@@ -33,7 +52,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "",
 				Crontab:                  "*/10 * * * *",
 				TTLSecondsAfterFinished:  "3600",
-				Args:                     []string{},
 			},
 		},
 		{
@@ -42,10 +60,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--repo-sync-image-pullsecrets=s1, s2",
 				"--repo-sync-image-pullsecrets= s3",
 			},
-			Config{
+			server.Config{
 				Kubeconfig:               "",
 				MasterURL:                "",
-				RepoSyncImage:            "quay.io/helmpack/chart-repo:latest",
+				RepoSyncImage:            "docker.io/kubeapps/asset-syncer:latest",
 				RepoSyncImagePullSecrets: []string{"s1", " s2", " s3"},
 				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: " s2"}, {Name: " s3"}},
 				RepoSyncCommand:          "/chart-repo",
@@ -59,7 +77,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "",
 				Crontab:                  "*/10 * * * *",
 				TTLSecondsAfterFinished:  "3600",
-				Args:                     []string{},
 			},
 		},
 		{
@@ -81,7 +98,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--user-agent-comment", "foo11",
 				"--crontab", "foo12",
 			},
-			Config{
+			server.Config{
 				Kubeconfig:               "foo01",
 				MasterURL:                "foo02",
 				RepoSyncImage:            "foo03",
@@ -98,23 +115,21 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "foo11",
 				Crontab:                  "foo12",
 				TTLSecondsAfterFinished:  "3600",
-				Args:                     []string{},
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(strings.Join(tt.args, " "), func(t *testing.T) {
-			conf, output, err := parseFlags("program", tt.args)
-			conf.ImagePullSecretsRefs = getImagePullSecretsRefs(conf.RepoSyncImagePullSecrets)
-
-			if err != nil {
-				t.Errorf("err got:\n%v\nwant nil", err)
-			}
-			if output != "" {
-				t.Errorf("output got:\n%q\nwant empty", output)
-			}
-			if got, want := *conf, tt.conf; !cmp.Equal(want, got) {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := newRootCmd()
+			b := bytes.NewBufferString("")
+			cmd.SetOut(b)
+			cmd.SetErr(b)
+			setFlags(cmd)
+			cmd.SetArgs(tt.args)
+			cmd.Execute()
+			serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
+			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -140,12 +155,15 @@ func TestParseFlagsError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(strings.Join(tt.args, " "), func(t *testing.T) {
-			conf, _, err := parseFlags("prog", tt.args)
-			if conf != nil {
-				t.Errorf("conf got %v, want nil", conf)
-			}
-			if strings.Index(err.Error(), tt.errstr) < 0 {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := newRootCmd()
+			b := bytes.NewBufferString("")
+			cmd.SetOut(b)
+			cmd.SetErr(b)
+			setFlags(cmd)
+			cmd.SetArgs(tt.args)
+			err := cmd.Execute()
+			if !strings.Contains(err.Error(), tt.errstr) {
 				t.Errorf("err got %q, want to find %q", err.Error(), tt.errstr)
 			}
 		})
