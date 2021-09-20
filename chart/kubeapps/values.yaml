@@ -729,6 +729,13 @@ apprepository:
   ##     ociRepositories:
   ##       - nginx
   ##       - jenkins
+  ##     # Optionally filter out some charts
+  ##     # Use variables so that the UI is able parse the expression
+  ##     filterRule:
+  ##       jq: .name == $var0 or .name == $var1
+  ##       variables:
+  ##         $var0: nginx
+  ##         $var1: jenkins
   ##
   initialRepos:
     - name: bitnami
