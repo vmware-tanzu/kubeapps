@@ -918,745 +918,729 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 }
 
 // misc global vars that get re-used in multiple tests scenarios
-var releasesGvr = schema.GroupVersionResource{
-	Group:    fluxHelmReleaseGroup,
-	Version:  fluxHelmReleaseVersion,
-	Resource: fluxHelmReleases,
-}
+var (
+	releasesGvr = schema.GroupVersionResource{
+		Group:    fluxHelmReleaseGroup,
+		Version:  fluxHelmReleaseVersion,
+		Resource: fluxHelmReleases,
+	}
 
-var redis_summary_installed = &corev1.InstalledPackageSummary{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name:    "my-redis",
-	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "14.4.0",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "6.2.4",
-	},
-	PkgDisplayName:   "redis",
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Status: &corev1.InstalledPackageStatus{
+	statusInstalled = &corev1.InstalledPackageStatus{
 		Ready:      true,
 		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-	},
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.6.1",
-		AppVersion: "6.2.4",
-	},
-}
+	}
 
-var redis_summary_failed = &corev1.InstalledPackageSummary{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name:    "my-redis",
-	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "14.4.0",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "6.2.4",
-	},
-	PkgDisplayName:   "redis",
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      false,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
-		UserReason: "InstallFailed: install retries exhausted",
-	},
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.6.1",
-		AppVersion: "6.2.4",
-	},
-}
-
-var redis_summary_pending = &corev1.InstalledPackageSummary{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name:    "my-redis",
-	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "14.4.0",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "6.2.4",
-	},
-	PkgDisplayName:   "redis",
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      false,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
-		UserReason: "Progressing: reconciliation in progress",
-	},
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.6.1",
-		AppVersion: "6.2.4",
-	},
-}
-
-var redis_summary_pending_2 = &corev1.InstalledPackageSummary{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name:    "my-redis",
-	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "14.4.0",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "6.2.4",
-	},
-	PkgDisplayName:   "redis",
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      false,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
-		UserReason: "ArtifactFailed: HelmChart 'default/kubeapps-my-redis' is not ready",
-	},
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.6.1",
-		AppVersion: "6.2.4",
-	},
-}
-
-var airflow_summary_installed = &corev1.InstalledPackageSummary{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-2",
-		},
-		Identifier: "my-airflow",
-		Plugin:     fluxPlugin,
-	},
-	Name:    "my-airflow",
-	IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "6.7.1",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "6.7.1",
-		AppVersion: "1.10.12",
-	},
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "10.2.1",
-		AppVersion: "2.1.0",
-	},
-	ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
-	PkgDisplayName:   "airflow",
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      true,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-	},
-}
-
-var redis_summary_latest = &corev1.InstalledPackageSummary{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name:    "my-redis",
-	IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "*",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "6.2.4",
-	},
-	PkgDisplayName:   "redis",
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      true,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-	},
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.6.1",
-		AppVersion: "6.2.4",
-	},
-}
-
-var airflow_summary_semver = &corev1.InstalledPackageSummary{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-2",
-		},
-		Identifier: "my-airflow",
-		Plugin:     fluxPlugin,
-	},
-	Name:    "my-airflow",
-	IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "<=6.7.1",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "6.7.1",
-		AppVersion: "1.10.12",
-	},
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "10.2.1",
-		AppVersion: "2.1.0",
-	},
-	ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
-	PkgDisplayName:   "airflow",
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      true,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-	},
-}
-
-var redis_existing_spec_completed = testSpecGetInstalledPackages{
-	repoName:             "bitnami-1",
-	repoNamespace:        "default",
-	repoIndex:            "testdata/redis-many-versions.yaml",
-	chartName:            "redis",
-	chartTarGz:           "testdata/redis-14.4.0.tgz",
-	chartSpecVersion:     "14.4.0",
-	chartArtifactVersion: "14.4.0",
-	releaseName:          "my-redis",
-	releaseNamespace:     "namespace-1",
-	releaseStatus: map[string]interface{}{
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Ready",
-				"status":             "True",
-				"reason":             "ReconciliationSucceeded",
-				"message":            "Release reconciliation succeeded",
+	redis_summary_installed = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
 			},
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Released",
-				"status":             "True",
-				"reason":             "InstallSucceeded",
-				"message":            "Helm install succeeded",
-			},
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
 		},
-		"lastAppliedRevision":   "14.4.0",
-		"lastAttemptedRevision": "14.4.0",
-	},
-}
-
-var redis_existing_stub_completed = helmReleaseStub{
-	name:         "test-my-redis",
-	namespace:    "test",
-	chartVersion: "14.4.0",
-	notes:        "some notes",
-	status:       release.StatusDeployed,
-}
-
-var redis_existing_spec_completed_with_values_and_reconciliation_options = testSpecGetInstalledPackages{
-	repoName:                  "bitnami-1",
-	repoNamespace:             "default",
-	repoIndex:                 "testdata/redis-many-versions.yaml",
-	chartName:                 "redis",
-	chartTarGz:                "testdata/redis-14.4.0.tgz",
-	chartSpecVersion:          "14.4.0",
-	chartArtifactVersion:      "14.4.0",
-	releaseName:               "my-redis",
-	releaseNamespace:          "namespace-1",
-	releaseSuspend:            true,
-	releaseServiceAccountName: "foo",
-	releaseValues: map[string]interface{}{
-		"replica": []interface{}{
-			map[string]interface{}{
-				"replicaCount":  "1",
-				"configuration": "xyz",
-			},
+		Name:    "my-redis",
+		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
 		},
-	},
-	releaseStatus: map[string]interface{}{
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Ready",
-				"status":             "True",
-				"reason":             "ReconciliationSucceeded",
-				"message":            "Release reconciliation succeeded",
-			},
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Released",
-				"status":             "True",
-				"reason":             "InstallSucceeded",
-				"message":            "Helm install succeeded",
-			},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
 		},
-		"lastAppliedRevision":   "14.4.0",
-		"lastAttemptedRevision": "14.4.0",
-	},
-}
-
-var redis_existing_spec_failed = testSpecGetInstalledPackages{
-	repoName:             "bitnami-1",
-	repoNamespace:        "default",
-	repoIndex:            "testdata/redis-many-versions.yaml",
-	chartName:            "redis",
-	chartTarGz:           "testdata/redis-14.4.0.tgz",
-	chartSpecVersion:     "14.4.0",
-	chartArtifactVersion: "14.4.0",
-	releaseName:          "my-redis",
-	releaseNamespace:     "namespace-1",
-	releaseStatus: map[string]interface{}{
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"lastTransitionTime": "2021-09-06T10:24:34Z",
-				"type":               "Ready",
-				"status":             "False",
-				"message":            "install retries exhausted",
-				"reason":             "InstallFailed",
-			},
-			map[string]interface{}{
-				"lastTransitionTime": "2021-09-06T10:24:34Z",
-				"type":               "Released",
-				"status":             "False",
-				"message":            "Helm install failed: unable to build kubernetes objects from release manifest: error validating \"\": error validating data: ValidationError(Deployment.spec.replicas): invalid type for io.k8s.api.apps.v1.DeploymentSpec.replicas: got \"string\", expected \"integer\"",
-				"reason":             "InstallFailed",
-			},
+		PkgDisplayName:   "redis",
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Status:           statusInstalled,
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.6.1",
+			AppVersion: "6.2.4",
 		},
-		"failures":              "14",
-		"installFailures":       "1",
-		"lastAttemptedRevision": "14.4.0",
-	},
-}
+	}
 
-var redis_existing_stub_failed = helmReleaseStub{
-	name:         "test-my-redis",
-	namespace:    "test",
-	chartVersion: "14.4.0",
-	notes:        "some notes",
-	status:       release.StatusFailed,
-}
-
-var airflow_existing_spec_completed = testSpecGetInstalledPackages{
-	repoName:             "bitnami-2",
-	repoNamespace:        "default",
-	repoIndex:            "testdata/airflow-many-versions.yaml",
-	chartName:            "airflow",
-	chartTarGz:           "testdata/airflow-6.7.1.tgz",
-	chartSpecVersion:     "6.7.1",
-	chartArtifactVersion: "6.7.1",
-	releaseName:          "my-airflow",
-	releaseNamespace:     "namespace-2",
-	releaseStatus: map[string]interface{}{
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Ready",
-				"status":             "True",
-				"reason":             "ReconciliationSucceeded",
-				"message":            "Release reconciliation succeeded",
+	redis_summary_failed = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
 			},
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Released",
-				"status":             "True",
-				"reason":             "InstallSucceeded",
-				"message":            "Helm install succeeded",
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
+		},
+		Name:    "my-redis",
+		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
+		},
+		PkgDisplayName:   "redis",
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+			UserReason: "InstallFailed: install retries exhausted",
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.6.1",
+			AppVersion: "6.2.4",
+		},
+	}
+
+	redis_summary_pending = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
 			},
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
 		},
-		"lastAppliedRevision":   "6.7.1",
-		"lastAttemptedRevision": "6.7.1",
-	},
-}
+		Name:    "my-redis",
+		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
+		},
+		PkgDisplayName:   "redis",
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			UserReason: "Progressing: reconciliation in progress",
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.6.1",
+			AppVersion: "6.2.4",
+		},
+	}
 
-var airflow_existing_spec_semver = testSpecGetInstalledPackages{
-	repoName:             "bitnami-2",
-	repoNamespace:        "default",
-	repoIndex:            "testdata/airflow-many-versions.yaml",
-	chartName:            "airflow",
-	chartTarGz:           "testdata/airflow-6.7.1.tgz",
-	chartSpecVersion:     "<=6.7.1",
-	chartArtifactVersion: "6.7.1",
-	releaseName:          "my-airflow",
-	releaseNamespace:     "namespace-2",
-	releaseStatus: map[string]interface{}{
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Ready",
-				"status":             "True",
-				"reason":             "ReconciliationSucceeded",
-				"message":            "Release reconciliation succeeded",
+	redis_summary_pending_2 = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
 			},
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Released",
-				"status":             "True",
-				"reason":             "InstallSucceeded",
-				"message":            "Helm install succeeded",
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
+		},
+		Name:    "my-redis",
+		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
+		},
+		PkgDisplayName:   "redis",
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			UserReason: "ArtifactFailed: HelmChart 'default/kubeapps-my-redis' is not ready",
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.6.1",
+			AppVersion: "6.2.4",
+		},
+	}
+
+	airflow_summary_installed = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-2",
 			},
+			Identifier: "my-airflow",
+			Plugin:     fluxPlugin,
 		},
-		"lastAppliedRevision":   "6.7.1",
-		"lastAttemptedRevision": "6.7.1",
-	},
-}
+		Name:    "my-airflow",
+		IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "6.7.1",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "6.7.1",
+			AppVersion: "1.10.12",
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "10.2.1",
+			AppVersion: "2.1.0",
+		},
+		ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+		PkgDisplayName:   "airflow",
+		Status:           statusInstalled,
+	}
 
-var redis_existing_spec_pending = testSpecGetInstalledPackages{
-	repoName:             "bitnami-1",
-	repoNamespace:        "default",
-	repoIndex:            "testdata/redis-many-versions.yaml",
-	chartName:            "redis",
-	chartTarGz:           "testdata/redis-14.4.0.tgz",
-	chartSpecVersion:     "14.4.0",
-	chartArtifactVersion: "14.4.0",
-	releaseName:          "my-redis",
-	releaseNamespace:     "namespace-1",
-	releaseStatus: map[string]interface{}{
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Ready",
-				"status":             "Unknown",
-				"reason":             "Progressing",
-				"message":            "reconciliation in progress",
+	redis_summary_latest = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
 			},
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
 		},
-		"lastAttemptedRevision": "14.4.0",
-	},
-}
+		Name:    "my-redis",
+		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
+		},
+		PkgDisplayName:   "redis",
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Status:           statusInstalled,
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.6.1",
+			AppVersion: "6.2.4",
+		},
+	}
 
-var redis_existing_spec_pending_2 = testSpecGetInstalledPackages{
-	repoName:             "bitnami-1",
-	repoNamespace:        "default",
-	repoIndex:            "testdata/redis-many-versions.yaml",
-	chartName:            "redis",
-	chartTarGz:           "testdata/redis-14.4.0.tgz",
-	chartSpecVersion:     "14.4.0",
-	chartArtifactVersion: "14.4.0",
-	releaseName:          "my-redis",
-	releaseNamespace:     "namespace-1",
-	releaseStatus: map[string]interface{}{
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"lastTransitionTime": "2021-09-06T05:26:52Z",
-				"message":            "HelmChart 'default/kubeapps-my-redis' is not ready",
-				"reason":             "ArtifactFailed",
-				"status":             "False",
-				"type":               "Ready",
+	airflow_summary_semver = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-2",
 			},
+			Identifier: "my-airflow",
+			Plugin:     fluxPlugin,
 		},
-		"failures":              "2",
-		"lastAttemptedRevision": "14.4.0",
-	},
-}
+		Name:    "my-airflow",
+		IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "<=6.7.1",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "6.7.1",
+			AppVersion: "1.10.12",
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "10.2.1",
+			AppVersion: "2.1.0",
+		},
+		ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+		PkgDisplayName:   "airflow",
+		Status:           statusInstalled,
+	}
 
-var redis_existing_stub_pending = helmReleaseStub{
-	name:         "test-my-redis",
-	namespace:    "test",
-	chartVersion: "14.4.0",
-	notes:        "some notes",
-	status:       release.StatusPendingInstall,
-}
-
-var redis_existing_spec_latest = testSpecGetInstalledPackages{
-	repoName:             "bitnami-1",
-	repoNamespace:        "default",
-	repoIndex:            "testdata/redis-many-versions.yaml",
-	chartName:            "redis",
-	chartTarGz:           "testdata/redis-14.4.0.tgz",
-	chartSpecVersion:     "*",
-	chartArtifactVersion: "14.4.0",
-	releaseName:          "my-redis",
-	releaseNamespace:     "namespace-1",
-	releaseStatus: map[string]interface{}{
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Ready",
-				"status":             "True",
-				"reason":             "ReconciliationSucceeded",
-				"message":            "Release reconciliation succeeded",
+	redis_existing_spec_completed = testSpecGetInstalledPackages{
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            "testdata/redis-many-versions.yaml",
+		chartName:            "redis",
+		chartTarGz:           "testdata/redis-14.4.0.tgz",
+		chartSpecVersion:     "14.4.0",
+		chartArtifactVersion: "14.4.0",
+		releaseName:          "my-redis",
+		releaseNamespace:     "namespace-1",
+		releaseStatus: map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Ready",
+					"status":             "True",
+					"reason":             "ReconciliationSucceeded",
+					"message":            "Release reconciliation succeeded",
+				},
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Released",
+					"status":             "True",
+					"reason":             "InstallSucceeded",
+					"message":            "Helm install succeeded",
+				},
 			},
-			map[string]interface{}{
-				"lastTransitionTime": "2021-08-11T08:46:03Z",
-				"type":               "Released",
-				"status":             "True",
-				"reason":             "InstallSucceeded",
-				"message":            "Helm install succeeded",
-			},
+			"lastAppliedRevision":   "14.4.0",
+			"lastAttemptedRevision": "14.4.0",
 		},
-		"lastAppliedRevision":   "14.4.0",
-		"lastAttemptedRevision": "14.4.0",
-	},
-}
+	}
 
-var redis_detail_failed = &corev1.InstalledPackageDetail{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name: "my-redis",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "14.4.0",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "1.2.3",
-	},
-	ReconciliationOptions: &corev1.ReconciliationOptions{
-		Interval: 60,
-	},
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      false,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
-		UserReason: "InstallFailed: install retries exhausted",
-	},
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "bitnami-1/redis",
-		Context:    &corev1.Context{Namespace: "default"},
-		Plugin:     fluxPlugin,
-	},
-	PostInstallationNotes: "some notes",
-}
+	redis_existing_stub_completed = helmReleaseStub{
+		name:         "test-my-redis",
+		namespace:    "test",
+		chartVersion: "14.4.0",
+		notes:        "some notes",
+		status:       release.StatusDeployed,
+	}
 
-var redis_detail_pending = &corev1.InstalledPackageDetail{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name: "my-redis",
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "14.4.0",
-	},
-	CurrentVersion: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "1.2.3",
-	},
-	ReconciliationOptions: &corev1.ReconciliationOptions{
-		Interval: 60,
-	},
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      false,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
-		UserReason: "Progressing: reconciliation in progress",
-	},
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "bitnami-1/redis",
-		Context:    &corev1.Context{Namespace: "default"},
-		Plugin:     fluxPlugin,
-	},
-	PostInstallationNotes: "some notes",
-}
-
-var redis_detail_completed = &corev1.InstalledPackageDetail{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name: "my-redis",
-	CurrentVersion: &corev1.PackageAppVersion{
-		AppVersion: "1.2.3",
-		PkgVersion: "14.4.0",
-	},
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "14.4.0",
-	},
-	ReconciliationOptions: &corev1.ReconciliationOptions{
-		Interval: 60,
-	},
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      true,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-	},
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "bitnami-1/redis",
-		Context:    &corev1.Context{Namespace: "default"},
-		Plugin:     fluxPlugin,
-	},
-	PostInstallationNotes: "some notes",
-}
-
-var redis_detail_completed_with_values_and_reconciliation_options = &corev1.InstalledPackageDetail{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	},
-	Name: "my-redis",
-	CurrentVersion: &corev1.PackageAppVersion{
-		AppVersion: "1.2.3",
-		PkgVersion: "14.4.0",
-	},
-	PkgVersionReference: &corev1.VersionReference{
-		Version: "14.4.0",
-	},
-	ReconciliationOptions: &corev1.ReconciliationOptions{
-		Interval:           60,
-		Suspend:            true,
-		ServiceAccountName: "foo",
-	},
-	Status: &corev1.InstalledPackageStatus{
-		Ready:      true,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-	},
-	ValuesApplied: "{\"replica\":[{\"configuration\":\"xyz\",\"replicaCount\":\"1\"}]}",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "bitnami-1/redis",
-		Context:    &corev1.Context{Namespace: "default"},
-		Plugin:     fluxPlugin,
-	},
-	PostInstallationNotes: "some notes",
-}
-
-var flux_helm_release_basic = map[string]interface{}{
-	"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
-	"kind":       "HelmRelease",
-	"metadata": map[string]interface{}{
-		"name":      "my-podinfo",
-		"namespace": "kubeapps",
-	},
-	"spec": map[string]interface{}{
-		"chart": map[string]interface{}{
-			"spec": map[string]interface{}{
-				"chart": "podinfo",
-				"sourceRef": map[string]interface{}{
-					"kind":      "HelmRepository",
-					"name":      "podinfo",
-					"namespace": "namespace-1",
+	redis_existing_spec_completed_with_values_and_reconciliation_options = testSpecGetInstalledPackages{
+		repoName:                  "bitnami-1",
+		repoNamespace:             "default",
+		repoIndex:                 "testdata/redis-many-versions.yaml",
+		chartName:                 "redis",
+		chartTarGz:                "testdata/redis-14.4.0.tgz",
+		chartSpecVersion:          "14.4.0",
+		chartArtifactVersion:      "14.4.0",
+		releaseName:               "my-redis",
+		releaseNamespace:          "namespace-1",
+		releaseSuspend:            true,
+		releaseServiceAccountName: "foo",
+		releaseValues: map[string]interface{}{
+			"replica": []interface{}{
+				map[string]interface{}{
+					"replicaCount":  "1",
+					"configuration": "xyz",
 				},
 			},
 		},
-		"install": map[string]interface{}{
-			"createNamespace": true,
-		},
-		"interval":        "1m",
-		"targetNamespace": "test",
-	},
-}
-
-var flux_helm_release_semver_constraint = map[string]interface{}{
-	"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
-	"kind":       "HelmRelease",
-	"metadata": map[string]interface{}{
-		"name":      "my-podinfo",
-		"namespace": "kubeapps",
-	},
-	"spec": map[string]interface{}{
-		"chart": map[string]interface{}{
-			"spec": map[string]interface{}{
-				"chart": "podinfo",
-				"sourceRef": map[string]interface{}{
-					"kind":      "HelmRepository",
-					"name":      "podinfo",
-					"namespace": "namespace-1",
+		releaseStatus: map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Ready",
+					"status":             "True",
+					"reason":             "ReconciliationSucceeded",
+					"message":            "Release reconciliation succeeded",
 				},
-				"version": "> 5",
-			},
-		},
-		"install": map[string]interface{}{
-			"createNamespace": true,
-		},
-		"interval":        "1m",
-		"targetNamespace": "test",
-	},
-}
-
-var flux_helm_release_reconcile_options = map[string]interface{}{
-	"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
-	"kind":       "HelmRelease",
-	"metadata": map[string]interface{}{
-		"name":      "my-podinfo",
-		"namespace": "kubeapps",
-	},
-	"spec": map[string]interface{}{
-		"chart": map[string]interface{}{
-			"spec": map[string]interface{}{
-				"chart": "podinfo",
-				"sourceRef": map[string]interface{}{
-					"kind":      "HelmRepository",
-					"name":      "podinfo",
-					"namespace": "namespace-1",
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Released",
+					"status":             "True",
+					"reason":             "InstallSucceeded",
+					"message":            "Helm install succeeded",
 				},
 			},
+			"lastAppliedRevision":   "14.4.0",
+			"lastAttemptedRevision": "14.4.0",
 		},
-		"install": map[string]interface{}{
-			"createNamespace": true,
-		},
-		"interval":           "1m0s",
-		"serviceAccountName": "foo",
-		"suspend":            false,
-		"targetNamespace":    "test",
-	},
-}
+	}
 
-var flux_helm_release_values = map[string]interface{}{
-	"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
-	"kind":       "HelmRelease",
-	"metadata": map[string]interface{}{
-		"name":      "my-podinfo",
-		"namespace": "kubeapps",
-	},
-	"spec": map[string]interface{}{
-		"chart": map[string]interface{}{
-			"spec": map[string]interface{}{
-				"chart": "podinfo",
-				"sourceRef": map[string]interface{}{
-					"kind":      "HelmRepository",
-					"name":      "podinfo",
-					"namespace": "namespace-1",
+	redis_existing_spec_failed = testSpecGetInstalledPackages{
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            "testdata/redis-many-versions.yaml",
+		chartName:            "redis",
+		chartTarGz:           "testdata/redis-14.4.0.tgz",
+		chartSpecVersion:     "14.4.0",
+		chartArtifactVersion: "14.4.0",
+		releaseName:          "my-redis",
+		releaseNamespace:     "namespace-1",
+		releaseStatus: map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-09-06T10:24:34Z",
+					"type":               "Ready",
+					"status":             "False",
+					"message":            "install retries exhausted",
+					"reason":             "InstallFailed",
+				},
+				map[string]interface{}{
+					"lastTransitionTime": "2021-09-06T10:24:34Z",
+					"type":               "Released",
+					"status":             "False",
+					"message":            "Helm install failed: unable to build kubernetes objects from release manifest: error validating \"\": error validating data: ValidationError(Deployment.spec.replicas): invalid type for io.k8s.api.apps.v1.DeploymentSpec.replicas: got \"string\", expected \"integer\"",
+					"reason":             "InstallFailed",
 				},
 			},
+			"failures":              "14",
+			"installFailures":       "1",
+			"lastAttemptedRevision": "14.4.0",
 		},
-		"install": map[string]interface{}{
-			"createNamespace": true,
-		},
-		"interval":        "1m",
-		"targetNamespace": "test",
-		"values": map[string]interface{}{
-			"ui": map[string]interface{}{"message": "what we do in the shadows"},
-		},
-	},
-}
+	}
 
-var create_installed_package_resp_my_podinfo = &corev1.CreateInstalledPackageResponse{
-	InstalledPackageRef: &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "kubeapps",
+	redis_existing_stub_failed = helmReleaseStub{
+		name:         "test-my-redis",
+		namespace:    "test",
+		chartVersion: "14.4.0",
+		notes:        "some notes",
+		status:       release.StatusFailed,
+	}
+
+	airflow_existing_spec_completed = testSpecGetInstalledPackages{
+		repoName:             "bitnami-2",
+		repoNamespace:        "default",
+		repoIndex:            "testdata/airflow-many-versions.yaml",
+		chartName:            "airflow",
+		chartTarGz:           "testdata/airflow-6.7.1.tgz",
+		chartSpecVersion:     "6.7.1",
+		chartArtifactVersion: "6.7.1",
+		releaseName:          "my-airflow",
+		releaseNamespace:     "namespace-2",
+		releaseStatus: map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Ready",
+					"status":             "True",
+					"reason":             "ReconciliationSucceeded",
+					"message":            "Release reconciliation succeeded",
+				},
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Released",
+					"status":             "True",
+					"reason":             "InstallSucceeded",
+					"message":            "Helm install succeeded",
+				},
+			},
+			"lastAppliedRevision":   "6.7.1",
+			"lastAttemptedRevision": "6.7.1",
 		},
-		Identifier: "my-podinfo",
-		Plugin:     fluxPlugin,
-	},
-}
+	}
+
+	airflow_existing_spec_semver = testSpecGetInstalledPackages{
+		repoName:             "bitnami-2",
+		repoNamespace:        "default",
+		repoIndex:            "testdata/airflow-many-versions.yaml",
+		chartName:            "airflow",
+		chartTarGz:           "testdata/airflow-6.7.1.tgz",
+		chartSpecVersion:     "<=6.7.1",
+		chartArtifactVersion: "6.7.1",
+		releaseName:          "my-airflow",
+		releaseNamespace:     "namespace-2",
+		releaseStatus: map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Ready",
+					"status":             "True",
+					"reason":             "ReconciliationSucceeded",
+					"message":            "Release reconciliation succeeded",
+				},
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Released",
+					"status":             "True",
+					"reason":             "InstallSucceeded",
+					"message":            "Helm install succeeded",
+				},
+			},
+			"lastAppliedRevision":   "6.7.1",
+			"lastAttemptedRevision": "6.7.1",
+		},
+	}
+
+	redis_existing_spec_pending = testSpecGetInstalledPackages{
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            "testdata/redis-many-versions.yaml",
+		chartName:            "redis",
+		chartTarGz:           "testdata/redis-14.4.0.tgz",
+		chartSpecVersion:     "14.4.0",
+		chartArtifactVersion: "14.4.0",
+		releaseName:          "my-redis",
+		releaseNamespace:     "namespace-1",
+		releaseStatus: map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Ready",
+					"status":             "Unknown",
+					"reason":             "Progressing",
+					"message":            "reconciliation in progress",
+				},
+			},
+			"lastAttemptedRevision": "14.4.0",
+		},
+	}
+
+	redis_existing_spec_pending_2 = testSpecGetInstalledPackages{
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            "testdata/redis-many-versions.yaml",
+		chartName:            "redis",
+		chartTarGz:           "testdata/redis-14.4.0.tgz",
+		chartSpecVersion:     "14.4.0",
+		chartArtifactVersion: "14.4.0",
+		releaseName:          "my-redis",
+		releaseNamespace:     "namespace-1",
+		releaseStatus: map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-09-06T05:26:52Z",
+					"message":            "HelmChart 'default/kubeapps-my-redis' is not ready",
+					"reason":             "ArtifactFailed",
+					"status":             "False",
+					"type":               "Ready",
+				},
+			},
+			"failures":              "2",
+			"lastAttemptedRevision": "14.4.0",
+		},
+	}
+
+	redis_existing_stub_pending = helmReleaseStub{
+		name:         "test-my-redis",
+		namespace:    "test",
+		chartVersion: "14.4.0",
+		notes:        "some notes",
+		status:       release.StatusPendingInstall,
+	}
+
+	redis_existing_spec_latest = testSpecGetInstalledPackages{
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            "testdata/redis-many-versions.yaml",
+		chartName:            "redis",
+		chartTarGz:           "testdata/redis-14.4.0.tgz",
+		chartSpecVersion:     "*",
+		chartArtifactVersion: "14.4.0",
+		releaseName:          "my-redis",
+		releaseNamespace:     "namespace-1",
+		releaseStatus: map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Ready",
+					"status":             "True",
+					"reason":             "ReconciliationSucceeded",
+					"message":            "Release reconciliation succeeded",
+				},
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Released",
+					"status":             "True",
+					"reason":             "InstallSucceeded",
+					"message":            "Helm install succeeded",
+				},
+			},
+			"lastAppliedRevision":   "14.4.0",
+			"lastAttemptedRevision": "14.4.0",
+		},
+	}
+
+	redis_detail_failed = &corev1.InstalledPackageDetail{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
+		},
+		Name: "my-redis",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "1.2.3",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: 60,
+		},
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+			UserReason: "InstallFailed: install retries exhausted",
+		},
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "bitnami-1/redis",
+			Context:    &corev1.Context{Namespace: "default"},
+			Plugin:     fluxPlugin,
+		},
+		PostInstallationNotes: "some notes",
+	}
+
+	redis_detail_pending = &corev1.InstalledPackageDetail{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
+		},
+		Name: "my-redis",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "1.2.3",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: 60,
+		},
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			UserReason: "Progressing: reconciliation in progress",
+		},
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "bitnami-1/redis",
+			Context:    &corev1.Context{Namespace: "default"},
+			Plugin:     fluxPlugin,
+		},
+		PostInstallationNotes: "some notes",
+	}
+
+	redis_detail_completed = &corev1.InstalledPackageDetail{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
+		},
+		Name: "my-redis",
+		CurrentVersion: &corev1.PackageAppVersion{
+			AppVersion: "1.2.3",
+			PkgVersion: "14.4.0",
+		},
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: 60,
+		},
+		Status: statusInstalled,
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "bitnami-1/redis",
+			Context:    &corev1.Context{Namespace: "default"},
+			Plugin:     fluxPlugin,
+		},
+		PostInstallationNotes: "some notes",
+	}
+
+	redis_detail_completed_with_values_and_reconciliation_options = &corev1.InstalledPackageDetail{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "my-redis",
+			Plugin:     fluxPlugin,
+		},
+		Name: "my-redis",
+		CurrentVersion: &corev1.PackageAppVersion{
+			AppVersion: "1.2.3",
+			PkgVersion: "14.4.0",
+		},
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval:           60,
+			Suspend:            true,
+			ServiceAccountName: "foo",
+		},
+		Status:        statusInstalled,
+		ValuesApplied: "{\"replica\":[{\"configuration\":\"xyz\",\"replicaCount\":\"1\"}]}",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "bitnami-1/redis",
+			Context:    &corev1.Context{Namespace: "default"},
+			Plugin:     fluxPlugin,
+		},
+		PostInstallationNotes: "some notes",
+	}
+
+	flux_helm_release_basic = map[string]interface{}{
+		"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+		"kind":       "HelmRelease",
+		"metadata": map[string]interface{}{
+			"name":      "my-podinfo",
+			"namespace": "kubeapps",
+		},
+		"spec": map[string]interface{}{
+			"chart": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"chart": "podinfo",
+					"sourceRef": map[string]interface{}{
+						"kind":      "HelmRepository",
+						"name":      "podinfo",
+						"namespace": "namespace-1",
+					},
+				},
+			},
+			"install": map[string]interface{}{
+				"createNamespace": true,
+			},
+			"interval":        "1m",
+			"targetNamespace": "test",
+		},
+	}
+
+	flux_helm_release_semver_constraint = map[string]interface{}{
+		"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+		"kind":       "HelmRelease",
+		"metadata": map[string]interface{}{
+			"name":      "my-podinfo",
+			"namespace": "kubeapps",
+		},
+		"spec": map[string]interface{}{
+			"chart": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"chart": "podinfo",
+					"sourceRef": map[string]interface{}{
+						"kind":      "HelmRepository",
+						"name":      "podinfo",
+						"namespace": "namespace-1",
+					},
+					"version": "> 5",
+				},
+			},
+			"install": map[string]interface{}{
+				"createNamespace": true,
+			},
+			"interval":        "1m",
+			"targetNamespace": "test",
+		},
+	}
+
+	flux_helm_release_reconcile_options = map[string]interface{}{
+		"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+		"kind":       "HelmRelease",
+		"metadata": map[string]interface{}{
+			"name":      "my-podinfo",
+			"namespace": "kubeapps",
+		},
+		"spec": map[string]interface{}{
+			"chart": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"chart": "podinfo",
+					"sourceRef": map[string]interface{}{
+						"kind":      "HelmRepository",
+						"name":      "podinfo",
+						"namespace": "namespace-1",
+					},
+				},
+			},
+			"install": map[string]interface{}{
+				"createNamespace": true,
+			},
+			"interval":           "1m0s",
+			"serviceAccountName": "foo",
+			"suspend":            false,
+			"targetNamespace":    "test",
+		},
+	}
+
+	flux_helm_release_values = map[string]interface{}{
+		"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+		"kind":       "HelmRelease",
+		"metadata": map[string]interface{}{
+			"name":      "my-podinfo",
+			"namespace": "kubeapps",
+		},
+		"spec": map[string]interface{}{
+			"chart": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"chart": "podinfo",
+					"sourceRef": map[string]interface{}{
+						"kind":      "HelmRepository",
+						"name":      "podinfo",
+						"namespace": "namespace-1",
+					},
+				},
+			},
+			"install": map[string]interface{}{
+				"createNamespace": true,
+			},
+			"interval":        "1m",
+			"targetNamespace": "test",
+			"values": map[string]interface{}{
+				"ui": map[string]interface{}{"message": "what we do in the shadows"},
+			},
+		},
+	}
+
+	create_installed_package_resp_my_podinfo = &corev1.CreateInstalledPackageResponse{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: "kubeapps",
+			},
+			Identifier: "my-podinfo",
+			Plugin:     fluxPlugin,
+		},
+	}
+)

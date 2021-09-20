@@ -170,19 +170,20 @@ message UpdateInstalledPackageRequest {
   InstalledPackageReference installed_package_ref = 1;
 
   // For helm this will be the exact version in VersionReference.version
+  // For fluxv2 this could be any semver constraint expression
   // For other plugins we can extend the VersionReference as needed. Optional
-  VersionReference pkg_version_reference = 2;
+  optional VersionReference pkg_version_reference = 2;
 
   // An optional serialized values string to be included when templating a
   // package in the format expected by the plugin. Included when the backend
   // format doesn't use secrets or configmaps for values or supports both.
   // These values are layered on top of any values refs above, when 
   // relevant. 
-  string values = 3;
+  optional string values = 3;
 
   // An optional field for specifying data common to systems that reconcile
   // the package on the cluster. 
-  ReconciliationOptions reconciliation_options = 4;
+  optional ReconciliationOptions reconciliation_options = 4;
 }
 
 // -- Start definitions of the response messages --

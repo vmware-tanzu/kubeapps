@@ -2679,7 +2679,7 @@
         },
         "pkgVersionReference": {
           "$ref": "#/definitions/v1alpha1VersionReference",
-          "title": "For helm this will be the exact version in VersionReference.version\nFor other plugins we can extend the VersionReference as needed. Optional"
+          "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
         },
         "values": {
           "type": "string",
