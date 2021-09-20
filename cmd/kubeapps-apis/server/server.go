@@ -46,7 +46,7 @@ type ServeOptions struct {
 
 // Serve is the root command that is run when no other sub-commands are present.
 // It runs the gRPC service, registering the configured plugins.
-func Serve(serveOpts ServeOptions) {
+func Serve(serveOpts ServeOptions) error {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
 	grpcSrv := grpc.NewServer()
@@ -56,9 +56,13 @@ func Serve(serveOpts ServeOptions) {
 	listenAddr := fmt.Sprintf(":%d", serveOpts.Port)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	gw, err := gatewayMux()
+	if err != nil {
+		return fmt.Errorf("Failed to create gateway: %v", err)
+	}
 	gwArgs := gwHandlerArgs{
 		ctx:         ctx,
-		mux:         gatewayMux(),
+		mux:         gw,
 		addr:        listenAddr,
 		dialOptions: []grpc.DialOption{grpc.WithInsecure()},
 	}
@@ -67,24 +71,24 @@ func Serve(serveOpts ServeOptions) {
 	// and register it for both grpc and http.
 	pluginsServer, err := NewPluginsServer(serveOpts, grpcSrv, gwArgs)
 	if err != nil {
-		log.Fatalf("failed to initialize plugins server: %v", err)
+		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
 	plugins.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
 	err = plugins.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
 	if err != nil {
-		log.Fatalf("failed to register core.plugins handler for gateway: %v", err)
+		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
 	}
 
 	// Create the core.packages server and register it for both grpc and http.
 	packages.RegisterPackagesServiceServer(grpcSrv, NewPackagesServer(pluginsServer.packagesPlugins))
 	err = packages.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
 	if err != nil {
-		log.Fatalf("failed to register core.packages handler for gateway: %v", err)
+		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)
 	}
 
 	lis, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		return fmt.Errorf("failed to listen: %v", err)
 	}
 
 	// Multiplex the connection between grpc and http.
@@ -140,8 +144,10 @@ func Serve(serveOpts ServeOptions) {
 
 	log.Infof("Starting server on :%d", serveOpts.Port)
 	if err := mux.Serve(); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		return fmt.Errorf("failed to serve: %v", err)
 	}
+
+	return nil
 }
 
 // gwHandlerArgs is a helper struct just encapsulating all the args
@@ -154,7 +160,7 @@ type gwHandlerArgs struct {
 }
 
 // Create a gateway mux that does not emit unpopulated fields.
-func gatewayMux() *runtime.ServeMux {
+func gatewayMux() (*runtime.ServeMux, error) {
 	gwmux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
@@ -173,15 +179,15 @@ func gatewayMux() *runtime.ServeMux {
 		http.ServeFile(w, r, "docs/kubeapps-apis.swagger.json")
 	}))
 	if err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		return nil, fmt.Errorf("failed to serve: %v", err)
 	}
 
 	err = gwmux.HandlePath(http.MethodGet, "/docs", runtime.HandlerFunc(func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		http.ServeFile(w, r, "docs/index.html")
 	}))
 	if err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		return nil, fmt.Errorf("failed to serve: %v", err)
 	}
 
-	return gwmux
+	return gwmux, nil
 }
