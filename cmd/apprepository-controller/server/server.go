@@ -45,6 +45,10 @@ type Config struct {
 	Crontab                  string
 	TTLSecondsAfterFinished  string
 	ReposPerNamespace        bool
+	CustomAnnotations        []string
+	CustomLabels             []string
+	ParsedCustomAnnotations  map[string]string
+	ParsedCustomLabels       map[string]string
 }
 
 func Serve(serveOpts Config) error {

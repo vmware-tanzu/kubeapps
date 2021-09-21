@@ -733,6 +733,12 @@ apprepository:
   initialRepos:
     - name: bitnami
       url: https://charts.bitnami.com/bitnami
+  ## @param apprepository.customAnnotations [object] Custom annotations be added to each AppRepository-generated CronJob, Job and Pod
+  ##
+  customAnnotations: {}
+  ## @param apprepository.customLabels [object] Custom labels be added to each AppRepository-generated CronJob, Job and Pod
+  ##
+  customLabels: {}
   ## @param apprepository.initialReposProxy [object] Proxy configuration to access chart repositories
   ##
   initialReposProxy:

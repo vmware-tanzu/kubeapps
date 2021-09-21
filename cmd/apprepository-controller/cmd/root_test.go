@@ -52,6 +52,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "",
 				Crontab:                  "*/10 * * * *",
 				TTLSecondsAfterFinished:  "3600",
+				CustomAnnotations:        []string{""},
+				CustomLabels:             []string{""},
+				ParsedCustomAnnotations:  map[string]string{},
+				ParsedCustomLabels:       map[string]string{},
 			},
 		},
 		{
@@ -77,6 +81,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "",
 				Crontab:                  "*/10 * * * *",
 				TTLSecondsAfterFinished:  "3600",
+				CustomAnnotations:        []string{""},
+				CustomLabels:             []string{""},
+				ParsedCustomAnnotations:  map[string]string{},
+				ParsedCustomLabels:       map[string]string{},
 			},
 		},
 		{
@@ -97,6 +105,9 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--database-secret-key", "foo10",
 				"--user-agent-comment", "foo11",
 				"--crontab", "foo12",
+				"--custom-annotations", "foo13=bar13,foo13x=bar13x",
+				"--custom-annotations", "extra13=extra13",
+				"--custom-labels", "foo14=bar14,foo14x=bar14x",
 			},
 			server.Config{
 				Kubeconfig:               "foo01",
@@ -115,6 +126,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgentComment:         "foo11",
 				Crontab:                  "foo12",
 				TTLSecondsAfterFinished:  "3600",
+				CustomAnnotations:        []string{"foo13=bar13", "foo13x=bar13x", "extra13=extra13"},
+				CustomLabels:             []string{"foo14=bar14", "foo14x=bar14x"},
+				ParsedCustomAnnotations:  map[string]string{"foo13": "bar13", "foo13x": "bar13x", "extra13": "extra13"},
+				ParsedCustomLabels:       map[string]string{"foo14": "bar14", "foo14x": "bar14x"},
 			},
 		},
 	}
@@ -129,6 +144,8 @@ func TestParseFlagsCorrect(t *testing.T) {
 			cmd.SetArgs(tt.args)
 			cmd.Execute()
 			serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
+			serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
+			serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
