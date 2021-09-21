@@ -62,21 +62,6 @@ export function flattenResources(
   return result;
 }
 
-export function getPluginFromString(pluginString?: string) {
-  // Fallback to the helm plugin
-  if (!pluginString) pluginString = "helm.packages+v1alpha1";
-  const splitChar = "+";
-  const splitStr = pluginString?.split(splitChar);
-  return { name: splitStr?.[0], version: splitStr?.[1] } as Plugin;
-}
-
-export function getStringFromPlugin(plugin?: Plugin) {
-  // Fallback to the helm plugin
-  if (!plugin) return "helm.packages+v1alpha1";
-  const splitChar = "+";
-  return `${plugin?.name + splitChar + plugin?.version}`;
-}
-
 export function getPluginIcon(plugin: Plugin | string) {
   // Temporary case while operators are not supported as kubeapps apis plugin
   if (typeof plugin === "string") {

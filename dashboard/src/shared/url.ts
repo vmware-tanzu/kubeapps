@@ -5,7 +5,6 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { IServiceBroker } from "./ServiceCatalog";
 import { IRepo } from "./types";
-import { getStringFromPlugin } from "./utils";
 
 export const app = {
   apps: {
@@ -23,15 +22,15 @@ export const app = {
       // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
       const repoName =
         availablePackageDetail.availablePackageRef?.identifier.split("/")?.[0] ?? globalNamespace;
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${encodeURI(
-        getStringFromPlugin(plugin),
-      )}/${encodeURIComponent(availablePackageDetail.name)}/versions/${version}`;
+      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${plugin.name}/${
+        plugin.version
+      }/${encodeURIComponent(availablePackageDetail.name)}/versions/${version}`;
     },
     list: (cluster?: string, namespace?: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (ref?: InstalledPackageReference) =>
-      `${app.apps.list(ref?.context?.cluster, ref?.context?.namespace)}/${encodeURI(
-        getStringFromPlugin(ref?.plugin),
-      )}/${ref?.identifier}`,
+      `${app.apps.list(ref?.context?.cluster, ref?.context?.namespace)}/${ref?.plugin?.name}/${
+        ref?.plugin?.version
+      }/${ref?.identifier}`,
     upgrade: (ref?: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
   },
   catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
@@ -45,9 +44,9 @@ export const app = {
       plugin: Plugin,
     ) => {
       const chartsSegment = globalNamespace === repo.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${encodeURI(
-        getStringFromPlugin(plugin),
-      )}/${encodeURIComponent(chartName)}`;
+      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${plugin.name}/${
+        plugin.version
+      }/${encodeURIComponent(chartName)}`;
     },
   },
   operators: {
