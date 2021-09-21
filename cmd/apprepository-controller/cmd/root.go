@@ -90,8 +90,8 @@ func setFlags(c *cobra.Command) {
 	// The support for this is currently beta in K8s (v1.21), older versions require a feature gate being set to enable it.
 	// See https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
 	c.Flags().StringVar(&serveOpts.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h) ")
-	c.StringSliceVar(&serveOpts.CustomAnnotations, "custom-annotations", []string{""}, "optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
-	c.StringSliceVar(&serveOpts.CustomLabels, "custom-labels", []string{""}, "optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
+	c.Flags().StringSliceVar(&serveOpts.CustomAnnotations, "custom-annotations", []string{""}, "optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
+	c.Flags().StringSliceVar(&serveOpts.CustomLabels, "custom-labels", []string{""}, "optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
 }
 
 // initConfig reads in config file and ENV variables if set.
