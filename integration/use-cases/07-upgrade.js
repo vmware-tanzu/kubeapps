@@ -1,5 +1,7 @@
 const utils = require("./lib/utils");
 const testName = "07-upgrade";
+const { screenshotsFolder } = require("../args");
+const path = require("path");
 
 test("Upgrades an application", async () => {
   await utils.login(
@@ -47,11 +49,10 @@ test("Upgrades an application", async () => {
     testName,
   );
 
-  // select the initialPackageVersion
-  await expect(page).toSelect('select[name="chart-versions"]', initialPackageVersion, {
-    delay: 2000,
-  });
+  console.log(`apache initialPackageVersion: ${initialPackageVersion}, latestPackageVersion: ${latestPackageVersion}`);
 
+  // select the initialPackageVersion
+  await expect(page).toSelect('select[name="chart-versions"]', initialPackageVersion);
   await new Promise(r => setTimeout(r, 500));
 
   await utils.retryAndRefresh(
@@ -60,6 +61,12 @@ test("Upgrades an application", async () => {
     async () => {
       // Check if the page contains the selected version
       await expect(page).toMatch(initialPackageVersion);
+
+      let screenshotFilename = `../${screenshotsFolder}/${testName}-check-initial-selected-version.png`;
+      console.log(`Saving screenshot to ${screenshotFilename}`);
+      await page.screenshot({
+        path: path.join(__dirname, screenshotFilename),
+      });
     },
     testName,
   );
@@ -112,9 +119,13 @@ test("Upgrades an application", async () => {
     3,
     async () => {
       // Select the latest pkg version
-      await expect(page).toSelect('select[name="chart-versions"]', latestPackageVersion, {
-        delay: 3000,
-      });
+      await expect(page).toSelect('select[name="chart-versions"]', latestPackageVersion);
+      // Immediately after selecting the version, the checked selection is still
+      // the unchanged. Not sure if it's due to the browser DOM needing
+      // milliseconds to update, or react's own rendering, but without the
+      // following 0.5s delay, we pick up the previously selected version
+      // (initialPackageVersion) as the checked one.
+      await new Promise(r => setTimeout(r, 500));
 
       // get the current pkg version (the selected one after being upgraded)
       const upgradedPackageVersionElement = await expect(page).toMatchElement(

@@ -490,7 +490,7 @@ func TestUpgradeAction(t *testing.T) {
 				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
 				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
 			},
-			responseBody: `{"data":{"name":"my-release","info":{"status":{"code":1}},"chart":{"metadata":{"name":"apache"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":2,"namespace":"default"}}`,
+			responseBody: `{"data":{"name":"my-release","info":{"status":{"code":1}},"chart":{"metadata":{"name":"apache","version":"1.0.0"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":2,"namespace":"default"}}`,
 		},
 		{
 			name:             "upgrade a missing release",

@@ -20,19 +20,17 @@ import (
 	"fmt"
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/kubeapps/kubeapps/cmd/kubeops/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	log "k8s.io/klog/v2"
-
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 )
 
 var (
 	cfgFile   string
 	serveOpts server.ServeOptions
-	// This version var is updated during the build
-	// see the -ldflags option in the Dockerfile
+	// This Version var is updated during the build
+	// see the -ldflags option in the cmd/kubeops/Dockerfile
 	version = "devel"
 )
 
@@ -41,14 +39,10 @@ var rootCmd *cobra.Command
 
 func newRootCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "kubeapps-apis",
-		Short: "A plugin-based gRPC and HTTP API server for interacting with Kubernetes packages",
-		Long: `kubeapps-apis is a plugin-based API server for interacting with Kubernetes packages.
-
-The api service serves both gRPC and HTTP requests for the configured APIs.`,
-
+		Use:   "kubeops",
+		Short: "Kubeops is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources.",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			log.Infof("kubeapps-apis has been configured with: %#v", serveOpts)
+			log.Infof("kubeops has been configured with: %#v", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return server.Serve(serveOpts)
@@ -68,16 +62,22 @@ func init() {
 	rootCmd = newRootCmd()
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
+	serveOpts.UserAgent = getUserAgent(version, serveOpts.UserAgentComment)
 }
 
 func setFlags(c *cobra.Command) {
-	c.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kubeapps-apis.yaml)")
-	c.Flags().IntVar(&serveOpts.Port, "port", 50051, "The port on which to run this api server. Both gRPC and HTTP requests will be served on this port.")
-	c.Flags().StringSliceVar(&serveOpts.PluginDirs, "plugin-dir", []string{"."}, "A directory to be scanned for .so plugins. May be specified multiple times.")
+	c.Flags().StringVar(&serveOpts.AssetsvcURL, "assetsvc-url", "https://kubeapps-internal-assetsvc:8080", "URL to the internal assetsvc")
+	c.Flags().StringVar(&serveOpts.HelmDriverArg, "helm-driver", "", "which Helm driver type to use")
+	c.Flags().IntVar(&serveOpts.ListLimit, "list-max", 256, "maximum number of releases to fetch")
+	c.Flags().StringVar(&serveOpts.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
+	// Default timeout from https://github.com/helm/helm/blob/9fafb4ad6811afb017cc464b630be2ff8390ac63/cmd/helm/install.go#L146
+	c.Flags().Int64Var(&serveOpts.Timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	c.Flags().StringVar(&serveOpts.ClustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	c.Flags().StringVar(&serveOpts.PinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
-	c.Flags().BoolVar(&serveOpts.UnsafeUseDemoSA, "unsafe-use-demo-sa", false, "if true, it will create and use a privileged Service Account for interacting with the resources instead of acting on a user's behalf.")
-	c.Flags().BoolVar(&serveOpts.UnsafeLocalDevKubeconfig, "unsafe-local-dev-kubeconfig", false, "if true, it will use the local kubeconfig at the KUBECONFIG env var instead of using the inCluster configuration.")
+	c.Flags().IntVar(&serveOpts.Burst, "burst", 15, "internal burst capacity")
+	c.Flags().Float32Var(&serveOpts.Qps, "qps", 10, "internal QPS rate")
+	c.Flags().StringVar(&serveOpts.NamespaceHeaderName, "namespace-header-name", "", "name of the header field, e.g. namespace-header-name=X-Consumer-Groups")
+	c.Flags().StringVar(&serveOpts.NamespaceHeaderPattern, "namespace-header-pattern", "", "regular expression that matches only single group, e.g. namespace-header-pattern=^namespace:([\\w]+):\\w+$, to match namespace:ns:read")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -87,12 +87,13 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := homedir.Dir()
+		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".kubeapps-apis" (without extension).
+		// Search config in home directory with name ".kubeops" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".kubeapps-apis")
+		viper.SetConfigType("yaml")
+		viper.SetConfigName(".kubeops")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -101,4 +102,16 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+// Returns the user agent to be used during calls to the chart repositories
+// Examples:
+// kubeops/devel
+// kubeops/2.3.4 (kubeapps v2.3.4-beta4)
+func getUserAgent(version, userAgentComment string) string {
+	ua := "kubeops/" + version
+	if userAgentComment != "" {
+		ua = fmt.Sprintf("%s (%s)", ua, userAgentComment)
+	}
+	return ua
 }
