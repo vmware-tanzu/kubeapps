@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 The Helm Authors
+Copyright 2021 VMware. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,58 +16,8 @@ limitations under the License.
 
 package main
 
-import (
-	"os"
-
-	"github.com/spf13/cobra"
-)
-
-var (
-	databaseURL           string
-	databaseName          string
-	databaseUser          string
-	databasePassword      string
-	debug                 bool
-	namespace             string
-	ociRepositories       []string
-	tlsInsecureSkipVerify bool
-	filterRules           string
-	passCredentials       bool
-)
-
-var rootCmd = &cobra.Command{
-	Use:   "asset-syncer",
-	Short: "Asset Synchronization utility",
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
-	},
-}
+import "github.com/kubeapps/kubeapps/cmd/asset-syncer/cmd"
 
 func main() {
-	cmd := rootCmd
-	if err := cmd.Execute(); err != nil {
-		os.Exit(1)
-	}
-}
-
-func init() {
-	rootCmd.PersistentFlags().StringVar(&databaseURL, "database-url", "localhost:5432", "Database URL")
-	rootCmd.PersistentFlags().StringVar(&databaseName, "database-name", "charts", "Name of the database to use")
-	rootCmd.PersistentFlags().StringVar(&databaseUser, "database-user", "", "Database user")
-	rootCmd.PersistentFlags().StringVar(&namespace, "namespace", "", "Namespace of the repository being synced")
-	// User agent configuration can be found in version.go. Check that file for more details
-	rootCmd.PersistentFlags().StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
-	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
-	rootCmd.PersistentFlags().BoolVar(&tlsInsecureSkipVerify, "tls-insecure-skip-verify", false, "Skip TLS verification")
-	rootCmd.PersistentFlags().StringVar(&filterRules, "filter-rules", "", "JSON blob with the rules to filter assets")
-	rootCmd.PersistentFlags().BoolVar(&passCredentials, "pass-credentials", false, "pass credentials to all domains")
-
-	databasePassword = os.Getenv("DB_PASSWORD")
-
-	syncCmd.Flags().StringSliceVar(&ociRepositories, "oci-repositories", []string{}, "List of OCI Repositories in case the type is OCI")
-	cmds := []*cobra.Command{syncCmd, deleteCmd, invalidateCacheCmd}
-	for _, cmd := range cmds {
-		rootCmd.AddCommand(cmd)
-	}
-	rootCmd.AddCommand(versionCmd)
+	cmd.Execute()
 }
