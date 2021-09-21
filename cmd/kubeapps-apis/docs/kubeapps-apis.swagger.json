@@ -378,7 +378,7 @@
           "PackagesService"
         ]
       },
-      "patch": {
+      "put": {
         "operationId": "PackagesService_UpdateInstalledPackage",
         "responses": {
           "200": {
@@ -840,7 +840,7 @@
           "FluxV2PackagesService"
         ]
       },
-      "patch": {
+      "put": {
         "summary": "UpdateInstalledPackage updates an installed package based on the request.",
         "operationId": "FluxV2PackagesService_UpdateInstalledPackage",
         "responses": {
@@ -1320,7 +1320,7 @@
           "HelmPackagesService"
         ]
       },
-      "patch": {
+      "put": {
         "summary": "UpdateInstalledPackage updates an installed package based on the request.",
         "operationId": "HelmPackagesService_UpdateInstalledPackage",
         "responses": {
@@ -1757,7 +1757,7 @@
           "KappControllerPackagesService"
         ]
       },
-      "patch": {
+      "put": {
         "summary": "UpdateInstalledPackage updates an installed package based on the request.",
         "operationId": "KappControllerPackagesService_UpdateInstalledPackage",
         "responses": {
@@ -2690,7 +2690,7 @@
           "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
         }
       },
-      "description": "Request for UpdateInstalledPackage. Partial resource updates are supported. \nFor example, to change the package version one only needs to specify the version reference. \nSimilarly to update the values, one only needs to specify that field",
+      "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole \nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the \nvalues for the fields fields below, which will replace, or be overlayed onto, the \ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version \nreference' without also specifying 'values' field. As a side effect, not specifying the \n'values' field in the request means there are no values specified in the desired state. \nSo the meaning of each field is describing the desired state of the corresponding field \nin the resource. If the desired state already matches the current state, no resources \nare changed.",
       "title": "UpdateInstalledPackageRequest"
     },
     "v1alpha1UpdateInstalledPackageResponse": {

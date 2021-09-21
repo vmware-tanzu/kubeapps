@@ -50,7 +50,7 @@ service PackagesService {
 
   rpc UpdateInstalledPackage(UpdateInstalledPackageRequest) returns (UpdateInstalledPackageResponse) {
      option (google.api.http) = {
-       patch: "/core/packages/v1alpha1/installedpackages"
+       put: "/core/packages/v1alpha1/installedpackages"
        body: "*"
       };
   }
@@ -161,9 +161,17 @@ message CreateInstalledPackageRequest {
 
 // UpdateInstalledPackageRequest
 //
-// Request for UpdateInstalledPackage. Partial resource updates are supported. 
-// For example, to change the package version one only needs to specify the version reference. 
-// Similarly to update the values, one only needs to specify that field
+// Request for UpdateInstalledPackage. The intent is to reach the desired state specified
+// by the fields in the request, while leaving other fields intact. This is a whole 
+// object "Update" semantics rather than "Patch" semantics. The caller will provide the 
+// values for the fields fields below, which will replace, or be overlayed onto, the 
+// corresponding fields in the existing resource. For example, with the
+// UpdateInstalledPackageRequest, it is not possible to change just the 'package version 
+// reference' without also specifying 'values' field. As a side effect, not specifying the 
+// 'values' field in the request means there are no values specified in the desired state. 
+// So the meaning of each field is describing the desired state of the corresponding field 
+// in the resource. If the desired state already matches the current state, no resources 
+// are changed. 
 message UpdateInstalledPackageRequest {
   // A reference uniquely identifying the installed package being updated.
   // Required
@@ -172,18 +180,18 @@ message UpdateInstalledPackageRequest {
   // For helm this will be the exact version in VersionReference.version
   // For fluxv2 this could be any semver constraint expression
   // For other plugins we can extend the VersionReference as needed. Optional
-  optional VersionReference pkg_version_reference = 2;
+  VersionReference pkg_version_reference = 2;
 
   // An optional serialized values string to be included when templating a
   // package in the format expected by the plugin. Included when the backend
   // format doesn't use secrets or configmaps for values or supports both.
   // These values are layered on top of any values refs above, when 
   // relevant. 
-  optional string values = 3;
+  string values = 3;
 
   // An optional field for specifying data common to systems that reconcile
   // the package on the cluster. 
-  optional ReconciliationOptions reconciliation_options = 4;
+  ReconciliationOptions reconciliation_options = 4;
 }
 
 // -- Start definitions of the response messages --

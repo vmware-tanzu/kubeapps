@@ -112,9 +112,6 @@ type integrationTestUpdateSpec struct {
 
 func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	fluxPluginClient := checkEnv(t)
-	valuesString1 := "{\"ui\": { \"message\": \"what we do in the shadows\" } }"
-	valuesString2 := "{\"ui\": { \"message\": \"Le Bureau des Légendes\" } }"
-	valuesString3 := ""
 
 	testCases := []integrationTestUpdateSpec{
 		{
@@ -125,12 +122,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				expectedDetail:    expected_detail_podinfo_5_2_1,
 				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
 			},
-			request: &corev1.UpdateInstalledPackageRequest{
-				// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-				PkgVersionReference: &corev1.VersionReference{
-					Version: "6.0.0",
-				},
-			},
+			request:                   update_request_1,
 			expectedDetailAfterUpdate: expected_detail_podinfo_6_0_0,
 		},
 		{
@@ -141,10 +133,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				expectedDetail:    expected_detail_podinfo_5_2_1_no_values,
 				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
 			},
-			request: &corev1.UpdateInstalledPackageRequest{
-				// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-				Values: &valuesString1,
-			},
+			request:                   update_request_2,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values,
 		},
 		{
@@ -155,10 +144,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				expectedDetail:    expected_detail_podinfo_5_2_1_values_2,
 				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
 			},
-			request: &corev1.UpdateInstalledPackageRequest{
-				// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-				Values: &valuesString2,
-			},
+			request:                   update_request_3,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_3,
 		},
 		{
@@ -169,10 +155,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				expectedDetail:    expected_detail_podinfo_5_2_1_values_4,
 				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
 			},
-			request: &corev1.UpdateInstalledPackageRequest{
-				// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-				Values: &valuesString3,
-			},
+			request:                   update_request_4,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_5,
 		},
 		{
@@ -183,9 +166,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				expectedDetail:    expected_detail_podinfo_5_2_1_values_6,
 				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
 			},
-			request: &corev1.UpdateInstalledPackageRequest{
-				// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-			},
+			request:                   update_request_5,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_6,
 		},
 	}
@@ -970,5 +951,44 @@ var (
 			},
 			Plugin: fluxPlugin,
 		},
+	}
+
+	update_request_1 = &corev1.UpdateInstalledPackageRequest{
+		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "6.0.0",
+		},
+	}
+
+	update_request_2 = &corev1.UpdateInstalledPackageRequest{
+		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "=5.2.1",
+		},
+		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+	}
+
+	update_request_3 = &corev1.UpdateInstalledPackageRequest{
+		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "=5.2.1",
+		},
+		Values: "{\"ui\": { \"message\": \"Le Bureau des Légendes\" } }",
+	}
+
+	update_request_4 = &corev1.UpdateInstalledPackageRequest{
+		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "=5.2.1",
+		},
+		Values: "",
+	}
+
+	update_request_5 = &corev1.UpdateInstalledPackageRequest{
+		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "=5.2.1",
+		},
+		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
 	}
 )

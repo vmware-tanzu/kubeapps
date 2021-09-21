@@ -376,60 +376,47 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}, nil
 }
 
-func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString *string) error {
+func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) error {
 	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
 	if err != nil {
 		return err
 	}
 
-	// for now we'll use types.MergePatchType, since
-	//  - JSONPatchType requires existing value for 'replace' to exist, so we'd need to do a Get(...) first. Yuck
-	//
-	patchMap := map[string]interface{}{
-		"spec": map[string]interface{}{
-			"chart": map[string]interface{}{
-				"spec": map[string]interface{}{},
-			},
-		},
+	unstructuredRel, err := ifc.Get(ctx, packageRef.Identifier, metav1.GetOptions{})
+	if err != nil {
+		return err
 	}
 
 	if versionRef.GetVersion() != "" {
-		unstructured.SetNestedField(patchMap, versionRef.GetVersion(), "spec", "chart", "spec", "version")
+		unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version")
+	} else {
+		unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "chart", "spec", "version")
 	}
 
-	if valuesString != nil {
-		if *valuesString != "" {
-			values := make(map[string]interface{})
-			if err = yaml.Unmarshal([]byte(*valuesString), &values); err != nil {
-				return err
-			}
-			unstructured.SetNestedMap(patchMap, values, "spec", "values")
-		} else {
-			// the semantics of this is a remove operation for a 'values' field
-			unstructured.SetNestedField(patchMap, nil, "spec", "values")
+	if valuesString != "" {
+		values := make(map[string]interface{})
+		if err = yaml.Unmarshal([]byte(valuesString), &values); err != nil {
+			return err
 		}
+		unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values")
+	} else {
+		unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "values")
 	}
 
-	if reconcile != nil {
-		if reconcile.Interval > 0 {
-			reconcileInterval := (time.Duration(reconcile.Interval) * time.Second).String()
-			unstructured.SetNestedField(patchMap, reconcileInterval, "spec", "interval")
-		}
-	}
+	// TODO
+	// if reconcile != nil {
+	//	if reconcile.Interval > 0 {
+	//		reconcileInterval := (time.Duration(reconcile.Interval) * time.Second).String()
+	//		unstructured.SetNestedField(patchMap, reconcileInterval, "spec", "interval")
+	//	}
+	//}
 
-	bytes, err := json.Marshal(patchMap)
+	unstructuredRel, err = ifc.Update(ctx, unstructuredRel, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 
-	log.Infof("About to patch release: %s", string(bytes))
-
-	patchedRel, err := ifc.Patch(ctx, packageRef.Identifier, types.MergePatchType, bytes, metav1.PatchOptions{})
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Patched release: %s", prettyPrintMap(patchedRel.Object))
+	log.Infof("Updated release: %s", prettyPrintMap(unstructuredRel.Object))
 	return nil
 }
 
