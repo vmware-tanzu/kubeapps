@@ -344,6 +344,67 @@
       }
     },
     "/core/packages/v1alpha1/installedpackages": {
+      "delete": {
+        "operationId": "PackagesService_DeleteInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1DeleteInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      },
       "post": {
         "operationId": "PackagesService_CreateInstalledPackage",
         "responses": {
@@ -406,69 +467,6 @@
             "schema": {
               "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
             }
-          }
-        ],
-        "tags": [
-          "PackagesService"
-        ]
-      }
-    },
-    "/core/packages/v1alpha1/installedpackages/plugin/{installedPackageRef.plugin.name}/{installedPackageRef.plugin.version}/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}": {
-      "delete": {
-        "operationId": "PackagesService_DeleteInstalledPackage",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1alpha1DeleteInstalledPackageResponse"
-            }
-          },
-          "401": {
-            "description": "Returned when the user does not have permission to access the resource.",
-            "schema": {}
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.context.cluster",
-            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.context.namespace",
-            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.identifier",
-            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
-            "in": "path",
-            "required": true,
-            "type": "string"
           }
         ],
         "tags": [
@@ -557,70 +555,6 @@
         },
         "tags": [
           "PluginsService"
-        ]
-      }
-    },
-    "/plugins/fluxv2.packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}": {
-      "delete": {
-        "summary": "DeleteInstalledPackage deletes an installed package based on the request.",
-        "operationId": "FluxV2PackagesService_DeleteInstalledPackage",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1alpha1DeleteInstalledPackageResponse"
-            }
-          },
-          "401": {
-            "description": "Returned when the user does not have permission to access the resource.",
-            "schema": {}
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "installedPackageRef.context.cluster",
-            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.context.namespace",
-            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.identifier",
-            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "FluxV2PackagesService"
         ]
       }
     },
@@ -932,6 +866,68 @@
       }
     },
     "/plugins/fluxv2/packages/v1alpha1/installedpackages": {
+      "delete": {
+        "summary": "DeleteInstalledPackage deletes an installed package based on the request.",
+        "operationId": "FluxV2PackagesService_DeleteInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1DeleteInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      },
       "post": {
         "summary": "CreateInstalledPackage creates an installed package based on the request.",
         "operationId": "FluxV2PackagesService_CreateInstalledPackage",
@@ -1101,70 +1097,6 @@
         ],
         "tags": [
           "FluxV2PackagesService"
-        ]
-      }
-    },
-    "/plugins/helm.packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}": {
-      "delete": {
-        "summary": "DeleteInstalledPackage deletes an installed package based on the request.",
-        "operationId": "HelmPackagesService_DeleteInstalledPackage",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1alpha1DeleteInstalledPackageResponse"
-            }
-          },
-          "401": {
-            "description": "Returned when the user does not have permission to access the resource.",
-            "schema": {}
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "installedPackageRef.context.cluster",
-            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.context.namespace",
-            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.identifier",
-            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "HelmPackagesService"
         ]
       }
     },
@@ -1476,6 +1408,68 @@
       }
     },
     "/plugins/helm/packages/v1alpha1/installedpackages": {
+      "delete": {
+        "summary": "DeleteInstalledPackage deletes an installed package based on the request.",
+        "operationId": "HelmPackagesService_DeleteInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1DeleteInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
+      },
       "post": {
         "summary": "CreateInstalledPackage creates an installed package based on the request.",
         "operationId": "HelmPackagesService_CreateInstalledPackage",
@@ -1602,70 +1596,6 @@
         ],
         "tags": [
           "HelmPackagesService"
-        ]
-      }
-    },
-    "/plugins/kapp_controller.packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}": {
-      "delete": {
-        "summary": "DeleteInstalledPackage deletes an installed package based on the request.",
-        "operationId": "KappControllerPackagesService_DeleteInstalledPackage",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1alpha1DeleteInstalledPackageResponse"
-            }
-          },
-          "401": {
-            "description": "Returned when the user does not have permission to access the resource.",
-            "schema": {}
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "installedPackageRef.context.cluster",
-            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.context.namespace",
-            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.identifier",
-            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "KappControllerPackagesService"
         ]
       }
     },
@@ -1977,6 +1907,68 @@
       }
     },
     "/plugins/kapp_controller/packages/v1alpha1/installedpackages": {
+      "delete": {
+        "summary": "DeleteInstalledPackage deletes an installed package based on the request.",
+        "operationId": "KappControllerPackagesService_DeleteInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1DeleteInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      },
       "post": {
         "summary": "CreateInstalledPackage creates an installed package based on the request.",
         "operationId": "KappControllerPackagesService_CreateInstalledPackage",

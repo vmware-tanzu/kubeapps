@@ -62,9 +62,7 @@ service HelmPackagesService {
   // DeleteInstalledPackage deletes an installed package based on the request.
   rpc DeleteInstalledPackage(kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse) {
     option (google.api.http) = {
-      // Example:
-      // /plugins/helm.packages/v1alpha1/installedpackages/cluster/default/ns/my-ns/release-identifier
-      delete: "/plugins/helm.packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+      delete: "/plugins/helm/packages/v1alpha1/installedpackages"
     };
   }
 }

@@ -57,9 +57,7 @@ service PackagesService {
 
   rpc DeleteInstalledPackage(DeleteInstalledPackageRequest) returns (DeleteInstalledPackageResponse) {
     option (google.api.http) = {
-      // Example:
-      // /core/packages/v1alpha1/installedpackages/plugin/helm.packages/v1alpha1/c/default/ns/my-ns/release-identifier
-      delete: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+      delete: "/core/packages/v1alpha1/installedpackages"
     };
   }
 }

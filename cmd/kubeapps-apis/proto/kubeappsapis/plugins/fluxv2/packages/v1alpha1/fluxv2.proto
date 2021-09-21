@@ -66,9 +66,7 @@ service FluxV2PackagesService {
   // DeleteInstalledPackage deletes an installed package based on the request.
   rpc DeleteInstalledPackage(kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse) {
     option (google.api.http) = {
-      // Example:
-      // /plugins/fluxv2.packages/v1alpha1/installedpackages/c/default/ns/my-ns/release-identifier
-      delete: "/plugins/fluxv2.packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+      delete: "/plugins/fluxv2/packages/v1alpha1/installedpackages"
     };
   }
 }
