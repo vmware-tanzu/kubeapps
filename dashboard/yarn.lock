@@ -1219,10 +1219,10 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^5.5.3":
-  version "5.5.3"
-  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.3.tgz#23dfb122c0844d6b53c2c92e99efcae820395931"
-  integrity sha512-yrYiew2rdGVp22BfjeatYjIvjRPCprLWSbhg0BRDqHzDeS+ewu/rzkJp/bMEN65o5Z+XFpK26UFNyWAzzaQvDw==
+"@cds/core@^5.5.4":
+  version "5.5.4"
+  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.4.tgz#6f77e22d205145f69bbe728b4abd720c361bf2b9"
+  integrity sha512-JViWaOhgXrr22UMYvSBNWu8wGUULcu7RmzjjSF3QxDWdXaaFV1deoRHuEKNTFKBvSg2C4XFWHzy/OlxvZLDDZw==
   dependencies:
     lit "2.0.0-rc.2"
     ramda "^0.27.1"
@@ -1232,10 +1232,10 @@
     "@types/resize-observer-browser" "^0.1.5"
     modern-normalize "1.1.0"
 
-"@cds/react@^5.5.3":
-  version "5.5.3"
-  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.3.tgz#738c3e4c546205dd56ae1c4a45faff6f55e5ffda"
-  integrity sha512-kC8U+jLeO9KVuPbl9ne0Yo7tB2QIffhgcsNfahTIwVDU62Qngu0fjUo5+Opy9Vv7XYVUoH4RipYA8qLN38jjXw==
+"@cds/react@^5.5.4":
+  version "5.5.4"
+  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.4.tgz#932e1786e362c7e84aed5eef98de0a172ca4aab0"
+  integrity sha512-e2xbRuECtsm1SVq6IgG1ZDjdijBBMAcYFZB3hpi/F4mdFcZUATH+k59wY0F+2Z8MES+NuAJEHFMlLRZvTjs2Vw==
   dependencies:
     react "^16.13.1"
     react-dom "^16.13.1"
@@ -1243,10 +1243,10 @@
     "@cds/city" "^1.1.0"
     modern-normalize "^1.1.0"
 
-"@clr/ui@^12.0.3":
-  version "12.0.3"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.3.tgz#5f0d6f42b7064c0cf5ddfb3e4ee7db4cdbab5aed"
-  integrity sha512-BzEXZn21IBBWt5ihSwMiFBa59H/gZ9QL0KPlw4buezUyU1TV9pCZdHrQeN1VvmNpTpygS+fa2VcdrqcdxVKOZA==
+"@clr/ui@^12.0.4":
+  version "12.0.4"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.4.tgz#0726398167b3f7ee1aba2859d07084bf67f82686"
+  integrity sha512-iZX466lvg368HQ6SZFoqv7J0cMfF2sEGUS+Oq18lt1KaYk0Rnw0nqcclWwCc0VzIN5waHd5tDhZZ7wQ7Rm9uqQ==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -2268,10 +2268,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/lodash@^4.14.172":
-  version "4.14.172"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.172.tgz#aad774c28e7bfd7a67de25408e03ee5a8c3d028a"
-  integrity sha512-/BHF5HAx3em7/KkzVKm3LrsD6HZAXuXO1AJZQ3cRRBZj4oHZDviWPYu0aEplAqDFNHZPW6d3G7KN+ONcCCC7pw==
+"@types/lodash@^4.14.173":
+  version "4.14.173"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.173.tgz#9d3b674c67a26cf673756f6aca7b429f237f91ed"
+  integrity sha512-vv0CAYoaEjCw/mLy96GBTnRoZrSxkGE0BKzKimdR8P3OzrNYNvBgtW7p055A+E8C31vXNUhWKoFCbhq7gbyhFg==
 
 "@types/long@^4.0.1":
   version "4.0.1"
@@ -2418,10 +2418,10 @@
     "@types/history" "*"
     "@types/react" "*"
 
-"@types/react-transition-group@^4.4.2":
-  version "4.4.2"
-  resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-4.4.2.tgz#38890fd9db68bf1f2252b99a942998dc7877c5b3"
-  integrity sha512-KibDWL6nshuOJ0fu8ll7QnV/LVTo3PzQ9aCPnRUYPfX7eZohHwLIdNHj7pftanREzHNP4/nJa8oeM73uSiavMQ==
+"@types/react-transition-group@^4.4.3":
+  version "4.4.3"
+  resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-4.4.3.tgz#b0994da0a7023d67dbb4a8910a62112bc00d5688"
+  integrity sha512-fUx5muOWSYP8Bw2BUQ9M9RK9+W1XBK/7FLJ8PTQpnpTEkn0ccyMffyEQvan4C3h53gHdx7KE5Qrxi/LnUGQtdg==
   dependencies:
     "@types/react" "*"
 
@@ -11853,10 +11853,10 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier@^2.0.2, prettier@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.4.0.tgz#85bdfe0f70c3e777cf13a4ffff39713ca6f64cba"
-  integrity sha512-DsEPLY1dE5HF3BxCRBmD4uYZ+5DCbvatnolqTqcxEgKVZnL2kUfyu7b8pPQ5+hTBkdhU9SLUmK0/pHb07RE4WQ==
+prettier@^2.0.2, prettier@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.4.1.tgz#671e11c89c14a4cfc876ce564106c4a6726c9f5c"
+  integrity sha512-9fbDAXSBcc6Bs1mZrDYb3XKzDLm4EXXL9sC1LqKP5rZkT6KRr/rf9amVUcODVXgguK/isJz0d0hP72WeaKWsvA==
 
 pretty-bytes@^5.3.0:
   version "5.6.0"
@@ -14665,10 +14665,10 @@ ts-proto-descriptors@^1.2.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.83.0:
-  version "1.83.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.83.0.tgz#e0c5715d0045ef485b334c7c89cf82c388b2cb2b"
-  integrity sha512-VfkaX75X3Dszc443mjG32xSIxrK0q397y3/NWE2tQeIOfrS1F+2qJ8CAw4zp+T5UK2Dh8rViu4uWe8vgj53z8Q==
+ts-proto@^1.83.1:
+  version "1.83.1"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.83.1.tgz#763cf86264d7e1836dec7319ecd71994fca17fe5"
+  integrity sha512-pAB7FKIqMKjTnakvMyBB7VeIeXPl+3YPWGfp03laSRf7tGTtrt8xV9jyrLB1WU5vSzusYbz57kBCt4lqbZULqw==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
