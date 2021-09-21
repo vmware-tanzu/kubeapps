@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
 	"github.com/spf13/cobra"
@@ -66,6 +67,8 @@ func init() {
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
 	serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
+	serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
+	serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
 }
 
 func setFlags(c *cobra.Command) {
@@ -87,7 +90,8 @@ func setFlags(c *cobra.Command) {
 	// The support for this is currently beta in K8s (v1.21), older versions require a feature gate being set to enable it.
 	// See https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
 	c.Flags().StringVar(&serveOpts.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h) ")
-
+	c.StringSliceVar(&serveOpts.CustomAnnotations, "custom-annotations", []string{""}, "optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
+	c.StringSliceVar(&serveOpts.CustomLabels, "custom-labels", []string{""}, "optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -124,4 +128,19 @@ func getImagePullSecretsRefs(imagePullSecretsRefsArr []string) []corev1.LocalObj
 		imagePullSecretsRefs = append(imagePullSecretsRefs, corev1.LocalObjectReference{Name: imagePullSecretName})
 	}
 	return imagePullSecretsRefs
+}
+
+// parseLabelsAnnotations transform an array of string "foo=bar" into a map["foo"]="bar"
+func parseLabelsAnnotations(textArr []string) map[string]string {
+	textMap := map[string]string{}
+	for _, text := range textArr {
+		if text != "" {
+			parts := strings.Split(text, "=")
+			if len(parts) != 2 {
+				log.Fatalf("Cannot parse '%s'", text)
+			}
+			textMap[parts[0]] = parts[1]
+		}
+	}
+	return textMap
 }
