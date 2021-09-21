@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -1026,4 +1027,31 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	}
 
 	return ch, registrySecrets, nil
+}
+
+// DeleteInstalledPackage deletes an installed package.
+func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
+	installedRef := request.GetInstalledPackageRef()
+	releaseName := installedRef.GetIdentifier()
+	namespace := installedRef.GetContext().GetNamespace()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), namespace)
+	log.Infof("+helm DeleteInstalledPackage %s", contextMsg)
+
+	// Create an action config for the installed pkg context.
+	actionConfig, err := s.actionConfigGetter(ctx, installedRef.GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+
+	keepHistory := false
+	err = agent.DeleteRelease(actionConfig, releaseName, keepHistory)
+	if err != nil {
+		log.Errorf("error: %+v", err)
+		if errors.Is(err, driver.ErrReleaseNotFound) {
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", releaseName, namespace, err)
+		}
+		return nil, status.Errorf(codes.Internal, "Unable to delete helm release %q in the namespace %q: %v", releaseName, namespace, err)
+	}
+
+	return &corev1.DeleteInstalledPackageResponse{}, nil
 }
