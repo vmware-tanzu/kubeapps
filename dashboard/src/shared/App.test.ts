@@ -4,7 +4,7 @@ import {
   Context,
   CreateInstalledPackageResponse,
   InstalledPackageReference,
-  VersionReference
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
