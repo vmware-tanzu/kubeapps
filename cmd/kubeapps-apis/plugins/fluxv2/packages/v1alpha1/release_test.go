@@ -61,6 +61,7 @@ type testSpecGetInstalledPackages struct {
 	releaseSuspend            bool
 	releaseServiceAccountName string
 	releaseStatus             map[string]interface{}
+	targetNamespace           string
 }
 
 func TestGetInstalledPackageSummaries(t *testing.T) {
@@ -243,76 +244,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runtimeObjs := []runtime.Object{}
-			for _, existing := range tc.existingObjs {
-				tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-
-				// stand up an http server just for the duration of this test
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(200)
-					w.Write(tarGzBytes)
-				}))
-				defer ts.Close()
-
-				chartSpec := map[string]interface{}{
-					"chart": existing.chartName,
-					"sourceRef": map[string]interface{}{
-						"name": existing.repoName,
-						"kind": fluxHelmRepository,
-					},
-					"version":  existing.chartSpecVersion,
-					"interval": "10m",
-				}
-				chartStatus := map[string]interface{}{
-					"conditions": []interface{}{
-						map[string]interface{}{
-							"type":   "Ready",
-							"status": "True",
-							"reason": "ChartPullSucceeded",
-						},
-					},
-					"artifact": map[string]interface{}{
-						"revision": existing.chartArtifactVersion,
-					},
-					"url": ts.URL,
-				}
-				chart := newChart(existing.chartName, existing.repoNamespace, chartSpec, chartStatus)
-				runtimeObjs = append(runtimeObjs, chart)
-
-				releaseSpec := map[string]interface{}{
-					"chart": map[string]interface{}{
-						"spec": map[string]interface{}{
-							"chart":   existing.chartName,
-							"version": existing.chartSpecVersion,
-							"sourceRef": map[string]interface{}{
-								"name":      existing.repoName,
-								"kind":      fluxHelmRepository,
-								"namespace": existing.repoNamespace,
-							},
-						},
-					},
-					"interval": "1m",
-				}
-				if len(existing.releaseValues) != 0 {
-					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
-				}
-				if existing.releaseSuspend {
-					unstructured.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
-				}
-				if len(existing.releaseServiceAccountName) != 0 {
-					unstructured.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
-				}
-				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
-				runtimeObjs = append(runtimeObjs, release)
-			}
-
+			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingObjs)
 			s, mock, _, err := newServerWithChartsAndReleases(nil, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
+			defer cleanup()
 
 			for i, existing := range tc.existingObjs {
 				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
@@ -405,7 +342,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_failed,
 			},
-			targetNamespace: "test",
 			existingHelmStubs: []helmReleaseStub{
 				redis_existing_stub_failed,
 			},
@@ -425,7 +361,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_pending,
 			},
-			targetNamespace: "test",
 			existingHelmStubs: []helmReleaseStub{
 				redis_existing_stub_pending,
 			},
@@ -445,7 +380,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
-			targetNamespace: "test",
 			existingHelmStubs: []helmReleaseStub{
 				redis_existing_stub_completed,
 			},
@@ -465,7 +399,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
-			targetNamespace:    "test",
 			expectedStatusCode: codes.NotFound,
 		},
 		{
@@ -481,7 +414,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed_with_values_and_reconciliation_options,
 			},
-			targetNamespace: "test",
 			existingHelmStubs: []helmReleaseStub{
 				redis_existing_stub_completed,
 			},
@@ -492,75 +424,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runtimeObjs := []runtime.Object{}
-			for _, existing := range tc.existingK8sObjs {
-				tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-
-				// stand up an http server just for the duration of this test
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(200)
-					w.Write(tarGzBytes)
-				}))
-				defer ts.Close()
-
-				chartSpec := map[string]interface{}{
-					"chart": existing.chartName,
-					"sourceRef": map[string]interface{}{
-						"name": existing.repoName,
-						"kind": fluxHelmRepository,
-					},
-					"version":  existing.chartSpecVersion,
-					"interval": "1m",
-				}
-				chartStatus := map[string]interface{}{
-					"conditions": []interface{}{
-						map[string]interface{}{
-							"lastTransitionTime": "2021-08-12T03:25:38Z",
-							"message":            "Fetched revision: " + existing.chartSpecVersion,
-							"type":               "Ready",
-							"status":             "True",
-							"reason":             "ChartPullSucceeded",
-						},
-					},
-					"artifact": map[string]interface{}{
-						"revision": existing.chartArtifactVersion,
-					},
-					"url": ts.URL,
-				}
-				chart := newChart(existing.chartName, existing.repoNamespace, chartSpec, chartStatus)
-				runtimeObjs = append(runtimeObjs, chart)
-
-				releaseSpec := map[string]interface{}{
-					"chart": map[string]interface{}{
-						"spec": map[string]interface{}{
-							"chart":   existing.chartName,
-							"version": existing.chartSpecVersion,
-							"sourceRef": map[string]interface{}{
-								"name":      existing.repoName,
-								"kind":      fluxHelmRepository,
-								"namespace": existing.repoNamespace,
-							},
-						},
-					},
-					"interval":        "1m",
-					"targetNamespace": tc.targetNamespace,
-				}
-				if len(existing.releaseValues) != 0 {
-					unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
-				}
-				if existing.releaseSuspend {
-					unstructured.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
-				}
-				if len(existing.releaseServiceAccountName) != 0 {
-					unstructured.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
-				}
-				release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
-				runtimeObjs = append(runtimeObjs, release)
-			}
-
+			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
+			defer cleanup()
 			actionConfig := newHelmActionConfig(t, tc.targetNamespace, tc.existingHelmStubs)
 			s, mock, _, err := newServerWithChartsAndReleases(actionConfig, runtimeObjs...)
 			if err != nil {
@@ -781,6 +646,178 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUpdateInstalledPackage(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.UpdateInstalledPackageRequest
+		existingK8sObjs    []testSpecGetInstalledPackages
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.UpdateInstalledPackageResponse
+		expectedRelease    map[string]interface{}
+	}{
+		{
+			name: "update package (simple)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Identifier: "my-redis",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: ">14.4.0",
+				},
+			},
+			existingK8sObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_completed,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Identifier: "my-redis",
+					Context: &corev1.Context{
+						Namespace: "namespace-1",
+					},
+					Plugin: fluxPlugin,
+				},
+			},
+			expectedRelease: flux_helm_release_updated_1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
+			defer cleanup()
+			s, mock, _, err := newServerWithChartsAndReleases(nil, runtimeObjs...)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			response, err := s.UpdateInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.UpdateInstalledPackageResponse{},
+				corev1.InstalledPackageReference{},
+				plugins.Plugin{},
+				corev1.Context{})
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+
+			// check expected HelmReleass CRD has been updated
+			dynamicClient, _, err = s.clientGetter(context.Background())
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			releaseObj, err := dynamicClient.Resource(releasesGvr).
+				Namespace(tc.expectedResponse.InstalledPackageRef.Context.Namespace).Get(
+				context.Background(),
+				tc.expectedResponse.InstalledPackageRef.Identifier,
+				v1.GetOptions{})
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := releaseObj.Object, tc.expectedRelease; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (runtimeObjs []runtime.Object, cleanup func()) {
+	for _, existing := range existingK8sObjs {
+		tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		// stand up an http server just for the duration of this test
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+			w.Write(tarGzBytes)
+		}))
+		cleanup = func() { ts.Close() }
+
+		chartSpec := map[string]interface{}{
+			"chart": existing.chartName,
+			"sourceRef": map[string]interface{}{
+				"name": existing.repoName,
+				"kind": fluxHelmRepository,
+			},
+			"version":  existing.chartSpecVersion,
+			"interval": "1m",
+		}
+		chartStatus := map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-12T03:25:38Z",
+					"message":            "Fetched revision: " + existing.chartSpecVersion,
+					"type":               "Ready",
+					"status":             "True",
+					"reason":             "ChartPullSucceeded",
+				},
+			},
+			"artifact": map[string]interface{}{
+				"revision": existing.chartArtifactVersion,
+			},
+			"url": ts.URL,
+		}
+		chart := newChart(existing.chartName, existing.repoNamespace, chartSpec, chartStatus)
+		runtimeObjs = append(runtimeObjs, chart)
+
+		releaseSpec := map[string]interface{}{
+			"chart": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"chart":   existing.chartName,
+					"version": existing.chartSpecVersion,
+					"sourceRef": map[string]interface{}{
+						"name":      existing.repoName,
+						"kind":      fluxHelmRepository,
+						"namespace": existing.repoNamespace,
+					},
+				},
+			},
+			"interval": "1m",
+			"install": map[string]interface{}{
+				"createNamespace": true,
+			},
+		}
+		if len(existing.targetNamespace) != 0 {
+			unstructured.SetNestedField(releaseSpec, existing.targetNamespace, "targetNamespace")
+		}
+		if len(existing.releaseValues) != 0 {
+			unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
+		}
+		if existing.releaseSuspend {
+			unstructured.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
+		}
+		if len(existing.releaseServiceAccountName) != 0 {
+			unstructured.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
+		}
+		release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
+		runtimeObjs = append(runtimeObjs, release)
+	}
+	return runtimeObjs, cleanup
 }
 
 func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actualResp *corev1.GetInstalledPackageDetailResponse, expectedResp *corev1.GetInstalledPackageDetailResponse) {
@@ -1155,6 +1192,7 @@ var (
 			"lastAppliedRevision":   "14.4.0",
 			"lastAttemptedRevision": "14.4.0",
 		},
+		targetNamespace: "test",
 	}
 
 	redis_existing_stub_completed = helmReleaseStub{
@@ -1205,6 +1243,7 @@ var (
 			"lastAppliedRevision":   "14.4.0",
 			"lastAttemptedRevision": "14.4.0",
 		},
+		targetNamespace: "test",
 	}
 
 	redis_existing_spec_failed = testSpecGetInstalledPackages{
@@ -1238,6 +1277,7 @@ var (
 			"installFailures":       "1",
 			"lastAttemptedRevision": "14.4.0",
 		},
+		targetNamespace: "test",
 	}
 
 	redis_existing_stub_failed = helmReleaseStub{
@@ -1334,6 +1374,7 @@ var (
 			},
 			"lastAttemptedRevision": "14.4.0",
 		},
+		targetNamespace: "test",
 	}
 
 	redis_existing_spec_pending_2 = testSpecGetInstalledPackages{
@@ -1641,6 +1682,58 @@ var (
 			},
 			Identifier: "my-podinfo",
 			Plugin:     fluxPlugin,
+		},
+	}
+
+	flux_helm_release_updated_1 = map[string]interface{}{
+		"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+		"kind":       "HelmRelease",
+		"metadata": map[string]interface{}{
+			"name":            "my-redis",
+			"namespace":       "namespace-1",
+			"generation":      int64(1),
+			"resourceVersion": "1",
+		},
+		"spec": map[string]interface{}{
+			"chart": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"chart": "redis",
+					"sourceRef": map[string]interface{}{
+						"kind":      "HelmRepository",
+						"name":      "bitnami-1",
+						"namespace": "default",
+					},
+					"version": ">14.4.0",
+				},
+			},
+			"install": map[string]interface{}{
+				"createNamespace": true,
+			},
+			"interval":           "1m",
+			"targetNamespace":    "test",
+			"values":             nil,
+			"serviceAccountName": nil,
+		},
+		"status": map[string]interface{}{
+			"conditions": []interface{}{
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Ready",
+					"status":             "True",
+					"reason":             "ReconciliationSucceeded",
+					"message":            "Release reconciliation succeeded",
+				},
+				map[string]interface{}{
+					"lastTransitionTime": "2021-08-11T08:46:03Z",
+					"type":               "Released",
+					"status":             "True",
+					"reason":             "InstallSucceeded",
+					"message":            "Helm install succeeded",
+				},
+			},
+			"lastAppliedRevision":   "14.4.0",
+			"lastAttemptedRevision": "14.4.0",
+			"observedGeneration":    int64(1),
 		},
 	}
 )

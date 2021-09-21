@@ -45,6 +45,8 @@ const (
 	fluxHelmRelease        = "HelmRelease"
 	fluxHelmReleases       = "helmreleases"
 	fluxHelmReleaseList    = "HelmReleaseList"
+
+	defaultReconcileInterval = "1m"
 )
 
 func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
@@ -359,7 +361,10 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		}
 	}
 
-	fluxHelmRelease := newFluxHelmRelease(chart, kubeappsNamespace, targetName, versionRef, reconcile, values)
+	fluxHelmRelease, err := newFluxHelmRelease(chart, kubeappsNamespace, targetName, versionRef, reconcile, values)
+	if err != nil {
+		return nil, err
+	}
 	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -376,48 +381,81 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}, nil
 }
 
-func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) error {
+func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
 	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	unstructuredRel, err := ifc.Get(ctx, packageRef.Identifier, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	// TODO: call newFluxRelease() with existing values OR at least
+	// get rid of the status before sending to update??
+
 	if versionRef.GetVersion() != "" {
-		unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version")
-	} else {
-		unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "chart", "spec", "version")
+		if err = unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
+			return nil, err
+		}
+	} else if err = unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "chart", "spec", "version"); err != nil {
+		return nil, err
 	}
 
 	if valuesString != "" {
 		values := make(map[string]interface{})
 		if err = yaml.Unmarshal([]byte(valuesString), &values); err != nil {
-			return err
+			return nil, err
+		} else if err = unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
+			return nil, err
 		}
-		unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values")
-	} else {
-		unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "values")
+	} else if err = unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "values"); err != nil {
+		return nil, err
 	}
 
-	// TODO
-	// if reconcile != nil {
-	//	if reconcile.Interval > 0 {
-	//		reconcileInterval := (time.Duration(reconcile.Interval) * time.Second).String()
-	//		unstructured.SetNestedField(patchMap, reconcileInterval, "spec", "interval")
-	//	}
-	//}
+	setInterval, setServiceAccount := false, false
+	if reconcile != nil {
+		if reconcile.Interval > 0 {
+			reconcileInterval := (time.Duration(reconcile.Interval) * time.Second).String()
+			if err := unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
+				return nil, err
+			}
+			setInterval = true
+		}
+		if reconcile.ServiceAccountName != "" {
+			if err = unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
+				setServiceAccount = true
+			}
+		}
+		if err = unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
+			return nil, err
+		}
+	}
+
+	if !setInterval {
+		if err = unstructured.SetNestedField(unstructuredRel.Object, defaultReconcileInterval, "spec", "interval"); err != nil {
+			return nil, err
+		}
+	}
+	if !setServiceAccount {
+		if err = unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "serviceAccountName"); err != nil {
+			return nil, err
+		}
+	}
 
 	unstructuredRel, err = ifc.Update(ctx, unstructuredRel, metav1.UpdateOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	log.Infof("Updated release: %s", prettyPrintMap(unstructuredRel.Object))
-	return nil
+	log.V(4).Infof("Updated release: %s", prettyPrintMap(unstructuredRel.Object))
+
+	return &corev1.InstalledPackageReference{
+		Context:    &corev1.Context{Namespace: packageRef.Context.Namespace},
+		Identifier: packageRef.Identifier,
+		Plugin:     GetPluginDetail(),
+	}, nil
 }
 
 // returns 3 things:
@@ -538,7 +576,7 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 // 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
 // 2. metadata.namespace, where this HelmRelease CRD will exist
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
-func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) *unstructured.Unstructured {
+func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
 	unstructuredRel := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
@@ -566,23 +604,33 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 		},
 	}
 	if versionRef.GetVersion() != "" {
-		unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version")
+		if err := unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
+			return nil, err
+		}
 	}
-	reconcileInterval := "1m" // unless explictly specified
+	reconcileInterval := defaultReconcileInterval // unless explictly specified
 	if reconcile != nil {
 		if reconcile.Interval > 0 {
 			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()
 		}
-		unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend")
+		if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
+			return nil, err
+		}
 		if reconcile.ServiceAccountName != "" {
-			unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName")
+			if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
+				return nil, err
+			}
 		}
 	}
 	if values != nil {
-		unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values")
+		if err := unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
+			return nil, err
+		}
 	}
 
 	// required fields, without which flux controller will fail to create the CRD
-	unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval")
-	return &unstructuredRel
+	if err := unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
+		return nil, err
+	}
+	return &unstructuredRel, nil
 }

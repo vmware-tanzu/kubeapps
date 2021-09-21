@@ -446,7 +446,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 
 	request.ProtoMessage()
 
-	if err := s.updateRelease(
+	if installedRef, err := s.updateRelease(
 		ctx,
 		request.InstalledPackageRef,
 		request.PkgVersionReference,
@@ -455,7 +455,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, err
 	} else {
 		return &corev1.UpdateInstalledPackageResponse{
-			InstalledPackageRef: request.InstalledPackageRef,
+			InstalledPackageRef: installedRef,
 		}, nil
 	}
 }
