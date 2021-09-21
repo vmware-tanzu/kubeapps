@@ -35,7 +35,8 @@ func (f *ChartClient) GetChart(details *chartUtils.Details, repoURL string) (*ch
 	}
 	return &chart3.Chart{
 		Metadata: &chart3.Metadata{
-			Name: details.ChartName,
+			Name:    details.ChartName,
+			Version: details.Version,
 		},
 		Values: vals,
 	}, nil
