@@ -505,7 +505,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		manager:                  manager,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
-		actionConfigGetter: func(context.Context, string, string) (*action.Configuration, error) {
+		actionConfigGetter: func(context.Context, *corev1.Context) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
@@ -2009,22 +2009,24 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			name: "returns an installed package detail",
 			existingReleases: []releaseStub{
 				{
-					name:         releaseName,
-					namespace:    releaseNamespace,
-					chartVersion: releaseVersion,
-					values:       releaseValues,
-					notes:        releaseNotes,
-					status:       release.StatusSuperseded,
-					version:      1,
+					name:           releaseName,
+					namespace:      releaseNamespace,
+					chartVersion:   releaseVersion,
+					chartNamespace: releaseNamespace,
+					values:         releaseValues,
+					notes:          releaseNotes,
+					status:         release.StatusSuperseded,
+					version:        1,
 				},
 				{
-					name:         releaseName,
-					namespace:    releaseNamespace,
-					chartVersion: releaseVersion,
-					values:       releaseValues,
-					notes:        releaseNotes,
-					status:       release.StatusDeployed,
-					version:      2,
+					name:           releaseName,
+					namespace:      releaseNamespace,
+					chartVersion:   releaseVersion,
+					chartNamespace: releaseNamespace,
+					values:         releaseValues,
+					notes:          releaseNotes,
+					status:         release.StatusDeployed,
+					version:        2,
 				},
 			},
 			request: &corev1.GetInstalledPackageDetailRequest{
@@ -2217,7 +2219,7 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 		Name: rel.name,
 		ID:   rel.chartID,
 		Repo: &models.Repo{
-			Namespace: rel.namespace,
+			Namespace: rel.chartNamespace,
 		},
 		ChartVersions: chartVersions,
 	}
@@ -2226,9 +2228,9 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 func populateAssetDBWithSummaries(t *testing.T, mock sqlmock.Sqlmock, pkgs []*corev1.InstalledPackageSummary) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
-	rels := []*releaseStub{}
+	rels := []releaseStub{}
 	for _, pkg := range pkgs {
-		rels = append(rels, &releaseStub{
+		rels = append(rels, releaseStub{
 			name:          pkg.Name,
 			namespace:     pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
 			chartVersion:  pkg.CurrentVersion.PkgVersion,
@@ -2242,21 +2244,22 @@ func populateAssetDBWithSummaries(t *testing.T, mock sqlmock.Sqlmock, pkgs []*co
 func populateAssetDBWithDetail(t *testing.T, mock sqlmock.Sqlmock, pkg *corev1.InstalledPackageDetail) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
-	rel := &releaseStub{
-		name:         pkg.Name,
-		namespace:    pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
-		chartVersion: pkg.CurrentVersion.PkgVersion,
-		chartID:      pkg.AvailablePackageRef.Identifier,
-		version:      DefaultReleaseRevision,
+	rel := releaseStub{
+		name:           pkg.Name,
+		namespace:      pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
+		chartVersion:   pkg.GetCurrentVersion().GetPkgVersion(),
+		chartID:        pkg.GetAvailablePackageRef().GetIdentifier(),
+		chartNamespace: pkg.GetAvailablePackageRef().GetContext().GetNamespace(),
+		version:        DefaultReleaseRevision,
 	}
-	populateAssetDB(t, mock, []*releaseStub{rel})
+	populateAssetDB(t, mock, []releaseStub{rel})
 }
 
-func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []*releaseStub) {
+func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []releaseStub) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
 	for _, rel := range rels {
-		chartJSON, err := json.Marshal(chartAssetForReleaseStub(rel))
+		chartJSON, err := json.Marshal(chartAssetForReleaseStub(&rel))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -2268,13 +2271,14 @@ func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []*releaseStub) {
 }
 
 type releaseStub struct {
-	name          string
-	namespace     string
-	version       int
-	chartVersion  string
-	chartID       string
-	latestVersion string
-	values        string
-	notes         string
-	status        release.Status
+	name           string
+	namespace      string
+	version        int
+	chartVersion   string
+	chartID        string
+	chartNamespace string
+	latestVersion  string
+	values         string
+	notes          string
+	status         release.Status
 }
