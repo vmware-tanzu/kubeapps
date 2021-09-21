@@ -1,6 +1,11 @@
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
+  Context,
+  CreateInstalledPackageRequest,
   InstalledPackageReference,
+  ReconciliationOptions,
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
@@ -9,6 +14,7 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
 export class App {
   private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  private static helmClient = () => new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
 
   public static async GetInstalledPackageSummaries(
     cluster: string,
@@ -28,27 +34,23 @@ export class App {
     });
   }
 
-  public static async create(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    availablePackageDetail: AvailablePackageDetail,
+  public static async createInstalledPackage(
+    targetContext: Context,
+    name: string,
+    availablePackageRef: AvailablePackageReference,
+    pkgVersionReference: VersionReference,
     values?: string,
+    reconciliationOptions?: ReconciliationOptions,
   ) {
-    const endpoint = url.kubeops.releases.list(cluster, namespace);
-    const { data } = await axiosWithAuth.post(endpoint, {
-      // TODO(agamez): get the repo name once available
-      // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
-      appRepositoryResourceName:
-        availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
-      appRepositoryResourceNamespace:
-        availablePackageDetail.availablePackageRef?.context?.namespace,
-      chartName: decodeURIComponent(availablePackageDetail.name),
-      releaseName,
+    // TODO(agamez): use the core API when available
+    return await this.helmClient().CreateInstalledPackage({
+      name,
       values,
-      version: availablePackageDetail.version?.pkgVersion,
-    });
-    return data;
+      targetContext,
+      availablePackageRef,
+      pkgVersionReference,
+      reconciliationOptions,
+    } as CreateInstalledPackageRequest);
   }
 
   public static async upgrade(

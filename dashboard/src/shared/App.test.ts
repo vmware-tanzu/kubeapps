@@ -1,6 +1,10 @@
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
+  Context,
+  CreateInstalledPackageResponse,
   InstalledPackageReference,
+  VersionReference
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
@@ -23,7 +27,7 @@ const availablePackageDetail: AvailablePackageDetail = {
   valuesSchema: "",
   version: { appVersion: "10.0.0", pkgVersion: "1.0.0" },
   availablePackageRef: {
-    identifier: "default",
+    identifier: "default/foo",
     context: { cluster: "default", namespace: "kubeapps" },
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
@@ -39,27 +43,52 @@ describe("App", () => {
     jest.restoreAllMocks();
   });
 
-  describe("create", () => {
-    const expectedURL = `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/defaultns/releases`;
-
-    it("creates an app in a namespace", async () => {
-      moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-      expect(await App.create("defaultc", "defaultns", "absent-ant", availablePackageDetail)).toBe(
-        "ok",
-      );
-      const request = moxios.requests.mostRecent();
-      expect(request.url).toBe(expectedURL);
-      expect(request.config.data).toEqual(
-        JSON.stringify({
-          appRepositoryResourceName:
-            availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
-          appRepositoryResourceNamespace:
-            availablePackageDetail.availablePackageRef?.context?.namespace,
-          chartName: decodeURIComponent(availablePackageDetail.name),
-          releaseName: "absent-ant",
-          version: availablePackageDetail.version?.pkgVersion,
-        }),
-      );
+  describe("createInstalledPackage", () => {
+    [
+      {
+        description: "createInstalledPackage basic",
+        args: {
+          tagetContext: { cluster: "my-cluster", namespace: "my-namespace" } as Context,
+          name: "",
+          availablePackageRef: {
+            identifier: "foo/bar",
+            context: { cluster: "my-cluster", namespace: "my-namespace" },
+            plugin: { name: "my.plugin", version: "0.0.1" },
+          } as AvailablePackageReference,
+          pkgVersionReference: { version: "1.2.3" } as VersionReference,
+          values: "",
+          reconciliationOptions: undefined,
+        },
+      },
+    ].forEach(t => {
+      it(t.description, async () => {
+        const mockCreateInstalledPackage = jest.fn().mockImplementation(() =>
+          Promise.resolve({
+            installedPackageRef: {
+              identifier: "foo/bar",
+              context: { cluster: "my-cluster", namespace: "my-namespace" },
+              plugin: { name: "my.plugin", version: "0.0.1" },
+            } as InstalledPackageReference,
+          } as CreateInstalledPackageResponse),
+        );
+        jest.spyOn(App, "createInstalledPackage").mockImplementation(mockCreateInstalledPackage);
+        const availablePackageSummaries = await App.createInstalledPackage(
+          t.args.tagetContext,
+          t.args.name,
+          t.args.availablePackageRef,
+          t.args.pkgVersionReference,
+          t.args.values,
+          t.args.reconciliationOptions,
+        );
+        expect(availablePackageSummaries).toStrictEqual({
+          installedPackageRef: {
+            identifier: "foo/bar",
+            context: { cluster: "my-cluster", namespace: "my-namespace" },
+            plugin: { name: "my.plugin", version: "0.0.1" },
+          } as InstalledPackageReference,
+        } as CreateInstalledPackageResponse);
+        expect(mockCreateInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
+      });
     });
   });
 

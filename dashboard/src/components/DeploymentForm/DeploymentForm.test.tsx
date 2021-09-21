@@ -149,9 +149,9 @@ describe("renders an error", () => {
   });
 
   it("triggers a deployment when submitting the form", async () => {
-    const deployChart = jest.fn().mockReturnValue(true);
+    const installPackage = jest.fn().mockReturnValue(true);
     const push = jest.fn();
-    actions.apps.deployChart = deployChart;
+    actions.apps.installPackage = installPackage;
     spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
 
     const appValues = "foo: bar";
@@ -200,7 +200,7 @@ describe("renders an error", () => {
       });
     });
 
-    expect(deployChart).toHaveBeenCalledWith(
+    expect(installPackage).toHaveBeenCalledWith(
       defaultProps.cluster,
       defaultProps.namespace,
       availablePackageDetail,

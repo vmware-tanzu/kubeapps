@@ -169,40 +169,45 @@ describe("delete applications", () => {
 
 describe("deploy chart", () => {
   beforeEach(() => {
-    App.create = jest.fn();
+    App.createInstalledPackage = jest.fn();
   });
 
   it("returns true if namespace is correct and deployment is successful", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart(
+      actions.apps.installPackage(
         "target-cluster",
         "target-namespace",
         {
           name: "my-version",
+          availablePackageRef: {
+            identifier: "testrepo/foo",
+          },
+          version: {
+            pkgVersion: "1.2.3",
+            appVersion: "3.2.1",
+          },
         } as AvailablePackageDetail,
         "my-release",
       ),
     );
     expect(res).toBe(true);
-    expect(App.create).toHaveBeenCalledWith(
-      "target-cluster",
-      "target-namespace",
+    expect(App.createInstalledPackage).toHaveBeenCalledWith(
+      { cluster: "target-cluster", namespace: "target-namespace" },
       "my-release",
-      {
-        name: "my-version",
-      } as AvailablePackageDetail,
+      { identifier: "testrepo/foo" },
+      { version: "1.2.3" },
       undefined,
     );
     const expectedActions = [
-      { type: getType(actions.apps.requestDeployApp) },
-      { type: getType(actions.apps.receiveDeployApp) },
+      { type: getType(actions.apps.requestInstallPackage) },
+      { type: getType(actions.apps.receiveInstallPackage) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart(
+      actions.apps.installPackage(
         "target-cluster",
         "default",
         { name: "my-version" } as AvailablePackageDetail,
@@ -215,7 +220,7 @@ describe("deploy chart", () => {
     );
     expect(res).toBe(false);
     const expectedActions = [
-      { type: getType(actions.apps.requestDeployApp) },
+      { type: getType(actions.apps.requestInstallPackage) },
       {
         type: getType(actions.apps.errorApp),
         payload: new UnprocessableEntity(
