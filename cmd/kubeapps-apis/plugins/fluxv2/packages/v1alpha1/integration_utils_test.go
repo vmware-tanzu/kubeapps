@@ -38,6 +38,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const (
+	// EnvvarFluxIntegrationTests enables tests that run against a local kind cluster
+	envVarFluxIntegrationTests = "ENABLE_FLUX_INTEGRATION_TESTS"
+)
+
 func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 	enableEnvVar := os.Getenv(envVarFluxIntegrationTests)
 	runTests := false

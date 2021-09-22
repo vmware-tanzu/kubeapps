@@ -36,11 +36,9 @@ import (
 // 3) run ./kind-cluster-setup.sh once prior to these tests
 
 const (
-	// EnvvarFluxIntegrationTests enables tests that run against a local kind cluster
-	envVarFluxIntegrationTests = "ENABLE_FLUX_INTEGRATION_TESTS"
-
-	// the only repo this test uses so far. Enough for this test. This is local copy of the first few entries
-	// on "https://stefanprodan.github.io/podinfo/index.yaml" on Sept 10 2021.
+	// the only repo these tests use so far. This is local copy of the first few entries
+	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
+	// urls modified to link to .tgz files also within the local cluster.
 	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
 	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/kind-cluster-setup.sh
 	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80"
