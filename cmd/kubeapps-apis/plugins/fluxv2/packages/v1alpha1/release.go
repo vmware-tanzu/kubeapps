@@ -392,15 +392,12 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		return nil, err
 	}
 
-	// TODO: call newFluxRelease() with existing values OR at least
-	// get rid of the status before sending to update??
-
 	if versionRef.GetVersion() != "" {
 		if err = unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
 			return nil, err
 		}
-	} else if err = unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "chart", "spec", "version"); err != nil {
-		return nil, err
+	} else {
+		unstructured.RemoveNestedField(unstructuredRel.Object, "spec", "chart", "spec", "version")
 	}
 
 	if valuesString != "" {
@@ -410,8 +407,8 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		} else if err = unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
 			return nil, err
 		}
-	} else if err = unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "values"); err != nil {
-		return nil, err
+	} else {
+		unstructured.RemoveNestedField(unstructuredRel.Object, "spec", "values")
 	}
 
 	setInterval, setServiceAccount := false, false
@@ -434,16 +431,21 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	}
 
 	if !setInterval {
+		// interval is a required field
 		if err = unstructured.SetNestedField(unstructuredRel.Object, defaultReconcileInterval, "spec", "interval"); err != nil {
 			return nil, err
 		}
 	}
 	if !setServiceAccount {
-		if err = unstructured.SetNestedField(unstructuredRel.Object, nil, "spec", "serviceAccountName"); err != nil {
-			return nil, err
-		}
+		unstructured.RemoveNestedField(unstructuredRel.Object, "spec", "serviceAccountName")
 	}
 
+	// get rid of the status field, since now there will be a new reconciliation process and the current status no
+	// longer applies. metadata and spec I want to keep, as they may have had added labels and/or annotations and/or
+	// even other changes made by the user.
+	unstructured.RemoveNestedField(unstructuredRel.Object, "status")
+
+	// replace the object in k8s with a new desired state
 	unstructuredRel, err = ifc.Update(ctx, unstructuredRel, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err

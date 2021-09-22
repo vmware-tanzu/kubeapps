@@ -169,9 +169,8 @@ message CreateInstalledPackageRequest {
 // UpdateInstalledPackageRequest, it is not possible to change just the 'package version 
 // reference' without also specifying 'values' field. As a side effect, not specifying the 
 // 'values' field in the request means there are no values specified in the desired state. 
-// So the meaning of each field is describing the desired state of the corresponding field 
-// in the resource. If the desired state already matches the current state, no resources 
-// are changed. 
+// So the meaning of each field value is describing the desired state of the corresponding 
+// field in the resource after the update operation has completed the renconciliation. 
 message UpdateInstalledPackageRequest {
   // A reference uniquely identifying the installed package being updated.
   // Required

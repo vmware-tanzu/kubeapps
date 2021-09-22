@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
@@ -675,13 +676,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Identifier: "my-redis",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-					Plugin: fluxPlugin,
-				},
+				InstalledPackageRef: my_redis_ref,
 			},
 			expectedRelease: flux_helm_release_updated_1,
 		},
@@ -832,8 +827,13 @@ func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actu
 		plugins.Plugin{},
 		corev1.ReconciliationOptions{},
 		corev1.AvailablePackageReference{})
-	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts) {
-		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+	// see comment in release_intergration_test.go. Intermittently we get an inconsistent error message from flux
+	opts2 := cmpopts.IgnoreFields(corev1.InstalledPackageStatus{}, "UserReason")
+	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts, opts2) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
+	}
+	if !strings.Contains(actualResp.InstalledPackageDetail.Status.UserReason, expectedResp.InstalledPackageDetail.Status.UserReason) {
+		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expectedResp.InstalledPackageDetail.Status.UserReason, actualResp.InstalledPackageDetail.Status.UserReason)
 	}
 }
 
@@ -968,16 +968,18 @@ var (
 		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	}
 
-	redis_summary_installed = &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
+	my_redis_ref = &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: "namespace-1",
 		},
-		Name:    "my-redis",
-		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		Identifier: "my-redis",
+		Plugin:     fluxPlugin,
+	}
+
+	redis_summary_installed = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
+		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "14.4.0",
 		},
@@ -995,15 +997,9 @@ var (
 	}
 
 	redis_summary_failed = &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
-		},
-		Name:    "my-redis",
-		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
+		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "14.4.0",
 		},
@@ -1025,15 +1021,9 @@ var (
 	}
 
 	redis_summary_pending = &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
-		},
-		Name:    "my-redis",
-		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
+		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "14.4.0",
 		},
@@ -1055,15 +1045,9 @@ var (
 	}
 
 	redis_summary_pending_2 = &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
-		},
-		Name:    "my-redis",
-		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
+		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "14.4.0",
 		},
@@ -1111,15 +1095,9 @@ var (
 	}
 
 	redis_summary_latest = &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
-		},
-		Name:    "my-redis",
-		IconUrl: "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
+		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
@@ -1709,31 +1687,8 @@ var (
 			"install": map[string]interface{}{
 				"createNamespace": true,
 			},
-			"interval":           "1m",
-			"targetNamespace":    "test",
-			"values":             nil,
-			"serviceAccountName": nil,
-		},
-		"status": map[string]interface{}{
-			"conditions": []interface{}{
-				map[string]interface{}{
-					"lastTransitionTime": "2021-08-11T08:46:03Z",
-					"type":               "Ready",
-					"status":             "True",
-					"reason":             "ReconciliationSucceeded",
-					"message":            "Release reconciliation succeeded",
-				},
-				map[string]interface{}{
-					"lastTransitionTime": "2021-08-11T08:46:03Z",
-					"type":               "Released",
-					"status":             "True",
-					"reason":             "InstallSucceeded",
-					"message":            "Helm install succeeded",
-				},
-			},
-			"lastAppliedRevision":   "14.4.0",
-			"lastAttemptedRevision": "14.4.0",
-			"observedGeneration":    int64(1),
+			"interval":        "1m",
+			"targetNamespace": "test",
 		},
 	}
 )

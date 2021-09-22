@@ -563,9 +563,16 @@ var (
 			Interval: 60,
 		},
 		Status: &corev1.InstalledPackageStatus{
-			Ready:      false,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
-			UserReason: "InstallFailed: install retries exhausted",
+			Ready:  false,
+			Reason: corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+			// most of the time it fails with
+			//   "InstallFailed: install retries exhausted",
+			// but every once in a while you get
+			//   "InstallFailed: Helm install failed: unable to build kubernetes objects from release manifest: error
+			//    validating "": error validating data: ValidationError(Deployment.spec.replicas): invalid type for
+			//    io.k8s.api.apps.v1.DeploymentSpec.replicas: got "string""
+			// so we'll just test the prefix
+			UserReason: "InstallFailed: ",
 		},
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "podinfo-5/podinfo",
