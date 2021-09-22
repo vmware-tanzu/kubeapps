@@ -519,7 +519,7 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 
 	})
 
-	mux.Handle("PATCH", pattern_FluxV2PackagesService_UpdateInstalledPackage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_FluxV2PackagesService_UpdateInstalledPackage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -746,7 +746,7 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 
 	})
 
-	mux.Handle("PATCH", pattern_FluxV2PackagesService_UpdateInstalledPackage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_FluxV2PackagesService_UpdateInstalledPackage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
