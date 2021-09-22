@@ -69,12 +69,49 @@ func local_request_FluxV2PackagesService_GetAvailablePackageSummaries_0(ctx cont
 }
 
 var (
-	filter_FluxV2PackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_FluxV2PackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_FluxV2PackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["available_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["available_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["available_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -92,6 +129,43 @@ func local_request_FluxV2PackagesService_GetAvailablePackageDetail_0(ctx context
 	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["available_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["available_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["available_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.identifier", err)
+	}
+
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -105,12 +179,49 @@ func local_request_FluxV2PackagesService_GetAvailablePackageDetail_0(ctx context
 }
 
 var (
-	filter_FluxV2PackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_FluxV2PackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_FluxV2PackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["available_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["available_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["available_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -127,6 +238,43 @@ func request_FluxV2PackagesService_GetAvailablePackageVersions_0(ctx context.Con
 func local_request_FluxV2PackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["available_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["available_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["available_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -213,12 +361,49 @@ func local_request_FluxV2PackagesService_GetInstalledPackageSummaries_0(ctx cont
 }
 
 var (
-	filter_FluxV2PackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_FluxV2PackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_FluxV2PackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -235,6 +420,43 @@ func request_FluxV2PackagesService_GetInstalledPackageDetail_0(ctx context.Conte
 func local_request_FluxV2PackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -294,6 +516,43 @@ func request_FluxV2PackagesService_UpdateInstalledPackage_0(ctx context.Context,
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
+
 	msg, err := client.UpdateInstalledPackage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -311,18 +570,92 @@ func local_request_FluxV2PackagesService_UpdateInstalledPackage_0(ctx context.Co
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
+
 	msg, err := server.UpdateInstalledPackage(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_FluxV2PackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_FluxV2PackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_FluxV2PackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -339,6 +672,43 @@ func request_FluxV2PackagesService_DeleteInstalledPackage_0(ctx context.Context,
 func local_request_FluxV2PackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -364,7 +734,7 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackagesummaries"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -387,7 +757,7 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackagedetails"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -410,7 +780,7 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackageversions"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -456,7 +826,7 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackagesummaries"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -479,7 +849,7 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackagedetail"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -525,7 +895,7 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -548,7 +918,7 @@ func RegisterFluxV2PackagesServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -610,7 +980,7 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackagesummaries"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -630,7 +1000,7 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackagedetails"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -650,7 +1020,7 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackageversions"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -690,7 +1060,7 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackagesummaries"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -710,7 +1080,7 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackagedetail"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -750,7 +1120,7 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -770,7 +1140,7 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -790,23 +1160,23 @@ func RegisterFluxV2PackagesServiceHandlerClient(ctx context.Context, mux *runtim
 }
 
 var (
-	pattern_FluxV2PackagesService_GetAvailablePackageSummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "availablepackagesummaries"}, ""))
+	pattern_FluxV2PackagesService_GetAvailablePackageSummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "availablepackages"}, ""))
 
-	pattern_FluxV2PackagesService_GetAvailablePackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "availablepackagedetails"}, ""))
+	pattern_FluxV2PackagesService_GetAvailablePackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "availablepackages", "c", "available_package_ref.context.cluster", "ns", "available_package_ref.context.namespace", "available_package_ref.identifier"}, ""))
 
-	pattern_FluxV2PackagesService_GetAvailablePackageVersions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "availablepackageversions"}, ""))
+	pattern_FluxV2PackagesService_GetAvailablePackageVersions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9, 2, 10}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "availablepackages", "c", "available_package_ref.context.cluster", "ns", "available_package_ref.context.namespace", "available_package_ref.identifier", "versions"}, ""))
 
 	pattern_FluxV2PackagesService_GetPackageRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "packagerepositories"}, ""))
 
-	pattern_FluxV2PackagesService_GetInstalledPackageSummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackagesummaries"}, ""))
+	pattern_FluxV2PackagesService_GetInstalledPackageSummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages"}, ""))
 
-	pattern_FluxV2PackagesService_GetInstalledPackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackagedetail"}, ""))
+	pattern_FluxV2PackagesService_GetInstalledPackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
 
 	pattern_FluxV2PackagesService_CreateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages"}, ""))
 
-	pattern_FluxV2PackagesService_UpdateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages"}, ""))
+	pattern_FluxV2PackagesService_UpdateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
 
-	pattern_FluxV2PackagesService_DeleteInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages"}, ""))
+	pattern_FluxV2PackagesService_DeleteInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
 )
 
 var (
