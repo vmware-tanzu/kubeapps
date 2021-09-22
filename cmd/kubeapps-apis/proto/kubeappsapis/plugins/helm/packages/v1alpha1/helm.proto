@@ -54,8 +54,15 @@ service HelmPackagesService {
    // UpdateInstalledPackage updates an installed package based on the request.
    rpc UpdateInstalledPackage(kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse) {
     option (google.api.http) = {
-      patch: "/plugins/helm/packages/v1alpha1/installedpackages"
+      put: "/plugins/helm/packages/v1alpha1/installedpackages"
       body: "*"
+    };
+  }
+
+  // DeleteInstalledPackage deletes an installed package based on the request.
+  rpc DeleteInstalledPackage(kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse) {
+    option (google.api.http) = {
+      delete: "/plugins/helm/packages/v1alpha1/installedpackages"
     };
   }
 }

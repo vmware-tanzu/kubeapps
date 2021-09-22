@@ -444,7 +444,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 
-	if err := s.updateRelease(
+	if installedRef, err := s.updateRelease(
 		ctx,
 		request.InstalledPackageRef,
 		request.PkgVersionReference,
@@ -452,6 +452,8 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		request.Values); err != nil {
 		return nil, err
 	} else {
-		return &corev1.UpdateInstalledPackageResponse{}, nil
+		return &corev1.UpdateInstalledPackageResponse{
+			InstalledPackageRef: installedRef,
+		}, nil
 	}
 }
