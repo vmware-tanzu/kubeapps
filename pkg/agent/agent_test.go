@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	kubechart "github.com/kubeapps/kubeapps/pkg/chart"
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"helm.sh/helm/v3/pkg/action"
@@ -16,10 +17,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
 const defaultListLimit = 256
@@ -220,7 +217,7 @@ func TestListReleases(t *testing.T) {
 		listLimit    int
 		status       string
 		releases     []releaseStub
-		expectedApps []proxy.AppOverview
+		expectedApps []AppOverview
 	}{
 		{
 			name:      "returns all apps across namespaces",
@@ -231,17 +228,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 				{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -250,10 +246,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.1",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.1",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -262,10 +257,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.2",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.2",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.2",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -279,17 +273,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 				{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -298,10 +291,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.1",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.1",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -315,17 +307,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 				{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -338,17 +329,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
 				{"wordpress", "dev", 2, "2.0.0", release.StatusDeployed},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -357,10 +347,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "2.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "2.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "2.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -373,17 +362,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
 				{"wordpress", "dev", 2, "1.0.0", release.StatusUninstalled},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -397,17 +385,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
 				{"wordpress", "dev", 2, "1.0.1", release.StatusUninstalled},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -416,10 +403,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "uninstalled",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.1",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.1",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},

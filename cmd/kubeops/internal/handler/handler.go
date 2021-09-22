@@ -12,7 +12,6 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	"github.com/kubeapps/kubeapps/pkg/chart"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "github.com/sirupsen/logrus"
@@ -258,12 +257,11 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(err, w)
 		return
 	}
-	compatRelease, err := helm3to2.Convert(*rel)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewDataResponse(compatRelease).Write(w)
+	response.NewDataResponse(rel).Write(w)
 }
 
 func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
@@ -283,12 +281,11 @@ func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, param
 		returnErrMessage(err, w)
 		return
 	}
-	compatRelease, err := helm3to2.Convert(*rel)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewDataResponse(compatRelease).Write(w)
+	response.NewDataResponse(rel).Write(w)
 }
 
 // GetRelease returns a release.
@@ -300,12 +297,11 @@ func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params han
 		returnErrMessage(err, w)
 		return
 	}
-	compatRelease, err := helm3to2.Convert(*release)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewDataResponse(compatRelease).Write(w)
+	response.NewDataResponse(release).Write(w)
 }
 
 // DeleteRelease deletes a release.
