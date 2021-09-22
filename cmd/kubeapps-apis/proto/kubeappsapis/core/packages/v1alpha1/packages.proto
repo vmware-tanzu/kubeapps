@@ -15,29 +15,29 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 service PackagesService {
   rpc GetAvailablePackageSummaries(GetAvailablePackageSummariesRequest) returns (GetAvailablePackageSummariesResponse) {
      option (google.api.http) = {
-       get: "/core/packages/v1alpha1/availablepackagesummaries"
+       get: "/core/packages/v1alpha1/availablepackages"
      };
    }
   rpc GetAvailablePackageDetail(GetAvailablePackageDetailRequest) returns (GetAvailablePackageDetailResponse) {
     option (google.api.http) = {
-      get: "/core/packages/v1alpha1/availablepackagedetails"
+      get: "/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}"
     };
   }
   rpc GetAvailablePackageVersions(GetAvailablePackageVersionsRequest) returns (GetAvailablePackageVersionsResponse) {
     option (google.api.http) = {
-      get: "/core/packages/v1alpha1/availablepackageversions"
+      get: "/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}/versions"
     };
   }
 
   rpc GetInstalledPackageSummaries(GetInstalledPackageSummariesRequest) returns (GetInstalledPackageSummariesResponse) {
     option (google.api.http) = {
-      get: "/core/packages/v1alpha1/installedpackagesummaries"
+      get: "/core/packages/v1alpha1/installedpackages"
     };
   }
 
   rpc GetInstalledPackageDetail(GetInstalledPackageDetailRequest) returns (GetInstalledPackageDetailResponse) {
     option (google.api.http) = {
-      get: "/core/packages/v1alpha1/installedpackagedetails"
+      get: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
     };
   }
 
@@ -50,14 +50,14 @@ service PackagesService {
 
   rpc UpdateInstalledPackage(UpdateInstalledPackageRequest) returns (UpdateInstalledPackageResponse) {
      option (google.api.http) = {
-       put: "/core/packages/v1alpha1/installedpackages"
+       put: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
        body: "*"
       };
   }
 
   rpc DeleteInstalledPackage(DeleteInstalledPackageRequest) returns (DeleteInstalledPackageResponse) {
     option (google.api.http) = {
-      delete: "/core/packages/v1alpha1/installedpackages"
+      delete: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
     };
   }
 }
@@ -161,15 +161,15 @@ message CreateInstalledPackageRequest {
 // UpdateInstalledPackageRequest
 //
 // Request for UpdateInstalledPackage. The intent is to reach the desired state specified
-// by the fields in the request, while leaving other fields intact. This is a whole 
-// object "Update" semantics rather than "Patch" semantics. The caller will provide the 
-// values for the fields fields below, which will replace, or be overlayed onto, the 
+// by the fields in the request, while leaving other fields intact. This is a whole
+// object "Update" semantics rather than "Patch" semantics. The caller will provide the
+// values for the fields fields below, which will replace, or be overlayed onto, the
 // corresponding fields in the existing resource. For example, with the
-// UpdateInstalledPackageRequest, it is not possible to change just the 'package version 
-// reference' without also specifying 'values' field. As a side effect, not specifying the 
-// 'values' field in the request means there are no values specified in the desired state. 
-// So the meaning of each field value is describing the desired state of the corresponding 
-// field in the resource after the update operation has completed the renconciliation. 
+// UpdateInstalledPackageRequest, it is not possible to change just the 'package version
+// reference' without also specifying 'values' field. As a side effect, not specifying the
+// 'values' field in the request means there are no values specified in the desired state.
+// So the meaning of each field value is describing the desired state of the corresponding
+// field in the resource after the update operation has completed the renconciliation.
 message UpdateInstalledPackageRequest {
   // A reference uniquely identifying the installed package being updated.
   // Required
