@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 The Helm Authors
+Copyright 2021 VMware. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package server
 
 import (
 	"archive/tar"
@@ -56,6 +56,23 @@ const (
 	additionalCAFile = "/usr/local/share/ca-certificates/ca.crt"
 	numWorkers       = 10
 )
+
+type Config struct {
+	DatabaseURL           string
+	DatabaseName          string
+	DatabaseUser          string
+	DatabasePassword      string
+	Debug                 bool
+	Namespace             string
+	OciRepositories       []string
+	TlsInsecureSkipVerify bool
+	FilterRules           string
+	PassCredentials       bool
+	UserAgent             string
+	KubeappsNamespace     string
+	AuthorizationHeader   string
+	DockerConfigJson      string
+}
 
 type importChartFilesJob struct {
 	Name         string
@@ -121,7 +138,7 @@ type Repo interface {
 	Repo() *models.RepoInternal
 	FilterIndex()
 	Charts(fetchLatestOnly bool) ([]models.Chart, error)
-	FetchFiles(name string, cv models.ChartVersion) (map[string]string, error)
+	FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
 }
 
 // HelmRepo implements the Repo interface for chartmuseum-like repositories
@@ -235,7 +252,7 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 }
 
 // FetchFiles retrieves the important files of a chart and version from the repo
-func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
+func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	authorizationHeader := ""
 	chartTarballURL := chartTarballURL(r.RepoInternal, cv)
 
@@ -246,7 +263,7 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion) (map[string]s
 	return tarutil.FetchChartDetailFromTarball(
 		name,
 		chartTarballURL,
-		userAgent(),
+		userAgent,
 		authorizationHeader,
 		r.netClient)
 }
@@ -268,8 +285,8 @@ type OCIRegistry struct {
 	filter *apprepov1alpha1.FilterRuleSpec
 }
 
-func doReq(url string, cli httpclient.Client, headers map[string]string) ([]byte, error) {
-	headers["User-Agent"] = userAgent()
+func doReq(url string, cli httpclient.Client, headers map[string]string, userAgent string) ([]byte, error) {
+	headers["User-Agent"] = userAgent
 	return httpclient.Get(url, cli, headers)
 }
 
@@ -288,8 +305,8 @@ type OCIManifest struct {
 }
 
 type ociAPI interface {
-	TagList(appName string) (*TagList, error)
-	IsHelmChart(appName, tag string) (bool, error)
+	TagList(appName, userAgent string) (*TagList, error)
+	IsHelmChart(appName, tag, userAgent string) (bool, error)
 }
 
 type ociAPICli struct {
@@ -299,10 +316,10 @@ type ociAPICli struct {
 }
 
 // TagList retrieves the list of tags for an asset
-func (o *ociAPICli) TagList(appName string) (*TagList, error) {
+func (o *ociAPICli) TagList(appName string, userAgent string) (*TagList, error) {
 	url := *o.url
 	url.Path = path.Join("v2", url.Path, appName, "tags", "list")
-	data, err := doReq(url.String(), o.netClient, map[string]string{"Authorization": o.authHeader})
+	data, err := doReq(url.String(), o.netClient, map[string]string{"Authorization": o.authHeader}, userAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +332,7 @@ func (o *ociAPICli) TagList(appName string) (*TagList, error) {
 	return &appTags, nil
 }
 
-func (o *ociAPICli) IsHelmChart(appName, tag string) (bool, error) {
+func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 	repoURL := *o.url
 	repoURL.Path = path.Join("v2", repoURL.Path, appName, "manifests", tag)
 	log.Debugf("getting tag %s", repoURL.String())
@@ -325,7 +342,7 @@ func (o *ociAPICli) IsHelmChart(appName, tag string) (bool, error) {
 		map[string]string{
 			"Authorization": o.authHeader,
 			"Accept":        "application/vnd.oci.image.manifest.v1+json",
-		})
+		}, userAgent)
 	if err != nil {
 		return false, err
 	}
@@ -339,7 +356,7 @@ func (o *ociAPICli) IsHelmChart(appName, tag string) (bool, error) {
 
 func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
 	for j := range tagJobs {
-		isHelmChart, err := o.IsHelmChart(j.AppName, j.Tag)
+		isHelmChart, err := o.IsHelmChart(j.AppName, j.Tag, GetUserAgent("", ""))
 		resultChan <- checkTagResult{j, isHelmChart, err}
 	}
 }
@@ -350,7 +367,7 @@ func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan chec
 func (r *OCIRegistry) Checksum() (string, error) {
 	r.tags = map[string]TagList{}
 	for _, appName := range r.repositories {
-		tags, err := r.ociCli.TagList(appName)
+		tags, err := r.ociCli.TagList(appName, GetUserAgent("", ""))
 		if err != nil {
 			return "", err
 		}
@@ -628,7 +645,7 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 }
 
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
-func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion) (map[string]string, error) {
+func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
 		models.ValuesKey: cv.Values,
 		models.ReadmeKey: cv.Readme,
@@ -647,14 +664,14 @@ func parseFilters(filters string) (*apprepov1alpha1.FilterRuleSpec, error) {
 	return filterSpec, nil
 }
 
-func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient httpclient.Client) (Repo, error) {
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient httpclient.Client, userAgent string) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
 		return nil, err
 	}
 
-	repoBytes, err := fetchRepoIndex(url.String(), authorizationHeader, netClient)
+	repoBytes, err := fetchRepoIndex(url.String(), authorizationHeader, netClient, userAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -693,14 +710,14 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 	}, nil
 }
 
-func fetchRepoIndex(url, authHeader string, cli httpclient.Client) ([]byte, error) {
+func fetchRepoIndex(url, authHeader string, cli httpclient.Client, userAgent string) ([]byte, error) {
 	indexURL, err := parseRepoURL(url)
 	if err != nil {
 		log.WithFields(log.Fields{"url": url}).WithError(err).Error("failed to parse URL")
 		return nil, err
 	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
-	return doReq(indexURL.String(), cli, map[string]string{"Authorization": authHeader})
+	return doReq(indexURL.String(), cli, map[string]string{"Authorization": authHeader}, userAgent)
 }
 
 func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {
@@ -721,7 +738,7 @@ type fileImporter struct {
 	netClient httpclient.Client
 }
 
-func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo) {
+func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo, userAgent string, passCredentials bool) {
 	iconJobs := make(chan models.Chart, numWorkers)
 	chartFilesJobs := make(chan importChartFilesJob, numWorkers)
 	var wg sync.WaitGroup
@@ -729,7 +746,7 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo) {
 	log.Debugf("starting %d workers", numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go f.importWorker(&wg, iconJobs, chartFilesJobs, repo)
+		go f.importWorker(&wg, iconJobs, chartFilesJobs, repo, userAgent, passCredentials)
 	}
 
 	// Enqueue jobs to process chart icons
@@ -763,30 +780,30 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo) {
 	wg.Wait()
 }
 
-func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Chart, chartFiles <-chan importChartFilesJob, repo Repo) {
+func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Chart, chartFiles <-chan importChartFilesJob, repo Repo, userAgent string, passCredentials bool) {
 	defer wg.Done()
 	for c := range icons {
 		log.WithFields(log.Fields{"name": c.Name}).Debug("importing icon")
-		if err := f.fetchAndImportIcon(c, repo.Repo()); err != nil {
+		if err := f.fetchAndImportIcon(c, repo.Repo(), userAgent, passCredentials); err != nil {
 			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to import icon")
 		}
 	}
 	for j := range chartFiles {
 		log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
-		if err := f.fetchAndImportFiles(j.Name, repo, j.ChartVersion); err != nil {
+		if err := f.fetchAndImportFiles(j.Name, repo, j.ChartVersion, userAgent, passCredentials); err != nil {
 			log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
 		}
 	}
 }
 
-func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal) error {
+func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal, userAgent string, passCredentials bool) error {
 	if c.Icon == "" {
 		log.WithFields(log.Fields{"name": c.Name}).Info("icon not found")
 		return nil
 	}
 
 	reqHeaders := make(map[string]string)
-	reqHeaders["User-Agent"] = userAgent()
+	reqHeaders["User-Agent"] = userAgent
 	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(c.Icon, r.URL) {
 		reqHeaders["Authorization"] = r.AuthorizationHeader
 	}
@@ -835,7 +852,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	return f.manager.updateIcon(models.Repo{Namespace: r.Namespace, Name: r.Name}, b, contentType, c.ID)
 }
 
-func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.ChartVersion) error {
+func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.ChartVersion, userAgent string, passCredentials bool) error {
 	r := repo.Repo()
 	chartID := fmt.Sprintf("%s/%s", r.Name, name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, cv.Version)
@@ -847,7 +864,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 	}
 	log.WithFields(log.Fields{"name": name, "version": cv.Version}).Debug("fetching files")
 
-	files, err := repo.FetchFiles(name, cv)
+	files, err := repo.FetchFiles(name, cv, userAgent, passCredentials)
 	if err != nil {
 		return err
 	}
@@ -887,4 +904,21 @@ func isURLDomainEqual(url1Str, url2Str string) bool {
 	}
 
 	return url1.Scheme == url2.Scheme && url1.Host == url2.Host
+}
+
+// Returns the user agent to be used during calls to the chart repositories
+// Examples:
+// asset-syncer/devel
+// asset-syncer/1.0
+// asset-syncer/1.0 (foo v1.0-beta4)
+// More info here https://github.com/kubeapps/kubeapps/issues/767#issuecomment-436835938
+func GetUserAgent(version, userAgentComment string) string {
+	if version == "" && userAgentComment == "" {
+		return "asset-syncer/devel"
+	}
+	ua := "asset-syncer/" + version
+	if userAgentComment != "" {
+		ua = fmt.Sprintf("%s (%s)", ua, userAgentComment)
+	}
+	return ua
 }

@@ -51,7 +51,7 @@ kubectl -n kubeapps scale deployment kubeapps-internal-apprepository-controller 
 You can now execute the `apprepository-controller` binary on the developer host with:
 
 ```bash
-./apprepository-controller --repo-sync-image=quay.io/helmpack/chart-repo:myver --kubeconfig ~/.kube/config
+./apprepository-controller --repo-sync-image=docker.io/kubeapps/asset-syncer:myver --kubeconfig ~/.kube/config
 ```
 
 Performing application repository actions in the Kubeapps dashboard will now trigger operations in the `apprepository-controller` binary running locally on your development host.

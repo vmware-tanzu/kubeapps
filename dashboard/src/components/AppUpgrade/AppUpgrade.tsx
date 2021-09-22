@@ -5,13 +5,13 @@ import {
   InstalledPackageDetail,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { FetchError, IAppRepository, IChartState, IStoreState, UpgradeError } from "shared/types";
-import { getPluginFromString } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
@@ -39,12 +39,14 @@ interface IRouteParams {
   cluster: string;
   namespace: string;
   releaseName: string;
-  plugin: string;
+  pluginName: string;
+  pluginVersion: string;
 }
 
 function AppUpgrade() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName, plugin } = ReactRouter.useParams() as IRouteParams;
+  const { cluster, namespace, releaseName, pluginName, pluginVersion } =
+    ReactRouter.useParams() as IRouteParams;
   const {
     apps: { selected: app, isFetching: appsIsFetching, error },
     charts: { isFetching: chartsIsFetching, selected, deployed },
@@ -55,7 +57,8 @@ function AppUpgrade() {
   const repoNamespace = repo?.metadata?.namespace || app?.availablePackageRef?.context?.namespace;
 
   const [pluginObj] = useState(
-    selected.availablePackageDetail?.availablePackageRef?.plugin ?? getPluginFromString(plugin),
+    selected.availablePackageDetail?.availablePackageRef?.plugin ??
+      ({ name: pluginName, version: pluginVersion } as Plugin),
   );
 
   useEffect(() => {

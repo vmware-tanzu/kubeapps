@@ -6,6 +6,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -14,7 +15,6 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
-import { getPluginFromString } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 
@@ -24,7 +24,8 @@ interface IRouteParams {
   repo: string;
   global: string;
   id: string;
-  plugin: string;
+  pluginName: string;
+  pluginVersion: string;
   version?: any;
 }
 
@@ -36,7 +37,8 @@ export default function DeploymentForm() {
     repo,
     global,
     id,
-    plugin,
+    pluginName,
+    pluginVersion,
     version: chartVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
@@ -55,7 +57,8 @@ export default function DeploymentForm() {
   const [appValues, setAppValues] = useState(values || "");
   const [valuesModified, setValuesModified] = useState(false);
   const [pluginObj] = useState(
-    selected.availablePackageDetail?.availablePackageRef?.plugin ?? getPluginFromString(plugin),
+    selected.availablePackageDetail?.availablePackageRef?.plugin ??
+      ({ name: pluginName, version: pluginVersion } as Plugin),
   );
 
   useEffect(() => {

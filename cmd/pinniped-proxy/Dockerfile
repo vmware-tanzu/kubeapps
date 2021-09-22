@@ -3,9 +3,11 @@
 FROM rust:1.54.0 as builder
 
 WORKDIR /pinniped-proxy
+ARG VERSION
 
 # Create a release build of pinniped-proxy itself.
 COPY ./cmd/pinniped-proxy ./
+ENV PINNIPED_PROXY_VERSION=$VERSION
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/pinniped-proxy/target \
     cargo build --release

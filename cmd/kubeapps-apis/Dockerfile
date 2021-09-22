@@ -22,12 +22,15 @@ RUN /tmp/buf lint ./cmd/kubeapps-apis
 # Build the main grpc server
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go build ./cmd/kubeapps-apis
+    go build \
+    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
+    ./cmd/kubeapps-apis
 
 # Build 'kapp-controller' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
+    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/kapp_controller/packages/v1alpha1/*.go
 
@@ -35,6 +38,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
+    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/*.go
 
@@ -42,8 +46,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
+    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /helm-packages-v1alpha1-plugin.so -buildmode=plugin \
-    -ldflags "-X main.version=$VERSION" \
     ./cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/*.go
 
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins

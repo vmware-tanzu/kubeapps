@@ -35,6 +35,8 @@ type KappControllerPackagesServiceClient interface {
 	CreateInstalledPackage(ctx context.Context, in *v1alpha1.CreateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.CreateInstalledPackageResponse, error)
 	// UpdateInstalledPackage updates an installed package based on the request.
 	UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error)
+	// DeleteInstalledPackage deletes an installed package based on the request.
+	DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error)
 }
 
 type kappControllerPackagesServiceClient struct {
@@ -117,6 +119,15 @@ func (c *kappControllerPackagesServiceClient) UpdateInstalledPackage(ctx context
 	return out, nil
 }
 
+func (c *kappControllerPackagesServiceClient) DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error) {
+	out := new(v1alpha1.DeleteInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KappControllerPackagesServiceServer is the server API for KappControllerPackagesService service.
 // All implementations should embed UnimplementedKappControllerPackagesServiceServer
 // for forward compatibility
@@ -137,6 +148,8 @@ type KappControllerPackagesServiceServer interface {
 	CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error)
 	// UpdateInstalledPackage updates an installed package based on the request.
 	UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error)
+	// DeleteInstalledPackage deletes an installed package based on the request.
+	DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error)
 }
 
 // UnimplementedKappControllerPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -166,6 +179,9 @@ func (UnimplementedKappControllerPackagesServiceServer) CreateInstalledPackage(c
 }
 func (UnimplementedKappControllerPackagesServiceServer) UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateInstalledPackage not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteInstalledPackage not implemented")
 }
 
 // UnsafeKappControllerPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -323,6 +339,24 @@ func _KappControllerPackagesService_UpdateInstalledPackage_Handler(srv interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KappControllerPackagesService_DeleteInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.DeleteInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).DeleteInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).DeleteInstalledPackage(ctx, req.(*v1alpha1.DeleteInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KappControllerPackagesService_ServiceDesc is the grpc.ServiceDesc for KappControllerPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -361,6 +395,10 @@ var KappControllerPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateInstalledPackage",
 			Handler:    _KappControllerPackagesService_UpdateInstalledPackage_Handler,
+		},
+		{
+			MethodName: "DeleteInstalledPackage",
+			Handler:    _KappControllerPackagesService_DeleteInstalledPackage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Bitnami
+Copyright 2021 VMware. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 // Run the local postgres with
 // docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.13.0-debian-10-r0
 // in another terminal.
-package main
+package server
 
 import (
 	"database/sql"
