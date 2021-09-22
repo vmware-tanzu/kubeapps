@@ -83,84 +83,52 @@ describe("fetches applications", () => {
 });
 
 describe("delete applications", () => {
-  const deleteAppOrig = App.delete;
-  let deleteAppMock: jest.Mock;
+  const deleteInstalledPackageOrig = App.deleteInstalledPackage;
+  let deleteInstalledPackage: jest.Mock;
   beforeEach(() => {
-    deleteAppMock = jest.fn(() => []);
-    App.delete = deleteAppMock;
+    deleteInstalledPackage = jest.fn(() => []);
+    App.deleteInstalledPackage = deleteInstalledPackage;
   });
   afterEach(() => {
-    App.delete = deleteAppOrig;
+    App.deleteInstalledPackage = deleteInstalledPackageOrig;
   });
   it("delete an application", async () => {
     await store.dispatch(
-      actions.apps.deleteApp(
-        {
-          context: { cluster: "default-c", namespace: "default-ns" },
-          identifier: "foo",
-          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
-        false,
-      ),
+      actions.apps.deleteInstalledPackage({
+        context: { cluster: "default-c", namespace: "default-ns" },
+        identifier: "foo",
+        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      } as InstalledPackageReference),
     );
     const expectedActions = [
-      { type: getType(actions.apps.requestDeleteApp) },
-      { type: getType(actions.apps.receiveDeleteApp) },
+      { type: getType(actions.apps.requestDeleteInstalledPackage) },
+      { type: getType(actions.apps.receiveDeleteInstalledPackage) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(deleteAppMock.mock.calls[0]).toEqual([
+    expect(deleteInstalledPackage.mock.calls[0]).toEqual([
       {
         context: { cluster: "default-c", namespace: "default-ns" },
         identifier: "foo",
         plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
       } as InstalledPackageReference,
-      false,
-    ]);
-  });
-  it("delete and purge an application", async () => {
-    await store.dispatch(
-      actions.apps.deleteApp(
-        {
-          context: { cluster: "default-c", namespace: "default-ns" },
-          identifier: "foo",
-          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
-        true,
-      ),
-    );
-    const expectedActions = [
-      { type: getType(actions.apps.requestDeleteApp) },
-      { type: getType(actions.apps.receiveDeleteApp) },
-    ];
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(deleteAppMock.mock.calls[0]).toEqual([
-      {
-        context: { cluster: "default-c", namespace: "default-ns" },
-        identifier: "foo",
-        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-      } as InstalledPackageReference,
-      true,
     ]);
   });
   it("delete and throw an error", async () => {
     const error = new Error("something went wrong!");
     const expectedActions = [
-      { type: getType(actions.apps.requestDeleteApp) },
+      { type: getType(actions.apps.requestDeleteInstalledPackage) },
       { type: getType(actions.apps.errorApp), payload: error },
     ];
-    deleteAppMock.mockImplementation(() => {
+    deleteInstalledPackage.mockImplementation(() => {
       throw error;
     });
     expect(
       await store.dispatch(
-        actions.apps.deleteApp(
-          {
-            context: { cluster: "default-c", namespace: "default-ns" },
-            identifier: "foo",
-            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-          } as InstalledPackageReference,
-          true,
-        ),
+        actions.apps.deleteInstalledPackage({
+          context: { cluster: "default-c", namespace: "default-ns" },
+          identifier: "foo",
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as InstalledPackageReference),
       ),
     ).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);

@@ -34,8 +34,7 @@ export default function DeleteButton({
   const closeModal = () => setModal(false);
   const handleDeleteClick = async () => {
     setDeleting(true);
-    // Purge the release in any case
-    const deleted = await dispatch(actions.apps.deleteApp(installedPackageRef, true));
+    const deleted = await dispatch(actions.apps.deleteInstalledPackage(installedPackageRef));
     setDeleting(false);
     if (deleted) {
       dispatch(
