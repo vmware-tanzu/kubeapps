@@ -52,10 +52,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
-
-	// TODO(mnelson): models.Chart.Maintainers is depending on the old v1 chart
-	// code. I don't expect there is any reason other than a historical one.
-	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
 	log "k8s.io/klog/v2"
 )
 
@@ -270,7 +266,7 @@ func TestIsValidChart(t *testing.T) {
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me"}},
+				Maintainers: []chart.Maintainer{{Name: "me"}},
 			},
 			expected: true,
 		},
@@ -284,7 +280,7 @@ func TestIsValidChart(t *testing.T) {
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me"}, {Email: "you"}},
+				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
 			},
 			expected: false,
 		},
@@ -321,7 +317,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 				ChartVersions: []models.ChartVersion{
 					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
 					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
@@ -417,7 +413,7 @@ func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions
 		Description: DefaultChartDescription,
 		Home:        DefaultChartHomeURL,
 		Icon:        DefaultChartIconURL,
-		Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
+		Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 		Sources:     []string{"http://source-1"},
 		Repo: &models.Repo{
 			Name:      repo_name,

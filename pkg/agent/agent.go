@@ -231,6 +231,6 @@ func appOverviewFromRelease(r *release.Release) proxy.AppOverview {
 		Namespace:     r.Namespace,
 		Status:        r.Info.Status.String(),
 		Chart:         r.Chart.Name(),
-		ChartMetadata: *r2Metadata,
+		ChartMetadata: *r.Chart.Metadata,
 	}
 }
