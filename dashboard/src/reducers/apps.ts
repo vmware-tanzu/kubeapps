@@ -51,9 +51,9 @@ const appsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveDeleteApp):
       return { ...state, isFetching: false };
-    case getType(actions.apps.requestDeployApp):
+    case getType(actions.apps.requestInstallPackage):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveDeployApp):
+    case getType(actions.apps.receiveInstallPackage):
       return { ...state, isFetching: false };
     case getType(actions.apps.requestRollbackApp):
       return { ...state, isFetching: true };

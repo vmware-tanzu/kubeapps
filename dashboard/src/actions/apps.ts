@@ -1,9 +1,11 @@
 import { JSONSchemaType } from "ajv";
 import {
   AvailablePackageDetail,
+  Context,
   InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageSummary,
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
 import Chart from "shared/Chart";
@@ -35,9 +37,9 @@ export const requestDeleteApp = createAction("REQUEST_DELETE_APP");
 
 export const receiveDeleteApp = createAction("RECEIVE_DELETE_APP_CONFIRMATION");
 
-export const requestDeployApp = createAction("REQUEST_DEPLOY_APP");
+export const requestInstallPackage = createAction("REQUEST_INSTALL_PACKAGE");
 
-export const receiveDeployApp = createAction("RECEIVE_DEPLOY_APP_CONFIRMATION");
+export const receiveInstallPackage = createAction("RECEIVE_INSTALL_PACKAGE");
 
 export const requestUpgradeApp = createAction("REQUEST_UPGRADE_APP");
 
@@ -64,8 +66,8 @@ const allActions = [
   receiveAppList,
   requestDeleteApp,
   receiveDeleteApp,
-  requestDeployApp,
-  receiveDeployApp,
+  requestInstallPackage,
+  receiveInstallPackage,
   requestUpgradeApp,
   receiveUpgradeApp,
   requestRollbackApp,
@@ -151,7 +153,7 @@ export function fetchApps(
   };
 }
 
-export function deployChart(
+export function installPackage(
   targetCluster: string,
   targetNamespace: string,
   availablePackageDetail: AvailablePackageDetail,
@@ -160,7 +162,7 @@ export function deployChart(
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestDeployApp());
+    dispatch(requestInstallPackage());
     try {
       if (values && schema) {
         const validation = validate(values, schema);
@@ -173,11 +175,28 @@ export function deployChart(
           );
         }
       }
-
-      await App.create(targetCluster, targetNamespace, releaseName, availablePackageDetail, values);
-      dispatch(receiveDeployApp());
-
-      return true;
+      if (
+        availablePackageDetail?.availablePackageRef &&
+        availablePackageDetail?.version?.pkgVersion
+      ) {
+        await App.createInstalledPackage(
+          { cluster: targetCluster, namespace: targetNamespace } as Context,
+          releaseName,
+          availablePackageDetail.availablePackageRef,
+          // TODO(agamez): check if this VersionReference we're using is what we expect
+          { version: availablePackageDetail.version.pkgVersion } as VersionReference,
+          values,
+        );
+        dispatch(receiveInstallPackage());
+        return true;
+      } else {
+        dispatch(
+          errorApp(
+            new CreateError("This package does not contain enough information to be installed"),
+          ),
+        );
+        return false;
+      }
     } catch (e: any) {
       dispatch(errorApp(new CreateError(e.message)));
       return false;

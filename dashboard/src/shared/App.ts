@@ -1,6 +1,11 @@
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
+  Context,
+  CreateInstalledPackageRequest,
   InstalledPackageReference,
+  ReconciliationOptions,
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
@@ -28,27 +33,22 @@ export class App {
     });
   }
 
-  public static async create(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    availablePackageDetail: AvailablePackageDetail,
+  public static async createInstalledPackage(
+    targetContext: Context,
+    name: string,
+    availablePackageRef: AvailablePackageReference,
+    pkgVersionReference: VersionReference,
     values?: string,
+    reconciliationOptions?: ReconciliationOptions,
   ) {
-    const endpoint = url.kubeops.releases.list(cluster, namespace);
-    const { data } = await axiosWithAuth.post(endpoint, {
-      // TODO(agamez): get the repo name once available
-      // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
-      appRepositoryResourceName:
-        availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
-      appRepositoryResourceNamespace:
-        availablePackageDetail.availablePackageRef?.context?.namespace,
-      chartName: decodeURIComponent(availablePackageDetail.name),
-      releaseName,
+    return await this.client().CreateInstalledPackage({
+      name,
       values,
-      version: availablePackageDetail.version?.pkgVersion,
-    });
-    return data;
+      targetContext,
+      availablePackageRef,
+      pkgVersionReference,
+      reconciliationOptions,
+    } as CreateInstalledPackageRequest);
   }
 
   public static async upgrade(
