@@ -65,6 +65,13 @@ service KappControllerPackagesService {
       body: "*"
     };
   }
+
+  // DeleteInstalledPackage deletes an installed package based on the request.
+  rpc DeleteInstalledPackage(kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse) {
+    option (google.api.http) = {
+      delete: "/plugins/kapp_controller/packages/v1alpha1/installedpackages"
+    };
+  }
 }
 
 // Specific messages used by the 'kapp_controller' plugin

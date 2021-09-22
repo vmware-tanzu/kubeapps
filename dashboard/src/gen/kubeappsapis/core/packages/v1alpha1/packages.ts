@@ -118,6 +118,49 @@ export interface CreateInstalledPackageRequest {
 }
 
 /**
+ * UpdateInstalledPackageRequest
+ *
+ * Request for UpdateInstalledPackage. Partial resource updates are supported.
+ * For example, to change the package version one only needs to specify the version reference.
+ * Similarly to update the values, one only needs to specify that field
+ */
+export interface UpdateInstalledPackageRequest {
+  /**
+   * A reference uniquely identifying the installed package being updated.
+   * Required
+   */
+  installedPackageRef?: InstalledPackageReference;
+  /**
+   * For helm this will be the exact version in VersionReference.version
+   * For other plugins we can extend the VersionReference as needed. Optional
+   */
+  pkgVersionReference?: VersionReference;
+  /**
+   * An optional serialized values string to be included when templating a
+   * package in the format expected by the plugin. Included when the backend
+   * format doesn't use secrets or configmaps for values or supports both.
+   * These values are layered on top of any values refs above, when
+   * relevant.
+   */
+  values: string;
+  /**
+   * An optional field for specifying data common to systems that reconcile
+   * the package on the cluster.
+   */
+  reconciliationOptions?: ReconciliationOptions;
+}
+
+/**
+ * DeleteInstalledPackageRequest
+ *
+ * Request for DeleteInstalledPackage
+ */
+export interface DeleteInstalledPackageRequest {
+  /** A reference to uniquely identify the installed package to be deleted. */
+  installedPackageRef?: InstalledPackageReference;
+}
+
+/**
  * GetAvailablePackageSummariesResponse
  *
  * Response for GetAvailablePackageSummaries
@@ -235,6 +278,22 @@ export interface GetInstalledPackageDetailResponse {
 export interface CreateInstalledPackageResponse {
   installedPackageRef?: InstalledPackageReference;
 }
+
+/**
+ * UpdateInstalledPackageResponse
+ *
+ * Response for UpdateInstalledPackage
+ */
+export interface UpdateInstalledPackageResponse {
+  installedPackageRef?: InstalledPackageReference;
+}
+
+/**
+ * DeleteInstalledPackageResponse
+ *
+ * Response for DeleteInstalledPackage
+ */
+export interface DeleteInstalledPackageResponse {}
 
 /**
  * AvailablePackageSummary
@@ -1501,6 +1560,212 @@ export const CreateInstalledPackageRequest = {
   },
 };
 
+const baseUpdateInstalledPackageRequest: object = { values: "" };
+
+export const UpdateInstalledPackageRequest = {
+  encode(
+    message: UpdateInstalledPackageRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.installedPackageRef !== undefined) {
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    if (message.pkgVersionReference !== undefined) {
+      VersionReference.encode(message.pkgVersionReference, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.values !== "") {
+      writer.uint32(26).string(message.values);
+    }
+    if (message.reconciliationOptions !== undefined) {
+      ReconciliationOptions.encode(
+        message.reconciliationOptions,
+        writer.uint32(34).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): UpdateInstalledPackageRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseUpdateInstalledPackageRequest,
+    } as UpdateInstalledPackageRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.pkgVersionReference = VersionReference.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.values = reader.string();
+          break;
+        case 4:
+          message.reconciliationOptions = ReconciliationOptions.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateInstalledPackageRequest {
+    const message = {
+      ...baseUpdateInstalledPackageRequest,
+    } as UpdateInstalledPackageRequest;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
+      message.pkgVersionReference = VersionReference.fromJSON(object.pkgVersionReference);
+    } else {
+      message.pkgVersionReference = undefined;
+    }
+    if (object.values !== undefined && object.values !== null) {
+      message.values = String(object.values);
+    } else {
+      message.values = "";
+    }
+    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
+      message.reconciliationOptions = ReconciliationOptions.fromJSON(object.reconciliationOptions);
+    } else {
+      message.reconciliationOptions = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: UpdateInstalledPackageRequest): unknown {
+    const obj: any = {};
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
+    message.pkgVersionReference !== undefined &&
+      (obj.pkgVersionReference = message.pkgVersionReference
+        ? VersionReference.toJSON(message.pkgVersionReference)
+        : undefined);
+    message.values !== undefined && (obj.values = message.values);
+    message.reconciliationOptions !== undefined &&
+      (obj.reconciliationOptions = message.reconciliationOptions
+        ? ReconciliationOptions.toJSON(message.reconciliationOptions)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<UpdateInstalledPackageRequest>): UpdateInstalledPackageRequest {
+    const message = {
+      ...baseUpdateInstalledPackageRequest,
+    } as UpdateInstalledPackageRequest;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromPartial(
+        object.installedPackageRef,
+      );
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
+      message.pkgVersionReference = VersionReference.fromPartial(object.pkgVersionReference);
+    } else {
+      message.pkgVersionReference = undefined;
+    }
+    if (object.values !== undefined && object.values !== null) {
+      message.values = object.values;
+    } else {
+      message.values = "";
+    }
+    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
+      message.reconciliationOptions = ReconciliationOptions.fromPartial(
+        object.reconciliationOptions,
+      );
+    } else {
+      message.reconciliationOptions = undefined;
+    }
+    return message;
+  },
+};
+
+const baseDeleteInstalledPackageRequest: object = {};
+
+export const DeleteInstalledPackageRequest = {
+  encode(
+    message: DeleteInstalledPackageRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.installedPackageRef !== undefined) {
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): DeleteInstalledPackageRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseDeleteInstalledPackageRequest,
+    } as DeleteInstalledPackageRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeleteInstalledPackageRequest {
+    const message = {
+      ...baseDeleteInstalledPackageRequest,
+    } as DeleteInstalledPackageRequest;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: DeleteInstalledPackageRequest): unknown {
+    const obj: any = {};
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<DeleteInstalledPackageRequest>): DeleteInstalledPackageRequest {
+    const message = {
+      ...baseDeleteInstalledPackageRequest,
+    } as DeleteInstalledPackageRequest;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromPartial(
+        object.installedPackageRef,
+      );
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    return message;
+  },
+};
+
 const baseGetAvailablePackageSummariesResponse: object = {
   nextPageToken: "",
   categories: "",
@@ -2023,6 +2288,122 @@ export const CreateInstalledPackageResponse = {
     } else {
       message.installedPackageRef = undefined;
     }
+    return message;
+  },
+};
+
+const baseUpdateInstalledPackageResponse: object = {};
+
+export const UpdateInstalledPackageResponse = {
+  encode(
+    message: UpdateInstalledPackageResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.installedPackageRef !== undefined) {
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): UpdateInstalledPackageResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseUpdateInstalledPackageResponse,
+    } as UpdateInstalledPackageResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateInstalledPackageResponse {
+    const message = {
+      ...baseUpdateInstalledPackageResponse,
+    } as UpdateInstalledPackageResponse;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: UpdateInstalledPackageResponse): unknown {
+    const obj: any = {};
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<UpdateInstalledPackageResponse>): UpdateInstalledPackageResponse {
+    const message = {
+      ...baseUpdateInstalledPackageResponse,
+    } as UpdateInstalledPackageResponse;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromPartial(
+        object.installedPackageRef,
+      );
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    return message;
+  },
+};
+
+const baseDeleteInstalledPackageResponse: object = {};
+
+export const DeleteInstalledPackageResponse = {
+  encode(_: DeleteInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): DeleteInstalledPackageResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseDeleteInstalledPackageResponse,
+    } as DeleteInstalledPackageResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): DeleteInstalledPackageResponse {
+    const message = {
+      ...baseDeleteInstalledPackageResponse,
+    } as DeleteInstalledPackageResponse;
+    return message;
+  },
+
+  toJSON(_: DeleteInstalledPackageResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<DeleteInstalledPackageResponse>): DeleteInstalledPackageResponse {
+    const message = {
+      ...baseDeleteInstalledPackageResponse,
+    } as DeleteInstalledPackageResponse;
     return message;
   },
 };
@@ -3987,6 +4368,14 @@ export interface PackagesService {
     request: DeepPartial<CreateInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<CreateInstalledPackageResponse>;
+  UpdateInstalledPackage(
+    request: DeepPartial<UpdateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdateInstalledPackageResponse>;
+  DeleteInstalledPackage(
+    request: DeepPartial<DeleteInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeleteInstalledPackageResponse>;
 }
 
 export class PackagesServiceClientImpl implements PackagesService {
@@ -4000,6 +4389,8 @@ export class PackagesServiceClientImpl implements PackagesService {
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
+    this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
+    this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -4064,6 +4455,28 @@ export class PackagesServiceClientImpl implements PackagesService {
     return this.rpc.unary(
       PackagesServiceCreateInstalledPackageDesc,
       CreateInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  UpdateInstalledPackage(
+    request: DeepPartial<UpdateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdateInstalledPackageResponse> {
+    return this.rpc.unary(
+      PackagesServiceUpdateInstalledPackageDesc,
+      UpdateInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  DeleteInstalledPackage(
+    request: DeepPartial<DeleteInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeleteInstalledPackageResponse> {
+    return this.rpc.unary(
+      PackagesServiceDeleteInstalledPackageDesc,
+      DeleteInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -4197,6 +4610,50 @@ export const PackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish
     deserializeBinary(data: Uint8Array) {
       return {
         ...CreateInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const PackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "UpdateInstalledPackage",
+  service: PackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return UpdateInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...UpdateInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "DeleteInstalledPackage",
+  service: PackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return DeleteInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...DeleteInstalledPackageResponse.decode(data),
         toObject() {
           return this;
         },
