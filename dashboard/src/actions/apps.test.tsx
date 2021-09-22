@@ -2,13 +2,14 @@ import {
   AvailablePackageDetail,
   InstalledPackageDetail,
   InstalledPackageReference,
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
 import Chart from "shared/Chart";
-import { IAppState, UnprocessableEntity } from "shared/types";
+import { IAppState, UnprocessableEntity, UpgradeError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
@@ -232,67 +233,64 @@ describe("deploy chart", () => {
   });
 });
 
-describe("upgradeApp", () => {
-  const provisionCMD = actions.apps.upgradeApp(
+describe("updateInstalledPackage", () => {
+  const updateInstalledPackageAction = actions.apps.updateInstalledPackage(
     {
       context: { cluster: "default-c", namespace: "default-ns" },
       identifier: "my-release",
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference,
-
-    {} as AvailablePackageDetail,
-    "kubeapps",
+    { version: { appVersion: "4.5.6", pkgVersion: "1.2.3" } } as AvailablePackageDetail,
+    "new-values",
   );
 
-  it("calls ServiceBinding.delete and returns true if no error", async () => {
-    App.upgrade = jest.fn().mockImplementationOnce(() => true);
-    const res = await store.dispatch(provisionCMD);
+  it("calls updateInstalledPackage and returns true if no error", async () => {
+    App.updateInstalledPackage = jest.fn().mockImplementationOnce(() => true);
+    const res = await store.dispatch(updateInstalledPackageAction);
     expect(res).toBe(true);
 
     const expectedActions = [
-      { type: getType(actions.apps.requestUpgradeApp) },
-      { type: getType(actions.apps.receiveUpgradeApp) },
+      { type: getType(actions.apps.requestUpdateInstalledPackage) },
+      { type: getType(actions.apps.receiveUpdateInstalledPackage) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.upgrade).toHaveBeenCalledWith(
+    expect(App.updateInstalledPackage).toHaveBeenCalledWith(
       {
         context: { cluster: "default-c", namespace: "default-ns" },
         identifier: "my-release",
         plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
       } as InstalledPackageReference,
-      "kubeapps",
-      {} as AvailablePackageDetail,
-      undefined,
+      { version: "1.2.3" } as VersionReference,
+      "new-values",
     );
   });
 
-  it("dispatches errorCatalog if error", async () => {
-    App.upgrade = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
+  it("dispatches UpgradeError if error", async () => {
+    App.updateInstalledPackage = jest.fn().mockImplementationOnce(() => {
+      throw new UpgradeError("Boom!");
     });
 
     const expectedActions = [
-      { type: getType(actions.apps.requestUpgradeApp) },
+      { type: getType(actions.apps.requestUpdateInstalledPackage) },
       {
         type: getType(actions.apps.errorApp),
-        payload: new Error("Boom!"),
+        payload: new UpgradeError("Boom!"),
       },
     ];
 
-    await store.dispatch(provisionCMD);
+    await store.dispatch(updateInstalledPackageAction);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema", async () => {
     const res = await store.dispatch(
-      actions.apps.upgradeApp(
+      actions.apps.updateInstalledPackage(
         {
           context: { cluster: "default-c", namespace: "default-ns" },
           identifier: "my-release",
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         } as InstalledPackageReference,
-        {} as AvailablePackageDetail,
-        "kubeapps",
+        { version: { appVersion: "4.5.6", pkgVersion: "1.2.3" } } as AvailablePackageDetail,
         "foo: 1",
         {
           properties: { foo: { type: "string" } },
@@ -302,7 +300,7 @@ describe("upgradeApp", () => {
 
     expect(res).toBe(false);
     const expectedActions = [
-      { type: getType(actions.apps.requestUpgradeApp) },
+      { type: getType(actions.apps.requestUpdateInstalledPackage) },
       {
         type: getType(actions.apps.errorApp),
         payload: new UnprocessableEntity(
