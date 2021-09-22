@@ -333,12 +333,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		{
 			name: "returns installed package detail when install fails",
 			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Identifier: "my-redis",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-				},
+				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_failed,
@@ -352,12 +347,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		{
 			name: "returns installed package detail when install is in progress",
 			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Identifier: "my-redis",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-				},
+				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_pending,
@@ -371,12 +361,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		{
 			name: "returns installed package detail when install is successful",
 			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Identifier: "my-redis",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-				},
+				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
@@ -405,12 +390,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		{
 			name: "returns values and reconciliation options in package detail",
 			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-					Identifier: "my-redis",
-				},
+				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed_with_values_and_reconciliation_options,
@@ -661,12 +641,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 		{
 			name: "update package (simple)",
 			request: &corev1.UpdateInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Identifier: "my-redis",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-				},
+				InstalledPackageRef: my_redis_ref,
 				PkgVersionReference: &corev1.VersionReference{
 					Version: ">14.4.0",
 				},
@@ -1421,14 +1396,8 @@ var (
 	}
 
 	redis_detail_failed = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
-		},
-		Name: "my-redis",
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "14.4.0",
 		},
@@ -1453,14 +1422,8 @@ var (
 	}
 
 	redis_detail_pending = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
-		},
-		Name: "my-redis",
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "14.4.0",
 		},
@@ -1485,14 +1448,8 @@ var (
 	}
 
 	redis_detail_completed = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
-		},
-		Name: "my-redis",
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
 		CurrentVersion: &corev1.PackageAppVersion{
 			AppVersion: "1.2.3",
 			PkgVersion: "14.4.0",
@@ -1513,14 +1470,8 @@ var (
 	}
 
 	redis_detail_completed_with_values_and_reconciliation_options = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-			},
-			Identifier: "my-redis",
-			Plugin:     fluxPlugin,
-		},
-		Name: "my-redis",
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
 		CurrentVersion: &corev1.PackageAppVersion{
 			AppVersion: "1.2.3",
 			PkgVersion: "14.4.0",
