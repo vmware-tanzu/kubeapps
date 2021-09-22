@@ -43,6 +43,7 @@ var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 	corev1.GetAvailablePackageVersionsResponse{},
 	corev1.GetInstalledPackageDetailResponse{},
 	corev1.GetInstalledPackageSummariesResponse{},
+	corev1.CreateInstalledPackageResponse{},
 	corev1.InstalledPackageDetail{},
 	corev1.InstalledPackageReference{},
 	corev1.InstalledPackageStatus{},
@@ -575,6 +576,97 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 	}
 }
 
-// TODO: implement this test once we implement the core operation
-// func TestCreateInstalledPackage(t *testing.T) {
-// }
+func TestCreateInstalledPackage(t *testing.T) {
+
+	testCases := []struct {
+		name              string
+		configuredPlugins []*plugins.Plugin
+		statusCode        codes.Code
+		request           *corev1.CreateInstalledPackageRequest
+		expectedResponse  *corev1.CreateInstalledPackageResponse
+	}{
+		{
+			name: "installs the package using the correct plugin",
+			configuredPlugins: []*plugins.Plugin{
+				{Name: "plugin-1", Version: "v1alpha1"},
+				{Name: "plugin-1", Version: "v1alpha2"},
+			},
+			statusCode: codes.OK,
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "available-pkg-1",
+					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+				},
+				TargetContext: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "my-ns",
+				},
+				Name: "installed-pkg-1",
+			},
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+					Identifier: "installed-pkg-1",
+					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+				},
+			},
+		},
+		{
+			name:       "returns invalid argument if plugin not specified in request",
+			statusCode: codes.InvalidArgument,
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "available-pkg-1",
+				},
+				TargetContext: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "my-ns",
+				},
+				Name: "installed-pkg-1",
+			},
+		},
+		{
+			name:       "returns internal error if unable to find the plugin",
+			statusCode: codes.Internal,
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "available-pkg-1",
+					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+				},
+				TargetContext: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "my-ns",
+				},
+				Name: "installed-pkg-1",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			configuredPluginServers := []*pkgsPluginWithServer{}
+			for _, p := range tc.configuredPlugins {
+				configuredPluginServers = append(configuredPluginServers, &pkgsPluginWithServer{
+					plugin: p,
+					server: plugin_test.TestPackagingPluginServer{Plugin: p},
+				})
+			}
+
+			server := &packagesServer{
+				plugins: configuredPluginServers,
+			}
+
+			installedPkgResponse, err := server.CreateInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				if got, want := installedPkgResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
+				}
+			}
+		})
+	}
+}

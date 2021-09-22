@@ -93,3 +93,16 @@ func (s TestPackagingPluginServer) GetAvailablePackageVersions(ctx context.Conte
 		PackageAppVersions: s.PackageAppVersions,
 	}, nil
 }
+
+func (s TestPackagingPluginServer) CreateInstalledPackage(ctx context.Context, request *packages.CreateInstalledPackageRequest) (*packages.CreateInstalledPackageResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &packages.CreateInstalledPackageResponse{
+		InstalledPackageRef: &packages.InstalledPackageReference{
+			Context:    request.GetTargetContext(),
+			Identifier: request.GetName(),
+			Plugin:     request.AvailablePackageRef.GetPlugin(),
+		},
+	}, nil
+}
