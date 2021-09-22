@@ -92,10 +92,10 @@ Our CI system relies on the [kubeapps/integration-tests](https://hub.docker.com/
 The `kubeapps/integration-tests` image is built using this [Makefile](../../integration/Makefile). Manually edit this file to specify the proper version tag.
 
 ```bash
+# Get the tags from https://hub.docker.com/r/kubeapps/integration-tests
 cd integration
-# edit the Makefile with the proper version tag
-make build
-make push
+IMAGE_TAG=v1.0.1 make build
+IMAGE_TAG=v1.0.1 make push
 ```
 
 > It will build and push the image using this [Dockerfile](../../integration/Dockerfile) (we are using the base image as in the [Kubeapps Dashboard build image](../../dashboard/Dockerfile)).
