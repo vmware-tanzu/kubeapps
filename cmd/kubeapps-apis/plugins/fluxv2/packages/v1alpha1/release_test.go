@@ -656,7 +656,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			expectedRelease: flux_helm_release_updated_1,
 		},
 		{
-			name: "returns invalid if installed package doesn't exist",
+			name: "returns not found if installed package doesn't exist",
 			request: &corev1.UpdateInstalledPackageRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{

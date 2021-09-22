@@ -332,6 +332,8 @@ func randSeq(n int) string {
 }
 
 // global vars
-var letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
-var typedClient kubernetes.Interface
-var dynamicClient dynamic.Interface
+var (
+	dynamicClient dynamic.Interface
+	typedClient   kubernetes.Interface
+	letters       = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+)
