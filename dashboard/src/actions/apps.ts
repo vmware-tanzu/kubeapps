@@ -187,10 +187,16 @@ export function installPackage(
           { version: availablePackageDetail.version.pkgVersion } as VersionReference,
           values,
         );
+        dispatch(receiveInstallPackage());
+        return true;
+      } else {
+        dispatch(
+          errorApp(
+            new CreateError("This package does not contain enough information to be installed"),
+          ),
+        );
+        return false;
       }
-      dispatch(receiveInstallPackage());
-
-      return true;
     } catch (e: any) {
       dispatch(errorApp(new CreateError(e.message)));
       return false;
