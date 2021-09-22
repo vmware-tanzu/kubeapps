@@ -389,7 +389,11 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 
 	unstructuredRel, err := ifc.Get(ctx, packageRef.Identifier, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		if errors.IsNotFound(err) {
+			return nil, status.Errorf(codes.NotFound, "%q", err)
+		} else {
+			return nil, status.Errorf(codes.Internal, "%q", err)
+		}
 	}
 
 	if versionRef.GetVersion() != "" {

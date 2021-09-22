@@ -444,8 +444,6 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 
-	request.ProtoMessage()
-
 	if installedRef, err := s.updateRelease(
 		ctx,
 		request.InstalledPackageRef,

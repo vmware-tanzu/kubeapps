@@ -655,6 +655,18 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			},
 			expectedRelease: flux_helm_release_updated_1,
 		},
+		{
+			name: "returns invalid if installed package doesn't exist",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: "not-a-valid-identifier",
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -715,6 +727,13 @@ func TestUpdateInstalledPackage(t *testing.T) {
 }
 
 func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (runtimeObjs []runtime.Object, cleanup func()) {
+	httpServers := []*httptest.Server{}
+	cleanup = func() {
+		for _, ts := range httpServers {
+			ts.Close()
+		}
+	}
+
 	for _, existing := range existingK8sObjs {
 		tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
 		if err != nil {
@@ -726,7 +745,7 @@ func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPacka
 			w.WriteHeader(200)
 			w.Write(tarGzBytes)
 		}))
-		cleanup = func() { ts.Close() }
+		httpServers = append(httpServers, ts)
 
 		chartSpec := map[string]interface{}{
 			"chart": existing.chartName,
