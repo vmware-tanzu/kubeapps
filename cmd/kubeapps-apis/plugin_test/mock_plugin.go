@@ -119,3 +119,10 @@ func (s TestPackagingPluginServer) UpdateInstalledPackage(ctx context.Context, r
 		},
 	}, nil
 }
+
+func (s TestPackagingPluginServer) DeleteInstalledPackage(ctx context.Context, request *packages.DeleteInstalledPackageRequest) (*packages.DeleteInstalledPackageResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &packages.DeleteInstalledPackageResponse{}, nil
+}

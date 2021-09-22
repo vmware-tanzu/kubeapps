@@ -752,3 +752,70 @@ func TestUpdateInstalledPackage(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteInstalledPackage(t *testing.T) {
+
+	testCases := []struct {
+		name              string
+		configuredPlugins []*plugins.Plugin
+		statusCode        codes.Code
+		request           *corev1.DeleteInstalledPackageRequest
+	}{
+		{
+			name: "deletes the package",
+			configuredPlugins: []*plugins.Plugin{
+				{Name: "plugin-1", Version: "v1alpha1"},
+				{Name: "plugin-1", Version: "v1alpha2"},
+			},
+			statusCode: codes.OK,
+			request: &corev1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+					Identifier: "installed-pkg-1",
+					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+				},
+			},
+		},
+		{
+			name:       "returns invalid argument if plugin not specified in request",
+			statusCode: codes.InvalidArgument,
+			request: &corev1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Identifier: "available-pkg-1",
+				},
+			},
+		},
+		{
+			name:       "returns internal error if unable to find the plugin",
+			statusCode: codes.Internal,
+			request: &corev1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Identifier: "available-pkg-1",
+					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			configuredPluginServers := []*pkgsPluginWithServer{}
+			for _, p := range tc.configuredPlugins {
+				configuredPluginServers = append(configuredPluginServers, &pkgsPluginWithServer{
+					plugin: p,
+					server: plugin_test.TestPackagingPluginServer{Plugin: p},
+				})
+			}
+
+			server := &packagesServer{
+				plugins: configuredPluginServers,
+			}
+
+			_, err := server.DeleteInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+		})
+	}
+}
