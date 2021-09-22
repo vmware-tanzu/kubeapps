@@ -14,7 +14,6 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
 export class App {
   private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
-  private static helmClient = () => new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
 
   public static async GetInstalledPackageSummaries(
     cluster: string,
@@ -42,8 +41,7 @@ export class App {
     values?: string,
     reconciliationOptions?: ReconciliationOptions,
   ) {
-    // TODO(agamez): use the core API when available
-    return await this.helmClient().CreateInstalledPackage({
+    return await this.client().CreateInstalledPackage({
       name,
       values,
       targetContext,
