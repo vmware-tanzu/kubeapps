@@ -375,12 +375,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		{
 			name: "returns a 404 if the installed package is not found",
 			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-					Identifier: "dontworrybehappy",
-				},
+				InstalledPackageRef: installedRef("dontworrybehappy", "namespace-1"),
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
@@ -456,13 +451,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 		{
 			name: "create package (simple)",
 			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-				},
-				Name: "my-podinfo",
+				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+				Name:                "my-podinfo",
 				TargetContext: &corev1.Context{
 					Namespace: "test",
 				},
@@ -479,13 +469,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 		{
 			name: "create package (semver constraint)",
 			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-				},
-				Name: "my-podinfo",
+				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+				Name:                "my-podinfo",
 				TargetContext: &corev1.Context{
 					Namespace: "test",
 				},
@@ -505,13 +490,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 		{
 			name: "create package (reconcile options)",
 			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-				},
-				Name: "my-podinfo",
+				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+				Name:                "my-podinfo",
 				TargetContext: &corev1.Context{
 					Namespace: "test",
 				},
@@ -533,13 +513,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 		{
 			name: "create package (values override)",
 			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "podinfo/podinfo",
-					Context: &corev1.Context{
-						Namespace: "namespace-1",
-					},
-				},
-				Name: "my-podinfo",
+				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+				Name:                "my-podinfo",
 				TargetContext: &corev1.Context{
 					Namespace: "test",
 				},
@@ -658,12 +633,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 		{
 			name: "returns not found if installed package doesn't exist",
 			request: &corev1.UpdateInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-					Identifier: "not-a-valid-identifier",
-				},
+				InstalledPackageRef: installedRef("not-a-valid-identifier", "default"),
 			},
 			expectedStatusCode: codes.NotFound,
 		},
@@ -948,6 +918,16 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 	return actionConfig
 }
 
+func installedRef(id, namespace string) *corev1.InstalledPackageReference {
+	return &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: namespace,
+		},
+		Identifier: id,
+		Plugin:     fluxPlugin,
+	}
+}
+
 // misc global vars that get re-used in multiple tests scenarios
 var (
 	releasesGvr = schema.GroupVersionResource{
@@ -962,13 +942,7 @@ var (
 		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	}
 
-	my_redis_ref = &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: "namespace-1",
-		},
-		Identifier: "my-redis",
-		Plugin:     fluxPlugin,
-	}
+	my_redis_ref = installedRef("my-redis", "namespace-1")
 
 	redis_summary_installed = &corev1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
@@ -1063,15 +1037,9 @@ var (
 	}
 
 	airflow_summary_installed = &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-2",
-			},
-			Identifier: "my-airflow",
-			Plugin:     fluxPlugin,
-		},
-		Name:    "my-airflow",
-		IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+		InstalledPackageRef: installedRef("my-airflow", "namespace-2"),
+		Name:                "my-airflow",
+		IconUrl:             "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "6.7.1",
 		},
@@ -1109,15 +1077,9 @@ var (
 	}
 
 	airflow_summary_semver = &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-2",
-			},
-			Identifier: "my-airflow",
-			Plugin:     fluxPlugin,
-		},
-		Name:    "my-airflow",
-		IconUrl: "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+		InstalledPackageRef: installedRef("my-airflow", "namespace-2"),
+		Name:                "my-airflow",
+		IconUrl:             "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "<=6.7.1",
 		},
@@ -1432,11 +1394,7 @@ var (
 			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
 			UserReason: "InstallFailed: install retries exhausted",
 		},
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "bitnami-1/redis",
-			Context:    &corev1.Context{Namespace: "default"},
-			Plugin:     fluxPlugin,
-		},
+		AvailablePackageRef:   availableRef("bitnami-1/redis", "default"),
 		PostInstallationNotes: "some notes",
 	}
 
@@ -1458,11 +1416,7 @@ var (
 			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
 			UserReason: "Progressing: reconciliation in progress",
 		},
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "bitnami-1/redis",
-			Context:    &corev1.Context{Namespace: "default"},
-			Plugin:     fluxPlugin,
-		},
+		AvailablePackageRef:   availableRef("bitnami-1/redis", "default"),
 		PostInstallationNotes: "some notes",
 	}
 
@@ -1479,12 +1433,8 @@ var (
 		ReconciliationOptions: &corev1.ReconciliationOptions{
 			Interval: 60,
 		},
-		Status: statusInstalled,
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "bitnami-1/redis",
-			Context:    &corev1.Context{Namespace: "default"},
-			Plugin:     fluxPlugin,
-		},
+		Status:                statusInstalled,
+		AvailablePackageRef:   availableRef("bitnami-1/redis", "default"),
 		PostInstallationNotes: "some notes",
 	}
 
@@ -1503,13 +1453,9 @@ var (
 			Suspend:            true,
 			ServiceAccountName: "foo",
 		},
-		Status:        statusInstalled,
-		ValuesApplied: "{\"replica\":[{\"configuration\":\"xyz\",\"replicaCount\":\"1\"}]}",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "bitnami-1/redis",
-			Context:    &corev1.Context{Namespace: "default"},
-			Plugin:     fluxPlugin,
-		},
+		Status:                statusInstalled,
+		ValuesApplied:         "{\"replica\":[{\"configuration\":\"xyz\",\"replicaCount\":\"1\"}]}",
+		AvailablePackageRef:   availableRef("bitnami-1/redis", "default"),
 		PostInstallationNotes: "some notes",
 	}
 
@@ -1624,13 +1570,7 @@ var (
 	}
 
 	create_installed_package_resp_my_podinfo = &corev1.CreateInstalledPackageResponse{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
-				Namespace: "kubeapps",
-			},
-			Identifier: "my-podinfo",
-			Plugin:     fluxPlugin,
-		},
+		InstalledPackageRef: installedRef("my-podinfo", "kubeapps"),
 	}
 
 	flux_helm_release_updated_1 = map[string]interface{}{
