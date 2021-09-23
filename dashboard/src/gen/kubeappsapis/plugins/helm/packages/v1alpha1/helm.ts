@@ -3,7 +3,6 @@ import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
 import _m0 from "protobufjs/minimal";
 import {
-  InstalledPackageReference,
   GetAvailablePackageSummariesRequest,
   GetAvailablePackageDetailRequest,
   GetAvailablePackageVersionsRequest,
@@ -40,36 +39,6 @@ export interface InstalledPackageDetailCustomDataHelm {
   releaseRevision: number;
 }
 
-export interface RollbackInstalledPackageRequest {
-  /**
-   * Installed package reference
-   *
-   * A reference uniquely identifying the installed package.
-   */
-  installedPackageRef?: InstalledPackageReference;
-  /**
-   * ReleaseRevision
-   *
-   * A number identifying the Helm revision to which to rollback.
-   */
-  releaseRevision: number;
-}
-
-/**
- * RollbackInstalledPackageResponse
- *
- * Response for RollbackInstalledPackage
- */
-export interface RollbackInstalledPackageResponse {
-  /**
-   * TODO: add example for API docs
-   * option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-   *   example: '{"installed_package_ref": {}}'
-   * };
-   */
-  installedPackageRef?: InstalledPackageReference;
-}
-
 const baseInstalledPackageDetailCustomDataHelm: object = { releaseRevision: 0 };
 
 export const InstalledPackageDetailCustomDataHelm = {
@@ -78,7 +47,7 @@ export const InstalledPackageDetailCustomDataHelm = {
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.releaseRevision !== 0) {
-      writer.uint32(16).int32(message.releaseRevision);
+      writer.uint32(8).int32(message.releaseRevision);
     }
     return writer;
   },
@@ -92,7 +61,7 @@ export const InstalledPackageDetailCustomDataHelm = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        case 2:
+        case 1:
           message.releaseRevision = reader.int32();
           break;
         default:
@@ -131,171 +100,6 @@ export const InstalledPackageDetailCustomDataHelm = {
       message.releaseRevision = object.releaseRevision;
     } else {
       message.releaseRevision = 0;
-    }
-    return message;
-  },
-};
-
-const baseRollbackInstalledPackageRequest: object = { releaseRevision: 0 };
-
-export const RollbackInstalledPackageRequest = {
-  encode(
-    message: RollbackInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
-    }
-    if (message.releaseRevision !== 0) {
-      writer.uint32(16).int32(message.releaseRevision);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): RollbackInstalledPackageRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseRollbackInstalledPackageRequest,
-    } as RollbackInstalledPackageRequest;
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
-          break;
-        case 2:
-          message.releaseRevision = reader.int32();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): RollbackInstalledPackageRequest {
-    const message = {
-      ...baseRollbackInstalledPackageRequest,
-    } as RollbackInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = Number(object.releaseRevision);
-    } else {
-      message.releaseRevision = 0;
-    }
-    return message;
-  },
-
-  toJSON(message: RollbackInstalledPackageRequest): unknown {
-    const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
-    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
-    return obj;
-  },
-
-  fromPartial(
-    object: DeepPartial<RollbackInstalledPackageRequest>,
-  ): RollbackInstalledPackageRequest {
-    const message = {
-      ...baseRollbackInstalledPackageRequest,
-    } as RollbackInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = object.releaseRevision;
-    } else {
-      message.releaseRevision = 0;
-    }
-    return message;
-  },
-};
-
-const baseRollbackInstalledPackageResponse: object = {};
-
-export const RollbackInstalledPackageResponse = {
-  encode(
-    message: RollbackInstalledPackageResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): RollbackInstalledPackageResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseRollbackInstalledPackageResponse,
-    } as RollbackInstalledPackageResponse;
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): RollbackInstalledPackageResponse {
-    const message = {
-      ...baseRollbackInstalledPackageResponse,
-    } as RollbackInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    return message;
-  },
-
-  toJSON(message: RollbackInstalledPackageResponse): unknown {
-    const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
-    return obj;
-  },
-
-  fromPartial(
-    object: DeepPartial<RollbackInstalledPackageResponse>,
-  ): RollbackInstalledPackageResponse {
-    const message = {
-      ...baseRollbackInstalledPackageResponse,
-    } as RollbackInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
     }
     return message;
   },
@@ -342,11 +146,6 @@ export interface HelmPackagesService {
     request: DeepPartial<DeleteInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeleteInstalledPackageResponse>;
-  /** RollbackInstalledPackage updates an installed package based on the request. */
-  RollbackInstalledPackage(
-    request: DeepPartial<RollbackInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<RollbackInstalledPackageResponse>;
 }
 
 export class HelmPackagesServiceClientImpl implements HelmPackagesService {
@@ -362,7 +161,6 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
-    this.RollbackInstalledPackage = this.RollbackInstalledPackage.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -449,17 +247,6 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     return this.rpc.unary(
       HelmPackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
-      metadata,
-    );
-  }
-
-  RollbackInstalledPackage(
-    request: DeepPartial<RollbackInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<RollbackInstalledPackageResponse> {
-    return this.rpc.unary(
-      HelmPackagesServiceRollbackInstalledPackageDesc,
-      RollbackInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -637,28 +424,6 @@ export const HelmPackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitio
     deserializeBinary(data: Uint8Array) {
       return {
         ...DeleteInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
-
-export const HelmPackagesServiceRollbackInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "RollbackInstalledPackage",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return RollbackInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...RollbackInstalledPackageResponse.decode(data),
         toObject() {
           return this;
         },
