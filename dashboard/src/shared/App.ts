@@ -1,10 +1,10 @@
 import {
-  AvailablePackageDetail,
   AvailablePackageReference,
   Context,
   CreateInstalledPackageRequest,
   InstalledPackageReference,
   ReconciliationOptions,
+  UpdateInstalledPackageRequest,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as url from "shared/url";
@@ -51,27 +51,18 @@ export class App {
     } as CreateInstalledPackageRequest);
   }
 
-  public static async upgrade(
+  public static async updateInstalledPackage(
     installedPackageRef: InstalledPackageReference,
-    chartNamespace: string,
-    availablePackageDetail: AvailablePackageDetail,
+    pkgVersionReference: VersionReference,
     values?: string,
+    reconciliationOptions?: ReconciliationOptions,
   ) {
-    const endpoint = url.kubeops.releases.get(
-      installedPackageRef.context?.cluster ?? "",
-      installedPackageRef.context?.namespace ?? "",
-      installedPackageRef.identifier,
-    );
-    const { data } = await axiosWithAuth.put(endpoint, {
-      appRepositoryResourceName:
-        availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
-      appRepositoryResourceNamespace: chartNamespace,
-      chartName: decodeURIComponent(availablePackageDetail.name),
-      releaseName: installedPackageRef.identifier,
+    return await this.client().UpdateInstalledPackage({
+      installedPackageRef,
+      pkgVersionReference,
       values,
-      version: availablePackageDetail.version?.pkgVersion,
-    });
-    return data;
+      reconciliationOptions,
+    } as UpdateInstalledPackageRequest);
   }
 
   public static async rollback(installedPackageRef: InstalledPackageReference, revision: number) {

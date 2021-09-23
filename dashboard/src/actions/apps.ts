@@ -41,9 +41,11 @@ export const requestInstallPackage = createAction("REQUEST_INSTALL_PACKAGE");
 
 export const receiveInstallPackage = createAction("RECEIVE_INSTALL_PACKAGE");
 
-export const requestUpgradeApp = createAction("REQUEST_UPGRADE_APP");
+export const requestUpdateInstalledPackage = createAction("REQUEST_UPDATE_INSTALLED_PACKAGE");
 
-export const receiveUpgradeApp = createAction("RECEIVE_UPGRADE_APP_CONFIRMATION");
+export const receiveUpdateInstalledPackage = createAction(
+  "RECEIVE_UPDATE_INSTALLED_PACKAGE_CONFIRMATION",
+);
 
 export const requestRollbackApp = createAction("REQUEST_ROLLBACK_APP");
 
@@ -68,8 +70,8 @@ const allActions = [
   receiveDeleteApp,
   requestInstallPackage,
   receiveInstallPackage,
-  requestUpgradeApp,
-  receiveUpgradeApp,
+  requestUpdateInstalledPackage,
+  receiveUpdateInstalledPackage,
   requestRollbackApp,
   receiveRollbackApp,
   errorApp,
@@ -204,15 +206,14 @@ export function installPackage(
   };
 }
 
-export function upgradeApp(
+export function updateInstalledPackage(
   installedPackageRef: InstalledPackageReference,
   availablePackageDetail: AvailablePackageDetail,
-  chartNamespace: string,
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestUpgradeApp());
+    dispatch(requestUpdateInstalledPackage());
     try {
       if (values && schema) {
         const validation = validate(values, schema);
@@ -225,9 +226,23 @@ export function upgradeApp(
           );
         }
       }
-      await App.upgrade(installedPackageRef, chartNamespace, availablePackageDetail, values);
-      dispatch(receiveUpgradeApp());
-      return true;
+      if (availablePackageDetail?.version?.pkgVersion) {
+        await App.updateInstalledPackage(
+          installedPackageRef,
+          // TODO(agamez): check if this VersionReference we're using is what we expect
+          { version: availablePackageDetail.version.pkgVersion } as VersionReference,
+          values,
+        );
+        dispatch(receiveUpdateInstalledPackage());
+        return true;
+      } else {
+        dispatch(
+          errorApp(
+            new UpgradeError("This package does not contain enough information to be installed"),
+          ),
+        );
+        return false;
+      }
     } catch (e: any) {
       dispatch(errorApp(new UpgradeError(e.message)));
       return false;
