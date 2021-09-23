@@ -42,6 +42,12 @@ parameters:
   POSTGRESQL_VERSION:
     type: "string"
     default: "11.13.0-debian-10-r0"
+  GKE_STABLE_VERSION:
+    type: "string"
+    default: "1.19"
+  GKE_REGULAR_VERSION:
+    type: "string"
+    default: "1.20"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -124,7 +130,7 @@ workflows:
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
           <<: *build_on_master
-      - GKE_1_20_MASTER:
+      - GKE_REGULAR_VERSION_MASTER:
           <<: *build_on_tag
           requires:
             - test_go
@@ -135,7 +141,7 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_1_20_LATEST_RELEASE:
+      - GKE_REGULAR_VERSION_LATEST_RELEASE:
           <<: *build_on_tag
           requires:
             - test_go
@@ -146,7 +152,7 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_1_19_MASTER:
+      - GKE_STABLE_VERSION_MASTER:
           <<: *build_on_tag
           requires:
             - test_go
@@ -157,7 +163,7 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_1_19_LATEST_RELEASE:
+      - GKE_STABLE_VERSION_LATEST_RELEASE:
           <<: *build_on_tag
           requires:
             - test_go
@@ -176,19 +182,19 @@ workflows:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_1_20_MASTER
-            - GKE_1_20_LATEST_RELEASE
-            - GKE_1_19_MASTER
-            - GKE_1_19_LATEST_RELEASE
+            - GKE_REGULAR_VERSION_MASTER
+            - GKE_REGULAR_VERSION_LATEST_RELEASE
+            - GKE_STABLE_VERSION_MASTER
+            - GKE_STABLE_VERSION_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
             - sync_chart_to_bitnami
             - local_e2e_tests
-            - GKE_1_20_MASTER
-            - GKE_1_20_LATEST_RELEASE
-            - GKE_1_19_MASTER
-            - GKE_1_19_LATEST_RELEASE
+            - GKE_REGULAR_VERSION_MASTER
+            - GKE_REGULAR_VERSION_LATEST_RELEASE
+            - GKE_STABLE_VERSION_MASTER
+            - GKE_STABLE_VERSION_LATEST_RELEASE
 
 ## Definitions
 common_envars: &common_envars
@@ -637,7 +643,6 @@ jobs:
     machine: true
     environment:
       DEFAULT_DEX_IP: "172.18.0.2"
-      KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       <<: *common_envars
@@ -645,33 +650,29 @@ jobs:
       number:
         type: string
     <<: *local_e2e_steps
-  GKE_1_20_MASTER:
+  GKE_REGULAR_VERSION_MASTER:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.20"
-      KUBEAPPS_DB: "postgresql"
+      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_1_20_LATEST_RELEASE:
+  GKE_REGULAR_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.20"
-      KUBEAPPS_DB: "postgresql"
+      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_1_19_MASTER:
+  GKE_STABLE_VERSION_MASTER:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.19"
-      KUBEAPPS_DB: "postgresql"
+      GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_1_19_LATEST_RELEASE:
+  GKE_STABLE_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.19"
-      KUBEAPPS_DB: "postgresql"
+      GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
