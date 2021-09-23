@@ -438,7 +438,8 @@ dashboard:
   ##    }
   ##
   customStyle: ""
-  ## @param dashboard.customAppViews Chart names to signal a custom app view
+  ## @param dashboard.customAppViews Package names to signal a custom app view
+  ## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/developer/custom-app-view-support.md
   ## e.g:
   ##  customAppViews:
   ##    - plugin: helm
