@@ -51,8 +51,8 @@ service HelmPackagesService {
     };
   }
 
-   // UpdateInstalledPackage updates an installed package based on the request.
-   rpc UpdateInstalledPackage(kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse) {
+  // UpdateInstalledPackage updates an installed package based on the request.
+  rpc UpdateInstalledPackage(kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse) {
     option (google.api.http) = {
       put: "/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
       body: "*"
@@ -63,6 +63,14 @@ service HelmPackagesService {
   rpc DeleteInstalledPackage(kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse) {
     option (google.api.http) = {
       delete: "/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+    };
+  }
+
+  // RollbackInstalledPackage updates an installed package based on the request.
+  rpc RollbackInstalledPackage(RollbackInstalledPackageRequest) returns (RollbackInstalledPackageResponse) {
+    option (google.api.http) = {
+      put: "/plugins/helm/packages/v1alpha1/installedpackages/rollback"
+      body: "*"
     };
   }
 }
@@ -76,5 +84,29 @@ message InstalledPackageDetailCustomDataHelm {
   // ReleaseRevision
   //
   // A number identifying the Helm revision
-  int32 release_revision = 1;
+  int32 release_revision = 2;
+}
+
+message RollbackInstalledPackageRequest {
+
+  // Installed package reference
+  //
+  // A reference uniquely identifying the installed package.
+  kubeappsapis.core.packages.v1alpha1.InstalledPackageReference installed_package_ref = 1;
+
+  // ReleaseRevision
+  //
+  // A number identifying the Helm revision to which to rollback.
+  int32 release_revision = 2;
+}
+
+// RollbackInstalledPackageResponse
+//
+// Response for RollbackInstalledPackage
+message RollbackInstalledPackageResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"installed_package_ref": {}}'
+  // };
+  kubeappsapis.core.packages.v1alpha1.InstalledPackageReference installed_package_ref = 1;
 }

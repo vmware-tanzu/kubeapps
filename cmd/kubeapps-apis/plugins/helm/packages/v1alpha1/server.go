@@ -1055,3 +1055,41 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 
 	return &corev1.DeleteInstalledPackageResponse{}, nil
 }
+
+// RollbackInstalledPackage updates an installed package.
+func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.RollbackInstalledPackageRequest) (*helmv1.RollbackInstalledPackageResponse, error) {
+	installedRef := request.GetInstalledPackageRef()
+	releaseName := installedRef.GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), installedRef.GetContext().GetNamespace())
+	log.Infof("+helm RollbackInstalledPackage %s", contextMsg)
+
+	// Create an action config for the installed pkg context.
+	actionConfig, err := s.actionConfigGetter(ctx, installedRef.GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+
+	release, err := agent.RollbackRelease(actionConfig, releaseName, int(request.GetReleaseRevision()))
+	if err != nil {
+		if errors.Is(err, driver.ErrReleaseNotFound) {
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", releaseName, installedRef.GetContext().GetNamespace(), err)
+		}
+		return nil, status.Errorf(codes.Internal, "Unable to rollback helm release %q in the namespace %q: %v", releaseName, installedRef.GetContext().GetNamespace(), err)
+	}
+
+	cluster := installedRef.GetContext().GetCluster()
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+
+	return &helmv1.RollbackInstalledPackageResponse{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Cluster:   cluster,
+				Namespace: release.Namespace,
+			},
+			Identifier: release.Name,
+			Plugin:     GetPluginDetail(),
+		},
+	}, nil
+}
