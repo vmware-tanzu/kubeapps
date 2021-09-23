@@ -93,3 +93,36 @@ func (s TestPackagingPluginServer) GetAvailablePackageVersions(ctx context.Conte
 		PackageAppVersions: s.PackageAppVersions,
 	}, nil
 }
+
+func (s TestPackagingPluginServer) CreateInstalledPackage(ctx context.Context, request *packages.CreateInstalledPackageRequest) (*packages.CreateInstalledPackageResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &packages.CreateInstalledPackageResponse{
+		InstalledPackageRef: &packages.InstalledPackageReference{
+			Context:    request.GetTargetContext(),
+			Identifier: request.GetName(),
+			Plugin:     s.Plugin,
+		},
+	}, nil
+}
+
+func (s TestPackagingPluginServer) UpdateInstalledPackage(ctx context.Context, request *packages.UpdateInstalledPackageRequest) (*packages.UpdateInstalledPackageResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &packages.UpdateInstalledPackageResponse{
+		InstalledPackageRef: &packages.InstalledPackageReference{
+			Context:    request.GetInstalledPackageRef().GetContext(),
+			Identifier: request.GetInstalledPackageRef().GetIdentifier(),
+			Plugin:     s.Plugin,
+		},
+	}, nil
+}
+
+func (s TestPackagingPluginServer) DeleteInstalledPackage(ctx context.Context, request *packages.DeleteInstalledPackageRequest) (*packages.DeleteInstalledPackageResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &packages.DeleteInstalledPackageResponse{}, nil
+}
