@@ -2233,10 +2233,10 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@^27.0.1":
-  version "27.0.1"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-27.0.1.tgz#fafcc997da0135865311bb1215ba16dba6bdf4ca"
-  integrity sha512-HTLpVXHrY69556ozYkcq47TtQJXpcWAWfkoqz+ZGz2JnmZhzlRjprCIyFnetSy8gpDWwTTGBcRVv1J1I1vBrHw==
+"@types/jest@^27.0.2":
+  version "27.0.2"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-27.0.2.tgz#ac383c4d4aaddd29bbf2b916d8d105c304a5fcd7"
+  integrity sha512-4dRxkS/AFX0c5XW6IPMNOydLn2tEhNhJV7DnYK+0bjoJZ+QTmfucBlihX7aoEsh/ocYtkLC73UbnBXBXIxsULA==
   dependencies:
     jest-diff "^27.0.0"
     pretty-format "^27.0.0"
@@ -2393,10 +2393,10 @@
     hoist-non-react-statics "^3.3.0"
     redux "^4.0.0"
 
-"@types/react-router-dom@*", "@types/react-router-dom@^5.1.9":
-  version "5.1.9"
-  resolved "https://registry.yarnpkg.com/@types/react-router-dom/-/react-router-dom-5.1.9.tgz#e8a8f687351ecc8c68bb4161d7e4b9df4994416e"
-  integrity sha512-Go0vxZSigXTyXx8xPkGiBrrc3YbBs82KE14WENMLS6TSUKcRFSmYVbL19zFOnNFqJhqrPqEs2h5eUpJhSRrwZw==
+"@types/react-router-dom@*", "@types/react-router-dom@^5.3.0":
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/@types/react-router-dom/-/react-router-dom-5.3.0.tgz#8c4e0aa0ccaf638ba965829ad29a10ac3cbe2212"
+  integrity sha512-svUzpEpKDwK8nmfV2vpZNSsiijFNKY8+gUqGqvGGOVrXvX58k1JIJubZa5igkwacbq/0umphO5SsQn/BQsnKpw==
   dependencies:
     "@types/history" "*"
     "@types/react" "*"
@@ -13287,10 +13287,10 @@ sass-loader@^10.0.5:
     schema-utils "^3.0.0"
     semver "^7.3.2"
 
-sass@^1.42.0:
-  version "1.42.0"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.42.0.tgz#dc485e5cf7890a22fd6ccc6856c64f297239d595"
-  integrity sha512-kcjxsemgaOnfl43oZgO/IePLvXQI0ZKzo0/xbCt6uyrg3FY/FF8hVK9YoO8GiZBcEG2Ebl79EKnUc+aiE4f2Vw==
+sass@^1.42.1:
+  version "1.42.1"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.42.1.tgz#5ab17bebc1cb1881ad2e0c9a932c66ad64e441e2"
+  integrity sha512-/zvGoN8B7dspKc5mC6HlaygyCBRvnyzzgD5khiaCfglWztY99cYoiTUksVx11NlnemrcfH5CEaCpsUKoW0cQqg==
   dependencies:
     chokidar ">=3.0.0 <4.0.0"
 
