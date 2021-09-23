@@ -2,6 +2,7 @@ import {
   AvailablePackageReference,
   Context,
   CreateInstalledPackageResponse,
+  DeleteInstalledPackageResponse,
   InstalledPackageReference,
   UpdateInstalledPackageResponse,
   VersionReference,
@@ -24,7 +25,7 @@ describe("App", () => {
   describe("createInstalledPackage", () => {
     [
       {
-        description: "createInstalledPackage basic",
+        description: "should call to createInstalledPackage",
         args: {
           tagetContext: { cluster: "my-cluster", namespace: "my-namespace" } as Context,
           name: "",
@@ -115,46 +116,28 @@ describe("App", () => {
     });
   });
 
-  describe("delete", () => {
+  describe("deleteInstalledPackage", () => {
     [
       {
-        description: "should delete an app in a namespace",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/default-c/namespaces/default-ns/releases/foo`,
-        purge: false,
-      },
-      {
-        description: "should delete and purge an app in a namespace",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/default-c/namespaces/default-ns/releases/foo?purge=true`,
-        purge: true,
-      },
-    ].forEach(t => {
-      it(t.description, async () => {
-        moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-        expect(
-          await App.delete(
-            {
-              context: { cluster: "default-c", namespace: "default-ns" },
-              identifier: "foo",
-              plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-            } as InstalledPackageReference,
-            t.purge,
-          ),
-        ).toBe("ok");
-        expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
-      });
-    });
-    it("throws an error if returns an error 404", async () => {
-      moxios.stubRequest(/.*/, { status: 404 });
-      await expect(
-        App.delete(
-          {
+        description: "should call to deleteInstalledPackage",
+        args: {
+          installedPackageReference: {
             context: { cluster: "default-c", namespace: "default-ns" },
             identifier: "foo",
             plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
           } as InstalledPackageReference,
-          false,
-        ),
-      ).rejects.toThrow("Request failed with status code 404");
+        },
+      },
+    ].forEach(t => {
+      it(t.description, async () => {
+        const mockDeleteInstalledPackage = jest
+          .fn()
+          .mockImplementation(() => Promise.resolve({} as DeleteInstalledPackageResponse));
+        jest.spyOn(App, "deleteInstalledPackage").mockImplementation(mockDeleteInstalledPackage);
+        const res = await App.deleteInstalledPackage(t.args.installedPackageReference);
+        expect(res).toStrictEqual({} as DeleteInstalledPackageResponse);
+        expect(mockDeleteInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
+      });
     });
   });
 

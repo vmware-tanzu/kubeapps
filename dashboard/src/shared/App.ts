@@ -2,6 +2,7 @@ import {
   AvailablePackageReference,
   Context,
   CreateInstalledPackageRequest,
+  DeleteInstalledPackageRequest,
   InstalledPackageReference,
   ReconciliationOptions,
   UpdateInstalledPackageRequest,
@@ -95,6 +96,12 @@ export class App {
     }
     const { data } = await axiosWithAuth.delete(endpoint);
     return data;
+  }
+
+  public static async deleteInstalledPackage(installedPackageRef: InstalledPackageReference) {
+    return await this.client().DeleteInstalledPackage({
+      installedPackageRef,
+    } as DeleteInstalledPackageRequest);
   }
 
   // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.

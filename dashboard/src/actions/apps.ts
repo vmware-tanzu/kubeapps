@@ -33,13 +33,15 @@ export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
   return (apps: InstalledPackageSummary[]) => resolve(apps);
 });
 
-export const requestDeleteApp = createAction("REQUEST_DELETE_APP");
+export const requestDeleteInstalledPackage = createAction("REQUEST_DELETE_INSTALLED_PACKAGE");
 
-export const receiveDeleteApp = createAction("RECEIVE_DELETE_APP_CONFIRMATION");
+export const receiveDeleteInstalledPackage = createAction(
+  "RECEIVE_DELETE_INSTALLED_PACKAGE_CONFIRMATION",
+);
 
 export const requestInstallPackage = createAction("REQUEST_INSTALL_PACKAGE");
 
-export const receiveInstallPackage = createAction("RECEIVE_INSTALL_PACKAGE");
+export const receiveInstallPackage = createAction("RECEIVE_INSTALL_PACKAGE_CONFIRMATION");
 
 export const requestUpdateInstalledPackage = createAction("REQUEST_UPDATE_INSTALLED_PACKAGE");
 
@@ -66,8 +68,8 @@ const allActions = [
   listApps,
   requestApps,
   receiveAppList,
-  requestDeleteApp,
-  receiveDeleteApp,
+  requestDeleteInstalledPackage,
+  receiveDeleteInstalledPackage,
   requestInstallPackage,
   receiveInstallPackage,
   requestUpdateInstalledPackage,
@@ -118,15 +120,14 @@ export function getApp(
   };
 }
 
-export function deleteApp(
+export function deleteInstalledPackage(
   installedPackageRef: InstalledPackageReference,
-  purge: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestDeleteApp());
+    dispatch(requestDeleteInstalledPackage());
     try {
-      await App.delete(installedPackageRef, purge);
-      dispatch(receiveDeleteApp());
+      await App.deleteInstalledPackage(installedPackageRef);
+      dispatch(receiveDeleteInstalledPackage());
       return true;
     } catch (e: any) {
       dispatch(errorApp(new DeleteError(e.message)));

@@ -40,8 +40,8 @@ afterEach(() => {
 });
 
 it("deletes an application", async () => {
-  const deleteApp = jest.fn();
-  actions.apps.deleteApp = deleteApp;
+  const deleteInstalledPackage = jest.fn();
+  actions.apps.deleteInstalledPackage = deleteInstalledPackage;
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
@@ -56,7 +56,7 @@ it("deletes an application", async () => {
         .prop("onClick") as any
     )();
   });
-  expect(deleteApp).toHaveBeenCalledWith(defaultProps.installedPackageRef, true);
+  expect(deleteInstalledPackage).toHaveBeenCalledWith(defaultProps.installedPackageRef);
 });
 
 it("renders an error", async () => {
