@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	v1alpha1_0 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1_1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -53,7 +53,7 @@ func request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx co
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -69,12 +69,49 @@ func local_request_KappControllerPackagesService_GetAvailablePackageSummaries_0(
 }
 
 var (
-	filter_KappControllerPackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_KappControllerPackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["available_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["available_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["available_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -89,8 +126,45 @@ func request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx conte
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["available_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["available_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["available_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -141,12 +215,49 @@ func local_request_KappControllerPackagesService_GetPackageRepositories_0(ctx co
 }
 
 var (
-	filter_KappControllerPackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_KappControllerPackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["available_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["available_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["available_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -161,8 +272,45 @@ func request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx con
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["available_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["available_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["available_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "available_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "available_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "available_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -181,7 +329,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -197,7 +345,7 @@ func request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx co
 }
 
 func local_request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -213,12 +361,49 @@ func local_request_KappControllerPackagesService_GetInstalledPackageSummaries_0(
 }
 
 var (
-	filter_KappControllerPackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_KappControllerPackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -233,8 +418,45 @@ func request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx conte
 }
 
 func local_request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -249,7 +471,7 @@ func local_request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx
 }
 
 func request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.CreateInstalledPackageRequest
+	var protoReq v1alpha1_1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -266,7 +488,7 @@ func request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.CreateInstalledPackageRequest
+	var protoReq v1alpha1_1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -283,7 +505,7 @@ func local_request_KappControllerPackagesService_CreateInstalledPackage_0(ctx co
 }
 
 func request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.UpdateInstalledPackageRequest
+	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -292,6 +514,43 @@ func request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.
 	}
 	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
 	}
 
 	msg, err := client.UpdateInstalledPackage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -300,7 +559,7 @@ func request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.UpdateInstalledPackageRequest
+	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -311,18 +570,92 @@ func local_request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx co
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
+
 	msg, err := server.UpdateInstalledPackage(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_KappControllerPackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_KappControllerPackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
+	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -337,8 +670,45 @@ func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
+	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["installed_package_ref.context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.cluster")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.cluster", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.cluster", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.context.namespace", err)
+	}
+
+	val, ok = pathParams["installed_package_ref.identifier"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "installed_package_ref.identifier")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "installed_package_ref.identifier", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "installed_package_ref.identifier", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -364,7 +734,7 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackagesummaries"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -387,7 +757,7 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackagedetails"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -433,7 +803,7 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackageversions"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -456,7 +826,7 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackagesummaries"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -479,7 +849,7 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackagedetail"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -525,7 +895,7 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -548,7 +918,7 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -610,7 +980,7 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackagesummaries"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -630,7 +1000,7 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackagedetails"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -670,7 +1040,7 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackageversions"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -690,7 +1060,7 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackagesummaries"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -710,7 +1080,7 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackagedetail"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -750,7 +1120,7 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -770,7 +1140,7 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -790,23 +1160,23 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 }
 
 var (
-	pattern_KappControllerPackagesService_GetAvailablePackageSummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "availablepackagesummaries"}, ""))
+	pattern_KappControllerPackagesService_GetAvailablePackageSummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "availablepackages"}, ""))
 
-	pattern_KappControllerPackagesService_GetAvailablePackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "availablepackagedetails"}, ""))
+	pattern_KappControllerPackagesService_GetAvailablePackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "availablepackages", "c", "available_package_ref.context.cluster", "ns", "available_package_ref.context.namespace", "available_package_ref.identifier"}, ""))
 
 	pattern_KappControllerPackagesService_GetPackageRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "packagerepositories"}, ""))
 
-	pattern_KappControllerPackagesService_GetAvailablePackageVersions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "availablepackageversions"}, ""))
+	pattern_KappControllerPackagesService_GetAvailablePackageVersions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9, 2, 10}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "availablepackages", "c", "available_package_ref.context.cluster", "ns", "available_package_ref.context.namespace", "available_package_ref.identifier", "versions"}, ""))
 
-	pattern_KappControllerPackagesService_GetInstalledPackageSummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackagesummaries"}, ""))
+	pattern_KappControllerPackagesService_GetInstalledPackageSummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackages"}, ""))
 
-	pattern_KappControllerPackagesService_GetInstalledPackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackagedetail"}, ""))
+	pattern_KappControllerPackagesService_GetInstalledPackageDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
 
 	pattern_KappControllerPackagesService_CreateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackages"}, ""))
 
-	pattern_KappControllerPackagesService_UpdateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackages"}, ""))
+	pattern_KappControllerPackagesService_UpdateInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
 
-	pattern_KappControllerPackagesService_DeleteInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackages"}, ""))
+	pattern_KappControllerPackagesService_DeleteInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9}, []string{"plugins", "kapp_controller", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier"}, ""))
 )
 
 var (
