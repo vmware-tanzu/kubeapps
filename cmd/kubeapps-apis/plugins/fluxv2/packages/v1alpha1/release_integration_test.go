@@ -35,7 +35,7 @@ import (
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 //    Didn't want to spend cycles writing port-forwarding code programmatically like https://github.com/anthhub/forwarder
 //    at this point.
-// 3) run ./kind-cluster-setup.sh once prior to these tests
+// 3) run './kind-cluster-setup.sh deploy' once prior to these tests
 
 const (
 	// the only repo these tests use so far. This is local copy of the first few entries
