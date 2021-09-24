@@ -8,13 +8,13 @@ import (
 	"os"
 
 	"github.com/containerd/containerd/remotes"
+	"github.com/deislabs/oras/pkg/content"
+	orascontext "github.com/deislabs/oras/pkg/context"
+	"github.com/deislabs/oras/pkg/oras"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	"oras.land/oras-go/pkg/content"
-	orascontext "oras.land/oras-go/pkg/context"
-	"oras.land/oras-go/pkg/oras"
 )
 
 // Code from Helm Registry Client. Copied here since it belongs to a internal package.
