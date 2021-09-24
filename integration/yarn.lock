@@ -1448,6 +1448,11 @@ expect-puppeteer@^5.0.4:
   resolved "https://registry.yarnpkg.com/expect-puppeteer/-/expect-puppeteer-5.0.4.tgz#54bfdecabb2acb3e3f0d0292cd3dab2dd8ff5a81"
   integrity sha512-NV7jSiKhK+byocxg9A+0av+Q2RSCP9bcLVRz7zhHaESeCOkuomMvl9oD+uo1K+NdqRCXhNkQlUGWlmtbrpR1qw==
 
+expect-puppeteer@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/expect-puppeteer/-/expect-puppeteer-6.0.0.tgz#22cd2c312b249a1fe4af17937406f50df92e7869"
+  integrity sha512-qJWHvlHy58+YgI/eMm9BCgR5YmpAITw7Qlzacf6l2ZYv8ej01fto3XtlKTCtk2ik3hMut344aSCGPn09MXtUvA==
+
 expect@^27.2.1:
   version "27.2.1"
   resolved "https://registry.yarnpkg.com/expect/-/expect-27.2.1.tgz#5f882b308716618613f0106a488b46c303908157"
