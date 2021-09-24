@@ -257,11 +257,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(err, w)
 		return
 	}
-	if err != nil {
-		returnErrMessage(err, w)
-		return
-	}
-	response.NewDataResponse(rel).Write(w)
+	response.NewDataResponse(*rel).Write(w)
 }
 
 func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
@@ -281,11 +277,7 @@ func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, param
 		returnErrMessage(err, w)
 		return
 	}
-	if err != nil {
-		returnErrMessage(err, w)
-		return
-	}
-	response.NewDataResponse(rel).Write(w)
+	response.NewDataResponse(*rel).Write(w)
 }
 
 // GetRelease returns a release.
@@ -297,11 +289,7 @@ func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params han
 		returnErrMessage(err, w)
 		return
 	}
-	if err != nil {
-		returnErrMessage(err, w)
-		return
-	}
-	response.NewDataResponse(release).Write(w)
+	response.NewDataResponse(*release).Write(w)
 }
 
 // DeleteRelease deletes a release.
