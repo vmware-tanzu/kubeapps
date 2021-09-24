@@ -171,9 +171,8 @@ func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 	return nil
 }
 
-// this should eventually be replaced with flux plugin's DeleteInstalledPackage()
-func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeDeleteHelmRelease(%s,%s)", name, namespace)
+func kubeForceDeleteHelmRelease(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeForceDeleteHelmRelease(%s,%s)", name, namespace)
 	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
 		return err
 		// remove finalizer on HelmRelease cuz sometimes it gets stuck indefinitely
@@ -184,6 +183,17 @@ func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
 		return err
 	}
 	return nil
+}
+
+func kubeExistsHelmRelease(t *testing.T, name, namespace string) (bool, error) {
+	t.Logf("+kubeExistsHelmRelease(%s,%s)", name, namespace)
+	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
+		return false, err
+	} else if _, err = ifc.Get(context.TODO(), name, metav1.GetOptions{}); err == nil {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }
 
 func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error) {

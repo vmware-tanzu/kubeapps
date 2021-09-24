@@ -23,6 +23,8 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
@@ -51,6 +53,7 @@ type integrationTestCreateSpec struct {
 	expectedDetail       *corev1.InstalledPackageDetail
 	expectedPodPrefix    string
 	expectInstallFailure bool
+	noCleanup            bool
 }
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
@@ -205,17 +208,48 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			request:           create_request_podinfo_for_delete_1,
 			expectedDetail:    expected_detail_podinfo_for_delete_1,
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
+			noCleanup:         true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			_ = createAndWaitForHelmRelease(t, tc, fluxPluginClient)
+			installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient)
 
-			//_, err := fluxPluginClient.UpdateInstalledPackage(context.TODO(), tc.request)
-			//if err != nil {
-			//	t.Fatalf("%+v", err)
-			//}
+			_, err := fluxPluginClient.DeleteInstalledPackage(context.TODO(), &corev1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: installedRef,
+			})
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			const maxWait = 25
+			for i := 0; i <= maxWait; i++ {
+				_, err := fluxPluginClient.GetInstalledPackageDetail(context.TODO(), &corev1.GetInstalledPackageDetailRequest{
+					InstalledPackageRef: installedRef,
+				})
+				if err != nil {
+					if status.Code(err) == codes.NotFound {
+						break // this is the only way to break out of this loop successfully
+					} else {
+						t.Fatalf("%+v", err)
+					}
+				}
+				if i == maxWait {
+					t.Fatalf("Timed out waiting for delete of installed package [%s], last error: [%v]", installedRef, err)
+				} else {
+					t.Logf("Waiting 1s for package [%s] to be deleted, attempt [%d/%d]...", installedRef, i+1, maxWait)
+					time.Sleep(1 * time.Second)
+				}
+			}
+
+			// sanity check
+			exists, err := kubeExistsHelmRelease(t, installedRef.Identifier, installedRef.Context.Namespace)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			} else if exists {
+				t.Fatalf("helmrelease [%s] still exists", installedRef)
+			}
 		})
 	}
 }
@@ -255,12 +289,14 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-		t.Cleanup(func() {
-			err = kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
-			if err != nil {
-				t.Logf("Failed to delete service account due to [%v]", err)
-			}
-		})
+		if !tc.noCleanup {
+			t.Cleanup(func() {
+				err = kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+				if err != nil {
+					t.Logf("Failed to delete service account due to [%v]", err)
+				}
+			})
+		}
 	}
 
 	// generate a unique target namespace for each test to avoid situations when tests are
@@ -285,11 +321,16 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 	}
 
+	if !tc.noCleanup {
+		t.Cleanup(func() {
+			err = kubeForceDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
+			if err != nil {
+				t.Logf("Failed to delete helm release due to [%v]", err)
+			}
+		})
+	}
+
 	t.Cleanup(func() {
-		err = kubeDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
-		if err != nil {
-			t.Logf("Failed to delete helm release due to [%v]", err)
-		}
 		err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace)
 		if err != nil {
 			t.Logf("Failed to delete namespace [%s] due to [%v]", tc.request.TargetContext.Namespace, err)

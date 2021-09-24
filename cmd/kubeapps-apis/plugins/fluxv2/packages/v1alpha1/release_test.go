@@ -38,6 +38,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -691,6 +692,88 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 			if got, want := releaseObj.Object, tc.expectedRelease; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestDeleteInstalledPackage(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.DeleteInstalledPackageRequest
+		existingK8sObjs    []testSpecGetInstalledPackages
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.DeleteInstalledPackageResponse
+	}{
+		{
+			name: "delete package",
+			request: &corev1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+			},
+			existingK8sObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_completed,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   &corev1.DeleteInstalledPackageResponse{},
+		},
+		{
+			name: "returns not found if installed package doesn't exist",
+			request: &corev1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: "not-a-valid-identifier",
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
+			defer cleanup()
+			s, mock, _, err := newServerWithChartsAndReleases(nil, runtimeObjs...)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			response, err := s.DeleteInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.DeleteInstalledPackageResponse{})
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+
+			// check expected HelmReleass CRD has been updated
+			dynamicClient, _, err = s.clientGetter(context.Background())
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			_, err = dynamicClient.Resource(releasesGvr).
+				Namespace(tc.request.InstalledPackageRef.Context.Namespace).Get(
+				context.Background(),
+				tc.request.InstalledPackageRef.Identifier,
+				v1.GetOptions{})
+			if !errors.IsNotFound(err) {
+				t.Errorf("mismatch expected, NotFound, got %+v", err)
 			}
 		})
 	}

@@ -470,9 +470,16 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 		return err
 	}
 
-	log.Infof("Deleted release: [%s]", packageRef.Identifier)
+	log.V(4).Infof("Deleted release: [%s]", packageRef.Identifier)
 
-	return ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{})
+	if err = ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{}); err != nil {
+		if errors.IsNotFound(err) {
+			return status.Errorf(codes.NotFound, "%q", err)
+		} else {
+			return status.Errorf(codes.Internal, "%q", err)
+		}
+	}
+	return nil
 }
 
 // returns 3 things:
