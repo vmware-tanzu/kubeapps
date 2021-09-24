@@ -1381,7 +1381,6 @@ authProxy:
 ## @section Pinniped Proxy parameters
 
 ## Pinniped Proxy configuration for converting user OIDC tokens to k8s client authorization certs
-## NOTE: This component is alpha functionality in Kubeapps until we complete testing and documentation.
 ##
 pinnipedProxy:
   ## @param pinnipedProxy.enabled Specifies whether Kubeapps should configure Pinniped Proxy
@@ -1473,6 +1472,7 @@ allowNamespaceDiscovery: true
 ## - isKubeappsCluster is an optional parameter that allows defining the cluster in which Kubeapps is installed;
 ##   this param is useful when every cluster is using an apiServiceURL (e.g., when using the Pinniped Impersonation Proxy)
 ##   as the chart cannot infer the cluster on which Kubeapps is installed in that case.
+## - pinnipedConfig is an optional parameter that contains configuration options specific to a cluster running the pinniped concierge service.
 ## e.g.:
 ## clusters:
 ## - name: default
@@ -1483,6 +1483,9 @@ allowNamespaceDiscovery: true
 ##   certificateAuthorityData: LS0tLS1CRUdJ...
 ##   serviceToken: ...
 ##   isKubeappsCluster: true
+##   pinnipedConfig:
+##     enable: true
+
 ##
 clusters:
   - name: default
