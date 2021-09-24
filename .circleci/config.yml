@@ -460,7 +460,7 @@ run_e2e_tests: &run_e2e_tests
     name: "Run e2e tests script"
     command: |
       # If we want to test the latest version instead we override the image to be used
-      if [[ -n "$TEST_LATEST_RELEASE" ]]; then
+      if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
         source ./script/chart_sync_utils.sh
         latest="$(latestReleaseTag)"
         DEV_TAG=${latest/v/}
@@ -492,7 +492,7 @@ gke_test: &gke_test
 
           # Cancel job if this is a test stable release job but
           # the chart version has not been bumped
-          if [[ -n "$TEST_LATEST_RELEASE" ]] && ! changedVersion; then
+          if [[ -n "${TEST_LATEST_RELEASE:-}" ]] && ! changedVersion; then
             echo "Step aborted, we are not releasing a new version of the chart"
             circleci step halt
           fi
