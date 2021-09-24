@@ -18,7 +18,7 @@ test("Deploys an application with the values by default", async () => {
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
-  await page.type("#releaseName", utils.getRandomName("my-app"));
+  await page.type("#releaseName", utils.getRandomName("my-app-for-04-deploy"));
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 

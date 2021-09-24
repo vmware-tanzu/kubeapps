@@ -448,6 +448,7 @@ describe("clusterReducer", () => {
       authProxySkipLoginPage: false,
       theme: "light",
       remoteComponentsUrl: "",
+      customAppViews: [],
     } as IConfig;
     it("re-writes the clusters to match the config.clusters state", () => {
       expect(

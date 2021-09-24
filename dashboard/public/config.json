@@ -8,5 +8,6 @@
   "oauthLogoutURI": "/oauth2/sign_out",
   "clusters": ["default"],
   "theme": "light",
-  "remoteComponentsUrl": ""
+  "remoteComponentsUrl": "",
+  "customAppViews": []
 }
