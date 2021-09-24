@@ -2,22 +2,22 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.17.0"
+    default: "1.17.1"
   NODE_VERSION:
     type: string
     default: "14"
   RUST_VERSION:
     type: string
-    default: "1.54.0"
+    default: "1.55.0"
   DOCKER_VERSION:
     type: string
-    default: "20.10.6"
+    default: "20.10.7"
   HELM_VERSION_MIN:
     type: "string"
     default: "v3.1.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.6.3"
+    default: "v3.7.0"
   OLM_VERSION:
     type: "string"
     default: "v0.18.3"
@@ -26,10 +26,10 @@ parameters:
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.1"
+    default: "v1.22.2"
   GITHUB_VERSION:
     type: "string"
-    default: "1.14.0"
+    default: "2.0.0"
   SEMVER_VERSION:
     type: "string"
     default: "3.2.0"
@@ -41,7 +41,7 @@ parameters:
     default: "v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "11.13.0-debian-10-r0"
+    default: "11.13.0-debian-10-r39"
   GKE_STABLE_VERSION:
     type: "string"
     default: "1.19"

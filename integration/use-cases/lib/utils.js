@@ -88,7 +88,7 @@ module.exports = {
     }
   },
   getRandomName: base => {
-    const randomNumber = Math.floor(Math.random() * Math.floor(100));
+    const randomNumber = Math.floor(Math.random() * Math.floor(10000));
     const name = base + "-" + randomNumber;
     return name;
   },
