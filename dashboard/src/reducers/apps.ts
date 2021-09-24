@@ -55,9 +55,9 @@ const appsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveInstallPackage):
       return { ...state, isFetching: false };
-    case getType(actions.apps.requestRollbackApp):
+    case getType(actions.apps.requestRollbackInstalledPackage):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveRollbackApp):
+    case getType(actions.apps.receiveRollbackInstalledPackage):
       return { ...state, isFetching: false };
     case LOCATION_CHANGE:
       return {

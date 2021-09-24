@@ -10,6 +10,7 @@ import thunk from "redux-thunk";
 import { App } from "shared/App";
 import Chart from "shared/Chart";
 import { IAppState, UnprocessableEntity, UpgradeError } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
@@ -84,14 +85,14 @@ describe("fetches applications", () => {
 });
 
 describe("delete applications", () => {
-  const deleteInstalledPackageOrig = App.deleteInstalledPackage;
+  const deleteInstalledPackageOrig = App.DeleteInstalledPackage;
   let deleteInstalledPackage: jest.Mock;
   beforeEach(() => {
     deleteInstalledPackage = jest.fn(() => []);
-    App.deleteInstalledPackage = deleteInstalledPackage;
+    App.DeleteInstalledPackage = deleteInstalledPackage;
   });
   afterEach(() => {
-    App.deleteInstalledPackage = deleteInstalledPackageOrig;
+    App.DeleteInstalledPackage = deleteInstalledPackageOrig;
   });
   it("delete an application", async () => {
     await store.dispatch(
@@ -138,7 +139,7 @@ describe("delete applications", () => {
 
 describe("deploy chart", () => {
   beforeEach(() => {
-    App.createInstalledPackage = jest.fn();
+    App.CreateInstalledPackage = jest.fn();
   });
 
   it("returns true if namespace is correct and deployment is successful", async () => {
@@ -160,7 +161,7 @@ describe("deploy chart", () => {
       ),
     );
     expect(res).toBe(true);
-    expect(App.createInstalledPackage).toHaveBeenCalledWith(
+    expect(App.CreateInstalledPackage).toHaveBeenCalledWith(
       { cluster: "target-cluster", namespace: "target-namespace" },
       "my-release",
       { identifier: "testrepo/foo" },
@@ -213,7 +214,7 @@ describe("updateInstalledPackage", () => {
   );
 
   it("calls updateInstalledPackage and returns true if no error", async () => {
-    App.updateInstalledPackage = jest.fn().mockImplementationOnce(() => true);
+    App.UpdateInstalledPackage = jest.fn().mockImplementationOnce(() => true);
     const res = await store.dispatch(updateInstalledPackageAction);
     expect(res).toBe(true);
 
@@ -222,7 +223,7 @@ describe("updateInstalledPackage", () => {
       { type: getType(actions.apps.receiveUpdateInstalledPackage) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.updateInstalledPackage).toHaveBeenCalledWith(
+    expect(App.UpdateInstalledPackage).toHaveBeenCalledWith(
       {
         context: { cluster: "default-c", namespace: "default-ns" },
         identifier: "my-release",
@@ -234,7 +235,7 @@ describe("updateInstalledPackage", () => {
   });
 
   it("dispatches UpgradeError if error", async () => {
-    App.updateInstalledPackage = jest.fn().mockImplementationOnce(() => {
+    App.UpdateInstalledPackage = jest.fn().mockImplementationOnce(() => {
       throw new UpgradeError("Boom!");
     });
 
@@ -280,12 +281,12 @@ describe("updateInstalledPackage", () => {
   });
 });
 
-describe("rollbackApp", () => {
-  const provisionCMD = actions.apps.rollbackApp(
+describe("rollbackInstalledPackage", () => {
+  const rollbackInstalledPackageAction = actions.apps.rollbackInstalledPackage(
     {
       context: { cluster: "default-c", namespace: "default-ns" },
       identifier: "my-release",
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
     } as InstalledPackageReference,
     1,
   );
@@ -295,14 +296,14 @@ describe("rollbackApp", () => {
       availablePackageRef: {
         context: { cluster: "default", namespace: "my-ns" },
         identifier: "test",
-        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
       },
       currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
     } as InstalledPackageDetail;
 
     const availablePackageDetail = { name: "test" } as AvailablePackageDetail;
 
-    App.rollback = jest.fn().mockImplementationOnce(() => true);
+    App.RollbackInstalledPackage = jest.fn().mockImplementationOnce(() => true);
     App.getRelease = jest.fn().mockReturnValue({ manifest: {} });
     App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
       installedPackageDetail: installedPackageDetail,
@@ -310,7 +311,7 @@ describe("rollbackApp", () => {
     Chart.getAvailablePackageDetail = jest.fn().mockReturnValue({
       availablePackageDetail: availablePackageDetail,
     });
-    const res = await store.dispatch(provisionCMD);
+    const res = await store.dispatch(rollbackInstalledPackageAction);
     expect(res).toBe(true);
 
     const selectCMD = actions.apps.selectApp(
@@ -322,8 +323,8 @@ describe("rollbackApp", () => {
     expect(res2).not.toBeNull();
 
     const expectedActions = [
-      { type: getType(actions.apps.requestRollbackApp) },
-      { type: getType(actions.apps.receiveRollbackApp) },
+      { type: getType(actions.apps.requestRollbackInstalledPackage) },
+      { type: getType(actions.apps.receiveRollbackInstalledPackage) },
       { type: getType(actions.apps.requestApps) },
       {
         type: getType(actions.apps.selectApp),
@@ -332,35 +333,40 @@ describe("rollbackApp", () => {
     ];
 
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.rollback).toHaveBeenCalledWith(
+    expect(App.RollbackInstalledPackage).toHaveBeenCalledWith(
       {
         context: { cluster: "default-c", namespace: "default-ns" },
         identifier: "my-release",
-        plugin: { name: "my.plugin", version: "0.0.1" },
+        plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" },
       },
       1,
     );
     expect(App.getRelease).toHaveBeenCalledWith({
       context: { cluster: "default-c", namespace: "default-ns" },
       identifier: "my-release",
-      plugin: { name: "my.plugin", version: "0.0.1" },
+      plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" },
     });
   });
 
-  it("dispatches an error", async () => {
-    App.rollback = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
-
+  it("dispatches an error if the package is not from one of the supported plugins", async () => {
     const expectedActions = [
-      { type: getType(actions.apps.requestRollbackApp) },
       {
         type: getType(actions.apps.errorApp),
-        payload: new Error("Boom!"),
+        payload: new UpgradeError(
+          "This package cannot be rolled back; this operation is only available for Helm packages",
+        ),
       },
     ];
 
-    await store.dispatch(provisionCMD);
+    const rollbackInstalledPackageBadAction = actions.apps.rollbackInstalledPackage(
+      {
+        context: { cluster: "default-c", namespace: "default-ns" },
+        identifier: "my-release",
+        plugin: { name: "bad-plugin", version: "0.0.1" } as Plugin,
+      } as InstalledPackageReference,
+      1,
+    );
+    await store.dispatch(rollbackInstalledPackageBadAction);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
