@@ -157,6 +157,13 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("Up to date", { timeout: 60000 });
-  await expect(page).toMatch("Ready");
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toMatch("Up to date", { timeout: 60000 });
+      await expect(page).toMatch("Ready");
+    },
+    testName,
+  );
 });

@@ -19,6 +19,7 @@ export const initialState: IConfigState = {
   clusters: [],
   theme: SupportedThemes.light,
   remoteComponentsUrl: "",
+  customAppViews: [],
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
