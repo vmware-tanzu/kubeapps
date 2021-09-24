@@ -74,25 +74,32 @@ parameters:
     default: "id_rsa_59812a95a654a746e515f537b34f6cad"
 
 ## Build conditions
-# Build in any branch or tag
+# Build on any branch or tag
 build_always: &build_always
   filters:
     tags:
       only: /^v.*/
-# Build only in master or in tags
-build_on_master: &build_on_master
+# Build only on the main branch or in tags
+build_on_main: &build_on_main
   filters:
     tags:
       only: /^v.*/
     branches:
       only: master
-# Build only in tags (release)
+# Build only on tags (release)
 build_on_tag: &build_on_tag
   filters:
     tags:
       only: /^v.*/
     branches:
       ignore: /.*/
+# Build only on the prerelease branch or in tags (release)
+build_on_tag_or_prerelease: &build_on_tag_or_prerelease
+  filters:
+    tags:
+      only: /^v.*/
+    branches:
+      only: prerelease
 
 workflows:
   version: 2
@@ -129,9 +136,9 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
-          <<: *build_on_master
-      - GKE_REGULAR_VERSION_MASTER:
-          <<: *build_on_tag
+          <<: *build_on_main
+      - GKE_REGULAR_VERSION_MAIN:
+          <<: *build_on_tag_or_prerelease
           requires:
             - test_go
             - test_dashboard
@@ -142,7 +149,7 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - GKE_REGULAR_VERSION_LATEST_RELEASE:
-          <<: *build_on_tag
+          <<: *build_on_tag_or_prerelease
           requires:
             - test_go
             - test_dashboard
@@ -152,8 +159,8 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_STABLE_VERSION_MASTER:
-          <<: *build_on_tag
+      - GKE_STABLE_VERSION_MAIN:
+          <<: *build_on_tag_or_prerelease
           requires:
             - test_go
             - test_dashboard
@@ -164,7 +171,7 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_LATEST_RELEASE:
-          <<: *build_on_tag
+          <<: *build_on_tag_or_prerelease
           requires:
             - test_go
             - test_dashboard
@@ -175,25 +182,25 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - push_images:
-          <<: *build_on_master
+          <<: *build_on_main
           requires:
             - local_e2e_tests
       - sync_chart_to_bitnami:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_REGULAR_VERSION_MASTER
+            - GKE_REGULAR_VERSION_MAIN
             - GKE_REGULAR_VERSION_LATEST_RELEASE
-            - GKE_STABLE_VERSION_MASTER
+            - GKE_STABLE_VERSION_MAIN
             - GKE_STABLE_VERSION_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
             - sync_chart_to_bitnami
             - local_e2e_tests
-            - GKE_REGULAR_VERSION_MASTER
+            - GKE_REGULAR_VERSION_MAIN
             - GKE_REGULAR_VERSION_LATEST_RELEASE
-            - GKE_STABLE_VERSION_MASTER
+            - GKE_STABLE_VERSION_MAIN
             - GKE_STABLE_VERSION_LATEST_RELEASE
 
 ## Definitions
@@ -650,7 +657,7 @@ jobs:
       number:
         type: string
     <<: *local_e2e_steps
-  GKE_REGULAR_VERSION_MASTER:
+  GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
@@ -663,7 +670,7 @@ jobs:
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_STABLE_VERSION_MASTER:
+  GKE_STABLE_VERSION_MAIN:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
