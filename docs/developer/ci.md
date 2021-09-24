@@ -6,7 +6,7 @@ Kubeapps leverages CircleCI for running the tests (both unit and integration tes
 
 The main configuration is located at this [CircleCI config file](../../.circleci/config.yml). At a glance, it contains:
 
-- **Build conditions**: `build_always`, `build_on_master` and `build_on_tag`. They will be added to each job to determine whether or not it should be executed. Whereas some should always be run, others only make sense when pushing to master or when a new tag has been created.
+- **Build conditions**: `build_always`, `build_on_main`, `build_on_tag` and `build_on_tag_or_prerelease`. They will be added to each job to determine whether or not it should be executed. Whereas some should always be run, others only make sense when pushing to the main branch or when a new tag has been created.
 - **Workflows**: we only use a single workflow named `kubeapps` with multiple jobs.
 - **Jobs**: the actual commands that are executed depending on the build conditions.
   - `test_go` (always): it runs every unit test for those projects written in Golang (that is, it runs `make test`) as well as it runs some DB-dependent tests.
@@ -21,7 +21,7 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Spin up two Kind clusters.
     - Load the CI images into the cluster.
     - Run the integration tests.
-  - `sync_chart_from_bitnami` (on master): each time a new commit is pushed to the main branch, it brings the current changes in the upstream [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merges the changes. This step involves:
+  - `sync_chart_from_bitnami` (on main): each time a new commit is pushed to the main branch, it brings the current changes in the upstream [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merges the changes. This step involves:
     - Checking if the Bitnami chart version is greater than the Kubeapps development chart version. If not, abort.
     - Deleting the local `chart/kubeapps` folder (note that the changes are already committed in git).
     - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/master/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
@@ -29,9 +29,9 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Renaming the production images (`bitnami/kubeapps-xxx`) by the development ones (`kubeapps/xxx`) with the `latest` tag.
     - Using `DEVEL` as the `appVersion`.
     - Sending a draft PR in the Kubeapps repository with these changes (from a pushed branch in the Kubeapps repository).
-  - `push_images` (on master): the CI images (which have already been built) get re-tagged and pushed to the `kubeapps` account.
-  - `GKE_STABLE_VERSION_MASTER` and `GKE_STABLE_VERSION_LATEST_RELEASE` (on tag): there is a job for each [Kubernetes version (stable and regular) supported by Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/release-notes) (GKE). It will run the e2e tests in a GKE cluster (version X.XX) using either the code in `master` or in the latest released version. If a change affecting the UI is pushed to the main branch, the e2e test might fail here. Use a try/catch block to temporarily work around this.
-  - `GKE_REGULAR_VERSION_MASTER` and `GKE_REGULAR_VERSION_LATEST_RELEASE` (on tag): the same as above, but using the Kubernetes regular version in GKE.
+  - `push_images` (on main): the CI images (which have already been built) get re-tagged and pushed to the `kubeapps` account.
+  - `GKE_STABLE_VERSION_MAIN` and `GKE_STABLE_VERSION_LATEST_RELEASE` (on tag or prerelease): there is a job for each [Kubernetes version (stable and regular) supported by Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/release-notes) (GKE). It will run the e2e tests in a GKE cluster (version X.XX) using either the code in `prerelease` or in the latest released version. If a change affecting the UI is pushed to the main branch, the e2e test might fail here. Use a try/catch block to temporarily work around this.
+  - `GKE_REGULAR_VERSION_MAIN` and `GKE_REGULAR_VERSION_LATEST_RELEASE` (on tag or prerelease): the same as above, but using the Kubernetes regular version in GKE.
   - `sync_chart_to_bitnami` (on tag): when releasing, it will synchronize our development chart with the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merge the changes. This step involves:
     - Checking if the Kubeapps development chart version is greater than the Bitnami chart version. If not, abort.
     - Deleting the local `bitnami/kubeapps` folder (note that the changes are already committed in git).
