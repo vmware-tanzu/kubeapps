@@ -9,7 +9,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
-import { App, KUBEOPS_ROOT_URL } from "./App";
+import { App } from "./App";
 import { axiosWithAuth } from "./AxiosInstance";
 
 describe("App", () => {

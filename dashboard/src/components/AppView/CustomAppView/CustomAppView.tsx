@@ -25,7 +25,7 @@ function CustomAppView({ resourceRefs, app, appDetails }: ICustomAppViewProps) {
   const dispatch = useDispatch();
 
   const handleDelete = useCallback(
-    () => dispatch(actions.apps.deleteApp(app.installedPackageRef!, true)),
+    () => dispatch(actions.apps.deleteInstalledPackage(app.installedPackageRef!)),
     [dispatch, app.installedPackageRef],
   );
 
