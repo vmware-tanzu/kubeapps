@@ -18,7 +18,7 @@ test("Fails to deploy an application due to missing permissions", async () => {
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
-  await page.type("#releaseName", utils.getRandomName("my-app"));
+  await page.type("#releaseName", utils.getRandomName("my-app-for-05-perms"));
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
