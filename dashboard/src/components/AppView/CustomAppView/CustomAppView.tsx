@@ -30,7 +30,7 @@ function CustomAppView({ resourceRefs, app, appDetails }: ICustomAppViewProps) {
   );
 
   const handleRollback = useCallback(
-    () => dispatch(actions.apps.rollbackApp(app.installedPackageRef!, 1)),
+    () => dispatch(actions.apps.rollbackInstalledPackage(app.installedPackageRef!, 1)),
     [dispatch, app.installedPackageRef],
   );
 
