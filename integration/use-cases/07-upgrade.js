@@ -84,7 +84,7 @@ test("Upgrades an application", async () => {
   await expect(page).toMatch("replicaCount: 2");
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
-  await page.type("#releaseName", utils.getRandomName("my-app"));
+  await page.type("#releaseName", utils.getRandomName("my-app-for-07-upgrade"));
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 

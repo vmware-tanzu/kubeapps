@@ -1670,6 +1670,64 @@
         ]
       }
     },
+    "/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/rollback": {
+      "put": {
+        "summary": "RollbackInstalledPackage updates an installed package based on the request.",
+        "operationId": "HelmPackagesService_RollbackInstalledPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1RollbackInstalledPackageResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1RollbackInstalledPackageRequest"
+            }
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
     "/plugins/kapp_controller/packages/v1alpha1/availablepackages": {
       "get": {
         "summary": "GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin",
@@ -3011,6 +3069,33 @@
       },
       "description": "ReconciliationOptions enable specifying standard fields for backends that continuously\nreconcile a package install as new matching versions are released. Most of the naming\nis from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's\nInstalledPackage.",
       "title": "ReconciliationOptions"
+    },
+    "v1alpha1RollbackInstalledPackageRequest": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
+          "description": "A reference uniquely identifying the installed package.",
+          "title": "Installed package reference"
+        },
+        "releaseRevision": {
+          "type": "integer",
+          "format": "int32",
+          "description": "A number identifying the Helm revision to which to rollback.",
+          "title": "ReleaseRevision"
+        }
+      }
+    },
+    "v1alpha1RollbackInstalledPackageResponse": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
+          "title": "TODO: add example for API docs\noption (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n  example: '{\"installed_package_ref\": {}}'\n};"
+        }
+      },
+      "description": "Response for RollbackInstalledPackage",
+      "title": "RollbackInstalledPackageResponse"
     },
     "v1alpha1UpdateInstalledPackageRequest": {
       "type": "object",

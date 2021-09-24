@@ -180,6 +180,7 @@ describe("Auth", () => {
         authProxySkipLoginPage: false,
         theme: SupportedThemes.light,
         remoteComponentsUrl: "",
+        customAppViews: [],
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -198,6 +199,7 @@ describe("Auth", () => {
         authProxySkipLoginPage: false,
         theme: SupportedThemes.light,
         remoteComponentsUrl: "",
+        customAppViews: [],
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

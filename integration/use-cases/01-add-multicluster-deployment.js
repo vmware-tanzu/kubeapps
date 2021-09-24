@@ -33,7 +33,7 @@ test("Deploys an application with the values by default", async () => {
   );
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
-  await page.type("#releaseName", utils.getRandomName("my-app"));
+  await page.type("#releaseName", utils.getRandomName("my-app-01-deploy"));
 
   await utils.retryAndRefresh(
     page,
