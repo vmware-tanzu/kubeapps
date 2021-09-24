@@ -24,6 +24,7 @@ import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import AppNotes from "./AppNotes/AppNotes";
 import AppView from "./AppView";
 import ChartInfo from "./ChartInfo/ChartInfo";
+import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 
 const routeParams = {
@@ -73,8 +74,8 @@ describe("AppView", () => {
     valuesApplied: "test",
     availablePackageRef: {
       identifier: "apache/1",
+      plugin: { name: "helm.packages" },
       context: { cluster: "", namespace: "chart-namespace" } as Context,
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as AvailablePackageReference,
     currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
     installedPackageRef: {
@@ -143,6 +144,52 @@ describe("AppView", () => {
     );
     expect(wrapper.find(Alert)).toExist();
     expect(wrapper.find(PageHeader)).not.toExist();
+  });
+
+  it("renders a custom component when chart is in customAppViews", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        apps: { selected: { ...installedPackage } },
+        config: {
+          customAppViews: [
+            {
+              name: "1",
+              plugin: "helm.packages",
+              repository: "apache",
+            },
+          ],
+        },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
+    );
+    expect(wrapper.find(CustomAppView)).toExist();
+  });
+
+  it("does not render a custom component when chart is not in customAppViews", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        apps: { selected: { ...installedPackage } },
+        config: {
+          customAppViews: [
+            {
+              name: "demo-chart",
+              plugin: "helm.packages",
+              repository: "demo-repo",
+            },
+          ],
+        },
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
+    );
+    expect(wrapper.find(CustomAppView)).not.toExist();
   });
 
   describe("State initialization", () => {
