@@ -19,6 +19,7 @@ import {
   UnprocessableEntity,
   UpgradeError,
 } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 import { App } from "../shared/App";
 import { validate } from "../shared/schema";
@@ -49,9 +50,11 @@ export const receiveUpdateInstalledPackage = createAction(
   "RECEIVE_UPDATE_INSTALLED_PACKAGE_CONFIRMATION",
 );
 
-export const requestRollbackApp = createAction("REQUEST_ROLLBACK_APP");
+export const requestRollbackInstalledPackage = createAction("REQUEST_ROLLBACK_INSTALLED_PACKAGE");
 
-export const receiveRollbackApp = createAction("RECEIVE_ROLLBACK_APP_CONFIRMATION");
+export const receiveRollbackInstalledPackage = createAction(
+  "RECEIVE_ROLLBACK_INSTALLED_PACKAGE_CONFIRMATION",
+);
 
 export const errorApp = createAction("ERROR_APP", resolve => {
   return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError) =>
@@ -74,8 +77,8 @@ const allActions = [
   receiveInstallPackage,
   requestUpdateInstalledPackage,
   receiveUpdateInstalledPackage,
-  requestRollbackApp,
-  receiveRollbackApp,
+  requestRollbackInstalledPackage,
+  receiveRollbackInstalledPackage,
   errorApp,
   selectApp,
 ];
@@ -126,7 +129,7 @@ export function deleteInstalledPackage(
   return async dispatch => {
     dispatch(requestDeleteInstalledPackage());
     try {
-      await App.deleteInstalledPackage(installedPackageRef);
+      await App.DeleteInstalledPackage(installedPackageRef);
       dispatch(receiveDeleteInstalledPackage());
       return true;
     } catch (e: any) {
@@ -182,7 +185,7 @@ export function installPackage(
         availablePackageDetail?.availablePackageRef &&
         availablePackageDetail?.version?.pkgVersion
       ) {
-        await App.createInstalledPackage(
+        await App.CreateInstalledPackage(
           { cluster: targetCluster, namespace: targetNamespace } as Context,
           releaseName,
           availablePackageDetail.availablePackageRef,
@@ -228,7 +231,7 @@ export function updateInstalledPackage(
         }
       }
       if (availablePackageDetail?.version?.pkgVersion) {
-        await App.updateInstalledPackage(
+        await App.UpdateInstalledPackage(
           installedPackageRef,
           // TODO(agamez): check if this VersionReference we're using is what we expect
           { version: availablePackageDetail.version.pkgVersion } as VersionReference,
@@ -251,19 +254,31 @@ export function updateInstalledPackage(
   };
 }
 
-export function rollbackApp(
+export function rollbackInstalledPackage(
   installedPackageRef: InstalledPackageReference,
   revision: number,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestRollbackApp());
-    try {
-      await App.rollback(installedPackageRef, revision);
-      dispatch(receiveRollbackApp());
-      dispatch(getApp(installedPackageRef));
-      return true;
-    } catch (e: any) {
-      dispatch(errorApp(new RollbackError(e.message)));
+    // rollbackInstalledPackage is currently only available for Helm packages
+    if (installedPackageRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
+      dispatch(requestRollbackInstalledPackage());
+      try {
+        await App.RollbackInstalledPackage(installedPackageRef, revision);
+        dispatch(receiveRollbackInstalledPackage());
+        dispatch(getApp(installedPackageRef));
+        return true;
+      } catch (e: any) {
+        dispatch(errorApp(new RollbackError(e.message)));
+        return false;
+      }
+    } else {
+      dispatch(
+        errorApp(
+          new RollbackError(
+            "This package cannot be rolled back; this operation is only available for Helm packages",
+          ),
+        ),
+      );
       return false;
     }
   };

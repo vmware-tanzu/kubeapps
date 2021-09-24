@@ -3,6 +3,7 @@ import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IClusterServiceVersion } from "shared/types";
+import { PluginNames } from "shared/utils";
 import CatalogItem from "./CatalogItem";
 import CatalogItems from "./CatalogItems";
 
@@ -133,7 +134,7 @@ it("changes the bgIcon based on the plugin name - default", () => {
 });
 
 it("changes the bgIcon based on the plugin name - helm", () => {
-  const pluginName = "helm.packages";
+  const pluginName = PluginNames.PACKAGES_HELM;
   const populatedProps = {
     ...defaultProps,
     charts: [
