@@ -69,7 +69,7 @@ service HelmPackagesService {
   // RollbackInstalledPackage updates an installed package based on the request.
   rpc RollbackInstalledPackage(RollbackInstalledPackageRequest) returns (RollbackInstalledPackageResponse) {
     option (google.api.http) = {
-      put: "/plugins/helm/packages/v1alpha1/installedpackages/rollback"
+      put: "/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/rollback"
       body: "*"
     };
   }
