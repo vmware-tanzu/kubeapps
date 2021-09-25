@@ -65,6 +65,19 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		if fluxPluginClient, err = getFluxPluginClient(t); err != nil {
 			t.Fatalf("Failed to get fluxv2 plugin due to: [%v]", err)
 		}
+
+		// check the fluxv2plugin-testdata-svc is deployed - without it,
+		// one gets timeout errors when trying to index a repo, and it takes a really
+		// long time
+		typedClient, err := kubeGetTypedClient()
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		_, err = typedClient.CoreV1().Services("default").Get(context.TODO(), "fluxv2plugin-testdata-svc", metav1.GetOptions{})
+		if err != nil {
+			t.Fatalf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
+		}
+
 		rand.Seed(time.Now().UnixNano())
 		return fluxPluginClient
 	}

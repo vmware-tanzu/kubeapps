@@ -121,7 +121,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:           podinfo_repo_url,
 				request:           create_request_podinfo_5_2_1,
 				expectedDetail:    expected_detail_podinfo_5_2_1,
-				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
+				expectedPodPrefix: "@TARGET_NS@-my-podinfo-6-",
 			},
 			request:                   update_request_1,
 			expectedDetailAfterUpdate: expected_detail_podinfo_6_0_0,
@@ -132,7 +132,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:           podinfo_repo_url,
 				request:           create_request_podinfo_5_2_1_no_values,
 				expectedDetail:    expected_detail_podinfo_5_2_1_no_values,
-				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
+				expectedPodPrefix: "@TARGET_NS@-my-podinfo-7-",
 			},
 			request:                   update_request_2,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values,
@@ -143,7 +143,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:           podinfo_repo_url,
 				request:           create_request_podinfo_5_2_1_values_2,
 				expectedDetail:    expected_detail_podinfo_5_2_1_values_2,
-				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
+				expectedPodPrefix: "@TARGET_NS@-my-podinfo-8-",
 			},
 			request:                   update_request_3,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_3,
@@ -154,7 +154,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:           podinfo_repo_url,
 				request:           create_request_podinfo_5_2_1_values_4,
 				expectedDetail:    expected_detail_podinfo_5_2_1_values_4,
-				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
+				expectedPodPrefix: "@TARGET_NS@-my-podinfo-9-",
 			},
 			request:                   update_request_4,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_5,
@@ -165,7 +165,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:           podinfo_repo_url,
 				request:           create_request_podinfo_5_2_1_values_6,
 				expectedDetail:    expected_detail_podinfo_5_2_1_values_6,
-				expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
+				expectedPodPrefix: "@TARGET_NS@-my-podinfo-10-",
 			},
 			request:                   update_request_5,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_6,
@@ -207,7 +207,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			repoUrl:           podinfo_repo_url,
 			request:           create_request_podinfo_for_delete_1,
 			expectedDetail:    expected_detail_podinfo_for_delete_1,
-			expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
+			expectedPodPrefix: "@TARGET_NS@-my-podinfo-11-",
 			noCleanup:         true,
 		},
 	}
@@ -249,6 +249,28 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				t.Fatalf("%+v", err)
 			} else if exists {
 				t.Fatalf("helmrelease [%s] still exists", installedRef)
+			}
+
+			// flux is supposed to clean up or "garbage collect" artifacts created by the release,
+			// wait to make sure this is done
+			expectedPodPrefix := strings.ReplaceAll(
+				tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
+			for i := 0; i <= maxWait; i++ {
+				if pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace); err != nil {
+					t.Fatalf("%+v", err)
+				} else if len(pods) == 0 {
+					break
+				} else if len(pods) != 1 {
+					t.Errorf("expected 1 pod, got: %s", pods)
+				} else if !strings.HasPrefix(pods[0], expectedPodPrefix) {
+					t.Errorf("expected pod with prefix [%s] not found in namespace [%s], pods found: [%v]",
+						expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
+				} else if i == maxWait {
+					t.Fatalf("Timed out waiting for garbage collection, of [%s], last error: [%v]", pods[0], err)
+				} else {
+					t.Logf("Waiting 2s for garbage collection of [%s], attempt [%d/%d]...", pods[0], i+1, maxWait)
+					time.Sleep(2 * time.Second)
+				}
 			}
 		})
 	}
@@ -350,7 +372,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 
 	if !tc.expectInstallFailure {
 		// check artifacts in target namespace:
-		tc.expectedPodPrefix = strings.ReplaceAll(
+		expectedPodPrefix := strings.ReplaceAll(
 			tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 		pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace)
 		if err != nil {
@@ -358,9 +380,9 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		}
 		if len(pods) != 1 {
 			t.Errorf("expected 1 pod, got: %s", pods)
-		} else if !strings.HasPrefix(pods[0], tc.expectedPodPrefix) {
+		} else if !strings.HasPrefix(pods[0], expectedPodPrefix) {
 			t.Errorf("expected pod with prefix [%s] not found in namespace [%s], pods found: [%v]",
-				tc.expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
+				expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
 		}
 	}
 	return installedPackageRef
