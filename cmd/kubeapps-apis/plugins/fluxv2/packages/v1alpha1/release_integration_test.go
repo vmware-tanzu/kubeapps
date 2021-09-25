@@ -252,7 +252,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			}
 
 			// flux is supposed to clean up or "garbage collect" artifacts created by the release,
-			// wait to make sure this is done
+			// in the targetNamespace, except the namespace itself. Wait to make sure this is done
 			expectedPodPrefix := strings.ReplaceAll(
 				tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 			for i := 0; i <= maxWait; i++ {
