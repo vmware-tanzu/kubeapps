@@ -179,6 +179,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.customAppViews`                        | Package names to signal a custom app view                                                  | `[]`                 |
 | `dashboard.customComponents`                      | Custom Form components injected into the BasicDeploymentForm                               | `""`                 |
 | `dashboard.remoteComponentsUrl`                   | Remote URL that can be used to load custom components vs loading from the local filesystem | `""`                 |
+| `dashboard.skipAvailablePackageDetails`           | Skip package details when they are not available                                           | `false`              |
 | `dashboard.customLocale`                          | Custom translations injected to the Dashboard to customize the strings used in Kubeapps    | `""`                 |
 | `dashboard.defaultTheme`                          | Default theme used in the Dashboard if the user has not selected any theme yet.            | `""`                 |
 | `dashboard.replicaCount`                          | Number of Dashboard replicas to deploy                                                     | `2`                  |

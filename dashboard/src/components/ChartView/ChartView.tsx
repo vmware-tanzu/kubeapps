@@ -103,6 +103,22 @@ export default function ChartView() {
     return <LoadingWrapper loaded={false} />;
   }
 
+  // If the chart does not have a README, redirect to deployment form
+  if (!readme && config.skipAvailablePackageDetails) {
+    return (
+      <ReactRouter.Redirect
+        to={app.apps.new(
+          cluster,
+          namespace,
+          availablePackageDetail,
+          pkgVersion!,
+          kubeappsNamespace,
+          pluginObj,
+        )}
+      />
+    );
+  }
+
   return (
     <section>
       <div>

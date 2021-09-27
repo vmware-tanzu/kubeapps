@@ -15,6 +15,7 @@ import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChartState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
+import ChartReadme from "./ChartReadme";
 import ChartView from "./ChartView";
 
 const defaultProps = {
@@ -248,6 +249,39 @@ it("renders the home link when set", () => {
       </a>,
     ),
   ).toBe(true);
+});
+
+describe("when package details are not available", () => {
+  it("redirects when skipAvailablePackageDetails is set to true", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultState,
+        charts: { selected: { readme: "" } },
+        config: { skipAvailablePackageDetails: true },
+      }),
+      <Router history={history}>
+        <Route path={routePath}>
+          <ChartView />
+        </Route>
+      </Router>,
+    );
+    expect(wrapper.text()).not.toContain("Fetching application README...");
+  });
+
+  it("does not redirect when skipAvailablePackageDetails is set to false", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultState,
+        config: { skipAvailablePackageDetails: false },
+      }),
+      <Router history={history}>
+        <Route path={routePath}>
+          <ChartView />
+        </Route>
+      </Router>,
+    );
+    expect(wrapper.containsMatchingElement(<ChartReadme />)).toBe(true);
+  });
 });
 
 describe("ChartMaintainers githubIDAsNames prop value", () => {

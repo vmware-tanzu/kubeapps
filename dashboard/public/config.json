@@ -9,5 +9,6 @@
   "clusters": ["default"],
   "theme": "light",
   "remoteComponentsUrl": "",
-  "customAppViews": []
+  "customAppViews": [],
+  "skipAvailablePackageDetails": false
 }
