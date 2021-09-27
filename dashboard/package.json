@@ -34,7 +34,7 @@
     "react-diff-viewer": "^3.1.1",
     "react-dom": "^17.0.2",
     "react-helmet": "^6.1.0",
-    "react-intl": "^5.20.10",
+    "react-intl": "^5.20.12",
     "react-jsonschema-form": "^1.8.1",
     "react-markdown": "^7.0.0",
     "react-minimal-pie-chart": "^8.2.0",
@@ -93,7 +93,7 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.2.33",
+    "@formatjs/cli": "^4.3.0",
     "@improbable-eng/grpc-web-fake-transport": "^0.14.1",
     "@types/enzyme": "^3.10.9",
     "@types/enzyme-adapter-react-16": "^1.0.6",
