@@ -29,7 +29,11 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName/upgrade": AppUpgrade,
   "/c/:cluster/ns/:namespace/apps/new/:repo/:pluginName/:pluginVersion/:id/versions/:version":
     DeploymentForm,
+  "/c/:cluster/ns/:namespace/apps/new/:repo/:pluginName/:pluginVersion/:id/versions/":
+    DeploymentForm,
   "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+    DeploymentForm,
+  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:pluginName/:pluginVersion/:id/versions/":
     DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
   "/c/:cluster/ns/:namespace/catalog/:repo": Catalog,

@@ -85,10 +85,10 @@ export default function DeploymentForm() {
           plugin: pluginObj,
           identifier: packageId,
         } as AvailablePackageReference,
-        chartVersion,
+        chartVersion || versions[0]?.pkgVersion,
       ),
     );
-  }, [chartCluster, chartNamespace, packageId, chartVersion, dispatch, pluginObj]);
+  }, [chartCluster, chartNamespace, packageId, chartVersion, dispatch, pluginObj, versions]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
@@ -132,6 +132,7 @@ export default function DeploymentForm() {
   };
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log(e.target.value);
     dispatch(
       push(
         url.app.apps.new(
