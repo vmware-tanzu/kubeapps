@@ -13,6 +13,7 @@ import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import {
+  CustomInstalledPackageDetail,
   DeleteError,
   FetchError,
   FetchWarning,
@@ -21,6 +22,7 @@ import {
   IResource,
   IStoreState,
 } from "shared/types";
+import { PluginNames } from "shared/utils";
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -120,6 +122,48 @@ function parseResources(
     }
   });
   return result;
+}
+
+function getButtons(app: CustomInstalledPackageDetail, error: any, revision: number) {
+  if (!app || !app?.installedPackageRef || !app.installedPackageRef.plugin) {
+    return [];
+  }
+
+  const buttons = [];
+
+  // Upgrade is a core operation, it will always be available
+  buttons.push(
+    <UpgradeButton
+      key="upgrade-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+      disabled={error !== undefined}
+    />,
+  );
+
+  // Rollback is a helm-only operation, it will only be available for helm-plugin packages
+  if (app.installedPackageRef.plugin.name === PluginNames.PACKAGES_HELM) {
+    buttons.push(
+      <RollbackButton
+        key="rollback-button"
+        installedPackageRef={app.installedPackageRef}
+        revision={revision}
+        releaseStatus={app?.status}
+        disabled={error !== undefined}
+      />,
+    );
+  }
+
+  // Delete is a core operation, it will always be available
+  buttons.push(
+    <DeleteButton
+      key="delete-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+    />,
+  );
+
+  return buttons;
 }
 
 export interface IRouteParams {
@@ -232,26 +276,7 @@ export default function AppView() {
             titleSize="md"
             helm={true}
             icon={icon}
-            buttons={[
-              <UpgradeButton
-                key="upgrade-button"
-                installedPackageRef={app.installedPackageRef}
-                releaseStatus={app?.status}
-                disabled={error !== undefined}
-              />,
-              <RollbackButton
-                key="rollback-button"
-                installedPackageRef={app.installedPackageRef}
-                revision={revision}
-                releaseStatus={app?.status}
-                disabled={error !== undefined}
-              />,
-              <DeleteButton
-                key="delete-button"
-                installedPackageRef={app.installedPackageRef}
-                releaseStatus={app?.status}
-              />,
-            ]}
+            buttons={getButtons(app, error, revision)}
           />
           {error &&
             (error.constructor === FetchWarning ? (

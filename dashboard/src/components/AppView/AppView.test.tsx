@@ -20,7 +20,11 @@ import { MemoryRouter, Route } from "react-router";
 import ResourceRef from "shared/ResourceRef";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError, IResource } from "shared/types";
+import { PluginNames } from "shared/utils";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
+import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
+import RollbackButton from "./AppControls/RollbackButton";
+import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
 import AppView from "./AppView";
 import ChartInfo from "./ChartInfo/ChartInfo";
@@ -74,7 +78,7 @@ describe("AppView", () => {
     valuesApplied: "test",
     availablePackageRef: {
       identifier: "apache/1",
-      plugin: { name: "helm.packages" },
+      plugin: { name: PluginNames.PACKAGES_HELM },
       context: { cluster: "", namespace: "chart-namespace" } as Context,
     } as AvailablePackageReference,
     currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -154,7 +158,7 @@ describe("AppView", () => {
           customAppViews: [
             {
               name: "1",
-              plugin: "helm.packages",
+              plugin: PluginNames.PACKAGES_HELM,
               repository: "apache",
             },
           ],
@@ -177,7 +181,7 @@ describe("AppView", () => {
           customAppViews: [
             {
               name: "demo-chart",
-              plugin: "helm.packages",
+              plugin: PluginNames.PACKAGES_HELM,
               repository: "demo-repo",
             },
           ],
@@ -190,6 +194,50 @@ describe("AppView", () => {
       </MemoryRouter>,
     );
     expect(wrapper.find(CustomAppView)).not.toExist();
+  });
+
+  it("renders a RollBack button if the installedPackage is from PACKAGES_HELM", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        apps: {
+          selected: {
+            ...installedPackage,
+            installedPackageRef: {
+              ...installedPackage.installedPackageRef,
+              plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" } as Plugin,
+            } as InstalledPackageReference,
+          },
+        },
+        config: {},
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
+    );
+
+    console.log(wrapper.debug());
+    expect(wrapper.find(UpgradeButton)).toExist();
+    expect(wrapper.find(RollbackButton)).toExist();
+    expect(wrapper.find(DeleteButton)).toExist();
+  });
+
+  it("does not render a RollBack button if the installedPackage is not from PACKAGES_HELM", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        apps: { selected: { ...installedPackage } },
+        config: {},
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <AppView />
+        </Route>
+      </MemoryRouter>,
+    );
+    expect(wrapper.find(UpgradeButton)).toExist();
+    expect(wrapper.find(RollbackButton)).not.toExist();
+    expect(wrapper.find(DeleteButton)).toExist();
   });
 
   describe("State initialization", () => {
