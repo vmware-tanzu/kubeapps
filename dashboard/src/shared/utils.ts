@@ -7,8 +7,8 @@ import { IK8sList, IKubeItem, IResource, ISecret } from "./types";
 
 export enum PluginNames {
   PACKAGES_HELM = "helm.packages",
-  PACKAGES_FLUX = -1,
-  PACKAGES_KAPP = -1,
+  PACKAGES_FLUX = "fluxv2.packages",
+  PACKAGES_KAPP = "kapp_controller.packages",
 }
 
 export function escapeRegExp(str: string) {
