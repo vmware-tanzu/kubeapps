@@ -35,6 +35,8 @@ type HelmPackagesServiceClient interface {
 	UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error)
 	// DeleteInstalledPackage deletes an installed package based on the request.
 	DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error)
+	// RollbackInstalledPackage updates an installed package based on the request.
+	RollbackInstalledPackage(ctx context.Context, in *RollbackInstalledPackageRequest, opts ...grpc.CallOption) (*RollbackInstalledPackageResponse, error)
 }
 
 type helmPackagesServiceClient struct {
@@ -117,6 +119,15 @@ func (c *helmPackagesServiceClient) DeleteInstalledPackage(ctx context.Context, 
 	return out, nil
 }
 
+func (c *helmPackagesServiceClient) RollbackInstalledPackage(ctx context.Context, in *RollbackInstalledPackageRequest, opts ...grpc.CallOption) (*RollbackInstalledPackageResponse, error) {
+	out := new(RollbackInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/RollbackInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HelmPackagesServiceServer is the server API for HelmPackagesService service.
 // All implementations should embed UnimplementedHelmPackagesServiceServer
 // for forward compatibility
@@ -137,6 +148,8 @@ type HelmPackagesServiceServer interface {
 	UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error)
 	// DeleteInstalledPackage deletes an installed package based on the request.
 	DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error)
+	// RollbackInstalledPackage updates an installed package based on the request.
+	RollbackInstalledPackage(context.Context, *RollbackInstalledPackageRequest) (*RollbackInstalledPackageResponse, error)
 }
 
 // UnimplementedHelmPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -166,6 +179,9 @@ func (UnimplementedHelmPackagesServiceServer) UpdateInstalledPackage(context.Con
 }
 func (UnimplementedHelmPackagesServiceServer) DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteInstalledPackage not implemented")
+}
+func (UnimplementedHelmPackagesServiceServer) RollbackInstalledPackage(context.Context, *RollbackInstalledPackageRequest) (*RollbackInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RollbackInstalledPackage not implemented")
 }
 
 // UnsafeHelmPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -323,6 +339,24 @@ func _HelmPackagesService_DeleteInstalledPackage_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HelmPackagesService_RollbackInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RollbackInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HelmPackagesServiceServer).RollbackInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/RollbackInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HelmPackagesServiceServer).RollbackInstalledPackage(ctx, req.(*RollbackInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HelmPackagesService_ServiceDesc is the grpc.ServiceDesc for HelmPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -361,6 +395,10 @@ var HelmPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteInstalledPackage",
 			Handler:    _HelmPackagesService_DeleteInstalledPackage_Handler,
+		},
+		{
+			MethodName: "RollbackInstalledPackage",
+			Handler:    _HelmPackagesService_RollbackInstalledPackage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

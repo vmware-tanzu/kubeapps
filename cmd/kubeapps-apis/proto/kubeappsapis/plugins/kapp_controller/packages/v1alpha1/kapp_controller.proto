@@ -11,14 +11,14 @@ service KappControllerPackagesService {
   // GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
   rpc GetAvailablePackageSummaries(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse) {
     option (google.api.http) = {
-      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackagesummaries"
+      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackages"
     };
   };
 
   // GetAvailablePackageDetail returns the package details managed by the 'kapp_controller' plugin
   rpc GetAvailablePackageDetail(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse) {
     option (google.api.http) = {
-      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackagedetails"
+      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}"
     };
   }
 
@@ -32,21 +32,21 @@ service KappControllerPackagesService {
   // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
   rpc GetAvailablePackageVersions(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse) {
     option (google.api.http) = {
-      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackageversions"
+      get: "/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}/versions"
     };
   }
 
   // GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
   rpc GetInstalledPackageSummaries(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse) {
     option (google.api.http) = {
-      get: "/plugins/kapp_controller/packages/v1alpha1/installedpackagesummaries"
+      get: "/plugins/kapp_controller/packages/v1alpha1/installedpackages"
     };
   }
 
   // GetInstalledPackageDetail returns the requested installed package managed by the 'kapp_controller' plugin
   rpc GetInstalledPackageDetail(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse) {
     option (google.api.http) = {
-      get: "/plugins/kapp_controller/packages/v1alpha1/installedpackagedetail"
+      get: "/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
     };
   }
 
@@ -61,7 +61,7 @@ service KappControllerPackagesService {
   // UpdateInstalledPackage updates an installed package based on the request.
   rpc UpdateInstalledPackage(kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse) {
     option (google.api.http) = {
-      put: "/plugins/kapp_controller/packages/v1alpha1/installedpackages"
+      put: "/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
       body: "*"
     };
   }
@@ -69,7 +69,7 @@ service KappControllerPackagesService {
   // DeleteInstalledPackage deletes an installed package based on the request.
   rpc DeleteInstalledPackage(kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse) {
     option (google.api.http) = {
-      delete: "/plugins/kapp_controller/packages/v1alpha1/installedpackages"
+      delete: "/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
     };
   }
 }

@@ -62,23 +62,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				}},
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+			},
 			chartName:     "redis",
 			chartTarGz:    "testdata/redis-14.4.0.tgz",
 			chartRevision: "14.4.0",
 			chartExists:   true,
 			expectedPackageDetail: &corev1.AvailablePackageDetail{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context:    &corev1.Context{Namespace: "default"},
-					Plugin:     fluxPlugin,
-				},
-				Name: "redis",
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				Name:                "redis",
 				Version: &corev1.PackageAppVersion{
 					PkgVersion: "14.4.0",
 					AppVersion: "6.2.4",
@@ -110,23 +102,16 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context:    &corev1.Context{Namespace: "default"},
-				},
-				PkgVersion: "14.3.4",
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				PkgVersion:          "14.3.4",
 			},
 			chartName:     "redis",
 			chartTarGz:    "testdata/redis-14.3.4.tgz",
 			chartRevision: "14.4.0",
 			chartExists:   false,
 			expectedPackageDetail: &corev1.AvailablePackageDetail{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context:    &corev1.Context{Namespace: "default"},
-					Plugin:     fluxPlugin,
-				},
-				Name: "redis",
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				Name:                "redis",
 				Version: &corev1.PackageAppVersion{
 					PkgVersion: "14.3.4",
 					AppVersion: "6.2.4",
@@ -285,12 +270,8 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				}},
+				AvailablePackageRef: availableRef("redis", "default"),
+			},
 			chartName:  "redis",
 			statusCode: codes.InvalidArgument,
 		},
@@ -364,13 +345,8 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				},
-				PkgVersion: "99.99.0",
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				PkgVersion:          "99.99.0",
 			},
 			chartName:  "redis",
 			statusCode: codes.Internal,
@@ -380,12 +356,8 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				}},
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+			},
 			chartName:  "redis",
 			statusCode: codes.Internal,
 		},
@@ -394,12 +366,8 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			repoName:      "bitnami-1",
 			repoNamespace: "non-default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				}},
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+			},
 			chartName:  "redis",
 			statusCode: codes.NotFound,
 		},
@@ -408,12 +376,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis-123",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				},
+				AvailablePackageRef: availableRef("bitnami-1/redis-123", "default"),
 			},
 			chartName:  "redis",
 			statusCode: codes.Internal,
@@ -578,12 +541,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
 			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "bitnami/redis",
-				},
+				AvailablePackageRef: availableRef("bitnami/redis", "kubeapps"),
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
@@ -611,12 +569,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
 			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "bitnami/redis-123",
-				},
+				AvailablePackageRef: availableRef("bitnami/redis-123", "kubeapps"),
 			},
 			expectedStatusCode: codes.Internal,
 		},
@@ -759,4 +712,14 @@ func newServerWithRepoAndCharts(repo runtime.Object, charts ...runtime.Object) (
 		return nil, nil, nil, err
 	}
 	return s, mock, watcher, nil
+}
+
+func availableRef(id, namespace string) *corev1.AvailablePackageReference {
+	return &corev1.AvailablePackageReference{
+		Identifier: id,
+		Context: &corev1.Context{
+			Namespace: namespace,
+		},
+		Plugin: fluxPlugin,
+	}
 }
