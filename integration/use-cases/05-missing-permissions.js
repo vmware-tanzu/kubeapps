@@ -1,4 +1,5 @@
 const utils = require("./lib/utils");
+const testName = "05-missing-permissions";
 
 test("Fails to deploy an application due to missing permissions", async () => {
   await utils.login(
@@ -37,5 +38,4 @@ test("Fails to deploy an application due to missing permissions", async () => {
     },
     testName,
   );
-
 });
