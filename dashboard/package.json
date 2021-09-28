@@ -101,7 +101,7 @@
     "@types/jest": "^27.0.2",
     "@types/js-yaml": "^4.0.3",
     "@types/jsonwebtoken": "^8.5.5",
-    "@types/lodash": "^4.14.173",
+    "@types/lodash": "^4.14.175",
     "@types/moxios": "^0.4.12",
     "@types/qs": "^6.9.7",
     "@types/react-copy-to-clipboard": "^5.0.1",
