@@ -65,6 +65,19 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		if fluxPluginClient, err = getFluxPluginClient(t); err != nil {
 			t.Fatalf("Failed to get fluxv2 plugin due to: [%v]", err)
 		}
+
+		// check the fluxv2plugin-testdata-svc is deployed - without it,
+		// one gets timeout errors when trying to index a repo, and it takes a really
+		// long time
+		typedClient, err := kubeGetTypedClient()
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		_, err = typedClient.CoreV1().Services("default").Get(context.TODO(), "fluxv2plugin-testdata-svc", metav1.GetOptions{})
+		if err != nil {
+			t.Fatalf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
+		}
+
 		rand.Seed(time.Now().UnixNano())
 		return fluxPluginClient
 	}
@@ -171,9 +184,8 @@ func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 	return nil
 }
 
-// this should eventually be replaced with flux plugin's DeleteInstalledPackage()
-func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeDeleteHelmRelease(%s,%s)", name, namespace)
+func kubeForceDeleteHelmRelease(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeForceDeleteHelmRelease(%s,%s)", name, namespace)
 	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
 		return err
 		// remove finalizer on HelmRelease cuz sometimes it gets stuck indefinitely
@@ -184,6 +196,17 @@ func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
 		return err
 	}
 	return nil
+}
+
+func kubeExistsHelmRelease(t *testing.T, name, namespace string) (bool, error) {
+	t.Logf("+kubeExistsHelmRelease(%s,%s)", name, namespace)
+	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
+		return false, err
+	} else if _, err = ifc.Get(context.TODO(), name, metav1.GetOptions{}); err == nil {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }
 
 func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error) {
