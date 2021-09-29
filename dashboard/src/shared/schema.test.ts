@@ -5,6 +5,7 @@ describe("retrieveBasicFormParams", () => {
   [
     {
       description: "should retrieve a param",
+      isLegacySchema: true,
       values: "user: andres",
       schema: {
         properties: { user: { type: "string", form: true } },
@@ -18,6 +19,7 @@ describe("retrieveBasicFormParams", () => {
     },
     {
       description: "should retrieve a param without default value",
+      isLegacySchema: true,
       values: "user:",
       schema: {
         properties: { user: { type: "string", form: true } },
@@ -30,6 +32,7 @@ describe("retrieveBasicFormParams", () => {
     },
     {
       description: "should retrieve a param with default value in the schema",
+      isLegacySchema: true,
       values: "user:",
       schema: {
         properties: { user: { type: "string", form: true, default: "michael" } },
@@ -43,6 +46,7 @@ describe("retrieveBasicFormParams", () => {
     },
     {
       description: "values prevail over default values",
+      isLegacySchema: true,
       values: "user: foo",
       schema: {
         properties: { user: { type: "string", form: true, default: "bar" } },
@@ -56,6 +60,7 @@ describe("retrieveBasicFormParams", () => {
     },
     {
       description: "it should return params even if the values don't include it",
+      isLegacySchema: true,
       values: "foo: bar",
       schema: {
         properties: { user: { type: "string", form: true, default: "andres" } },
@@ -69,6 +74,7 @@ describe("retrieveBasicFormParams", () => {
     },
     {
       description: "should retrieve a nested param",
+      isLegacySchema: true,
       values: "credentials:\n  user: andres",
       schema: {
         properties: {
@@ -87,6 +93,7 @@ describe("retrieveBasicFormParams", () => {
     },
     {
       description: "should retrieve several params and ignore the ones not marked",
+      isLegacySchema: true,
       values: `
 # Application Credentials
 credentials:
@@ -135,6 +142,7 @@ service: ClusterIP
     },
     {
       description: "should retrieve a param with title and description",
+      isLegacySchema: true,
       values: "blogName: myBlog",
       schema: {
         properties: {
@@ -143,6 +151,7 @@ service: ClusterIP
             form: true,
             title: "Blog Name",
             description: "Title of the blog",
+            isLegacySchema: true,
           },
         },
       } as any,
@@ -153,11 +162,13 @@ service: ClusterIP
           value: "myBlog",
           title: "Blog Name",
           description: "Title of the blog",
+          isLegacySchema: true,
         } as IBasicFormParam,
       ],
     },
     {
       description: "should retrieve a param with children params",
+      isLegacySchema: true,
       values: `
 externalDatabase:
   name: "foo"
@@ -194,6 +205,7 @@ externalDatabase:
     },
     {
       description: "should retrieve a false param",
+      isLegacySchema: true,
       values: "foo: false",
       schema: {
         properties: {
@@ -204,6 +216,7 @@ externalDatabase:
     },
     {
       description: "should retrieve a param with enum values",
+      isLegacySchema: true,
       values: "databaseType: postgresql",
       schema: {
         properties: {
@@ -225,7 +238,7 @@ externalDatabase:
     },
   ].forEach(t => {
     it(t.description, () => {
-      expect(retrieveBasicFormParams(t.values, t.schema)).toMatchObject(t.result);
+      expect(retrieveBasicFormParams(t.isLegacySchema, t.values, t.schema)).toMatchObject(t.result);
     });
   });
 });

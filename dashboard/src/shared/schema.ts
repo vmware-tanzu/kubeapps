@@ -16,6 +16,7 @@ nullOptions.nullStr = "";
 // It uses the raw yaml to setup default values.
 // It returns a key:value map for easier handling.
 export function retrieveBasicFormParams(
+  isLegacySchema: boolean,
   defaultValues: string,
   schema?: JSONSchemaType<any>,
   parentPath?: string,
@@ -28,35 +29,78 @@ export function retrieveBasicFormParams(
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
       const { type, form } = properties[propertyKey];
-      // If the property has the key "form", it's a basic parameter
-      if (form) {
-        // Use the default value either from the JSON schema or the default values
-        const value = getValue(defaultValues, itemPath, properties[propertyKey].default);
-        const param: IBasicFormParam = {
-          ...properties[propertyKey],
-          path: itemPath,
-          type,
-          value,
-          enum: properties[propertyKey].enum?.map(
-            (item: { toString: () => any }) => item?.toString() ?? "",
-          ),
-          children:
-            properties[propertyKey].type === "object"
-              ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}/`)
-              : undefined,
-        };
-        params = params.concat(param);
+      // If it is a kubeapps-specific schema
+      if (isLegacySchema) {
+        // If the property has the key "form", it's a basic parameter
+        if (form) {
+          params = params.concat(
+            getParam(defaultValues, itemPath, properties, propertyKey, type, isLegacySchema),
+          );
+        } else {
+          // If the property is an object, iterate recursively
+          if (schema.properties?.[propertyKey].type === "object") {
+            params = params.concat(
+              retrieveBasicFormParams(
+                isLegacySchema,
+                defaultValues,
+                properties[propertyKey],
+                `${itemPath}/`,
+              ),
+            );
+          }
+        }
+        // Otherwise, it is a normal JSON schema with no kubeapps-specific logic
       } else {
         // If the property is an object, iterate recursively
-        if (schema.properties![propertyKey].type === "object") {
+        if (schema.properties?.[propertyKey].type === "object") {
           params = params.concat(
-            retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}/`),
+            retrieveBasicFormParams(
+              isLegacySchema,
+              defaultValues,
+              properties[propertyKey],
+              `${itemPath}/`,
+            ),
+          );
+          // Unless there is a form property with a false value, we will render every field in the schema
+        } else if (form !== false) {
+          params = params.concat(
+            getParam(defaultValues, itemPath, properties, propertyKey, type, isLegacySchema),
           );
         }
       }
     });
   }
   return params;
+}
+
+function getParam(
+  defaultValues: string,
+  itemPath: string,
+  properties: string,
+  propertyKey: string,
+  type: string,
+  legacyBehavior: boolean,
+): IBasicFormParam {
+  // Use the default value either from the JSON schema or the default values
+  const value = getValue(defaultValues, itemPath, properties[propertyKey].default);
+  return {
+    ...properties[propertyKey],
+    path: itemPath,
+    type,
+    value,
+    enum: properties[propertyKey].enum?.map(
+      (item: { toString: () => any }) => item?.toString() ?? "",
+    ),
+    children:
+      properties[propertyKey].type === "object"
+        ? retrieveBasicFormParams(
+            legacyBehavior,
+            defaultValues,
+            properties[propertyKey],
+            `${itemPath}/`,
+          )
+        : undefined,
+  };
 }
 
 function getDefinedPath(allElementsButTheLast: string[], doc: YAML.Document) {
@@ -155,4 +199,8 @@ export function validate(
 ): { valid: boolean; errors: ErrorObject[] | null | undefined } {
   const valid = ajv.validate(schema, yaml.load(values));
   return { valid: !!valid, errors: ajv.errors };
+}
+
+export function isLegacySchema(schema?: JSONSchemaType<any> | any): boolean {
+  return !!schema?.["$schema"] && schema["$schema"] !== "";
 }

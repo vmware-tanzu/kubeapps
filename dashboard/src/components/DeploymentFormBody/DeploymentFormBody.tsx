@@ -4,7 +4,12 @@ import Alert from "components/js/Alert";
 import Tabs from "components/Tabs";
 import { isEqual } from "lodash";
 import { useEffect, useState } from "react";
-import { parseValues, retrieveBasicFormParams, setValue } from "../../shared/schema";
+import {
+  isLegacySchema,
+  parseValues,
+  retrieveBasicFormParams,
+  setValue,
+} from "../../shared/schema";
 import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
@@ -44,7 +49,7 @@ function DeploymentFormBody({
   const { availablePackageDetail, versions, schema, values, pkgVersion, error } = selected;
 
   useEffect(() => {
-    const params = retrieveBasicFormParams(appValues, schema);
+    const params = retrieveBasicFormParams(isLegacySchema(schema), appValues, schema);
     if (!isEqual(params, basicFormParameters)) {
       setBasicFormParameters(params);
     }
@@ -59,7 +64,7 @@ function DeploymentFormBody({
     setValuesModified();
   };
   const refreshBasicParameters = () => {
-    setBasicFormParameters(retrieveBasicFormParams(appValues, schema));
+    setBasicFormParameters(retrieveBasicFormParams(isLegacySchema(schema), appValues, schema));
   };
 
   const handleBasicFormParamChange = (param: IBasicFormParam) => {
@@ -94,7 +99,7 @@ function DeploymentFormBody({
   const restoreDefaultValues = () => {
     if (values) {
       setValues(values);
-      setBasicFormParameters(retrieveBasicFormParams(values, schema));
+      setBasicFormParameters(retrieveBasicFormParams(isLegacySchema(schema), values, schema));
     }
     setRestoreModalOpen(false);
   };

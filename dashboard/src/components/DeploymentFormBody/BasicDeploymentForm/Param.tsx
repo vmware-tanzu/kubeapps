@@ -162,7 +162,7 @@ export default function Param({
   } else {
     const label = param.title || param.path;
     let inputType = "string";
-    if (type === "integer") {
+    if (type === "integer" || type === "number") {
       inputType = "number";
     }
     if (
