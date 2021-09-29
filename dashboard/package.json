@@ -1,6 +1,7 @@
 {
   "name": "dashboard",
   "version": "0.1.0",
+  "proxy": "https://localhost",
   "private": true,
   "homepage": "./",
   "dependencies": {
@@ -35,7 +36,6 @@
     "react-dom": "^17.0.2",
     "react-helmet": "^6.1.0",
     "react-intl": "^5.20.12",
-    "react-jsonschema-form": "^1.8.1",
     "react-markdown": "^7.0.0",
     "react-minimal-pie-chart": "^8.2.0",
     "react-redux": "^7.2.5",
