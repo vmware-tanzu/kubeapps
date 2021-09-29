@@ -132,7 +132,6 @@ export default function DeploymentForm() {
   };
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log(e.target.value);
     dispatch(
       push(
         url.app.apps.new(

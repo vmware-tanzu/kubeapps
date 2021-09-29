@@ -103,7 +103,7 @@ export default function ChartView() {
     return <LoadingWrapper loaded={false} />;
   }
 
-  // If the chart does not have a README, redirect to deployment form
+  // If package does not have a README, redirect to deployment form
   if (!readme && config.skipAvailablePackageDetails) {
     return (
       <ReactRouter.Redirect
