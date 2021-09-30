@@ -486,9 +486,9 @@ describe("fetchDeployedAvailablePackageDetail", () => {
       .mockImplementation(mockGetAvailablePackageDetail);
 
     const expectedActions = [
-      { type: getType(actions.charts.requestDeployedChartVersion) },
+      { type: getType(actions.charts.requestDeployedAvailablePackageDetail) },
       {
-        type: getType(actions.charts.receiveDeployedChartVersion),
+        type: getType(actions.charts.receiveDeployedAvailablePackageDetail),
         payload: {
           chartVersion: defaultAvailablePackageDetail,
           schema: defaultAvailablePackageDetail.valuesSchema,

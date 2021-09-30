@@ -45,10 +45,12 @@ export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve =
   return (selectedPackage: AvailablePackageDetail) => resolve({ selectedPackage });
 });
 
-export const requestDeployedChartVersion = createAction("REQUEST_DEPLOYED_CHART_VERSION");
+export const requestDeployedAvailablePackageDetail = createAction(
+  "REQUEST_DEPLOYED_AVAILABLE_PACKAGE_DETAIL",
+);
 
-export const receiveDeployedChartVersion = createAction(
-  "RECEIVE_DEPLOYED_CHART_VERSION",
+export const receiveDeployedAvailablePackageDetail = createAction(
+  "RECEIVE_DEPLOYED_AVAILABLE_PACKAGE_DETAIL",
   resolve => {
     return (chartVersion: AvailablePackageDetail, values?: string, schema?: string) =>
       resolve({ chartVersion, values, schema });
@@ -66,8 +68,8 @@ const allActions = [
   receiveAvailablePackageSummaries,
   receiveAvailablePackageVersions,
   selectChartVersion,
-  requestDeployedChartVersion,
-  receiveDeployedChartVersion,
+  requestDeployedAvailablePackageDetail,
+  receiveDeployedAvailablePackageDetail,
   resetChartVersion,
   resetRequestCharts,
 ];
@@ -141,14 +143,14 @@ export function fetchDeployedAvailablePackageDetail(
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      dispatch(requestDeployedChartVersion());
+      dispatch(requestDeployedAvailablePackageDetail());
       const response = await PackagesService.getAvailablePackageDetail(
         availablePackageReference,
         version,
       );
       if (response.availablePackageDetail) {
         dispatch(
-          receiveDeployedChartVersion(
+          receiveDeployedAvailablePackageDetail(
             response.availablePackageDetail,
             response.availablePackageDetail.defaultValues,
             response.availablePackageDetail.valuesSchema,

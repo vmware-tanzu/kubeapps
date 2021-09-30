@@ -89,12 +89,12 @@ const chartsReducer = (
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.requestDeployedChartVersion):
+    case getType(actions.charts.requestDeployedAvailablePackageDetail):
       return {
         ...state,
         deployed: {},
       };
-    case getType(actions.charts.receiveDeployedChartVersion):
+    case getType(actions.charts.receiveDeployedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
