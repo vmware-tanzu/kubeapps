@@ -7,7 +7,7 @@ import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { AppRepository } from "shared/AppRepository";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import Secret from "shared/Secret";
 import { IAppRepository, NotFoundError } from "shared/types";
 import { getType } from "typesafe-actions";
@@ -1017,7 +1017,7 @@ describe("findPackageInRepo", () => {
     },
   } as InstalledPackageDetail;
   it("dispatches requestRepo and receivedRepo if no error", async () => {
-    Chart.getAvailablePackageVersions = jest.fn();
+    PackagesService.getAvailablePackageVersions = jest.fn();
     const expectedActions = [
       {
         type: getType(repoActions.requestRepo),
@@ -1036,7 +1036,7 @@ describe("findPackageInRepo", () => {
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.getAvailablePackageVersions).toBeCalledWith({
+    expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
       context: { cluster: "default", namespace: "other-namespace" },
       identifier: "my-repo/my-chart",
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
@@ -1044,7 +1044,7 @@ describe("findPackageInRepo", () => {
   });
 
   it("dispatches requestRepo and errorChart if error fetching", async () => {
-    Chart.getAvailablePackageVersions = jest.fn(() => {
+    PackagesService.getAvailablePackageVersions = jest.fn(() => {
       throw new Error();
     });
 
@@ -1069,7 +1069,7 @@ describe("findPackageInRepo", () => {
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.getAvailablePackageVersions).toBeCalledWith({
+    expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
       context: { cluster: "default", namespace: "other-namespace" },
       identifier: "my-repo/my-chart",
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,

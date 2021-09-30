@@ -12,7 +12,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IChartState } from "shared/types";
 import * as url from "shared/url";
@@ -161,7 +161,7 @@ describe("it behaves like a loading component", () => {
 
 it("fetches the available versions", () => {
   const getAvailablePackageVersions = jest.fn();
-  Chart.getAvailablePackageVersions = getAvailablePackageVersions;
+  PackagesService.getAvailablePackageVersions = getAvailablePackageVersions;
   mountWrapper(defaultStore, <UpgradeForm {...defaultProps} />);
   expect(getAvailablePackageVersions).toHaveBeenCalledWith({
     context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
@@ -186,7 +186,7 @@ it("fetches the current chart version even if there is already one in the state"
   };
 
   const getAvailablePackageDetail = jest.fn();
-  Chart.getAvailablePackageDetail = getAvailablePackageDetail;
+  PackagesService.getAvailablePackageDetail = getAvailablePackageDetail;
   mountWrapper(
     defaultStore,
     <UpgradeForm {...defaultProps} selected={selected} deployed={deployed} />,

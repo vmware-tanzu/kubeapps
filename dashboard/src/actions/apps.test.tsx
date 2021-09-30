@@ -7,7 +7,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import { IAppState, UnprocessableEntity } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -336,7 +336,7 @@ describe("rollbackApp", () => {
     App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
       installedPackageDetail: installedPackageDetail,
     });
-    Chart.getAvailablePackageDetail = jest.fn().mockReturnValue({
+    PackagesService.getAvailablePackageDetail = jest.fn().mockReturnValue({
       availablePackageDetail: availablePackageDetail,
     });
     const res = await store.dispatch(provisionCMD);

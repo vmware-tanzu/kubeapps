@@ -10,7 +10,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import { FetchError, IReceiveChartsActionPayload } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -244,7 +244,7 @@ describe("fetchCharts", () => {
         .fn()
         .mockImplementation(() => Promise.resolve(tc.response));
       jest
-        .spyOn(Chart, "getAvailablePackageSummaries")
+        .spyOn(PackagesService, "getAvailablePackageSummaries")
         .mockImplementation(mockGetAvailablePackageSummaries);
 
       await store.dispatch(
@@ -274,7 +274,7 @@ describe("fetchCharts", () => {
       throw new Error("could not find chart");
     });
     jest
-      .spyOn(Chart, "getAvailablePackageSummaries")
+      .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
       actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
@@ -291,7 +291,7 @@ describe("fetchCharts", () => {
       throw new Error("something went wrong");
     });
     jest
-      .spyOn(Chart, "getAvailablePackageSummaries")
+      .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
       actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
@@ -309,7 +309,7 @@ describe("fetchCharts", () => {
       throw new Error("something went wrong");
     });
     jest
-      .spyOn(Chart, "getAvailablePackageSummaries")
+      .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
       actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
@@ -330,7 +330,7 @@ describe("fetchChartVersions", () => {
       .fn()
       .mockImplementation(() => Promise.resolve(availableVersionsResponse));
     jest
-      .spyOn(Chart, "getAvailablePackageVersions")
+      .spyOn(PackagesService, "getAvailablePackageVersions")
       .mockImplementation(mockGetAvailablePackageVersions);
   });
 
@@ -365,7 +365,7 @@ describe("fetchChartVersion", () => {
     };
     mockGetAvailablePackageDetail = jest.fn().mockImplementation(() => Promise.resolve(response));
     jest
-      .spyOn(Chart, "getAvailablePackageDetail")
+      .spyOn(PackagesService, "getAvailablePackageDetail")
       .mockImplementation(mockGetAvailablePackageDetail);
   });
 
@@ -431,7 +431,7 @@ describe("fetchChartVersion", () => {
   });
 
   it("dispatches an error if it's unexpected", async () => {
-    jest.spyOn(Chart, "getAvailablePackageDetail").mockImplementation(() => {
+    jest.spyOn(PackagesService, "getAvailablePackageDetail").mockImplementation(() => {
       throw new Error("Boom!");
     });
 
@@ -461,7 +461,7 @@ describe("getDeployedChartVersion", () => {
       .fn()
       .mockImplementation(() => Promise.resolve(response));
     jest
-      .spyOn(Chart, "getAvailablePackageDetail")
+      .spyOn(PackagesService, "getAvailablePackageDetail")
       .mockImplementation(mockGetAvailablePackageDetail);
 
     const expectedActions = [

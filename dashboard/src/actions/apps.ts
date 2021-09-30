@@ -6,7 +6,7 @@ import {
   InstalledPackageSummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import {
   CreateError,
   DeleteError,
@@ -91,7 +91,7 @@ export function getApp(
       let availablePackageDetail;
       try {
         // Get the details of the available package that corresponds to the installed package
-        const resp = await Chart.getAvailablePackageDetail(
+        const resp = await PackagesService.getAvailablePackageDetail(
           installedPackageDetail?.availablePackageRef,
           installedPackageDetail?.currentVersion?.pkgVersion,
         );

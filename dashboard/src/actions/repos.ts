@@ -6,7 +6,7 @@ import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { AppRepository } from "shared/AppRepository";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import Secret from "shared/Secret";
 import {
   IAppRepository,
@@ -366,7 +366,7 @@ export function findPackageInRepo(
     if (app?.availablePackageRef?.identifier && app?.availablePackageRef?.plugin) {
       const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
       try {
-        await Chart.getAvailablePackageVersions({
+        await PackagesService.getAvailablePackageVersions({
           context: { cluster: cluster, namespace: repoNamespace },
           plugin: app.availablePackageRef.plugin,
           identifier: app.availablePackageRef.identifier,

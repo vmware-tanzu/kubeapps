@@ -5,7 +5,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, deprecated } from "typesafe-actions";
-import Chart from "../shared/Chart";
+import PackagesService from "../shared/PackagesService";
 import { FetchError, IReceiveChartsActionPayload, IStoreState } from "../shared/types";
 
 const { createAction } = deprecated;
@@ -72,7 +72,7 @@ export function fetchCharts(
   return async dispatch => {
     dispatch(requestCharts(page));
     try {
-      const response = await Chart.getAvailablePackageSummaries(
+      const response = await PackagesService.getAvailablePackageSummaries(
         cluster,
         namespace,
         repos,
@@ -93,7 +93,7 @@ export function fetchChartVersions(
   return async dispatch => {
     dispatch(requestCharts());
     try {
-      const response = await Chart.getAvailablePackageVersions(availablePackageReference);
+      const response = await PackagesService.getAvailablePackageVersions(availablePackageReference);
       dispatch(receiveChartVersions(response));
     } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
@@ -107,7 +107,10 @@ export function fetchChartVersion(
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      const response = await Chart.getAvailablePackageDetail(availablePackageReference, version);
+      const response = await PackagesService.getAvailablePackageDetail(
+        availablePackageReference,
+        version,
+      );
       if (response.availablePackageDetail?.version?.pkgVersion) {
         dispatch(selectChartVersion(response.availablePackageDetail));
       } else {
@@ -126,7 +129,10 @@ export function getDeployedChartVersion(
   return async dispatch => {
     try {
       dispatch(requestDeployedChartVersion());
-      const response = await Chart.getAvailablePackageDetail(availablePackageReference, version);
+      const response = await PackagesService.getAvailablePackageDetail(
+        availablePackageReference,
+        version,
+      );
       if (response.availablePackageDetail) {
         dispatch(
           receiveDeployedChartVersion(
