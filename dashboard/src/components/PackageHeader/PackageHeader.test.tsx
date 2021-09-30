@@ -73,16 +73,14 @@ it("uses the first version as default in the select input", () => {
 });
 
 it("uses the current version as default in the select input", () => {
-  const versions = [
+  const versions: PackageAppVersion[] = [
     {
-      attributes: {
-        version: "1.2.3",
-      },
+      pkgVersion: "1.2.3",
+      appVersion: "10.0.0",
     },
     {
-      attributes: {
-        version: "1.2.4",
-      },
+      pkgVersion: "1.2.4",
+      appVersion: "10.0.0",
     },
   ];
   const wrapper = mount(

@@ -17,14 +17,14 @@ export default function PackageVersionSelector({
   return (
     <div className="clr-select-wrapper">
       <select
-        name="chart-versions"
+        name="package-versions"
         className="clr-page-size-select"
         onChange={onSelect}
         value={selectedVersion || currentVersion || (versions.length ? versions[0].pkgVersion : "")}
       >
         {versions.map(v => {
           return (
-            <option key={`chart-version-selector-${v.pkgVersion}`} value={v.pkgVersion}>
+            <option key={`package-version-selector-${v.pkgVersion}`} value={v.pkgVersion}>
               {v.pkgVersion} / App Version {v.appVersion}
               {currentVersion === v.pkgVersion ? " (current)" : ""}
             </option>

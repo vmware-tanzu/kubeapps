@@ -46,11 +46,11 @@ export default function PackageHeader({
       helm={true}
       version={
         <>
-          <label className="header-version-label" htmlFor="chart-versions">
+          <label className="header-version-label" htmlFor="package-versions">
             Package Version{" "}
             <Tooltip
-              label="chart-versions-tooltip"
-              id="chart-versions-tooltip"
+              label="package-versions-tooltip"
+              id="package-versions-tooltip"
               position="bottom-left"
               iconProps={{ solid: true, size: "sm" }}
             >
