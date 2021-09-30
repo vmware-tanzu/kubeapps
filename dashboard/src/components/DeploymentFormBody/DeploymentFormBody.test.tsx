@@ -13,7 +13,7 @@ import DifferentialSelector from "./DifferentialSelector";
 const defaultProps: IDeploymentFormBodyProps = {
   deploymentEvent: "install",
   packageId: "foo",
-  chartVersion: "1.0.0",
+  packageVersion: "1.0.0",
   packagesIsFetching: false,
   selected: {} as IPackageState["selected"],
   appValues: "foo: bar\n",

@@ -345,7 +345,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
         <CdsRadioGroup layout="vertical">
           <label>Repository Type</label>
-          <CdsControlMessage>Select the chart storage type.</CdsControlMessage>
+          <CdsControlMessage>Select the package storage type.</CdsControlMessage>
           <CdsRadio>
             <label>Helm Repository</label>
             <input
@@ -601,7 +601,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       {namespace === kubeappsNamespace && (
         <p>
           <strong>NOTE:</strong> This App Repository will be created in the "{kubeappsNamespace}"
-          namespace and charts will be available in all namespaces for installation.
+          namespace and packages will be available in all namespaces for installation.
         </p>
       )}
       {validationError && (

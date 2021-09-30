@@ -75,13 +75,13 @@ describe("AppView", () => {
     availablePackageRef: {
       identifier: "apache/1",
       plugin: { name: "helm.packages" },
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
     } as AvailablePackageReference,
     currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
     installedPackageRef: {
       identifier: "apache/1",
       pkgVersion: "1.0.0",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference,
     latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -146,7 +146,7 @@ describe("AppView", () => {
     expect(wrapper.find(PageHeader)).not.toExist();
   });
 
-  it("renders a custom component when chart is in customAppViews", () => {
+  it("renders a custom component when package is in customAppViews", () => {
     const wrapper = mountWrapper(
       getStore({
         apps: { selected: { ...installedPackage } },
@@ -169,14 +169,14 @@ describe("AppView", () => {
     expect(wrapper.find(CustomAppView)).toExist();
   });
 
-  it("does not render a custom component when chart is not in customAppViews", () => {
+  it("does not render a custom component when package is not in customAppViews", () => {
     const wrapper = mountWrapper(
       getStore({
         apps: { selected: { ...installedPackage } },
         config: {
           customAppViews: [
             {
-              name: "demo-chart",
+              name: "demo-package",
               plugin: "helm.packages",
               repository: "demo-repo",
             },
@@ -345,8 +345,8 @@ describe("AppView", () => {
       metadata:
         name: cm-one
         labels:
-          chart: cm-1.2.3
-          chart: cm-1.2.3
+          package: cm-1.2.3
+          package: cm-1.2.3
 `;
 
       expect(() => {

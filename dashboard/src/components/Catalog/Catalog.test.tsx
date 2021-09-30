@@ -53,7 +53,7 @@ const availablePkgSummary1: AvailablePackageSummary = {
   shortDescription: "",
   availablePackageRef: {
     identifier: "foo/foo",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
@@ -66,7 +66,7 @@ const availablePkgSummary2: AvailablePackageSummary = {
   shortDescription: "",
   availablePackageRef: {
     identifier: "bar/bar",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
@@ -102,14 +102,14 @@ const defaultState = {
   } as IConfigState,
 } as IStoreState;
 
-const populatedChartState = {
+const populatedPackageState = {
   ...defaultPackageState,
   items: [availablePkgSummary1, availablePkgSummary2],
 } as IStoreState["packages"];
 
 const populatedState = {
   ...defaultState,
-  packages: populatedChartState,
+  packages: populatedPackageState,
   operators: { csvs: [csv] },
 } as IStoreState;
 
@@ -350,10 +350,10 @@ describe("filters by application type", () => {
     ).not.toExist();
   });
 
-  it("filters only charts", () => {
+  it("filters only packages", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
-      <MemoryRouter initialEntries={[routePathParam + "?Type=Charts"]}>
+      <MemoryRouter initialEntries={[routePathParam + "?Type=Packages"]}>
         <Route path={routePath}>
           <Catalog />
         </Route>
@@ -362,7 +362,7 @@ describe("filters by application type", () => {
     expect(wrapper.find(InfoCard)).toHaveLength(2);
   });
 
-  it("push filter for only charts", () => {
+  it("push filter for only packages", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
       <MemoryRouter initialEntries={[routePathParam]}>
@@ -371,14 +371,14 @@ describe("filters by application type", () => {
         </Route>
       </MemoryRouter>,
     );
-    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Charts");
+    const input = wrapper.find("input").findWhere(i => i.prop("value") === "Packages");
     expect(input).toHaveLength(1);
-    input.simulate("change", { target: { value: "Charts", checked: true } });
+    input.simulate("change", { target: { value: "Packages", checked: true } });
 
     // It should have pushed with the filter
     expect(mockDispatch).toHaveBeenCalledWith({
       payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Charts"],
+        args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Packages"],
         method: "push",
       },
       type: "@@router/CALL_HISTORY_METHOD",
@@ -421,8 +421,8 @@ describe("filters by application type", () => {
   });
 });
 
-describe("pagination and chart fetching", () => {
-  it("sets the initial state page to 0 before fetching charts", () => {
+describe("pagination and package fetching", () => {
+  it("sets the initial state page to 0 before fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
@@ -454,7 +454,7 @@ describe("pagination and chart fetching", () => {
     );
   });
 
-  it("sets the state page when fetching charts", () => {
+  it("sets the state page when fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
@@ -485,7 +485,7 @@ describe("pagination and chart fetching", () => {
     );
   });
 
-  it("items are translated to CatalogItems after fetching charts", () => {
+  it("items are translated to CatalogItems after fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 

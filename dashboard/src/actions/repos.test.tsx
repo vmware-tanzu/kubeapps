@@ -1012,7 +1012,7 @@ describe("findPackageInRepo", () => {
   const installedPackageDetail = {
     availablePackageRef: {
       context: { cluster: "default", namespace: "my-ns" },
-      identifier: "my-repo/my-chart",
+      identifier: "my-repo/my-package",
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   } as InstalledPackageDetail;
@@ -1038,7 +1038,7 @@ describe("findPackageInRepo", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
       context: { cluster: "default", namespace: "other-namespace" },
-      identifier: "my-repo/my-chart",
+      identifier: "my-repo/my-package",
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as AvailablePackageReference);
   });
@@ -1055,7 +1055,7 @@ describe("findPackageInRepo", () => {
       {
         type: getType(actions.packages.createErrorPackage),
         payload: new NotFoundError(
-          "Package my-repo/my-chart not found in the repository other-namespace.",
+          "Package my-repo/my-package not found in the repository other-namespace.",
         ),
       },
     ];
@@ -1071,7 +1071,7 @@ describe("findPackageInRepo", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
       context: { cluster: "default", namespace: "other-namespace" },
-      identifier: "my-repo/my-chart",
+      identifier: "my-repo/my-package",
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as AvailablePackageReference);
   });

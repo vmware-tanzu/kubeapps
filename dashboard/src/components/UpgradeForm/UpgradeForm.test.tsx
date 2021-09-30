@@ -39,7 +39,7 @@ const availablePkgDetails = [
     longDescription: "test",
     availablePackageRef: {
       identifier: "foo/foo",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
     valuesSchema: "test",
@@ -63,7 +63,7 @@ const availablePkgDetails = [
     longDescription: "test",
     availablePackageRef: {
       identifier: "foo/foo",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
     valuesSchema: "test",
@@ -80,7 +80,7 @@ const availablePkgDetails = [
 const defaultProps = {
   appCurrentVersion: "1.0.0",
   appCurrentValues: "foo: bar",
-  packageId: "my-chart",
+  packageId: "my-package",
   packagesIsFetching: false,
   namespace: "default",
   cluster: "default",
@@ -128,7 +128,7 @@ describe("it behaves like a loading component", () => {
     ).toExist();
   });
 
-  it("if the chart is being fetched", () => {
+  it("if the package is being fetched", () => {
     expect(
       mountWrapper(
         getStore({ packages: { isFetching: true } } as IStoreState),
@@ -170,7 +170,7 @@ it("fetches the available versions", () => {
   } as AvailablePackageReference);
 });
 
-it("fetches the current chart version even if there is already one in the state", () => {
+it("fetches the current package version even if there is already one in the state", () => {
   const deployed = {
     availablePackageDetail: availablePkgDetails[1],
   };
@@ -225,7 +225,7 @@ it("defaults the upgrade version to the current version", () => {
   // often used by users to update values only, so we can't default to the
   // latest version on the assumption that they always want to upgrade.
   const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
-  expect(wrapper.find(DeploymentFormBody).prop("chartVersion")).toBe("1.0.0");
+  expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("1.0.0");
 });
 
 it("forwards the appValues when modified", () => {
@@ -434,7 +434,7 @@ describe("when receiving new props", () => {
   });
 });
 
-it("shows, by default, the default values of the deployed chart plus any modification", () => {
+it("shows, by default, the default values of the deployed package plus any modification", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <UpgradeForm

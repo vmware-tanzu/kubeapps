@@ -19,7 +19,7 @@ const mockStore = configureMockStore([thunk]);
 
 let store: any;
 
-const namespace = "chart-namespace";
+const namespace = "package-namespace";
 const cluster = "default";
 const repos = "foo";
 const defaultPage = 1;
@@ -35,7 +35,7 @@ const defaultAvailablePackageSummary: AvailablePackageSummary = {
   shortDescription: "",
   availablePackageRef: {
     identifier: "foo/foo",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: plugin,
   },
 };
@@ -52,7 +52,7 @@ const defaultAvailablePackageDetail: AvailablePackageDetail = {
   longDescription: "",
   availablePackageRef: {
     identifier: "foo/foo",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: plugin,
   },
   valuesSchema: "",
@@ -85,7 +85,7 @@ interface IfetchAvailablePackageSummariesTestCase {
 
 const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTestCase[] = [
   {
-    name: "fetches charts with query",
+    name: "fetches packages with query",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken: "1",
@@ -111,7 +111,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedParams: [cluster, namespace, "", 1, defaultSize, "foo"],
   },
   {
-    name: "fetches charts from a repo (first page)",
+    name: "fetches packages from a repo (first page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken: "3",
@@ -136,7 +136,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedParams: [cluster, namespace, repos, 1, defaultSize, undefined],
   },
   {
-    name: "fetches charts from a repo (middle page)",
+    name: "fetches packages from a repo (middle page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken: "3",
@@ -161,7 +161,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
-    name: "fetches charts from a repo (last page)",
+    name: "fetches packages from a repo (last page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken: "3",
@@ -186,7 +186,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedParams: [cluster, namespace, repos, 3, defaultSize, undefined],
   },
   {
-    name: "fetches charts from a repo (already processed page)",
+    name: "fetches packages from a repo (already processed page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken: "3",
@@ -211,7 +211,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
   },
   {
-    name: "fetches charts from a repo (off-limits page)",
+    name: "fetches packages from a repo (off-limits page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken: "3",
@@ -267,11 +267,11 @@ describe("fetchAvailablePackageSummaries", () => {
       { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 1 },
       {
         type: getType(actions.packages.createErrorPackage),
-        payload: new FetchError("could not find chart"),
+        payload: new FetchError("could not find package"),
       },
     ];
     const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() => {
-      throw new Error("could not find chart");
+      throw new Error("could not find package");
     });
     jest
       .spyOn(PackagesService, "getAvailablePackageSummaries")
@@ -358,7 +358,7 @@ describe("fetchAvailablePackageVersions", () => {
       .mockImplementation(mockGetAvailablePackageVersions);
   });
 
-  it("fetches chart versions", async () => {
+  it("fetches package versions", async () => {
     const expectedActions = [
       { type: getType(actions.packages.requestSelectedAvailablePackageVersions) },
       {
@@ -396,7 +396,7 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
       .mockImplementation(mockGetAvailablePackageDetail);
   });
 
-  it("gets a chart version", async () => {
+  it("gets a package version", async () => {
     const expectedActions = [
       { type: getType(actions.packages.requestSelectedAvailablePackageDetail) },
       {
@@ -427,7 +427,7 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
     ]);
   });
 
-  it("gets a chart version with tag", async () => {
+  it("gets a package version with tag", async () => {
     const expectedActions = [
       { type: getType(actions.packages.requestSelectedAvailablePackageDetail) },
       {
@@ -483,7 +483,7 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
 });
 
 describe("fetchDeployedAvailablePackageDetail", () => {
-  it("should request a deployed chart", async () => {
+  it("should request a deployed package", async () => {
     const response: GetAvailablePackageDetailResponse = {
       availablePackageDetail: defaultAvailablePackageDetail,
     };

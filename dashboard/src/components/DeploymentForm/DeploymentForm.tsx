@@ -200,7 +200,7 @@ export default function DeploymentForm() {
               <DeploymentFormBody
                 deploymentEvent="install"
                 packageId={packageId}
-                chartVersion={packageVersion}
+                packageVersion={packageVersion}
                 packagesIsFetching={packagesIsFetching}
                 selected={selected}
                 setValues={handleValuesChange}

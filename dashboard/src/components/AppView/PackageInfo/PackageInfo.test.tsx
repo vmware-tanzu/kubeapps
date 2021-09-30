@@ -22,14 +22,14 @@ const defaultProps = {
     valuesApplied: "test",
     availablePackageRef: {
       identifier: "apache/1",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as AvailablePackageReference,
     currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
     installedPackageRef: {
       identifier: "apache/1",
       pkgVersion: "1.0.0",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference,
     latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -54,7 +54,7 @@ it("renders an app item", () => {
   expect(subsections).toHaveLength(2);
 });
 
-context("ChartUpdateInfo: when information about updates is available", () => {
+context("PackageUpdateInfo: when information about updates is available", () => {
   it("renders an up to date message if there are no updates", () => {
     const appWithoutUpdates = {
       ...defaultProps.installedPackageDetail,
@@ -66,7 +66,7 @@ context("ChartUpdateInfo: when information about updates is available", () => {
     );
     expect(wrapper.find(".color-icon-success").text()).toContain("Up to date");
   });
-  it("renders an new version found message if the chart latest version is newer", () => {
+  it("renders an new version found message if the package latest version is newer", () => {
     const appWithUpdates = {
       ...defaultProps.installedPackageDetail,
       latestVersion: {

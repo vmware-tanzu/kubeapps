@@ -204,7 +204,8 @@ export default function Catalog() {
 
   const filteredAvailablePackageSummaries = availablePackageSummaries
     .filter(
-      () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
+      () =>
+        filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Packages"),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
     .filter(
@@ -283,8 +284,8 @@ export default function Catalog() {
                 entry.isIntersecting &&
                 // Disable scrolling when only operators are selected
                 (!filters[filterNames.TYPE].length ||
-                  filters[filterNames.TYPE].find((type: string) => type === "Charts")) &&
-                // Disable scrolling if all the charts have been fetched
+                  filters[filterNames.TYPE].find((type: string) => type === "Packages")) &&
+                // Disable scrolling if all the packages have been fetched
                 !isFetching &&
                 !hasFinishedFetching &&
                 hasLoadedFirstPage
@@ -363,7 +364,7 @@ export default function Catalog() {
                   <label>Application Type</label>
                   <FilterGroup
                     name={filterNames.TYPE}
-                    options={["Operators", "Charts"]}
+                    options={["Operators", "Packages"]}
                     currentFilters={filters[filterNames.TYPE]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
@@ -444,7 +445,7 @@ export default function Catalog() {
                     />
                     {!hasFinishedFetching &&
                       (!filters[filterNames.TYPE].length ||
-                        filters[filterNames.TYPE].find((type: string) => type === "Charts")) && (
+                        filters[filterNames.TYPE].find((type: string) => type === "Packages")) && (
                         <div className="endPageMessage">
                           <LoadingWrapper loaded={false} />
                           {error && !hasFinishedFetching && (

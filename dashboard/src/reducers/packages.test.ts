@@ -5,7 +5,7 @@ import actions from "../actions";
 import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";
 import packageReducer from "./packages";
 
-describe("chartReducer", () => {
+describe("packageReducer", () => {
   let initialState: IPackageState;
   const availablePackageSummary1: AvailablePackageSummary = {
     name: "foo",
@@ -16,7 +16,7 @@ describe("chartReducer", () => {
     shortDescription: "",
     availablePackageRef: {
       identifier: "foo/foo",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   };
@@ -30,7 +30,7 @@ describe("chartReducer", () => {
     shortDescription: "",
     availablePackageRef: {
       identifier: "bar/bar",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   };

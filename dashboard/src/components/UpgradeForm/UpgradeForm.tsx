@@ -250,7 +250,7 @@ function UpgradeForm({
                     <DeploymentFormBody
                       deploymentEvent="upgrade"
                       packageId={packageId}
-                      chartVersion={appCurrentVersion}
+                      packageVersion={appCurrentVersion}
                       deployedValues={deployedValues}
                       packagesIsFetching={packagesIsFetching}
                       selected={selected}

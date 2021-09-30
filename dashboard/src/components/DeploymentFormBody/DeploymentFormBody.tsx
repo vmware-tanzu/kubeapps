@@ -17,7 +17,7 @@ import DifferentialTab from "./DifferentialTab";
 export interface IDeploymentFormBodyProps {
   deploymentEvent: DeploymentEvent;
   packageId: string;
-  chartVersion: string;
+  packageVersion: string;
   deployedValues?: string;
   packagesIsFetching: boolean;
   selected: IPackageState["selected"];
@@ -29,7 +29,7 @@ export interface IDeploymentFormBodyProps {
 function DeploymentFormBody({
   deploymentEvent,
   packageId,
-  chartVersion,
+  packageVersion,
   deployedValues,
   packagesIsFetching,
   selected,
@@ -101,7 +101,7 @@ function DeploymentFormBody({
   if (error) {
     return (
       <Alert theme="danger">
-        Unable to fetch package "{packageId}" ({chartVersion}): Got {error.message}
+        Unable to fetch package "{packageId}" ({packageVersion}): Got {error.message}
       </Alert>
     );
   }

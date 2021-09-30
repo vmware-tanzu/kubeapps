@@ -29,7 +29,7 @@ function AppUpgrade() {
     ReactRouter.useParams() as IRouteParams;
   const {
     apps: { selected: app, isFetching: appsIsFetching, error },
-    packages: { isFetching: chartsIsFetching, selected, deployed },
+    packages: { isFetching: packagesIsFetching, selected, deployed },
     repos: { repo },
   } = useSelector((state: IStoreState) => state);
 
@@ -94,7 +94,7 @@ function AppUpgrade() {
           appCurrentVersion={app.currentVersion.pkgVersion}
           appCurrentValues={app.valuesApplied}
           packageId={app.availablePackageRef.identifier}
-          packagesIsFetching={chartsIsFetching}
+          packagesIsFetching={packagesIsFetching}
           repoNamespace={repoNamespace}
           namespace={namespace}
           cluster={cluster}

@@ -264,7 +264,7 @@ it("skips the repo selection form if the app contains upgrade info", () => {
 });
 
 describe("when receiving new props", () => {
-  it("should request the deployed chart when the app and repo are populated", () => {
+  it("should request the deployed package when the app and repo are populated", () => {
     const fetchDeployedAvailablePackageDetail = jest.fn();
     actions.packages.fetchDeployedAvailablePackageDetail = fetchDeployedAvailablePackageDetail;
 
@@ -301,7 +301,7 @@ describe("when receiving new props", () => {
     );
   });
 
-  it("should request the deployed chart when the repo is populated later", () => {
+  it("should request the deployed package when the repo is populated later", () => {
     const fetchDeployedAvailablePackageDetail = jest.fn();
     actions.packages.fetchDeployedAvailablePackageDetail = fetchDeployedAvailablePackageDetail;
 

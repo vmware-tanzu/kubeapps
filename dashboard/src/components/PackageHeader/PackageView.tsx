@@ -50,8 +50,8 @@ export default function PackageView() {
   const { availablePackageDetail, versions, pkgVersion, readmeError, error, readme } = selected;
 
   const packageId = `${repo}/${id}`;
-  const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
-  const chartCluster = global === "global" ? config.kubeappsCluster : cluster;
+  const packageNamespace = global === "global" ? config.kubeappsNamespace : namespace;
+  const packageCluster = global === "global" ? config.kubeappsCluster : cluster;
   const kubeappsNamespace = config.kubeappsNamespace;
 
   const location = ReactRouter.useLocation();
@@ -63,7 +63,7 @@ export default function PackageView() {
     dispatch(
       actions.packages.fetchAndSelectAvailablePackageDetail(
         {
-          context: { cluster: chartCluster, namespace: chartNamespace },
+          context: { cluster: packageCluster, namespace: packageNamespace },
           plugin: pluginObj,
           identifier: packageId,
         } as AvailablePackageReference,
@@ -71,18 +71,18 @@ export default function PackageView() {
       ),
     );
     return;
-  }, [dispatch, packageId, chartNamespace, chartCluster, queryVersion, pluginObj]);
+  }, [dispatch, packageId, packageNamespace, packageCluster, queryVersion, pluginObj]);
 
   // Fetch all versions
   useEffect(() => {
     dispatch(
       actions.packages.fetchAvailablePackageVersions({
-        context: { cluster: chartCluster, namespace: chartNamespace },
+        context: { cluster: packageCluster, namespace: packageNamespace },
         plugin: { name: pluginName, version: pluginVersion } as Plugin,
         identifier: packageId,
       } as AvailablePackageReference),
     );
-  }, [dispatch, packageId, chartNamespace, chartCluster, pluginName, pluginVersion]);
+  }, [dispatch, packageId, packageNamespace, packageCluster, pluginName, pluginVersion]);
 
   // Select version handler
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {
