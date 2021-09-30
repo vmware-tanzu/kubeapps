@@ -19,7 +19,7 @@ export interface IDeploymentFormBodyProps {
   packageId: string;
   chartVersion: string;
   deployedValues?: string;
-  chartsIsFetching: boolean;
+  packagesIsFetching: boolean;
   selected: IPackageState["selected"];
   appValues: string;
   setValues: (values: string) => void;
@@ -31,7 +31,7 @@ function DeploymentFormBody({
   packageId,
   chartVersion,
   deployedValues,
-  chartsIsFetching,
+  packagesIsFetching,
   selected,
   appValues,
   setValues,
@@ -105,7 +105,7 @@ function DeploymentFormBody({
       </Alert>
     );
   }
-  if (chartsIsFetching || !availablePackageDetail || !versions.length) {
+  if (packagesIsFetching || !availablePackageDetail || !versions.length) {
     return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
   }
   const tabColumns = [

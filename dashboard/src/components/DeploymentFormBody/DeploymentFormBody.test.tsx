@@ -14,7 +14,7 @@ const defaultProps: IDeploymentFormBodyProps = {
   deploymentEvent: "install",
   packageId: "foo",
   chartVersion: "1.0.0",
-  chartsIsFetching: false,
+  packagesIsFetching: false,
   selected: {} as IPackageState["selected"],
   appValues: "foo: bar\n",
   setValues: jest.fn(),

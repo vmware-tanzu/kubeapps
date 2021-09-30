@@ -39,16 +39,16 @@ export default function DeploymentForm() {
     id,
     pluginName,
     pluginVersion,
-    version: chartVersion,
+    version: packageVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
     apps,
     config,
-    packages: { isFetching: chartsIsFetching, selected },
+    packages: { isFetching: packagesIsFetching, selected },
   } = useSelector((state: IStoreState) => state);
   const packageId = `${repo}/${id}`;
-  const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
-  const chartCluster = global === "global" ? config.kubeappsCluster : cluster;
+  const packageNamespace = global === "global" ? config.kubeappsNamespace : namespace;
+  const packageCluster = global === "global" ? config.kubeappsCluster : cluster;
   const error = apps.error || selected.error;
   const kubeappsNamespace = config.kubeappsNamespace;
   const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
@@ -64,12 +64,12 @@ export default function DeploymentForm() {
   useEffect(() => {
     dispatch(
       actions.packages.fetchAvailablePackageVersions({
-        context: { cluster: chartCluster, namespace: chartNamespace },
+        context: { cluster: packageCluster, namespace: packageNamespace },
         plugin: pluginObj,
         identifier: packageId,
       } as AvailablePackageReference),
     );
-  }, [dispatch, chartCluster, chartNamespace, packageId, pluginObj]);
+  }, [dispatch, packageCluster, packageNamespace, packageId, pluginObj]);
 
   useEffect(() => {
     if (!valuesModified) {
@@ -81,14 +81,14 @@ export default function DeploymentForm() {
     dispatch(
       actions.packages.fetchAndSelectAvailablePackageDetail(
         {
-          context: { cluster: chartCluster, namespace: chartNamespace },
+          context: { cluster: packageCluster, namespace: packageNamespace },
           plugin: pluginObj,
           identifier: packageId,
         } as AvailablePackageReference,
-        chartVersion,
+        packageVersion,
       ),
     );
-  }, [chartCluster, chartNamespace, packageId, chartVersion, dispatch, pluginObj]);
+  }, [packageCluster, packageNamespace, packageId, packageVersion, dispatch, pluginObj]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
@@ -162,7 +162,7 @@ export default function DeploymentForm() {
   return (
     <section>
       <PackageHeader
-        chartAttrs={availablePackageDetail}
+        availablePackageDetail={availablePackageDetail}
         versions={versions}
         onSelect={selectVersion}
         selectedVersion={pkgVersion}
@@ -200,8 +200,8 @@ export default function DeploymentForm() {
               <DeploymentFormBody
                 deploymentEvent="install"
                 packageId={packageId}
-                chartVersion={chartVersion}
-                chartsIsFetching={chartsIsFetching}
+                chartVersion={packageVersion}
+                packagesIsFetching={packagesIsFetching}
                 selected={selected}
                 setValues={handleValuesChange}
                 appValues={appValues}

@@ -77,7 +77,7 @@ export default function Catalog() {
     packages: {
       hasFinishedFetching,
       selected: { error },
-      items: availablePackages,
+      items: availablePackageSummaries,
       categories,
       size,
       isFetching,
@@ -202,7 +202,7 @@ export default function Catalog() {
     pushFilters(newFilters);
   };
 
-  const filteredCharts = availablePackages
+  const filteredAvailablePackageSummaries = availablePackageSummaries
     .filter(
       () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
     )
@@ -331,7 +331,7 @@ export default function Catalog() {
       {isEqual(filters, initialFilterState()) &&
       hasFinishedFetching &&
       searchFilter.length === 0 &&
-      availablePackages.length === 0 &&
+      availablePackageSummaries.length === 0 &&
       csvs.length === 0 ? (
         <div className="empty-catalog">
           <CdsIcon shape="bundle" />
@@ -434,7 +434,7 @@ export default function Catalog() {
                 <Row>
                   <>
                     <CatalogItems
-                      charts={filteredCharts}
+                      availablePackageSummaries={filteredAvailablePackageSummaries}
                       csvs={filteredCSVs}
                       cluster={cluster}
                       namespace={namespace}

@@ -9,8 +9,8 @@ import placeholder from "../../placeholder.png";
 import "./PackageHeader.css";
 import PackageVersionSelector from "./PackageVersionSelector";
 
-interface IPackageHeaderProps {
-  chartAttrs: AvailablePackageDetail;
+export interface IPackageHeaderProps {
+  availablePackageDetail: AvailablePackageDetail;
   versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   releaseName?: string;
@@ -20,7 +20,7 @@ interface IPackageHeaderProps {
 }
 
 export default function PackageHeader({
-  chartAttrs,
+  availablePackageDetail,
   versions,
   onSelect,
   releaseName,
@@ -35,14 +35,14 @@ export default function PackageHeader({
         // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
         releaseName
           ? `${releaseName} (${
-              chartAttrs.availablePackageRef?.identifier.split("/")[0]
-            }/${decodeURIComponent(chartAttrs.name)})`
-          : `${chartAttrs.availablePackageRef?.identifier.split("/")[0]}/${decodeURIComponent(
-              chartAttrs.name,
-            )}`
+              availablePackageDetail?.availablePackageRef?.identifier.split("/")[0]
+            }/${decodeURIComponent(availablePackageDetail?.name)})`
+          : `${
+              availablePackageDetail?.availablePackageRef?.identifier.split("/")[0]
+            }/${decodeURIComponent(availablePackageDetail?.name)}`
       }
       titleSize="md"
-      icon={chartAttrs.iconUrl ? chartAttrs.iconUrl : placeholder}
+      icon={availablePackageDetail?.iconUrl ? availablePackageDetail.iconUrl : placeholder}
       helm={true}
       version={
         <>

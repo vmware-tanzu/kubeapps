@@ -5,10 +5,10 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import PackageHeader from "./PackageHeader";
-const testProps: any = {
-  chartAttrs: {
-    shortDescription: "A Test Chart",
+import PackageHeader, { IPackageHeaderProps } from "./PackageHeader";
+const testProps: IPackageHeaderProps = {
+  availablePackageDetail: {
+    shortDescription: "A Test Package",
     name: "test",
     categories: [""],
     displayName: "foo",
@@ -40,7 +40,7 @@ const testProps: any = {
   onSelect: jest.fn(),
 };
 
-it("renders a header for the chart", () => {
+it("renders a header for the package", () => {
   const wrapper = mount(<PackageHeader {...testProps} />);
   expect(wrapper.text()).toContain("testrepo/test");
 });

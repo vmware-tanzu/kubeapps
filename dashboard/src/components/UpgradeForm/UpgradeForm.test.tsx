@@ -81,7 +81,7 @@ const defaultProps = {
   appCurrentVersion: "1.0.0",
   appCurrentValues: "foo: bar",
   packageId: "my-chart",
-  chartsIsFetching: false,
+  packagesIsFetching: false,
   namespace: "default",
   cluster: "default",
   releaseName: "my-release",
@@ -89,7 +89,7 @@ const defaultProps = {
   repoNamespace: "kubeapps",
   error: undefined,
   apps: { isFetching: false },
-  charts: { isFetching: false },
+  packages: { isFetching: false },
   selected: {
     versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
     availablePackageDetail: { name: "test" } as AvailablePackageDetail,

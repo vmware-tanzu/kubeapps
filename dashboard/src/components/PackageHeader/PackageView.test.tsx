@@ -18,8 +18,8 @@ import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 import PackageView from "./PackageView";
 
 const defaultProps = {
-  chartID: "testrepo/test",
-  chartNamespace: "kubeapps-namespace",
+  packageID: "testrepo/test",
+  packageNamespace: "kubeapps-namespace",
   isFetching: false,
   namespace: "test",
   cluster: "default",
@@ -48,7 +48,7 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
   longDescription: "test",
   availablePackageRef: {
     identifier: "foo/foo",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
   valuesSchema: "test",
@@ -59,31 +59,6 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
     appVersion: testVersion.appVersion,
     pkgVersion: testVersion.pkgVersion,
   } as PackageAppVersion,
-};
-
-const emptyAvailablePkg: AvailablePackageDetail = {
-  name: "foo",
-  categories: [""],
-  displayName: "foo",
-  iconUrl: "",
-  repoUrl: "",
-  homeUrl: "",
-  sourceUrls: [],
-  shortDescription: "",
-  longDescription: "",
-  availablePackageRef: {
-    identifier: "foo/foo",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
-    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  },
-  valuesSchema: "",
-  defaultValues: "",
-  maintainers: [],
-  readme: "",
-  version: {
-    appVersion: "",
-    pkgVersion: testVersion.pkgVersion,
-  },
 };
 
 const defaultPackageState = {
@@ -128,7 +103,7 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.chartNamespace}/packages/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.packageNamespace}/packages/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
 const routePath = "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
@@ -144,14 +119,14 @@ it("triggers the fetchAvailablePackageVersions when mounting", () => {
     </Router>,
   );
   expect(spy).toHaveBeenCalledWith({
-    context: { cluster: defaultProps.cluster, namespace: defaultProps.chartNamespace },
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
     identifier: `${defaultProps.repo}/${defaultProps.id}`,
     plugin: defaultProps.plugin,
   } as AvailablePackageReference);
 });
 
 describe("when receiving new props", () => {
-  it("finds and selects the chart version when version changes", () => {
+  it("finds and selects the package version when version changes", () => {
     const spy = jest.fn();
     actions.packages.fetchAndSelectAvailablePackageDetail = spy;
     mountWrapper(
@@ -164,7 +139,7 @@ describe("when receiving new props", () => {
     );
     expect(spy).toHaveBeenCalledWith(
       {
-        context: { cluster: defaultProps.cluster, namespace: defaultProps.chartNamespace },
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
         identifier: "testrepo/test",
         plugin: defaultProps.plugin,
       } as AvailablePackageReference,
@@ -173,7 +148,7 @@ describe("when receiving new props", () => {
   });
 });
 
-it("behaves as a loading component when fetching is false but no chart is available", () => {
+it("behaves as a loading component when fetching is false but no package is available", () => {
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
@@ -188,7 +163,7 @@ it("behaves as a loading component when fetching is false but no chart is availa
   expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
-it("behaves as a loading component when fetching is true and chart is available", () => {
+it("behaves as a loading component when fetching is true and the package is available", () => {
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
@@ -257,7 +232,7 @@ it("renders the home link when set", () => {
   ).toBe(true);
 });
 
-describe("ChartMaintainers githubIDAsNames prop value", () => {
+describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
   const tests: Array<{
     expected: boolean;
     name: string;
@@ -302,8 +277,8 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
         </Router>,
       );
 
-      const chartMaintainers = wrapper.find(AvailablePackageMaintainers);
-      expect(chartMaintainers.props().githubIDAsNames).toBe(t.expected);
+      const availablePackageMaintainers = wrapper.find(AvailablePackageMaintainers);
+      expect(availablePackageMaintainers.props().githubIDAsNames).toBe(t.expected);
     });
   }
 });

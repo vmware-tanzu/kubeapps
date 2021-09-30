@@ -107,7 +107,7 @@ export default function PackageView() {
     <section>
       <div>
         <PackageHeader
-          chartAttrs={availablePackageDetail}
+          availablePackageDetail={availablePackageDetail}
           versions={versions}
           onSelect={selectVersion}
           deployButton={

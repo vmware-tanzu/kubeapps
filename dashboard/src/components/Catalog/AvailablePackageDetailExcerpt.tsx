@@ -5,7 +5,7 @@ interface AvailablePackageDetailExcerptProps {
   pkg?: AvailablePackageDetail;
 }
 
-function isKubernetesCharts(repoURL: string) {
+function isKubernetesPackages(repoURL: string) {
   return (
     repoURL === "https://kubernetes-charts.storage.googleapis.com" ||
     repoURL === "https://kubernetes-charts-incubator.storage.googleapis.com"
@@ -80,7 +80,7 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
           <div>
             <AvailablePackageMaintainers
               maintainers={pkg.maintainers}
-              githubIDAsNames={isKubernetesCharts(pkg.repoUrl)}
+              githubIDAsNames={isKubernetesPackages(pkg.repoUrl)}
             />
           </div>
         </section>

@@ -28,7 +28,7 @@ export interface IUpgradeFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
   packageId: string;
-  chartsIsFetching: boolean;
+  packagesIsFetching: boolean;
   namespace: string;
   cluster: string;
   releaseName: string;
@@ -59,7 +59,7 @@ function UpgradeForm({
   appCurrentVersion,
   appCurrentValues,
   packageId,
-  chartsIsFetching,
+  packagesIsFetching,
   namespace,
   cluster,
   releaseName,
@@ -83,9 +83,9 @@ function UpgradeForm({
 
   const {
     apps: { isFetching: appsFetching },
-    packages: { isFetching: chartsFetching },
+    packages: { isFetching: packagesFetching },
   } = useSelector((state: IStoreState) => state);
-  const isFetching = appsFetching || chartsFetching;
+  const isFetching = appsFetching || packagesFetching;
   const pluginObj = plugin ?? selected.availablePackageDetail?.availablePackageRef?.plugin;
 
   useEffect(() => {
@@ -219,7 +219,7 @@ function UpgradeForm({
           <>
             <PackageHeader
               releaseName={releaseName}
-              chartAttrs={availablePackageDetail}
+              availablePackageDetail={availablePackageDetail}
               versions={versions}
               onSelect={selectVersion}
               currentVersion={deployed.availablePackageDetail?.version?.pkgVersion}
@@ -252,7 +252,7 @@ function UpgradeForm({
                       packageId={packageId}
                       chartVersion={appCurrentVersion}
                       deployedValues={deployedValues}
-                      chartsIsFetching={chartsIsFetching}
+                      packagesIsFetching={packagesIsFetching}
                       selected={selected}
                       setValues={handleValuesChange}
                       appValues={appValues}

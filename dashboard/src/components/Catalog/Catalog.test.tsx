@@ -105,12 +105,13 @@ const defaultState = {
 const populatedChartState = {
   ...defaultPackageState,
   items: [availablePkgSummary1, availablePkgSummary2],
-};
+} as IStoreState["packages"];
+
 const populatedState = {
   ...defaultState,
   packages: populatedChartState,
   operators: { csvs: [csv] },
-};
+} as IStoreState;
 
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseHistory: jest.SpyInstance;
