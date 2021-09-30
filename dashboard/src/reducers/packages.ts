@@ -48,7 +48,7 @@ const chartsSelectedReducer = (
       return { ...state, error: action.payload };
     case getType(actions.charts.clearErrorPackage):
       return { ...state, error: undefined };
-    case getType(actions.charts.resetChartVersion):
+    case getType(actions.charts.resetPackageVersion):
       return initialState.selected;
     default:
   }
@@ -118,7 +118,7 @@ const chartsReducer = (
         items: state.items,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.resetChartVersion):
+    case getType(actions.charts.resetPackageVersion):
     case getType(actions.charts.clearErrorPackage):
       return {
         ...state,
