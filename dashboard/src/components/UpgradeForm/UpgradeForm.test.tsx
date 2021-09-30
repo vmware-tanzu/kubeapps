@@ -14,7 +14,7 @@ import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IPackageState } from "shared/types";
+import { FetchError, IPackageState, IStoreState } from "shared/types";
 import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
@@ -122,7 +122,7 @@ describe("it behaves like a loading component", () => {
   it("if the app is being fetched", () => {
     expect(
       mountWrapper(
-        getStore({ apps: { isFetching: true } }),
+        getStore({ apps: { isFetching: true } } as IStoreState),
         <UpgradeForm {...defaultProps} />,
       ).find(LoadingWrapper),
     ).toExist();
@@ -131,7 +131,7 @@ describe("it behaves like a loading component", () => {
   it("if the chart is being fetched", () => {
     expect(
       mountWrapper(
-        getStore({ charts: { isFetching: true } }),
+        getStore({ packages: { isFetching: true } } as IStoreState),
         <UpgradeForm {...defaultProps} />,
       ).find(LoadingWrapper),
     ).toExist();

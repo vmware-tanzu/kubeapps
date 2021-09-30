@@ -305,7 +305,7 @@ export interface IStoreState {
   router: RouterState;
   apps: IAppState;
   auth: IAuthState;
-  charts: IPackageState;
+  packages: IPackageState;
   config: IConfigState;
   kube: IKubeState;
   repos: IAppRepositoryState;

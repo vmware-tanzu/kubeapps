@@ -25,7 +25,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
       repo,
       errors: { fetch: fetchError },
     },
-    charts: {
+    packages: {
       selected: { error: chartError },
     },
     config: { kubeappsNamespace, kubeappsCluster },

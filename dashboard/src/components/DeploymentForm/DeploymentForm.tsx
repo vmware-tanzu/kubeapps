@@ -44,7 +44,7 @@ export default function DeploymentForm() {
   const {
     apps,
     config,
-    charts: { isFetching: chartsIsFetching, selected },
+    packages: { isFetching: chartsIsFetching, selected },
   } = useSelector((state: IStoreState) => state);
   const packageId = `${repo}/${id}`;
   const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;

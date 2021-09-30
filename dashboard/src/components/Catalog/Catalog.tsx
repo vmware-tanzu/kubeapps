@@ -74,7 +74,7 @@ interface IRouteParams {
 
 export default function Catalog() {
   const {
-    charts: {
+    packages: {
       hasFinishedFetching,
       selected: { error },
       items: availablePackages,

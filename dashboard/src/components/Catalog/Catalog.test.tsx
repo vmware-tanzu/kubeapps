@@ -15,13 +15,18 @@ import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IAppRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository, IPackageState, IClusterServiceVersion } from "../../shared/types";
+import {
+  IAppRepository,
+  IPackageState,
+  IClusterServiceVersion,
+  IStoreState,
+} from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
 import PackageCatalogItem from "./PackageCatalogItem";
 
-const defaultChartState = {
+const defaultPackageState = {
   isFetching: false,
   hasFinishedFetching: false,
   selected: {} as IPackageState["selected"],
@@ -31,7 +36,7 @@ const defaultChartState = {
   size: 20,
 } as IPackageState;
 const defaultProps = {
-  charts: defaultChartState,
+  packages: defaultPackageState,
   repo: "",
   filter: {},
   cluster: initialState.config.kubeappsCluster,
@@ -88,22 +93,22 @@ const csv = {
 } as IClusterServiceVersion;
 
 const defaultState = {
-  charts: defaultChartState,
+  packages: defaultPackageState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
   repos: { repos: [] } as Partial<IAppRepositoryState>,
   config: {
     kubeappsCluster: defaultProps.cluster,
     kubeappsNamespace: defaultProps.kubeappsNamespace,
   } as IConfigState,
-};
+} as IStoreState;
 
 const populatedChartState = {
-  ...defaultChartState,
+  ...defaultPackageState,
   items: [availablePkgSummary1, availablePkgSummary2],
 };
 const populatedState = {
   ...defaultState,
-  charts: populatedChartState,
+  packages: populatedChartState,
   operators: { csvs: [csv] },
 };
 
@@ -158,7 +163,10 @@ it("should not render a message if there are no elements in the catalog but the 
 
 it("should render a message if there are no elements in the catalog and the fetching has ended", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, charts: { hasFinishedFetching: true } }),
+    getStore({
+      ...defaultState,
+      packages: { hasFinishedFetching: true } as unknown as IStoreState,
+    }),
     <Catalog />,
   );
   wrapper.setProps({ searchFilter: "" });
@@ -169,7 +177,7 @@ it("should render a message if there are no elements in the catalog and the fetc
 
 it("should render a spinner if there are no elements but it's still fetching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, charts: { hasFinishedFetching: false } }),
+    getStore({ ...defaultState, packages: { hasFinishedFetching: false } }),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).toExist();
@@ -177,7 +185,7 @@ it("should render a spinner if there are no elements but it's still fetching", (
 
 it("should not render a spinner if there are no elements and it finished fetching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, charts: { hasFinishedFetching: true } }),
+    getStore({ ...defaultState, packages: { hasFinishedFetching: true } }),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).not.toExist();
@@ -185,7 +193,7 @@ it("should not render a spinner if there are no elements and it finished fetchin
 
 it("should render a spinner if there already pending elements", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, charts: { hasFinishedFetching: false } }),
+    getStore({ ...populatedState, packages: { hasFinishedFetching: false } }),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).toExist();
@@ -193,7 +201,7 @@ it("should render a spinner if there already pending elements", () => {
 
 it("should not render a message if only operators are selected", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, charts: { hasFinishedFetching: true } }),
+    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
     <MemoryRouter initialEntries={[routePathParam + "?Operators=bar"]}>
       <Route path={routePath}>
         <Catalog />
@@ -205,7 +213,7 @@ it("should not render a message if only operators are selected", () => {
 
 it("should not render a message if there are no more elements", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, charts: { hasFinishedFetching: true } }),
+    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
     <Catalog />,
   );
   const message = wrapper.find(".endPageMessage");
@@ -214,7 +222,7 @@ it("should not render a message if there are no more elements", () => {
 
 it("should not render a message if there are no more elements but it's searching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, charts: { hasFinishedFetching: true } }),
+    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
     <MemoryRouter initialEntries={[routePathParam + "?Search=bar"]}>
       <Route path={routePath}>
         <Catalog />
@@ -227,7 +235,7 @@ it("should not render a message if there are no more elements but it's searching
 
 it("should render the scroll handler if not finished", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, charts: { hasFinishedFetching: false } }),
+    getStore({ ...populatedState, packages: { hasFinishedFetching: false } }),
     <Catalog />,
   );
   const scroll = wrapper.find(".scrollHandler");
@@ -237,7 +245,7 @@ it("should render the scroll handler if not finished", () => {
 
 it("should not render the scroll handler if finished", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, charts: { hasFinishedFetching: true } }),
+    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
     <Catalog />,
   );
   const scroll = wrapper.find(".scrollHandler");
@@ -245,21 +253,27 @@ it("should not render the scroll handler if finished", () => {
 });
 
 it("should render an error if it exists", () => {
-  const charts = {
-    ...defaultChartState,
+  const packages = {
+    ...defaultPackageState,
     selected: {
       error: new Error("Boom!"),
     },
   } as any;
-  const wrapper = mountWrapper(getStore({ ...populatedState, charts: charts }), <Catalog />);
+  const wrapper = mountWrapper(
+    getStore({ ...populatedState, packages: packages } as IStoreState),
+    <Catalog />,
+  );
   const error = wrapper.find(Alert);
   expect(error.prop("theme")).toBe("danger");
   expect(error).toIncludeText("Boom!");
 });
 
 it("behaves like a loading wrapper", () => {
-  const charts = { isFetching: true, items: [], categories: [], selected: {} } as any;
-  const wrapper = mountWrapper(getStore({ ...populatedState, charts: charts }), <Catalog />);
+  const packages = { isFetching: true, items: [], categories: [], selected: {} } as any;
+  const wrapper = mountWrapper(
+    getStore({ ...populatedState, packages: packages } as IStoreState),
+    <Catalog />,
+  );
   expect(wrapper.find(LoadingWrapper)).toExist();
 });
 
@@ -411,14 +425,14 @@ describe("pagination and chart fetching", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
-    const charts = {
-      ...defaultChartState,
+    const packages = {
+      ...defaultPackageState,
       hasFinishedFetching: false,
       isFetching: false,
       items: [],
     } as any;
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, charts: charts }),
+      getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -443,14 +457,14 @@ describe("pagination and chart fetching", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
-    const charts = {
-      ...defaultChartState,
+    const packages = {
+      ...defaultPackageState,
       hasFinishedFetching: false,
       isFetching: true,
       items: [availablePkgSummary1],
     } as any;
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, charts: charts }),
+      getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -474,14 +488,14 @@ describe("pagination and chart fetching", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
-    const charts = {
-      ...defaultChartState,
+    const packages = {
+      ...defaultPackageState,
       hasFinishedFetching: true,
       isFetching: false,
       items: [availablePkgSummary1, availablePkgSummary2],
     } as any;
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, charts: charts }),
+      getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -537,15 +551,15 @@ describe("pagination and chart fetching", () => {
     });
 
     it("changes page", () => {
-      const charts = {
-        ...defaultChartState,
+      const packages = {
+        ...defaultPackageState,
         hasFinishedFetching: false,
         isFetching: false,
         items: [],
       } as any;
 
       mountWrapper(
-        getStore({ ...populatedState, charts: charts }),
+        getStore({ ...populatedState, packages: packages } as IStoreState),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <Catalog />
@@ -766,13 +780,13 @@ describe("filters by category", () => {
     mockDispatch.mockRestore();
   });
   it("renders a Unknown category if not set", () => {
-    const charts = {
-      ...defaultChartState,
+    const packages = {
+      ...defaultPackageState,
       items: [availablePkgSummary1],
       categories: [availablePkgSummary1.categories[0]],
     };
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, charts: charts }),
+      getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -783,12 +797,12 @@ describe("filters by category", () => {
   });
 
   it("push filter for category", () => {
-    const charts = {
-      ...defaultChartState,
+    const packages = {
+      ...defaultPackageState,
       items: [availablePkgSummary1, availablePkgSummary2],
       categories: [availablePkgSummary1.categories[0], availablePkgSummary2.categories[0]],
     };
-    const store = getStore({ ...defaultState, charts: charts });
+    const store = getStore({ ...defaultState, packages: packages } as IStoreState);
     const wrapper = mountWrapper(
       store,
       <MemoryRouter initialEntries={[routePathParam]}>
@@ -811,13 +825,13 @@ describe("filters by category", () => {
   });
 
   it("filters a category", () => {
-    const charts = {
-      ...defaultChartState,
+    const packages = {
+      ...defaultPackageState,
       items: [availablePkgSummary1, availablePkgSummary2],
       categories: [availablePkgSummary1.categories[0], availablePkgSummary2.categories[0]],
     };
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, charts: charts }),
+      getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam + "?Category=Database"]}>
         <Route path={routePath}>
           <Catalog />

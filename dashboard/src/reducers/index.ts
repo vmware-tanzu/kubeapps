@@ -16,7 +16,7 @@ const rootReducer = (history: History) =>
     router: connectRouter(history),
     apps: appsReducer,
     auth: authReducer,
-    charts: chartsReducer,
+    packages: chartsReducer,
     config: configReducer,
     kube: kubeReducer,
     clusters: clusterReducer,

@@ -22,7 +22,7 @@ const mockStore = configureMockStore([thunk]);
 export const initialState = {
   apps: cloneDeep(appsInitialState),
   auth: cloneDeep(authInitialState),
-  charts: cloneDeep(packagesInitialState),
+  packages: cloneDeep(packagesInitialState),
   config: {
     ...cloneDeep(configInitialState),
     kubeappsCluster: "default-cluster",

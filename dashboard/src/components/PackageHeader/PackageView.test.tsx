@@ -13,7 +13,7 @@ import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router";
 import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IPackageState } from "../../shared/types";
+import { IPackageState, IStoreState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 import PackageView from "./PackageView";
 
@@ -86,7 +86,7 @@ const emptyAvailablePkg: AvailablePackageDetail = {
   },
 };
 
-const defaultChartsState = {
+const defaultPackageState = {
   isFetching: false,
   hasFinishedFetching: false,
   selected: {
@@ -106,9 +106,9 @@ const defaultChartsState = {
 } as IPackageState;
 
 const defaultState = {
-  charts: defaultChartsState,
+  packages: defaultPackageState,
   config: { kubeappsCluster: "default", kubeappsNamespace: "kubeapps" } as IConfigState,
-};
+} as IStoreState;
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
@@ -177,8 +177,8 @@ it("behaves as a loading component when fetching is false but no chart is availa
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
-      charts: { ...defaultChartsState, selected: {}, isFetching: false },
-    }),
+      packages: { ...defaultPackageState, selected: {}, isFetching: false },
+    } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
         <PackageView />
@@ -190,7 +190,10 @@ it("behaves as a loading component when fetching is false but no chart is availa
 
 it("behaves as a loading component when fetching is true and chart is available", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, charts: { ...defaultChartsState, isFetching: false } }),
+    getStore({
+      ...defaultState,
+      packages: { ...defaultPackageState, isFetching: false },
+    } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
         <PackageView />
@@ -203,15 +206,19 @@ it("behaves as a loading component when fetching is true and chart is available"
 it("does not render the app version, home and sources sections if not set", () => {
   const wrapper = mountWrapper(
     getStore({
-      ...defaultChartsState,
-      charts: { selected: { availablePackageDetail: emptyAvailablePkg } },
-    }),
+      ...defaultState,
+      packages: {
+        ...defaultPackageState,
+        selected: { availablePackageDetail: undefined },
+      },
+    } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
         <PackageView />
       </Route>
     </Router>,
   );
+
   expect(wrapper.contains("App Version")).toBe(false);
   expect(wrapper.contains("Home")).toBe(false);
   expect(wrapper.contains("Related")).toBe(false);
@@ -286,8 +293,8 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
       const wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          charts: { selected: { availablePackageDetail: myAvailablePkgDetail } },
-        }),
+          packages: { selected: { availablePackageDetail: myAvailablePkgDetail } },
+        } as IStoreState),
         <Router history={history}>
           <Route path={routePath}>
             <PackageView />
@@ -307,8 +314,8 @@ it("renders the sources links when set", () => {
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
-      charts: { selected: { availablePackageDetail: myAvailablePkgDetail } },
-    }),
+      packages: { selected: { availablePackageDetail: myAvailablePkgDetail } },
+    } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
         <PackageView />
@@ -337,8 +344,8 @@ describe("renders errors", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultState,
-        charts: { ...defaultChartsState, selected: { error: new Error("Boom!") } },
-      }),
+        packages: { ...defaultPackageState, selected: { error: new Error("Boom!") } },
+      } as unknown as IStoreState),
       <Router history={history}>
         <Route path={routePath}>
           <PackageView />

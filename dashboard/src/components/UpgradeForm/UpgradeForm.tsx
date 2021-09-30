@@ -83,7 +83,7 @@ function UpgradeForm({
 
   const {
     apps: { isFetching: appsFetching },
-    charts: { isFetching: chartsFetching },
+    packages: { isFetching: chartsFetching },
   } = useSelector((state: IStoreState) => state);
   const isFetching = appsFetching || chartsFetching;
   const pluginObj = plugin ?? selected.availablePackageDetail?.availablePackageRef?.plugin;

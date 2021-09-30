@@ -45,7 +45,7 @@ export default function PackageView() {
   } = ReactRouter.useParams() as IRouteParams;
   const {
     config,
-    charts: { isFetching, selected },
+    packages: { isFetching, selected },
   } = useSelector((state: IStoreState) => state);
   const { availablePackageDetail, versions, pkgVersion, readmeError, error, readme } = selected;
 

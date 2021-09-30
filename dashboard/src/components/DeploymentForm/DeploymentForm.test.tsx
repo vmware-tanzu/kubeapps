@@ -13,7 +13,7 @@ import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError } from "shared/types";
+import { FetchError, IStoreState } from "shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
 
@@ -96,7 +96,10 @@ describe("renders an error", () => {
       pkgVersion: "1.2.4",
       values: "bar: foo",
     };
-    const wrapper = mountWrapper(getStore({ charts: { selected: selected } }), <DeploymentForm />);
+    const wrapper = mountWrapper(
+      getStore({ packages: { selected: selected } } as IStoreState),
+      <DeploymentForm />,
+    );
 
     const handleValuesChange: (v: string) => void = wrapper
       .find(DeploymentFormBody)
@@ -116,7 +119,10 @@ describe("renders an error", () => {
       pkgVersion: "1.2.4",
       values: "bar: foo",
     };
-    const wrapper = mountWrapper(getStore({ charts: { selected: selected } }), <DeploymentForm />);
+    const wrapper = mountWrapper(
+      getStore({ packages: { selected: selected } } as IStoreState),
+      <DeploymentForm />,
+    );
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("bar: foo");
   });
 
@@ -127,7 +133,10 @@ describe("renders an error", () => {
       pkgVersion: "1.2.4",
       values: "bar: foo",
     };
-    const wrapper = mountWrapper(getStore({ charts: { selected: selected } }), <DeploymentForm />);
+    const wrapper = mountWrapper(
+      getStore({ packages: { selected: selected } } as IStoreState),
+      <DeploymentForm />,
+    );
 
     const handleValuesChange: (v: string) => void = wrapper
       .find(DeploymentFormBody)
@@ -166,7 +175,7 @@ describe("renders an error", () => {
     };
 
     const wrapper = mountWrapper(
-      getStore({ charts: { selected: selected } }),
+      getStore({ packages: { selected: selected } } as unknown as IStoreState),
 
       <Router history={history}>
         <Route path={routePath}>
