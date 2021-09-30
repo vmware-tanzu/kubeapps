@@ -128,8 +128,8 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.chartNamespace}/charts/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
-const routePath = "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.chartNamespace}/packages/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
+const routePath = "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("triggers the fetchAvailablePackageVersions when mounting", () => {

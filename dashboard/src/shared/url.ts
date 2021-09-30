@@ -34,19 +34,19 @@ export const app = {
     upgrade: (ref?: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
   },
   catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
-  charts: {
+  packages: {
     get: (
       cluster: string,
       namespace: string,
-      chartName: string,
+      packageName: string,
       repo: IRepo,
       globalNamespace: string,
       plugin: Plugin,
     ) => {
-      const chartsSegment = globalNamespace === repo.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${plugin.name}/${
+      const packagesSegment = globalNamespace === repo.namespace ? "global-packages" : "packages";
+      return `/c/${cluster}/ns/${namespace}/${packagesSegment}/${repo.name}/${plugin.name}/${
         plugin.version
-      }/${encodeURIComponent(chartName)}`;
+      }/${encodeURIComponent(packageName)}`;
     },
   },
   operators: {

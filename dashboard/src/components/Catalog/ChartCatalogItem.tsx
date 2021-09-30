@@ -13,7 +13,7 @@ export default function ChartCatalogItem(props: IChartCatalogItem) {
   } = useSelector((state: IStoreState) => state);
   const iconSrc = icon || placeholder;
   const cluster = useSelector((state: IStoreState) => state.clusters.currentCluster);
-  const link = url.app.charts.get(
+  const link = url.app.packages.get(
     cluster,
     namespace,
     name,

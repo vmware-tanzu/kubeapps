@@ -33,12 +33,12 @@ const privateRoutes = {
     DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
   "/c/:cluster/ns/:namespace/catalog/:repo": Catalog,
-  "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id": PackageView,
-  "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+  "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id": PackageView,
+  "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id/versions/:version":
     PackageView,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:pluginName/:pluginVersion/:id":
+  "/c/:cluster/ns/:namespace/:global(global)-packages/:repo/:pluginName/:pluginVersion/:id":
     PackageView,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+  "/c/:cluster/ns/:namespace/:global(global)-packages/:repo/:pluginName/:pluginVersion/:id/versions/:version":
     PackageView,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
