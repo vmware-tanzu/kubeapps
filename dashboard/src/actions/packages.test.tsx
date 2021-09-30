@@ -355,7 +355,10 @@ describe("fetchAvailablePackageVersions", () => {
   it("fetches chart versions", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestAvailablePackageSummaries) },
-      { type: getType(actions.charts.receiveChartVersions), payload: availableVersionsResponse },
+      {
+        type: getType(actions.charts.receiveAvailablePackageVersions),
+        payload: availableVersionsResponse,
+      },
     ];
     await store.dispatch(
       actions.charts.fetchAvailablePackageVersions({

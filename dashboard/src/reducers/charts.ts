@@ -38,7 +38,7 @@ const chartsSelectedReducer = (
             ? (JSON.parse(action.payload.selectedPackage.valuesSchema) as JSONSchemaType<any>)
             : ({} as JSONSchemaType<any>),
       };
-    case getType(actions.charts.receiveChartVersions):
+    case getType(actions.charts.receiveAvailablePackageVersions):
       return {
         ...state,
         error: undefined,
@@ -77,7 +77,7 @@ const chartsReducer = (
         ),
       };
     }
-    case getType(actions.charts.receiveChartVersions):
+    case getType(actions.charts.receiveAvailablePackageVersions):
       return {
         ...state,
         isFetching: false,

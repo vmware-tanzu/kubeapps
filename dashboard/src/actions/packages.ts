@@ -28,9 +28,12 @@ export const receiveAvailablePackageSummaries = createAction(
   },
 );
 
-export const receiveChartVersions = createAction("RECEIVE_CHART_VERSIONS", resolve => {
-  return (versions: GetAvailablePackageVersionsResponse) => resolve(versions);
-});
+export const receiveAvailablePackageVersions = createAction(
+  "RECEIVE_AVAILABLE_PACKAGE_VERSIONS",
+  resolve => {
+    return (versions: GetAvailablePackageVersionsResponse) => resolve(versions);
+  },
+);
 
 export const errorChart = createAction("ERROR_CHART", resolve => {
   return (err: Error) => resolve(err);
@@ -61,7 +64,7 @@ const allActions = [
   errorChart,
   clearErrorChart,
   receiveAvailablePackageSummaries,
-  receiveChartVersions,
+  receiveAvailablePackageVersions,
   selectChartVersion,
   requestDeployedChartVersion,
   receiveDeployedChartVersion,
@@ -104,7 +107,7 @@ export function fetchAvailablePackageVersions(
     dispatch(requestAvailablePackageSummaries());
     try {
       const response = await PackagesService.getAvailablePackageVersions(availablePackageReference);
-      dispatch(receiveChartVersions(response));
+      dispatch(receiveAvailablePackageVersions(response));
     } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
