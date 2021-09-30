@@ -1,6 +1,6 @@
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import ChartHeader from "components/ChartView/ChartHeader";
+import PackageHeader from "components/PackageHeader/PackageHeader";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
@@ -161,7 +161,7 @@ export default function DeploymentForm() {
   }
   return (
     <section>
-      <ChartHeader
+      <PackageHeader
         chartAttrs={availablePackageDetail}
         versions={versions}
         onSelect={selectVersion}

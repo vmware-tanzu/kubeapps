@@ -5,7 +5,7 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import ChartHeader from "./ChartHeader";
+import PackageHeader from "./PackageHeader";
 const testProps: any = {
   chartAttrs: {
     shortDescription: "A Test Chart",
@@ -41,17 +41,17 @@ const testProps: any = {
 };
 
 it("renders a header for the chart", () => {
-  const wrapper = mount(<ChartHeader {...testProps} />);
+  const wrapper = mount(<PackageHeader {...testProps} />);
   expect(wrapper.text()).toContain("testrepo/test");
 });
 
 it("displays the appVersion", () => {
-  const wrapper = mount(<ChartHeader {...testProps} />);
+  const wrapper = mount(<PackageHeader {...testProps} />);
   expect(wrapper.text()).toContain("1.2.3");
 });
 
 it("uses the icon", () => {
-  const wrapper = mount(<ChartHeader {...testProps} />);
+  const wrapper = mount(<PackageHeader {...testProps} />);
   const icon = wrapper.find("img").filterWhere(i => i.prop("alt") === "icon");
   expect(icon.exists()).toBe(true);
   expect(icon.props()).toMatchObject({ src: "api/assetsvc/test.jpg" });
@@ -68,7 +68,7 @@ it("uses the first version as default in the select input", () => {
       appVersion: "10.0.0",
     },
   ];
-  const wrapper = mount(<ChartHeader {...testProps} versions={versions} />);
+  const wrapper = mount(<PackageHeader {...testProps} versions={versions} />);
   expect(wrapper.find("select").prop("value")).toBe("1.2.3");
 });
 
@@ -85,6 +85,8 @@ it("uses the current version as default in the select input", () => {
       },
     },
   ];
-  const wrapper = mount(<ChartHeader {...testProps} versions={versions} currentVersion="1.2.4" />);
+  const wrapper = mount(
+    <PackageHeader {...testProps} versions={versions} currentVersion="1.2.4" />,
+  );
   expect(wrapper.find("select").prop("value")).toBe("1.2.4");
 });

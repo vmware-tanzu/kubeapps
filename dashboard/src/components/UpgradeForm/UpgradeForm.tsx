@@ -1,7 +1,7 @@
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import ChartHeader from "components/ChartView/ChartHeader";
-import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
+import PackageHeader from "components/PackageHeader/PackageHeader";
+import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
@@ -217,7 +217,7 @@ function UpgradeForm({
           <></>
         ) : (
           <>
-            <ChartHeader
+            <PackageHeader
               releaseName={releaseName}
               chartAttrs={availablePackageDetail}
               versions={versions}
@@ -240,7 +240,7 @@ function UpgradeForm({
                       <label className="centered deployment-form-label deployment-form-label-text-param">
                         Upgrade to Version
                       </label>
-                      <ChartVersionSelector
+                      <PackageVersionSelector
                         versions={versions}
                         selectedVersion={pkgVersion}
                         onSelect={selectVersion}

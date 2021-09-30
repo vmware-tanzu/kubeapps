@@ -1,4 +1,4 @@
-import AvailablePackageMaintainers from "components/ChartView/AvailablePackageMaintainers";
+import AvailablePackageMaintainers from "components/PackageHeader/AvailablePackageMaintainers";
 import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 interface AvailablePackageDetailExcerptProps {

@@ -15,7 +15,7 @@ import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChartState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
-import ChartView from "./ChartView";
+import PackageView from "./PackageView";
 
 const defaultProps = {
   chartID: "testrepo/test",
@@ -139,7 +139,7 @@ it("triggers the fetchChartVersions when mounting", () => {
     getStore(defaultState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -158,7 +158,7 @@ describe("when receiving new props", () => {
       getStore(defaultState),
       <Router history={history}>
         <Route path={routePath}>
-          <ChartView />
+          <PackageView />
         </Route>
       </Router>,
     );
@@ -181,7 +181,7 @@ it("behaves as a loading component when fetching is false but no chart is availa
     }),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -193,7 +193,7 @@ it("behaves as a loading component when fetching is true and chart is available"
     getStore({ ...defaultState, charts: { ...defaultChartsState, isFetching: false } }),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -208,7 +208,7 @@ it("does not render the app version, home and sources sections if not set", () =
     }),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -223,7 +223,7 @@ it("renders the app version when set", () => {
     getStore(defaultState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -236,7 +236,7 @@ it("renders the home link when set", () => {
     getStore(defaultState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -290,7 +290,7 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
         }),
         <Router history={history}>
           <Route path={routePath}>
-            <ChartView />
+            <PackageView />
           </Route>
         </Router>,
       );
@@ -311,7 +311,7 @@ it("renders the sources links when set", () => {
     }),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -341,7 +341,7 @@ describe("renders errors", () => {
       }),
       <Router history={history}>
         <Route path={routePath}>
-          <ChartView />
+          <PackageView />
         </Route>
       </Router>,
     );

@@ -17,8 +17,8 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import ChartHeader from "./ChartHeader";
-import ChartReadme from "./ChartReadme";
+import PackageHeader from "./PackageHeader";
+import PackageReadme from "./PackageReadme";
 
 interface IRouteParams {
   cluster: string;
@@ -31,7 +31,7 @@ interface IRouteParams {
   version?: string;
 }
 
-export default function ChartView() {
+export default function PackageView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const {
     cluster,
@@ -106,7 +106,7 @@ export default function ChartView() {
   return (
     <section>
       <div>
-        <ChartHeader
+        <PackageHeader
           chartAttrs={availablePackageDetail}
           versions={versions}
           onSelect={selectVersion}
@@ -136,7 +136,7 @@ export default function ChartView() {
             <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
           </Column>
           <Column span={9}>
-            <ChartReadme readme={readme} error={readmeError} />
+            <PackageReadme readme={readme} error={readmeError} />
             <div className="after-readme-button">
               <Link
                 to={app.apps.new(

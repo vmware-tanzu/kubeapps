@@ -6,10 +6,10 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 import placeholder from "../../placeholder.png";
-import "./ChartHeader.css";
-import ChartVersionSelector from "./ChartVersionSelector";
+import "./PackageHeader.css";
+import PackageVersionSelector from "./PackageVersionSelector";
 
-interface IChartHeaderProps {
+interface IPackageHeaderProps {
   chartAttrs: AvailablePackageDetail;
   versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -19,7 +19,7 @@ interface IChartHeaderProps {
   deployButton?: JSX.Element;
 }
 
-export default function ChartHeader({
+export default function PackageHeader({
   chartAttrs,
   versions,
   onSelect,
@@ -27,7 +27,7 @@ export default function ChartHeader({
   currentVersion,
   deployButton,
   selectedVersion,
-}: IChartHeaderProps) {
+}: IPackageHeaderProps) {
   return (
     <PageHeader
       title={
@@ -65,7 +65,7 @@ export default function ChartHeader({
               .{" "}
             </Tooltip>
           </label>
-          <ChartVersionSelector
+          <PackageVersionSelector
             versions={versions}
             onSelect={onSelect}
             selectedVersion={selectedVersion}

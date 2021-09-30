@@ -1,5 +1,5 @@
 import actions from "actions";
-import ChartHeader from "components/ChartView/ChartHeader";
+import PackageHeader from "components/PackageHeader/PackageHeader";
 import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
@@ -86,7 +86,7 @@ describe("renders an error", () => {
       <DeploymentForm />,
     );
     expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.find(ChartHeader)).not.toExist();
+    expect(wrapper.find(PackageHeader)).not.toExist();
   });
 
   it("forwards the appValues when modified", () => {

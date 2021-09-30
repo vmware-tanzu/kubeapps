@@ -4,7 +4,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 
-interface IChartHeaderProps {
+interface IPackageVersionSelectorProps {
   chartAttrs: AvailablePackageDetail;
   versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -14,12 +14,12 @@ interface IChartHeaderProps {
   deployButton?: JSX.Element;
 }
 
-export default function ChartVersionSelector({
+export default function PackageVersionSelector({
   versions,
   onSelect,
   currentVersion,
   selectedVersion,
-}: IChartHeaderProps) {
+}: IPackageVersionSelectorProps) {
   return (
     <div className="clr-select-wrapper">
       <select
