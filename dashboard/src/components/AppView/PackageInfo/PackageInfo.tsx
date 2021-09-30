@@ -12,8 +12,8 @@ function PackageInfo({ installedPackageDetail, availablePackageDetail }: IPackag
   return (
     <section className="left-menu">
       {installedPackageDetail && (
-        <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
-          <h5 className="left-menu-subsection-title" id="chartinfo-versions">
+        <section className="left-menu-subsection" aria-labelledby="packageinfo-versions">
+          <h5 className="left-menu-subsection-title" id="packageinfo-versions">
             Versions
           </h5>
           <div>
@@ -31,8 +31,8 @@ function PackageInfo({ installedPackageDetail, availablePackageDetail }: IPackag
       )}
       {availablePackageDetail && (
         <>
-          <section className="left-menu-subsection" aria-labelledby="chartinfo-description">
-            <h5 className="left-menu-subsection-title" id="chartinfo-description">
+          <section className="left-menu-subsection" aria-labelledby="packageinfo-description">
+            <h5 className="left-menu-subsection-title" id="packageinfo-description">
               Description
             </h5>
             <span>{availablePackageDetail.shortDescription}</span>

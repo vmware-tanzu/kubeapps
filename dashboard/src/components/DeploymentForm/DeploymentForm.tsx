@@ -107,7 +107,7 @@ export default function DeploymentForm() {
     setDeploying(true);
     if (availablePackageDetail) {
       const deployed = await dispatch(
-        actions.apps.deployChart(
+        actions.apps.deployPackage(
           cluster,
           namespace,
           availablePackageDetail,

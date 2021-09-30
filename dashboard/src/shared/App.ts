@@ -53,7 +53,7 @@ export class App {
 
   public static async upgrade(
     installedPackageRef: InstalledPackageReference,
-    chartNamespace: string,
+    packageNamespace: string,
     availablePackageDetail: AvailablePackageDetail,
     values?: string,
   ) {
@@ -65,7 +65,7 @@ export class App {
     const { data } = await axiosWithAuth.put(endpoint, {
       appRepositoryResourceName:
         availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
-      appRepositoryResourceNamespace: chartNamespace,
+      appRepositoryResourceNamespace: packageNamespace,
       chartName: decodeURIComponent(availablePackageDetail.name),
       releaseName: installedPackageRef.identifier,
       values,

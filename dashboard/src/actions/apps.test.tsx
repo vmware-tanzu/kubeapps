@@ -167,14 +167,14 @@ describe("delete applications", () => {
   });
 });
 
-describe("deploy chart", () => {
+describe("deploy package", () => {
   beforeEach(() => {
     App.create = jest.fn();
   });
 
   it("returns true if namespace is correct and deployment is successful", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart(
+      actions.apps.deployPackage(
         "target-cluster",
         "target-namespace",
         {
@@ -202,7 +202,7 @@ describe("deploy chart", () => {
 
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart(
+      actions.apps.deployPackage(
         "target-cluster",
         "default",
         { name: "my-version" } as AvailablePackageDetail,

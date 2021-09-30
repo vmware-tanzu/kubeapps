@@ -86,7 +86,7 @@ export function getApp(
       const legacyResponse = await App.getRelease(installedPackageRef);
       // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
-      // For local packages with no references to any available packages (eg.a local chart for development)
+      // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
       let availablePackageDetail;
       try {
@@ -151,7 +151,7 @@ export function fetchApps(
   };
 }
 
-export function deployChart(
+export function deployPackage(
   targetCluster: string,
   targetNamespace: string,
   availablePackageDetail: AvailablePackageDetail,
@@ -188,7 +188,7 @@ export function deployChart(
 export function upgradeApp(
   installedPackageRef: InstalledPackageReference,
   availablePackageDetail: AvailablePackageDetail,
-  chartNamespace: string,
+  packageNamespace: string,
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
@@ -206,7 +206,7 @@ export function upgradeApp(
           );
         }
       }
-      await App.upgrade(installedPackageRef, chartNamespace, availablePackageDetail, values);
+      await App.upgrade(installedPackageRef, packageNamespace, availablePackageDetail, values);
       dispatch(receiveUpgradeApp());
       return true;
     } catch (e: any) {
