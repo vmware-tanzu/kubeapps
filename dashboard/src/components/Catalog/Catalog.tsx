@@ -253,7 +253,7 @@ export default function Catalog() {
   };
 
   const forceRetry = () => {
-    dispatch(actions.charts.clearErrorChart());
+    dispatch(actions.charts.clearErrorPackage());
     dispatch(
       actions.charts.fetchAvailablePackageSummaries(
         cluster,

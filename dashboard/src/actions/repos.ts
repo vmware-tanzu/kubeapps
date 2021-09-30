@@ -17,7 +17,7 @@ import {
   NotFoundError,
 } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-import { errorChart } from "./packages";
+import { errorPackage } from "./packages";
 
 const { createAction } = deprecated;
 
@@ -88,7 +88,7 @@ const allActions = [
   receiveRepo,
   receiveRepos,
   receiveReposSecret,
-  errorChart,
+  errorPackage,
   requestRepo,
   redirect,
   redirected,
@@ -375,7 +375,7 @@ export function findPackageInRepo(
         return true;
       } catch (e: any) {
         dispatch(
-          errorChart(
+          errorPackage(
             new NotFoundError(
               `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
             ),
@@ -385,7 +385,7 @@ export function findPackageInRepo(
       }
     } else {
       dispatch(
-        errorChart(
+        errorPackage(
           new NotFoundError(
             `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
           ),

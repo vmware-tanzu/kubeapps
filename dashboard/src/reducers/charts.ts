@@ -44,9 +44,9 @@ const chartsSelectedReducer = (
         error: undefined,
         versions: action.payload.packageAppVersions,
       };
-    case getType(actions.charts.errorChart):
+    case getType(actions.charts.errorPackage):
       return { ...state, error: action.payload };
-    case getType(actions.charts.clearErrorChart):
+    case getType(actions.charts.clearErrorPackage):
       return { ...state, error: undefined };
     case getType(actions.charts.resetChartVersion):
       return initialState.selected;
@@ -110,7 +110,7 @@ const chartsReducer = (
         hasFinishedFetching: false,
         items: [],
       };
-    case getType(actions.charts.errorChart):
+    case getType(actions.charts.errorPackage):
       return {
         ...state,
         isFetching: false,
@@ -119,7 +119,7 @@ const chartsReducer = (
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.resetChartVersion):
-    case getType(actions.charts.clearErrorChart):
+    case getType(actions.charts.clearErrorPackage):
       return {
         ...state,
         selected: chartsSelectedReducer(state.selected, action),

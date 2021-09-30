@@ -35,11 +35,11 @@ export const receiveAvailablePackageVersions = createAction(
   },
 );
 
-export const errorChart = createAction("ERROR_CHART", resolve => {
+export const errorPackage = createAction("ERROR_PACKAGE", resolve => {
   return (err: Error) => resolve(err);
 });
 
-export const clearErrorChart = createAction("CLEAR_ERROR_CHART");
+export const clearErrorPackage = createAction("CLEAR_ERROR_PACKAGE");
 
 export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve => {
   return (selectedPackage: AvailablePackageDetail) => resolve({ selectedPackage });
@@ -61,8 +61,8 @@ export const resetRequestCharts = createAction("RESET_REQUEST_CHARTS");
 
 const allActions = [
   requestAvailablePackageSummaries,
-  errorChart,
-  clearErrorChart,
+  errorPackage,
+  clearErrorPackage,
   receiveAvailablePackageSummaries,
   receiveAvailablePackageVersions,
   selectChartVersion,
@@ -95,7 +95,7 @@ export function fetchAvailablePackageSummaries(
       );
       dispatch(receiveAvailablePackageSummaries({ response, page }));
     } catch (e: any) {
-      dispatch(errorChart(new FetchError(e.message)));
+      dispatch(errorPackage(new FetchError(e.message)));
     }
   };
 }
@@ -109,7 +109,7 @@ export function fetchAvailablePackageVersions(
       const response = await PackagesService.getAvailablePackageVersions(availablePackageReference);
       dispatch(receiveAvailablePackageVersions(response));
     } catch (e: any) {
-      dispatch(errorChart(new FetchError(e.message)));
+      dispatch(errorPackage(new FetchError(e.message)));
     }
   };
 }
@@ -127,10 +127,10 @@ export function fetchAvailablePackageDetail(
       if (response.availablePackageDetail?.version?.pkgVersion) {
         dispatch(selectChartVersion(response.availablePackageDetail));
       } else {
-        dispatch(errorChart(new FetchError("could not find package version")));
+        dispatch(errorPackage(new FetchError("could not find package version")));
       }
     } catch (e: any) {
-      dispatch(errorChart(new FetchError(e.message)));
+      dispatch(errorPackage(new FetchError(e.message)));
     }
   };
 }
@@ -156,7 +156,7 @@ export function fetchDeployedAvailablePackageDetail(
         );
       }
     } catch (e: any) {
-      dispatch(errorChart(new FetchError(e.message)));
+      dispatch(errorPackage(new FetchError(e.message)));
     }
   };
 }

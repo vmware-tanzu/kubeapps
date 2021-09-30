@@ -1043,7 +1043,7 @@ describe("findPackageInRepo", () => {
     } as AvailablePackageReference);
   });
 
-  it("dispatches requestRepo and errorChart if error fetching", async () => {
+  it("dispatches requestRepo and errorPackage if error fetching", async () => {
     PackagesService.getAvailablePackageVersions = jest.fn(() => {
       throw new Error();
     });
@@ -1053,7 +1053,7 @@ describe("findPackageInRepo", () => {
         type: getType(repoActions.requestRepo),
       },
       {
-        type: getType(actions.charts.errorChart),
+        type: getType(actions.charts.errorPackage),
         payload: new NotFoundError(
           "Package my-repo/my-chart not found in the repository other-namespace.",
         ),
