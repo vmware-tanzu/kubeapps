@@ -18,7 +18,7 @@ export const initialState: IPackageState = {
   size: 20,
 };
 
-const chartsSelectedReducer = (
+const selectedPackageReducer = (
   state: IPackageState["selected"],
   action: PackagesAction | NamespaceAction,
 ): IPackageState["selected"] => {
@@ -55,7 +55,7 @@ const chartsSelectedReducer = (
   return state;
 };
 
-const chartsReducer = (
+const packageReducer = (
   state: IPackageState = initialState,
   action: PackagesAction | NamespaceAction,
 ): IPackageState => {
@@ -83,19 +83,19 @@ const chartsReducer = (
       return {
         ...state,
         isFetching: false,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
     case getType(actions.packages.requestSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: true,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
     case getType(actions.packages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
     case getType(actions.packages.requestDeployedAvailablePackageDetail):
       return {
@@ -124,16 +124,16 @@ const chartsReducer = (
         isFetching: false,
         hasFinishedFetching: false,
         items: state.items,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
     case getType(actions.packages.resetSelectedAvailablePackageDetail):
     case getType(actions.packages.clearErrorPackage):
       return {
         ...state,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
   }
   return state;
 };
 
-export default chartsReducer;
+export default packageReducer;

@@ -4,7 +4,7 @@ import { combineReducers } from "redux";
 import { IStoreState } from "shared/types";
 import appsReducer from "./apps";
 import authReducer from "./auth";
-import chartsReducer from "./packages";
+import packageReducer from "./packages";
 import clusterReducer from "./cluster";
 import configReducer from "./config";
 import kubeReducer from "./kube";
@@ -16,7 +16,7 @@ const rootReducer = (history: History) =>
     router: connectRouter(history),
     apps: appsReducer,
     auth: authReducer,
-    packages: chartsReducer,
+    packages: packageReducer,
     config: configReducer,
     kube: kubeReducer,
     clusters: clusterReducer,
