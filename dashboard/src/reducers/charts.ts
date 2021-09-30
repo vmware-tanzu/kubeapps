@@ -60,7 +60,7 @@ const chartsReducer = (
   action: ChartsAction | NamespaceAction,
 ): IChartState => {
   switch (action.type) {
-    case getType(actions.charts.requestCharts):
+    case getType(actions.charts.requestAvailablePackageSummaries):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts): {
       const isLastPage =

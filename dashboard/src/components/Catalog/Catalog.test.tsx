@@ -410,7 +410,6 @@ describe("pagination and chart fetching", () => {
   it("sets the initial state page to 0 before fetching charts", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
-    // const resetRequestCharts = jest.fn();
 
     const charts = {
       ...defaultChartState,
@@ -438,14 +437,11 @@ describe("pagination and chart fetching", () => {
       20,
       "",
     );
-    // TODO(agamez): check whether it should be called
-    // expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
 
   it("sets the state page when fetching charts", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
-    // const resetRequestCharts = jest.fn();
 
     const charts = {
       ...defaultChartState,
@@ -472,14 +468,11 @@ describe("pagination and chart fetching", () => {
       20,
       "",
     );
-    // TODO(agamez): check whether it should be called
-    // expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
   it("items are translated to CatalogItems after fetching charts", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
-    // const resetRequestCharts = jest.fn();
 
     const charts = {
       ...defaultChartState,
@@ -506,8 +499,6 @@ describe("pagination and chart fetching", () => {
       20,
       "",
     );
-    // TODO(agamez): check whether it should be called
-    // expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
   describe("pagination", () => {

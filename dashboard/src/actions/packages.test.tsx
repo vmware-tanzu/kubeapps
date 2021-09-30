@@ -95,7 +95,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedPage: 1,
     requestedQuery: "foo",
     expectedActions: [
-      { type: getType(actions.charts.requestCharts), payload: 1 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
@@ -120,7 +120,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 1,
     expectedActions: [
-      { type: getType(actions.charts.requestCharts), payload: 1 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
@@ -145,7 +145,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
-      { type: getType(actions.charts.requestCharts), payload: 2 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 2 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
@@ -170,7 +170,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 3,
     expectedActions: [
-      { type: getType(actions.charts.requestCharts), payload: 3 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 3 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
@@ -195,7 +195,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
-      { type: getType(actions.charts.requestCharts), payload: 2 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 2 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
@@ -220,7 +220,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 4,
     expectedActions: [
-      { type: getType(actions.charts.requestCharts), payload: 4 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 4 },
       {
         type: getType(actions.charts.receiveCharts),
         payload: {
@@ -264,7 +264,7 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a 404 error", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts), payload: 1 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
       {
         type: getType(actions.charts.errorChart),
         payload: new FetchError("could not find chart"),
@@ -290,7 +290,7 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a generic error", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts), payload: 1 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
       { type: getType(actions.charts.errorChart), payload: new Error("something went wrong") },
     ];
     const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() => {
@@ -313,7 +313,7 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a generic error and it is cleared later", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts), payload: 1 },
+      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
       { type: getType(actions.charts.errorChart), payload: new Error("something went wrong") },
       { type: getType(actions.charts.clearErrorChart) },
     ];
@@ -354,7 +354,7 @@ describe("fetchAvailablePackageVersions", () => {
 
   it("fetches chart versions", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestCharts) },
+      { type: getType(actions.charts.requestAvailablePackageSummaries) },
       { type: getType(actions.charts.receiveChartVersions), payload: availableVersionsResponse },
     ];
     await store.dispatch(

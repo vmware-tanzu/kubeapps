@@ -71,9 +71,9 @@ describe("chartReducer", () => {
     ).toEqual({ ...initialState });
   });
 
-  it("requestCharts (without page)", () => {
+  it("requestAvailablePackageSummaries (without page)", () => {
     const state = chartsReducer(undefined, {
-      type: getType(actions.charts.requestCharts) as any,
+      type: getType(actions.charts.requestAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
       ...initialState,
@@ -81,9 +81,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("requestCharts (with page)", () => {
+  it("requestAvailablePackageSummaries (with page)", () => {
     const state = chartsReducer(undefined, {
-      type: getType(actions.charts.requestCharts) as any,
+      type: getType(actions.charts.requestAvailablePackageSummaries) as any,
       payload: 2,
     });
     expect(state).toEqual({
@@ -220,9 +220,9 @@ describe("chartReducer", () => {
     expect(state2.items.length).toBe(2);
   });
 
-  it("requestCharts and receiveCharts with multiple pages", () => {
+  it("requestAvailablePackageSummaries and receiveCharts with multiple pages", () => {
     const stateReq1 = chartsReducer(initialState, {
-      type: getType(actions.charts.requestCharts) as any,
+      type: getType(actions.charts.requestAvailablePackageSummaries) as any,
       payload: 1,
     });
     expect(stateReq1).toEqual({
@@ -250,7 +250,7 @@ describe("chartReducer", () => {
       hasFinishedFetching: false,
     });
     const stateReq2 = chartsReducer(stateRec1, {
-      type: getType(actions.charts.requestCharts) as any,
+      type: getType(actions.charts.requestAvailablePackageSummaries) as any,
       payload: 2,
     });
     expect(stateReq2).toEqual({
@@ -279,7 +279,7 @@ describe("chartReducer", () => {
       items: [availablePackageSummary1, availablePackageSummary2],
     });
     const stateReq3 = chartsReducer(stateRec2, {
-      type: getType(actions.charts.requestCharts) as any,
+      type: getType(actions.charts.requestAvailablePackageSummaries) as any,
       payload: 3,
     });
     expect(stateReq3).toEqual({

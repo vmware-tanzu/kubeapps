@@ -10,9 +10,12 @@ import { FetchError, IReceiveChartsActionPayload, IStoreState } from "../shared/
 
 const { createAction } = deprecated;
 
-export const requestCharts = createAction("REQUEST_CHARTS", resolve => {
-  return (page?: number) => resolve(page);
-});
+export const requestAvailablePackageSummaries = createAction(
+  "REQUEST_AVAILABLE_PACKAGE_SUMMARIES",
+  resolve => {
+    return (page?: number) => resolve(page);
+  },
+);
 
 export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
   return (payload: IReceiveChartsActionPayload) => resolve(payload);
@@ -47,7 +50,7 @@ export const resetChartVersion = createAction("RESET_CHART_VERSION");
 export const resetRequestCharts = createAction("RESET_REQUEST_CHARTS");
 
 const allActions = [
-  requestCharts,
+  requestAvailablePackageSummaries,
   errorChart,
   clearErrorChart,
   receiveCharts,
@@ -70,7 +73,7 @@ export function fetchAvailablePackageSummaries(
   query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    dispatch(requestCharts(page));
+    dispatch(requestAvailablePackageSummaries(page));
     try {
       const response = await PackagesService.getAvailablePackageSummaries(
         cluster,
@@ -91,7 +94,7 @@ export function fetchAvailablePackageVersions(
   availablePackageReference?: AvailablePackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    dispatch(requestCharts());
+    dispatch(requestAvailablePackageSummaries());
     try {
       const response = await PackagesService.getAvailablePackageVersions(availablePackageReference);
       dispatch(receiveChartVersions(response));
