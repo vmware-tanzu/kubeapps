@@ -92,9 +92,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("single receiveCharts (first page) should be returned", () => {
+  it("single receiveAvailablePackageSummaries (first page) should be returned", () => {
     const state = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -113,11 +113,11 @@ describe("chartReducer", () => {
     });
   });
 
-  it("single receiveCharts (middle page) having visited the previous ones should be ignored", () => {
+  it("single receiveAvailablePackageSummaries (middle page) having visited the previous ones should be ignored", () => {
     const state = chartsReducer(
       { ...initialState },
       {
-        type: getType(actions.charts.receiveCharts) as any,
+        type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -137,11 +137,11 @@ describe("chartReducer", () => {
     });
   });
 
-  it("single receiveCharts (middle page) not visiting the previous ones should be ignored", () => {
+  it("single receiveAvailablePackageSummaries (middle page) not visiting the previous ones should be ignored", () => {
     const state = chartsReducer(
       { ...initialState },
       {
-        type: getType(actions.charts.receiveCharts) as any,
+        type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -161,13 +161,13 @@ describe("chartReducer", () => {
     });
   });
 
-  it("single receiveCharts (last page) not incrementing page", () => {
+  it("single receiveAvailablePackageSummaries (last page) not incrementing page", () => {
     const state = chartsReducer(
       {
         ...initialState,
       },
       {
-        type: getType(actions.charts.receiveCharts) as any,
+        type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -187,9 +187,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("two receiveCharts should add items (no dups)", () => {
+  it("two receiveAvailablePackageSummaries should add items (no dups)", () => {
     const state1 = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -200,7 +200,7 @@ describe("chartReducer", () => {
       } as IReceiveChartsActionPayload,
     });
     const state2 = chartsReducer(state1, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary2],
@@ -220,7 +220,7 @@ describe("chartReducer", () => {
     expect(state2.items.length).toBe(2);
   });
 
-  it("requestAvailablePackageSummaries and receiveCharts with multiple pages", () => {
+  it("requestAvailablePackageSummaries and receiveAvailablePackageSummaries with multiple pages", () => {
     const stateReq1 = chartsReducer(initialState, {
       type: getType(actions.charts.requestAvailablePackageSummaries) as any,
       payload: 1,
@@ -232,7 +232,7 @@ describe("chartReducer", () => {
       items: [],
     });
     const stateRec1 = chartsReducer(stateReq1, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -261,7 +261,7 @@ describe("chartReducer", () => {
       items: [availablePackageSummary1],
     });
     const stateRec2 = chartsReducer(stateReq2, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary2],
@@ -290,7 +290,7 @@ describe("chartReducer", () => {
       items: [availablePackageSummary1, availablePackageSummary2],
     });
     const stateRec3 = chartsReducer(stateReq3, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -311,9 +311,9 @@ describe("chartReducer", () => {
 
   // TODO(agamez): check whether or not we really want to filter out duplicates. If so, add some deleted tests back
 
-  it("two receiveCharts and then errorChart", () => {
+  it("two receiveAvailablePackageSummaries and then errorChart", () => {
     const state1 = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -324,7 +324,7 @@ describe("chartReducer", () => {
       } as IReceiveChartsActionPayload,
     });
     const state2 = chartsReducer(state1, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [],
@@ -347,7 +347,7 @@ describe("chartReducer", () => {
 
   it("clears errors after clearErrorChart", () => {
     const state1 = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
+      type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],

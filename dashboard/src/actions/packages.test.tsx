@@ -97,7 +97,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedActions: [
       { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
       {
-        type: getType(actions.charts.receiveCharts),
+        type: getType(actions.charts.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -122,7 +122,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedActions: [
       { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
       {
-        type: getType(actions.charts.receiveCharts),
+        type: getType(actions.charts.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -147,7 +147,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedActions: [
       { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 2 },
       {
-        type: getType(actions.charts.receiveCharts),
+        type: getType(actions.charts.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -172,7 +172,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedActions: [
       { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 3 },
       {
-        type: getType(actions.charts.receiveCharts),
+        type: getType(actions.charts.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -197,7 +197,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedActions: [
       { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 2 },
       {
-        type: getType(actions.charts.receiveCharts),
+        type: getType(actions.charts.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -222,7 +222,7 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     expectedActions: [
       { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 4 },
       {
-        type: getType(actions.charts.receiveCharts),
+        type: getType(actions.charts.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],

@@ -6,7 +6,11 @@ import {
 import { ThunkAction } from "redux-thunk";
 import { ActionType, deprecated } from "typesafe-actions";
 import PackagesService from "../shared/PackagesService";
-import { FetchError, IReceiveChartsActionPayload, IStoreState } from "../shared/types";
+import {
+  FetchError,
+  IReceiveChartsActionPayload as IReceiveAvailablePackageSummariesActionPayload,
+  IStoreState,
+} from "../shared/types";
 
 const { createAction } = deprecated;
 
@@ -17,9 +21,12 @@ export const requestAvailablePackageSummaries = createAction(
   },
 );
 
-export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
-  return (payload: IReceiveChartsActionPayload) => resolve(payload);
-});
+export const receiveAvailablePackageSummaries = createAction(
+  "RECEIVE_AVAILABLE_PACKAGE_SUMMARIES",
+  resolve => {
+    return (payload: IReceiveAvailablePackageSummariesActionPayload) => resolve(payload);
+  },
+);
 
 export const receiveChartVersions = createAction("RECEIVE_CHART_VERSIONS", resolve => {
   return (versions: GetAvailablePackageVersionsResponse) => resolve(versions);
@@ -53,7 +60,7 @@ const allActions = [
   requestAvailablePackageSummaries,
   errorChart,
   clearErrorChart,
-  receiveCharts,
+  receiveAvailablePackageSummaries,
   receiveChartVersions,
   selectChartVersion,
   requestDeployedChartVersion,
@@ -83,7 +90,7 @@ export function fetchAvailablePackageSummaries(
         size,
         query,
       );
-      dispatch(receiveCharts({ response, page }));
+      dispatch(receiveAvailablePackageSummaries({ response, page }));
     } catch (e: any) {
       dispatch(errorChart(new FetchError(e.message)));
     }
