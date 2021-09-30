@@ -104,7 +104,7 @@ const chartsReducer = (
           values: action.payload.availablePackageDetail.defaultValues,
         },
       };
-    case getType(actions.charts.resetRequestCharts):
+    case getType(actions.charts.resetAvailablePackageSummaries):
       return {
         ...state,
         hasFinishedFetching: false,

@@ -61,7 +61,7 @@ export const receiveDeployedAvailablePackageDetail = createAction(
 
 export const resetChartVersion = createAction("RESET_CHART_VERSION");
 
-export const resetRequestCharts = createAction("RESET_REQUEST_CHARTS");
+export const resetAvailablePackageSummaries = createAction("RESET_AVAILABLE_PACKAGE_SUMMARIES");
 
 const allActions = [
   requestAvailablePackageSummaries,
@@ -73,7 +73,7 @@ const allActions = [
   requestDeployedAvailablePackageDetail,
   receiveDeployedAvailablePackageDetail,
   resetChartVersion,
-  resetRequestCharts,
+  resetAvailablePackageSummaries,
 ];
 
 export type PackagesAction = ActionType<typeof allActions[number]>;

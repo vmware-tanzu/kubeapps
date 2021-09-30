@@ -189,7 +189,7 @@ export default function Catalog() {
   // detect changes in cluster/ns/repos/search and reset the current package list
   useEffect(() => {
     setPage(0);
-    dispatch(actions.charts.resetRequestCharts());
+    dispatch(actions.charts.resetAvailablePackageSummaries());
     dispatch(actions.charts.resetChartVersion());
   }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
 

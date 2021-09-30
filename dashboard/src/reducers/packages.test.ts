@@ -372,9 +372,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("resetRequestCharts resets to the initial", () => {
+  it("resetAvailablePackageSummaries resets to the initial", () => {
     const state = chartsReducer(undefined, {
-      type: getType(actions.charts.resetRequestCharts) as any,
+      type: getType(actions.charts.resetAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
       ...initialState,
