@@ -52,7 +52,10 @@ export const receiveSelectedAvailablePackageDetail = createAction(
 // Reset action
 export const resetSelectedAvailablePackageDetail = createAction("RESET_PACKAGE_VERSION");
 
-// No request action
+// Request action
+export const requestSelectedAvailablePackageVersions = createAction(
+  "REQUEST_SELECTED_AVAILABLE_PACKAGE_VERSIONS",
+);
 
 // Receive action
 export const receiveSelectedAvailablePackageVersions = createAction(
@@ -99,6 +102,7 @@ const allActions = [
   resetAvailablePackageSummaries,
   receiveSelectedAvailablePackageDetail,
   resetSelectedAvailablePackageDetail,
+  requestSelectedAvailablePackageVersions,
   receiveSelectedAvailablePackageVersions,
   requestDeployedAvailablePackageDetail,
   receiveDeployedAvailablePackageDetail,
@@ -138,7 +142,7 @@ export function fetchAvailablePackageVersions(
   availablePackageReference?: AvailablePackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
   return async dispatch => {
-    dispatch(requestAvailablePackageSummaries());
+    dispatch(requestSelectedAvailablePackageVersions());
     try {
       const response = await PackagesService.getAvailablePackageVersions(availablePackageReference);
       dispatch(receiveSelectedAvailablePackageVersions(response));

@@ -62,6 +62,8 @@ const chartsReducer = (
   switch (action.type) {
     case getType(actions.charts.requestAvailablePackageSummaries):
       return { ...state, isFetching: true };
+    case getType(actions.charts.requestSelectedAvailablePackageVersions):
+      return { ...state, isFetching: true };
     case getType(actions.charts.receiveAvailablePackageSummaries): {
       const isLastPage =
         action.payload.page >= parseInt(action.payload.response.nextPageToken) ||
