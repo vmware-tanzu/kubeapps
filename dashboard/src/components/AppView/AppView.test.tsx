@@ -23,7 +23,7 @@ import { DeleteError, FetchError, IResource } from "shared/types";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import AppNotes from "./AppNotes/AppNotes";
 import AppView from "./AppView";
-import ChartInfo from "./ChartInfo/ChartInfo";
+import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 
@@ -387,7 +387,7 @@ describe("AppView", () => {
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
       const wrapper = mountWrapper(getStore(validState), <AppView />);
-      expect(wrapper.find(ChartInfo)).toExist();
+      expect(wrapper.find(PackageInfo)).toExist();
       expect(wrapper.find(ApplicationStatusContainer)).toExist();
       expect(wrapper.find(".control-buttons")).toExist();
       expect(wrapper.find(AppNotes)).toExist();

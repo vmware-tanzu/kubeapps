@@ -2,13 +2,13 @@ import {
   AvailablePackageDetail,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import ChartUpdateInfo from "./ChartUpdateInfo";
-interface IChartInfoProps {
+import PackageUpdateInfo from "./PackageUpdateInfo";
+interface IPackageInfoProps {
   installedPackageDetail: InstalledPackageDetail;
   availablePackageDetail?: AvailablePackageDetail;
 }
 
-function ChartInfo({ installedPackageDetail, availablePackageDetail }: IChartInfoProps) {
+function PackageInfo({ installedPackageDetail, availablePackageDetail }: IPackageInfoProps) {
   return (
     <section className="left-menu">
       {installedPackageDetail && (
@@ -26,7 +26,7 @@ function ChartInfo({ installedPackageDetail, availablePackageDetail }: IChartInf
               Package Version: <strong>{installedPackageDetail.currentVersion?.pkgVersion}</strong>
             </span>
           </div>
-          <ChartUpdateInfo installedPackageDetail={installedPackageDetail} />
+          <PackageUpdateInfo installedPackageDetail={installedPackageDetail} />
         </section>
       )}
       {availablePackageDetail && (
@@ -43,4 +43,4 @@ function ChartInfo({ installedPackageDetail, availablePackageDetail }: IChartInf
   );
 }
 
-export default ChartInfo;
+export default PackageInfo;

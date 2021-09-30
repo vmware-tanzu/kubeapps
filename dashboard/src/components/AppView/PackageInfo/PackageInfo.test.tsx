@@ -13,7 +13,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import ChartInfo from "./ChartInfo";
+import PackageInfo from "./PackageInfo";
 
 const defaultProps = {
   installedPackageDetail: {
@@ -48,7 +48,7 @@ const defaultProps = {
 };
 
 it("renders an app item", () => {
-  const wrapper = mountWrapper(defaultStore, <ChartInfo {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <PackageInfo {...defaultProps} />);
   // Renders info about the description and versions
   const subsections = wrapper.find(".left-menu-subsection");
   expect(subsections).toHaveLength(2);
@@ -62,7 +62,7 @@ context("ChartUpdateInfo: when information about updates is available", () => {
     } as InstalledPackageDetail;
     const wrapper = mountWrapper(
       defaultStore,
-      <ChartInfo {...defaultProps} installedPackageDetail={appWithoutUpdates} />,
+      <PackageInfo {...defaultProps} installedPackageDetail={appWithoutUpdates} />,
     );
     expect(wrapper.find(".color-icon-success").text()).toContain("Up to date");
   });
@@ -76,7 +76,7 @@ context("ChartUpdateInfo: when information about updates is available", () => {
     } as InstalledPackageDetail;
     const wrapper = mountWrapper(
       defaultStore,
-      <ChartInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
+      <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
     expect(wrapper.find(Alert).text()).toContain("A new package version is available: 1.0.1");
   });
@@ -90,7 +90,7 @@ context("ChartUpdateInfo: when information about updates is available", () => {
     } as InstalledPackageDetail;
     const wrapper = mountWrapper(
       defaultStore,
-      <ChartInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
+      <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
     expect(wrapper.find(Alert).text()).toContain("A new app version is available: 10.1.0");
   });
@@ -104,7 +104,7 @@ context("ChartUpdateInfo: when information about updates is available", () => {
     } as InstalledPackageDetail;
     const wrapper = mountWrapper(
       defaultStore,
-      <ChartInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
+      <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
     expect(wrapper.find(Alert).text()).toContain("A new app version is available: latest");
   });
@@ -118,7 +118,7 @@ context("ChartUpdateInfo: when information about updates is available", () => {
     } as InstalledPackageDetail;
     const wrapper = mountWrapper(
       defaultStore,
-      <ChartInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
+      <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
     expect(wrapper.find(Alert).text()).toContain("A new package version is available: latest");
   });
