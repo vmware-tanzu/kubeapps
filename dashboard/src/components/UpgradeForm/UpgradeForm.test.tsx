@@ -112,7 +112,7 @@ const populatedProps = {
     schema: schema as any,
   } as IChartState["selected"],
   deployed: {
-    chartVersion: availablePkgDetails[0],
+    availablePackageDetail: availablePkgDetails[0],
     schema: schema as any,
     values: "foo:",
   } as IChartState["deployed"],
@@ -172,7 +172,7 @@ it("fetches the available versions", () => {
 
 it("fetches the current chart version even if there is already one in the state", () => {
   const deployed = {
-    chartVersion: availablePkgDetails[1],
+    availablePackageDetail: availablePkgDetails[1],
   };
 
   const selected = {
@@ -197,7 +197,7 @@ it("fetches the current chart version even if there is already one in the state"
       identifier: defaultProps.packageId,
       plugin: defaultProps.plugin,
     } as AvailablePackageReference,
-    deployed.chartVersion.version?.pkgVersion,
+    deployed.availablePackageDetail.version?.pkgVersion,
   );
 });
 

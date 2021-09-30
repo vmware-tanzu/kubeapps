@@ -55,8 +55,7 @@ export const requestDeployedAvailablePackageDetail = createAction(
 export const receiveDeployedAvailablePackageDetail = createAction(
   "RECEIVE_DEPLOYED_AVAILABLE_PACKAGE_DETAIL",
   resolve => {
-    return (chartVersion: AvailablePackageDetail, values?: string, schema?: string) =>
-      resolve({ chartVersion, values, schema });
+    return (availablePackageDetail: AvailablePackageDetail) => resolve({ availablePackageDetail });
   },
 );
 
@@ -152,13 +151,7 @@ export function fetchDeployedAvailablePackageDetail(
         version,
       );
       if (response.availablePackageDetail) {
-        dispatch(
-          receiveDeployedAvailablePackageDetail(
-            response.availablePackageDetail,
-            response.availablePackageDetail.defaultValues,
-            response.availablePackageDetail.valuesSchema,
-          ),
-        );
+        dispatch(receiveDeployedAvailablePackageDetail(response.availablePackageDetail));
       }
     } catch (e: any) {
       dispatch(errorPackage(new FetchError(e.message)));

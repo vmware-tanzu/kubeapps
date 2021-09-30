@@ -74,7 +74,7 @@ export interface IChartState {
     schema?: JSONSchemaType<any>;
   };
   deployed: {
-    chartVersion?: AvailablePackageDetail;
+    availablePackageDetail?: AvailablePackageDetail;
     values?: string;
     schema?: JSONSchemaType<any>;
   };

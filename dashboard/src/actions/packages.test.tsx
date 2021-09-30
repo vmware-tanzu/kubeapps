@@ -489,11 +489,7 @@ describe("fetchDeployedAvailablePackageDetail", () => {
       { type: getType(actions.charts.requestDeployedAvailablePackageDetail) },
       {
         type: getType(actions.charts.receiveDeployedAvailablePackageDetail),
-        payload: {
-          chartVersion: defaultAvailablePackageDetail,
-          schema: defaultAvailablePackageDetail.valuesSchema,
-          values: defaultAvailablePackageDetail.defaultValues,
-        },
+        payload: { availablePackageDetail: defaultAvailablePackageDetail },
       },
     ];
 

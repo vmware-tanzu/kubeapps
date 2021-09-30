@@ -99,9 +99,9 @@ const chartsReducer = (
         ...state,
         isFetching: false,
         deployed: {
-          chartVersion: action.payload.chartVersion,
-          schema: action.payload.schema as any,
-          values: action.payload.values,
+          availablePackageDetail: action.payload.availablePackageDetail,
+          schema: action.payload.availablePackageDetail.valuesSchema as any,
+          values: action.payload.availablePackageDetail.defaultValues,
         },
       };
     case getType(actions.charts.resetRequestCharts):

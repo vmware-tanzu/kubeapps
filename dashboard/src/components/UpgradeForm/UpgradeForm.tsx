@@ -126,7 +126,7 @@ function UpgradeForm({
           plugin: pluginObj,
           identifier: packageId,
         } as AvailablePackageReference,
-        deployed.chartVersion?.version?.pkgVersion,
+        deployed.availablePackageDetail?.version?.pkgVersion,
       ),
     );
   }, [
@@ -134,7 +134,7 @@ function UpgradeForm({
     cluster,
     repoNamespace,
     packageId,
-    deployed.chartVersion?.version?.pkgVersion,
+    deployed.availablePackageDetail?.version?.pkgVersion,
     pluginObj,
   ]);
 
@@ -222,7 +222,7 @@ function UpgradeForm({
               chartAttrs={availablePackageDetail}
               versions={versions}
               onSelect={selectVersion}
-              currentVersion={deployed.chartVersion?.version?.pkgVersion}
+              currentVersion={deployed.availablePackageDetail?.version?.pkgVersion}
               selectedVersion={pkgVersion}
             />
             <LoadingWrapper
