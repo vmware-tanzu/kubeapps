@@ -6,7 +6,7 @@ import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
 import { initialState as appsInitialState } from "reducers/apps";
 import { initialState as authInitialState } from "reducers/auth";
-import { initialState as chartsInitialState } from "reducers/charts";
+import { initialState as packagesInitialState } from "reducers/packages";
 import { initialState as clustersInitialState } from "reducers/cluster";
 import { initialState as configInitialState } from "reducers/config";
 import { initialState as kubeInitialState } from "reducers/kube";
@@ -22,7 +22,7 @@ const mockStore = configureMockStore([thunk]);
 export const initialState = {
   apps: cloneDeep(appsInitialState),
   auth: cloneDeep(authInitialState),
-  charts: cloneDeep(chartsInitialState),
+  charts: cloneDeep(packagesInitialState),
   config: {
     ...cloneDeep(configInitialState),
     kubeappsCluster: "default-cluster",

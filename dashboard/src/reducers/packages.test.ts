@@ -3,7 +3,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { IChartState, IReceiveChartsActionPayload } from "../shared/types";
-import chartsReducer from "./charts";
+import chartsReducer from "./packages";
 
 describe("chartReducer", () => {
   let initialState: IChartState;

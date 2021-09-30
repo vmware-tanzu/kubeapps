@@ -59,7 +59,7 @@ export interface IReceiveChartsActionPayload {
   page: number;
 }
 
-export interface IChartState {
+export interface IPackageState {
   isFetching: boolean;
   hasFinishedFetching: boolean;
   selected: {
@@ -305,7 +305,7 @@ export interface IStoreState {
   router: RouterState;
   apps: IAppState;
   auth: IAuthState;
-  charts: IChartState;
+  charts: IPackageState;
   config: IConfigState;
   kube: IKubeState;
   repos: IAppRepositoryState;

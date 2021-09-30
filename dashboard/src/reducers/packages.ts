@@ -1,12 +1,12 @@
 import { JSONSchemaType } from "ajv";
 import { uniqBy } from "lodash";
-import { IChartState } from "shared/types";
+import { IPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { ChartsAction } from "../actions/packages";
 import { NamespaceAction } from "../actions/namespace";
 
-export const initialState: IChartState = {
+export const initialState: IPackageState = {
   isFetching: false,
   hasFinishedFetching: false,
   items: [],
@@ -19,9 +19,9 @@ export const initialState: IChartState = {
 };
 
 const chartsSelectedReducer = (
-  state: IChartState["selected"],
+  state: IPackageState["selected"],
   action: ChartsAction | NamespaceAction,
-): IChartState["selected"] => {
+): IPackageState["selected"] => {
   switch (action.type) {
     case getType(actions.charts.selectAvailablePackageDetail):
       return {
@@ -56,9 +56,9 @@ const chartsSelectedReducer = (
 };
 
 const chartsReducer = (
-  state: IChartState = initialState,
+  state: IPackageState = initialState,
   action: ChartsAction | NamespaceAction,
-): IChartState => {
+): IPackageState => {
   switch (action.type) {
     case getType(actions.charts.requestAvailablePackageSummaries):
       return { ...state, isFetching: true };

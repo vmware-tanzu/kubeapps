@@ -4,7 +4,7 @@ import { combineReducers } from "redux";
 import { IStoreState } from "shared/types";
 import appsReducer from "./apps";
 import authReducer from "./auth";
-import chartsReducer from "./charts";
+import chartsReducer from "./packages";
 import clusterReducer from "./cluster";
 import configReducer from "./config";
 import kubeReducer from "./kube";

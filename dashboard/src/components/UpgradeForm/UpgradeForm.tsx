@@ -18,7 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { deleteValue, setValue } from "../../shared/schema";
-import { IChartState, IStoreState } from "../../shared/types";
+import { IPackageState, IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
@@ -34,8 +34,8 @@ export interface IUpgradeFormProps {
   releaseName: string;
   repoNamespace: string;
   error?: Error;
-  selected: IChartState["selected"];
-  deployed: IChartState["deployed"];
+  selected: IPackageState["selected"];
+  deployed: IPackageState["deployed"];
   plugin: Plugin;
 }
 
