@@ -1,17 +1,11 @@
-import {
-  AvailablePackageDetail,
-  PackageAppVersion,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageAppVersion } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 
 interface IPackageVersionSelectorProps {
-  chartAttrs: AvailablePackageDetail;
   versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
-  releaseName?: string;
   currentVersion?: string;
   selectedVersion?: string;
-  deployButton?: JSX.Element;
 }
 
 export default function PackageVersionSelector({

@@ -70,7 +70,6 @@ export default function PackageHeader({
             onSelect={onSelect}
             selectedVersion={selectedVersion}
             currentVersion={currentVersion}
-            chartAttrs={chartAttrs}
           />
         </>
       }

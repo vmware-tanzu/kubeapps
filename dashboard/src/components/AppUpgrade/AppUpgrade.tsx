@@ -2,7 +2,6 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import {
   AvailablePackageReference,
-  InstalledPackageDetail,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
@@ -11,29 +10,10 @@ import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { FetchError, IAppRepository, IPackageState, IStoreState, UpgradeError } from "shared/types";
+import { FetchError, IStoreState } from "shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
-
-export interface IAppUpgradeProps {
-  app?: InstalledPackageDetail;
-  appsIsFetching: boolean;
-  chartsIsFetching: boolean;
-  error?: FetchError | UpgradeError;
-  namespace: string;
-  cluster: string;
-  releaseName: string;
-  repoName?: string;
-  repoNamespace?: string;
-  selected: IPackageState["selected"];
-  deployed: IPackageState["deployed"];
-  reposIsFetching: boolean;
-  repoError?: Error;
-  chartsError: Error | undefined;
-  repo: IAppRepository;
-  repos: IAppRepository[];
-}
 
 interface IRouteParams {
   cluster: string;

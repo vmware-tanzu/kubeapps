@@ -245,7 +245,6 @@ function UpgradeForm({
                         selectedVersion={pkgVersion}
                         onSelect={selectVersion}
                         currentVersion={appCurrentVersion}
-                        chartAttrs={availablePackageDetail}
                       />
                     </div>
                     <DeploymentFormBody
