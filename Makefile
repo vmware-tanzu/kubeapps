@@ -1,4 +1,4 @@
-IMPORT_PATH:= github.com/kubeapps/kubeapps
+IMPORT_PATH:= github.com/coreweave/kubeapps
 GO = /usr/bin/env go
 GOFMT = /usr/bin/env gofmt
 IMAGE_TAG ?= dev-$(shell date +%FT%H-%M-%S-%Z)
@@ -16,17 +16,17 @@ IMG_MODIFIER ?=
 GO_PACKAGES = ./...
 # GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 
-all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/kubeops kubeapps/assetsvc kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis
+all: coreweave/dashboard coreweave/apprepository-controller coreweave/kubeops coreweave/assetsvc coreweave/asset-syncer coreweave/pinniped-proxy coreweave/kubeapps-apis
 
 # TODO(miguel) Create Makefiles per component
 # TODO(mnelson) Or at least don't send the whole repo as the context for each project.
 # Currently the go projects include the whole repository as the docker context
 # only because the shared pkg/ directories?
-kubeapps/%:
-	DOCKER_BUILDKIT=1 docker build -t kubeapps/$*$(IMG_MODIFIER):$(IMAGE_TAG) --build-arg "VERSION=${VERSION}" -f cmd/$*/Dockerfile .
+coreweave/%:
+	DOCKER_BUILDKIT=1 docker build -t coreweave/$*$(IMG_MODIFIER):$(IMAGE_TAG) --build-arg "VERSION=${VERSION}" -f cmd/$*/Dockerfile .
 
-kubeapps/dashboard:
-	docker build -t kubeapps/dashboard$(IMG_MODIFIER):$(IMAGE_TAG) -f dashboard/Dockerfile dashboard/
+coreweave/dashboard:
+	docker build -t coreweave/dashboard$(IMG_MODIFIER):$(IMAGE_TAG) -f dashboard/Dockerfile dashboard/
 
 test:
 	$(GO) test $(GO_PACKAGES)

@@ -44,7 +44,7 @@ parameters:
     default: "11.13.0-debian-10-r39"
   IMAGES_TO_PUSH:
     type: "string"
-    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
+    default: "coreweave/apprepository-controller coreweave/dashboard coreweave/asset-syncer coreweave/assetsvc coreweave/kubeops coreweave/pinniped-proxy coreweave/kubeapps-apis"
   CI_BOT_USERNAME:
     type: "string"
     default: "kubeapps-bot"
@@ -123,9 +123,9 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
-          <<: *build_on_master
+          <<: *build_always
       - GKE_1_20_MASTER:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - test_go
             - test_dashboard
@@ -136,7 +136,7 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - GKE_1_20_LATEST_RELEASE:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - test_go
             - test_dashboard
@@ -147,7 +147,7 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - GKE_1_19_MASTER:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - test_go
             - test_dashboard
@@ -158,7 +158,7 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - GKE_1_19_LATEST_RELEASE:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - test_go
             - test_dashboard
@@ -169,11 +169,11 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - push_images:
-          <<: *build_on_master
+          <<: *build_always
           requires:
             - local_e2e_tests
       - sync_chart_to_bitnami:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - local_e2e_tests
             - GKE_1_20_MASTER
@@ -181,7 +181,7 @@ workflows:
             - GKE_1_19_MASTER
             - GKE_1_19_LATEST_RELEASE
       - release:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - sync_chart_to_bitnami
             - local_e2e_tests
