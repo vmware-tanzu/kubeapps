@@ -113,8 +113,8 @@ const defaultState = {
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.charts = {
-    ...actions.charts,
+  actions.packages = {
+    ...actions.packages,
     fetchAvailablePackageVersions: jest.fn(),
     resetSelectedAvailablePackageDetail: jest.fn(),
     receiveSelectedAvailablePackageDetail: jest.fn(),
@@ -134,7 +134,7 @@ const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("triggers the fetchAvailablePackageVersions when mounting", () => {
   const spy = jest.fn();
-  actions.charts.fetchAvailablePackageVersions = spy;
+  actions.packages.fetchAvailablePackageVersions = spy;
   mountWrapper(
     getStore(defaultState),
     <Router history={history}>
@@ -153,7 +153,7 @@ it("triggers the fetchAvailablePackageVersions when mounting", () => {
 describe("when receiving new props", () => {
   it("finds and selects the chart version when version changes", () => {
     const spy = jest.fn();
-    actions.charts.fetchAndSelectAvailablePackageDetail = spy;
+    actions.packages.fetchAndSelectAvailablePackageDetail = spy;
     mountWrapper(
       getStore(defaultState),
       <Router history={history}>

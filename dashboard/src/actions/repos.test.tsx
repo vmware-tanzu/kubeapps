@@ -1053,7 +1053,7 @@ describe("findPackageInRepo", () => {
         type: getType(repoActions.requestRepo),
       },
       {
-        type: getType(actions.charts.createErrorPackage),
+        type: getType(actions.packages.createErrorPackage),
         payload: new NotFoundError(
           "Package my-repo/my-chart not found in the repository other-namespace.",
         ),

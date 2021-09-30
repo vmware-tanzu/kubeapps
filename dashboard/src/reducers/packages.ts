@@ -23,7 +23,7 @@ const chartsSelectedReducer = (
   action: PackagesAction | NamespaceAction,
 ): IPackageState["selected"] => {
   switch (action.type) {
-    case getType(actions.charts.receiveSelectedAvailablePackageDetail):
+    case getType(actions.packages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         error: undefined,
@@ -38,17 +38,17 @@ const chartsSelectedReducer = (
             ? (JSON.parse(action.payload.selectedPackage.valuesSchema) as JSONSchemaType<any>)
             : ({} as JSONSchemaType<any>),
       };
-    case getType(actions.charts.receiveSelectedAvailablePackageVersions):
+    case getType(actions.packages.receiveSelectedAvailablePackageVersions):
       return {
         ...state,
         error: undefined,
         versions: action.payload.packageAppVersions,
       };
-    case getType(actions.charts.createErrorPackage):
+    case getType(actions.packages.createErrorPackage):
       return { ...state, error: action.payload };
-    case getType(actions.charts.clearErrorPackage):
+    case getType(actions.packages.clearErrorPackage):
       return { ...state, error: undefined };
-    case getType(actions.charts.resetSelectedAvailablePackageDetail):
+    case getType(actions.packages.resetSelectedAvailablePackageDetail):
       return initialState.selected;
     default:
   }
@@ -60,11 +60,11 @@ const chartsReducer = (
   action: PackagesAction | NamespaceAction,
 ): IPackageState => {
   switch (action.type) {
-    case getType(actions.charts.requestAvailablePackageSummaries):
+    case getType(actions.packages.requestAvailablePackageSummaries):
       return { ...state, isFetching: true };
-    case getType(actions.charts.requestSelectedAvailablePackageVersions):
+    case getType(actions.packages.requestSelectedAvailablePackageVersions):
       return { ...state, isFetching: true };
-    case getType(actions.charts.receiveAvailablePackageSummaries): {
+    case getType(actions.packages.receiveAvailablePackageSummaries): {
       const isLastPage =
         action.payload.page >= parseInt(action.payload.response.nextPageToken) ||
         action.payload.response.nextPageToken === "";
@@ -79,30 +79,30 @@ const chartsReducer = (
         ),
       };
     }
-    case getType(actions.charts.receiveSelectedAvailablePackageVersions):
+    case getType(actions.packages.receiveSelectedAvailablePackageVersions):
       return {
         ...state,
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.requestSelectedAvailablePackageDetail):
+    case getType(actions.packages.requestSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: true,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.receiveSelectedAvailablePackageDetail):
+    case getType(actions.packages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.requestDeployedAvailablePackageDetail):
+    case getType(actions.packages.requestDeployedAvailablePackageDetail):
       return {
         ...state,
         deployed: {},
       };
-    case getType(actions.charts.receiveDeployedAvailablePackageDetail):
+    case getType(actions.packages.receiveDeployedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
@@ -112,13 +112,13 @@ const chartsReducer = (
           values: action.payload.availablePackageDetail.defaultValues,
         },
       };
-    case getType(actions.charts.resetAvailablePackageSummaries):
+    case getType(actions.packages.resetAvailablePackageSummaries):
       return {
         ...state,
         hasFinishedFetching: false,
         items: [],
       };
-    case getType(actions.charts.createErrorPackage):
+    case getType(actions.packages.createErrorPackage):
       return {
         ...state,
         isFetching: false,
@@ -126,8 +126,8 @@ const chartsReducer = (
         items: state.items,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.resetSelectedAvailablePackageDetail):
-    case getType(actions.charts.clearErrorPackage):
+    case getType(actions.packages.resetSelectedAvailablePackageDetail):
+    case getType(actions.packages.clearErrorPackage):
       return {
         ...state,
         selected: chartsSelectedReducer(state.selected, action),

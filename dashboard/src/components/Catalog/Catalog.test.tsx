@@ -300,7 +300,7 @@ describe("filters by the searched item", () => {
 
   it("filters modifying the search box", () => {
     const fetchAvailablePackageSummaries = jest.fn();
-    actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
     const mockDispatch = jest.fn();
     const mockUseEffect = jest.fn();
 
@@ -423,7 +423,7 @@ describe("filters by application type", () => {
 describe("pagination and chart fetching", () => {
   it("sets the initial state page to 0 before fetching charts", () => {
     const fetchAvailablePackageSummaries = jest.fn();
-    actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
     const packages = {
       ...defaultPackageState,
@@ -455,7 +455,7 @@ describe("pagination and chart fetching", () => {
 
   it("sets the state page when fetching charts", () => {
     const fetchAvailablePackageSummaries = jest.fn();
-    actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
     const packages = {
       ...defaultPackageState,
@@ -486,7 +486,7 @@ describe("pagination and chart fetching", () => {
 
   it("items are translated to CatalogItems after fetching charts", () => {
     const fetchAvailablePackageSummaries = jest.fn();
-    actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
     const packages = {
       ...defaultPackageState,

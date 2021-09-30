@@ -95,9 +95,9 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedPage: 1,
     requestedQuery: "foo",
     expectedActions: [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 1 },
       {
-        type: getType(actions.charts.receiveAvailablePackageSummaries),
+        type: getType(actions.packages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -120,9 +120,9 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 1,
     expectedActions: [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 1 },
       {
-        type: getType(actions.charts.receiveAvailablePackageSummaries),
+        type: getType(actions.packages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -145,9 +145,9 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 2 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 2 },
       {
-        type: getType(actions.charts.receiveAvailablePackageSummaries),
+        type: getType(actions.packages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -170,9 +170,9 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 3,
     expectedActions: [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 3 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 3 },
       {
-        type: getType(actions.charts.receiveAvailablePackageSummaries),
+        type: getType(actions.packages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -195,9 +195,9 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 2,
     expectedActions: [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 2 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 2 },
       {
-        type: getType(actions.charts.receiveAvailablePackageSummaries),
+        type: getType(actions.packages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -220,9 +220,9 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
     requestedRepos: repos,
     requestedPage: 4,
     expectedActions: [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 4 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 4 },
       {
-        type: getType(actions.charts.receiveAvailablePackageSummaries),
+        type: getType(actions.packages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
@@ -248,7 +248,7 @@ describe("fetchAvailablePackageSummaries", () => {
         .mockImplementation(mockGetAvailablePackageSummaries);
 
       await store.dispatch(
-        actions.charts.fetchAvailablePackageSummaries(
+        actions.packages.fetchAvailablePackageSummaries(
           cluster,
           namespace,
           tc.requestedRepos,
@@ -264,9 +264,9 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a 404 error", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 1 },
       {
-        type: getType(actions.charts.createErrorPackage),
+        type: getType(actions.packages.createErrorPackage),
         payload: new FetchError("could not find chart"),
       },
     ];
@@ -277,7 +277,7 @@ describe("fetchAvailablePackageSummaries", () => {
       .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
-      actions.charts.fetchAvailablePackageSummaries(
+      actions.packages.fetchAvailablePackageSummaries(
         cluster,
         namespace,
         "foo",
@@ -290,9 +290,9 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a generic error", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 1 },
       {
-        type: getType(actions.charts.createErrorPackage),
+        type: getType(actions.packages.createErrorPackage),
         payload: new Error("something went wrong"),
       },
     ];
@@ -303,7 +303,7 @@ describe("fetchAvailablePackageSummaries", () => {
       .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
-      actions.charts.fetchAvailablePackageSummaries(
+      actions.packages.fetchAvailablePackageSummaries(
         cluster,
         namespace,
         "foo",
@@ -316,12 +316,12 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a generic error and it is cleared later", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
+      { type: getType(actions.packages.requestAvailablePackageSummaries), payload: 1 },
       {
-        type: getType(actions.charts.createErrorPackage),
+        type: getType(actions.packages.createErrorPackage),
         payload: new Error("something went wrong"),
       },
-      { type: getType(actions.charts.clearErrorPackage) },
+      { type: getType(actions.packages.clearErrorPackage) },
     ];
     const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() => {
       throw new Error("something went wrong");
@@ -330,7 +330,7 @@ describe("fetchAvailablePackageSummaries", () => {
       .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
-      actions.charts.fetchAvailablePackageSummaries(
+      actions.packages.fetchAvailablePackageSummaries(
         cluster,
         namespace,
         "foo",
@@ -338,7 +338,7 @@ describe("fetchAvailablePackageSummaries", () => {
         defaultSize,
       ),
     );
-    await store.dispatch(actions.charts.clearErrorPackage());
+    await store.dispatch(actions.packages.clearErrorPackage());
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -360,14 +360,14 @@ describe("fetchAvailablePackageVersions", () => {
 
   it("fetches chart versions", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestSelectedAvailablePackageVersions) },
+      { type: getType(actions.packages.requestSelectedAvailablePackageVersions) },
       {
-        type: getType(actions.charts.receiveSelectedAvailablePackageVersions),
+        type: getType(actions.packages.receiveSelectedAvailablePackageVersions),
         payload: availableVersionsResponse,
       },
     ];
     await store.dispatch(
-      actions.charts.fetchAvailablePackageVersions({
+      actions.packages.fetchAvailablePackageVersions({
         context: { cluster: cluster, namespace: namespace },
         identifier: "foo",
         plugin: plugin,
@@ -398,16 +398,16 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
 
   it("gets a chart version", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestSelectedAvailablePackageDetail) },
+      { type: getType(actions.packages.requestSelectedAvailablePackageDetail) },
       {
-        type: getType(actions.charts.receiveSelectedAvailablePackageDetail),
+        type: getType(actions.packages.receiveSelectedAvailablePackageDetail),
         payload: {
           selectedPackage: defaultAvailablePackageDetail,
         },
       },
     ];
     await store.dispatch(
-      actions.charts.fetchAndSelectAvailablePackageDetail(
+      actions.packages.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
@@ -429,16 +429,16 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
 
   it("gets a chart version with tag", async () => {
     const expectedActions = [
-      { type: getType(actions.charts.requestSelectedAvailablePackageDetail) },
+      { type: getType(actions.packages.requestSelectedAvailablePackageDetail) },
       {
-        type: getType(actions.charts.receiveSelectedAvailablePackageDetail),
+        type: getType(actions.packages.receiveSelectedAvailablePackageDetail),
         payload: {
           selectedPackage: defaultAvailablePackageDetail,
         },
       },
     ];
     await store.dispatch(
-      actions.charts.fetchAndSelectAvailablePackageDetail(
+      actions.packages.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
@@ -465,11 +465,11 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
     });
 
     const expectedActions = [
-      { type: getType(actions.charts.requestSelectedAvailablePackageDetail) },
-      { type: getType(actions.charts.createErrorPackage), payload: new Error("Boom!") },
+      { type: getType(actions.packages.requestSelectedAvailablePackageDetail) },
+      { type: getType(actions.packages.createErrorPackage), payload: new Error("Boom!") },
     ];
     await store.dispatch(
-      actions.charts.fetchAndSelectAvailablePackageDetail(
+      actions.packages.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
@@ -495,15 +495,15 @@ describe("fetchDeployedAvailablePackageDetail", () => {
       .mockImplementation(mockGetAvailablePackageDetail);
 
     const expectedActions = [
-      { type: getType(actions.charts.requestDeployedAvailablePackageDetail) },
+      { type: getType(actions.packages.requestDeployedAvailablePackageDetail) },
       {
-        type: getType(actions.charts.receiveDeployedAvailablePackageDetail),
+        type: getType(actions.packages.receiveDeployedAvailablePackageDetail),
         payload: { availablePackageDetail: defaultAvailablePackageDetail },
       },
     ];
 
     await store.dispatch(
-      actions.charts.fetchDeployedAvailablePackageDetail(
+      actions.packages.fetchDeployedAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",

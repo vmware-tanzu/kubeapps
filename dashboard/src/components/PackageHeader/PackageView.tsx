@@ -61,7 +61,7 @@ export default function PackageView() {
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.charts.fetchAndSelectAvailablePackageDetail(
+      actions.packages.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: chartCluster, namespace: chartNamespace },
           plugin: pluginObj,
@@ -76,7 +76,7 @@ export default function PackageView() {
   // Fetch all versions
   useEffect(() => {
     dispatch(
-      actions.charts.fetchAvailablePackageVersions({
+      actions.packages.fetchAvailablePackageVersions({
         context: { cluster: chartCluster, namespace: chartNamespace },
         plugin: { name: pluginName, version: pluginVersion } as Plugin,
         identifier: packageId,

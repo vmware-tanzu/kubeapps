@@ -115,7 +115,7 @@ export default function Catalog() {
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
     dispatch(
-      actions.charts.fetchAvailablePackageSummaries(
+      actions.packages.fetchAvailablePackageSummaries(
         cluster,
         namespace,
         reposFilter,
@@ -189,8 +189,8 @@ export default function Catalog() {
   // detect changes in cluster/ns/repos/search and reset the current package list
   useEffect(() => {
     setPage(0);
-    dispatch(actions.charts.resetAvailablePackageSummaries());
-    dispatch(actions.charts.resetSelectedAvailablePackageDetail());
+    dispatch(actions.packages.resetAvailablePackageSummaries());
+    dispatch(actions.packages.resetSelectedAvailablePackageDetail());
   }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
@@ -253,9 +253,9 @@ export default function Catalog() {
   };
 
   const forceRetry = () => {
-    dispatch(actions.charts.clearErrorPackage());
+    dispatch(actions.packages.clearErrorPackage());
     dispatch(
-      actions.charts.fetchAvailablePackageSummaries(
+      actions.packages.fetchAvailablePackageSummaries(
         cluster,
         namespace,
         reposFilter,
