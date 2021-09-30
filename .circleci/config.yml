@@ -50,7 +50,7 @@ parameters:
     default: "kubeapps-bot"
   CI_BOT_EMAIL:
     type: "string"
-    default: "tanzu-kubeapps-team@vmware.com"
+    default: "devs@coreweave.com"
   CI_BOT_GPG:
     type: "string"
     default: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
@@ -255,12 +255,12 @@ build_images: &build_images
             makeArgs="VERSION=${CIRCLE_TAG}"
           fi
           for IMAGE in "${IMG_ARRAY[@]}"; do
-            make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs kubeapps/${IMAGE}
+            make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs coreweave/${IMAGE}
             if [[ -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
               docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-              docker push kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+              docker push coreweave/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
             fi
-            docker save kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG} > images/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+            docker save coreweave/${IMAGE}${IMG_MODIFIER}:${DEV_TAG} > images/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
           done
     - persist_to_workspace:
         root: images
@@ -543,7 +543,7 @@ local_e2e_steps: &local_e2e_steps
 
 jobs:
   test_go:
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+    working_directory: /go/src/github.com/coreweave/kubeapps
     environment:
       CGO_ENABLED: "0"
       <<: *common_envars
@@ -563,7 +563,7 @@ jobs:
             docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
             docker run --network container:postgresql -d --name tests circleci/golang:${GOLANG_VERSION} tail -f /dev/null
             docker cp /go tests:/
-            docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
+            docker exec -it tests /bin/sh -c "cd /go/src/github.com/coreweave/kubeapps/ && make test-db"
   test_dashboard:
     docker:
       - image: circleci/node:<< pipeline.parameters.NODE_VERSION >>
@@ -606,7 +606,7 @@ jobs:
   build_go_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+    working_directory: /go/src/github.com/coreweave/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
       IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"
