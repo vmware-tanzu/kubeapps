@@ -76,7 +76,7 @@ const allActions = [
   resetRequestCharts,
 ];
 
-export type ChartsAction = ActionType<typeof allActions[number]>;
+export type PackagesAction = ActionType<typeof allActions[number]>;
 
 export function fetchAvailablePackageSummaries(
   cluster: string,
@@ -85,7 +85,7 @@ export function fetchAvailablePackageSummaries(
   page: number,
   size: number,
   query?: string,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
   return async dispatch => {
     dispatch(requestAvailablePackageSummaries(page));
     try {
@@ -106,7 +106,7 @@ export function fetchAvailablePackageSummaries(
 
 export function fetchAvailablePackageVersions(
   availablePackageReference?: AvailablePackageReference,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
   return async dispatch => {
     dispatch(requestAvailablePackageSummaries());
     try {
@@ -121,7 +121,7 @@ export function fetchAvailablePackageVersions(
 export function fetchAvailablePackageDetail(
   availablePackageReference?: AvailablePackageReference,
   version?: string,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
   return async dispatch => {
     try {
       const response = await PackagesService.getAvailablePackageDetail(
@@ -142,7 +142,7 @@ export function fetchAvailablePackageDetail(
 export function fetchDeployedAvailablePackageDetail(
   availablePackageReference?: AvailablePackageReference,
   version?: string,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
   return async dispatch => {
     try {
       dispatch(requestDeployedAvailablePackageDetail());

@@ -3,7 +3,7 @@ import { uniqBy } from "lodash";
 import { IPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { ChartsAction } from "../actions/packages";
+import { PackagesAction } from "../actions/packages";
 import { NamespaceAction } from "../actions/namespace";
 
 export const initialState: IPackageState = {
@@ -20,7 +20,7 @@ export const initialState: IPackageState = {
 
 const chartsSelectedReducer = (
   state: IPackageState["selected"],
-  action: ChartsAction | NamespaceAction,
+  action: PackagesAction | NamespaceAction,
 ): IPackageState["selected"] => {
   switch (action.type) {
     case getType(actions.charts.selectAvailablePackageDetail):
@@ -57,7 +57,7 @@ const chartsSelectedReducer = (
 
 const chartsReducer = (
   state: IPackageState = initialState,
-  action: ChartsAction | NamespaceAction,
+  action: PackagesAction | NamespaceAction,
 ): IPackageState => {
   switch (action.type) {
     case getType(actions.charts.requestAvailablePackageSummaries):
