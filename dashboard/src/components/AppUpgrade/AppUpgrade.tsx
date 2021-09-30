@@ -75,7 +75,10 @@ function AppUpgrade() {
     dispatch(
       actions.charts.getDeployedChartVersion(
         {
-          context: { cluster: cluster, namespace: repoNamespace ?? "" },
+          context: {
+            cluster: app?.availablePackageRef?.context?.cluster ?? cluster,
+            namespace: repoNamespace ?? "",
+          },
           identifier: app?.availablePackageRef?.identifier ?? "",
           plugin: app?.availablePackageRef?.plugin,
         } as AvailablePackageReference,
