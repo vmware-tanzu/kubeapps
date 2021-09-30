@@ -13,7 +13,7 @@ import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router";
 import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState } from "../../shared/types";
+import { IPackageState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 import PackageView from "./PackageView";
 
@@ -23,7 +23,7 @@ const defaultProps = {
   isFetching: false,
   namespace: "test",
   cluster: "default",
-  selected: { versions: [] } as IChartState["selected"],
+  selected: { versions: [] } as IPackageState["selected"],
   version: undefined,
   kubeappsNamespace: "kubeapps",
   repo: "testrepo",
@@ -98,12 +98,12 @@ const defaultChartsState = {
     readmeError: undefined,
     values: "values",
     versions: [testVersion],
-  } as IChartState["selected"],
-  deployed: {} as IChartState["deployed"],
+  } as IPackageState["selected"],
+  deployed: {} as IPackageState["deployed"],
   items: [],
   categories: [],
   size: 20,
-} as IChartState;
+} as IPackageState;
 
 const defaultState = {
   charts: defaultChartsState,

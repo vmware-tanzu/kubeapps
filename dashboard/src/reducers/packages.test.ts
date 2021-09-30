@@ -2,11 +2,11 @@ import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { IChartState, IReceivePackagesActionPayload } from "../shared/types";
+import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";
 import chartsReducer from "./packages";
 
 describe("chartReducer", () => {
-  let initialState: IChartState;
+  let initialState: IPackageState;
   const availablePackageSummary1: AvailablePackageSummary = {
     name: "foo",
     categories: [""],

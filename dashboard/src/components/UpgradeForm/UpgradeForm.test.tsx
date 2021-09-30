@@ -14,7 +14,7 @@ import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IChartState } from "shared/types";
+import { FetchError, IPackageState } from "shared/types";
 import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
@@ -93,8 +93,8 @@ const defaultProps = {
   selected: {
     versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
     availablePackageDetail: { name: "test" } as AvailablePackageDetail,
-  } as IChartState["selected"],
-  deployed: {} as IChartState["deployed"],
+  } as IPackageState["selected"],
+  deployed: {} as IPackageState["deployed"],
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 } as IUpgradeFormProps;
 
@@ -110,12 +110,12 @@ const populatedProps = {
     values: "initial: values",
     versions: [testVersion],
     schema: schema as any,
-  } as IChartState["selected"],
+  } as IPackageState["selected"],
   deployed: {
     availablePackageDetail: availablePkgDetails[0],
     schema: schema as any,
     values: "foo:",
-  } as IChartState["deployed"],
+  } as IPackageState["deployed"],
 };
 
 describe("it behaves like a loading component", () => {

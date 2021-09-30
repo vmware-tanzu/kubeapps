@@ -5,7 +5,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState } from "shared/types";
+import { IPackageState } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import DeploymenetFormBody, { IDeploymentFormBodyProps } from "./DeploymentFormBody";
 import DifferentialSelector from "./DifferentialSelector";
@@ -15,7 +15,7 @@ const defaultProps: IDeploymentFormBodyProps = {
   packageId: "foo",
   chartVersion: "1.0.0",
   chartsIsFetching: false,
-  selected: {} as IChartState["selected"],
+  selected: {} as IPackageState["selected"],
   appValues: "foo: bar\n",
   setValues: jest.fn(),
   setValuesModified: jest.fn(),
@@ -43,7 +43,7 @@ c: d
     schema,
     versions: [versions[0], { ...versions[0], pkgVersion: "1.2.4" } as PackageAppVersion],
     availablePackageDetail: { name: "my-version" } as AvailablePackageDetail,
-  } as IChartState["selected"];
+  } as IPackageState["selected"];
 
   const wrapper = mountWrapper(
     defaultStore,

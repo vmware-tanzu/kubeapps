@@ -15,7 +15,7 @@ import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IAppRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository, IChartState, IClusterServiceVersion } from "../../shared/types";
+import { IAppRepository, IPackageState, IClusterServiceVersion } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -24,12 +24,12 @@ import ChartCatalogItem from "./ChartCatalogItem";
 const defaultChartState = {
   isFetching: false,
   hasFinishedFetching: false,
-  selected: {} as IChartState["selected"],
-  deployed: {} as IChartState["deployed"],
+  selected: {} as IPackageState["selected"],
+  deployed: {} as IPackageState["deployed"],
   items: [],
   categories: [],
   size: 20,
-} as IChartState;
+} as IPackageState;
 const defaultProps = {
   charts: defaultChartState,
   repo: "",
