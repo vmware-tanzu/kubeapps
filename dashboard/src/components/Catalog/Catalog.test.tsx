@@ -19,7 +19,7 @@ import { IAppRepository, IPackageState, IClusterServiceVersion } from "../../sha
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
-import ChartCatalogItem from "./ChartCatalogItem";
+import PackageCatalogItem from "./PackageCatalogItem";
 
 const defaultChartState = {
   isFetching: false,
@@ -427,7 +427,7 @@ describe("pagination and chart fetching", () => {
     );
 
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
-    expect(wrapper.find(ChartCatalogItem).length).toBe(0);
+    expect(wrapper.find(PackageCatalogItem).length).toBe(0);
     expect(fetchAvailablePackageSummaries).toHaveBeenNthCalledWith(
       1,
       "default-cluster",
@@ -459,7 +459,7 @@ describe("pagination and chart fetching", () => {
     );
 
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
-    expect(wrapper.find(ChartCatalogItem).length).toBe(1);
+    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
     expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
       "default-cluster",
       "kubeapps",
@@ -490,7 +490,7 @@ describe("pagination and chart fetching", () => {
     );
 
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
-    expect(wrapper.find(ChartCatalogItem).length).toBe(2);
+    expect(wrapper.find(PackageCatalogItem).length).toBe(2);
     expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
       "default-cluster",
       "kubeapps",

@@ -4,9 +4,9 @@ import * as url from "shared/url";
 import { getPluginIcon, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard";
-import { IChartCatalogItem } from "./CatalogItem";
+import { IPackageCatalogItem } from "./CatalogItem";
 
-export default function ChartCatalogItem(props: IChartCatalogItem) {
+export default function PackageCatalogItem(props: IPackageCatalogItem) {
   const { icon, name, repo, version, description, namespace, id } = props;
   const {
     config: { kubeappsNamespace },
