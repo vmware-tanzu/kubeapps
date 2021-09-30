@@ -17,7 +17,7 @@ import {
   NotFoundError,
 } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-import { errorChart } from "./charts";
+import { errorChart } from "./packages";
 
 const { createAction } = deprecated;
 

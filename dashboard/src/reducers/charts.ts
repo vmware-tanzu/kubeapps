@@ -3,7 +3,7 @@ import { uniqBy } from "lodash";
 import { IChartState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { ChartsAction } from "../actions/charts";
+import { ChartsAction } from "../actions/packages";
 import { NamespaceAction } from "../actions/namespace";
 
 export const initialState: IChartState = {
