@@ -23,7 +23,7 @@ const chartsSelectedReducer = (
   action: ChartsAction | NamespaceAction,
 ): IChartState["selected"] => {
   switch (action.type) {
-    case getType(actions.charts.selectChartVersion):
+    case getType(actions.charts.selectAvailablePackageDetail):
       return {
         ...state,
         error: undefined,
@@ -83,7 +83,7 @@ const chartsReducer = (
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.selectChartVersion):
+    case getType(actions.charts.selectAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,

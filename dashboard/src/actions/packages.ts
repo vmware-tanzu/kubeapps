@@ -41,9 +41,12 @@ export const errorPackage = createAction("ERROR_PACKAGE", resolve => {
 
 export const clearErrorPackage = createAction("CLEAR_ERROR_PACKAGE");
 
-export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve => {
-  return (selectedPackage: AvailablePackageDetail) => resolve({ selectedPackage });
-});
+export const selectAvailablePackageDetail = createAction(
+  "SELECT_AVAILABLE_PACKAGE_DETAIL",
+  resolve => {
+    return (selectedPackage: AvailablePackageDetail) => resolve({ selectedPackage });
+  },
+);
 
 export const requestDeployedAvailablePackageDetail = createAction(
   "REQUEST_DEPLOYED_AVAILABLE_PACKAGE_DETAIL",
@@ -67,7 +70,7 @@ const allActions = [
   clearErrorPackage,
   receiveAvailablePackageSummaries,
   receiveAvailablePackageVersions,
-  selectChartVersion,
+  selectAvailablePackageDetail,
   requestDeployedAvailablePackageDetail,
   receiveDeployedAvailablePackageDetail,
   resetChartVersion,
@@ -127,7 +130,7 @@ export function fetchAvailablePackageDetail(
         version,
       );
       if (response.availablePackageDetail?.version?.pkgVersion) {
-        dispatch(selectChartVersion(response.availablePackageDetail));
+        dispatch(selectAvailablePackageDetail(response.availablePackageDetail));
       } else {
         dispatch(errorPackage(new FetchError("could not find package version")));
       }

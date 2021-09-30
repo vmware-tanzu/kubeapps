@@ -393,7 +393,7 @@ describe("fetchAvailablePackageDetail", () => {
   it("gets a chart version", async () => {
     const expectedActions = [
       {
-        type: getType(actions.charts.selectChartVersion),
+        type: getType(actions.charts.selectAvailablePackageDetail),
         payload: {
           selectedPackage: defaultAvailablePackageDetail,
         },
@@ -423,7 +423,7 @@ describe("fetchAvailablePackageDetail", () => {
   it("gets a chart version with tag", async () => {
     const expectedActions = [
       {
-        type: getType(actions.charts.selectChartVersion),
+        type: getType(actions.charts.selectAvailablePackageDetail),
         payload: {
           selectedPackage: defaultAvailablePackageDetail,
         },

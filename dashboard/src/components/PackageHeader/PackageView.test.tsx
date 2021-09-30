@@ -117,7 +117,7 @@ beforeEach(() => {
     ...actions.charts,
     fetchAvailablePackageVersions: jest.fn(),
     resetChartVersion: jest.fn(),
-    selectChartVersion: jest.fn(),
+    selectAvailablePackageDetail: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
