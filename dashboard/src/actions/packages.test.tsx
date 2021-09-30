@@ -73,7 +73,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-interface IFetchChartsTestCase {
+interface IfetchAvailablePackageSummariesTestCase {
   name: string;
   response: GetAvailablePackageSummariesResponse;
   requestedRepos: string;
@@ -83,7 +83,7 @@ interface IFetchChartsTestCase {
   expectedParams: any[];
 }
 
-const fetchChartsTestCases: IFetchChartsTestCase[] = [
+const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTestCase[] = [
   {
     name: "fetches charts with query",
     response: {
@@ -237,8 +237,8 @@ const fetchChartsTestCases: IFetchChartsTestCase[] = [
   },
 ];
 
-describe("fetchCharts", () => {
-  fetchChartsTestCases.forEach(tc => {
+describe("fetchAvailablePackageSummaries", () => {
+  fetchAvailablePackageSummariesTestCases.forEach(tc => {
     it(tc.name, async () => {
       const mockGetAvailablePackageSummaries = jest
         .fn()
@@ -248,7 +248,7 @@ describe("fetchCharts", () => {
         .mockImplementation(mockGetAvailablePackageSummaries);
 
       await store.dispatch(
-        actions.charts.fetchCharts(
+        actions.charts.fetchAvailablePackageSummaries(
           cluster,
           namespace,
           tc.requestedRepos,
@@ -277,7 +277,13 @@ describe("fetchCharts", () => {
       .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
-      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+      actions.charts.fetchAvailablePackageSummaries(
+        cluster,
+        namespace,
+        "foo",
+        defaultPage,
+        defaultSize,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -294,7 +300,13 @@ describe("fetchCharts", () => {
       .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
-      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+      actions.charts.fetchAvailablePackageSummaries(
+        cluster,
+        namespace,
+        "foo",
+        defaultPage,
+        defaultSize,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -312,14 +324,20 @@ describe("fetchCharts", () => {
       .spyOn(PackagesService, "getAvailablePackageSummaries")
       .mockImplementation(mockGetAvailablePackageSummaries);
     await store.dispatch(
-      actions.charts.fetchCharts(cluster, namespace, "foo", defaultPage, defaultSize),
+      actions.charts.fetchAvailablePackageSummaries(
+        cluster,
+        namespace,
+        "foo",
+        defaultPage,
+        defaultSize,
+      ),
     );
     await store.dispatch(actions.charts.clearErrorChart());
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
 
-describe("fetchChartVersions", () => {
+describe("fetchAvailablePackageVersions", () => {
   const packageAppVersions = [{ pkgVersion: "1.2.3", appVersion: "4.5.6" }];
   const availableVersionsResponse: GetAvailablePackageVersionsResponse = {
     packageAppVersions,
@@ -340,7 +358,7 @@ describe("fetchChartVersions", () => {
       { type: getType(actions.charts.receiveChartVersions), payload: availableVersionsResponse },
     ];
     await store.dispatch(
-      actions.charts.fetchChartVersions({
+      actions.charts.fetchAvailablePackageVersions({
         context: { cluster: cluster, namespace: namespace },
         identifier: "foo",
         plugin: plugin,
@@ -357,7 +375,7 @@ describe("fetchChartVersions", () => {
   });
 });
 
-describe("fetchChartVersion", () => {
+describe("fetchAvailablePackageDetail", () => {
   let mockGetAvailablePackageDetail: jest.Mock;
   beforeEach(() => {
     const response: GetAvailablePackageDetailResponse = {
@@ -379,7 +397,7 @@ describe("fetchChartVersion", () => {
       },
     ];
     await store.dispatch(
-      actions.charts.fetchChartVersion(
+      actions.charts.fetchAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
@@ -409,7 +427,7 @@ describe("fetchChartVersion", () => {
       },
     ];
     await store.dispatch(
-      actions.charts.fetchChartVersion(
+      actions.charts.fetchAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
@@ -439,7 +457,7 @@ describe("fetchChartVersion", () => {
       { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
     ];
     await store.dispatch(
-      actions.charts.fetchChartVersion(
+      actions.charts.fetchAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
@@ -452,7 +470,7 @@ describe("fetchChartVersion", () => {
   });
 });
 
-describe("getDeployedChartVersion", () => {
+describe("fetchDeployedAvailablePackageDetail", () => {
   it("should request a deployed chart", async () => {
     const response: GetAvailablePackageDetailResponse = {
       availablePackageDetail: defaultAvailablePackageDetail,
@@ -477,7 +495,7 @@ describe("getDeployedChartVersion", () => {
     ];
 
     await store.dispatch(
-      actions.charts.getDeployedChartVersion(
+      actions.charts.fetchDeployedAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",

@@ -63,7 +63,7 @@ export default function DeploymentForm() {
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersions({
+      actions.charts.fetchAvailablePackageVersions({
         context: { cluster: chartCluster, namespace: chartNamespace },
         plugin: pluginObj,
         identifier: packageId,
@@ -79,7 +79,7 @@ export default function DeploymentForm() {
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersion(
+      actions.charts.fetchAvailablePackageDetail(
         {
           context: { cluster: chartCluster, namespace: chartNamespace },
           plugin: pluginObj,

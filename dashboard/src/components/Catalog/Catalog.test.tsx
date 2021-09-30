@@ -285,8 +285,8 @@ describe("filters by the searched item", () => {
   });
 
   it("filters modifying the search box", () => {
-    const fetchCharts = jest.fn();
-    actions.charts.fetchCharts = fetchCharts;
+    const fetchAvailablePackageSummaries = jest.fn();
+    actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
     const mockDispatch = jest.fn();
     const mockUseEffect = jest.fn();
 
@@ -408,8 +408,8 @@ describe("filters by application type", () => {
 
 describe("pagination and chart fetching", () => {
   it("sets the initial state page to 0 before fetching charts", () => {
-    const fetchCharts = jest.fn();
-    actions.charts.fetchCharts = fetchCharts;
+    const fetchAvailablePackageSummaries = jest.fn();
+    actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
     // const resetRequestCharts = jest.fn();
 
     const charts = {
@@ -429,14 +429,22 @@ describe("pagination and chart fetching", () => {
 
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(0);
-    expect(fetchCharts).toHaveBeenNthCalledWith(1, "default-cluster", "kubeapps", "", 0, 20, "");
+    expect(fetchAvailablePackageSummaries).toHaveBeenNthCalledWith(
+      1,
+      "default-cluster",
+      "kubeapps",
+      "",
+      0,
+      20,
+      "",
+    );
     // TODO(agamez): check whether it should be called
     // expect(resetRequestCharts).toHaveBeenNthCalledWith(1);
   });
 
   it("sets the state page when fetching charts", () => {
-    const fetchCharts = jest.fn();
-    actions.charts.fetchCharts = fetchCharts;
+    const fetchAvailablePackageSummaries = jest.fn();
+    actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
     // const resetRequestCharts = jest.fn();
 
     const charts = {
@@ -456,14 +464,21 @@ describe("pagination and chart fetching", () => {
 
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(1);
-    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 0, 20, "");
+    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
+      "default-cluster",
+      "kubeapps",
+      "",
+      0,
+      20,
+      "",
+    );
     // TODO(agamez): check whether it should be called
     // expect(resetRequestCharts).toHaveBeenCalledWith();
   });
 
   it("items are translated to CatalogItems after fetching charts", () => {
-    const fetchCharts = jest.fn();
-    actions.charts.fetchCharts = fetchCharts;
+    const fetchAvailablePackageSummaries = jest.fn();
+    actions.charts.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
     // const resetRequestCharts = jest.fn();
 
     const charts = {
@@ -483,7 +498,14 @@ describe("pagination and chart fetching", () => {
 
     expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
     expect(wrapper.find(ChartCatalogItem).length).toBe(2);
-    expect(fetchCharts).toHaveBeenCalledWith("default-cluster", "kubeapps", "", 0, 20, "");
+    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
+      "default-cluster",
+      "kubeapps",
+      "",
+      0,
+      20,
+      "",
+    );
     // TODO(agamez): check whether it should be called
     // expect(resetRequestCharts).toHaveBeenCalledWith();
   });

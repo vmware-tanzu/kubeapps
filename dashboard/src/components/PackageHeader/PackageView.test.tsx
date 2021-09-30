@@ -115,7 +115,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.charts = {
     ...actions.charts,
-    fetchChartVersions: jest.fn(),
+    fetchAvailablePackageVersions: jest.fn(),
     resetChartVersion: jest.fn(),
     selectChartVersion: jest.fn(),
   };
@@ -132,9 +132,9 @@ const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.chartNamesp
 const routePath = "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
-it("triggers the fetchChartVersions when mounting", () => {
+it("triggers the fetchAvailablePackageVersions when mounting", () => {
   const spy = jest.fn();
-  actions.charts.fetchChartVersions = spy;
+  actions.charts.fetchAvailablePackageVersions = spy;
   mountWrapper(
     getStore(defaultState),
     <Router history={history}>
@@ -153,7 +153,7 @@ it("triggers the fetchChartVersions when mounting", () => {
 describe("when receiving new props", () => {
   it("finds and selects the chart version when version changes", () => {
     const spy = jest.fn();
-    actions.charts.fetchChartVersion = spy;
+    actions.charts.fetchAvailablePackageDetail = spy;
     mountWrapper(
       getStore(defaultState),
       <Router history={history}>

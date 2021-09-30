@@ -90,7 +90,7 @@ function UpgradeForm({
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersions({
+      actions.charts.fetchAvailablePackageVersions({
         context: { cluster: cluster, namespace: repoNamespace },
         plugin: pluginObj,
         identifier: packageId,
@@ -120,7 +120,7 @@ function UpgradeForm({
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersion(
+      actions.charts.fetchAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: repoNamespace },
           plugin: pluginObj,
@@ -158,7 +158,7 @@ function UpgradeForm({
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      actions.charts.fetchChartVersion(
+      actions.charts.fetchAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: repoNamespace },
           plugin: pluginObj,

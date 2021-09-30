@@ -61,7 +61,7 @@ const allActions = [
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
 
-export function fetchCharts(
+export function fetchAvailablePackageSummaries(
   cluster: string,
   namespace: string,
   repos: string,
@@ -87,7 +87,7 @@ export function fetchCharts(
   };
 }
 
-export function fetchChartVersions(
+export function fetchAvailablePackageVersions(
   availablePackageReference?: AvailablePackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
@@ -101,7 +101,7 @@ export function fetchChartVersions(
   };
 }
 
-export function fetchChartVersion(
+export function fetchAvailablePackageDetail(
   availablePackageReference?: AvailablePackageReference,
   version?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
@@ -122,7 +122,7 @@ export function fetchChartVersion(
   };
 }
 
-export function getDeployedChartVersion(
+export function fetchDeployedAvailablePackageDetail(
   availablePackageReference?: AvailablePackageReference,
   version?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {

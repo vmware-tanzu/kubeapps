@@ -114,7 +114,16 @@ export default function Catalog() {
   const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
-    dispatch(actions.charts.fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter));
+    dispatch(
+      actions.charts.fetchAvailablePackageSummaries(
+        cluster,
+        namespace,
+        reposFilter,
+        page,
+        size,
+        searchFilter,
+      ),
+    );
   }, [dispatch, page, size, cluster, namespace, reposFilter, searchFilter]);
 
   // hasLoadedFirstPage is used to not bump the current page until the first page is fully
@@ -245,7 +254,16 @@ export default function Catalog() {
 
   const forceRetry = () => {
     dispatch(actions.charts.clearErrorChart());
-    dispatch(actions.charts.fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter));
+    dispatch(
+      actions.charts.fetchAvailablePackageSummaries(
+        cluster,
+        namespace,
+        reposFilter,
+        page,
+        size,
+        searchFilter,
+      ),
+    );
   };
 
   const increaseRequestedPage = () => {

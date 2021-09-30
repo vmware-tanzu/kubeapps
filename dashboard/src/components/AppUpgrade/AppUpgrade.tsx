@@ -73,7 +73,7 @@ function AppUpgrade() {
 
   useEffect(() => {
     dispatch(
-      actions.charts.getDeployedChartVersion(
+      actions.charts.fetchDeployedAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: repoNamespace ?? "" },
           identifier: app?.availablePackageRef?.identifier ?? "",

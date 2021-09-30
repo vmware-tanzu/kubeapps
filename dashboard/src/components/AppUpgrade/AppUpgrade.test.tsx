@@ -265,8 +265,8 @@ it("skips the repo selection form if the app contains upgrade info", () => {
 
 describe("when receiving new props", () => {
   it("should request the deployed chart when the app and repo are populated", () => {
-    const getDeployedChartVersion = jest.fn();
-    actions.charts.getDeployedChartVersion = getDeployedChartVersion;
+    const fetchDeployedAvailablePackageDetail = jest.fn();
+    actions.charts.fetchDeployedAvailablePackageDetail = fetchDeployedAvailablePackageDetail;
 
     const state = {
       apps: {
@@ -291,7 +291,7 @@ describe("when receiving new props", () => {
       </MemoryRouter>,
     );
 
-    expect(getDeployedChartVersion).toHaveBeenCalledWith(
+    expect(fetchDeployedAvailablePackageDetail).toHaveBeenCalledWith(
       {
         context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
         identifier: "stable/bar",
@@ -302,8 +302,8 @@ describe("when receiving new props", () => {
   });
 
   it("should request the deployed chart when the repo is populated later", () => {
-    const getDeployedChartVersion = jest.fn();
-    actions.charts.getDeployedChartVersion = getDeployedChartVersion;
+    const fetchDeployedAvailablePackageDetail = jest.fn();
+    actions.charts.fetchDeployedAvailablePackageDetail = fetchDeployedAvailablePackageDetail;
 
     const state = {
       apps: {
@@ -327,7 +327,7 @@ describe("when receiving new props", () => {
         </Route>
       </MemoryRouter>,
     );
-    expect(getDeployedChartVersion).toHaveBeenCalledWith(
+    expect(fetchDeployedAvailablePackageDetail).toHaveBeenCalledWith(
       {
         context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
         identifier: "stable/bar",

@@ -48,8 +48,8 @@ afterEach(() => {
 });
 
 it("fetches the available versions", () => {
-  const fetchChartVersions = jest.fn();
-  actions.charts.fetchChartVersion = fetchChartVersions;
+  const fetchAvailablePackageVersions = jest.fn();
+  actions.charts.fetchAvailablePackageDetail = fetchAvailablePackageVersions;
 
   mountWrapper(
     getStore({}),
@@ -60,7 +60,7 @@ it("fetches the available versions", () => {
     </MemoryRouter>,
   );
 
-  expect(fetchChartVersions).toHaveBeenCalledWith(
+  expect(fetchAvailablePackageVersions).toHaveBeenCalledWith(
     {
       context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
       identifier: `${defaultProps.repo}/${defaultProps.pkgName}`,
