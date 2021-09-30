@@ -2,7 +2,7 @@ import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { IChartState, IReceiveChartsActionPayload } from "../shared/types";
+import { IChartState, IReceivePackagesActionPayload } from "../shared/types";
 import chartsReducer from "./packages";
 
 describe("chartReducer", () => {
@@ -102,7 +102,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(state).toEqual({
       ...initialState,
@@ -125,7 +125,7 @@ describe("chartReducer", () => {
             categories: ["foo"],
           },
           page: 2,
-        } as IReceiveChartsActionPayload,
+        } as IReceivePackagesActionPayload,
       },
     );
     expect(state).toEqual({
@@ -149,7 +149,7 @@ describe("chartReducer", () => {
             categories: ["foo"],
           },
           page: 2,
-        } as IReceiveChartsActionPayload,
+        } as IReceivePackagesActionPayload,
       },
     );
     expect(state).toEqual({
@@ -175,7 +175,7 @@ describe("chartReducer", () => {
             categories: ["foo"],
           },
           page: 3,
-        } as IReceiveChartsActionPayload,
+        } as IReceivePackagesActionPayload,
       },
     );
     expect(state).toEqual({
@@ -197,7 +197,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
@@ -208,7 +208,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 2,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(state2).toEqual({
       ...initialState,
@@ -240,7 +240,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(stateRec1).toEqual({
       ...initialState,
@@ -269,7 +269,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 2,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(stateRec2).toEqual({
       ...initialState,
@@ -298,7 +298,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 3,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(stateRec3).toEqual({
       ...initialState,
@@ -321,7 +321,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
@@ -332,7 +332,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 2,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     const state3 = chartsReducer(state2, {
       type: getType(actions.charts.errorPackage) as any,
@@ -355,7 +355,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     const state2 = chartsReducer(state1, {
       type: getType(actions.charts.errorPackage) as any,

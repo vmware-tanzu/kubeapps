@@ -8,7 +8,7 @@ import { ActionType, deprecated } from "typesafe-actions";
 import PackagesService from "../shared/PackagesService";
 import {
   FetchError,
-  IReceiveChartsActionPayload as IReceiveAvailablePackageSummariesActionPayload,
+  IReceivePackagesActionPayload as IReceiveAvailablePackageSummariesActionPayload,
   IStoreState,
 } from "../shared/types";
 

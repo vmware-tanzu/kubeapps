@@ -54,7 +54,7 @@ export interface IRepo {
   url: string;
 }
 
-export interface IReceiveChartsActionPayload {
+export interface IReceivePackagesActionPayload {
   response: GetAvailablePackageSummariesResponse;
   page: number;
 }
