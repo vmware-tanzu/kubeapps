@@ -79,7 +79,7 @@ export default function DeploymentForm() {
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchAvailablePackageDetail(
+      actions.charts.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: chartCluster, namespace: chartNamespace },
           plugin: pluginObj,

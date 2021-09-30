@@ -41,7 +41,7 @@ export const errorPackage = createAction("ERROR_PACKAGE", resolve => {
 
 export const clearErrorPackage = createAction("CLEAR_ERROR_PACKAGE");
 
-export const selectAvailablePackageDetail = createAction(
+export const receiveSelectedAvailablePackageDetail = createAction(
   "SELECT_AVAILABLE_PACKAGE_DETAIL",
   resolve => {
     return (selectedPackage: AvailablePackageDetail) => resolve({ selectedPackage });
@@ -69,7 +69,7 @@ const allActions = [
   clearErrorPackage,
   receiveAvailablePackageSummaries,
   receiveAvailablePackageVersions,
-  selectAvailablePackageDetail,
+  receiveSelectedAvailablePackageDetail,
   requestDeployedAvailablePackageDetail,
   receiveDeployedAvailablePackageDetail,
   resetChartVersion,
@@ -118,7 +118,7 @@ export function fetchAvailablePackageVersions(
   };
 }
 
-export function fetchAvailablePackageDetail(
+export function fetchAndSelectAvailablePackageDetail(
   availablePackageReference?: AvailablePackageReference,
   version?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
@@ -129,7 +129,7 @@ export function fetchAvailablePackageDetail(
         version,
       );
       if (response.availablePackageDetail?.version?.pkgVersion) {
-        dispatch(selectAvailablePackageDetail(response.availablePackageDetail));
+        dispatch(receiveSelectedAvailablePackageDetail(response.availablePackageDetail));
       } else {
         dispatch(errorPackage(new FetchError("could not find package version")));
       }

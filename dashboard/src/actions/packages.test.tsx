@@ -378,7 +378,7 @@ describe("fetchAvailablePackageVersions", () => {
   });
 });
 
-describe("fetchAvailablePackageDetail", () => {
+describe("fetchAndSelectAvailablePackageDetail", () => {
   let mockGetAvailablePackageDetail: jest.Mock;
   beforeEach(() => {
     const response: GetAvailablePackageDetailResponse = {
@@ -393,14 +393,14 @@ describe("fetchAvailablePackageDetail", () => {
   it("gets a chart version", async () => {
     const expectedActions = [
       {
-        type: getType(actions.charts.selectAvailablePackageDetail),
+        type: getType(actions.charts.receiveSelectedAvailablePackageDetail),
         payload: {
           selectedPackage: defaultAvailablePackageDetail,
         },
       },
     ];
     await store.dispatch(
-      actions.charts.fetchAvailablePackageDetail(
+      actions.charts.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
@@ -423,14 +423,14 @@ describe("fetchAvailablePackageDetail", () => {
   it("gets a chart version with tag", async () => {
     const expectedActions = [
       {
-        type: getType(actions.charts.selectAvailablePackageDetail),
+        type: getType(actions.charts.receiveSelectedAvailablePackageDetail),
         payload: {
           selectedPackage: defaultAvailablePackageDetail,
         },
       },
     ];
     await store.dispatch(
-      actions.charts.fetchAvailablePackageDetail(
+      actions.charts.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
@@ -460,7 +460,7 @@ describe("fetchAvailablePackageDetail", () => {
       { type: getType(actions.charts.errorPackage), payload: new Error("Boom!") },
     ];
     await store.dispatch(
-      actions.charts.fetchAvailablePackageDetail(
+      actions.charts.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",

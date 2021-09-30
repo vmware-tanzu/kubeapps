@@ -23,7 +23,7 @@ const chartsSelectedReducer = (
   action: PackagesAction | NamespaceAction,
 ): IPackageState["selected"] => {
   switch (action.type) {
-    case getType(actions.charts.selectAvailablePackageDetail):
+    case getType(actions.charts.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         error: undefined,
@@ -83,7 +83,7 @@ const chartsReducer = (
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.selectAvailablePackageDetail):
+    case getType(actions.charts.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,

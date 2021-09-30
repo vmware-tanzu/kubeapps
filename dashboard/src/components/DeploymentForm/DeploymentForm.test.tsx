@@ -49,7 +49,7 @@ afterEach(() => {
 
 it("fetches the available versions", () => {
   const fetchAvailablePackageVersions = jest.fn();
-  actions.charts.fetchAvailablePackageDetail = fetchAvailablePackageVersions;
+  actions.charts.fetchAndSelectAvailablePackageDetail = fetchAvailablePackageVersions;
 
   mountWrapper(
     getStore({}),

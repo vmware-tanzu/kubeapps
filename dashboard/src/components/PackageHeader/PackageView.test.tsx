@@ -117,7 +117,7 @@ beforeEach(() => {
     ...actions.charts,
     fetchAvailablePackageVersions: jest.fn(),
     resetChartVersion: jest.fn(),
-    selectAvailablePackageDetail: jest.fn(),
+    receiveSelectedAvailablePackageDetail: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -153,7 +153,7 @@ it("triggers the fetchAvailablePackageVersions when mounting", () => {
 describe("when receiving new props", () => {
   it("finds and selects the chart version when version changes", () => {
     const spy = jest.fn();
-    actions.charts.fetchAvailablePackageDetail = spy;
+    actions.charts.fetchAndSelectAvailablePackageDetail = spy;
     mountWrapper(
       getStore(defaultState),
       <Router history={history}>

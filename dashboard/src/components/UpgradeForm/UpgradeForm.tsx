@@ -120,7 +120,7 @@ function UpgradeForm({
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchAvailablePackageDetail(
+      actions.charts.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: repoNamespace },
           plugin: pluginObj,
@@ -158,7 +158,7 @@ function UpgradeForm({
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      actions.charts.fetchAvailablePackageDetail(
+      actions.charts.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: cluster, namespace: repoNamespace },
           plugin: pluginObj,

@@ -61,7 +61,7 @@ export default function PackageView() {
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.charts.fetchAvailablePackageDetail(
+      actions.charts.fetchAndSelectAvailablePackageDetail(
         {
           context: { cluster: chartCluster, namespace: chartNamespace },
           plugin: pluginObj,
