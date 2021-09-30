@@ -38,17 +38,17 @@ const chartsSelectedReducer = (
             ? (JSON.parse(action.payload.selectedPackage.valuesSchema) as JSONSchemaType<any>)
             : ({} as JSONSchemaType<any>),
       };
-    case getType(actions.charts.receiveAvailablePackageVersions):
+    case getType(actions.charts.receiveSelectedAvailablePackageVersions):
       return {
         ...state,
         error: undefined,
         versions: action.payload.packageAppVersions,
       };
-    case getType(actions.charts.errorPackage):
+    case getType(actions.charts.createErrorPackage):
       return { ...state, error: action.payload };
     case getType(actions.charts.clearErrorPackage):
       return { ...state, error: undefined };
-    case getType(actions.charts.resetPackageVersion):
+    case getType(actions.charts.resetSelectedAvailablePackageDetail):
       return initialState.selected;
     default:
   }
@@ -77,7 +77,7 @@ const chartsReducer = (
         ),
       };
     }
-    case getType(actions.charts.receiveAvailablePackageVersions):
+    case getType(actions.charts.receiveSelectedAvailablePackageVersions):
       return {
         ...state,
         isFetching: false,
@@ -110,7 +110,7 @@ const chartsReducer = (
         hasFinishedFetching: false,
         items: [],
       };
-    case getType(actions.charts.errorPackage):
+    case getType(actions.charts.createErrorPackage):
       return {
         ...state,
         isFetching: false,
@@ -118,7 +118,7 @@ const chartsReducer = (
         items: state.items,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.resetPackageVersion):
+    case getType(actions.charts.resetSelectedAvailablePackageDetail):
     case getType(actions.charts.clearErrorPackage):
       return {
         ...state,

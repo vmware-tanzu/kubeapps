@@ -14,6 +14,10 @@ import {
 
 const { createAction } = deprecated;
 
+// ** AvailablePackageSummaries actions **
+// related to the list of available packages (aka Catalog)
+
+// Request action
 export const requestAvailablePackageSummaries = createAction(
   "REQUEST_AVAILABLE_PACKAGE_SUMMARIES",
   resolve => {
@@ -21,6 +25,7 @@ export const requestAvailablePackageSummaries = createAction(
   },
 );
 
+// Receive action
 export const receiveAvailablePackageSummaries = createAction(
   "RECEIVE_AVAILABLE_PACKAGE_SUMMARIES",
   resolve => {
@@ -28,30 +33,46 @@ export const receiveAvailablePackageSummaries = createAction(
   },
 );
 
-export const receiveAvailablePackageVersions = createAction(
-  "RECEIVE_AVAILABLE_PACKAGE_VERSIONS",
-  resolve => {
-    return (versions: GetAvailablePackageVersionsResponse) => resolve(versions);
-  },
-);
+// Reset action
+export const resetAvailablePackageSummaries = createAction("RESET_AVAILABLE_PACKAGE_SUMMARIES");
 
-export const errorPackage = createAction("ERROR_PACKAGE", resolve => {
-  return (err: Error) => resolve(err);
-});
+// ** SelectedAvailablePackage actions **
+// related to the selected package in the state (package detail and list of versions)
 
-export const clearErrorPackage = createAction("CLEAR_ERROR_PACKAGE");
+// No request action
 
+// Receive action
 export const receiveSelectedAvailablePackageDetail = createAction(
-  "SELECT_AVAILABLE_PACKAGE_DETAIL",
+  "RECEIVE_SELECTED_AVAILABLE_PACKAGE_DETAIL",
   resolve => {
     return (selectedPackage: AvailablePackageDetail) => resolve({ selectedPackage });
   },
 );
 
+// Reset action
+export const resetSelectedAvailablePackageDetail = createAction("RESET_PACKAGE_VERSION");
+
+// No request action
+
+// Receive action
+export const receiveSelectedAvailablePackageVersions = createAction(
+  "RECEIVE_SELECTED_AVAILABLE_PACKAGE_VERSIONS",
+  resolve => {
+    return (versions: GetAvailablePackageVersionsResponse) => resolve(versions);
+  },
+);
+
+// No reset action
+
+// ** DeployedAvailablePackage actions **
+// related to the already deployed package in the state
+
+// Request action
 export const requestDeployedAvailablePackageDetail = createAction(
   "REQUEST_DEPLOYED_AVAILABLE_PACKAGE_DETAIL",
 );
 
+// Receive action
 export const receiveDeployedAvailablePackageDetail = createAction(
   "RECEIVE_DEPLOYED_AVAILABLE_PACKAGE_DETAIL",
   resolve => {
@@ -59,21 +80,30 @@ export const receiveDeployedAvailablePackageDetail = createAction(
   },
 );
 
-export const resetPackageVersion = createAction("RESET_PACKAGE_VERSION");
+// No reset action
 
-export const resetAvailablePackageSummaries = createAction("RESET_AVAILABLE_PACKAGE_SUMMARIES");
+// ** Error actions **
+// for handling the erros thrown by the rest of the actions
+
+// Create action
+export const createErrorPackage = createAction("CREATE_ERROR_PACKAGE", resolve => {
+  return (err: Error) => resolve(err);
+});
+
+// Reset action
+export const clearErrorPackage = createAction("CLEAR_ERROR_PACKAGE");
 
 const allActions = [
   requestAvailablePackageSummaries,
-  errorPackage,
-  clearErrorPackage,
   receiveAvailablePackageSummaries,
-  receiveAvailablePackageVersions,
+  resetAvailablePackageSummaries,
   receiveSelectedAvailablePackageDetail,
+  resetSelectedAvailablePackageDetail,
+  receiveSelectedAvailablePackageVersions,
   requestDeployedAvailablePackageDetail,
   receiveDeployedAvailablePackageDetail,
-  resetPackageVersion,
-  resetAvailablePackageSummaries,
+  createErrorPackage,
+  clearErrorPackage,
 ];
 
 export type PackagesAction = ActionType<typeof allActions[number]>;
@@ -99,7 +129,7 @@ export function fetchAvailablePackageSummaries(
       );
       dispatch(receiveAvailablePackageSummaries({ response, page }));
     } catch (e: any) {
-      dispatch(errorPackage(new FetchError(e.message)));
+      dispatch(createErrorPackage(new FetchError(e.message)));
     }
   };
 }
@@ -111,9 +141,9 @@ export function fetchAvailablePackageVersions(
     dispatch(requestAvailablePackageSummaries());
     try {
       const response = await PackagesService.getAvailablePackageVersions(availablePackageReference);
-      dispatch(receiveAvailablePackageVersions(response));
+      dispatch(receiveSelectedAvailablePackageVersions(response));
     } catch (e: any) {
-      dispatch(errorPackage(new FetchError(e.message)));
+      dispatch(createErrorPackage(new FetchError(e.message)));
     }
   };
 }
@@ -131,10 +161,10 @@ export function fetchAndSelectAvailablePackageDetail(
       if (response.availablePackageDetail?.version?.pkgVersion) {
         dispatch(receiveSelectedAvailablePackageDetail(response.availablePackageDetail));
       } else {
-        dispatch(errorPackage(new FetchError("could not find package version")));
+        dispatch(createErrorPackage(new FetchError("could not find package version")));
       }
     } catch (e: any) {
-      dispatch(errorPackage(new FetchError(e.message)));
+      dispatch(createErrorPackage(new FetchError(e.message)));
     }
   };
 }
@@ -154,7 +184,7 @@ export function fetchDeployedAvailablePackageDetail(
         dispatch(receiveDeployedAvailablePackageDetail(response.availablePackageDetail));
       }
     } catch (e: any) {
-      dispatch(errorPackage(new FetchError(e.message)));
+      dispatch(createErrorPackage(new FetchError(e.message)));
     }
   };
 }

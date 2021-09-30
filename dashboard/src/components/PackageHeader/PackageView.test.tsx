@@ -116,7 +116,7 @@ beforeEach(() => {
   actions.charts = {
     ...actions.charts,
     fetchAvailablePackageVersions: jest.fn(),
-    resetPackageVersion: jest.fn(),
+    resetSelectedAvailablePackageDetail: jest.fn(),
     receiveSelectedAvailablePackageDetail: jest.fn(),
   };
   const mockDispatch = jest.fn();

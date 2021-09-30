@@ -190,7 +190,7 @@ export default function Catalog() {
   useEffect(() => {
     setPage(0);
     dispatch(actions.charts.resetAvailablePackageSummaries());
-    dispatch(actions.charts.resetPackageVersion());
+    dispatch(actions.charts.resetSelectedAvailablePackageDetail());
   }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {

@@ -52,7 +52,7 @@ describe("chartReducer", () => {
 
   it("unsets an error when changing namespace", () => {
     const state = chartsReducer(undefined, {
-      type: getType(actions.charts.errorPackage) as any,
+      type: getType(actions.charts.createErrorPackage) as any,
       payload: error,
     });
     expect(state).toEqual({
@@ -311,7 +311,7 @@ describe("chartReducer", () => {
 
   // TODO(agamez): check whether or not we really want to filter out duplicates. If so, add some deleted tests back
 
-  it("two receiveAvailablePackageSummaries and then errorPackage", () => {
+  it("two receiveAvailablePackageSummaries and then createErrorPackage", () => {
     const state1 = chartsReducer(undefined, {
       type: getType(actions.charts.receiveAvailablePackageSummaries) as any,
       payload: {
@@ -335,7 +335,7 @@ describe("chartReducer", () => {
       } as IReceivePackagesActionPayload,
     });
     const state3 = chartsReducer(state2, {
-      type: getType(actions.charts.errorPackage) as any,
+      type: getType(actions.charts.createErrorPackage) as any,
     });
     expect(state3).toEqual({
       ...initialState,
@@ -358,7 +358,7 @@ describe("chartReducer", () => {
       } as IReceivePackagesActionPayload,
     });
     const state2 = chartsReducer(state1, {
-      type: getType(actions.charts.errorPackage) as any,
+      type: getType(actions.charts.createErrorPackage) as any,
     });
     const state3 = chartsReducer(state2, {
       type: getType(actions.charts.clearErrorPackage) as any,
@@ -381,9 +381,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("errorPackage resets to the initial state", () => {
+  it("createErrorPackage resets to the initial state", () => {
     const state = chartsReducer(undefined, {
-      type: getType(actions.charts.errorPackage) as any,
+      type: getType(actions.charts.createErrorPackage) as any,
     });
     expect(state).toEqual({
       ...initialState,
