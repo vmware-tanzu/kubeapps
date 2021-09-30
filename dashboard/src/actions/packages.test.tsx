@@ -291,7 +291,10 @@ describe("fetchAvailablePackageSummaries", () => {
   it("returns a generic error", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
-      { type: getType(actions.charts.createErrorPackage), payload: new Error("something went wrong") },
+      {
+        type: getType(actions.charts.createErrorPackage),
+        payload: new Error("something went wrong"),
+      },
     ];
     const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() => {
       throw new Error("something went wrong");
@@ -314,7 +317,10 @@ describe("fetchAvailablePackageSummaries", () => {
   it("returns a generic error and it is cleared later", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestAvailablePackageSummaries), payload: 1 },
-      { type: getType(actions.charts.createErrorPackage), payload: new Error("something went wrong") },
+      {
+        type: getType(actions.charts.createErrorPackage),
+        payload: new Error("something went wrong"),
+      },
       { type: getType(actions.charts.clearErrorPackage) },
     ];
     const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() => {
@@ -392,6 +398,7 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
 
   it("gets a chart version", async () => {
     const expectedActions = [
+      { type: getType(actions.charts.requestSelectedAvailablePackageDetail) },
       {
         type: getType(actions.charts.receiveSelectedAvailablePackageDetail),
         payload: {
@@ -422,6 +429,7 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
 
   it("gets a chart version with tag", async () => {
     const expectedActions = [
+      { type: getType(actions.charts.requestSelectedAvailablePackageDetail) },
       {
         type: getType(actions.charts.receiveSelectedAvailablePackageDetail),
         payload: {
@@ -457,6 +465,7 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
     });
 
     const expectedActions = [
+      { type: getType(actions.charts.requestSelectedAvailablePackageDetail) },
       { type: getType(actions.charts.createErrorPackage), payload: new Error("Boom!") },
     ];
     await store.dispatch(

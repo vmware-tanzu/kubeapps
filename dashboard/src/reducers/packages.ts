@@ -85,6 +85,12 @@ const chartsReducer = (
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
+    case getType(actions.charts.requestSelectedAvailablePackageDetail):
+      return {
+        ...state,
+        isFetching: true,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
     case getType(actions.charts.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
