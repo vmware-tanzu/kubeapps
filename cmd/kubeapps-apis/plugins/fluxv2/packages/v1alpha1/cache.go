@@ -246,7 +246,7 @@ func (c NamespacedResourceWatcherCache) resync() (string, error) {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
-	// TODO: (gfichtenholt) RBAC check whether I list and watch specified GVR?
+	// TODO: (gfichtenholt) RBAC check whether I can list and watch specified GVR?
 	// Currently you'll need to run with the unsafe dev-only service account, since the plugin sets
 	// up background jobs that are running outside of requests from the user (ie. we're not using the
 	// users' token for those). Longer term, the plan is to create a separate RBAC yaml specific to

@@ -17,20 +17,12 @@ rules:
   - apiGroups:
       - "packageinstalls.packaging.carvel.dev"
       - "packagerepositories.packaging.carvel.dev"
-  # TODO (gfichtenholt) possibly surround this with if "fluxv2 plugin is enabled"
-      - "source.toolkit.fluxcd.io"
-      - "helm.toolkit.fluxcd.io"
     resources: ['*']
     verbs: ['*']
   # So that our dev user is seen as having access to a namespace.
   # We'll need to add rbac for our dev user to install later as well.
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list"]
-  # needed by fluxv2 plug-in to check whether flux CRDs have been installed
-  # TODO (gfichtenholt) possibly surround this with "if fluxv2 plugin is enabled"
-  - apiGroups: ["apiextensions.k8s.io"] 
-    resources: ["customresourcedefinitions"]
     verbs: ["get", "list"]
 {{- if .Values.kubeappsapis.unsafeUseDemoSA }}
 # Dev-only ClusterRoleBinding to the ServiceAccount
@@ -39,7 +31,6 @@ apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRoleBinding
 metadata:
   name: "kubeapps:controller:kubeapps-apis-dev-{{ .Release.Namespace }}"
-  namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: kubeappsapis
     {{- if .Values.commonLabels }}

@@ -21,11 +21,19 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/pkg/agent"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/kube"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	log "k8s.io/klog/v2"
 )
 
 // see https://blog.golang.org/context
@@ -96,7 +104,7 @@ func getUnescapedChartID(chartID string) (string, error) {
 	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
 	chartIDParts := strings.Split(unescapedChartID, "/")
 	if len(chartIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect request.AvailablePackageRef.Identifier, currently just 'foo/bar' patters are supported: %s", chartID)
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
 	}
 	return unescapedChartID, nil
 }
@@ -133,4 +141,58 @@ func namespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedNa
 				prettyPrintMap(unstructuredObj))
 	}
 	return &types.NamespacedName{Name: name, Namespace: namespace}, nil
+}
+
+func newHelmActionConfigGetter(configGetter server.KubernetesConfigGetter) helmActionConfigGetter {
+	return func(ctx context.Context, namespace string) (*action.Configuration, error) {
+		if configGetter == nil {
+			return nil, status.Errorf(codes.Internal, "configGetter arg required")
+		}
+		// The Flux plugin currently supports interactions with the default (kubeapps)
+		// cluster only:
+		cluster := ""
+		config, err := configGetter(ctx, cluster)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+		}
+
+		restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
+		clientSet, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "unable to create kubernetes client due to: %v", err)
+		}
+		// TODO(mnelson): Update to allow different helm storage options.
+		storage := agent.StorageForSecrets(namespace, clientSet)
+		return &action.Configuration{
+			RESTClientGetter: restClientGetter,
+			KubeClient:       kube.New(restClientGetter),
+			Releases:         storage,
+			Log:              log.Infof,
+		}, nil
+	}
+}
+
+func newClientGetter(configGetter server.KubernetesConfigGetter) clientGetter {
+	return func(ctx context.Context) (dynamic.Interface, apiext.Interface, error) {
+		if configGetter == nil {
+			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+		}
+		// The Flux plugin currently supports interactions with the default (kubeapps)
+		// cluster only:
+		cluster := ""
+		config, err := configGetter(ctx, cluster)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+		}
+
+		dynamicClient, err := dynamic.NewForConfig(config)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
+		}
+		apiExtensions, err := apiext.NewForConfig(config)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
+		}
+		return dynamicClient, apiExtensions, nil
+	}
 }
