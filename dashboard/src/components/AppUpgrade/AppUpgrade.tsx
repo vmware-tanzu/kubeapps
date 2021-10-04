@@ -56,11 +56,9 @@ function AppUpgrade() {
     charts: { isFetching: chartsIsFetching, selected: selectedPackage },
   } = useSelector((state: IStoreState) => state);
 
-  const [pluginObj] = useState(
-    selectedPackage.availablePackageDetail?.availablePackageRef?.plugin ??
-      ({ name: pluginName, version: pluginVersion } as Plugin),
-  );
+  const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
+  // Initial fetch using the params in the URL
   useEffect(() => {
     dispatch(
       actions.apps.getApp({
@@ -84,22 +82,14 @@ function AppUpgrade() {
       />
     );
   }
-  if (
-    installedAppInstalledPackageDetail?.currentVersion?.pkgVersion &&
-    installedAppInstalledPackageDetail?.availablePackageRef?.identifier &&
-    installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace &&
-    installedAppInstalledPackageDetail?.installedPackageRef?.identifier &&
-    installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster &&
-    installedAppInstalledPackageDetail?.installedPackageRef?.context?.namespace &&
-    installedAppInstalledPackageDetail?.availablePackageRef?.plugin
-  ) {
+  if (installedAppAvailablePackageDetail && installedAppInstalledPackageDetail && selectedPackage) {
     return (
       <div>
         <UpgradeForm
           installedAppAvailablePackageDetail={installedAppAvailablePackageDetail}
           installedAppInstalledPackageDetail={installedAppInstalledPackageDetail}
-          chartsIsFetching={chartsIsFetching}
           selected={selectedPackage}
+          chartsIsFetching={chartsIsFetching}
           error={error}
         />
       </div>

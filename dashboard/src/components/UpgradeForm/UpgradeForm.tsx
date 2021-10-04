@@ -11,9 +11,7 @@ import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
 import {
   AvailablePackageDetail,
-  AvailablePackageReference,
   InstalledPackageDetail,
-  InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
@@ -28,11 +26,11 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./UpgradeForm.css";
 
 export interface IUpgradeFormProps {
-  installedAppAvailablePackageDetail?: AvailablePackageDetail;
-  installedAppInstalledPackageDetail?: InstalledPackageDetail;
+  installedAppAvailablePackageDetail: AvailablePackageDetail;
+  installedAppInstalledPackageDetail: InstalledPackageDetail;
+  selected: IChartState["selected"];
   chartsIsFetching: boolean;
   error?: Error;
-  selected: IChartState["selected"];
 }
 
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
@@ -81,16 +79,9 @@ function UpgradeForm({
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersions({
-        context: {
-          cluster: installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster,
-          namespace: installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace,
-        },
-        plugin: installedAppInstalledPackageDetail?.availablePackageRef?.plugin,
-        identifier: installedAppInstalledPackageDetail?.availablePackageRef?.identifier,
-      } as AvailablePackageReference),
+      actions.charts.fetchChartVersions(installedAppInstalledPackageDetail?.availablePackageRef),
     );
-  }, [dispatch, installedAppInstalledPackageDetail]);
+  }, [dispatch, installedAppInstalledPackageDetail?.availablePackageRef]);
 
   useEffect(() => {
     if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
@@ -152,14 +143,7 @@ function UpgradeForm({
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
       actions.charts.fetchChartVersion(
-        {
-          context: {
-            cluster: installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster,
-            namespace: installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace,
-          },
-          plugin: installedAppInstalledPackageDetail?.availablePackageRef?.plugin,
-          identifier: installedAppInstalledPackageDetail?.availablePackageRef?.identifier,
-        } as AvailablePackageReference,
+        installedAppInstalledPackageDetail?.availablePackageRef,
         e.currentTarget.value,
       ),
     );
@@ -171,15 +155,7 @@ function UpgradeForm({
     if (availablePackageDetail) {
       const deployedSuccess = await dispatch(
         actions.apps.upgradeApp(
-          {
-            context: {
-              cluster: installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster,
-              namespace:
-                installedAppInstalledPackageDetail?.installedPackageRef?.context?.namespace,
-            },
-            identifier: installedAppInstalledPackageDetail?.installedPackageRef?.identifier,
-            plugin: installedAppInstalledPackageDetail?.availablePackageRef?.plugin,
-          } as InstalledPackageReference,
+          installedAppInstalledPackageDetail?.installedPackageRef!,
           availablePackageDetail,
           installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace!,
           appValues,
@@ -188,19 +164,7 @@ function UpgradeForm({
       );
       setIsDeploying(false);
       if (deployedSuccess) {
-        dispatch(
-          push(
-            url.app.apps.get({
-              context: {
-                cluster: installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster,
-                namespace:
-                  installedAppInstalledPackageDetail?.installedPackageRef?.context?.namespace,
-              },
-              plugin: installedAppInstalledPackageDetail?.availablePackageRef?.plugin,
-              identifier: installedAppInstalledPackageDetail?.installedPackageRef?.identifier,
-            } as AvailablePackageReference),
-          ),
-        );
+        dispatch(push(url.app.apps.get(installedAppInstalledPackageDetail?.installedPackageRef)));
       }
     }
   };
