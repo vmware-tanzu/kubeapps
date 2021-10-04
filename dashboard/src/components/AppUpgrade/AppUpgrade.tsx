@@ -54,13 +54,7 @@ function AppUpgrade() {
       selectedDetails: installedAppAvailablePackageDetail,
     },
     charts: { isFetching: chartsIsFetching, selected: selectedPackage },
-    repos: { repo },
   } = useSelector((state: IStoreState) => state);
-
-  // const repoName = repo?.metadata?.name || app?.availablePackageRef?.context?.namespace;
-  const repoNamespace =
-    repo?.metadata?.namespace ||
-    installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace;
 
   const [pluginObj] = useState(
     selectedPackage.availablePackageDetail?.availablePackageRef?.plugin ??
@@ -75,7 +69,7 @@ function AppUpgrade() {
         plugin: pluginObj,
       } as InstalledPackageReference),
     );
-  }, [dispatch, cluster, namespace, releaseName, pluginObj]);
+  }, [dispatch, cluster, namespace, pluginObj, releaseName]);
 
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
@@ -84,7 +78,7 @@ function AppUpgrade() {
   if (appsIsFetching || !installedAppInstalledPackageDetail) {
     return (
       <LoadingWrapper
-        loadingText={`Fetching ${releaseName}...`}
+        loadingText={`Fetching ${installedAppInstalledPackageDetail?.installedPackageRef?.identifier}...`}
         className="margin-t-xxl"
         loaded={false}
       />
@@ -93,28 +87,20 @@ function AppUpgrade() {
   if (
     installedAppInstalledPackageDetail?.currentVersion?.pkgVersion &&
     installedAppInstalledPackageDetail?.availablePackageRef?.identifier &&
-    repoNamespace
+    installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace &&
+    installedAppInstalledPackageDetail?.installedPackageRef?.identifier &&
+    installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster &&
+    installedAppInstalledPackageDetail?.installedPackageRef?.context?.namespace &&
+    installedAppInstalledPackageDetail?.availablePackageRef?.plugin
   ) {
     return (
       <div>
         <UpgradeForm
           installedAppAvailablePackageDetail={installedAppAvailablePackageDetail}
-          appCurrentVersion={installedAppInstalledPackageDetail.currentVersion.pkgVersion}
-          appCurrentValues={installedAppInstalledPackageDetail.valuesApplied}
-          packageId={installedAppInstalledPackageDetail.availablePackageRef.identifier}
+          installedAppInstalledPackageDetail={installedAppInstalledPackageDetail}
           chartsIsFetching={chartsIsFetching}
-          repoNamespace={repoNamespace}
-          namespace={namespace}
-          cluster={cluster}
-          releaseName={releaseName}
           selected={selectedPackage}
-          deployed={{
-            chartVersion: installedAppAvailablePackageDetail,
-            values: installedAppAvailablePackageDetail?.defaultValues,
-            schema: installedAppAvailablePackageDetail?.valuesSchema as any,
-          }}
           error={error}
-          plugin={pluginObj}
         />
       </div>
     );

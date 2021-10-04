@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
+
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import ChartHeader from "components/ChartView/ChartHeader";
@@ -10,9 +12,9 @@ import * as jsonpatch from "fast-json-patch";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
+  InstalledPackageDetail,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,18 +29,10 @@ import "./UpgradeForm.css";
 
 export interface IUpgradeFormProps {
   installedAppAvailablePackageDetail?: AvailablePackageDetail;
-  appCurrentVersion: string;
-  appCurrentValues?: string;
-  packageId: string;
+  installedAppInstalledPackageDetail?: InstalledPackageDetail;
   chartsIsFetching: boolean;
-  namespace: string;
-  cluster: string;
-  releaseName: string;
-  repoNamespace: string;
   error?: Error;
   selected: IChartState["selected"];
-  deployed: IChartState["deployed"];
-  plugin: Plugin;
 }
 
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
@@ -59,20 +53,14 @@ function applyModifications(mods: jsonpatch.Operation[], values: string) {
 
 function UpgradeForm({
   installedAppAvailablePackageDetail,
-  appCurrentVersion,
-  appCurrentValues,
-  packageId,
+  installedAppInstalledPackageDetail,
   chartsIsFetching,
-  namespace,
-  cluster,
-  releaseName,
-  repoNamespace,
   error,
   selected,
-  deployed,
-  plugin,
 }: IUpgradeFormProps) {
-  const [appValues, setAppValues] = useState(appCurrentValues || "");
+  const [appValues, setAppValues] = useState(
+    installedAppInstalledPackageDetail?.valuesApplied || "",
+  );
   const [isDeploying, setIsDeploying] = useState(false);
   const [valuesModified, setValuesModified] = useState(false);
   const [modifications, setModifications] = useState(
@@ -81,6 +69,7 @@ function UpgradeForm({
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const [deployedValues, setDeployedValues] = useState("");
+  const [hasSelectedInstalledPackage, setHasSelectedInstalledPackage] = useState(false);
 
   const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
 
@@ -89,67 +78,49 @@ function UpgradeForm({
     charts: { isFetching: chartsFetching },
   } = useSelector((state: IStoreState) => state);
   const isFetching = appsFetching || chartsFetching;
-  const pluginObj = plugin ?? selected.availablePackageDetail?.availablePackageRef?.plugin;
 
   useEffect(() => {
     dispatch(
       actions.charts.fetchChartVersions({
-        context: { cluster: cluster, namespace: repoNamespace },
-        plugin: pluginObj,
-        identifier: packageId,
+        context: {
+          cluster: installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster,
+          namespace: installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace,
+        },
+        plugin: installedAppInstalledPackageDetail?.availablePackageRef?.plugin,
+        identifier: installedAppInstalledPackageDetail?.availablePackageRef?.identifier,
       } as AvailablePackageReference),
     );
-  }, [dispatch, cluster, repoNamespace, packageId, pluginObj]);
+  }, [dispatch, installedAppInstalledPackageDetail]);
 
   useEffect(() => {
-    if (deployed.values && !modifications) {
+    if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
       // Calculate modifications from the default values
-      const defaultValuesObj = yaml.load(deployed.values);
-      const deployedValuesObj = yaml.load(appCurrentValues || "");
+      const defaultValuesObj = yaml.load(installedAppAvailablePackageDetail?.defaultValues);
+      const deployedValuesObj = yaml.load(installedAppInstalledPackageDetail?.valuesApplied || "");
       const newModifications = jsonpatch.compare(defaultValuesObj as any, deployedValuesObj as any);
-      const values = applyModifications(newModifications, deployed.values);
+      const values = applyModifications(
+        newModifications,
+        installedAppAvailablePackageDetail?.defaultValues,
+      );
       setModifications(newModifications);
       setAppValues(values);
     }
-  }, [deployed.values, appCurrentValues, modifications]);
+  }, [
+    installedAppAvailablePackageDetail?.defaultValues,
+    installedAppInstalledPackageDetail?.valuesApplied,
+    modifications,
+  ]);
 
   useEffect(() => {
-    if (deployed.values) {
+    if (installedAppAvailablePackageDetail?.defaultValues) {
       // Apply modifications to deployed values
-      const values = applyModifications(modifications || [], deployed.values);
+      const values = applyModifications(
+        modifications || [],
+        installedAppAvailablePackageDetail?.defaultValues,
+      );
       setDeployedValues(values);
     }
-  }, [deployed.values, modifications]);
-
-  useEffect(() => {
-    // Do not re-request the package details if the version is the same as the already requested one
-    if (
-      installedAppAvailablePackageDetail?.version?.pkgVersion !==
-      deployed.chartVersion?.version?.pkgVersion
-    ) {
-      dispatch(
-        actions.charts.fetchChartVersion(
-          {
-            context: { cluster: cluster, namespace: repoNamespace },
-            plugin: pluginObj,
-            identifier: packageId,
-          } as AvailablePackageReference,
-          deployed.chartVersion?.version?.pkgVersion,
-        ),
-      );
-      // Instead, dispatch the action manually and selects that version
-    } else if (installedAppAvailablePackageDetail) {
-      dispatch(actions.charts.selectChartVersion(installedAppAvailablePackageDetail));
-    }
-  }, [
-    dispatch,
-    cluster,
-    repoNamespace,
-    installedAppAvailablePackageDetail,
-    packageId,
-    deployed.chartVersion?.version?.pkgVersion,
-    pluginObj,
-  ]);
+  }, [installedAppAvailablePackageDetail?.defaultValues, modifications]);
 
   useEffect(() => {
     if (!valuesModified && values) {
@@ -160,6 +131,15 @@ function UpgradeForm({
       setAppValues(newAppValues);
     }
   }, [values, modifications, valuesModified]);
+
+  // Mark the current installed package version as selected, next time,
+  // the selection will be handled by selectVersion()
+  useEffect(() => {
+    if (!hasSelectedInstalledPackage && installedAppAvailablePackageDetail) {
+      dispatch(actions.charts.selectChartVersion(installedAppAvailablePackageDetail));
+      setHasSelectedInstalledPackage(true);
+    }
+  }, [dispatch, hasSelectedInstalledPackage, installedAppAvailablePackageDetail]);
 
   const setValuesModifiedTrue = () => {
     setValuesModified(true);
@@ -173,9 +153,12 @@ function UpgradeForm({
     dispatch(
       actions.charts.fetchChartVersion(
         {
-          context: { cluster: cluster, namespace: repoNamespace },
-          plugin: pluginObj,
-          identifier: packageId,
+          context: {
+            cluster: installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster,
+            namespace: installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace,
+          },
+          plugin: installedAppInstalledPackageDetail?.availablePackageRef?.plugin,
+          identifier: installedAppInstalledPackageDetail?.availablePackageRef?.identifier,
         } as AvailablePackageReference,
         e.currentTarget.value,
       ),
@@ -189,12 +172,16 @@ function UpgradeForm({
       const deployedSuccess = await dispatch(
         actions.apps.upgradeApp(
           {
-            context: { cluster: cluster, namespace: namespace },
-            identifier: releaseName,
-            plugin: pluginObj,
+            context: {
+              cluster: installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster,
+              namespace:
+                installedAppInstalledPackageDetail?.installedPackageRef?.context?.namespace,
+            },
+            identifier: installedAppInstalledPackageDetail?.installedPackageRef?.identifier,
+            plugin: installedAppInstalledPackageDetail?.availablePackageRef?.plugin,
           } as InstalledPackageReference,
           availablePackageDetail,
-          repoNamespace,
+          installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace!,
           appValues,
           schema,
         ),
@@ -204,9 +191,13 @@ function UpgradeForm({
         dispatch(
           push(
             url.app.apps.get({
-              context: { cluster: cluster, namespace: namespace },
-              plugin: pluginObj,
-              identifier: releaseName,
+              context: {
+                cluster: installedAppInstalledPackageDetail?.installedPackageRef?.context?.cluster,
+                namespace:
+                  installedAppInstalledPackageDetail?.installedPackageRef?.context?.namespace,
+              },
+              plugin: installedAppInstalledPackageDetail?.availablePackageRef?.plugin,
+              identifier: installedAppInstalledPackageDetail?.installedPackageRef?.identifier,
             } as AvailablePackageReference),
           ),
         );
@@ -231,11 +222,11 @@ function UpgradeForm({
         ) : (
           <>
             <ChartHeader
-              releaseName={releaseName}
+              releaseName={installedAppInstalledPackageDetail?.installedPackageRef?.identifier}
               chartAttrs={availablePackageDetail}
               versions={versions}
               onSelect={selectVersion}
-              currentVersion={deployed.chartVersion?.version?.pkgVersion}
+              currentVersion={installedAppAvailablePackageDetail?.version?.pkgVersion}
               selectedVersion={pkgVersion}
             />
             <LoadingWrapper
@@ -257,14 +248,18 @@ function UpgradeForm({
                         versions={versions}
                         selectedVersion={pkgVersion}
                         onSelect={selectVersion}
-                        currentVersion={appCurrentVersion}
+                        currentVersion={
+                          installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
+                        }
                         chartAttrs={availablePackageDetail}
                       />
                     </div>
                     <DeploymentFormBody
                       deploymentEvent="upgrade"
-                      packageId={packageId}
-                      chartVersion={appCurrentVersion}
+                      packageId={
+                        installedAppInstalledPackageDetail?.availablePackageRef?.identifier!
+                      }
+                      chartVersion={installedAppInstalledPackageDetail?.currentVersion?.pkgVersion!}
                       deployedValues={deployedValues}
                       chartsIsFetching={chartsIsFetching}
                       selected={selected}
