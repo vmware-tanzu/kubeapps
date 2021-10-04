@@ -90,7 +90,7 @@ const defaultProps = {
   error: undefined,
   apps: { isFetching: false },
   charts: { isFetching: false },
-  selected: {
+  selectedPackage: {
     versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
     availablePackageDetail: { name: "test" } as AvailablePackageDetail,
   } as IChartState["selected"],
@@ -141,7 +141,7 @@ describe("it behaves like a loading component", () => {
     expect(
       mountWrapper(
         defaultStore,
-        <UpgradeForm {...defaultProps} selected={{ ...defaultProps.selected, versions: [] }} />,
+        <UpgradeForm {...defaultProps} selectedPackage={{ ...defaultProps.selectedPackage, versions: [] }} />,
       ).find(LoadingWrapper),
     ).toExist();
   });
@@ -152,7 +152,7 @@ describe("it behaves like a loading component", () => {
         defaultStore,
         <UpgradeForm
           {...defaultProps}
-          selected={{ ...defaultProps.selected, availablePackageDetail: undefined }}
+          selectedPackage={{ ...defaultProps.selectedPackage, availablePackageDetail: undefined }}
         />,
       ).find(LoadingWrapper),
     ).toExist();
@@ -189,7 +189,7 @@ it("fetches the current chart version even if there is already one in the state"
   Chart.getAvailablePackageDetail = getAvailablePackageDetail;
   mountWrapper(
     defaultStore,
-    <UpgradeForm {...defaultProps} selected={selected} deployed={deployed} />,
+    <UpgradeForm {...defaultProps} selectedPackage={selected} deployed={deployed} />,
   );
   expect(getAvailablePackageDetail).toHaveBeenCalledWith(
     {
@@ -213,7 +213,7 @@ describe("renders an error", () => {
     };
     const wrapper = mountWrapper(
       defaultStore,
-      <UpgradeForm {...defaultProps} selected={selected} />,
+      <UpgradeForm {...defaultProps} selectedPackage={selected} />,
     );
     expect(wrapper.find(Alert).exists()).toBe(true);
     expect(wrapper.find(Alert).html()).toContain("wrong format!");
@@ -312,7 +312,7 @@ describe("when receiving new props", () => {
         {...populatedProps}
         deployed={{ values: deployedValues }}
         appCurrentValues={currentValues}
-        selected={{
+        selectedPackage={{
           versions: [testVersion],
           availablePackageDetail: availablePkgDetails[1],
           values: defaultValues,
@@ -426,7 +426,7 @@ describe("when receiving new props", () => {
           {...populatedProps}
           appCurrentValues={t.deployedValues}
           deployed={deployed}
-          selected={newSelected}
+          selectedPackage={newSelected}
         />,
       );
       expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(t.result);

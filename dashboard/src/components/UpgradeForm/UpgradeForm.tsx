@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
-
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import ChartHeader from "components/ChartView/ChartHeader";
@@ -28,7 +26,7 @@ import "./UpgradeForm.css";
 export interface IUpgradeFormProps {
   installedAppAvailablePackageDetail: AvailablePackageDetail;
   installedAppInstalledPackageDetail: InstalledPackageDetail;
-  selected: IChartState["selected"];
+  selectedPackage: IChartState["selected"];
   chartsIsFetching: boolean;
   error?: Error;
 }
@@ -49,33 +47,32 @@ function applyModifications(mods: jsonpatch.Operation[], values: string) {
   return values;
 }
 
-function UpgradeForm({
-  installedAppAvailablePackageDetail,
-  installedAppInstalledPackageDetail,
-  chartsIsFetching,
-  error,
-  selected,
-}: IUpgradeFormProps) {
+function UpgradeForm() {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+
+  const {
+    apps: {
+      selected: installedAppInstalledPackageDetail,
+      isFetching: appsIsFetching,
+      error,
+      selectedDetails: installedAppAvailablePackageDetail,
+    },
+    charts: { isFetching: chartsIsFetching, selected: selectedPackage },
+  } = useSelector((state: IStoreState) => state);
+
+  const isFetching = appsIsFetching || chartsIsFetching;
+  const { availablePackageDetail, versions, schema, values, pkgVersion } = selectedPackage;
+
   const [appValues, setAppValues] = useState(
     installedAppInstalledPackageDetail?.valuesApplied || "",
   );
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [valuesModified, setValuesModified] = useState(false);
   const [modifications, setModifications] = useState(
     undefined as undefined | jsonpatch.Operation[],
   );
-  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-
   const [deployedValues, setDeployedValues] = useState("");
   const [hasSelectedInstalledPackage, setHasSelectedInstalledPackage] = useState(false);
-
-  const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
-
-  const {
-    apps: { isFetching: appsFetching },
-    charts: { isFetching: chartsFetching },
-  } = useSelector((state: IStoreState) => state);
-  const isFetching = appsFetching || chartsFetching;
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [valuesModified, setValuesModified] = useState(false);
 
   useEffect(() => {
     dispatch(
@@ -152,12 +149,16 @@ function UpgradeForm({
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsDeploying(true);
-    if (availablePackageDetail) {
+    if (
+      availablePackageDetail &&
+      installedAppInstalledPackageDetail?.installedPackageRef &&
+      installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace
+    ) {
       const deployedSuccess = await dispatch(
         actions.apps.upgradeApp(
-          installedAppInstalledPackageDetail?.installedPackageRef!,
+          installedAppInstalledPackageDetail?.installedPackageRef,
           availablePackageDetail,
-          installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace!,
+          installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace,
           appValues,
           schema,
         ),
@@ -198,42 +199,51 @@ function UpgradeForm({
                 !isDeploying && !isFetching && versions?.length > 0 && !!availablePackageDetail
               }
             >
-              <Row>
-                <Column span={3}>
-                  <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
-                </Column>
-                <Column span={9}>
-                  <form onSubmit={handleDeploy}>
-                    <div className="upgrade-form-version-selector">
-                      <label className="centered deployment-form-label deployment-form-label-text-param">
-                        Upgrade to Version
-                      </label>
-                      <ChartVersionSelector
-                        versions={versions}
-                        selectedVersion={pkgVersion}
-                        onSelect={selectVersion}
-                        currentVersion={
-                          installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
-                        }
-                        chartAttrs={availablePackageDetail}
-                      />
-                    </div>
-                    <DeploymentFormBody
-                      deploymentEvent="upgrade"
-                      packageId={
-                        installedAppInstalledPackageDetail?.availablePackageRef?.identifier!
-                      }
-                      chartVersion={installedAppInstalledPackageDetail?.currentVersion?.pkgVersion!}
-                      deployedValues={deployedValues}
-                      chartsIsFetching={chartsIsFetching}
-                      selected={selected}
-                      setValues={handleValuesChange}
-                      appValues={appValues}
-                      setValuesModified={setValuesModifiedTrue}
-                    />
-                  </form>
-                </Column>
-              </Row>
+              {!installedAppInstalledPackageDetail?.availablePackageRef?.identifier ||
+              !installedAppInstalledPackageDetail?.currentVersion?.pkgVersion ? (
+                <></>
+              ) : (
+                <>
+                  <Row>
+                    <Column span={3}>
+                      <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
+                    </Column>
+                    <Column span={9}>
+                      <form onSubmit={handleDeploy}>
+                        <div className="upgrade-form-version-selector">
+                          <label className="centered deployment-form-label deployment-form-label-text-param">
+                            Upgrade to Version
+                          </label>
+                          <ChartVersionSelector
+                            versions={versions}
+                            selectedVersion={pkgVersion}
+                            onSelect={selectVersion}
+                            currentVersion={
+                              installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
+                            }
+                            chartAttrs={availablePackageDetail}
+                          />
+                        </div>
+                        <DeploymentFormBody
+                          deploymentEvent="upgrade"
+                          packageId={
+                            installedAppInstalledPackageDetail?.availablePackageRef?.identifier
+                          }
+                          chartVersion={
+                            installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
+                          }
+                          deployedValues={deployedValues}
+                          chartsIsFetching={isFetching}
+                          selected={selectedPackage}
+                          setValues={handleValuesChange}
+                          appValues={appValues}
+                          setValuesModified={setValuesModifiedTrue}
+                        />
+                      </form>
+                    </Column>
+                  </Row>
+                </>
+              )}
             </LoadingWrapper>
           </>
         )}

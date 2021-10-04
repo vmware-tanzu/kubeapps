@@ -46,6 +46,7 @@ function AppUpgrade() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const { cluster, namespace, releaseName, pluginName, pluginVersion } =
     ReactRouter.useParams() as IRouteParams;
+
   const {
     apps: {
       selected: installedAppInstalledPackageDetail,
@@ -55,6 +56,8 @@ function AppUpgrade() {
     },
     charts: { isFetching: chartsIsFetching, selected: selectedPackage },
   } = useSelector((state: IStoreState) => state);
+
+  const isFetching = appsIsFetching || chartsIsFetching;
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
@@ -73,10 +76,14 @@ function AppUpgrade() {
     return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
   }
 
-  if (appsIsFetching || !installedAppInstalledPackageDetail) {
+  if (isFetching || !installedAppInstalledPackageDetail) {
     return (
       <LoadingWrapper
-        loadingText={`Fetching ${installedAppInstalledPackageDetail?.installedPackageRef?.identifier}...`}
+        loadingText={`Fetching ${
+          installedAppInstalledPackageDetail
+            ? installedAppInstalledPackageDetail?.installedPackageRef?.identifier
+            : "package"
+        }...`}
         className="margin-t-xxl"
         loaded={false}
       />
@@ -85,13 +92,7 @@ function AppUpgrade() {
   if (installedAppAvailablePackageDetail && installedAppInstalledPackageDetail && selectedPackage) {
     return (
       <div>
-        <UpgradeForm
-          installedAppAvailablePackageDetail={installedAppAvailablePackageDetail}
-          installedAppInstalledPackageDetail={installedAppInstalledPackageDetail}
-          selected={selectedPackage}
-          chartsIsFetching={chartsIsFetching}
-          error={error}
-        />
+        <UpgradeForm />
       </div>
     );
   }
