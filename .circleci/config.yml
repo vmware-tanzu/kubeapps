@@ -94,46 +94,6 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-      - GKE_1_20_MASTER:
-          <<: *build_always
-          requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-      - GKE_1_20_LATEST_RELEASE:
-          <<: *build_always
-          requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-      - GKE_1_19_MASTER:
-          <<: *build_always
-          requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-      - GKE_1_19_LATEST_RELEASE:
-          <<: *build_always
-          requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
       - push_images:
           <<: *build_always
           requires:
@@ -142,10 +102,6 @@ workflows:
           <<: *build_always
           requires:
             - local_e2e_tests
-            - GKE_1_20_MASTER
-            - GKE_1_20_LATEST_RELEASE
-            - GKE_1_19_MASTER
-            - GKE_1_19_LATEST_RELEASE
 
 ## Definitions
 common_envars: &common_envars
@@ -162,16 +118,6 @@ common_envars: &common_envars
   POSTGRESQL_VERSION: << pipeline.parameters.POSTGRESQL_VERSION >>
   RUST_VERSION: << pipeline.parameters.RUST_VERSION >>
 
-install_gcloud_sdk: &install_gcloud_sdk
-  run:
-    name: "Install gcloud sdk"
-    command: |
-      echo "export PATH=$PATH:${HOME}/google-cloud-sdk/bin" >> $BASH_ENV
-      echo "export CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> $BASH_ENV
-      if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
-        rm -rf $HOME/google-cloud-sdk;
-        curl https://sdk.cloud.google.com | bash;
-      fi
 install_helm_cli: &install_helm_cli
   run:
     name: "Install helm (minimum and stable)"
@@ -376,60 +322,6 @@ run_e2e_tests: &run_e2e_tests
         # Test failed
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       fi
-gke_test: &gke_test
-  docker:
-    - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
-  steps:
-    - checkout
-    - run:
-        name: Check conditions
-        command: |
-          source ./script/chart_sync_utils.sh
-
-          # In the case of GKE we will only want to build if it is
-          # a build of a branch in the kubeapps repository
-          if [[ -z "$GKE_ADMIN" ]]; then
-            echo "Step aborted, we are not in the Kubeapps repository"
-            circleci step halt
-          fi
-
-          # Cancel job if this is a test stable release job but
-          # the chart version has not been bumped
-          if [[ -n "$TEST_LATEST_RELEASE" ]] && ! changedVersion; then
-            echo "Step aborted, we are not releasing a new version of the chart"
-            circleci step halt
-          fi
-    - <<: *exports
-    - <<: *install_gcloud_sdk
-    - setup_remote_docker
-    - run:
-        name: Configure Google Cloud
-        command: |
-          gcloud -q config set project $GKE_PROJECT
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/client_secrets.json
-          echo $GCLOUD_KEY > $GOOGLE_APPLICATION_CREDENTIALS
-          if [ -a $GOOGLE_APPLICATION_CREDENTIALS ]; then
-            gcloud -q auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS;
-          fi
-    - <<: *install_kubectl
-    # A GKE cluster name cannot contain non-alphanumeric characters (nor uppercase letters)
-    - run:
-        name: Export escaped GKE cluster name
-        command: |
-          echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
-    - run:
-        name: Start GKE environment
-        command: |
-          ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
-    - <<: *install_helm_cli
-    - <<: *run_e2e_tests
-    - store_artifacts:
-        path: integration/reports
-    - run: exit $TEST_RESULT
-    - run:
-        name: Cleanup GKE Cluster
-        command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
-        when: always
 local_e2e_steps: &local_e2e_steps
   steps:
     - checkout
@@ -561,36 +453,6 @@ jobs:
       number:
         type: string
     <<: *local_e2e_steps
-  GKE_1_20_MASTER:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: "1.20"
-      KUBEAPPS_DB: "postgresql"
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
-  GKE_1_20_LATEST_RELEASE:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: "1.20"
-      KUBEAPPS_DB: "postgresql"
-      TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
-  GKE_1_19_MASTER:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: "1.19"
-      KUBEAPPS_DB: "postgresql"
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
-  GKE_1_19_LATEST_RELEASE:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: "1.19"
-      KUBEAPPS_DB: "postgresql"
-      TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
   push_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
