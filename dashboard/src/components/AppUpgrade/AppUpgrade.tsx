@@ -1,7 +1,6 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
-  AvailablePackageReference,
   InstalledPackageDetail,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -48,16 +47,23 @@ function AppUpgrade() {
   const { cluster, namespace, releaseName, pluginName, pluginVersion } =
     ReactRouter.useParams() as IRouteParams;
   const {
-    apps: { selected: app, isFetching: appsIsFetching, error },
-    charts: { isFetching: chartsIsFetching, selected, deployed },
+    apps: {
+      selected: installedAppInstalledPackageDetail,
+      isFetching: appsIsFetching,
+      error,
+      selectedDetails: installedAppAvailablePackageDetail,
+    },
+    charts: { isFetching: chartsIsFetching, selected: selectedPackage },
     repos: { repo },
   } = useSelector((state: IStoreState) => state);
 
-  const repoName = repo?.metadata?.name || app?.availablePackageRef?.context?.namespace;
-  const repoNamespace = repo?.metadata?.namespace || app?.availablePackageRef?.context?.namespace;
+  // const repoName = repo?.metadata?.name || app?.availablePackageRef?.context?.namespace;
+  const repoNamespace =
+    repo?.metadata?.namespace ||
+    installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace;
 
   const [pluginObj] = useState(
-    selected.availablePackageDetail?.availablePackageRef?.plugin ??
+    selectedPackage.availablePackageDetail?.availablePackageRef?.plugin ??
       ({ name: pluginName, version: pluginVersion } as Plugin),
   );
 
@@ -71,24 +77,11 @@ function AppUpgrade() {
     );
   }, [dispatch, cluster, namespace, releaseName, pluginObj]);
 
-  useEffect(() => {
-    dispatch(
-      actions.charts.getDeployedChartVersion(
-        {
-          context: { cluster: cluster, namespace: repoNamespace ?? "" },
-          identifier: app?.availablePackageRef?.identifier ?? "",
-          plugin: app?.availablePackageRef?.plugin,
-        } as AvailablePackageReference,
-        app?.currentVersion?.pkgVersion,
-      ),
-    );
-  }, [dispatch, app, repoName, repoNamespace, cluster]);
-
   if (error && error.constructor === FetchError) {
     return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
   }
 
-  if (appsIsFetching || !app) {
+  if (appsIsFetching || !installedAppInstalledPackageDetail) {
     return (
       <LoadingWrapper
         loadingText={`Fetching ${releaseName}...`}
@@ -98,36 +91,41 @@ function AppUpgrade() {
     );
   }
   if (
-    app?.currentVersion?.pkgVersion &&
-    app?.valuesApplied &&
-    app?.availablePackageRef?.identifier &&
-    repoNamespace &&
-    namespace &&
-    cluster &&
-    releaseName &&
-    selected &&
-    deployed
+    installedAppInstalledPackageDetail?.currentVersion?.pkgVersion &&
+    installedAppInstalledPackageDetail?.availablePackageRef?.identifier &&
+    repoNamespace
   ) {
     return (
       <div>
         <UpgradeForm
-          appCurrentVersion={app.currentVersion.pkgVersion}
-          appCurrentValues={app.valuesApplied}
-          packageId={app.availablePackageRef.identifier}
+          installedAppAvailablePackageDetail={installedAppAvailablePackageDetail}
+          appCurrentVersion={installedAppInstalledPackageDetail.currentVersion.pkgVersion}
+          appCurrentValues={installedAppInstalledPackageDetail.valuesApplied}
+          packageId={installedAppInstalledPackageDetail.availablePackageRef.identifier}
           chartsIsFetching={chartsIsFetching}
           repoNamespace={repoNamespace}
           namespace={namespace}
           cluster={cluster}
           releaseName={releaseName}
-          selected={selected}
-          deployed={deployed}
+          selected={selectedPackage}
+          deployed={{
+            chartVersion: installedAppAvailablePackageDetail,
+            values: installedAppAvailablePackageDetail?.defaultValues,
+            schema: installedAppAvailablePackageDetail?.valuesSchema as any,
+          }}
           error={error}
           plugin={pluginObj}
         />
       </div>
     );
   }
-  return <SelectRepoForm cluster={cluster} namespace={namespace} app={app} />;
+  return (
+    <SelectRepoForm
+      cluster={cluster}
+      namespace={namespace}
+      app={installedAppInstalledPackageDetail}
+    />
+  );
 }
 
 export default AppUpgrade;

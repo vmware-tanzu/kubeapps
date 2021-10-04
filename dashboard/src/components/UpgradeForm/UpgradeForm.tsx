@@ -8,6 +8,7 @@ import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
 import {
+  AvailablePackageDetail,
   AvailablePackageReference,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -25,6 +26,7 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./UpgradeForm.css";
 
 export interface IUpgradeFormProps {
+  installedAppAvailablePackageDetail?: AvailablePackageDetail;
   appCurrentVersion: string;
   appCurrentValues?: string;
   packageId: string;
@@ -56,6 +58,7 @@ function applyModifications(mods: jsonpatch.Operation[], values: string) {
 }
 
 function UpgradeForm({
+  installedAppAvailablePackageDetail,
   appCurrentVersion,
   appCurrentValues,
   packageId,
@@ -119,20 +122,30 @@ function UpgradeForm({
   }, [deployed.values, modifications]);
 
   useEffect(() => {
-    dispatch(
-      actions.charts.fetchChartVersion(
-        {
-          context: { cluster: cluster, namespace: repoNamespace },
-          plugin: pluginObj,
-          identifier: packageId,
-        } as AvailablePackageReference,
-        deployed.chartVersion?.version?.pkgVersion,
-      ),
-    );
+    // Do not re-request the package details if the version is the same as the already requested one
+    if (
+      installedAppAvailablePackageDetail?.version?.pkgVersion !==
+      deployed.chartVersion?.version?.pkgVersion
+    ) {
+      dispatch(
+        actions.charts.fetchChartVersion(
+          {
+            context: { cluster: cluster, namespace: repoNamespace },
+            plugin: pluginObj,
+            identifier: packageId,
+          } as AvailablePackageReference,
+          deployed.chartVersion?.version?.pkgVersion,
+        ),
+      );
+      // Instead, dispatch the action manually and selects that version
+    } else if (installedAppAvailablePackageDetail) {
+      dispatch(actions.charts.selectChartVersion(installedAppAvailablePackageDetail));
+    }
   }, [
     dispatch,
     cluster,
     repoNamespace,
+    installedAppAvailablePackageDetail,
     packageId,
     deployed.chartVersion?.version?.pkgVersion,
     pluginObj,
