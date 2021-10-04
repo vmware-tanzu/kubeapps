@@ -27,12 +27,6 @@ parameters:
   KUBECTL_VERSION:
     type: "string"
     default: "v1.22.2"
-  GITHUB_VERSION:
-    type: "string"
-    default: "2.0.0"
-  SEMVER_VERSION:
-    type: "string"
-    default: "3.2.0"
   KIND_VERSION:
     type: "string"
     default: "v0.11.1"
@@ -45,27 +39,6 @@ parameters:
   IMAGES_TO_PUSH:
     type: "string"
     default: "coreweave/apprepository-controller coreweave/dashboard coreweave/asset-syncer coreweave/assetsvc coreweave/kubeops coreweave/pinniped-proxy coreweave/kubeapps-apis"
-  CI_BOT_USERNAME:
-    type: "string"
-    default: "kubeapps-bot"
-  CI_BOT_EMAIL:
-    type: "string"
-    default: "devs@coreweave.com"
-  CI_BOT_GPG:
-    type: "string"
-    default: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
-  CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FINGERPRINT:
-    type: "string"
-    default: "20:5e:d1:68:7c:10:67:c1:ab:e2:6e:33:e3:7a:64:6e"
-  CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FILENAME:
-    type: "string"
-    default: "id_rsa_205ed1687c1067c1abe26e33e37a646e"
-  CI_BOT_FORKED_CHARTS_DEPLOYKEY_FINGERPRINT:
-    type: "string"
-    default: "59:81:2a:95:a6:54:a7:46:e5:15:f5:37:b3:4f:6c:ad"
-  CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME:
-    type: "string"
-    default: "id_rsa_59812a95a654a746e515f537b34f6cad"
 
 ## Build conditions
 # Build in any branch or tag
@@ -121,9 +94,6 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-            - sync_chart_from_bitnami
-      - sync_chart_from_bitnami:
-          <<: *build_always
       - GKE_1_20_MASTER:
           <<: *build_always
           requires:
@@ -134,7 +104,6 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-            - sync_chart_from_bitnami
       - GKE_1_20_LATEST_RELEASE:
           <<: *build_always
           requires:
@@ -145,7 +114,6 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-            - sync_chart_from_bitnami
       - GKE_1_19_MASTER:
           <<: *build_always
           requires:
@@ -156,7 +124,6 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-            - sync_chart_from_bitnami
       - GKE_1_19_LATEST_RELEASE:
           <<: *build_always
           requires:
@@ -167,23 +134,13 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-            - sync_chart_from_bitnami
       - push_images:
           <<: *build_always
           requires:
             - local_e2e_tests
-      - sync_chart_to_bitnami:
-          <<: *build_always
-          requires:
-            - local_e2e_tests
-            - GKE_1_20_MASTER
-            - GKE_1_20_LATEST_RELEASE
-            - GKE_1_19_MASTER
-            - GKE_1_19_LATEST_RELEASE
       - release:
           <<: *build_always
           requires:
-            - sync_chart_to_bitnami
             - local_e2e_tests
             - GKE_1_20_MASTER
             - GKE_1_20_LATEST_RELEASE
@@ -199,8 +156,6 @@ common_envars: &common_envars
   K8S_KIND_VERSION: << pipeline.parameters.K8S_KIND_VERSION >>
   KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
   KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
-  GITHUB_VERSION: << pipeline.parameters.GITHUB_VERSION >>
-  SEMVER_VERSION: << pipeline.parameters.SEMVER_VERSION >>
   MKCERT_VERSION: << pipeline.parameters.MKCERT_VERSION >>
   NODE_VERSION: << pipeline.parameters.NODE_VERSION >>
   OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
@@ -382,45 +337,6 @@ install_mkcert: &install_mkcert
       chmod +x "mkcert-${MKCERT_VERSION}-linux-amd64"
       sudo mv "mkcert-${MKCERT_VERSION}-linux-amd64" /usr/local/bin/mkcert
       mkcert -install
-install_github: &install_github
-  run:
-    # Assuming there is a personal access token created in GitHub granted with the scopes
-    # "repo:status", "public_repo" and "read:org"
-    # This token is passed as a GITHUB_TOKEN env var via CircleCI
-    name: "Install GitHub CLI"
-    command: |
-      cd /tmp
-      wget https://github.com/cli/cli/releases/download/v${GITHUB_VERSION}/gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-      tar zxf gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-      rm gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-      sudo mv gh_${GITHUB_VERSION}_linux_amd64/bin/gh /usr/local/bin/
-install_semver: &install_semver
-  run:
-    name: "Install semver bash tool"
-    command: |
-      cd /tmp
-      wget https://github.com/fsaintjacques/semver-tool/archive/refs/tags/${SEMVER_VERSION}.tar.gz
-      tar zxf ${SEMVER_VERSION}.tar.gz
-      rm ${SEMVER_VERSION}.tar.gz
-      cd semver-tool-${SEMVER_VERSION}
-      sudo make install
-setup_gpg: &setup_gpg
-  run:
-    name: "Install the GPG key"
-    command: |
-      # Creating the files from the GPG_KEY_PUBLIC and GPG_KEY_PRIVATE env vars
-      echo -e ${GPG_KEY_PUBLIC} > /tmp/public.key
-      echo -e ${GPG_KEY_PRIVATE} > /tmp/private.key
-
-      # Importing the GPG keys
-      gpg --import /tmp/public.key
-      gpg --import --no-tty --batch --yes /tmp/private.key
-
-      # Trusting the imported GPG private key
-      (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "<< pipeline.parameters.CI_BOT_GPG >>" trust
-
-      # Listing the key to verify the import process succeeded
-      gpg --list-secret-keys << pipeline.parameters.CI_BOT_EMAIL >>
 
 install_multicluster_deps: &install_multicluster_deps
   run:
@@ -675,74 +591,6 @@ jobs:
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  sync_chart_to_bitnami:
-    environment:
-      <<: *common_envars
-    docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
-    steps:
-      - checkout
-      - <<: *install_github
-      - <<: *install_semver
-      - <<: *setup_gpg
-      - add_ssh_keys:
-          fingerprints:
-            # Deployment key uploaded to the kubeapps-bot/charts repository
-            - << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FINGERPRINT >>
-
-      - run:
-          # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
-          # public key uploaded to GitHub as a deploy key with write permissions in both kubeapps and kubeapps-bot/charts
-          # private key uploaded to CircleCI with hostname "github.com"
-          name: Start ssh-agent and configure the key
-          command: |
-            eval "$(ssh-agent -s)"
-            # the name is always "id_rsa_"+fingerprint without ":""
-            # Deployment key uploaded to the kubeapps-bot/charts repository
-            ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >>
-      - run:
-          # Assuming there is a personal access token created in GitHub granted with the scopes
-          # "repo:status", "public_repo" and "read:org"
-          # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Execute the chart_sync script
-          command: |
-            ./script/chart_sync.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >>
-  sync_chart_from_bitnami:
-    environment:
-      <<: *common_envars
-    docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
-    steps:
-      - checkout
-      - <<: *install_github
-      - <<: *install_semver
-      - <<: *setup_gpg
-      - add_ssh_keys:
-          fingerprints:
-            # Deployment key uploaded to the kubeapps/kubeapps repository
-            - << pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FINGERPRINT >>
-            # Deployment key uploaded to the kubeapps-bot/charts repository
-            - << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FINGERPRINT >>
-
-      - run:
-          # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
-          # public key uploaded to GitHub as a deploy key with write permissions
-          # private key uploaded to CircleCI with hostname "github.com"
-          name: Start ssh-agent and configure the key
-          command: |
-            eval "$(ssh-agent -s)"
-            # the name is always "id_rsa_"+fingerprint without ":""
-            # Deployment key uploaded to the kubeapps/kubeapps repository
-            ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FILENAME >>
-            # Deployment key uploaded to the kubeapps-bot/charts repository
-            ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >>
-      - run:
-          # Assuming there is a personal access token created in GitHub granted with the scopes
-          # "repo:status", "public_repo" and "read:org"
-          # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Execute the check_upstream_chart script
-          command: |
-            ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >>
   push_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>

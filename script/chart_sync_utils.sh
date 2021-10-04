@@ -17,7 +17,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Remote github repostories for:
+# Remote github repositories for:
 ## the upstream chart repository fork (CHARTS_REPO)
 ## the upstream chart original repository (CHARTS_REPO_ORIGINAL)
 ## the development chart repository (KUBEAPPS_REPO)
