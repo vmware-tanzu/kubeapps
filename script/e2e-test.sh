@@ -257,7 +257,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
 
-if [[ -n "${TEST_UPGRADE}" ]]; then
+if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps bitnami/kubeapps \
