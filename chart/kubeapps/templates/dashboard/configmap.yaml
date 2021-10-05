@@ -77,6 +77,5 @@ data:
       "featureFlags": {{ .Values.featureFlags | toJson }},
       "clusters": {{ template "kubeapps.clusterNames" . }},
       "theme": "{{ .Values.dashboard.defaultTheme }}",
-      "remoteComponentsUrl": "{{ .Values.dashboard.remoteComponentsUrl }}",
-      "customAppViews": {{ .Values.dashboard.customAppViews | toJson }}
+      "remoteComponentsUrl": "{{ .Values.dashboard.remoteComponentsUrl }}"
     }
