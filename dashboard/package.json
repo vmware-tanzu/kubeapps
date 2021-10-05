@@ -2,6 +2,7 @@
   "name": "dashboard",
   "version": "0.1.0",
   "private": true,
+  "proxy": "https://localhost", 
   "homepage": "./",
   "dependencies": {
     "@cds/city": "^1.1.0",
