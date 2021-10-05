@@ -464,6 +464,24 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	}, nil
 }
 
+func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference) error {
+	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
+	if err != nil {
+		return err
+	}
+
+	log.V(4).Infof("Deleted release: [%s]", packageRef.Identifier)
+
+	if err = ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{}); err != nil {
+		if errors.IsNotFound(err) {
+			return status.Errorf(codes.NotFound, "%q", err)
+		} else {
+			return status.Errorf(codes.Internal, "%q", err)
+		}
+	}
+	return nil
+}
+
 // returns 3 things:
 // - ready:  whether the HelmRelease object is in a ready state
 // - reason: one of SUCCESS/FAILURE/PENDING/UNSPECIFIED,

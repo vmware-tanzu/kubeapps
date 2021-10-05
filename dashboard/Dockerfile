@@ -1,4 +1,4 @@
-FROM bitnami/node:14.17.5 AS build
+FROM bitnami/node:14.17.6 AS build
 WORKDIR /app
 
 COPY package.json yarn.lock /app/

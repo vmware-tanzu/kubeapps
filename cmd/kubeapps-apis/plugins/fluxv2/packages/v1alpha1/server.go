@@ -457,3 +457,14 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		}, nil
 	}
 }
+
+// DeleteInstalledPackage deletes an installed package.
+func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
+	log.Infof("+fluxv2 DeleteInstalledPackage [%v]", request)
+
+	if err := s.deleteRelease(ctx, request.InstalledPackageRef); err != nil {
+		return nil, err
+	} else {
+		return &corev1.DeleteInstalledPackageResponse{}, nil
+	}
+}

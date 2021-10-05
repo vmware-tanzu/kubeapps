@@ -35,6 +35,7 @@ import AppNotes from "./AppNotes/AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
 import ChartInfo from "./ChartInfo/ChartInfo";
+import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 
 export interface IAppViewResourceRefs {
@@ -121,7 +122,7 @@ function parseResources(
   return result;
 }
 
-interface IRouteParams {
+export interface IRouteParams {
   cluster: string;
   namespace: string;
   releaseName: string;
@@ -145,6 +146,7 @@ export default function AppView() {
   const {
     apps: { error, selected: app, selectedDetails: appDetails },
     kube: { kinds },
+    config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
@@ -205,6 +207,19 @@ export default function AppView() {
     resourceRefs;
   const revision = app?.revision ?? 0;
   const icon = appDetails?.iconUrl ?? placeholder;
+
+  // If the package identifier matches the current list of loaded customAppViews,
+  // then load the custom view from external bundle instead of the default one.
+  const appRepo = app?.availablePackageRef?.identifier.split("/")[0];
+  const appName = app?.availablePackageRef?.identifier.split("/")[1];
+  const appPlugin = app?.availablePackageRef?.plugin?.name;
+  if (
+    customAppViews.some(
+      entry => entry.name === appName && entry.plugin === appPlugin && entry.repository === appRepo,
+    )
+  ) {
+    return <CustomAppView resourceRefs={resourceRefs} app={app!} appDetails={appDetails!} />;
+  }
 
   return (
     <LoadingWrapper loaded={!!app} loadingText="Retrieving application..." className="margin-t-xl">

@@ -67,11 +67,11 @@ test("Creates a private registry", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 10000 });
+      await expect(page).toMatchElement("a", { text: "foo apache chart for CI", timeout: 10000 });
     },
     testName,
   );
-  await expect(page).toClick("a", { text: "Apache HTTP Server" });
+  await expect(page).toClick("a", { text: "foo apache chart for CI" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
@@ -157,6 +157,13 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("Up to date", { timeout: 60000 });
-  await expect(page).toMatch("Ready");
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toMatch("Up to date", { timeout: 60000 });
+      await expect(page).toMatch("Ready");
+    },
+    testName,
+  );
 });

@@ -120,9 +120,16 @@ export interface CreateInstalledPackageRequest {
 /**
  * UpdateInstalledPackageRequest
  *
- * Request for UpdateInstalledPackage. Partial resource updates are supported.
- * For example, to change the package version one only needs to specify the version reference.
- * Similarly to update the values, one only needs to specify that field
+ * Request for UpdateInstalledPackage. The intent is to reach the desired state specified
+ * by the fields in the request, while leaving other fields intact. This is a whole
+ * object "Update" semantics rather than "Patch" semantics. The caller will provide the
+ * values for the fields fields below, which will replace, or be overlayed onto, the
+ * corresponding fields in the existing resource. For example, with the
+ * UpdateInstalledPackageRequest, it is not possible to change just the 'package version
+ * reference' without also specifying 'values' field. As a side effect, not specifying the
+ * 'values' field in the request means there are no values specified in the desired state.
+ * So the meaning of each field value is describing the desired state of the corresponding
+ * field in the resource after the update operation has completed the renconciliation.
  */
 export interface UpdateInstalledPackageRequest {
   /**
@@ -132,6 +139,7 @@ export interface UpdateInstalledPackageRequest {
   installedPackageRef?: InstalledPackageReference;
   /**
    * For helm this will be the exact version in VersionReference.version
+   * For fluxv2 this could be any semver constraint expression
    * For other plugins we can extend the VersionReference as needed. Optional
    */
   pkgVersionReference?: VersionReference;

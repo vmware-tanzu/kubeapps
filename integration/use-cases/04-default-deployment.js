@@ -12,13 +12,13 @@ test("Deploys an application with the values by default", async () => {
 
   await expect(page).toClick("a", { text: "Catalog" });
 
-  await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 60000 });
-  await expect(page).toClick("a", { text: "Apache HTTP Server" });
+  await expect(page).toMatchElement("a", { text: "foo apache chart for CI", timeout: 60000 });
+  await expect(page).toClick("a", { text: "foo apache chart for CI" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
-  await page.type("#releaseName", utils.getRandomName("my-app"));
+  await page.type("#releaseName", utils.getRandomName("my-app-for-04-deploy"));
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 

@@ -13,8 +13,8 @@ test("Upgrades an application", async () => {
     "password",
   );
 
-  await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 60000 });
-  await expect(page).toClick("a", { text: "Apache HTTP Server" });
+  await expect(page).toMatchElement("a", { text: "foo apache chart for CI", timeout: 60000 });
+  await expect(page).toClick("a", { text: "foo apache chart for CI" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
@@ -84,7 +84,7 @@ test("Upgrades an application", async () => {
   await expect(page).toMatch("replicaCount: 2");
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
-  await page.type("#releaseName", utils.getRandomName("my-app"));
+  await page.type("#releaseName", utils.getRandomName("my-app-for-07-upgrade"));
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 

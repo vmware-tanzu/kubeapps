@@ -2132,7 +2132,14 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) 
 	memDriver := driver.NewMemory()
 
 	actionConfig := &action.Configuration{
-		Releases:     storage.Init(memDriver),
+		// Create the Releases storage explicitly so we can set the
+		// internal log function used to see data in test output.
+		Releases: &storage.Storage{
+			Driver: memDriver,
+			Log: func(format string, v ...interface{}) {
+				t.Logf(format, v...)
+			},
+		},
 		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
 		Capabilities: chartutil.DefaultCapabilities,
 		Log: func(format string, v ...interface{}) {
