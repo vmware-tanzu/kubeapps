@@ -145,13 +145,28 @@ pushChart() {
   local version=$2
   local user=$3
   local password=$4
+  prefix="kubeapps-"
+  description="foo ${chart} chart for CI"
+
   info "Adding ${chart}-${version} to ChartMuseum ..."
   curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+
+  # Mutate the chart name and description, then re-package the tarball
+  # For instance, the apache's Chart.yaml file becomes modified to:
+  #   name: kubeapps-apache
+  #   description: foo apache chart for CI
+  # consequently, the new packaged chart is "${prefix}${chart}-${version}.tgz"
+  # This workaround should mitigate https://github.com/kubeapps/kubeapps/issues/3339
+  mkdir ./${chart}-${version}
+  tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
+  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
+  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
+  helm package ./${chart}-${version}/${chart} -d .
 
   local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
   /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
   sleep 2
-  curl -u "${user}:${password}" --data-binary "@${chart}-${version}.tgz" http://localhost:8080/api/charts
+  curl -u "${user}:${password}" --data-binary "@${prefix}${chart}-${version}.tgz" http://localhost:8080/api/charts
   pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
 }
 
@@ -178,6 +193,10 @@ installOrUpgradeKubeapps() {
     --set postgresql.replication.enabled=false
     --set postgresql.postgresqlPassword=password
     --set redis.auth.password=password
+    --set apprepository.initialRepos[0].name=bitnami
+    --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
+    --set apprepository.initialRepos[0].basicAuth.user=admin
+    --set apprepository.initialRepos[0].basicAuth.password=password
     --wait)
 
   echo "${cmd[@]}"
@@ -261,7 +280,7 @@ if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps bitnami/kubeapps \
-    "--set" "apprepository.initialRepos=null"
+    "--set" "apprepository.initialRepos={}"
 
   info "Waiting for Kubeapps components to be ready (bitnami chart)..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
