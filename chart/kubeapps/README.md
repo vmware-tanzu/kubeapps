@@ -245,6 +245,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `apprepository.syncImage.pullPolicy`                  | Kubeapps Asset Syncer image pull policy                                                   | `IfNotPresent`                      |
 | `apprepository.syncImage.pullSecrets`                 | Kubeapps Asset Syncer image pull secrets                                                  | `[]`                                |
 | `apprepository.initialRepos`                          | Initial chart repositories to configure                                                   | `[]`                                |
+| `apprepository.customAnnotations`                     | Custom annotations be added to each AppRepository-generated CronJob, Job and Pod          | `{}`                                |
+| `apprepository.customLabels`                          | Custom labels be added to each AppRepository-generated CronJob, Job and Pod               | `{}`                                |
 | `apprepository.initialReposProxy`                     | Proxy configuration to access chart repositories                                          | `{}`                                |
 | `apprepository.crontab`                               | Schedule for syncing App repositories (default to 10 minutes)                             | `""`                                |
 | `apprepository.watchAllNamespaces`                    | Watch all namespaces to support separate AppRepositories per namespace                    | `true`                              |
@@ -478,7 +480,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | Name                                                 | Description                                                                                                             | Value                    |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `kubeappsapis.unsafeUseDemoSA`                       | If true, replace the user's credentials by a full-granted demo service account. Just intended for development purposes. | `false`                  |
-| `kubeappsapis.enabledPlugins`                        | Enabled plugins for the Kubeapps-APIs service                                                                           | `[]`                     |
+| `kubeappsapis.enabledPlugins`                        | Enabled plugins for the Kubeapps-APIs service                                                                           | `["helm"]`               |
 | `kubeappsapis.image.registry`                        | Kubeapps-APIs image registry                                                                                            | `docker.io`              |
 | `kubeappsapis.image.repository`                      | Kubeapps-APIs image repository                                                                                          | `kubeapps/kubeapps-apis` |
 | `kubeappsapis.image.tag`                             | Kubeapps-APIs image tag (immutable tags are recommended)                                                                | `latest`                 |
