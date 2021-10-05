@@ -55,7 +55,10 @@ function AppUpgrade() {
     dispatch(
       actions.packages.fetchDeployedAvailablePackageDetail(
         {
-          context: { cluster: cluster, namespace: repoNamespace ?? "" },
+          context: {
+            cluster: app?.availablePackageRef?.context?.cluster ?? cluster,
+            namespace: repoNamespace ?? "",
+          },
           identifier: app?.availablePackageRef?.identifier ?? "",
           plugin: app?.availablePackageRef?.plugin,
         } as AvailablePackageReference,
