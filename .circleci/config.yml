@@ -42,6 +42,12 @@ parameters:
   POSTGRESQL_VERSION:
     type: "string"
     default: "11.13.0-debian-10-r39"
+  GKE_STABLE_VERSION:
+    type: "string"
+    default: "1.19"
+  GKE_REGULAR_VERSION:
+    type: "string"
+    default: "1.20"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -68,25 +74,32 @@ parameters:
     default: "id_rsa_59812a95a654a746e515f537b34f6cad"
 
 ## Build conditions
-# Build in any branch or tag
+# Build on any branch or tag
 build_always: &build_always
   filters:
     tags:
       only: /^v.*/
-# Build only in master or in tags
-build_on_master: &build_on_master
+# Build only on the main branch or in tags
+build_on_main: &build_on_main
   filters:
     tags:
       only: /^v.*/
     branches:
       only: master
-# Build only in tags (release)
+# Build only on tags (release)
 build_on_tag: &build_on_tag
   filters:
     tags:
       only: /^v.*/
     branches:
       ignore: /.*/
+# Build only on the prerelease branch or in tags (release)
+build_on_tag_or_prerelease: &build_on_tag_or_prerelease
+  filters:
+    tags:
+      only: /^v.*/
+    branches:
+      only: prerelease
 
 workflows:
   version: 2
@@ -123,9 +136,9 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
-          <<: *build_on_master
-      - GKE_1_20_MASTER:
-          <<: *build_on_tag
+          <<: *build_on_main
+      - GKE_REGULAR_VERSION_MAIN:
+          <<: *build_on_tag_or_prerelease
           requires:
             - test_go
             - test_dashboard
@@ -135,8 +148,8 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_1_20_LATEST_RELEASE:
-          <<: *build_on_tag
+      - GKE_REGULAR_VERSION_LATEST_RELEASE:
+          <<: *build_on_tag_or_prerelease
           requires:
             - test_go
             - test_dashboard
@@ -146,8 +159,8 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_1_19_MASTER:
-          <<: *build_on_tag
+      - GKE_STABLE_VERSION_MAIN:
+          <<: *build_on_tag_or_prerelease
           requires:
             - test_go
             - test_dashboard
@@ -157,8 +170,8 @@ workflows:
             - build_dashboard
             - build_pinniped_proxy
             - sync_chart_from_bitnami
-      - GKE_1_19_LATEST_RELEASE:
-          <<: *build_on_tag
+      - GKE_STABLE_VERSION_LATEST_RELEASE:
+          <<: *build_on_tag_or_prerelease
           requires:
             - test_go
             - test_dashboard
@@ -169,26 +182,26 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - push_images:
-          <<: *build_on_master
+          <<: *build_on_main
           requires:
             - local_e2e_tests
       - sync_chart_to_bitnami:
           <<: *build_on_tag
           requires:
             - local_e2e_tests
-            - GKE_1_20_MASTER
-            - GKE_1_20_LATEST_RELEASE
-            - GKE_1_19_MASTER
-            - GKE_1_19_LATEST_RELEASE
+            - GKE_REGULAR_VERSION_MAIN
+            - GKE_REGULAR_VERSION_LATEST_RELEASE
+            - GKE_STABLE_VERSION_MAIN
+            - GKE_STABLE_VERSION_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
             - sync_chart_to_bitnami
             - local_e2e_tests
-            - GKE_1_20_MASTER
-            - GKE_1_20_LATEST_RELEASE
-            - GKE_1_19_MASTER
-            - GKE_1_19_LATEST_RELEASE
+            - GKE_REGULAR_VERSION_MAIN
+            - GKE_REGULAR_VERSION_LATEST_RELEASE
+            - GKE_STABLE_VERSION_MAIN
+            - GKE_STABLE_VERSION_LATEST_RELEASE
 
 ## Definitions
 common_envars: &common_envars
@@ -447,7 +460,7 @@ run_e2e_tests: &run_e2e_tests
     name: "Run e2e tests script"
     command: |
       # If we want to test the latest version instead we override the image to be used
-      if [[ -n "$TEST_LATEST_RELEASE" ]]; then
+      if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
         source ./script/chart_sync_utils.sh
         latest="$(latestReleaseTag)"
         DEV_TAG=${latest/v/}
@@ -479,7 +492,7 @@ gke_test: &gke_test
 
           # Cancel job if this is a test stable release job but
           # the chart version has not been bumped
-          if [[ -n "$TEST_LATEST_RELEASE" ]] && ! changedVersion; then
+          if [[ -n "${TEST_LATEST_RELEASE:-}" ]] && ! changedVersion; then
             echo "Step aborted, we are not releasing a new version of the chart"
             circleci step halt
           fi
@@ -637,7 +650,6 @@ jobs:
     machine: true
     environment:
       DEFAULT_DEX_IP: "172.18.0.2"
-      KUBEAPPS_DB: "postgresql"
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       <<: *common_envars
@@ -645,33 +657,29 @@ jobs:
       number:
         type: string
     <<: *local_e2e_steps
-  GKE_1_20_MASTER:
+  GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.20"
-      KUBEAPPS_DB: "postgresql"
+      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_1_20_LATEST_RELEASE:
+  GKE_REGULAR_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.20"
-      KUBEAPPS_DB: "postgresql"
+      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_1_19_MASTER:
+  GKE_STABLE_VERSION_MAIN:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.19"
-      KUBEAPPS_DB: "postgresql"
+      GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
-  GKE_1_19_LATEST_RELEASE:
+  GKE_STABLE_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.19"
-      KUBEAPPS_DB: "postgresql"
+      GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
       <<: *common_envars
