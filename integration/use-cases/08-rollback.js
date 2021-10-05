@@ -12,8 +12,8 @@ test("Rolls back an application", async () => {
   );
 
   // Deploy the app
-  await expect(page).toMatchElement("a", { text: "Apache HTTP Server", timeout: 60000 });
-  await expect(page).toClick("a", { text: "Apache HTTP Server" });
+  await expect(page).toMatchElement("a", { text: "foo apache chart for CI", timeout: 60000 });
+  await expect(page).toClick("a", { text: "foo apache chart for CI" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
