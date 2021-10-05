@@ -844,6 +844,9 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		Version:                        request.GetPkgVersionReference().GetVersion(),
 	}
 	ch, registrySecrets, err := s.fetchChartWithRegistrySecrets(ctx, chartDetails, typedClient)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "Missing permissions %v", err)
+	}
 
 	// Create an action config for the target namespace.
 	actionConfig, err := s.actionConfigGetter(ctx, request.GetTargetContext())
@@ -913,6 +916,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		Version:                        request.GetPkgVersionReference().GetVersion(),
 	}
 	ch, registrySecrets, err := s.fetchChartWithRegistrySecrets(ctx, chartDetails, typedClient)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "Missing permissions %v", err)
+	}
 
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(ctx, installedRef.GetContext())
@@ -1020,6 +1026,9 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 		caCertSecret, authSecret,
 		s.chartClientFactory.New(appRepo.Spec.Type, userAgentString),
 	)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s from the namespace %q: %v", chartDetails.ChartName, appRepo.Namespace, err)
+	}
 
 	registrySecrets, err := chartutils.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, client)
 	if err != nil {
