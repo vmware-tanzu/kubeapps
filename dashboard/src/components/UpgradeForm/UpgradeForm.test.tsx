@@ -164,7 +164,10 @@ it("fetches the available versions", () => {
   Chart.getAvailablePackageVersions = getAvailablePackageVersions;
   mountWrapper(defaultStore, <UpgradeForm {...defaultProps} />);
   expect(getAvailablePackageVersions).toHaveBeenCalledWith({
-    context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
+    context: {
+      cluster: defaultProps.cluster,
+      namespace: defaultProps.repoNamespace,
+    },
     identifier: defaultProps.packageId,
     plugin: defaultProps.plugin,
   } as AvailablePackageReference);
@@ -193,7 +196,10 @@ it("fetches the current chart version even if there is already one in the state"
   );
   expect(getAvailablePackageDetail).toHaveBeenCalledWith(
     {
-      context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
+      context: {
+        cluster: availablePkgDetails[0].availablePackageRef?.context?.cluster,
+        namespace: defaultProps.repoNamespace,
+      },
       identifier: defaultProps.packageId,
       plugin: defaultProps.plugin,
     } as AvailablePackageReference,
