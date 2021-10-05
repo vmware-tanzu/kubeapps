@@ -139,7 +139,7 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.GetAvailablePackageDetail(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable get the to get the available package detail from the plugin %v: %v", request.AvailablePackageRef.Plugin, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package detail for the package %q using the plugin %q: %v", request.AvailablePackageRef.Identifier, request.AvailablePackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
