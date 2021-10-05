@@ -49,7 +49,7 @@
     "redux": "^4.1.1",
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.3.0",
-    "remark-gfm": "^2.0.0",
+    "remark-gfm": "^3.0.0",
     "seamless-immutable": "^7.1.4",
     "swagger-ui-react": "^3.52.3",
     "typesafe-actions": "^5.1.0",
