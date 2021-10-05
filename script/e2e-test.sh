@@ -146,17 +146,21 @@ pushChart() {
   local user=$3
   local password=$4
   prefix="kubeapps-"
+  description="foo ${chart} chart for CI"
 
   info "Adding ${chart}-${version} to ChartMuseum ..."
   curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
 
-  # Mudate the chart name adding a prefix and packing the tarball again
-  # For instance, in the apache chart, it becomes 'name: kubeapps-apache';
+  # Mutate the chart name and description, then re-package the tarball
+  # For instance, the apache's Chart.yaml file becomes modified to:
+  #   name: kubeapps-apache
+  #   description: foo apache chart for CI
   # consequently, the new packaged chart is "${prefix}${chart}-${version}.tgz"
   # This workaround should mitigate https://github.com/kubeapps/kubeapps/issues/3339
   mkdir ./${chart}-${version}
   tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
   sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
+  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
   helm package ./${chart}-${version}/${chart} -d .
 
   local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
