@@ -133,18 +133,18 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.AvailablePackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.AvailablePackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.GetAvailablePackageDetail(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable get the GetAvailablePackageDetail from the plugin %v: %v", request.AvailablePackageRef.Plugin, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package detail for the package %q using the plugin %q: %v", request.AvailablePackageRef.Identifier, request.AvailablePackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
 	if response.GetAvailablePackageDetail().GetAvailablePackageRef() == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid GetAvailablePackageDetail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, status.Errorf(codes.Internal, "Invalid available package detail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
 	}
 
 	// Build the response
@@ -203,13 +203,13 @@ func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.InstalledPackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.InstalledPackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.GetInstalledPackageDetail(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable get the GetInstalledPackageDetail from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the installed package detail for the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -235,13 +235,13 @@ func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.AvailablePackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.AvailablePackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.GetAvailablePackageVersions(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable get the GetAvailablePackageVersions from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package versions for the package %q using the plugin %q: %v", request.AvailablePackageRef.Identifier, request.AvailablePackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -267,13 +267,13 @@ func (s packagesServer) CreateInstalledPackage(ctx context.Context, request *pac
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.AvailablePackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.AvailablePackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.CreateInstalledPackage(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to  CreateInstalledPackage using the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to create the installed package for the package %q using the plugin %q: %v", request.AvailablePackageRef.Identifier, request.AvailablePackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -296,18 +296,18 @@ func (s packagesServer) UpdateInstalledPackage(ctx context.Context, request *pac
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.InstalledPackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.InstalledPackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.UpdateInstalledPackage(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to  CreateInstalledPackage using the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to update the installed package for the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
 	if response.InstalledPackageRef == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid CreateInstalledPackage response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, status.Errorf(codes.Internal, "Invalid UpdateInstalledPackage response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
 	}
 
 	return response, nil
@@ -325,13 +325,13 @@ func (s packagesServer) DeleteInstalledPackage(ctx context.Context, request *pac
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable get the plugin %v", request.InstalledPackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.InstalledPackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
 	response, err := pluginWithServer.server.DeleteInstalledPackage(ctx, request)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to  CreateInstalledPackage using the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to delete the installed packagefor the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
 	}
 
 	return response, nil
