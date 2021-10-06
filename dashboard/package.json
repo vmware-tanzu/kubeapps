@@ -25,7 +25,6 @@
     "prop-types": "^15.7.2",
     "protobufjs": "^6.11.2",
     "qs": "^6.10.1",
-    "raf": "^3.4.1",
     "react": "^17.0.2",
     "react-ace": "^9.4.4",
     "react-compound-slider": "^3.3.1",
