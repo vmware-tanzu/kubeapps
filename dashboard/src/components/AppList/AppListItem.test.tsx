@@ -22,7 +22,7 @@ const defaultProps = {
     installedPackageRef: {
       identifier: "foo",
       pkgVersion: "1.0.0",
-      context: { cluster: "default", namespace: "chart-namespace" } as Context,
+      context: { cluster: "default", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference,
     status: {
@@ -58,7 +58,7 @@ it("renders an app item", () => {
   });
 });
 
-it("should add a tooltip with the chart update available", () => {
+it("should add a tooltip with the package update available", () => {
   const props = {
     ...defaultProps,
     app: {

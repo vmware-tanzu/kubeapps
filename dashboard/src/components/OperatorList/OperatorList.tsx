@@ -198,7 +198,7 @@ export default function OperatorList({
         filter={
           <SearchFilter
             key="searchFilter"
-            placeholder="search charts..."
+            placeholder="search operators..."
             onChange={setSearchFilter}
             value={searchFilter}
             submitFilters={submitFilters}

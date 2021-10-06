@@ -8,7 +8,7 @@ import {
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import {
   CreateError,
   DeleteError,
@@ -95,12 +95,12 @@ export function getApp(
       const legacyResponse = await App.getRelease(installedPackageRef);
       // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
-      // For local packages with no references to any available packages (eg.a local chart for development)
+      // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
       let availablePackageDetail;
       try {
         // Get the details of the available package that corresponds to the installed package
-        const resp = await Chart.getAvailablePackageDetail(
+        const resp = await PackagesService.getAvailablePackageDetail(
           installedPackageDetail?.availablePackageRef,
           installedPackageDetail?.currentVersion?.pkgVersion,
         );

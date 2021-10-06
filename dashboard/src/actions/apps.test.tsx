@@ -137,7 +137,7 @@ describe("delete applications", () => {
   });
 });
 
-describe("deploy chart", () => {
+describe("deploy package", () => {
   beforeEach(() => {
     App.CreateInstalledPackage = jest.fn();
   });
@@ -307,9 +307,6 @@ describe("rollbackInstalledPackage", () => {
     App.getRelease = jest.fn().mockReturnValue({ manifest: {} });
     App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
       installedPackageDetail: installedPackageDetail,
-    });
-    Chart.getAvailablePackageDetail = jest.fn().mockReturnValue({
-      availablePackageDetail: availablePackageDetail,
     });
     const res = await store.dispatch(rollbackInstalledPackageAction);
     expect(res).toBe(true);

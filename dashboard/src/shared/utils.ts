@@ -68,7 +68,7 @@ export function flattenResources(
   return result;
 }
 
-export function getPluginIcon(plugin: Plugin | string) {
+export function getPluginIcon(plugin?: Plugin | string) {
   // Temporary case while operators are not supported as kubeapps apis plugin
   if (typeof plugin === "string") {
     switch (plugin) {

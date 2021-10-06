@@ -3,11 +3,11 @@ import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Link } from "react-router-dom";
 import { app as appURL } from "shared/url";
-interface IChartInfoProps {
+interface IPackageUpdateInfoProps {
   installedPackageDetail: InstalledPackageDetail;
 }
 
-export default function ChartUpdateInfo({ installedPackageDetail }: IChartInfoProps) {
+export default function PackageUpdateInfo({ installedPackageDetail }: IPackageUpdateInfoProps) {
   let alertContent;
   if (
     installedPackageDetail.latestVersion?.appVersion &&

@@ -8,7 +8,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
 import { axiosWithAuth } from "./AxiosInstance";
-import Chart from "./Chart";
+import PackagesService from "./PackagesService";
 
 const clusterName = "cluster-name";
 const namespaceName = "namespace-name";
@@ -83,9 +83,9 @@ describe("App", () => {
           } as GetAvailablePackageSummariesResponse),
         );
         jest
-          .spyOn(Chart, "getAvailablePackageSummaries")
+          .spyOn(PackagesService, "getAvailablePackageSummaries")
           .mockImplementation(mockGetAvailablePackageSummaries);
-        const availablePackageSummaries = await Chart.getAvailablePackageSummaries(
+        const availablePackageSummaries = await PackagesService.getAvailablePackageSummaries(
           t.args.cluster,
           t.args.namespace,
           t.args.repos,
@@ -123,9 +123,9 @@ describe("App", () => {
           } as GetAvailablePackageVersionsResponse),
         );
         jest
-          .spyOn(Chart, "getAvailablePackageVersions")
+          .spyOn(PackagesService, "getAvailablePackageVersions")
           .mockImplementation(mockGetAvailablePackageVersions);
-        const availablePackageVersions = await Chart.getAvailablePackageVersions({
+        const availablePackageVersions = await PackagesService.getAvailablePackageVersions({
           context: { cluster: t.args.cluster, namespace: t.args.namespace },
           identifier: t.args.id,
           plugin: t.args.plugin,
@@ -173,9 +173,9 @@ describe("App", () => {
           } as GetAvailablePackageDetailResponse),
         );
         jest
-          .spyOn(Chart, "getAvailablePackageDetail")
+          .spyOn(PackagesService, "getAvailablePackageDetail")
           .mockImplementation(mockGetAvailablePackageDetail);
-        const availablePackageDetail = await Chart.getAvailablePackageDetail(
+        const availablePackageDetail = await PackagesService.getAvailablePackageDetail(
           {
             context: { cluster: t.args.cluster, namespace: t.args.namespace },
             identifier: t.args.id,

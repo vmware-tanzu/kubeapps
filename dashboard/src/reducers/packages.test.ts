@@ -2,11 +2,11 @@ import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { IChartState, IReceiveChartsActionPayload } from "../shared/types";
-import chartsReducer from "./charts";
+import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";
+import packageReducer from "./packages";
 
-describe("chartReducer", () => {
-  let initialState: IChartState;
+describe("packageReducer", () => {
+  let initialState: IPackageState;
   const availablePackageSummary1: AvailablePackageSummary = {
     name: "foo",
     categories: [""],
@@ -16,7 +16,7 @@ describe("chartReducer", () => {
     shortDescription: "",
     availablePackageRef: {
       identifier: "foo/foo",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   };
@@ -30,7 +30,7 @@ describe("chartReducer", () => {
     shortDescription: "",
     availablePackageRef: {
       identifier: "bar/bar",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
   };
@@ -51,8 +51,8 @@ describe("chartReducer", () => {
   const error = new Error("Boom");
 
   it("unsets an error when changing namespace", () => {
-    const state = chartsReducer(undefined, {
-      type: getType(actions.charts.errorChart) as any,
+    const state = packageReducer(undefined, {
+      type: getType(actions.packages.createErrorPackage) as any,
       payload: error,
     });
     expect(state).toEqual({
@@ -65,15 +65,15 @@ describe("chartReducer", () => {
     });
 
     expect(
-      chartsReducer(undefined, {
+      packageReducer(undefined, {
         type: getType(actions.namespace.setNamespaceState) as any,
       }),
     ).toEqual({ ...initialState });
   });
 
-  it("requestCharts (without page)", () => {
-    const state = chartsReducer(undefined, {
-      type: getType(actions.charts.requestCharts) as any,
+  it("requestAvailablePackageSummaries (without page)", () => {
+    const state = packageReducer(undefined, {
+      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
       ...initialState,
@@ -81,9 +81,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("requestCharts (with page)", () => {
-    const state = chartsReducer(undefined, {
-      type: getType(actions.charts.requestCharts) as any,
+  it("requestAvailablePackageSummaries (with page)", () => {
+    const state = packageReducer(undefined, {
+      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
       payload: 2,
     });
     expect(state).toEqual({
@@ -92,9 +92,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("single receiveCharts (first page) should be returned", () => {
-    const state = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
+  it("single receiveAvailablePackageSummaries (first page) should be returned", () => {
+    const state = packageReducer(undefined, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -102,7 +102,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(state).toEqual({
       ...initialState,
@@ -113,11 +113,11 @@ describe("chartReducer", () => {
     });
   });
 
-  it("single receiveCharts (middle page) having visited the previous ones should be ignored", () => {
-    const state = chartsReducer(
+  it("single receiveAvailablePackageSummaries (middle page) having visited the previous ones should be ignored", () => {
+    const state = packageReducer(
       { ...initialState },
       {
-        type: getType(actions.charts.receiveCharts) as any,
+        type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -125,7 +125,7 @@ describe("chartReducer", () => {
             categories: ["foo"],
           },
           page: 2,
-        } as IReceiveChartsActionPayload,
+        } as IReceivePackagesActionPayload,
       },
     );
     expect(state).toEqual({
@@ -137,11 +137,11 @@ describe("chartReducer", () => {
     });
   });
 
-  it("single receiveCharts (middle page) not visiting the previous ones should be ignored", () => {
-    const state = chartsReducer(
+  it("single receiveAvailablePackageSummaries (middle page) not visiting the previous ones should be ignored", () => {
+    const state = packageReducer(
       { ...initialState },
       {
-        type: getType(actions.charts.receiveCharts) as any,
+        type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -149,7 +149,7 @@ describe("chartReducer", () => {
             categories: ["foo"],
           },
           page: 2,
-        } as IReceiveChartsActionPayload,
+        } as IReceivePackagesActionPayload,
       },
     );
     expect(state).toEqual({
@@ -161,13 +161,13 @@ describe("chartReducer", () => {
     });
   });
 
-  it("single receiveCharts (last page) not incrementing page", () => {
-    const state = chartsReducer(
+  it("single receiveAvailablePackageSummaries (last page) not incrementing page", () => {
+    const state = packageReducer(
       {
         ...initialState,
       },
       {
-        type: getType(actions.charts.receiveCharts) as any,
+        type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -175,7 +175,7 @@ describe("chartReducer", () => {
             categories: ["foo"],
           },
           page: 3,
-        } as IReceiveChartsActionPayload,
+        } as IReceivePackagesActionPayload,
       },
     );
     expect(state).toEqual({
@@ -187,9 +187,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("two receiveCharts should add items (no dups)", () => {
-    const state1 = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
+  it("two receiveAvailablePackageSummaries should add items (no dups)", () => {
+    const state1 = packageReducer(undefined, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -197,10 +197,10 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
-    const state2 = chartsReducer(state1, {
-      type: getType(actions.charts.receiveCharts) as any,
+    const state2 = packageReducer(state1, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary2],
@@ -208,7 +208,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 2,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(state2).toEqual({
       ...initialState,
@@ -220,9 +220,9 @@ describe("chartReducer", () => {
     expect(state2.items.length).toBe(2);
   });
 
-  it("requestCharts and receiveCharts with multiple pages", () => {
-    const stateReq1 = chartsReducer(initialState, {
-      type: getType(actions.charts.requestCharts) as any,
+  it("requestAvailablePackageSummaries and receiveAvailablePackageSummaries with multiple pages", () => {
+    const stateReq1 = packageReducer(initialState, {
+      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
       payload: 1,
     });
     expect(stateReq1).toEqual({
@@ -231,8 +231,8 @@ describe("chartReducer", () => {
       hasFinishedFetching: false,
       items: [],
     });
-    const stateRec1 = chartsReducer(stateReq1, {
-      type: getType(actions.charts.receiveCharts) as any,
+    const stateRec1 = packageReducer(stateReq1, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -240,7 +240,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(stateRec1).toEqual({
       ...initialState,
@@ -249,8 +249,8 @@ describe("chartReducer", () => {
       items: [availablePackageSummary1],
       hasFinishedFetching: false,
     });
-    const stateReq2 = chartsReducer(stateRec1, {
-      type: getType(actions.charts.requestCharts) as any,
+    const stateReq2 = packageReducer(stateRec1, {
+      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
       payload: 2,
     });
     expect(stateReq2).toEqual({
@@ -260,8 +260,8 @@ describe("chartReducer", () => {
       categories: ["foo"],
       items: [availablePackageSummary1],
     });
-    const stateRec2 = chartsReducer(stateReq2, {
-      type: getType(actions.charts.receiveCharts) as any,
+    const stateRec2 = packageReducer(stateReq2, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary2],
@@ -269,7 +269,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 2,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(stateRec2).toEqual({
       ...initialState,
@@ -278,8 +278,8 @@ describe("chartReducer", () => {
       categories: ["foo"],
       items: [availablePackageSummary1, availablePackageSummary2],
     });
-    const stateReq3 = chartsReducer(stateRec2, {
-      type: getType(actions.charts.requestCharts) as any,
+    const stateReq3 = packageReducer(stateRec2, {
+      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
       payload: 3,
     });
     expect(stateReq3).toEqual({
@@ -289,8 +289,8 @@ describe("chartReducer", () => {
       categories: ["foo"],
       items: [availablePackageSummary1, availablePackageSummary2],
     });
-    const stateRec3 = chartsReducer(stateReq3, {
-      type: getType(actions.charts.receiveCharts) as any,
+    const stateRec3 = packageReducer(stateReq3, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -298,7 +298,7 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 3,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
     expect(stateRec3).toEqual({
       ...initialState,
@@ -311,9 +311,9 @@ describe("chartReducer", () => {
 
   // TODO(agamez): check whether or not we really want to filter out duplicates. If so, add some deleted tests back
 
-  it("two receiveCharts and then errorChart", () => {
-    const state1 = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
+  it("two receiveAvailablePackageSummaries and then createErrorPackage", () => {
+    const state1 = packageReducer(undefined, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -321,10 +321,10 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
-    const state2 = chartsReducer(state1, {
-      type: getType(actions.charts.receiveCharts) as any,
+    const state2 = packageReducer(state1, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [],
@@ -332,10 +332,10 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 2,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
-    const state3 = chartsReducer(state2, {
-      type: getType(actions.charts.errorChart) as any,
+    const state3 = packageReducer(state2, {
+      type: getType(actions.packages.createErrorPackage) as any,
     });
     expect(state3).toEqual({
       ...initialState,
@@ -345,9 +345,9 @@ describe("chartReducer", () => {
     });
   });
 
-  it("clears errors after clearErrorChart", () => {
-    const state1 = chartsReducer(undefined, {
-      type: getType(actions.charts.receiveCharts) as any,
+  it("clears errors after clearErrorPackage", () => {
+    const state1 = packageReducer(undefined, {
+      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -355,13 +355,13 @@ describe("chartReducer", () => {
           categories: ["foo"],
         },
         page: 1,
-      } as IReceiveChartsActionPayload,
+      } as IReceivePackagesActionPayload,
     });
-    const state2 = chartsReducer(state1, {
-      type: getType(actions.charts.errorChart) as any,
+    const state2 = packageReducer(state1, {
+      type: getType(actions.packages.createErrorPackage) as any,
     });
-    const state3 = chartsReducer(state2, {
-      type: getType(actions.charts.clearErrorChart) as any,
+    const state3 = packageReducer(state2, {
+      type: getType(actions.packages.clearErrorPackage) as any,
     });
     expect(state3).toEqual({
       ...initialState,
@@ -372,18 +372,18 @@ describe("chartReducer", () => {
     });
   });
 
-  it("resetRequestCharts resets to the initial", () => {
-    const state = chartsReducer(undefined, {
-      type: getType(actions.charts.resetRequestCharts) as any,
+  it("resetAvailablePackageSummaries resets to the initial", () => {
+    const state = packageReducer(undefined, {
+      type: getType(actions.packages.resetAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
       ...initialState,
     });
   });
 
-  it("errorChart resets to the initial state", () => {
-    const state = chartsReducer(undefined, {
-      type: getType(actions.charts.errorChart) as any,
+  it("createErrorPackage resets to the initial state", () => {
+    const state = packageReducer(undefined, {
+      type: getType(actions.packages.createErrorPackage) as any,
     });
     expect(state).toEqual({
       ...initialState,

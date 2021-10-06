@@ -3,7 +3,7 @@ import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import ReactMarkdown from "react-markdown";
 import { HashLink as Link } from "react-router-hash-link";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import ChartReadme from "./ChartReadme";
+import PackageReadme from "./PackageReadme";
 
 const defaultProps = {
   error: undefined,
@@ -12,8 +12,8 @@ const defaultProps = {
 
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.charts = {
-    ...actions.charts,
+  actions.packages = {
+    ...actions.packages,
   };
 });
 
@@ -22,7 +22,7 @@ afterEach(() => {
 });
 
 it("behaves as a loading component", () => {
-  const wrapper = mountWrapper(defaultStore, <ChartReadme {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <PackageReadme {...defaultProps} />);
   expect(wrapper.find(LoadingWrapper)).toExist();
 });
 
@@ -31,7 +31,7 @@ it("renders the ReactMarkdown content is readme is present", () => {
     ...defaultProps,
     readme: "# Markdown Readme",
   };
-  const wrapper = mountWrapper(defaultStore, <ChartReadme {...props} />);
+  const wrapper = mountWrapper(defaultStore, <PackageReadme {...props} />);
   const component = wrapper.find(ReactMarkdown);
   expect(component.html()).toEqual('<h1 id="markdown-readme">Markdown Readme</h1>');
 });
@@ -41,7 +41,7 @@ it("renders the ReactMarkdown content with github flavored markdown (table)", ()
     ...defaultProps,
     readme: "|h1|h2|\n|-|-|\n|foo|bar|",
   };
-  const wrapper = mountWrapper(defaultStore, <ChartReadme {...props} />);
+  const wrapper = mountWrapper(defaultStore, <PackageReadme {...props} />);
   const component = wrapper.find(ReactMarkdown);
   expect(component.props()).toMatchObject({ children: props.readme });
   expect(component.find("table th").first().text()).toBe("h1");
@@ -51,19 +51,22 @@ it("renders the ReactMarkdown content with github flavored markdown (table)", ()
 });
 
 it("renders a not found error when error is set", () => {
-  const wrapper = mountWrapper(defaultStore, <ChartReadme {...defaultProps} error={"not found"} />);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <PackageReadme {...defaultProps} error={"not found"} />,
+  );
   expect(wrapper.text()).toContain("No README found");
 });
 
 it("renders an alert when error is set", () => {
-  const wrapper = mountWrapper(defaultStore, <ChartReadme {...defaultProps} error={"Boom!"} />);
+  const wrapper = mountWrapper(defaultStore, <PackageReadme {...defaultProps} error={"Boom!"} />);
   expect(wrapper.text()).toContain("Unable to fetch package README: Boom!");
 });
 
 it("renders the ReactMarkdown content adding IDs for the titles", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <ChartReadme {...defaultProps} readme="# _Markdown_ 'Readme_or_not'!" />,
+    <PackageReadme {...defaultProps} readme="# _Markdown_ 'Readme_or_not'!" />,
   );
   const component = wrapper.find("#markdown-readme_or_not");
   expect(component).toExist();
@@ -72,7 +75,7 @@ it("renders the ReactMarkdown content adding IDs for the titles", () => {
 it("renders the ReactMarkdown ignoring comments", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <ChartReadme
+    <PackageReadme
       {...defaultProps}
       readme={`<!-- This is a comment -->
       This is text`}
@@ -86,7 +89,7 @@ it("renders the ReactMarkdown ignoring comments", () => {
 it("renders the ReactMarkdown content with hash links", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <ChartReadme
+    <PackageReadme
       {...defaultProps}
       readme={`[section 1](#section-1)
       # Section 1`}

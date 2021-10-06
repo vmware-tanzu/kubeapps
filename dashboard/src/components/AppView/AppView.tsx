@@ -36,7 +36,7 @@ import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
-import ChartInfo from "./ChartInfo/ChartInfo";
+import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 
@@ -295,7 +295,7 @@ export default function AppView() {
           ) : (
             <Row>
               <Column span={3}>
-                <ChartInfo installedPackageDetail={app} availablePackageDetail={appDetails!} />
+                <PackageInfo installedPackageDetail={app} availablePackageDetail={appDetails!} />
               </Column>
               <Column span={9}>
                 <div className="appview-separator">

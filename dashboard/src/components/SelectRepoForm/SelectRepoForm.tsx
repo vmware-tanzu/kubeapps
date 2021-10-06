@@ -25,8 +25,8 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
       repo,
       errors: { fetch: fetchError },
     },
-    charts: {
-      selected: { error: chartError },
+    packages: {
+      selected: { error: packageError },
     },
     config: { kubeappsNamespace, kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
@@ -88,7 +88,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
       )}
       {repos.length > 0 && (
         <div className="select-repo-form">
-          {chartError && <Alert theme="danger">An error occurred: {chartError.message}</Alert>}
+          {packageError && <Alert theme="danger">An error occurred: {packageError.message}</Alert>}
           <h2>
             Select the source repository of '{app?.availablePackageRef?.identifier ?? app?.name}'
           </h2>

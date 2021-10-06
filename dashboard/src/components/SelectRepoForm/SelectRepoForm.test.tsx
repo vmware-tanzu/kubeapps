@@ -16,7 +16,7 @@ const defaultProps = {
 const installedPackageDetail = {
   availablePackageRef: {
     context: { cluster: "default", namespace: "default" },
-    identifier: "bitnami/my-chart",
+    identifier: "bitnami/my-package",
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 } as InstalledPackageDetail;

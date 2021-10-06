@@ -5,10 +5,10 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import ChartHeader from "./ChartHeader";
-const testProps: any = {
-  chartAttrs: {
-    shortDescription: "A Test Chart",
+import PackageHeader, { IPackageHeaderProps } from "./PackageHeader";
+const testProps: IPackageHeaderProps = {
+  availablePackageDetail: {
+    shortDescription: "A Test Package",
     name: "test",
     categories: [""],
     displayName: "foo",
@@ -40,18 +40,18 @@ const testProps: any = {
   onSelect: jest.fn(),
 };
 
-it("renders a header for the chart", () => {
-  const wrapper = mount(<ChartHeader {...testProps} />);
+it("renders a header for the package", () => {
+  const wrapper = mount(<PackageHeader {...testProps} />);
   expect(wrapper.text()).toContain("testrepo/test");
 });
 
 it("displays the appVersion", () => {
-  const wrapper = mount(<ChartHeader {...testProps} />);
+  const wrapper = mount(<PackageHeader {...testProps} />);
   expect(wrapper.text()).toContain("1.2.3");
 });
 
 it("uses the icon", () => {
-  const wrapper = mount(<ChartHeader {...testProps} />);
+  const wrapper = mount(<PackageHeader {...testProps} />);
   const icon = wrapper.find("img").filterWhere(i => i.prop("alt") === "icon");
   expect(icon.exists()).toBe(true);
   expect(icon.props()).toMatchObject({ src: "api/assetsvc/test.jpg" });
@@ -68,23 +68,23 @@ it("uses the first version as default in the select input", () => {
       appVersion: "10.0.0",
     },
   ];
-  const wrapper = mount(<ChartHeader {...testProps} versions={versions} />);
+  const wrapper = mount(<PackageHeader {...testProps} versions={versions} />);
   expect(wrapper.find("select").prop("value")).toBe("1.2.3");
 });
 
 it("uses the current version as default in the select input", () => {
-  const versions = [
+  const versions: PackageAppVersion[] = [
     {
-      attributes: {
-        version: "1.2.3",
-      },
+      pkgVersion: "1.2.3",
+      appVersion: "10.0.0",
     },
     {
-      attributes: {
-        version: "1.2.4",
-      },
+      pkgVersion: "1.2.4",
+      appVersion: "10.0.0",
     },
   ];
-  const wrapper = mount(<ChartHeader {...testProps} versions={versions} currentVersion="1.2.4" />);
+  const wrapper = mount(
+    <PackageHeader {...testProps} versions={versions} currentVersion="1.2.4" />,
+  );
   expect(wrapper.find("select").prop("value")).toBe("1.2.4");
 });

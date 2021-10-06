@@ -2,7 +2,6 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import {
   AvailablePackageReference,
-  InstalledPackageDetail,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
@@ -11,29 +10,10 @@ import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { FetchError, IAppRepository, IChartState, IStoreState, UpgradeError } from "shared/types";
+import { FetchError, IStoreState } from "shared/types";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
-
-export interface IAppUpgradeProps {
-  app?: InstalledPackageDetail;
-  appsIsFetching: boolean;
-  chartsIsFetching: boolean;
-  error?: FetchError | UpgradeError;
-  namespace: string;
-  cluster: string;
-  releaseName: string;
-  repoName?: string;
-  repoNamespace?: string;
-  selected: IChartState["selected"];
-  deployed: IChartState["deployed"];
-  reposIsFetching: boolean;
-  repoError?: Error;
-  chartsError: Error | undefined;
-  repo: IAppRepository;
-  repos: IAppRepository[];
-}
 
 interface IRouteParams {
   cluster: string;
@@ -49,7 +29,7 @@ function AppUpgrade() {
     ReactRouter.useParams() as IRouteParams;
   const {
     apps: { selected: app, isFetching: appsIsFetching, error },
-    charts: { isFetching: chartsIsFetching, selected, deployed },
+    packages: { isFetching: packagesIsFetching, selected, deployed },
     repos: { repo },
   } = useSelector((state: IStoreState) => state);
 
@@ -73,7 +53,7 @@ function AppUpgrade() {
 
   useEffect(() => {
     dispatch(
-      actions.charts.getDeployedChartVersion(
+      actions.packages.fetchDeployedAvailablePackageDetail(
         {
           context: {
             cluster: app?.availablePackageRef?.context?.cluster ?? cluster,
@@ -117,7 +97,7 @@ function AppUpgrade() {
           appCurrentVersion={app.currentVersion.pkgVersion}
           appCurrentValues={app.valuesApplied}
           packageId={app.availablePackageRef.identifier}
-          chartsIsFetching={chartsIsFetching}
+          packagesIsFetching={packagesIsFetching}
           repoNamespace={repoNamespace}
           namespace={namespace}
           cluster={cluster}
