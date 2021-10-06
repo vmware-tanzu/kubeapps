@@ -1,36 +1,30 @@
-import {
-  AvailablePackageDetail,
-  PackageAppVersion,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageAppVersion } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 
-interface IChartHeaderProps {
-  chartAttrs: AvailablePackageDetail;
+interface IPackageVersionSelectorProps {
   versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
-  releaseName?: string;
   currentVersion?: string;
   selectedVersion?: string;
-  deployButton?: JSX.Element;
 }
 
-export default function ChartVersionSelector({
+export default function PackageVersionSelector({
   versions,
   onSelect,
   currentVersion,
   selectedVersion,
-}: IChartHeaderProps) {
+}: IPackageVersionSelectorProps) {
   return (
     <div className="clr-select-wrapper">
       <select
-        name="chart-versions"
+        name="package-versions"
         className="clr-page-size-select"
         onChange={onSelect}
         value={selectedVersion || currentVersion || (versions.length ? versions[0].pkgVersion : "")}
       >
         {versions.map(v => {
           return (
-            <option key={`chart-version-selector-${v.pkgVersion}`} value={v.pkgVersion}>
+            <option key={`package-version-selector-${v.pkgVersion}`} value={v.pkgVersion}>
               {v.pkgVersion} / App Version {v.appVersion}
               {currentVersion === v.pkgVersion ? " (current)" : ""}
             </option>

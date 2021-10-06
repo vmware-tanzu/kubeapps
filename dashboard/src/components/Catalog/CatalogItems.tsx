@@ -5,8 +5,8 @@ import { getIcon } from "shared/Operators";
 import { IClusterServiceVersion, IRepo } from "shared/types";
 import placeholder from "../../placeholder.png";
 import CatalogItem, { ICatalogItemProps } from "./CatalogItem";
-interface ICatalogItemsProps {
-  charts: AvailablePackageSummary[];
+export interface ICatalogItemsProps {
+  availablePackageSummaries: AvailablePackageSummary[];
   csvs: IClusterServiceVersion[];
   cluster: string;
   namespace: string;
@@ -16,7 +16,7 @@ interface ICatalogItemsProps {
 }
 
 export default function CatalogItems({
-  charts,
+  availablePackageSummaries,
   csvs,
   cluster,
   namespace,
@@ -24,15 +24,15 @@ export default function CatalogItems({
   hasLoadedFirstPage,
   hasFinishedFetching,
 }: ICatalogItemsProps) {
-  const chartItems: ICatalogItemProps[] = useMemo(
+  const packageItems: ICatalogItemProps[] = useMemo(
     () =>
-      charts.map(c => {
+      availablePackageSummaries.map(c => {
         return {
           type: `${c.availablePackageRef?.plugin?.name}/${c.availablePackageRef?.plugin?.version}`,
-          id: `chart/${c.availablePackageRef?.identifier}`,
+          id: `package/${c.availablePackageRef?.identifier}`,
           item: {
             plugin: c.availablePackageRef?.plugin ?? ({ name: "", version: "" } as Plugin),
-            id: `chart/${c.availablePackageRef?.identifier}/${c.latestVersion?.pkgVersion}`,
+            id: `package/${c.availablePackageRef?.identifier}/${c.latestVersion?.pkgVersion}`,
             name: c.displayName,
             icon: c.iconUrl ?? placeholder,
             version: c.latestVersion?.pkgVersion ?? "",
@@ -48,7 +48,7 @@ export default function CatalogItems({
           },
         };
       }),
-    [charts, cluster, namespace],
+    [availablePackageSummaries, cluster, namespace],
   );
   const crdItems: ICatalogItemProps[] = useMemo(
     () =>
@@ -82,7 +82,7 @@ export default function CatalogItems({
   const sortedItems =
     !hasLoadedFirstPage && page === 1
       ? []
-      : chartItems
+      : packageItems
           .concat(crdItems)
           .sort((a, b) => (a.item.name.toLowerCase() > b.item.name.toLowerCase() ? 1 : -1));
 

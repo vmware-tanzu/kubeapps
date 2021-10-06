@@ -38,10 +38,10 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/helm/pkg/repo"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 

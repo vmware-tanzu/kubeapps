@@ -3,7 +3,6 @@ import {
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { IServiceBroker } from "./ServiceCatalog";
 import { IRepo } from "./types";
 
 export const app = {
@@ -34,19 +33,19 @@ export const app = {
     upgrade: (ref?: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
   },
   catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
-  charts: {
+  packages: {
     get: (
       cluster: string,
       namespace: string,
-      chartName: string,
+      packageName: string,
       repo: IRepo,
       globalNamespace: string,
       plugin: Plugin,
     ) => {
-      const chartsSegment = globalNamespace === repo.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${plugin.name}/${
+      const packagesSegment = globalNamespace === repo.namespace ? "global-packages" : "packages";
+      return `/c/${cluster}/ns/${namespace}/${packagesSegment}/${repo.name}/${plugin.name}/${
         plugin.version
-      }/${encodeURIComponent(chartName)}`;
+      }/${encodeURIComponent(packageName)}`;
     },
   },
   operators: {
@@ -128,13 +127,6 @@ export const api = {
     namespaces: (cluster: string) => `${api.k8s.base(cluster)}/api/v1/namespaces`,
     namespace: (cluster: string, namespace: string) =>
       namespace ? `${api.k8s.namespaces(cluster)}/${namespace}` : `${api.k8s.base(cluster)}/api/v1`,
-    // clusterservicebrokers and operators operate on the default cluster only, currently.
-    clusterservicebrokers: {
-      sync: (cluster: string, broker: IServiceBroker) =>
-        `${api.k8s.base(cluster)}/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/${
-          broker.metadata.name
-        }`,
-    },
     operators: {
       operators: (cluster: string, namespace: string) =>
         `${api.k8s.base(cluster)}/apis/packages.operators.coreos.com/v1/${withNS(

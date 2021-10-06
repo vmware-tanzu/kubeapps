@@ -165,7 +165,7 @@ function AppRepoList() {
             cluster only.
           </p>
           <p>
-            The catalog of charts from AppRepositories on the default cluster which are available
+            The catalog of packages from AppRepositories on the default cluster which are available
             for all namespaces will be available on additional clusters also, but you can not
             currently create a private AppRepository for a particular namespace of an additional
             cluster. We may in the future support AppRepositories on additional clusters but for now

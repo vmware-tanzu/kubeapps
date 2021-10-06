@@ -6,7 +6,7 @@ import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { AppRepository } from "shared/AppRepository";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import Secret from "shared/Secret";
 import {
   IAppRepository,
@@ -17,7 +17,7 @@ import {
   NotFoundError,
 } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-import { errorChart } from "./charts";
+import { createErrorPackage } from "./packages";
 
 const { createAction } = deprecated;
 
@@ -88,7 +88,7 @@ const allActions = [
   receiveRepo,
   receiveRepos,
   receiveReposSecret,
-  errorChart,
+  createErrorPackage,
   requestRepo,
   redirect,
   redirected,
@@ -366,7 +366,7 @@ export function findPackageInRepo(
     if (app?.availablePackageRef?.identifier && app?.availablePackageRef?.plugin) {
       const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
       try {
-        await Chart.getAvailablePackageVersions({
+        await PackagesService.getAvailablePackageVersions({
           context: { cluster: cluster, namespace: repoNamespace },
           plugin: app.availablePackageRef.plugin,
           identifier: app.availablePackageRef.identifier,
@@ -375,7 +375,7 @@ export function findPackageInRepo(
         return true;
       } catch (e: any) {
         dispatch(
-          errorChart(
+          createErrorPackage(
             new NotFoundError(
               `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
             ),
@@ -385,7 +385,7 @@ export function findPackageInRepo(
       }
     } else {
       dispatch(
-        errorChart(
+        createErrorPackage(
           new NotFoundError(
             `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
           ),

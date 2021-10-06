@@ -2,7 +2,7 @@ import AppList from "components/AppList/AppList";
 import AppUpgrade from "components/AppUpgrade";
 import AppView from "components/AppView";
 import Catalog from "components/Catalog/Catalog";
-import ChartView from "components/ChartView";
+import PackageView from "components/PackageHeader";
 import AppRepoList from "components/Config/AppRepoList";
 import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
@@ -33,13 +33,13 @@ const privateRoutes = {
     DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
   "/c/:cluster/ns/:namespace/catalog/:repo": Catalog,
-  "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id": ChartView,
-  "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id/versions/:version":
-    ChartView,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:pluginName/:pluginVersion/:id":
-    ChartView,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:pluginName/:pluginVersion/:id/versions/:version":
-    ChartView,
+  "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id": PackageView,
+  "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+    PackageView,
+  "/c/:cluster/ns/:namespace/:global(global)-packages/:repo/:pluginName/:pluginVersion/:id":
+    PackageView,
+  "/c/:cluster/ns/:namespace/:global(global)-packages/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+    PackageView,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
   "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,

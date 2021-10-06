@@ -6,7 +6,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
-export default class Chart {
+export default class PackagesService {
   private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
 
   public static async getAvailablePackageSummaries(
