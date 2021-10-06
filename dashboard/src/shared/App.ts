@@ -1,14 +1,26 @@
 import {
-  AvailablePackageDetail,
+  AvailablePackageReference,
+  Context,
+  CreateInstalledPackageRequest,
+  DeleteInstalledPackageRequest,
   InstalledPackageReference,
+  ReconciliationOptions,
+  UpdateInstalledPackageRequest,
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  RollbackInstalledPackageRequest,
+  RollbackInstalledPackageResponse,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { PluginNames } from "./utils";
 
-export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
 export class App {
-  private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  private static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  private static helmPluginClient = () =>
+    new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
 
   public static async GetInstalledPackageSummaries(
     cluster: string,
@@ -16,94 +28,69 @@ export class App {
     page?: number,
     size?: number,
   ) {
-    return await this.client().GetInstalledPackageSummaries({
+    return await this.coreClient().GetInstalledPackageSummaries({
       context: { cluster: cluster, namespace: namespace },
       paginationOptions: { pageSize: size || 0, pageToken: page?.toString() || "0" },
     });
   }
 
   public static async GetInstalledPackageDetail(installedPackageRef?: InstalledPackageReference) {
-    return await this.client().GetInstalledPackageDetail({
+    return await this.coreClient().GetInstalledPackageDetail({
       installedPackageRef: installedPackageRef,
     });
   }
 
-  public static async create(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    availablePackageDetail: AvailablePackageDetail,
+  public static async CreateInstalledPackage(
+    targetContext: Context,
+    name: string,
+    availablePackageRef: AvailablePackageReference,
+    pkgVersionReference: VersionReference,
     values?: string,
+    reconciliationOptions?: ReconciliationOptions,
   ) {
-    const endpoint = url.kubeops.releases.list(cluster, namespace);
-    const { data } = await axiosWithAuth.post(endpoint, {
-      // TODO(agamez): get the repo name once available
-      // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
-      appRepositoryResourceName:
-        availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
-      appRepositoryResourceNamespace:
-        availablePackageDetail.availablePackageRef?.context?.namespace,
-      chartName: decodeURIComponent(availablePackageDetail.name),
-      releaseName,
+    return await this.coreClient().CreateInstalledPackage({
+      name,
       values,
-      version: availablePackageDetail.version?.pkgVersion,
-    });
-    return data;
+      targetContext,
+      availablePackageRef,
+      pkgVersionReference,
+      reconciliationOptions,
+    } as CreateInstalledPackageRequest);
   }
 
-  public static async upgrade(
+  public static async UpdateInstalledPackage(
     installedPackageRef: InstalledPackageReference,
-    packageNamespace: string,
-    availablePackageDetail: AvailablePackageDetail,
+    pkgVersionReference: VersionReference,
     values?: string,
+    reconciliationOptions?: ReconciliationOptions,
   ) {
-    const endpoint = url.kubeops.releases.get(
-      installedPackageRef.context?.cluster ?? "",
-      installedPackageRef.context?.namespace ?? "",
-      installedPackageRef.identifier,
-    );
-    const { data } = await axiosWithAuth.put(endpoint, {
-      appRepositoryResourceName:
-        availablePackageDetail.availablePackageRef?.identifier.split("/")[0],
-      appRepositoryResourceNamespace: packageNamespace,
-      chartName: decodeURIComponent(availablePackageDetail.name),
-      releaseName: installedPackageRef.identifier,
+    return await this.coreClient().UpdateInstalledPackage({
+      installedPackageRef,
+      pkgVersionReference,
       values,
-      version: availablePackageDetail.version?.pkgVersion,
-    });
-    return data;
+      reconciliationOptions,
+    } as UpdateInstalledPackageRequest);
   }
 
-  public static async rollback(installedPackageRef: InstalledPackageReference, revision: number) {
-    const endpoint = url.kubeops.releases.get(
-      installedPackageRef.context?.cluster ?? "",
-      installedPackageRef.context?.namespace ?? "",
-      installedPackageRef.identifier,
-    );
-    const { data } = await axiosWithAuth.put(
-      endpoint,
-      {},
-      {
-        params: {
-          action: "rollback",
-          revision,
-        },
-      },
-    );
-    return data;
-  }
-
-  public static async delete(installedPackageRef: InstalledPackageReference, purge: boolean) {
-    let endpoint = url.kubeops.releases.get(
-      installedPackageRef.context?.cluster ?? "",
-      installedPackageRef.context?.namespace ?? "",
-      installedPackageRef.identifier,
-    );
-    if (purge) {
-      endpoint += "?purge=true";
+  public static async RollbackInstalledPackage(
+    installedPackageRef: InstalledPackageReference,
+    releaseRevision: number,
+  ) {
+    // rollbackInstalledPackage is currently only available for Helm packages
+    if (installedPackageRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
+      return await this.helmPluginClient().RollbackInstalledPackage({
+        installedPackageRef,
+        releaseRevision,
+      } as RollbackInstalledPackageRequest);
+    } else {
+      return {} as RollbackInstalledPackageResponse;
     }
-    const { data } = await axiosWithAuth.delete(endpoint);
-    return data;
+  }
+
+  public static async DeleteInstalledPackage(installedPackageRef: InstalledPackageReference) {
+    return await this.coreClient().DeleteInstalledPackage({
+      installedPackageRef,
+    } as DeleteInstalledPackageRequest);
   }
 
   // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.

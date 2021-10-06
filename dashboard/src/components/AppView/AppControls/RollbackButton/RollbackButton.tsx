@@ -33,7 +33,7 @@ function RollbackButton({
   const closeModal = () => setModalOpen(false);
   const handleRollback = async (r: number) => {
     setLoading(true);
-    const success = await dispatch(actions.apps.rollbackApp(installedPackageRef, r));
+    const success = await dispatch(actions.apps.rollbackInstalledPackage(installedPackageRef, r));
     setLoading(false);
     if (success) {
       closeModal();

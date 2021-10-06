@@ -1,4 +1,5 @@
 const utils = require("./lib/utils");
+const testName = "05-missing-permissions";
 
 test("Fails to deploy an application due to missing permissions", async () => {
   await utils.login(
@@ -11,8 +12,15 @@ test("Fails to deploy an application due to missing permissions", async () => {
   );
 
   await expect(page).toClick("a", { text: "Catalog" });
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
+    },
+    testName,
+  );
 
-  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
   await expect(page).toClick("a", { text: "apache" });
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
@@ -22,5 +30,12 @@ test("Fails to deploy an application due to missing permissions", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("missing permissions", { timeout: 60000 });
+  await utils.retryAndRefresh(
+    page,
+    3,
+    async () => {
+      await expect(page).toMatch("Missing permissions", { timeout: 60000 });
+    },
+    testName,
+  );
 });

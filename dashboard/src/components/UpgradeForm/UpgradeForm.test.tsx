@@ -253,9 +253,11 @@ it("triggers an upgrade when submitting the form", async () => {
   jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const { namespace, releaseName } = defaultProps;
   const appValues = "initial: values\nfoo: bar\n";
-  const upgradeApp = jest.spyOn(actions.apps, "upgradeApp").mockImplementation(() => {
-    return jest.fn();
-  });
+  const updateInstalledPackage = jest
+    .spyOn(actions.apps, "updateInstalledPackage")
+    .mockImplementation(() => {
+      return jest.fn();
+    });
   const wrapper = mountWrapper(
     defaultStore,
     <UpgradeForm {...populatedProps} namespace={namespace} />,
@@ -271,14 +273,13 @@ it("triggers an upgrade when submitting the form", async () => {
       preventDefault: jest.fn(),
     });
   });
-  expect(upgradeApp).toHaveBeenCalledWith(
+  expect(updateInstalledPackage).toHaveBeenCalledWith(
     {
       context: { cluster: defaultProps.cluster, namespace: namespace },
       identifier: releaseName,
       plugin: { name: "my.plugin", version: "0.0.1" },
     } as InstalledPackageReference,
     availablePkgDetails[0],
-    "kubeapps",
     appValues,
     schema,
   );

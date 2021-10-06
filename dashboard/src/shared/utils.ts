@@ -5,6 +5,12 @@ import placeholder from "../placeholder.png";
 import ResourceRef from "./ResourceRef";
 import { IK8sList, IKubeItem, IResource, ISecret } from "./types";
 
+export enum PluginNames {
+  PACKAGES_HELM = "helm.packages",
+  PACKAGES_FLUX = "fluxv2.packages",
+  PACKAGES_KAPP = "kapp_controller.packages",
+}
+
 export function escapeRegExp(str: string) {
   return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
 }
@@ -77,7 +83,7 @@ export function getPluginIcon(plugin?: Plugin | string) {
     }
   } else {
     switch (plugin?.name) {
-      case "helm.packages":
+      case PluginNames.PACKAGES_HELM:
         return helmIcon;
       default:
         return placeholder;
