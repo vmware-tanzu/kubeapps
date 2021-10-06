@@ -21,7 +21,7 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
-    "normalize.css": "^8.0.1",
+    "modern-normalize": "^1.1.0",
     "prop-types": "^15.7.2",
     "protobufjs": "^6.11.2",
     "qs": "^6.10.1",
