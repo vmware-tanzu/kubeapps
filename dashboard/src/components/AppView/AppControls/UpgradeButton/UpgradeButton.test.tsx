@@ -24,7 +24,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.apps = {
     ...actions.apps,
-    upgradeApp: jest.fn(),
+    updateInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);

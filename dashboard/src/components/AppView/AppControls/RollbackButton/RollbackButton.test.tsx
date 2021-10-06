@@ -31,7 +31,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.apps = {
     ...actions.apps,
-    rollbackApp: jest.fn(),
+    rollbackInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -43,8 +43,8 @@ afterEach(() => {
 });
 
 it("rolls back an application", async () => {
-  const rollbackApp = jest.fn();
-  actions.apps.rollbackApp = rollbackApp;
+  const rollbackInstalledPackage = jest.fn();
+  actions.apps.rollbackInstalledPackage = rollbackInstalledPackage;
   const wrapper = mountWrapper(defaultStore, <RollbackButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
@@ -63,7 +63,7 @@ it("rolls back an application", async () => {
         .prop("onClick") as any
     )();
   });
-  expect(rollbackApp).toHaveBeenCalledWith(defaultProps.installedPackageRef, 1);
+  expect(rollbackInstalledPackage).toHaveBeenCalledWith(defaultProps.installedPackageRef, 1);
 });
 
 it("renders an error", async () => {

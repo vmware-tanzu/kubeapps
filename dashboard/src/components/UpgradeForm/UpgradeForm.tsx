@@ -179,14 +179,13 @@ function UpgradeForm({
     setIsDeploying(true);
     if (availablePackageDetail) {
       const deployedSuccess = await dispatch(
-        actions.apps.upgradeApp(
+        actions.apps.updateInstalledPackage(
           {
             context: { cluster: cluster, namespace: namespace },
             identifier: releaseName,
             plugin: pluginObj,
           } as InstalledPackageReference,
           availablePackageDetail,
-          repoNamespace,
           appValues,
           schema,
         ),
