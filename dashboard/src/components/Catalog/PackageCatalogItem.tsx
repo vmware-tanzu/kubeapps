@@ -4,16 +4,16 @@ import * as url from "shared/url";
 import { getPluginIcon, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard";
-import { IChartCatalogItem } from "./CatalogItem";
+import { IPackageCatalogItem } from "./CatalogItem";
 
-export default function ChartCatalogItem(props: IChartCatalogItem) {
+export default function PackageCatalogItem(props: IPackageCatalogItem) {
   const { icon, name, repo, version, description, namespace, id } = props;
   const {
     config: { kubeappsNamespace },
   } = useSelector((state: IStoreState) => state);
   const iconSrc = icon || placeholder;
   const cluster = useSelector((state: IStoreState) => state.clusters.currentCluster);
-  const link = url.app.charts.get(
+  const link = url.app.packages.get(
     cluster,
     namespace,
     name,

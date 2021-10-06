@@ -1,5 +1,5 @@
 import actions from "actions";
-import ChartHeader from "components/ChartView/ChartHeader";
+import PackageHeader from "components/PackageHeader/PackageHeader";
 import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
@@ -13,7 +13,7 @@ import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError } from "shared/types";
+import { FetchError, IStoreState } from "shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
 
@@ -48,8 +48,8 @@ afterEach(() => {
 });
 
 it("fetches the available versions", () => {
-  const fetchChartVersions = jest.fn();
-  actions.charts.fetchChartVersion = fetchChartVersions;
+  const fetchAvailablePackageVersions = jest.fn();
+  actions.packages.fetchAndSelectAvailablePackageDetail = fetchAvailablePackageVersions;
 
   mountWrapper(
     getStore({}),
@@ -60,7 +60,7 @@ it("fetches the available versions", () => {
     </MemoryRouter>,
   );
 
-  expect(fetchChartVersions).toHaveBeenCalledWith(
+  expect(fetchAvailablePackageVersions).toHaveBeenCalledWith(
     {
       context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
       identifier: `${defaultProps.repo}/${defaultProps.pkgName}`,
@@ -86,7 +86,7 @@ describe("renders an error", () => {
       <DeploymentForm />,
     );
     expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.find(ChartHeader)).not.toExist();
+    expect(wrapper.find(PackageHeader)).not.toExist();
   });
 
   it("forwards the appValues when modified", () => {
@@ -96,7 +96,10 @@ describe("renders an error", () => {
       pkgVersion: "1.2.4",
       values: "bar: foo",
     };
-    const wrapper = mountWrapper(getStore({ charts: { selected: selected } }), <DeploymentForm />);
+    const wrapper = mountWrapper(
+      getStore({ packages: { selected: selected } } as IStoreState),
+      <DeploymentForm />,
+    );
 
     const handleValuesChange: (v: string) => void = wrapper
       .find(DeploymentFormBody)
@@ -116,7 +119,10 @@ describe("renders an error", () => {
       pkgVersion: "1.2.4",
       values: "bar: foo",
     };
-    const wrapper = mountWrapper(getStore({ charts: { selected: selected } }), <DeploymentForm />);
+    const wrapper = mountWrapper(
+      getStore({ packages: { selected: selected } } as IStoreState),
+      <DeploymentForm />,
+    );
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("bar: foo");
   });
 
@@ -127,7 +133,10 @@ describe("renders an error", () => {
       pkgVersion: "1.2.4",
       values: "bar: foo",
     };
-    const wrapper = mountWrapper(getStore({ charts: { selected: selected } }), <DeploymentForm />);
+    const wrapper = mountWrapper(
+      getStore({ packages: { selected: selected } } as IStoreState),
+      <DeploymentForm />,
+    );
 
     const handleValuesChange: (v: string) => void = wrapper
       .find(DeploymentFormBody)
@@ -149,9 +158,9 @@ describe("renders an error", () => {
   });
 
   it("triggers a deployment when submitting the form", async () => {
-    const deployChart = jest.fn().mockReturnValue(true);
+    const deployPackage = jest.fn().mockReturnValue(true);
     const push = jest.fn();
-    actions.apps.deployChart = deployChart;
+    actions.apps.deployPackage = deployPackage;
     spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
 
     const appValues = "foo: bar";
@@ -166,7 +175,7 @@ describe("renders an error", () => {
     };
 
     const wrapper = mountWrapper(
-      getStore({ charts: { selected: selected } }),
+      getStore({ packages: { selected: selected } } as unknown as IStoreState),
 
       <Router history={history}>
         <Route path={routePath}>
@@ -200,7 +209,7 @@ describe("renders an error", () => {
       });
     });
 
-    expect(deployChart).toHaveBeenCalledWith(
+    expect(deployPackage).toHaveBeenCalledWith(
       defaultProps.cluster,
       defaultProps.namespace,
       availablePackageDetail,

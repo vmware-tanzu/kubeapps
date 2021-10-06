@@ -17,8 +17,8 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import ChartHeader from "./ChartHeader";
-import ChartReadme from "./ChartReadme";
+import PackageHeader from "./PackageHeader";
+import PackageReadme from "./PackageReadme";
 
 interface IRouteParams {
   cluster: string;
@@ -31,7 +31,7 @@ interface IRouteParams {
   version?: string;
 }
 
-export default function ChartView() {
+export default function PackageView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const {
     cluster,
@@ -45,13 +45,13 @@ export default function ChartView() {
   } = ReactRouter.useParams() as IRouteParams;
   const {
     config,
-    charts: { isFetching, selected },
+    packages: { isFetching, selected },
   } = useSelector((state: IStoreState) => state);
   const { availablePackageDetail, versions, pkgVersion, readmeError, error, readme } = selected;
 
   const packageId = `${repo}/${id}`;
-  const chartNamespace = global === "global" ? config.kubeappsNamespace : namespace;
-  const chartCluster = global === "global" ? config.kubeappsCluster : cluster;
+  const packageNamespace = global === "global" ? config.kubeappsNamespace : namespace;
+  const packageCluster = global === "global" ? config.kubeappsCluster : cluster;
   const kubeappsNamespace = config.kubeappsNamespace;
 
   const location = ReactRouter.useLocation();
@@ -61,9 +61,9 @@ export default function ChartView() {
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersion(
+      actions.packages.fetchAndSelectAvailablePackageDetail(
         {
-          context: { cluster: chartCluster, namespace: chartNamespace },
+          context: { cluster: packageCluster, namespace: packageNamespace },
           plugin: pluginObj,
           identifier: packageId,
         } as AvailablePackageReference,
@@ -71,18 +71,18 @@ export default function ChartView() {
       ),
     );
     return;
-  }, [dispatch, packageId, chartNamespace, chartCluster, queryVersion, pluginObj]);
+  }, [dispatch, packageId, packageNamespace, packageCluster, queryVersion, pluginObj]);
 
   // Fetch all versions
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersions({
-        context: { cluster: chartCluster, namespace: chartNamespace },
+      actions.packages.fetchAvailablePackageVersions({
+        context: { cluster: packageCluster, namespace: packageNamespace },
         plugin: { name: pluginName, version: pluginVersion } as Plugin,
         identifier: packageId,
       } as AvailablePackageReference),
     );
-  }, [dispatch, packageId, chartNamespace, chartCluster, pluginName, pluginVersion]);
+  }, [dispatch, packageId, packageNamespace, packageCluster, pluginName, pluginVersion]);
 
   // Select version handler
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -106,8 +106,8 @@ export default function ChartView() {
   return (
     <section>
       <div>
-        <ChartHeader
-          chartAttrs={availablePackageDetail}
+        <PackageHeader
+          availablePackageDetail={availablePackageDetail}
           versions={versions}
           onSelect={selectVersion}
           deployButton={
@@ -136,7 +136,7 @@ export default function ChartView() {
             <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
           </Column>
           <Column span={9}>
-            <ChartReadme readme={readme} error={readmeError} />
+            <PackageReadme readme={readme} error={readmeError} />
             <div className="after-readme-button">
               <Link
                 to={app.apps.new(

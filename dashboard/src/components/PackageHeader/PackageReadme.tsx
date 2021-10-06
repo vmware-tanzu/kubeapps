@@ -7,12 +7,12 @@ import HeadingRenderer from "./HeadingRenderer";
 import LinkRenderer from "./LinkRenderer";
 import TableRenderer from "./TableRenderer";
 
-interface IChartReadmeProps {
+interface IPackageReadmeProps {
   error?: string;
   readme?: string;
 }
 
-function ChartReadme({ error, readme }: IChartReadmeProps) {
+function PackageReadme({ error, readme }: IPackageReadmeProps) {
   if (error) {
     if (error.toLocaleLowerCase().includes("not found")) {
       return (
@@ -56,4 +56,4 @@ function ChartReadme({ error, readme }: IChartReadmeProps) {
   );
 }
 
-export default ChartReadme;
+export default PackageReadme;

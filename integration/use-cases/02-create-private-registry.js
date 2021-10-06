@@ -75,7 +75,7 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toSelect('select[name="chart-versions"]', "8.6.2");
+  await expect(page).toSelect('select[name="package-versions"]', "8.6.2");
   const appName = "my-app" + randomNumber;
   await page.type("#releaseName", appName);
 
@@ -119,12 +119,12 @@ test("Creates a private registry", async () => {
   try {
     await new Promise(r => setTimeout(r, 500));
 
-    let chartVersionElement = await expect(page).toMatchElement(
-      '.upgrade-form-version-selector select[name="chart-versions"]',
+    packagehartVersionElement = await expect(page).toMatchElement(
+      '.upgrade-form-version-selector select[name="package-versions"]',
     );
-    let chartVersionElementContent = await chartVersionElement.getProperty("value");
-    let chartVersionValue = await chartVersionElementContent.jsonValue();
-    expect(chartVersionValue).toEqual("8.6.2");
+    packagehartVersionElementContent = await packageVersionElement.getProperty("value");
+    packagehartVersionValue = await packageVersionElementContent.jsonValue();
+    expect(packageVersionValue).toEqual("8.6.2");
   } catch (e) {
     retries--;
     if (!retries) {
@@ -137,19 +137,19 @@ test("Creates a private registry", async () => {
   await new Promise(r => setTimeout(r, 1000));
 
   await expect(page).toSelect(
-    '.upgrade-form-version-selector select[name="chart-versions"]',
+    '.upgrade-form-version-selector select[name="package-versions"]',
     "8.6.3",
   );
 
   await new Promise(r => setTimeout(r, 1000));
 
   // Ensure that the new value is selected
-  chartVersionElement = await expect(page).toMatchElement(
-    '.upgrade-form-version-selector select[name="chart-versions"]',
+  packageVersionElement = await expect(page).toMatchElement(
+    '.upgrade-form-version-selector select[name="package-versions"]',
   );
-  chartVersionElementContent = await chartVersionElement.getProperty("value");
-  chartVersionValue = await chartVersionElementContent.jsonValue();
-  expect(chartVersionValue).toEqual("8.6.3");
+  packageVersionElementContent = await packageVersionElement.getProperty("value");
+  packageVersionValue = await packageVersionElementContent.jsonValue();
+  expect(packageVersionValue).toEqual("8.6.3");
 
   await expect(page).toClick("li", { text: "Changes" });
 
