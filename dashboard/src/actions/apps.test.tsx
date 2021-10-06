@@ -8,7 +8,6 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
-import Chart from "shared/Chart";
 import { IAppState, UnprocessableEntity, UpgradeError } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";

@@ -82,7 +82,7 @@ export function getPluginIcon(plugin?: Plugin | string) {
         return placeholder;
     }
   } else {
-    switch (plugin.name) {
+    switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
         return helmIcon;
       default:
