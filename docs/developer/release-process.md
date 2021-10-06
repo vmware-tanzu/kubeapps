@@ -167,11 +167,25 @@ Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls)
 
 Now create a Pull Request containing all these changes (only if no major versions have been bumped up) and wait until for another Kubeapps maintainer to review and accept so you can merge it.
 
-## 1 - Select the commit to tag and perform a manual test
+## 1 - Select the commit to be tagged and perform some tests
 
-Once the dependencies have been updated and the chart changes merged, the next step is to choose the proper commit so that we can base the release on it. It is, usually, the latest commit in the main branch.
+Once the dependencies have been updated and the chart changes merged, the next step is to choose the proper commit so that we can base the release on it. It is, usually, the latest commit in the main branch. Then, some manual and automated tests should be performed to ensure the stability and reliability of the release.
 
-Even though the existing test base in our repository, we still _should_ perform a manual review of the application as it is in the selected commit. To do so, follow these instructions:
+## 1.1 - Trigger a `prerelease` CI flow
+
+One of the CI flows we have defined is the `prerelease` one. It is being triggered once a commit is pushed to the `prerelease` branch in the Kubeapps repository. Although the precise instructions may differ depending on your git configuration, the main steps are:
+
+```bash
+# assuming you are in the main branch, with the latest changes pulled locally
+git checkout -b prerelease
+git push origin prerelease # replace `origin` by your remote name
+```
+
+Then, check out the workflow that has just been created in CircleCI: [https://app.circleci.com/pipelines/github/kubeapps/kubeapps?branch=prerelease](https://app.circleci.com/pipelines/github/kubeapps/kubeapps?branch=prerelease).
+
+## 1.2 - Perform a manual test
+
+Even though we have a thorough test suite in our repository, we still _must_ perform a manual review of the application as it is in the selected commit. To do so, follow these instructions:
 
 - Perform a checkout of the chosen commit.
 - Install Kubeapps using the development chart: `helm install kubeapps ./chart/kubeapps/ -n kubeapps`
