@@ -158,9 +158,9 @@ describe("renders an error", () => {
   });
 
   it("triggers a deployment when submitting the form", async () => {
-    const deployPackage = jest.fn().mockReturnValue(true);
+    const installPackage = jest.fn().mockReturnValue(true);
     const push = jest.fn();
-    actions.apps.deployPackage = deployPackage;
+    actions.apps.installPackage = installPackage;
     spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
 
     const appValues = "foo: bar";
@@ -209,7 +209,7 @@ describe("renders an error", () => {
       });
     });
 
-    expect(deployPackage).toHaveBeenCalledWith(
+    expect(installPackage).toHaveBeenCalledWith(
       defaultProps.cluster,
       defaultProps.namespace,
       availablePackageDetail,

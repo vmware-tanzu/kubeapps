@@ -25,12 +25,12 @@ function CustomAppView({ resourceRefs, app, appDetails }: ICustomAppViewProps) {
   const dispatch = useDispatch();
 
   const handleDelete = useCallback(
-    () => dispatch(actions.apps.deleteApp(app.installedPackageRef!, true)),
+    () => dispatch(actions.apps.deleteInstalledPackage(app.installedPackageRef!)),
     [dispatch, app.installedPackageRef],
   );
 
   const handleRollback = useCallback(
-    () => dispatch(actions.apps.rollbackApp(app.installedPackageRef!, 1)),
+    () => dispatch(actions.apps.rollbackInstalledPackage(app.installedPackageRef!, 1)),
     [dispatch, app.installedPackageRef],
   );
 
