@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -38,12 +37,12 @@ import (
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
-	chartv2 "k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/repo"
 )
 
 const testChartArchive = "./testdata/nginx-apiVersion-v1-5.1.1.tgz"
@@ -96,7 +95,7 @@ func TestFindChartInRepoIndex(t *testing.T) {
 	repoURL := "http://charts.example.com/repo/"
 	expectedURL := fmt.Sprintf("%s%s", repoURL, chartURL)
 
-	chartMeta := chartv2.Metadata{Name: name, Version: version}
+	chartMeta := chart.Metadata{Name: name, Version: version}
 	chartVersion := repo.ChartVersion{URLs: []string{chartURL}}
 	chartVersion.Metadata = &chartMeta
 	chartVersions := []*repo.ChartVersion{&chartVersion}
@@ -196,11 +195,6 @@ func TestParseDetails(t *testing.T) {
 			}
 		})
 	}
-}
-
-// fakeLoadChartV2 implements LoadChartV2 interface.
-func fakeLoadChartV2(in io.Reader) (*chartv2.Chart, error) {
-	return &chartv2.Chart{}, nil
 }
 
 func TestParseDetailsForHTTPClient(t *testing.T) {
@@ -486,7 +480,7 @@ func newHTTPClient(repoURL string, charts []Details, userAgent string) httpclien
 	entries := map[string]repo.ChartVersions{}
 	// Populate Chart registry with content of the given helmReleases
 	for _, ch := range charts {
-		chartMeta := chartv2.Metadata{Name: ch.ChartName, Version: ch.Version}
+		chartMeta := chart.Metadata{Name: ch.ChartName, Version: ch.Version}
 		chartURL := fmt.Sprintf("%s%s-%s.tgz", repoURL, ch.ChartName, ch.Version)
 		chartURLs = append(chartURLs, chartURL)
 		chartVersion := repo.ChartVersion{Metadata: &chartMeta, URLs: []string{chartURL}}
@@ -528,7 +522,7 @@ func TestGetChart(t *testing.T) {
 		{
 			name:         "gets the chart with a user agent",
 			chartVersion: "5.1.1-apiVersionV1",
-			userAgent:    "tiller-proxy/devel",
+			userAgent:    "kubeops/devel",
 		},
 		{
 			name:         "gets a v2 chart without error when v1 support not required",
