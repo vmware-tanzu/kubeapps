@@ -1,12 +1,10 @@
 {{- if .Values.featureFlags.kubeappsAPIsServer }}
-{{- if .Values.kubeappsapis.unsafeUseDemoSA }}
 {{- if has "fluxv2" .Values.kubeappsapis.enabledPlugins }}
 {{- if .Values.rbac.create -}}
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRole
 metadata:
   name: "kubeapps:controller:kubeapps-apis-fluxv2-plugin"
-  namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: kubeappsapis
     {{- if .Values.commonLabels }}
@@ -28,7 +26,6 @@ apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRoleBinding
 metadata:
   name: "kubeapps:controller:kubeapps-apis-fluxv2-plugin"
-  namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: kubeappsapis
     {{- if .Values.commonLabels }}
@@ -45,7 +42,6 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "kubeapps.kubeappsapis.fullname" . }}
     namespace: {{ .Release.Namespace }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -3,8 +3,7 @@
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRole
 metadata:
-  name: "kubeapps:controller:kubeapps-apis-dev-{{ .Release.Namespace }}"
-  namespace: {{ .Release.Namespace | quote }}
+  name: "kubeapps:controller:kubeapps-apis-dev"
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: kubeappsapis
     {{- if .Values.commonLabels }}
@@ -30,7 +29,7 @@ rules:
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRoleBinding
 metadata:
-  name: "kubeapps:controller:kubeapps-apis-dev-{{ .Release.Namespace }}"
+  name: "kubeapps:controller:kubeapps-apis-dev"
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: kubeappsapis
     {{- if .Values.commonLabels }}
@@ -42,7 +41,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: "kubeapps:controller:kubeapps-apis-dev-{{ .Release.Namespace }}"
+  name: "kubeapps:controller:kubeapps-apis-dev"
 subjects:
   - kind: ServiceAccount
     name: {{ template "kubeapps.kubeappsapis.fullname" . }}

@@ -176,14 +176,14 @@ func (c NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 
 	name := fmt.Sprintf("%s.%s", c.config.gvr.Resource, c.config.gvr.Group)
-	crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
+	if crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{}); err != nil {
 		return err
-	}
-	for _, condition := range crd.Status.Conditions {
-		if condition.Type == apiextv1.Established &&
-			condition.Status == apiextv1.ConditionTrue {
-			return nil
+	} else {
+		for _, condition := range crd.Status.Conditions {
+			if condition.Type == apiextv1.Established &&
+				condition.Status == apiextv1.ConditionTrue {
+				return nil
+			}
 		}
 	}
 	return status.Errorf(codes.FailedPrecondition, "CRD [%s] is not valid", c.config.gvr)
