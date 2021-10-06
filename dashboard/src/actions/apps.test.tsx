@@ -7,7 +7,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import { IAppState, UnprocessableEntity } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -167,14 +167,14 @@ describe("delete applications", () => {
   });
 });
 
-describe("deploy chart", () => {
+describe("deploy package", () => {
   beforeEach(() => {
     App.create = jest.fn();
   });
 
   it("returns true if namespace is correct and deployment is successful", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart(
+      actions.apps.deployPackage(
         "target-cluster",
         "target-namespace",
         {
@@ -202,7 +202,7 @@ describe("deploy chart", () => {
 
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart(
+      actions.apps.deployPackage(
         "target-cluster",
         "default",
         { name: "my-version" } as AvailablePackageDetail,
@@ -336,7 +336,7 @@ describe("rollbackApp", () => {
     App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
       installedPackageDetail: installedPackageDetail,
     });
-    Chart.getAvailablePackageDetail = jest.fn().mockReturnValue({
+    PackagesService.getAvailablePackageDetail = jest.fn().mockReturnValue({
       availablePackageDetail: availablePackageDetail,
     });
     const res = await store.dispatch(provisionCMD);

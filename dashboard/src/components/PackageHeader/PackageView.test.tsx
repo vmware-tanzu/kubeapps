@@ -13,17 +13,17 @@ import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router";
 import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IChartState } from "../../shared/types";
+import { IPackageState, IStoreState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
-import ChartView from "./ChartView";
+import PackageView from "./PackageView";
 
 const defaultProps = {
-  chartID: "testrepo/test",
-  chartNamespace: "kubeapps-namespace",
+  packageID: "testrepo/test",
+  packageNamespace: "kubeapps-namespace",
   isFetching: false,
   namespace: "test",
   cluster: "default",
-  selected: { versions: [] } as IChartState["selected"],
+  selected: { versions: [] } as IPackageState["selected"],
   version: undefined,
   kubeappsNamespace: "kubeapps",
   repo: "testrepo",
@@ -48,7 +48,7 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
   longDescription: "test",
   availablePackageRef: {
     identifier: "foo/foo",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
   valuesSchema: "test",
@@ -61,32 +61,7 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
   } as PackageAppVersion,
 };
 
-const emptyAvailablePkg: AvailablePackageDetail = {
-  name: "foo",
-  categories: [""],
-  displayName: "foo",
-  iconUrl: "",
-  repoUrl: "",
-  homeUrl: "",
-  sourceUrls: [],
-  shortDescription: "",
-  longDescription: "",
-  availablePackageRef: {
-    identifier: "foo/foo",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
-    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  },
-  valuesSchema: "",
-  defaultValues: "",
-  maintainers: [],
-  readme: "",
-  version: {
-    appVersion: "",
-    pkgVersion: testVersion.pkgVersion,
-  },
-};
-
-const defaultChartsState = {
+const defaultPackageState = {
   isFetching: false,
   hasFinishedFetching: false,
   selected: {
@@ -98,26 +73,26 @@ const defaultChartsState = {
     readmeError: undefined,
     values: "values",
     versions: [testVersion],
-  } as IChartState["selected"],
-  deployed: {} as IChartState["deployed"],
+  } as IPackageState["selected"],
+  deployed: {} as IPackageState["deployed"],
   items: [],
   categories: [],
   size: 20,
-} as IChartState;
+} as IPackageState;
 
 const defaultState = {
-  charts: defaultChartsState,
+  packages: defaultPackageState,
   config: { kubeappsCluster: "default", kubeappsNamespace: "kubeapps" } as IConfigState,
-};
+} as IStoreState;
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.charts = {
-    ...actions.charts,
-    fetchChartVersions: jest.fn(),
-    resetChartVersion: jest.fn(),
-    selectChartVersion: jest.fn(),
+  actions.packages = {
+    ...actions.packages,
+    fetchAvailablePackageVersions: jest.fn(),
+    resetSelectedAvailablePackageDetail: jest.fn(),
+    receiveSelectedAvailablePackageDetail: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -128,43 +103,43 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.chartNamespace}/charts/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
-const routePath = "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.packageNamespace}/packages/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
+const routePath = "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
-it("triggers the fetchChartVersions when mounting", () => {
+it("triggers the fetchAvailablePackageVersions when mounting", () => {
   const spy = jest.fn();
-  actions.charts.fetchChartVersions = spy;
+  actions.packages.fetchAvailablePackageVersions = spy;
   mountWrapper(
     getStore(defaultState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
   expect(spy).toHaveBeenCalledWith({
-    context: { cluster: defaultProps.cluster, namespace: defaultProps.chartNamespace },
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
     identifier: `${defaultProps.repo}/${defaultProps.id}`,
     plugin: defaultProps.plugin,
   } as AvailablePackageReference);
 });
 
 describe("when receiving new props", () => {
-  it("finds and selects the chart version when version changes", () => {
+  it("finds and selects the package version when version changes", () => {
     const spy = jest.fn();
-    actions.charts.fetchChartVersion = spy;
+    actions.packages.fetchAndSelectAvailablePackageDetail = spy;
     mountWrapper(
       getStore(defaultState),
       <Router history={history}>
         <Route path={routePath}>
-          <ChartView />
+          <PackageView />
         </Route>
       </Router>,
     );
     expect(spy).toHaveBeenCalledWith(
       {
-        context: { cluster: defaultProps.cluster, namespace: defaultProps.chartNamespace },
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
         identifier: "testrepo/test",
         plugin: defaultProps.plugin,
       } as AvailablePackageReference,
@@ -173,27 +148,30 @@ describe("when receiving new props", () => {
   });
 });
 
-it("behaves as a loading component when fetching is false but no chart is available", () => {
+it("behaves as a loading component when fetching is false but no package is available", () => {
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
-      charts: { ...defaultChartsState, selected: {}, isFetching: false },
-    }),
+      packages: { ...defaultPackageState, selected: {}, isFetching: false },
+    } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
   expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
-it("behaves as a loading component when fetching is true and chart is available", () => {
+it("behaves as a loading component when fetching is true and the package is available", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, charts: { ...defaultChartsState, isFetching: false } }),
+    getStore({
+      ...defaultState,
+      packages: { ...defaultPackageState, isFetching: false },
+    } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -203,15 +181,19 @@ it("behaves as a loading component when fetching is true and chart is available"
 it("does not render the app version, home and sources sections if not set", () => {
   const wrapper = mountWrapper(
     getStore({
-      ...defaultChartsState,
-      charts: { selected: { availablePackageDetail: emptyAvailablePkg } },
-    }),
+      ...defaultState,
+      packages: {
+        ...defaultPackageState,
+        selected: { availablePackageDetail: undefined },
+      },
+    } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
+
   expect(wrapper.contains("App Version")).toBe(false);
   expect(wrapper.contains("Home")).toBe(false);
   expect(wrapper.contains("Related")).toBe(false);
@@ -223,7 +205,7 @@ it("renders the app version when set", () => {
     getStore(defaultState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -236,7 +218,7 @@ it("renders the home link when set", () => {
     getStore(defaultState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -250,7 +232,7 @@ it("renders the home link when set", () => {
   ).toBe(true);
 });
 
-describe("ChartMaintainers githubIDAsNames prop value", () => {
+describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
   const tests: Array<{
     expected: boolean;
     name: string;
@@ -286,17 +268,17 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
       const wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          charts: { selected: { availablePackageDetail: myAvailablePkgDetail } },
-        }),
+          packages: { selected: { availablePackageDetail: myAvailablePkgDetail } },
+        } as IStoreState),
         <Router history={history}>
           <Route path={routePath}>
-            <ChartView />
+            <PackageView />
           </Route>
         </Router>,
       );
 
-      const chartMaintainers = wrapper.find(AvailablePackageMaintainers);
-      expect(chartMaintainers.props().githubIDAsNames).toBe(t.expected);
+      const availablePackageMaintainers = wrapper.find(AvailablePackageMaintainers);
+      expect(availablePackageMaintainers.props().githubIDAsNames).toBe(t.expected);
     });
   }
 });
@@ -307,11 +289,11 @@ it("renders the sources links when set", () => {
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
-      charts: { selected: { availablePackageDetail: myAvailablePkgDetail } },
-    }),
+      packages: { selected: { availablePackageDetail: myAvailablePkgDetail } },
+    } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
-        <ChartView />
+        <PackageView />
       </Route>
     </Router>,
   );
@@ -337,11 +319,11 @@ describe("renders errors", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultState,
-        charts: { ...defaultChartsState, selected: { error: new Error("Boom!") } },
-      }),
+        packages: { ...defaultPackageState, selected: { error: new Error("Boom!") } },
+      } as unknown as IStoreState),
       <Router history={history}>
         <Route path={routePath}>
-          <ChartView />
+          <PackageView />
         </Route>
       </Router>,
     );

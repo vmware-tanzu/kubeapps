@@ -12,9 +12,9 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IChartState } from "shared/types";
+import { FetchError, IPackageState, IStoreState } from "shared/types";
 import * as url from "shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
@@ -39,7 +39,7 @@ const availablePkgDetails = [
     longDescription: "test",
     availablePackageRef: {
       identifier: "foo/foo",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
     valuesSchema: "test",
@@ -63,7 +63,7 @@ const availablePkgDetails = [
     longDescription: "test",
     availablePackageRef: {
       identifier: "foo/foo",
-      context: { cluster: "", namespace: "chart-namespace" } as Context,
+      context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
     valuesSchema: "test",
@@ -80,8 +80,8 @@ const availablePkgDetails = [
 const defaultProps = {
   appCurrentVersion: "1.0.0",
   appCurrentValues: "foo: bar",
-  packageId: "my-chart",
-  chartsIsFetching: false,
+  packageId: "my-package",
+  packagesIsFetching: false,
   namespace: "default",
   cluster: "default",
   releaseName: "my-release",
@@ -89,12 +89,12 @@ const defaultProps = {
   repoNamespace: "kubeapps",
   error: undefined,
   apps: { isFetching: false },
-  charts: { isFetching: false },
+  packages: { isFetching: false },
   selected: {
     versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
     availablePackageDetail: { name: "test" } as AvailablePackageDetail,
-  } as IChartState["selected"],
-  deployed: {} as IChartState["deployed"],
+  } as IPackageState["selected"],
+  deployed: {} as IPackageState["deployed"],
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 } as IUpgradeFormProps;
 
@@ -110,28 +110,28 @@ const populatedProps = {
     values: "initial: values",
     versions: [testVersion],
     schema: schema as any,
-  } as IChartState["selected"],
+  } as IPackageState["selected"],
   deployed: {
-    chartVersion: availablePkgDetails[0],
+    availablePackageDetail: availablePkgDetails[0],
     schema: schema as any,
     values: "foo:",
-  } as IChartState["deployed"],
+  } as IPackageState["deployed"],
 };
 
 describe("it behaves like a loading component", () => {
   it("if the app is being fetched", () => {
     expect(
       mountWrapper(
-        getStore({ apps: { isFetching: true } }),
+        getStore({ apps: { isFetching: true } } as IStoreState),
         <UpgradeForm {...defaultProps} />,
       ).find(LoadingWrapper),
     ).toExist();
   });
 
-  it("if the chart is being fetched", () => {
+  it("if the package is being fetched", () => {
     expect(
       mountWrapper(
-        getStore({ charts: { isFetching: true } }),
+        getStore({ packages: { isFetching: true } } as IStoreState),
         <UpgradeForm {...defaultProps} />,
       ).find(LoadingWrapper),
     ).toExist();
@@ -161,7 +161,7 @@ describe("it behaves like a loading component", () => {
 
 it("fetches the available versions", () => {
   const getAvailablePackageVersions = jest.fn();
-  Chart.getAvailablePackageVersions = getAvailablePackageVersions;
+  PackagesService.getAvailablePackageVersions = getAvailablePackageVersions;
   mountWrapper(defaultStore, <UpgradeForm {...defaultProps} />);
   expect(getAvailablePackageVersions).toHaveBeenCalledWith({
     context: {
@@ -173,9 +173,9 @@ it("fetches the available versions", () => {
   } as AvailablePackageReference);
 });
 
-it("fetches the current chart version even if there is already one in the state", () => {
+it("fetches the current package version even if there is already one in the state", () => {
   const deployed = {
-    chartVersion: availablePkgDetails[1],
+    availablePackageDetail: availablePkgDetails[1],
   };
 
   const selected = {
@@ -189,7 +189,7 @@ it("fetches the current chart version even if there is already one in the state"
   };
 
   const getAvailablePackageDetail = jest.fn();
-  Chart.getAvailablePackageDetail = getAvailablePackageDetail;
+  PackagesService.getAvailablePackageDetail = getAvailablePackageDetail;
   mountWrapper(
     defaultStore,
     <UpgradeForm {...defaultProps} selected={selected} deployed={deployed} />,
@@ -203,7 +203,7 @@ it("fetches the current chart version even if there is already one in the state"
       identifier: defaultProps.packageId,
       plugin: defaultProps.plugin,
     } as AvailablePackageReference,
-    deployed.chartVersion.version?.pkgVersion,
+    deployed.availablePackageDetail.version?.pkgVersion,
   );
 });
 
@@ -231,7 +231,7 @@ it("defaults the upgrade version to the current version", () => {
   // often used by users to update values only, so we can't default to the
   // latest version on the assumption that they always want to upgrade.
   const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
-  expect(wrapper.find(DeploymentFormBody).prop("chartVersion")).toBe("1.0.0");
+  expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("1.0.0");
 });
 
 it("forwards the appValues when modified", () => {
@@ -440,7 +440,7 @@ describe("when receiving new props", () => {
   });
 });
 
-it("shows, by default, the default values of the deployed chart plus any modification", () => {
+it("shows, by default, the default values of the deployed package plus any modification", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <UpgradeForm

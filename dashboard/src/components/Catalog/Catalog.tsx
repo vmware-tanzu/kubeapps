@@ -74,10 +74,10 @@ interface IRouteParams {
 
 export default function Catalog() {
   const {
-    charts: {
+    packages: {
       hasFinishedFetching,
       selected: { error },
-      items: availablePackages,
+      items: availablePackageSummaries,
       categories,
       size,
       isFetching,
@@ -114,7 +114,16 @@ export default function Catalog() {
   const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
-    dispatch(actions.charts.fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter));
+    dispatch(
+      actions.packages.fetchAvailablePackageSummaries(
+        cluster,
+        namespace,
+        reposFilter,
+        page,
+        size,
+        searchFilter,
+      ),
+    );
   }, [dispatch, page, size, cluster, namespace, reposFilter, searchFilter]);
 
   // hasLoadedFirstPage is used to not bump the current page until the first page is fully
@@ -180,8 +189,8 @@ export default function Catalog() {
   // detect changes in cluster/ns/repos/search and reset the current package list
   useEffect(() => {
     setPage(0);
-    dispatch(actions.charts.resetRequestCharts());
-    dispatch(actions.charts.resetChartVersion());
+    dispatch(actions.packages.resetAvailablePackageSummaries());
+    dispatch(actions.packages.resetSelectedAvailablePackageDetail());
   }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
@@ -193,9 +202,10 @@ export default function Catalog() {
     pushFilters(newFilters);
   };
 
-  const filteredCharts = availablePackages
+  const filteredAvailablePackageSummaries = availablePackageSummaries
     .filter(
-      () => filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Charts"),
+      () =>
+        filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Packages"),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
     .filter(
@@ -244,8 +254,17 @@ export default function Catalog() {
   };
 
   const forceRetry = () => {
-    dispatch(actions.charts.clearErrorChart());
-    dispatch(actions.charts.fetchCharts(cluster, namespace, reposFilter, page, size, searchFilter));
+    dispatch(actions.packages.clearErrorPackage());
+    dispatch(
+      actions.packages.fetchAvailablePackageSummaries(
+        cluster,
+        namespace,
+        reposFilter,
+        page,
+        size,
+        searchFilter,
+      ),
+    );
   };
 
   const increaseRequestedPage = () => {
@@ -265,8 +284,8 @@ export default function Catalog() {
                 entry.isIntersecting &&
                 // Disable scrolling when only operators are selected
                 (!filters[filterNames.TYPE].length ||
-                  filters[filterNames.TYPE].find((type: string) => type === "Charts")) &&
-                // Disable scrolling if all the charts have been fetched
+                  filters[filterNames.TYPE].find((type: string) => type === "Packages")) &&
+                // Disable scrolling if all the packages have been fetched
                 !isFetching &&
                 !hasFinishedFetching &&
                 hasLoadedFirstPage
@@ -313,7 +332,7 @@ export default function Catalog() {
       {isEqual(filters, initialFilterState()) &&
       hasFinishedFetching &&
       searchFilter.length === 0 &&
-      availablePackages.length === 0 &&
+      availablePackageSummaries.length === 0 &&
       csvs.length === 0 ? (
         <div className="empty-catalog">
           <CdsIcon shape="bundle" />
@@ -345,7 +364,7 @@ export default function Catalog() {
                   <label>Application Type</label>
                   <FilterGroup
                     name={filterNames.TYPE}
-                    options={["Operators", "Charts"]}
+                    options={["Operators", "Packages"]}
                     currentFilters={filters[filterNames.TYPE]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
@@ -416,7 +435,7 @@ export default function Catalog() {
                 <Row>
                   <>
                     <CatalogItems
-                      charts={filteredCharts}
+                      availablePackageSummaries={filteredAvailablePackageSummaries}
                       csvs={filteredCSVs}
                       cluster={cluster}
                       namespace={namespace}
@@ -426,7 +445,7 @@ export default function Catalog() {
                     />
                     {!hasFinishedFetching &&
                       (!filters[filterNames.TYPE].length ||
-                        filters[filterNames.TYPE].find((type: string) => type === "Charts")) && (
+                        filters[filterNames.TYPE].find((type: string) => type === "Packages")) && (
                         <div className="endPageMessage">
                           <LoadingWrapper loaded={false} />
                           {error && !hasFinishedFetching && (

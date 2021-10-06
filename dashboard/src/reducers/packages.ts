@@ -1,12 +1,12 @@
 import { JSONSchemaType } from "ajv";
 import { uniqBy } from "lodash";
-import { IChartState } from "shared/types";
+import { IPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { ChartsAction } from "../actions/charts";
+import { PackagesAction } from "../actions/packages";
 import { NamespaceAction } from "../actions/namespace";
 
-export const initialState: IChartState = {
+export const initialState: IPackageState = {
   isFetching: false,
   hasFinishedFetching: false,
   items: [],
@@ -18,12 +18,12 @@ export const initialState: IChartState = {
   size: 20,
 };
 
-const chartsSelectedReducer = (
-  state: IChartState["selected"],
-  action: ChartsAction | NamespaceAction,
-): IChartState["selected"] => {
+const selectedPackageReducer = (
+  state: IPackageState["selected"],
+  action: PackagesAction | NamespaceAction,
+): IPackageState["selected"] => {
   switch (action.type) {
-    case getType(actions.charts.selectChartVersion):
+    case getType(actions.packages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         error: undefined,
@@ -38,31 +38,33 @@ const chartsSelectedReducer = (
             ? (JSON.parse(action.payload.selectedPackage.valuesSchema) as JSONSchemaType<any>)
             : ({} as JSONSchemaType<any>),
       };
-    case getType(actions.charts.receiveChartVersions):
+    case getType(actions.packages.receiveSelectedAvailablePackageVersions):
       return {
         ...state,
         error: undefined,
         versions: action.payload.packageAppVersions,
       };
-    case getType(actions.charts.errorChart):
+    case getType(actions.packages.createErrorPackage):
       return { ...state, error: action.payload };
-    case getType(actions.charts.clearErrorChart):
+    case getType(actions.packages.clearErrorPackage):
       return { ...state, error: undefined };
-    case getType(actions.charts.resetChartVersion):
+    case getType(actions.packages.resetSelectedAvailablePackageDetail):
       return initialState.selected;
     default:
   }
   return state;
 };
 
-const chartsReducer = (
-  state: IChartState = initialState,
-  action: ChartsAction | NamespaceAction,
-): IChartState => {
+const packageReducer = (
+  state: IPackageState = initialState,
+  action: PackagesAction | NamespaceAction,
+): IPackageState => {
   switch (action.type) {
-    case getType(actions.charts.requestCharts):
+    case getType(actions.packages.requestAvailablePackageSummaries):
       return { ...state, isFetching: true };
-    case getType(actions.charts.receiveCharts): {
+    case getType(actions.packages.requestSelectedAvailablePackageVersions):
+      return { ...state, isFetching: true };
+    case getType(actions.packages.receiveAvailablePackageSummaries): {
       const isLastPage =
         action.payload.page >= parseInt(action.payload.response.nextPageToken) ||
         action.payload.response.nextPageToken === "";
@@ -77,55 +79,61 @@ const chartsReducer = (
         ),
       };
     }
-    case getType(actions.charts.receiveChartVersions):
+    case getType(actions.packages.receiveSelectedAvailablePackageVersions):
       return {
         ...state,
         isFetching: false,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
-    case getType(actions.charts.selectChartVersion):
+    case getType(actions.packages.requestSelectedAvailablePackageDetail):
+      return {
+        ...state,
+        isFetching: true,
+        selected: selectedPackageReducer(state.selected, action),
+      };
+    case getType(actions.packages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
-    case getType(actions.charts.requestDeployedChartVersion):
+    case getType(actions.packages.requestDeployedAvailablePackageDetail):
       return {
         ...state,
         deployed: {},
       };
-    case getType(actions.charts.receiveDeployedChartVersion):
+    case getType(actions.packages.receiveDeployedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
         deployed: {
-          chartVersion: action.payload.chartVersion,
-          schema: action.payload.schema as any,
-          values: action.payload.values,
+          availablePackageDetail: action.payload.availablePackageDetail,
+          schema: action.payload.availablePackageDetail.valuesSchema as any,
+          values: action.payload.availablePackageDetail.defaultValues,
         },
       };
-    case getType(actions.charts.resetRequestCharts):
+    case getType(actions.packages.resetAvailablePackageSummaries):
       return {
         ...state,
         hasFinishedFetching: false,
         items: [],
       };
-    case getType(actions.charts.errorChart):
+    case getType(actions.packages.createErrorPackage):
       return {
         ...state,
         isFetching: false,
         hasFinishedFetching: false,
         items: state.items,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
-    case getType(actions.charts.resetChartVersion):
-    case getType(actions.charts.clearErrorChart):
+    case getType(actions.packages.resetSelectedAvailablePackageDetail):
+    case getType(actions.packages.clearErrorPackage):
       return {
         ...state,
-        selected: chartsSelectedReducer(state.selected, action),
+        selected: selectedPackageReducer(state.selected, action),
       };
   }
   return state;
 };
 
-export default chartsReducer;
+export default packageReducer;

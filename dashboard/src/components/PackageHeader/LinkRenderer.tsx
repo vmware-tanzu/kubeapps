@@ -5,7 +5,7 @@ const LinkRenderer: React.FunctionComponent<{}> = (props: any) => {
     return <Link to={props.href}>{props.children}</Link>;
   }
   // If it's not a hash link it's an external link since it's rendering
-  // the chart README. Because of that, render it as a normal anchor
+  // the package README. Because of that, render it as a normal anchor
   return <a href={props.href}>{props.children}</a>;
 };
 

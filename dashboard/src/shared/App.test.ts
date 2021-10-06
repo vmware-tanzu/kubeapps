@@ -17,7 +17,7 @@ const availablePackageDetail: AvailablePackageDetail = {
   longDescription: "bla bla",
   maintainers: [],
   readme: "",
-  repoUrl: "http://example.com/charts",
+  repoUrl: "http://example.com/packages",
   shortDescription: "bla",
   sourceUrls: [""],
   valuesSchema: "",
