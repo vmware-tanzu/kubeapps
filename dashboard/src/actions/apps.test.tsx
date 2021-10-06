@@ -239,7 +239,7 @@ describe("upgradeApp", () => {
     "kubeapps",
   );
 
-  it("calls ServiceBinding.delete and returns true if no error", async () => {
+  it("calls App.upgrade and returns true if no error", async () => {
     App.upgrade = jest.fn().mockImplementationOnce(() => true);
     const res = await store.dispatch(provisionCMD);
     expect(res).toBe(true);
