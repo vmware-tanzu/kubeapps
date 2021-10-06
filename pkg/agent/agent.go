@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
-	"github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -20,6 +18,16 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
 )
+
+type AppOverview struct {
+	ReleaseName   string         `json:"releaseName"`
+	Version       string         `json:"version"`
+	Namespace     string         `json:"namespace"`
+	Icon          string         `json:"icon,omitempty"`
+	Status        string         `json:"status"`
+	Chart         string         `json:"chart"`
+	ChartMetadata chart.Metadata `json:"chartMetadata"`
+}
 
 // StorageForDriver is a function type which returns a specific storage.
 type StorageForDriver func(namespace string, clientset *kubernetes.Clientset) *storage.Storage
@@ -45,7 +53,7 @@ func StorageForMemory(_ string, _ *kubernetes.Clientset) *storage.Storage {
 }
 
 // ListReleases lists releases in the specified namespace, or all namespaces if the empty string is given.
-func ListReleases(actionConfig *action.Configuration, namespace string, listLimit int, status string) ([]proxy.AppOverview, error) {
+func ListReleases(actionConfig *action.Configuration, namespace string, listLimit int, status string) ([]AppOverview, error) {
 	allNamespaces := namespace == ""
 	cmd := action.NewList(actionConfig)
 	if allNamespaces {
@@ -59,7 +67,7 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 	if err != nil {
 		return nil, err
 	}
-	appOverviews := make([]proxy.AppOverview, 0)
+	appOverviews := make([]AppOverview, 0)
 	for _, r := range releases {
 		if allNamespaces || r.Namespace == namespace {
 			appOverviews = append(appOverviews, appOverviewFromRelease(r))
@@ -222,15 +230,14 @@ func ParseDriverType(raw string) (StorageForDriver, error) {
 	}
 }
 
-func appOverviewFromRelease(r *release.Release) proxy.AppOverview {
-	r2Metadata := helm3to2.ConvertMetadata(*r.Chart.Metadata)
-	return proxy.AppOverview{
+func appOverviewFromRelease(r *release.Release) AppOverview {
+	return AppOverview{
 		ReleaseName:   r.Name,
 		Version:       r.Chart.Metadata.Version,
 		Icon:          r.Chart.Metadata.Icon,
 		Namespace:     r.Namespace,
 		Status:        r.Info.Status.String(),
 		Chart:         r.Chart.Name(),
-		ChartMetadata: *r2Metadata,
+		ChartMetadata: *r.Chart.Metadata,
 	}
 }

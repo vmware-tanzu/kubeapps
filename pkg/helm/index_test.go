@@ -41,7 +41,7 @@ func Test_parseRepoIndex(t *testing.T) {
 		index, err := parseRepoIndex([]byte(validRepoIndexYAML))
 		assert.NoErr(t, err)
 		assert.Equal(t, len(index.Entries), 2, "number of charts")
-		assert.Equal(t, index.Entries["acs-engine-autoscaler"][0].GetName(), "acs-engine-autoscaler", "chart version populated")
+		assert.Equal(t, index.Entries["acs-engine-autoscaler"][0].Name, "acs-engine-autoscaler", "chart version populated")
 	})
 }
 

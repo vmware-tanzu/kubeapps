@@ -81,6 +81,8 @@ function UpgradeForm({
 
   const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
 
+  const packageCluster = availablePackageDetail?.availablePackageRef?.context?.cluster;
+
   const {
     apps: { isFetching: appsFetching },
     charts: { isFetching: chartsFetching },
@@ -91,12 +93,15 @@ function UpgradeForm({
   useEffect(() => {
     dispatch(
       actions.charts.fetchChartVersions({
-        context: { cluster: cluster, namespace: repoNamespace },
+        context: {
+          cluster: packageCluster ?? cluster,
+          namespace: repoNamespace,
+        },
         plugin: pluginObj,
         identifier: packageId,
       } as AvailablePackageReference),
     );
-  }, [dispatch, cluster, repoNamespace, packageId, pluginObj]);
+  }, [dispatch, packageCluster, repoNamespace, packageId, cluster, pluginObj]);
 
   useEffect(() => {
     if (deployed.values && !modifications) {
@@ -122,7 +127,7 @@ function UpgradeForm({
     dispatch(
       actions.charts.fetchChartVersion(
         {
-          context: { cluster: cluster, namespace: repoNamespace },
+          context: { cluster: packageCluster, namespace: repoNamespace },
           plugin: pluginObj,
           identifier: packageId,
         } as AvailablePackageReference,
@@ -131,7 +136,7 @@ function UpgradeForm({
     );
   }, [
     dispatch,
-    cluster,
+    packageCluster,
     repoNamespace,
     packageId,
     deployed.chartVersion?.version?.pkgVersion,
@@ -160,7 +165,7 @@ function UpgradeForm({
     dispatch(
       actions.charts.fetchChartVersion(
         {
-          context: { cluster: cluster, namespace: repoNamespace },
+          context: { cluster: packageCluster, namespace: repoNamespace },
           plugin: pluginObj,
           identifier: packageId,
         } as AvailablePackageReference,

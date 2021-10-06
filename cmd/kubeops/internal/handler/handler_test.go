@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -32,7 +33,8 @@ const (
 )
 
 var (
-	testingTime, _ = helmTime.Parse(time.RFC3339, "1977-09-02T22:04:05Z")
+	testingTime, _    = helmTime.Parse(time.RFC3339, "1977-09-02T22:04:05Z")
+	lastDeployedRegex = regexp.MustCompile(`"last_deployed":\s*"[^"]+?[^\/"]+"`)
 )
 
 // newConfigFixture returns a Config with fake clients
@@ -93,7 +95,6 @@ func TestActions(t *testing.T) {
 		// Scenario params
 		Description      string
 		ExistingReleases []*release.Release
-		Skip             bool //TODO: Remove this when the memory bug is fixed
 		KubeError        error
 		// Request params
 		RequestBody  string
@@ -145,7 +146,6 @@ func TestActions(t *testing.T) {
 			// Scenario params
 			Description:      "Get a non-existing release",
 			ExistingReleases: []*release.Release{},
-			Skip:             true,
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -153,7 +153,7 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        404,
-			RemainingReleases: []*release.Release{},
+			RemainingReleases: nil,
 			ResponseBody:      "",
 		},
 		{
@@ -205,7 +205,7 @@ func TestActions(t *testing.T) {
 			RemainingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 			},
-			ResponseBody: `{"data":{"name":"foobar","info":{"status":{"code":1}},"chart":{"metadata":{"name":"foo"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":1,"namespace":"default"}}`,
+			ResponseBody: `{"data":{"name":"foobar","info":{"first_deployed":"1977-09-02T22:04:05Z","last_deployed":"1977-09-02T22:04:05Z","deleted":"","status":"deployed"},"chart":{"metadata":{"name":"foo"},"lock":null,"templates":null,"values":{},"schema":null,"files":null},"version":1,"namespace":"default"}}`,
 		},
 		{
 			// Scenario params
@@ -223,7 +223,7 @@ func TestActions(t *testing.T) {
 			RemainingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusUninstalled),
 			},
-			ResponseBody: `{"data":{"name":"foobar","info":{"status":{"code":2},"deleted":{"seconds":242085845}},"chart":{"metadata":{"name":"foo"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":1,"namespace":"default"}}`,
+			ResponseBody: `{"data":{"name":"foobar","info":{"first_deployed":"1977-09-02T22:04:05Z","last_deployed":"1977-09-02T22:04:05Z","deleted":"1977-09-02T22:04:05Z","status":"uninstalled"},"chart":{"metadata":{"name":"foo"},"lock":null,"templates":null,"values":{},"schema":null,"files":null},"version":1,"namespace":"default"}}`,
 		},
 		{
 			// Scenario params
@@ -245,7 +245,6 @@ func TestActions(t *testing.T) {
 			// Scenario params
 			Description:      "Delete a missing release",
 			ExistingReleases: []*release.Release{},
-			Skip:             true,
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -275,11 +274,6 @@ func TestActions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
-			// TODO Remove this `if` statement after the memory driver bug is fixed
-			// Memory Driver Bug: https://github.com/helm/helm/pull/7372
-			if test.Skip {
-				t.SkipNow()
-			}
 			// Initialize environment for test
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
 			response := httptest.NewRecorder()
@@ -342,7 +336,7 @@ func createRelease(chartName, name, namespace string, version int, status releas
 		Name:      name,
 		Namespace: namespace,
 		Version:   version,
-		Info:      &release.Info{Status: status, Deleted: deleted},
+		Info:      &release.Info{Status: status, Deleted: deleted, FirstDeployed: testingTime, LastDeployed: testingTime},
 		Chart: &chart.Chart{
 			Metadata: &chart.Metadata{
 				Name: chartName,
@@ -387,7 +381,7 @@ func TestRollbackAction(t *testing.T) {
 				createRelease("apache", releaseName, "default", 2, release.StatusSuperseded),
 				createRelease("apache", releaseName, "default", 3, release.StatusDeployed),
 			},
-			responseBody: `{"data":{"name":"my-release","info":{"status":{"code":1}},"chart":{"metadata":{"name":"apache"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":3,"namespace":"default"}}`,
+			responseBody: `{"data":{"name":"my-release","info":{"first_deployed":"1977-09-02T22:04:05Z","last_deployed":"1977-09-02T22:04:05Z","deleted":"","description":"Rollback to 1","status":"deployed"},"chart":{"metadata":{"name":"apache"},"lock":null,"templates":null,"values":{},"schema":null,"files":null},"version":3,"namespace":"default"}}`,
 		},
 		{
 			name: "errors if the release does not exist",
@@ -435,7 +429,6 @@ func TestRollbackAction(t *testing.T) {
 			responseBody: `{"code":422,"message":"Missing revision to rollback in request"}`,
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			k := &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
@@ -449,7 +442,11 @@ func TestRollbackAction(t *testing.T) {
 			if got, want := response.Code, tc.statusCode; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
-			if got, want := response.Body.String(), tc.responseBody; got != want {
+
+			// using a fixed date to avoid time-dependant tests
+			// ideally, we should mutate the date as we are doing for deleted releases
+			fixedDateResponse := lastDeployedRegex.ReplaceAllString(response.Body.String(), `"last_deployed":"1977-09-02T22:04:05Z"`)
+			if got, want := fixedDateResponse, tc.responseBody; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 
@@ -490,7 +487,7 @@ func TestUpgradeAction(t *testing.T) {
 				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
 				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
 			},
-			responseBody: `{"data":{"name":"my-release","info":{"status":{"code":1}},"chart":{"metadata":{"name":"apache","version":"1.0.0"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":2,"namespace":"default"}}`,
+			responseBody: `{"data":{"name":"my-release","info":{"first_deployed":"1977-09-02T22:04:05Z","last_deployed":"1977-09-02T22:04:05Z","deleted":"","description":"Upgrade complete","status":"deployed"},"chart":{"metadata":{"name":"apache","version":"1.0.0"},"lock":null,"templates":null,"values":{},"schema":null,"files":null},"version":2,"namespace":"default"}}`,
 		},
 		{
 			name:             "upgrade a missing release",
@@ -519,7 +516,11 @@ func TestUpgradeAction(t *testing.T) {
 			if got, want := response.Code, tc.statusCode; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
-			if got, want := response.Body.String(), tc.responseBody; got != want {
+
+			// using a fixed date to avoid time-dependant tests
+			// ideally, we should mutate the date as we are doing for deleted releases
+			fixedDateResponse := lastDeployedRegex.ReplaceAllString(response.Body.String(), `"last_deployed":"1977-09-02T22:04:05Z"`)
+			if got, want := fixedDateResponse, tc.responseBody; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 
