@@ -62,7 +62,7 @@ export function flattenResources(
   return result;
 }
 
-export function getPluginIcon(plugin: Plugin | string) {
+export function getPluginIcon(plugin?: Plugin | string) {
   // Temporary case while operators are not supported as kubeapps apis plugin
   if (typeof plugin === "string") {
     switch (plugin) {
@@ -76,7 +76,7 @@ export function getPluginIcon(plugin: Plugin | string) {
         return placeholder;
     }
   } else {
-    switch (plugin.name) {
+    switch (plugin?.name) {
       case "helm.packages":
         return helmIcon;
       default:

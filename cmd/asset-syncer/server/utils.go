@@ -48,8 +48,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
+	"helm.sh/helm/v3/pkg/chart"
 	h3chart "helm.sh/helm/v3/pkg/chart"
-	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 const (
@@ -486,7 +486,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 		maintainers = append(maintainers, chart.Maintainer{
 			Name:  m.Name,
 			Email: m.Email,
-			Url:   m.URL,
+			URL:   m.URL,
 		})
 	}
 

@@ -1,10 +1,10 @@
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import ChartHeader from "components/ChartView/ChartHeader";
-import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import PackageHeader from "components/PackageHeader/PackageHeader";
+import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
 import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
 import {
@@ -17,7 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { deleteValue, setValue } from "../../shared/schema";
-import { IChartState, IStoreState } from "../../shared/types";
+import { IPackageState, IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
@@ -26,7 +26,7 @@ import "./UpgradeForm.css";
 export interface IUpgradeFormProps {
   installedAppAvailablePackageDetail: AvailablePackageDetail;
   installedAppInstalledPackageDetail: InstalledPackageDetail;
-  selectedPackage: IChartState["selected"];
+  selectedPackage: IPackageState["selected"];
   chartsIsFetching: boolean;
   error?: Error;
 }
@@ -57,7 +57,7 @@ function UpgradeForm() {
       error,
       selectedDetails: installedAppAvailablePackageDetail,
     },
-    charts: { isFetching: chartsIsFetching, selected: selectedPackage },
+    packages: { isFetching: chartsIsFetching, selected: selectedPackage },
   } = useSelector((state: IStoreState) => state);
 
   const isFetching = appsIsFetching || chartsIsFetching;
@@ -76,7 +76,9 @@ function UpgradeForm() {
 
   useEffect(() => {
     dispatch(
-      actions.charts.fetchChartVersions(installedAppInstalledPackageDetail?.availablePackageRef),
+      actions.packages.fetchAvailablePackageVersions(
+        installedAppInstalledPackageDetail?.availablePackageRef,
+      ),
     );
   }, [dispatch, installedAppInstalledPackageDetail?.availablePackageRef]);
 
@@ -124,7 +126,9 @@ function UpgradeForm() {
   // the selection will be handled by selectVersion()
   useEffect(() => {
     if (!hasSelectedInstalledPackage && installedAppAvailablePackageDetail) {
-      dispatch(actions.charts.selectChartVersion(installedAppAvailablePackageDetail));
+      dispatch(
+        actions.packages.receiveSelectedAvailablePackageDetail(installedAppAvailablePackageDetail),
+      );
       setHasSelectedInstalledPackage(true);
     }
   }, [dispatch, hasSelectedInstalledPackage, installedAppAvailablePackageDetail]);
@@ -139,7 +143,7 @@ function UpgradeForm() {
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      actions.charts.fetchChartVersion(
+      actions.packages.fetchAndSelectAvailablePackageDetail(
         installedAppInstalledPackageDetail?.availablePackageRef,
         e.currentTarget.value,
       ),
@@ -186,9 +190,9 @@ function UpgradeForm() {
           <></>
         ) : (
           <>
-            <ChartHeader
+            <PackageHeader
               releaseName={installedAppInstalledPackageDetail?.installedPackageRef?.identifier}
-              chartAttrs={availablePackageDetail}
+              availablePackageDetail={availablePackageDetail}
               versions={versions}
               onSelect={selectVersion}
               currentVersion={installedAppAvailablePackageDetail?.version?.pkgVersion}
@@ -214,14 +218,13 @@ function UpgradeForm() {
                           <label className="centered deployment-form-label deployment-form-label-text-param">
                             Upgrade to Version
                           </label>
-                          <ChartVersionSelector
+                          <PackageVersionSelector
                             versions={versions}
                             selectedVersion={pkgVersion}
                             onSelect={selectVersion}
                             currentVersion={
                               installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
                             }
-                            chartAttrs={availablePackageDetail}
                           />
                         </div>
                         <DeploymentFormBody
@@ -229,11 +232,11 @@ function UpgradeForm() {
                           packageId={
                             installedAppInstalledPackageDetail?.availablePackageRef?.identifier
                           }
-                          chartVersion={
+                          packageVersion={
                             installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
                           }
                           deployedValues={deployedValues}
-                          chartsIsFetching={isFetching}
+                          packagesIsFetching={isFetching}
                           selected={selectedPackage}
                           setValues={handleValuesChange}
                           appValues={appValues}

@@ -1,6 +1,6 @@
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { IRepo } from "shared/types";
-import ChartCatalogItem from "./ChartCatalogItem";
+import PackageCatalogItem from "./PackageCatalogItem";
 import OperatorCatalogItem from "./OperatorCatalogItem";
 
 export interface ICatalogItem {
@@ -13,7 +13,7 @@ export interface ICatalogItem {
   icon?: string;
 }
 
-export interface IChartCatalogItem extends ICatalogItem {
+export interface IPackageCatalogItem extends ICatalogItem {
   id: string;
   repo: IRepo;
   plugin: Plugin;
@@ -27,7 +27,7 @@ export interface IOperatorCatalogItem extends ICatalogItem {
 export interface ICatalogItemProps {
   type: string;
   id: string;
-  item: IChartCatalogItem | IOperatorCatalogItem;
+  item: IPackageCatalogItem | IOperatorCatalogItem;
 }
 
 function CatalogItem(props: ICatalogItemProps) {
@@ -35,8 +35,8 @@ function CatalogItem(props: ICatalogItemProps) {
     const item = props.item as IOperatorCatalogItem;
     return <OperatorCatalogItem {...item} />;
   } else {
-    const item = props.item as IChartCatalogItem;
-    return <ChartCatalogItem {...item} />;
+    const item = props.item as IPackageCatalogItem;
+    return <PackageCatalogItem {...item} />;
   }
 }
 

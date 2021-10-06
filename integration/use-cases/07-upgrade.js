@@ -26,7 +26,7 @@ test("Upgrades an application", async () => {
     3,
     async () => {
       // get the latest pkg version (the first one)
-      const latestPackageVersionElements = await page.$$('select[name="chart-versions"] option', {
+      const latestPackageVersionElements = await page.$$('select[name="package-versions"] option', {
         delay: 2000,
       });
       const latestPackageVersionElementContent = await latestPackageVersionElements[0].getProperty(
@@ -36,7 +36,7 @@ test("Upgrades an application", async () => {
       latestPackageVersion = latestPackageVersionValue.split(" ")[0];
 
       // get an older version to be installed (the second one)
-      const initialPackageVersionElements = await page.$$('select[name="chart-versions"] option', {
+      const initialPackageVersionElements = await page.$$('select[name="package-versions"] option', {
         delay: 2000,
       });
       const initialPackageVersionElementContent =
@@ -52,7 +52,7 @@ test("Upgrades an application", async () => {
   console.log(`apache initialPackageVersion: ${initialPackageVersion}, latestPackageVersion: ${latestPackageVersion}`);
 
   // select the initialPackageVersion
-  await expect(page).toSelect('select[name="chart-versions"]', initialPackageVersion);
+  await expect(page).toSelect('select[name="package-versions"]', initialPackageVersion);
   await new Promise(r => setTimeout(r, 500));
 
   await utils.retryAndRefresh(
@@ -119,7 +119,7 @@ test("Upgrades an application", async () => {
     3,
     async () => {
       // Select the latest pkg version
-      await expect(page).toSelect('select[name="chart-versions"]', latestPackageVersion);
+      await expect(page).toSelect('select[name="package-versions"]', latestPackageVersion);
       // Immediately after selecting the version, the checked selection is still
       // the unchanged. Not sure if it's due to the browser DOM needing
       // milliseconds to update, or react's own rendering, but without the
@@ -129,7 +129,7 @@ test("Upgrades an application", async () => {
 
       // get the current pkg version (the selected one after being upgraded)
       const upgradedPackageVersionElement = await expect(page).toMatchElement(
-        'select[name="chart-versions"] option:checked',
+        'select[name="package-versions"] option:checked',
       );
       const upgradedPackageVersionElementContent = await upgradedPackageVersionElement.getProperty(
         "textContent",

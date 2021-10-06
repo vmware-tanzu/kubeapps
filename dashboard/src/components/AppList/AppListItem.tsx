@@ -77,7 +77,7 @@ function AppListItem(props: IAppListItemProps) {
       tag1Content={appStatus}
       tag1Class={appStatus === "deployed" ? "label-success" : "label-warning"}
       tooltip={tooltip}
-      bgIcon={getPluginIcon(app.installedPackageRef?.plugin ?? "chart")}
+      bgIcon={getPluginIcon(app.installedPackageRef?.plugin)}
     />
   );
 }

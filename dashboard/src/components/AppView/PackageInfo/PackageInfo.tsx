@@ -2,18 +2,18 @@ import {
   AvailablePackageDetail,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import ChartUpdateInfo from "./ChartUpdateInfo";
-interface IChartInfoProps {
+import PackageUpdateInfo from "./PackageUpdateInfo";
+interface IPackageInfoProps {
   installedPackageDetail: InstalledPackageDetail;
   availablePackageDetail?: AvailablePackageDetail;
 }
 
-function ChartInfo({ installedPackageDetail, availablePackageDetail }: IChartInfoProps) {
+function PackageInfo({ installedPackageDetail, availablePackageDetail }: IPackageInfoProps) {
   return (
     <section className="left-menu">
       {installedPackageDetail && (
-        <section className="left-menu-subsection" aria-labelledby="chartinfo-versions">
-          <h5 className="left-menu-subsection-title" id="chartinfo-versions">
+        <section className="left-menu-subsection" aria-labelledby="packageinfo-versions">
+          <h5 className="left-menu-subsection-title" id="packageinfo-versions">
             Versions
           </h5>
           <div>
@@ -26,13 +26,13 @@ function ChartInfo({ installedPackageDetail, availablePackageDetail }: IChartInf
               Package Version: <strong>{installedPackageDetail.currentVersion?.pkgVersion}</strong>
             </span>
           </div>
-          <ChartUpdateInfo installedPackageDetail={installedPackageDetail} />
+          <PackageUpdateInfo installedPackageDetail={installedPackageDetail} />
         </section>
       )}
       {availablePackageDetail && (
         <>
-          <section className="left-menu-subsection" aria-labelledby="chartinfo-description">
-            <h5 className="left-menu-subsection-title" id="chartinfo-description">
+          <section className="left-menu-subsection" aria-labelledby="packageinfo-description">
+            <h5 className="left-menu-subsection-title" id="packageinfo-description">
               Description
             </h5>
             <span>{availablePackageDetail.shortDescription}</span>
@@ -43,4 +43,4 @@ function ChartInfo({ installedPackageDetail, availablePackageDetail }: IChartInf
   );
 }
 
-export default ChartInfo;
+export default PackageInfo;

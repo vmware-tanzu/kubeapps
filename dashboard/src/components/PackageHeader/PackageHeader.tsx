@@ -6,11 +6,11 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
 import placeholder from "../../placeholder.png";
-import "./ChartHeader.css";
-import ChartVersionSelector from "./ChartVersionSelector";
+import "./PackageHeader.css";
+import PackageVersionSelector from "./PackageVersionSelector";
 
-interface IChartHeaderProps {
-  chartAttrs: AvailablePackageDetail;
+export interface IPackageHeaderProps {
+  availablePackageDetail: AvailablePackageDetail;
   versions: PackageAppVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   releaseName?: string;
@@ -19,15 +19,15 @@ interface IChartHeaderProps {
   deployButton?: JSX.Element;
 }
 
-export default function ChartHeader({
-  chartAttrs,
+export default function PackageHeader({
+  availablePackageDetail,
   versions,
   onSelect,
   releaseName,
   currentVersion,
   deployButton,
   selectedVersion,
-}: IChartHeaderProps) {
+}: IPackageHeaderProps) {
   return (
     <PageHeader
       title={
@@ -35,22 +35,22 @@ export default function ChartHeader({
         // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
         releaseName
           ? `${releaseName} (${
-              chartAttrs.availablePackageRef?.identifier.split("/")[0]
-            }/${decodeURIComponent(chartAttrs.name)})`
-          : `${chartAttrs.availablePackageRef?.identifier.split("/")[0]}/${decodeURIComponent(
-              chartAttrs.name,
-            )}`
+              availablePackageDetail?.availablePackageRef?.identifier.split("/")[0]
+            }/${decodeURIComponent(availablePackageDetail?.name)})`
+          : `${
+              availablePackageDetail?.availablePackageRef?.identifier.split("/")[0]
+            }/${decodeURIComponent(availablePackageDetail?.name)}`
       }
       titleSize="md"
-      icon={chartAttrs.iconUrl ? chartAttrs.iconUrl : placeholder}
+      icon={availablePackageDetail?.iconUrl ? availablePackageDetail.iconUrl : placeholder}
       helm={true}
       version={
         <>
-          <label className="header-version-label" htmlFor="chart-versions">
+          <label className="header-version-label" htmlFor="package-versions">
             Package Version{" "}
             <Tooltip
-              label="chart-versions-tooltip"
-              id="chart-versions-tooltip"
+              label="package-versions-tooltip"
+              id="package-versions-tooltip"
               position="bottom-left"
               iconProps={{ solid: true, size: "sm" }}
             >
@@ -65,12 +65,11 @@ export default function ChartHeader({
               .{" "}
             </Tooltip>
           </label>
-          <ChartVersionSelector
+          <PackageVersionSelector
             versions={versions}
             onSelect={onSelect}
             selectedVersion={selectedVersion}
             currentVersion={currentVersion}
-            chartAttrs={chartAttrs}
           />
         </>
       }
