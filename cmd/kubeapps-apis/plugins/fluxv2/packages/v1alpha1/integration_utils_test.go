@@ -26,6 +26,7 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	kubecorev1 "k8s.io/api/core/v1"
 	kuberbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -392,6 +393,21 @@ func randSeq(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func newGrpcContext(t *testing.T, name string) context.Context {
+	token, err := kubeCreateAdminServiceAccount(t, name, "default")
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
+			t.Logf("Failed to delete service account due to [%v]", err)
+		}
+	})
+	return metadata.NewOutgoingContext(
+		context.TODO(),
+		metadata.Pairs("Authorization", "Bearer "+token))
 }
 
 // global vars

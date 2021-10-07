@@ -24,7 +24,6 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -103,18 +102,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		// TODO (gfichtenholt): add a negative test for unauthenticated user
 	}
 
-	token, err := kubeCreateAdminServiceAccount(t, "test-create-admin", "default")
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccount(t, "test-create-admin", "default"); err != nil {
-			t.Logf("Failed to delete service account due to [%v]", err)
-		}
-	})
-	grpcContext := metadata.NewOutgoingContext(
-		context.TODO(),
-		metadata.Pairs("Authorization", "Bearer "+token))
+	grpcContext := newGrpcContext(t, "test-create-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -192,18 +180,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		// TODO (gfichtenholt): add a negative test for unauthenticated user
 	}
 
-	token, err := kubeCreateAdminServiceAccount(t, "test-update-admin", "default")
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccount(t, "test-update-admin", "default"); err != nil {
-			t.Logf("Failed to delete service account due to [%v]", err)
-		}
-	})
-	grpcContext := metadata.NewOutgoingContext(
-		context.TODO(),
-		metadata.Pairs("Authorization", "Bearer "+token))
+	grpcContext := newGrpcContext(t, "test-update-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -246,18 +223,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 		// TODO (gfichtenholt): add a negative test for unauthenticated user
 	}
 
-	token, err := kubeCreateAdminServiceAccount(t, "test-delete-admin", "default")
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccount(t, "test-delete-admin", "default"); err != nil {
-			t.Logf("Failed to delete service account due to [%v]", err)
-		}
-	})
-	grpcContext := metadata.NewOutgoingContext(
-		context.TODO(),
-		metadata.Pairs("Authorization", "Bearer "+token))
+	grpcContext := newGrpcContext(t, "test-delete-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
