@@ -224,12 +224,15 @@ func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error)
 	}
 }
 
-// will create a service account with cluster-admin privs
-func kubeCreateServiceAccount(t *testing.T, name, namespace string) error {
+// will create a service account with cluster-admin privs and return the associated
+// Bearer token (base64-encoded)
+func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
 	t.Logf("+kubeCreateServiceAccount(%s,%s)", name, namespace)
-	if typedClient, err := kubeGetTypedClient(); err != nil {
-		return err
-	} else if _, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return "", err
+	}
+	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
 		context.TODO(),
 		&kubecorev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
@@ -237,9 +240,40 @@ func kubeCreateServiceAccount(t *testing.T, name, namespace string) error {
 				Namespace: namespace,
 			},
 		},
-		metav1.CreateOptions{}); err != nil {
-		return err
-	} else if _, err = typedClient.RbacV1().ClusterRoleBindings().Create(
+		metav1.CreateOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	secretName := ""
+	for i := 0; i < 10; i++ {
+		svcAccount, err := typedClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+		if err != nil {
+			return "", err
+		}
+		if len(svcAccount.Secrets) >= 1 && svcAccount.Secrets[0].Name != "" {
+			secretName = svcAccount.Secrets[0].Name
+			break
+		}
+		t.Logf("Waiting 1s for service account [%s] secret...", name)
+		time.Sleep(1 * time.Second)
+	}
+	if secretName == "" {
+		return "", fmt.Errorf("Service account [%s] has no secrets", name)
+	}
+
+	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
+		context.TODO(),
+		secretName,
+		metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	token := secret.Data["token"]
+	if token == nil {
+		return "", err
+	}
+	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
 		context.TODO(),
 		&kuberbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
@@ -257,10 +291,11 @@ func kubeCreateServiceAccount(t *testing.T, name, namespace string) error {
 				Name: "cluster-admin",
 			},
 		},
-		metav1.CreateOptions{}); err != nil {
-		return err
+		metav1.CreateOptions{})
+	if err != nil {
+		return "", err
 	}
-	return nil
+	return string(token), nil
 }
 
 func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
