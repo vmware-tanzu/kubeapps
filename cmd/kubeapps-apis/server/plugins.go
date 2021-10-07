@@ -321,6 +321,25 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 		if cluster == "" {
 			cluster = clustersConfig.KubeappsClusterName
 		}
+
+		// TODO (gfichtenholt) the following code needs to be re-written to allow a couple of use cases:
+		// 1) flux plugin initializing, no incoming context (token == ""), we want inClusterConfig RBAC
+		// 2) flux plugin calls on behalf of some user (token != ""), we want
+		//    kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
+		// OR
+		// possibly one may argue we shouldn't support (1) here at all and raise an error if it happens.
+		// I can accept that, I will then copy the logic for getting inClusterConfig into flux plugin module
+		//
+		// FWIW, for the time being I replaced the code below with
+		//if token == "" {
+		//	config = inClusterConfig
+		//} else {
+		//	config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
+		//	if err != nil {
+		//		return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
+		//	}
+		//}
+		// and was able to run my integration tests successfully
 		if cluster == clustersConfig.KubeappsClusterName && serveOpts.UnsafeUseDemoSA {
 			// If using the priviledged servicceAccount, just use the default inClusterConfig
 			// instead of creating a user config with authentication

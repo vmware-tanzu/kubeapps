@@ -176,14 +176,14 @@ func (c NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 
 	name := fmt.Sprintf("%s.%s", c.config.gvr.Resource, c.config.gvr.Group)
-	crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
+	if crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{}); err != nil {
 		return err
-	}
-	for _, condition := range crd.Status.Conditions {
-		if condition.Type == apiextv1.Established &&
-			condition.Status == apiextv1.ConditionTrue {
-			return nil
+	} else {
+		for _, condition := range crd.Status.Conditions {
+			if condition.Type == apiextv1.Established &&
+				condition.Status == apiextv1.ConditionTrue {
+				return nil
+			}
 		}
 	}
 	return status.Errorf(codes.FailedPrecondition, "CRD [%s] is not valid", c.config.gvr)
@@ -246,12 +246,10 @@ func (c NamespacedResourceWatcherCache) resync() (string, error) {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
-	// TODO: (gfichtenholt) RBAC check whether I list and watch specified GVR?
-	// Currently you'll need to run with the unsafe dev-only service account, since the plugin sets
-	// up background jobs that are running outside of requests from the user (ie. we're not using the
-	// users' token for those). Longer term, the plan is to create a separate RBAC yaml specific to
-	// the plugin that will need to be applied for using the plugin (nice and explicit),
-	// granting additional RBAC privs to the service account used by kubeapps-apis
+	// This code runs in the background, i.e. not in a context of any specific user request.
+	// As such, it requires RBAC to be set up properly during install to be able to list specified GVR
+	// (e.g. flux CRDs). For further details, see https://github.com/kubeapps/kubeapps/pull/3551 and
+	// see helm chart templates/kubeappsapis/rbac_fluxv2.yaml
 
 	// Notice, we are not setting resourceVersion in ListOptions, which means
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
