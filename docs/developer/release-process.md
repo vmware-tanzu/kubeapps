@@ -177,7 +177,9 @@ One of the CI flows we have defined is the `prerelease` one. It is being trigger
 
 ```bash
 # assuming you are in the main branch, with the latest changes pulled locally
-git checkout -b prerelease
+# and you already have a `prerelease` local branch
+git checkout prerelease
+git merge master
 git push origin prerelease # replace `origin` by your remote name
 ```
 
@@ -206,7 +208,7 @@ For doing so, execute the following commands:
 ```bash
 export VERSION_NAME="v1.0.0-beta.1" # edit it accordingly
 
-git tag ${VERSION_NAME}
+git tag ${VERSION_NAME} -m ${VERSION_NAME}
 git push origin ${VERSION_NAME} # replace `origin` by your remote name
 ```
 
