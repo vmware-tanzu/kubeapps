@@ -18,17 +18,14 @@ import (
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/kube"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
-	"github.com/kubeapps/kubeapps/pkg/agent"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -56,53 +53,7 @@ type Server struct {
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
-	clientGetter := func(ctx context.Context) (dynamic.Interface, apiext.Interface, error) {
-		if configGetter == nil {
-			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
-		}
-		// The Flux plugin currently supports interactions with the default (kubeapps)
-		// cluster only:
-		cluster := ""
-		config, err := configGetter(ctx, cluster)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
-		}
-		dynamicClient, err := dynamic.NewForConfig(config)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
-		}
-		apiExtensions, err := apiext.NewForConfig(config)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get api extensions client : %v", err))
-		}
-		return dynamicClient, apiExtensions, nil
-	}
-	actionConfigGetter := func(ctx context.Context, namespace string) (*action.Configuration, error) {
-		if configGetter == nil {
-			return nil, status.Errorf(codes.Internal, "configGetter arg required")
-		}
-		// The Flux plugin currently supports interactions with the default (kubeapps)
-		// cluster only:
-		cluster := ""
-		config, err := configGetter(ctx, cluster)
-		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
-		}
-
-		restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
-		clientSet, err := kubernetes.NewForConfig(config)
-		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to create kubernetes client : %v", err))
-		}
-		// TODO(mnelson): Update to allow different helm storage options.
-		storage := agent.StorageForSecrets(namespace, clientSet)
-		return &action.Configuration{
-			RESTClientGetter: restClientGetter,
-			KubeClient:       kube.New(restClientGetter),
-			Releases:         storage,
-			Log:              log.Infof,
-		}, nil
-	}
+	clientGetter := newClientGetter(configGetter)
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -116,15 +67,15 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
-	cache, err := newCache(cacheConfig)
-	if err != nil {
+	if cache, err := newCache(cacheConfig); err != nil {
 		return nil, err
+	} else {
+		return &Server{
+			clientGetter:       clientGetter,
+			actionConfigGetter: newHelmActionConfigGetter(configGetter),
+			cache:              cache,
+		}, nil
 	}
-	return &Server{
-		clientGetter:       clientGetter,
-		actionConfigGetter: actionConfigGetter,
-		cache:              cache,
-	}, nil
 }
 
 // getDynamicClient returns a dynamic k8s client.

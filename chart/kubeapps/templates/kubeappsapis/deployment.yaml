@@ -29,9 +29,7 @@ spec:
         {{- end }}
     spec:
       {{- include "kubeapps.imagePullSecrets" . | indent 6 }}
-       {{- if .Values.kubeappsapis.unsafeUseDemoSA }}
       serviceAccountName: {{ template "kubeapps.kubeappsapis.fullname" . }}
-      {{- end }}
       {{- if .Values.kubeappsapis.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.hostAliases "context" $) | nindent 8 }}
       {{- end }}

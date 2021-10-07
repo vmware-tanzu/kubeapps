@@ -26,6 +26,7 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	kubecorev1 "k8s.io/api/core/v1"
 	kuberbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -224,12 +225,15 @@ func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error)
 	}
 }
 
-// will create a service account with cluster-admin privs
-func kubeCreateServiceAccount(t *testing.T, name, namespace string) error {
+// will create a service account with cluster-admin privs and return the associated
+// Bearer token (base64-encoded)
+func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
 	t.Logf("+kubeCreateServiceAccount(%s,%s)", name, namespace)
-	if typedClient, err := kubeGetTypedClient(); err != nil {
-		return err
-	} else if _, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return "", err
+	}
+	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
 		context.TODO(),
 		&kubecorev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
@@ -237,9 +241,40 @@ func kubeCreateServiceAccount(t *testing.T, name, namespace string) error {
 				Namespace: namespace,
 			},
 		},
-		metav1.CreateOptions{}); err != nil {
-		return err
-	} else if _, err = typedClient.RbacV1().ClusterRoleBindings().Create(
+		metav1.CreateOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	secretName := ""
+	for i := 0; i < 10; i++ {
+		svcAccount, err := typedClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+		if err != nil {
+			return "", err
+		}
+		if len(svcAccount.Secrets) >= 1 && svcAccount.Secrets[0].Name != "" {
+			secretName = svcAccount.Secrets[0].Name
+			break
+		}
+		t.Logf("Waiting 1s for service account [%s] secret...", name)
+		time.Sleep(1 * time.Second)
+	}
+	if secretName == "" {
+		return "", fmt.Errorf("Service account [%s] has no secrets", name)
+	}
+
+	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
+		context.TODO(),
+		secretName,
+		metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	token := secret.Data["token"]
+	if token == nil {
+		return "", err
+	}
+	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
 		context.TODO(),
 		&kuberbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
@@ -257,10 +292,11 @@ func kubeCreateServiceAccount(t *testing.T, name, namespace string) error {
 				Name: "cluster-admin",
 			},
 		},
-		metav1.CreateOptions{}); err != nil {
-		return err
+		metav1.CreateOptions{})
+	if err != nil {
+		return "", err
 	}
-	return nil
+	return string(token), nil
 }
 
 func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
@@ -357,6 +393,21 @@ func randSeq(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func newGrpcContext(t *testing.T, name string) context.Context {
+	token, err := kubeCreateAdminServiceAccount(t, name, "default")
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
+			t.Logf("Failed to delete service account due to [%v]", err)
+		}
+	})
+	return metadata.NewOutgoingContext(
+		context.TODO(),
+		metadata.Pairs("Authorization", "Bearer "+token))
 }
 
 // global vars

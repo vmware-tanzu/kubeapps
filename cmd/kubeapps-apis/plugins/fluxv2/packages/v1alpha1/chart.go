@@ -107,14 +107,17 @@ func (s *Server) getChartTarball(ctx context.Context, repoName string, chartName
 	// this model toward this proposal
 	// https://github.com/fluxcd/flux2/blob/1c5a25313561771d585c4192d7f330b45753cd99/docs/proposals/secure-impersonation.md
 	// So we may not necessarily want to follow what flux does today
-	unstructuredChart := newFluxHelmChart(chartName, repoName, chartVersion)
+	unstructuredChart, err := newFluxHelmChart(chartName, repoName, chartVersion)
+	if err != nil {
+		return "", err, nil
+	}
 
 	resourceIfc, err := s.getChartsResourceInterface(ctx, namespace)
 	if err != nil {
 		return "", err, nil
 	}
 
-	newChart, err := resourceIfc.Create(ctx, &unstructuredChart, metav1.CreateOptions{})
+	newChart, err := resourceIfc.Create(ctx, unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
 		log.Errorf("Error creating chart: %v\n%v", err, unstructuredChart)
 		return "", err, nil
@@ -459,7 +462,7 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 	return summaries, nil
 }
 
-func newFluxHelmChart(chartName, repoName, version string) unstructured.Unstructured {
+func newFluxHelmChart(chartName, repoName, version string) (*unstructured.Unstructured, error) {
 	unstructuredChart := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
@@ -478,9 +481,11 @@ func newFluxHelmChart(chartName, repoName, version string) unstructured.Unstruct
 		},
 	}
 	if version != "" {
-		unstructured.SetNestedField(unstructuredChart.Object, version, "spec", "version")
+		if err := unstructured.SetNestedField(unstructuredChart.Object, version, "spec", "version"); err != nil {
+			return nil, err
+		}
 	}
-	return unstructuredChart
+	return &unstructuredChart, nil
 }
 
 func availablePackageDetailFromTarball(chartID, tarUrl string) (*corev1.AvailablePackageDetail, error) {

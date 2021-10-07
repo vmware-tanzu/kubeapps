@@ -37,6 +37,10 @@ import (
 //    at this point.
 // 3) run './kind-cluster-setup.sh deploy' once prior to these tests
 
+// TODO (gfichtenholt) currently core server's has broken logic inside plugins.go
+// createConfigGetterWithParams(...). Refer to my comment in there. I had to make suggested changes
+// locally to make these tests pass
+
 const (
 	// the only repo these tests use so far. This is local copy of the first few entries
 	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
@@ -95,11 +99,14 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			expectedDetail:       expected_detail_install_fails,
 			expectInstallFailure: true,
 		},
+		// TODO (gfichtenholt): add a negative test for unauthenticated user
 	}
+
+	grpcContext := newGrpcContext(t, "test-create-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			createAndWaitForHelmRelease(t, tc, fluxPluginClient)
+			createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcContext)
 		})
 	}
 }
@@ -170,19 +177,22 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			request:                   update_request_5,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_6,
 		},
+		// TODO (gfichtenholt): add a negative test for unauthenticated user
 	}
+
+	grpcContext := newGrpcContext(t, "test-update-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreateSpec, fluxPluginClient)
+			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
-			_, err := fluxPluginClient.UpdateInstalledPackage(context.TODO(), tc.request)
+			_, err := fluxPluginClient.UpdateInstalledPackage(grpcContext, tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			actualRespAfterUpdate := waitUntilInstallCompletes(t, fluxPluginClient, installedRef, false)
+			actualRespAfterUpdate := waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedRef, false)
 
 			tc.expectedDetailAfterUpdate.PostInstallationNotes = strings.ReplaceAll(
 				tc.expectedDetailAfterUpdate.PostInstallationNotes,
@@ -210,13 +220,16 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			expectedPodPrefix: "@TARGET_NS@-my-podinfo-11-",
 			noCleanup:         true,
 		},
+		// TODO (gfichtenholt): add a negative test for unauthenticated user
 	}
+
+	grpcContext := newGrpcContext(t, "test-delete-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient)
+			installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcContext)
 
-			_, err := fluxPluginClient.DeleteInstalledPackage(context.TODO(), &corev1.DeleteInstalledPackageRequest{
+			_, err := fluxPluginClient.DeleteInstalledPackage(grpcContext, &corev1.DeleteInstalledPackageRequest{
 				InstalledPackageRef: installedRef,
 			})
 			if err != nil {
@@ -225,7 +238,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 
 			const maxWait = 25
 			for i := 0; i <= maxWait; i++ {
-				_, err := fluxPluginClient.GetInstalledPackageDetail(context.TODO(), &corev1.GetInstalledPackageDetailRequest{
+				_, err := fluxPluginClient.GetInstalledPackageDetail(grpcContext, &corev1.GetInstalledPackageDetailRequest{
 					InstalledPackageRef: installedRef,
 				})
 				if err != nil {
@@ -253,6 +266,8 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 
 			// flux is supposed to clean up or "garbage collect" artifacts created by the release,
 			// in the targetNamespace, except the namespace itself. Wait to make sure this is done
+			// (https://fluxcd.io/docs/components/helm/) it clearly says: Prunes Helm releases removed
+			// from cluster (garbage collection)
 			expectedPodPrefix := strings.ReplaceAll(
 				tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 			for i := 0; i <= maxWait; i++ {
@@ -276,7 +291,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
-func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient) *corev1.InstalledPackageReference {
+func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
 	err := kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
@@ -293,13 +308,13 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	// need to wait until repo is index by flux plugin
 	const maxWait = 25
 	for i := 0; i <= maxWait; i++ {
-		_, err := fluxPluginClient.GetAvailablePackageDetail(
-			context.TODO(),
+		resp, err := fluxPluginClient.GetAvailablePackageDetail(
+			grpcContext,
 			&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 		if err == nil {
 			break
 		} else if i == maxWait {
-			t.Fatalf("Timed out waiting for available package [%s], last error: [%v]", availablePackageRef, err)
+			t.Fatalf("Timed out waiting for available package [%s], last response: %v, last error: [%v]", availablePackageRef, resp, err)
 		} else {
 			t.Logf("Waiting 1s for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
 			time.Sleep(1 * time.Second)
@@ -307,7 +322,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	}
 
 	if tc.request.ReconciliationOptions != nil && tc.request.ReconciliationOptions.ServiceAccountName != "" {
-		err = kubeCreateServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+		_, err = kubeCreateAdminServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -328,7 +343,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		tc.request.TargetContext.Namespace += "-" + randSeq(4)
 	}
 
-	resp, err := fluxPluginClient.CreateInstalledPackage(context.TODO(), tc.request)
+	resp, err := fluxPluginClient.CreateInstalledPackage(grpcContext, tc.request)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
@@ -359,7 +374,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		}
 	})
 
-	actualResp := waitUntilInstallCompletes(t, fluxPluginClient, installedPackageRef, tc.expectInstallFailure)
+	actualResp := waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedPackageRef, tc.expectInstallFailure)
 
 	tc.expectedDetail.PostInstallationNotes = strings.ReplaceAll(
 		tc.expectedDetail.PostInstallationNotes, "@TARGET_NS@", tc.request.TargetContext.Namespace)
@@ -388,11 +403,11 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	return installedPackageRef
 }
 
-func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, installedPackageRef *corev1.InstalledPackageReference, expectInstallFailure bool) (actualResp *corev1.GetInstalledPackageDetailResponse) {
+func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context, installedPackageRef *corev1.InstalledPackageReference, expectInstallFailure bool) (actualResp *corev1.GetInstalledPackageDetailResponse) {
 	const maxWait = 25
 	for i := 0; i <= maxWait; i++ {
 		resp2, err := fluxPluginClient.GetInstalledPackageDetail(
-			context.TODO(),
+			grpcContext,
 			&corev1.GetInstalledPackageDetailRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
 			t.Fatalf("%+v", err)
