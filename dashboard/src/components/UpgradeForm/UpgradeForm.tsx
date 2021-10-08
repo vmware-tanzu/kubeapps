@@ -159,10 +159,9 @@ function UpgradeForm() {
       installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace
     ) {
       const deployedSuccess = await dispatch(
-        actions.apps.upgradeApp(
+        actions.apps.updateInstalledPackage(
           installedAppInstalledPackageDetail?.installedPackageRef,
           availablePackageDetail,
-          installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace,
           appValues,
           schema,
         ),
