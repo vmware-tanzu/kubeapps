@@ -63,24 +63,39 @@ function UpgradeForm() {
   const isFetching = appsIsFetching || chartsIsFetching;
   const { availablePackageDetail, versions, schema, values, pkgVersion } = selectedPackage;
 
-  const [appValues, setAppValues] = useState(
-    installedAppInstalledPackageDetail?.valuesApplied || "",
-  );
+  const [appValues, setAppValues] = useState("");
   const [modifications, setModifications] = useState(
     undefined as undefined | jsonpatch.Operation[],
   );
   const [deployedValues, setDeployedValues] = useState("");
-  const [hasSelectedInstalledPackage, setHasSelectedInstalledPackage] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [valuesModified, setValuesModified] = useState(false);
 
   useEffect(() => {
-    dispatch(
-      actions.packages.fetchAvailablePackageVersions(
-        installedAppInstalledPackageDetail?.availablePackageRef,
-      ),
-    );
-  }, [dispatch, installedAppInstalledPackageDetail?.availablePackageRef]);
+    // This block just will be executed once, given that populating
+    // the list of versions does not depend on anything else
+    if (selectedPackage.versions.length === 0) {
+      dispatch(
+        actions.packages.fetchAvailablePackageVersions(
+          installedAppInstalledPackageDetail?.availablePackageRef,
+        ),
+      );
+      if (installedAppAvailablePackageDetail) {
+        // Additionally, mark the current installed package version as the selected,
+        // next time, the selection will be handled by selectVersion()
+        dispatch(
+          actions.packages.receiveSelectedAvailablePackageDetail(
+            installedAppAvailablePackageDetail,
+          ),
+        );
+      }
+    }
+  }, [
+    dispatch,
+    installedAppInstalledPackageDetail?.availablePackageRef,
+    selectedPackage.versions.length,
+    installedAppAvailablePackageDetail,
+  ]);
 
   useEffect(() => {
     if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
@@ -121,17 +136,6 @@ function UpgradeForm() {
       setAppValues(newAppValues);
     }
   }, [values, modifications, valuesModified]);
-
-  // Mark the current installed package version as selected, next time,
-  // the selection will be handled by selectVersion()
-  useEffect(() => {
-    if (!hasSelectedInstalledPackage && installedAppAvailablePackageDetail) {
-      dispatch(
-        actions.packages.receiveSelectedAvailablePackageDetail(installedAppAvailablePackageDetail),
-      );
-      setHasSelectedInstalledPackage(true);
-    }
-  }, [dispatch, hasSelectedInstalledPackage, installedAppAvailablePackageDetail]);
 
   const setValuesModifiedTrue = () => {
     setValuesModified(true);
