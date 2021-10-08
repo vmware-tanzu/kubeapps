@@ -55,13 +55,13 @@ function AppUpgrade() {
   }
 
   if (isFetching || !installedAppInstalledPackageDetail) {
+    const loadingPkgName =
+      selectedPackage.availablePackageDetail?.availablePackageRef?.identifier ??
+      installedAppInstalledPackageDetail?.installedPackageRef?.identifier ??
+      "package";
     return (
       <LoadingWrapper
-        loadingText={`Fetching ${
-          installedAppInstalledPackageDetail
-            ? installedAppInstalledPackageDetail?.installedPackageRef?.identifier
-            : "package"
-        }...`}
+        loadingText={`Fetching '${loadingPkgName}' version...`}
         className="margin-t-xxl"
         loaded={false}
       />
