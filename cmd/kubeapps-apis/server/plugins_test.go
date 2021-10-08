@@ -372,7 +372,6 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			serveOpts := ServeOptions{
 				ClustersConfigPath: "/config.yaml",
 				PinnipedProxyURL:   "http://example.com",
-				UnsafeUseDemoSA:    false,
 			}
 			configGetter, err := createConfigGetterWithParams(inClusterConfig, serveOpts, clustersConfig)
 			if err != nil {
