@@ -78,9 +78,6 @@ spec:
             {{- if .Values.pinnipedProxy.enabled }}
             - --pinniped-proxy-url=http://{{ template "kubeapps.pinniped-proxy.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.pinnipedProxy.containerPort }}
             {{- end }}
-            {{- if .Values.kubeappsapis.unsafeUseDemoSA }}
-            - --unsafe-use-demo-sa=true
-            {{- end }}
           env:
             - name: PORT
               value: {{ .Values.kubeappsapis.containerPort | quote }}

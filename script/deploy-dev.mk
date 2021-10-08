@@ -37,14 +37,6 @@ deploy-dev-kubeapps:
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml
 
-deploy-dev-kubeapps-with-apis:
-	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
-		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--set kubeappsapis.unsafeUseDemoSA=true
-
-
 deploy-dev: deploy-dependencies deploy-dev-kubeapps
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"

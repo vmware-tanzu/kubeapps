@@ -136,7 +136,7 @@ func Serve(serveOpts ServeOptions) error {
 	}()
 
 	if serveOpts.UnsafeUseDemoSA {
-		log.Warning("Using the demo Service Account for authenticating the requests. This is not recommended except for development purposes. Set `kubeappsapis.unsafeUseDemoSA: false` to remove this warning")
+		log.Warning("Using the demo Service Account for authenticating the requests. This is not recommended except for development purposes.")
 	}
 	if serveOpts.UnsafeLocalDevKubeconfig {
 		log.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
