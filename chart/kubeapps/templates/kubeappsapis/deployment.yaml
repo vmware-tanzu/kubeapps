@@ -1,4 +1,3 @@
-{{- if .Values.featureFlags.kubeappsAPIsServer }}
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
@@ -162,4 +161,3 @@ spec:
         - name: ca-certs
           emptyDir: {}
       {{- end }}
-{{- end }}

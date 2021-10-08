@@ -1,4 +1,3 @@
-{{- if .Values.featureFlags.kubeappsAPIsServer }}
 {{- if has "fluxv2" .Values.kubeappsapis.enabledPlugins }}
 {{- if .Values.rbac.create -}}
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
@@ -42,6 +41,5 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "kubeapps.kubeappsapis.fullname" . }}
     namespace: {{ .Release.Namespace }}
-{{- end }}
 {{- end }}
 {{- end }}
