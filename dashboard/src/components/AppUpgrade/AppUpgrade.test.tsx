@@ -1,9 +1,10 @@
-import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import {
+  AvailablePackageDetail,
   AvailablePackageReference,
   Context,
+  InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
@@ -21,8 +22,10 @@ import {
   FetchError,
   IAppRepository,
   IAppState,
+  IPackageState,
   UpgradeError,
 } from "shared/types";
+import { PluginNames } from "shared/utils";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 import AppUpgrade from "./AppUpgrade";
@@ -64,6 +67,20 @@ const installedPackage1 = {
   } as InstalledPackageStatus,
 } as CustomInstalledPackageDetail;
 
+const installedPackageDetail = {
+  availablePackageRef: {
+    context: { cluster: "default", namespace: "my-ns" },
+    identifier: "test",
+    plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
+  },
+  currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
+} as InstalledPackageDetail;
+
+const selectedPackage = {
+  versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
+  availablePackageDetail: { name: "test" } as AvailablePackageDetail,
+} as IPackageState["selected"];
+
 const repo1 = {
   metadata: {
     name: defaultProps.repo,
@@ -98,7 +115,7 @@ it("renders the repo selection form if not introduced", () => {
     } as IAppState,
   };
   const wrapper = mountWrapper(
-    getStore({ ...defaultStore, apps: { ...state.apps } }),
+    getStore({ ...defaultStore, ...state }),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
         <AppUpgrade />,
@@ -118,8 +135,7 @@ it("renders the repo selection form if not introduced when the app is loaded", (
   const wrapper = mountWrapper(
     getStore({
       ...defaultStore,
-      repos: { ...state.repos },
-      apps: { ...state.apps },
+      ...state,
     }),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
@@ -142,7 +158,7 @@ describe("when an error exists", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultStore,
-        apps: { ...state.apps },
+        ...state,
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -168,8 +184,7 @@ describe("when an error exists", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultStore,
-        repos: { ...state.repos },
-        apps: { ...state.apps },
+        ...state,
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -189,12 +204,15 @@ describe("when an error exists", () => {
       apps: {
         error: upgradeError,
         selected: installedPackage1,
-      } as IAppState,
+        selectedDetails: installedPackageDetail,
+      } as unknown as IAppState,
+      packages: { selected: selectedPackage } as IPackageState,
     };
+
     const wrapper = mountWrapper(
       getStore({
         ...defaultStore,
-        apps: { ...state.apps },
+        ...state,
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -203,7 +221,7 @@ describe("when an error exists", () => {
       </MemoryRouter>,
     );
     expect(wrapper.find(UpgradeForm)).toExist();
-    expect(wrapper.find(UpgradeForm).prop("error")).toEqual(upgradeError);
+    expect(wrapper.find(UpgradeForm).find(Alert)).toIncludeText(upgradeError.message);
   });
 });
 
@@ -211,18 +229,19 @@ it("renders the upgrade form when the repo is available", () => {
   const state = {
     apps: {
       selected: installedPackage1,
-    } as IAppState,
+      selectedDetails: installedPackageDetail,
+    } as unknown as IAppState,
     repos: {
       repo: repo1,
       repos: [repo1],
       isFetching: false,
     } as IAppRepositoryState,
+    packages: { selected: selectedPackage } as IPackageState,
   };
   const wrapper = mountWrapper(
     getStore({
       ...defaultStore,
-      apps: { ...state.apps },
-      repos: { ...state.repos },
+      ...state,
     }),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
@@ -239,18 +258,19 @@ it("skips the repo selection form if the app contains upgrade info", () => {
   const state = {
     apps: {
       selected: installedPackage1,
-    } as IAppState,
+      selectedDetails: installedPackageDetail,
+    } as unknown as IAppState,
     repos: {
       repo: repo1,
       repos: [repo1],
       isFetching: false,
     } as IAppRepositoryState,
+    packages: { selected: selectedPackage } as IPackageState,
   };
   const wrapper = mountWrapper(
     getStore({
       ...defaultStore,
-      apps: { ...state.apps },
-      repos: { ...state.repos },
+      ...state,
     }),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
@@ -261,79 +281,4 @@ it("skips the repo selection form if the app contains upgrade info", () => {
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
-});
-
-describe("when receiving new props", () => {
-  it("should request the deployed package when the app and repo are populated", () => {
-    const fetchDeployedAvailablePackageDetail = jest.fn();
-    actions.packages.fetchDeployedAvailablePackageDetail = fetchDeployedAvailablePackageDetail;
-
-    const state = {
-      apps: {
-        selected: installedPackage1,
-      } as IAppState,
-      repos: {
-        repo: repo1,
-        repos: [repo1],
-        isFetching: false,
-      } as IAppRepositoryState,
-    };
-    mountWrapper(
-      getStore({
-        ...defaultStore,
-        apps: { ...state.apps },
-        repos: { ...state.repos },
-      }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppUpgrade />,
-        </Route>
-      </MemoryRouter>,
-    );
-
-    expect(fetchDeployedAvailablePackageDetail).toHaveBeenCalledWith(
-      {
-        context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
-        identifier: "stable/bar",
-        plugin: defaultProps.plugin,
-      } as AvailablePackageReference,
-      "1.0.0",
-    );
-  });
-
-  it("should request the deployed package when the repo is populated later", () => {
-    const fetchDeployedAvailablePackageDetail = jest.fn();
-    actions.packages.fetchDeployedAvailablePackageDetail = fetchDeployedAvailablePackageDetail;
-
-    const state = {
-      apps: {
-        selected: installedPackage1,
-      } as IAppState,
-      repos: {
-        repo: repo1,
-        repos: [repo1],
-        isFetching: false,
-      } as IAppRepositoryState,
-    };
-    mountWrapper(
-      getStore({
-        ...defaultStore,
-        apps: { ...state.apps },
-        repos: { ...state.repos },
-      }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppUpgrade />,
-        </Route>
-      </MemoryRouter>,
-    );
-    expect(fetchDeployedAvailablePackageDetail).toHaveBeenCalledWith(
-      {
-        context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace },
-        identifier: "stable/bar",
-        plugin: defaultProps.plugin,
-      } as AvailablePackageReference,
-      "1.0.0",
-    );
-  });
 });
