@@ -214,7 +214,13 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 func (s *Server) installedPackageDetail(ctx context.Context, name types.NamespacedName) (*corev1.InstalledPackageDetail, error) {
 	unstructuredRelease, err := s.getReleaseInCluster(ctx, name)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q due to: %v", name, err)
+		if errors.IsNotFound(err) {
+			return nil, status.Errorf(codes.NotFound, "%q", err)
+		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "Unable to ase due to %v", err)
+		} else {
+			return nil, status.Errorf(codes.Internal, "%q", err)
+		}
 	}
 
 	log.V(4).Infof("installedPackageDetail:\n[%s]", prettyPrintMap(unstructuredRelease.Object))
@@ -367,7 +373,11 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}
 	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, metav1.CreateOptions{})
 	if err != nil {
-		return nil, err
+		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "Unable to create release due to %v", err)
+		} else {
+			return nil, err
+		}
 	}
 
 	name, err := namespacedName(newRelease.Object)
@@ -391,6 +401,8 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, status.Errorf(codes.NotFound, "%q", err)
+		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "Unable to ase due to %v", err)
 		} else {
 			return nil, status.Errorf(codes.Internal, "%q", err)
 		}
@@ -452,7 +464,11 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	// replace the object in k8s with a new desired state
 	unstructuredRel, err = ifc.Update(ctx, unstructuredRel, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, err
+		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "Unable to update release due to %v", err)
+		} else {
+			return nil, err
+		}
 	}
 
 	log.V(4).Infof("Updated release: %s", prettyPrintMap(unstructuredRel.Object))
@@ -475,6 +491,8 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 	if err = ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{}); err != nil {
 		if errors.IsNotFound(err) {
 			return status.Errorf(codes.NotFound, "%q", err)
+		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return status.Errorf(codes.Unauthenticated, "Unable to delete release due to %v", err)
 		} else {
 			return status.Errorf(codes.Internal, "%q", err)
 		}
