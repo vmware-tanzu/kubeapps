@@ -12,6 +12,7 @@ import {
   CreateInstalledPackageRequest,
   UpdateInstalledPackageRequest,
   DeleteInstalledPackageRequest,
+  GetResourceRefsRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
@@ -20,6 +21,7 @@ import {
   CreateInstalledPackageResponse,
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
+  GetResourceRefsResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
@@ -373,6 +375,14 @@ export interface KappControllerPackagesService {
     request: DeepPartial<DeleteInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeleteInstalledPackageResponse>;
+  /**
+   * GetResourceRefs returns the references for the Kubernetes resources created by
+   * an installed package.
+   */
+  GetResourceRefs(
+    request: DeepPartial<GetResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetResourceRefsResponse>;
 }
 
 export class KappControllerPackagesServiceClientImpl implements KappControllerPackagesService {
@@ -389,6 +399,7 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
+    this.GetResourceRefs = this.GetResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -486,6 +497,17 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     return this.rpc.unary(
       KappControllerPackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetResourceRefs(
+    request: DeepPartial<GetResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetResourceRefsResponse> {
+    return this.rpc.unary(
+      KappControllerPackagesServiceGetResourceRefsDesc,
+      GetResourceRefsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -691,6 +713,28 @@ export const KappControllerPackagesServiceDeleteInstalledPackageDesc: UnaryMetho
     deserializeBinary(data: Uint8Array) {
       return {
         ...DeleteInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const KappControllerPackagesServiceGetResourceRefsDesc: UnaryMethodDefinitionish = {
+  methodName: "GetResourceRefs",
+  service: KappControllerPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetResourceRefsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetResourceRefsResponse.decode(data),
         toObject() {
           return this;
         },

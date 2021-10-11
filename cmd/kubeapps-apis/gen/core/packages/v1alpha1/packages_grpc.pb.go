@@ -26,6 +26,7 @@ type PackagesServiceClient interface {
 	CreateInstalledPackage(ctx context.Context, in *CreateInstalledPackageRequest, opts ...grpc.CallOption) (*CreateInstalledPackageResponse, error)
 	UpdateInstalledPackage(ctx context.Context, in *UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*UpdateInstalledPackageResponse, error)
 	DeleteInstalledPackage(ctx context.Context, in *DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*DeleteInstalledPackageResponse, error)
+	GetResourceRefs(ctx context.Context, in *GetResourceRefsRequest, opts ...grpc.CallOption) (*GetResourceRefsResponse, error)
 }
 
 type packagesServiceClient struct {
@@ -108,6 +109,15 @@ func (c *packagesServiceClient) DeleteInstalledPackage(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *packagesServiceClient) GetResourceRefs(ctx context.Context, in *GetResourceRefsRequest, opts ...grpc.CallOption) (*GetResourceRefsResponse, error) {
+	out := new(GetResourceRefsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetResourceRefs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PackagesServiceServer is the server API for PackagesService service.
 // All implementations should embed UnimplementedPackagesServiceServer
 // for forward compatibility
@@ -120,6 +130,7 @@ type PackagesServiceServer interface {
 	CreateInstalledPackage(context.Context, *CreateInstalledPackageRequest) (*CreateInstalledPackageResponse, error)
 	UpdateInstalledPackage(context.Context, *UpdateInstalledPackageRequest) (*UpdateInstalledPackageResponse, error)
 	DeleteInstalledPackage(context.Context, *DeleteInstalledPackageRequest) (*DeleteInstalledPackageResponse, error)
+	GetResourceRefs(context.Context, *GetResourceRefsRequest) (*GetResourceRefsResponse, error)
 }
 
 // UnimplementedPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -149,6 +160,9 @@ func (UnimplementedPackagesServiceServer) UpdateInstalledPackage(context.Context
 }
 func (UnimplementedPackagesServiceServer) DeleteInstalledPackage(context.Context, *DeleteInstalledPackageRequest) (*DeleteInstalledPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteInstalledPackage not implemented")
+}
+func (UnimplementedPackagesServiceServer) GetResourceRefs(context.Context, *GetResourceRefsRequest) (*GetResourceRefsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetResourceRefs not implemented")
 }
 
 // UnsafePackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -306,6 +320,24 @@ func _PackagesService_DeleteInstalledPackage_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PackagesService_GetResourceRefs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetResourceRefsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PackagesServiceServer).GetResourceRefs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetResourceRefs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PackagesServiceServer).GetResourceRefs(ctx, req.(*GetResourceRefsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PackagesService_ServiceDesc is the grpc.ServiceDesc for PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -344,6 +376,10 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteInstalledPackage",
 			Handler:    _PackagesService_DeleteInstalledPackage_Handler,
+		},
+		{
+			MethodName: "GetResourceRefs",
+			Handler:    _PackagesService_GetResourceRefs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

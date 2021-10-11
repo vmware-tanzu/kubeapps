@@ -169,6 +169,15 @@ export interface DeleteInstalledPackageRequest {
 }
 
 /**
+ * GetResourceRefsRequest
+ *
+ * Request for GetResourceRefs
+ */
+export interface GetResourceRefsRequest {
+  installedPackageRef?: InstalledPackageReference;
+}
+
+/**
  * GetAvailablePackageSummariesResponse
  *
  * Response for GetAvailablePackageSummaries
@@ -302,6 +311,15 @@ export interface UpdateInstalledPackageResponse {
  * Response for DeleteInstalledPackage
  */
 export interface DeleteInstalledPackageResponse {}
+
+/**
+ * GetResourceRefsResponse
+ *
+ * Response for GetResourceRefs
+ */
+export interface GetResourceRefsResponse {
+  resourceRefs: ResourceRef[];
+}
 
 /**
  * AvailablePackageSummary
@@ -945,6 +963,18 @@ export interface PackageAppVersion {
    * Version of the packaged application
    */
   appVersion: string;
+}
+
+/**
+ * Resource reference
+ *
+ * A reference to a Kubernetes resource related to a package.
+ */
+export interface ResourceRef {
+  context?: Context;
+  /** Group/Version? */
+  kind: string;
+  name: string;
 }
 
 const baseGetAvailablePackageSummariesRequest: object = {};
@@ -1774,6 +1804,69 @@ export const DeleteInstalledPackageRequest = {
   },
 };
 
+const baseGetResourceRefsRequest: object = {};
+
+export const GetResourceRefsRequest = {
+  encode(message: GetResourceRefsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.installedPackageRef !== undefined) {
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetResourceRefsRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseGetResourceRefsRequest } as GetResourceRefsRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetResourceRefsRequest {
+    const message = { ...baseGetResourceRefsRequest } as GetResourceRefsRequest;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: GetResourceRefsRequest): unknown {
+    const obj: any = {};
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetResourceRefsRequest>): GetResourceRefsRequest {
+    const message = { ...baseGetResourceRefsRequest } as GetResourceRefsRequest;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromPartial(
+        object.installedPackageRef,
+      );
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    return message;
+  },
+};
+
 const baseGetAvailablePackageSummariesResponse: object = {
   nextPageToken: "",
   categories: "",
@@ -2412,6 +2505,74 @@ export const DeleteInstalledPackageResponse = {
     const message = {
       ...baseDeleteInstalledPackageResponse,
     } as DeleteInstalledPackageResponse;
+    return message;
+  },
+};
+
+const baseGetResourceRefsResponse: object = {};
+
+export const GetResourceRefsResponse = {
+  encode(message: GetResourceRefsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.resourceRefs) {
+      ResourceRef.encode(v!, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetResourceRefsResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseGetResourceRefsResponse,
+    } as GetResourceRefsResponse;
+    message.resourceRefs = [];
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.resourceRefs.push(ResourceRef.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetResourceRefsResponse {
+    const message = {
+      ...baseGetResourceRefsResponse,
+    } as GetResourceRefsResponse;
+    message.resourceRefs = [];
+    if (object.resourceRefs !== undefined && object.resourceRefs !== null) {
+      for (const e of object.resourceRefs) {
+        message.resourceRefs.push(ResourceRef.fromJSON(e));
+      }
+    }
+    return message;
+  },
+
+  toJSON(message: GetResourceRefsResponse): unknown {
+    const obj: any = {};
+    if (message.resourceRefs) {
+      obj.resourceRefs = message.resourceRefs.map(e => (e ? ResourceRef.toJSON(e) : undefined));
+    } else {
+      obj.resourceRefs = [];
+    }
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetResourceRefsResponse>): GetResourceRefsResponse {
+    const message = {
+      ...baseGetResourceRefsResponse,
+    } as GetResourceRefsResponse;
+    message.resourceRefs = [];
+    if (object.resourceRefs !== undefined && object.resourceRefs !== null) {
+      for (const e of object.resourceRefs) {
+        message.resourceRefs.push(ResourceRef.fromPartial(e));
+      }
+    }
     return message;
   },
 };
@@ -4350,6 +4511,96 @@ export const PackageAppVersion = {
   },
 };
 
+const baseResourceRef: object = { kind: "", name: "" };
+
+export const ResourceRef = {
+  encode(message: ResourceRef, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.kind !== "") {
+      writer.uint32(18).string(message.kind);
+    }
+    if (message.name !== "") {
+      writer.uint32(26).string(message.name);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ResourceRef {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseResourceRef } as ResourceRef;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.kind = reader.string();
+          break;
+        case 3:
+          message.name = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ResourceRef {
+    const message = { ...baseResourceRef } as ResourceRef;
+    if (object.context !== undefined && object.context !== null) {
+      message.context = Context.fromJSON(object.context);
+    } else {
+      message.context = undefined;
+    }
+    if (object.kind !== undefined && object.kind !== null) {
+      message.kind = String(object.kind);
+    } else {
+      message.kind = "";
+    }
+    if (object.name !== undefined && object.name !== null) {
+      message.name = String(object.name);
+    } else {
+      message.name = "";
+    }
+    return message;
+  },
+
+  toJSON(message: ResourceRef): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.kind !== undefined && (obj.kind = message.kind);
+    message.name !== undefined && (obj.name = message.name);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<ResourceRef>): ResourceRef {
+    const message = { ...baseResourceRef } as ResourceRef;
+    if (object.context !== undefined && object.context !== null) {
+      message.context = Context.fromPartial(object.context);
+    } else {
+      message.context = undefined;
+    }
+    if (object.kind !== undefined && object.kind !== null) {
+      message.kind = object.kind;
+    } else {
+      message.kind = "";
+    }
+    if (object.name !== undefined && object.name !== null) {
+      message.name = object.name;
+    } else {
+      message.name = "";
+    }
+    return message;
+  },
+};
+
 /** Each packages v1alpha1 plugin must implement at least the following rpcs: */
 export interface PackagesService {
   GetAvailablePackageSummaries(
@@ -4384,6 +4635,10 @@ export interface PackagesService {
     request: DeepPartial<DeleteInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeleteInstalledPackageResponse>;
+  GetResourceRefs(
+    request: DeepPartial<GetResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetResourceRefsResponse>;
 }
 
 export class PackagesServiceClientImpl implements PackagesService {
@@ -4399,6 +4654,7 @@ export class PackagesServiceClientImpl implements PackagesService {
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
+    this.GetResourceRefs = this.GetResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -4485,6 +4741,17 @@ export class PackagesServiceClientImpl implements PackagesService {
     return this.rpc.unary(
       PackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetResourceRefs(
+    request: DeepPartial<GetResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetResourceRefsResponse> {
+    return this.rpc.unary(
+      PackagesServiceGetResourceRefsDesc,
+      GetResourceRefsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -4662,6 +4929,28 @@ export const PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish
     deserializeBinary(data: Uint8Array) {
       return {
         ...DeleteInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const PackagesServiceGetResourceRefsDesc: UnaryMethodDefinitionish = {
+  methodName: "GetResourceRefs",
+  service: PackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetResourceRefsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetResourceRefsResponse.decode(data),
         toObject() {
           return this;
         },

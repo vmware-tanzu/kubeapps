@@ -37,6 +37,9 @@ type KappControllerPackagesServiceClient interface {
 	UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error)
 	// DeleteInstalledPackage deletes an installed package based on the request.
 	DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error)
+	// GetResourceRefs returns the references for the Kubernetes resources created by
+	// an installed package.
+	GetResourceRefs(ctx context.Context, in *v1alpha1.GetResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetResourceRefsResponse, error)
 }
 
 type kappControllerPackagesServiceClient struct {
@@ -128,6 +131,15 @@ func (c *kappControllerPackagesServiceClient) DeleteInstalledPackage(ctx context
 	return out, nil
 }
 
+func (c *kappControllerPackagesServiceClient) GetResourceRefs(ctx context.Context, in *v1alpha1.GetResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetResourceRefsResponse, error) {
+	out := new(v1alpha1.GetResourceRefsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetResourceRefs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KappControllerPackagesServiceServer is the server API for KappControllerPackagesService service.
 // All implementations should embed UnimplementedKappControllerPackagesServiceServer
 // for forward compatibility
@@ -150,6 +162,9 @@ type KappControllerPackagesServiceServer interface {
 	UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error)
 	// DeleteInstalledPackage deletes an installed package based on the request.
 	DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error)
+	// GetResourceRefs returns the references for the Kubernetes resources created by
+	// an installed package.
+	GetResourceRefs(context.Context, *v1alpha1.GetResourceRefsRequest) (*v1alpha1.GetResourceRefsResponse, error)
 }
 
 // UnimplementedKappControllerPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -182,6 +197,9 @@ func (UnimplementedKappControllerPackagesServiceServer) UpdateInstalledPackage(c
 }
 func (UnimplementedKappControllerPackagesServiceServer) DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteInstalledPackage not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) GetResourceRefs(context.Context, *v1alpha1.GetResourceRefsRequest) (*v1alpha1.GetResourceRefsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetResourceRefs not implemented")
 }
 
 // UnsafeKappControllerPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -357,6 +375,24 @@ func _KappControllerPackagesService_DeleteInstalledPackage_Handler(srv interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KappControllerPackagesService_GetResourceRefs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetResourceRefsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).GetResourceRefs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetResourceRefs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).GetResourceRefs(ctx, req.(*v1alpha1.GetResourceRefsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KappControllerPackagesService_ServiceDesc is the grpc.ServiceDesc for KappControllerPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -399,6 +435,10 @@ var KappControllerPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteInstalledPackage",
 			Handler:    _KappControllerPackagesService_DeleteInstalledPackage_Handler,
+		},
+		{
+			MethodName: "GetResourceRefs",
+			Handler:    _KappControllerPackagesService_GetResourceRefs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

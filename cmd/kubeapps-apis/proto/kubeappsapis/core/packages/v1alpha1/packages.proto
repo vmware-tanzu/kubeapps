@@ -60,6 +60,12 @@ service PackagesService {
       delete: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
     };
   }
+
+  rpc GetResourceRefs(GetResourceRefsRequest) returns (GetResourceRefsResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resources"
+    };
+  }
 }
 
 // Standard request and response messages for each required function are defined
@@ -197,6 +203,13 @@ message UpdateInstalledPackageRequest {
 // Request for DeleteInstalledPackage
 message DeleteInstalledPackageRequest {
   // A reference to uniquely identify the installed package to be deleted.
+  InstalledPackageReference installed_package_ref = 1;
+}
+
+// GetResourceRefsRequest
+//
+// Request for GetResourceRefs
+message GetResourceRefsRequest {
   InstalledPackageReference installed_package_ref = 1;
 }
 
@@ -338,6 +351,13 @@ message UpdateInstalledPackageResponse {
 // Response for DeleteInstalledPackage
 message DeleteInstalledPackageResponse {
   // For future extensibility only.
+}
+
+// GetResourceRefsResponse
+//
+// Response for GetResourceRefs
+message GetResourceRefsResponse {
+    repeated ResourceRef resource_refs = 1;
 }
 
 // -- Start definitions used in the responses  --
@@ -885,3 +905,15 @@ message PackageAppVersion {
   // Version of the packaged application
   string app_version = 2;
 };
+
+// Resource reference
+//
+// A reference to a Kubernetes resource related to a package.
+message ResourceRef {
+    Context context = 1;
+
+    // Group/Version?
+    string kind = 2;
+
+    string name = 3;
+}

@@ -564,6 +564,69 @@
         ]
       }
     },
+    "/core/packages/v1alpha1/installedpackages/plugin/{installedPackageRef.plugin.name}/{installedPackageRef.plugin.version}/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resources": {
+      "get": {
+        "operationId": "PackagesService_GetResourceRefs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetResourceRefsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
     "/core/plugins/v1alpha1/configured-plugins": {
       "get": {
         "summary": "GetConfiguredPlugins returns a map of short and longnames for the configured plugins.",
@@ -1102,6 +1165,70 @@
             "schema": {
               "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
             }
+          }
+        ],
+        "tags": [
+          "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resources": {
+      "get": {
+        "summary": "GetResourceRefs returns the references for the Kubernetes resources created by\nan installed package.",
+        "operationId": "FluxV2PackagesService_GetResourceRefs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetResourceRefsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1663,6 +1790,70 @@
             "schema": {
               "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
             }
+          }
+        ],
+        "tags": [
+          "HelmPackagesService"
+        ]
+      }
+    },
+    "/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resources": {
+      "get": {
+        "summary": "GetResourceRefs returns the references for the Kubernetes resources created by\nan installed package.",
+        "operationId": "HelmPackagesService_GetResourceRefs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetResourceRefsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2246,6 +2437,70 @@
         ]
       }
     },
+    "/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resources": {
+      "get": {
+        "summary": "GetResourceRefs returns the references for the Kubernetes resources created by\nan installed package.",
+        "operationId": "KappControllerPackagesService_GetResourceRefs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetResourceRefsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "KappControllerPackagesService"
+        ]
+      }
+    },
     "/plugins/kapp_controller/packages/v1alpha1/packagerepositories": {
       "get": {
         "summary": "GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin",
@@ -2808,6 +3063,19 @@
       "description": "Response for GetInstalledPackageSummaries",
       "title": "GetInstalledPackageSummariesResponse"
     },
+    "v1alpha1GetResourceRefsResponse": {
+      "type": "object",
+      "properties": {
+        "resourceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1ResourceRef"
+          }
+        }
+      },
+      "description": "Response for GetResourceRefs",
+      "title": "GetResourceRefsResponse"
+    },
     "v1alpha1InstalledPackageDetail": {
       "type": "object",
       "properties": {
@@ -3069,6 +3337,23 @@
       },
       "description": "ReconciliationOptions enable specifying standard fields for backends that continuously\nreconcile a package install as new matching versions are released. Most of the naming\nis from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's\nInstalledPackage.",
       "title": "ReconciliationOptions"
+    },
+    "v1alpha1ResourceRef": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1alpha1Context"
+        },
+        "kind": {
+          "type": "string",
+          "title": "Group/Version?"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "description": "A reference to a Kubernetes resource related to a package.",
+      "title": "Resource reference"
     },
     "v1alpha1RollbackInstalledPackageRequest": {
       "type": "object",

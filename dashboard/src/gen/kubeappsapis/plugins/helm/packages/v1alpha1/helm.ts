@@ -12,6 +12,7 @@ import {
   CreateInstalledPackageRequest,
   UpdateInstalledPackageRequest,
   DeleteInstalledPackageRequest,
+  GetResourceRefsRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
@@ -20,6 +21,7 @@ import {
   CreateInstalledPackageResponse,
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
+  GetResourceRefsResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { BrowserHeaders } from "browser-headers";
 
@@ -347,6 +349,14 @@ export interface HelmPackagesService {
     request: DeepPartial<RollbackInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<RollbackInstalledPackageResponse>;
+  /**
+   * GetResourceRefs returns the references for the Kubernetes resources created by
+   * an installed package.
+   */
+  GetResourceRefs(
+    request: DeepPartial<GetResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetResourceRefsResponse>;
 }
 
 export class HelmPackagesServiceClientImpl implements HelmPackagesService {
@@ -363,6 +373,7 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
     this.RollbackInstalledPackage = this.RollbackInstalledPackage.bind(this);
+    this.GetResourceRefs = this.GetResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -460,6 +471,17 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     return this.rpc.unary(
       HelmPackagesServiceRollbackInstalledPackageDesc,
       RollbackInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetResourceRefs(
+    request: DeepPartial<GetResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetResourceRefsResponse> {
+    return this.rpc.unary(
+      HelmPackagesServiceGetResourceRefsDesc,
+      GetResourceRefsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -659,6 +681,28 @@ export const HelmPackagesServiceRollbackInstalledPackageDesc: UnaryMethodDefinit
     deserializeBinary(data: Uint8Array) {
       return {
         ...RollbackInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmPackagesServiceGetResourceRefsDesc: UnaryMethodDefinitionish = {
+  methodName: "GetResourceRefs",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetResourceRefsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetResourceRefsResponse.decode(data),
         toObject() {
           return this;
         },
