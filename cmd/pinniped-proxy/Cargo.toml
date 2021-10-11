@@ -19,7 +19,7 @@ kube = { version = "0.60.0" }
 # CRD (which we're not).
 kube-derive = { version = "0.60.0", default-features = false}
 kube-runtime = "0.60.0"
-k8s-openapi = { version = "0.13.0", default-features = false, features = ["v1_20"] }
+k8s-openapi = { version = "0.13.1", default-features = false, features = ["v1_20"] }
 log = "0.4"
 native-tls = "0.2"
 openssl = "0.10"
