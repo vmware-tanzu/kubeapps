@@ -35,12 +35,10 @@ import (
 )
 
 type ServeOptions struct {
-	Port               int
-	PluginDirs         []string
-	ClustersConfigPath string
-	PinnipedProxyURL   string
-	//temporary flags while this component in under heavy development
-	UnsafeUseDemoSA          bool
+	Port                     int
+	PluginDirs               []string
+	ClustersConfigPath       string
+	PinnipedProxyURL         string
 	UnsafeLocalDevKubeconfig bool
 }
 
@@ -135,9 +133,6 @@ func Serve(serveOpts ServeOptions) error {
 		}
 	}()
 
-	if serveOpts.UnsafeUseDemoSA {
-		log.Warning("Using the demo Service Account for authenticating the requests. This is not recommended except for development purposes. Set `kubeappsapis.unsafeUseDemoSA: false` to remove this warning")
-	}
 	if serveOpts.UnsafeLocalDevKubeconfig {
 		log.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
 	}

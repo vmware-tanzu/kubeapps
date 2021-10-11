@@ -340,15 +340,9 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 		//	}
 		//}
 		// and was able to run my integration tests successfully
-		if cluster == clustersConfig.KubeappsClusterName && serveOpts.UnsafeUseDemoSA {
-			// If using the priviledged servicceAccount, just use the default inClusterConfig
-			// instead of creating a user config with authentication
-			config = inClusterConfig
-		} else {
-			config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
-			if err != nil {
-				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
-			}
+		config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 		}
 		return config, nil
 	}, nil
