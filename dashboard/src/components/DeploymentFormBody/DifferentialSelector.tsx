@@ -15,17 +15,30 @@ export default function DifferentialSelector({
   appValues,
 }: IDifferentialSelectorProps) {
   let oldValues = "";
-  let emptyDiffText = "";
+  let emptyDiffElement = <></>;
   if (deploymentEvent === "upgrade") {
     // If there are already some deployed values (upgrade scenario)
     // We compare the values from the old release and the new one
     oldValues = deployedValues;
-    emptyDiffText = "The values for the new release are identical to the deployed version.";
+    emptyDiffElement = (
+      <span>
+        <p>
+          The values you have entered to upgrade this package with are identical to the currently
+          deployed ones.
+        </p>
+        <p>
+          If you want to restore the default values provided by the package, click on the{" "}
+          <i>Restore defaults</i> button below.
+        </p>
+      </span>
+    );
   } else {
     // If it's a new deployment, we show the different from the default
     // values for the selected version
     oldValues = defaultValues || "";
-    emptyDiffText = "No changes detected from the package defaults.";
+    emptyDiffElement = <span>No changes detected from the package defaults.</span>;
   }
-  return <Differential oldValues={oldValues} newValues={appValues} emptyDiffText={emptyDiffText} />;
+  return (
+    <Differential oldValues={oldValues} newValues={appValues} emptyDiffElement={emptyDiffElement} />
+  );
 }

@@ -44,7 +44,6 @@ describe("packageReducer", () => {
       selected: {
         versions: [],
       },
-      deployed: {},
       size: 20,
     };
   });

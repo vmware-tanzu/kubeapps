@@ -30,7 +30,6 @@ const defaultPackageState = {
   isFetching: false,
   hasFinishedFetching: false,
   selected: {} as IPackageState["selected"],
-  deployed: {} as IPackageState["deployed"],
   items: [],
   categories: [],
   size: 20,
