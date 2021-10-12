@@ -330,18 +330,6 @@
   resolved "https://registry.yarnpkg.com/@istanbuljs/schema/-/schema-0.1.3.tgz#e45e384e4b8ec16bce2fd903af78450f6bf7ec98"
   integrity sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==
 
-"@jest/console@^27.2.4":
-  version "27.2.4"
-  resolved "https://registry.yarnpkg.com/@jest/console/-/console-27.2.4.tgz#2f1a4bf82b9940065d4818fac271def99ec55e5e"
-  integrity sha512-94znCKynPZpDpYHQ6esRJSc11AmONrVkBOBZiD7S+bSubHhrUfbS95EY5HIOxhm4PQO7cnvZkL3oJcY0oMA+Wg==
-  dependencies:
-    "@jest/types" "^27.2.4"
-    "@types/node" "*"
-    chalk "^4.0.0"
-    jest-message-util "^27.2.4"
-    jest-util "^27.2.4"
-    slash "^3.0.0"
-
 "@jest/console@^27.2.5":
   version "27.2.5"
   resolved "https://registry.yarnpkg.com/@jest/console/-/console-27.2.5.tgz#bddbf8d41c191f17b52bf0c9e6c0d18605e35d6e"
@@ -444,15 +432,6 @@
     jest-mock "^27.2.5"
     jest-util "^27.2.5"
 
-"@jest/globals@^27.2.4":
-  version "27.2.4"
-  resolved "https://registry.yarnpkg.com/@jest/globals/-/globals-27.2.4.tgz#0aeb22b011f8c8c4b8ff3b4dbd1ee0392fe0dd8a"
-  integrity sha512-DRsRs5dh0i+fA9mGHylTU19+8fhzNJoEzrgsu+zgJoZth3x8/0juCQ8nVVdW1er4Cqifb/ET7/hACYVPD0dBEA==
-  dependencies:
-    "@jest/environment" "^27.2.4"
-    "@jest/types" "^27.2.4"
-    expect "^27.2.4"
-
 "@jest/globals@^27.2.5":
   version "27.2.5"
   resolved "https://registry.yarnpkg.com/@jest/globals/-/globals-27.2.5.tgz#4115538f98ed6cee4051a90fdbd0854062902099"
@@ -502,17 +481,7 @@
     graceful-fs "^4.2.4"
     source-map "^0.6.0"
 
-"@jest/test-result@^27.2.4":
-  version "27.2.4"
-  resolved "https://registry.yarnpkg.com/@jest/test-result/-/test-result-27.2.4.tgz#d1ca8298d168f1b0be834bfb543b1ac0294c05d7"
-  integrity sha512-eU+PRo0+lIS01b0dTmMdVZ0TtcRSxEaYquZTRFMQz6CvsehGhx9bRzi9Zdw6VROviJyv7rstU+qAMX5pNBmnfQ==
-  dependencies:
-    "@jest/console" "^27.2.4"
-    "@jest/types" "^27.2.4"
-    "@types/istanbul-lib-coverage" "^2.0.0"
-    collect-v8-coverage "^1.0.0"
-
-"@jest/test-result@^27.2.5":
+"@jest/test-result@^27.2.4", "@jest/test-result@^27.2.5":
   version "27.2.5"
   resolved "https://registry.yarnpkg.com/@jest/test-result/-/test-result-27.2.5.tgz#e9f73cf6cd5e2cc6eb3105339248dea211f9320e"
   integrity sha512-ub7j3BrddxZ0BdSnM5JCF6cRZJ/7j3wgdX0+Dtwhw2Po+HKsELCiXUTvh+mgS4/89mpnU1CPhZxe2mTvuLPJJg==
@@ -521,16 +490,6 @@
     "@jest/types" "^27.2.5"
     "@types/istanbul-lib-coverage" "^2.0.0"
     collect-v8-coverage "^1.0.0"
-
-"@jest/test-sequencer@^27.2.4":
-  version "27.2.4"
-  resolved "https://registry.yarnpkg.com/@jest/test-sequencer/-/test-sequencer-27.2.4.tgz#df66422a3e9e7440ce8b7498e255fa6b52c0bc03"
-  integrity sha512-fpk5eknU3/DXE2QCCG1wv/a468+cfPo3Asu6d6yUtM9LOPh709ubZqrhuUOYfM8hXMrIpIdrv1CdCrWWabX0rQ==
-  dependencies:
-    "@jest/test-result" "^27.2.4"
-    graceful-fs "^4.2.4"
-    jest-haste-map "^27.2.4"
-    jest-runtime "^27.2.4"
 
 "@jest/test-sequencer@^27.2.5":
   version "27.2.5"
@@ -1978,27 +1937,7 @@ jest-get-type@^27.0.6:
   resolved "https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-27.0.6.tgz#0eb5c7f755854279ce9b68a9f1a4122f69047cfe"
   integrity sha512-XTkK5exIeUbbveehcSR8w0bhH+c0yloW/Wpl+9vZrjzztCPWrxhHwkIFpZzCt71oRBsgxmuUfxEqOYoZI2macg==
 
-jest-haste-map@^27.2.4:
-  version "27.2.4"
-  resolved "https://registry.yarnpkg.com/jest-haste-map/-/jest-haste-map-27.2.4.tgz#f8974807bedf07348ca9fd24e5861ab7c8e61aba"
-  integrity sha512-bkJ4bT00T2K+1NZXbRcyKnbJ42I6QBvoDNMTAQQDBhaGNnZreiQKUNqax0e6hLTx7E75pKDeltVu3V1HAdu+YA==
-  dependencies:
-    "@jest/types" "^27.2.4"
-    "@types/graceful-fs" "^4.1.2"
-    "@types/node" "*"
-    anymatch "^3.0.3"
-    fb-watchman "^2.0.0"
-    graceful-fs "^4.2.4"
-    jest-regex-util "^27.0.6"
-    jest-serializer "^27.0.6"
-    jest-util "^27.2.4"
-    jest-worker "^27.2.4"
-    micromatch "^4.0.4"
-    walker "^1.0.7"
-  optionalDependencies:
-    fsevents "^2.3.2"
-
-jest-haste-map@^27.2.5:
+jest-haste-map@^27.2.4, jest-haste-map@^27.2.5:
   version "27.2.5"
   resolved "https://registry.yarnpkg.com/jest-haste-map/-/jest-haste-map-27.2.5.tgz#0247b7299250643472bbcf5b4ad85c72d5178e2e"
   integrity sha512-pzO+Gw2WLponaSi0ilpzYBE0kuVJstoXBX8YWyUebR8VaXuX4tzzn0Zp23c/WaETo7XYTGv2e8KdnpiskAFMhQ==
@@ -2211,40 +2150,7 @@ jest-runner@^27.2.5:
     source-map-support "^0.5.6"
     throat "^6.0.1"
 
-jest-runtime@^27.2.4:
-  version "27.2.4"
-  resolved "https://registry.yarnpkg.com/jest-runtime/-/jest-runtime-27.2.4.tgz#170044041e5d30625ab8d753516bbe503f213a5c"
-  integrity sha512-ICKzzYdjIi70P17MZsLLIgIQFCQmIjMFf+xYww3aUySiUA/QBPUTdUqo5B2eg4HOn9/KkUsV0z6GVgaqAPBJvg==
-  dependencies:
-    "@jest/console" "^27.2.4"
-    "@jest/environment" "^27.2.4"
-    "@jest/fake-timers" "^27.2.4"
-    "@jest/globals" "^27.2.4"
-    "@jest/source-map" "^27.0.6"
-    "@jest/test-result" "^27.2.4"
-    "@jest/transform" "^27.2.4"
-    "@jest/types" "^27.2.4"
-    "@types/yargs" "^16.0.0"
-    chalk "^4.0.0"
-    cjs-module-lexer "^1.0.0"
-    collect-v8-coverage "^1.0.0"
-    execa "^5.0.0"
-    exit "^0.1.2"
-    glob "^7.1.3"
-    graceful-fs "^4.2.4"
-    jest-haste-map "^27.2.4"
-    jest-message-util "^27.2.4"
-    jest-mock "^27.2.4"
-    jest-regex-util "^27.0.6"
-    jest-resolve "^27.2.4"
-    jest-snapshot "^27.2.4"
-    jest-util "^27.2.4"
-    jest-validate "^27.2.4"
-    slash "^3.0.0"
-    strip-bom "^4.0.0"
-    yargs "^16.2.0"
-
-jest-runtime@^27.2.5:
+jest-runtime@^27.2.4, jest-runtime@^27.2.5:
   version "27.2.5"
   resolved "https://registry.yarnpkg.com/jest-runtime/-/jest-runtime-27.2.5.tgz#d144c3f6889b927aae1e695b63a41a3323b7016b"
   integrity sha512-N0WRZ3QszKyZ3Dm27HTBbBuestsSd3Ud5ooVho47XZJ8aSKO/X1Ag8M1dNx9XzfGVRNdB/xCA3lz8MJwIzPLLA==
@@ -2405,15 +2311,6 @@ jest-watcher@^27.2.5:
     chalk "^4.0.0"
     jest-util "^27.2.5"
     string-length "^4.0.1"
-
-jest-worker@^27.2.4:
-  version "27.2.4"
-  resolved "https://registry.yarnpkg.com/jest-worker/-/jest-worker-27.2.4.tgz#881455df75e22e7726a53f43703ab74d6b36f82d"
-  integrity sha512-Zq9A2Pw59KkVjBBKD1i3iE2e22oSjXhUKKuAK1HGX8flGwkm6NMozyEYzKd41hXc64dbd/0eWFeEEuxqXyhM+g==
-  dependencies:
-    "@types/node" "*"
-    merge-stream "^2.0.0"
-    supports-color "^8.0.0"
 
 jest-worker@^27.2.5:
   version "27.2.5"
