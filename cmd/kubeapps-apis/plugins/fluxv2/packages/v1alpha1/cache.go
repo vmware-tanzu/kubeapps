@@ -56,7 +56,9 @@ type cacheValueDeleter func(string, map[string]interface{}) (bool, error)
 // TODO (gfichtenholt) rename this to just Config when caching is separated out into core server
 // and/or caching-rleated code is moved into a separate package?
 type cacheConfig struct {
-	gvr          schema.GroupVersionResource
+	gvr schema.GroupVersionResource
+	// this clientGetter is for running out-of-request interactions with the Kubernetes API server,
+	// such as watching for resource changes
 	clientGetter clientGetter
 	// 'onAdd' and 'onModify' hooks are called when a new or modified object comes about and
 	// allows the plug-in to return information about WHETHER OR NOT and WHAT is to be stored
@@ -114,22 +116,18 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 
 	if redisCli == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
-	}
-
-	if config.clientGetter == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with configGetter")
-	}
-
-	if config.onAdd == nil || config.onModify == nil || config.onDelete == nil || config.onGet == nil {
+	} else if config.clientGetter == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with clientGetter")
+	} else if config.onAdd == nil || config.onModify == nil || config.onDelete == nil || config.onGet == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with expected cache hooks")
 	}
 
 	// sanity check that the redis client is connected
-	pong, err := redisCli.Ping(redisCli.Context()).Result()
-	if err != nil {
+	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
 		return nil, err
+	} else {
+		log.Infof("[PING] -> [%s]", pong)
 	}
-	log.Infof("[PING] -> [%s]", pong)
 
 	c := NamespacedResourceWatcherCache{
 		config:                  config,
@@ -138,7 +136,7 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	}
 
 	// sanity check that the specified GVR is a valid registered CRD
-	if err = c.isGvrValid(); err != nil {
+	if err := c.isGvrValid(); err != nil {
 		return nil, err
 	}
 

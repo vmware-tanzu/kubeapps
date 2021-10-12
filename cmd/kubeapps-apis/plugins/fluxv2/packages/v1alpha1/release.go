@@ -217,7 +217,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		if errors.IsNotFound(err) {
 			return nil, status.Errorf(codes.NotFound, "%q", err)
 		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "Unable to ase due to %v", err)
+			return nil, status.Errorf(codes.Unauthenticated, "unable to get release due to %v", err)
 		} else {
 			return nil, status.Errorf(codes.Internal, "%q", err)
 		}

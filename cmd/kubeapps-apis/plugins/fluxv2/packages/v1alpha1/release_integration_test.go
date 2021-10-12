@@ -418,7 +418,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	resp, err := fluxPluginClient.CreateInstalledPackage(ctx, tc.request)
 	if tc.unauthorized {
 		if status.Code(err) != codes.Unauthenticated {
-			t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+			t.Fatalf("Expected Unathenticated, got: %v", err)
 		}
 		return nil // done, nothing more to check
 	} else if err != nil {
@@ -503,9 +503,9 @@ func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2P
 				break
 			}
 		}
-		t.Logf("Waiting 1s until install completes due to: [%s], userReason: [%s], attempt: [%d/%d]...",
+		t.Logf("Waiting 2s until install completes due to: [%s], userReason: [%s], attempt: [%d/%d]...",
 			resp2.InstalledPackageDetail.Status.Reason, resp2.InstalledPackageDetail.Status.UserReason, i+1, maxWait)
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	if actualResp == nil {
