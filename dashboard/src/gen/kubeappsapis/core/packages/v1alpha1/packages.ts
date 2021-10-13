@@ -318,6 +318,7 @@ export interface DeleteInstalledPackageResponse {}
  * Response for GetResourceRefs
  */
 export interface GetResourceRefsResponse {
+  context?: Context;
   resourceRefs: ResourceRef[];
 }
 
@@ -968,10 +969,11 @@ export interface PackageAppVersion {
 /**
  * Resource reference
  *
- * A reference to a Kubernetes resource related to a package.
+ * A reference to a Kubernetes resource related to a specific installed package.
+ * The context (cluster, namespace) for each resource is that of the related
+ * installed package.
  */
 export interface ResourceRef {
-  context?: Context;
   /** Group/Version? */
   kind: string;
   name: string;
@@ -2513,8 +2515,11 @@ const baseGetResourceRefsResponse: object = {};
 
 export const GetResourceRefsResponse = {
   encode(message: GetResourceRefsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
     for (const v of message.resourceRefs) {
-      ResourceRef.encode(v!, writer.uint32(10).fork()).ldelim();
+      ResourceRef.encode(v!, writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -2530,6 +2535,9 @@ export const GetResourceRefsResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        case 2:
           message.resourceRefs.push(ResourceRef.decode(reader, reader.uint32()));
           break;
         default:
@@ -2545,6 +2553,11 @@ export const GetResourceRefsResponse = {
       ...baseGetResourceRefsResponse,
     } as GetResourceRefsResponse;
     message.resourceRefs = [];
+    if (object.context !== undefined && object.context !== null) {
+      message.context = Context.fromJSON(object.context);
+    } else {
+      message.context = undefined;
+    }
     if (object.resourceRefs !== undefined && object.resourceRefs !== null) {
       for (const e of object.resourceRefs) {
         message.resourceRefs.push(ResourceRef.fromJSON(e));
@@ -2555,6 +2568,8 @@ export const GetResourceRefsResponse = {
 
   toJSON(message: GetResourceRefsResponse): unknown {
     const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     if (message.resourceRefs) {
       obj.resourceRefs = message.resourceRefs.map(e => (e ? ResourceRef.toJSON(e) : undefined));
     } else {
@@ -2568,6 +2583,11 @@ export const GetResourceRefsResponse = {
       ...baseGetResourceRefsResponse,
     } as GetResourceRefsResponse;
     message.resourceRefs = [];
+    if (object.context !== undefined && object.context !== null) {
+      message.context = Context.fromPartial(object.context);
+    } else {
+      message.context = undefined;
+    }
     if (object.resourceRefs !== undefined && object.resourceRefs !== null) {
       for (const e of object.resourceRefs) {
         message.resourceRefs.push(ResourceRef.fromPartial(e));
@@ -4515,14 +4535,11 @@ const baseResourceRef: object = { kind: "", name: "" };
 
 export const ResourceRef = {
   encode(message: ResourceRef, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.context !== undefined) {
-      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
-    }
     if (message.kind !== "") {
-      writer.uint32(18).string(message.kind);
+      writer.uint32(10).string(message.kind);
     }
     if (message.name !== "") {
-      writer.uint32(26).string(message.name);
+      writer.uint32(18).string(message.name);
     }
     return writer;
   },
@@ -4535,12 +4552,9 @@ export const ResourceRef = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.context = Context.decode(reader, reader.uint32());
-          break;
-        case 2:
           message.kind = reader.string();
           break;
-        case 3:
+        case 2:
           message.name = reader.string();
           break;
         default:
@@ -4553,11 +4567,6 @@ export const ResourceRef = {
 
   fromJSON(object: any): ResourceRef {
     const message = { ...baseResourceRef } as ResourceRef;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
     if (object.kind !== undefined && object.kind !== null) {
       message.kind = String(object.kind);
     } else {
@@ -4573,8 +4582,6 @@ export const ResourceRef = {
 
   toJSON(message: ResourceRef): unknown {
     const obj: any = {};
-    message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     message.kind !== undefined && (obj.kind = message.kind);
     message.name !== undefined && (obj.name = message.name);
     return obj;
@@ -4582,11 +4589,6 @@ export const ResourceRef = {
 
   fromPartial(object: DeepPartial<ResourceRef>): ResourceRef {
     const message = { ...baseResourceRef } as ResourceRef;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
     if (object.kind !== undefined && object.kind !== null) {
       message.kind = object.kind;
     } else {

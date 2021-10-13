@@ -1195,12 +1195,13 @@ func (s *Server) GetResourceRefs(ctx context.Context, request *corev1.GetResourc
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
 	}
 
-	refs, err := resourceRefsFromManifest(release.Manifest, pkgRef.GetContext())
+	refs, err := resourceRefsFromManifest(release.Manifest)
 	if err != nil {
 		return nil, err
 	}
 
 	return &corev1.GetResourceRefsResponse{
+		Context:      pkgRef.GetContext(),
 		ResourceRefs: refs,
 	}, nil
 }
@@ -1216,7 +1217,7 @@ type YAMLResource struct {
 }
 
 // resourceRefsFromManifest returns the resource refs for a given yaml manifest.
-func resourceRefsFromManifest(m string, requestContext *corev1.Context) ([]*corev1.ResourceRef, error) {
+func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
 	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
 	refs := []*corev1.ResourceRef{}
 	doc := YAMLResource{}
@@ -1230,9 +1231,8 @@ func resourceRefsFromManifest(m string, requestContext *corev1.Context) ([]*core
 		}
 		if doc.Kind != "" {
 			refs = append(refs, &corev1.ResourceRef{
-				Kind:    doc.Kind,
-				Name:    doc.Metadata.Name,
-				Context: requestContext,
+				Kind: doc.Kind,
+				Name: doc.Metadata.Name,
 			})
 		}
 	}

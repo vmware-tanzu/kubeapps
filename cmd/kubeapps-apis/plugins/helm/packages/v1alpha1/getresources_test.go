@@ -66,22 +66,18 @@ metadata:
 				},
 			},
 			expectedResponse: &corev1.GetResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
 				ResourceRefs: []*corev1.ResourceRef{
 					{
 						Name: "apache-test",
 						Kind: "Service",
-						Context: &corev1.Context{
-							Cluster:   "default",
-							Namespace: "default",
-						},
 					},
 					{
 						Name: "apache-test",
 						Kind: "Deployment",
-						Context: &corev1.Context{
-							Cluster:   "default",
-							Namespace: "default",
-						},
 					},
 				},
 			},
@@ -118,14 +114,14 @@ metadata:
 				},
 			},
 			expectedResponse: &corev1.GetResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
 				ResourceRefs: []*corev1.ResourceRef{
 					{
 						Name: "apache-test",
 						Kind: "Deployment",
-						Context: &corev1.Context{
-							Cluster:   "default",
-							Namespace: "default",
-						},
 					},
 				},
 			},

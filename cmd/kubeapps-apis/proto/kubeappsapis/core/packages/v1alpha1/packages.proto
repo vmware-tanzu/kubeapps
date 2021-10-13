@@ -357,7 +357,8 @@ message DeleteInstalledPackageResponse {
 //
 // Response for GetResourceRefs
 message GetResourceRefsResponse {
-    repeated ResourceRef resource_refs = 1;
+  Context context = 1;
+  repeated ResourceRef resource_refs = 2;
 }
 
 // -- Start definitions used in the responses  --
@@ -908,12 +909,12 @@ message PackageAppVersion {
 
 // Resource reference
 //
-// A reference to a Kubernetes resource related to a package.
+// A reference to a Kubernetes resource related to a specific installed package.
+// The context (cluster, namespace) for each resource is that of the related
+// installed package.
 message ResourceRef {
-    Context context = 1;
-
     // Group/Version?
-    string kind = 2;
+    string kind = 1;
 
-    string name = 3;
+    string name = 2;
 }

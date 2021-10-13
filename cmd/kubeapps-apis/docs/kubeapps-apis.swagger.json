@@ -3066,6 +3066,9 @@
     "v1alpha1GetResourceRefsResponse": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/v1alpha1Context"
+        },
         "resourceRefs": {
           "type": "array",
           "items": {
@@ -3341,9 +3344,6 @@
     "v1alpha1ResourceRef": {
       "type": "object",
       "properties": {
-        "context": {
-          "$ref": "#/definitions/v1alpha1Context"
-        },
         "kind": {
           "type": "string",
           "title": "Group/Version?"
@@ -3352,7 +3352,7 @@
           "type": "string"
         }
       },
-      "description": "A reference to a Kubernetes resource related to a package.",
+      "description": "A reference to a Kubernetes resource related to a specific installed package.\nThe context (cluster, namespace) for each resource is that of the related\ninstalled package.",
       "title": "Resource reference"
     },
     "v1alpha1RollbackInstalledPackageRequest": {
