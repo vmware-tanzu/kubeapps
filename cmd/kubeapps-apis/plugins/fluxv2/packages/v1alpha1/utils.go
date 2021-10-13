@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	log "k8s.io/klog/v2"
 )
 
@@ -180,19 +181,42 @@ func newClientGetter(configGetter server.KubernetesConfigGetter) clientGetter {
 		// The Flux plugin currently supports interactions with the default (kubeapps)
 		// cluster only:
 		cluster := ""
-		config, err := configGetter(ctx, cluster)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+		if config, err := configGetter(ctx, cluster); err != nil {
+			if status.Code(err) == codes.Unauthenticated {
+				// want to make sure we return same status in this case
+				return nil, nil, status.Errorf(codes.Unauthenticated, "unable to get config due to: %v", err)
+			} else {
+				return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+			}
+		} else {
+			return clientGetterHelper(config)
 		}
-
-		dynamicClient, err := dynamic.NewForConfig(config)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
-		}
-		apiExtensions, err := apiext.NewForConfig(config)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
-		}
-		return dynamicClient, apiExtensions, nil
 	}
+}
+
+// https://github.com/kubeapps/kubeapps/issues/3560
+// flux plug-in runs out-of-request interactions with the Kubernetes API server.
+// Although we've already ensured that if the flux plugin is selected, that the service account
+// will be granted additional read privileges, we also need to ensure that the plugin can get a
+// config based on the service account rather than the request context
+func newBackgroundClientGetter() clientGetter {
+	return func(ctx context.Context) (dynamic.Interface, apiext.Interface, error) {
+		if config, err := rest.InClusterConfig(); err != nil {
+			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get in cluster config due to: %v", err)
+		} else {
+			return clientGetterHelper(config)
+		}
+	}
+}
+
+func clientGetterHelper(config *rest.Config) (dynamic.Interface, apiext.Interface, error) {
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
+	}
+	apiExtensions, err := apiext.NewForConfig(config)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
+	}
+	return dynamicClient, apiExtensions, nil
 }

@@ -53,7 +53,6 @@ type Server struct {
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
-	clientGetter := newClientGetter(configGetter)
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -61,7 +60,7 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 	}
 	cacheConfig := cacheConfig{
 		gvr:          repositoriesGvr,
-		clientGetter: clientGetter,
+		clientGetter: newBackgroundClientGetter(),
 		onAdd:        onAddOrModifyRepo,
 		onModify:     onAddOrModifyRepo,
 		onGet:        onGetRepo,
@@ -71,7 +70,7 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 		return nil, err
 	} else {
 		return &Server{
-			clientGetter:       clientGetter,
+			clientGetter:       newClientGetter(configGetter),
 			actionConfigGetter: newHelmActionConfigGetter(configGetter),
 			cache:              cache,
 		}, nil
@@ -85,7 +84,7 @@ func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error
 	}
 	dynamicClient, _, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		return nil, err
 	}
 	return dynamicClient, nil
 }

@@ -52,7 +52,7 @@ shell) shell
     ;;
 logs) logs
     ;;
-*) echo "Invalid option"
+*) echo "Invalid command: $1"
    ;;
 esac
 

@@ -32,7 +32,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -185,13 +184,9 @@ func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 	return nil
 }
 
-func kubeForceDeleteHelmRelease(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeForceDeleteHelmRelease(%s,%s)", name, namespace)
+func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeDeleteHelmRelease(%s,%s)", name, namespace)
 	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
-		return err
-		// remove finalizer on HelmRelease cuz sometimes it gets stuck indefinitely
-	} else if _, err = ifc.Patch(context.TODO(), name, types.JSONPatchType,
-		[]byte("[ { \"op\": \"remove\", \"path\": \"/metadata/finalizers\" } ]"), metav1.PatchOptions{}); err != nil {
 		return err
 	} else if err = ifc.Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
 		return err
@@ -228,7 +223,7 @@ func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error)
 // will create a service account with cluster-admin privs and return the associated
 // Bearer token (base64-encoded)
 func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
-	t.Logf("+kubeCreateServiceAccount(%s,%s)", name, namespace)
+	t.Logf("+kubeCreateAdminServiceAccount(%s,%s)", name, namespace)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return "", err
@@ -256,7 +251,7 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 			secretName = svcAccount.Secrets[0].Name
 			break
 		}
-		t.Logf("Waiting 1s for service account [%s] secret...", name)
+		t.Logf("Waiting 1s for service account [%s] secret to be set up... [%d/%d]", name, i+1, 10)
 		time.Sleep(1 * time.Second)
 	}
 	if secretName == "" {
