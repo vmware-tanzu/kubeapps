@@ -79,7 +79,7 @@ data:
            exist, even with the `default` function.
            See https://github.com/helm/helm/issues/8026#issuecomment-756538254 */}}
     {{- $pinnipedConfig := .pinnipedConfig | default dict }}
-    {{- if and $.Values.pinnipedProxy.enabled $pinnipedConfig.enable }}
+    {{- if and $.Values.pinnipedProxy.enabled $pinnipedConfig.enabled }}
         # If pinniped proxy is enabled *and* the current cluster is configured
         # to exchange credentials then we route via pinnipedProxy to exchange
         # credentials for client certificates.

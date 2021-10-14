@@ -1500,7 +1500,7 @@ allowNamespaceDiscovery: true
 ##   serviceToken: ...
 ##   isKubeappsCluster: true
 ##   pinnipedConfig:
-##     enable: true
+##     enabled: true
 
 ##
 clusters:
