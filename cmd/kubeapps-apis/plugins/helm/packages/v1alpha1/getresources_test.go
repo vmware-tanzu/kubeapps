@@ -72,12 +72,14 @@ metadata:
 				},
 				ResourceRefs: []*corev1.ResourceRef{
 					{
-						Name: "apache-test",
-						Kind: "Service",
+						Version: "v1",
+						Name:    "apache-test",
+						Kind:    "Service",
 					},
 					{
-						Name: "apache-test",
-						Kind: "Deployment",
+						Version: "apps/v1",
+						Name:    "apache-test",
+						Kind:    "Deployment",
 					},
 				},
 			},
@@ -120,8 +122,9 @@ metadata:
 				},
 				ResourceRefs: []*corev1.ResourceRef{
 					{
-						Name: "apache-test",
-						Kind: "Deployment",
+						Version: "apps/v1",
+						Name:    "apache-test",
+						Kind:    "Deployment",
 					},
 				},
 			},

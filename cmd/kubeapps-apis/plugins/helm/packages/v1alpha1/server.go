@@ -1212,8 +1212,9 @@ type YAMLMetadata struct {
 }
 
 type YAMLResource struct {
-	Kind     string       `json:"kind"`
-	Metadata YAMLMetadata `json:"metadata"`
+	APIVersion string       `json:"apiVersion"`
+	Kind       string       `json:"kind"`
+	Metadata   YAMLMetadata `json:"metadata"`
 }
 
 // resourceRefsFromManifest returns the resource refs for a given yaml manifest.
@@ -1231,8 +1232,9 @@ func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
 		}
 		if doc.Kind != "" {
 			refs = append(refs, &corev1.ResourceRef{
-				Kind: doc.Kind,
-				Name: doc.Metadata.Name,
+				Version: doc.APIVersion,
+				Kind:    doc.Kind,
+				Name:    doc.Metadata.Name,
 			})
 		}
 	}

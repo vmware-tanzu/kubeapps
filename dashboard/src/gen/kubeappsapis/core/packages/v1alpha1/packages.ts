@@ -974,7 +974,7 @@ export interface PackageAppVersion {
  * installed package.
  */
 export interface ResourceRef {
-  /** Group/Version? */
+  version: string;
   kind: string;
   name: string;
 }
@@ -4531,15 +4531,18 @@ export const PackageAppVersion = {
   },
 };
 
-const baseResourceRef: object = { kind: "", name: "" };
+const baseResourceRef: object = { version: "", kind: "", name: "" };
 
 export const ResourceRef = {
   encode(message: ResourceRef, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.version !== "") {
+      writer.uint32(10).string(message.version);
+    }
     if (message.kind !== "") {
-      writer.uint32(10).string(message.kind);
+      writer.uint32(18).string(message.kind);
     }
     if (message.name !== "") {
-      writer.uint32(18).string(message.name);
+      writer.uint32(26).string(message.name);
     }
     return writer;
   },
@@ -4552,9 +4555,12 @@ export const ResourceRef = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.kind = reader.string();
+          message.version = reader.string();
           break;
         case 2:
+          message.kind = reader.string();
+          break;
+        case 3:
           message.name = reader.string();
           break;
         default:
@@ -4567,6 +4573,11 @@ export const ResourceRef = {
 
   fromJSON(object: any): ResourceRef {
     const message = { ...baseResourceRef } as ResourceRef;
+    if (object.version !== undefined && object.version !== null) {
+      message.version = String(object.version);
+    } else {
+      message.version = "";
+    }
     if (object.kind !== undefined && object.kind !== null) {
       message.kind = String(object.kind);
     } else {
@@ -4582,6 +4593,7 @@ export const ResourceRef = {
 
   toJSON(message: ResourceRef): unknown {
     const obj: any = {};
+    message.version !== undefined && (obj.version = message.version);
     message.kind !== undefined && (obj.kind = message.kind);
     message.name !== undefined && (obj.name = message.name);
     return obj;
@@ -4589,6 +4601,11 @@ export const ResourceRef = {
 
   fromPartial(object: DeepPartial<ResourceRef>): ResourceRef {
     const message = { ...baseResourceRef } as ResourceRef;
+    if (object.version !== undefined && object.version !== null) {
+      message.version = object.version;
+    } else {
+      message.version = "";
+    }
     if (object.kind !== undefined && object.kind !== null) {
       message.kind = object.kind;
     } else {

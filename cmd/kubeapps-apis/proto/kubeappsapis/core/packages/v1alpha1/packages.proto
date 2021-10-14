@@ -913,8 +913,8 @@ message PackageAppVersion {
 // The context (cluster, namespace) for each resource is that of the related
 // installed package.
 message ResourceRef {
-    // Group/Version?
-    string kind = 1;
+  string version = 1;
+  string kind = 2;
 
-    string name = 2;
+  string name = 3;
 }

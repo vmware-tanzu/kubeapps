@@ -3344,9 +3344,11 @@
     "v1alpha1ResourceRef": {
       "type": "object",
       "properties": {
+        "version": {
+          "type": "string"
+        },
         "kind": {
-          "type": "string",
-          "title": "Group/Version?"
+          "type": "string"
         },
         "name": {
           "type": "string"
