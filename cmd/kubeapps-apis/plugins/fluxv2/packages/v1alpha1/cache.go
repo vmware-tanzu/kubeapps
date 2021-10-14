@@ -363,7 +363,7 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 			log.Errorf("Failed to set value for object with key [%s] in cache due to: %v", key, err)
 			return err
 		} else {
-			log.Infof("Set value for key [%s] in cache", key)
+			log.V(4).Infof("Set value for key [%s] in cache", key)
 		}
 	}
 	return nil
@@ -456,7 +456,7 @@ func (c NamespacedResourceWatcherCache) listKeys(filters []string) ([]string, er
 			if err != nil {
 				return nil, err
 			}
-			log.Infof("listKeys: SCAN returned keys: %s, cursor: [%d]", keys, cursor)
+			log.V(4).Infof("listKeys: SCAN returned keys: %s, cursor: [%d]", keys, cursor)
 			for _, key := range keys {
 				redisKeys[key] = struct{}{}
 			}

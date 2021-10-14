@@ -187,10 +187,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if pageSize > 0 && len(packageSummaries) == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
+
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: packageSummaries,
 		NextPageToken:             nextPageToken,
 		// TODO (gfichtenholt) Categories?
+		// Just happened to notice that helm plug-in returning this.
+		// Never discussed this and the design doc appears to have a lot of back-and-forth comments
+		// about this
 	}, nil
 }
 
