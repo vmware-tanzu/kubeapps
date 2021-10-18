@@ -10187,12 +10187,10 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-mock-socket@^9.0.5:
-  version "9.0.5"
-  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.0.5.tgz#49446821d9afe41213f9647eb29ca834e5b3c0bc"
-  integrity sha512-H1PNSeFtxoiWOPryZzywBATsyDij5158zDOzfVIqQ7WSqEciEsrt6otrWrVCIZPPkBxns1IGFSnRgtUWFo2d+A==
-  dependencies:
-    url-parse "^1.4.4"
+mock-socket@^9.0.6:
+  version "9.0.6"
+  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.0.6.tgz#030559905e99c61c1d77598ad3e7087456331648"
+  integrity sha512-dbWynjkixRSxs0vKiIR/zc3UscCFp+0FG0I/fuZW7EEdXVOSEhZ1TMCurkQ97Vj+Gp5YvWMWdvpBSJTVKtvECw==
 
 modern-normalize@1.1.0, modern-normalize@^1.1.0:
   version "1.1.0"
@@ -15161,7 +15159,7 @@ url-loader@4.1.1:
     mime-types "^2.1.27"
     schema-utils "^3.0.0"
 
-url-parse@^1.4.3, url-parse@^1.4.4, url-parse@^1.5.2, url-parse@^1.5.3:
+url-parse@^1.4.3, url-parse@^1.5.2, url-parse@^1.5.3:
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/url-parse/-/url-parse-1.5.3.tgz#71c1303d38fb6639ade183c2992c8cc0686df862"
   integrity sha512-IIORyIQD9rvj0A4CLWsHkBBJuNqWpFQe224b6j9t/ABmquIS0qDU2pY6kl6AuOrL5OkCXHMCFNe1jBcuAggjvQ==
