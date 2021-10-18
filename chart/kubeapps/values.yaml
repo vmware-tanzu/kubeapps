@@ -1354,6 +1354,13 @@ authProxy:
   ##   - --oidc-issuer-url=https://accounts.google.com # Only needed if provider is oidc
   ##
   additionalFlags: []
+  ## @param authProxy.extraEnvVars Array with extra environment variables to add to the Auth Proxy container
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
   ## @param authProxy.containerPort Auth Proxy HTTP container port
   ##
   containerPort: 3000
@@ -1498,6 +1505,7 @@ clusters:
 ##
 featureFlags:
   invalidateCache: true
+  kubeappsAPIsServer: true
 ## RBAC configuration
 ##
 rbac:
@@ -1578,6 +1586,8 @@ postgresql:
 
 ## @section kubeappsapis parameters
 kubeappsapis:
+  ## @param kubeappsapis.unsafeUseDemoSA If true, replace the user's credentials by a full-granted demo service account. Just intended for development purposes.
+  unsafeUseDemoSA: false
   ## @param kubeappsapis.enabledPlugins Enabled plugins for the Kubeapps-APIs service
   ## e.g:
   ## enabledPlugins:

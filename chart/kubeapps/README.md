@@ -409,6 +409,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.scope`                                 | OAuth scope specification                                                     | `openid email groups`  |
 | `authProxy.emailDomain`                           | Allowed email domains                                                         | `*`                    |
 | `authProxy.additionalFlags`                       | Additional flags for oauth2-proxy                                             | `[]`                   |
+| `authProxy.extraEnvVars`                          | Array with extra environment variables to add to the Auth Proxy container                      | `[]`                   |
 | `authProxy.containerPort`                         | Auth Proxy HTTP container port                                                | `3000`                 |
 | `authProxy.containerSecurityContext.enabled`      | Enabled Auth Proxy containers' Security Context                               | `true`                 |
 | `authProxy.containerSecurityContext.runAsUser`    | Set Auth Proxy container's Security Context runAsUser                         | `1001`                 |
@@ -478,6 +479,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 | Name                                                 | Description                                                                                                             | Value                   |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `kubeappsapis.unsafeUseDemoSA`                       | If true, replace the user's credentials by a full-granted demo service account. Just intended for development purposes. | `false`                 |
 | `kubeappsapis.enabledPlugins`                        | Enabled plugins for the Kubeapps-APIs service                                                                           | `["helm"]`              |
 | `kubeappsapis.image.registry`                        | Kubeapps-APIs image registry                                                                                            | `docker.io`             |
 | `kubeappsapis.image.repository`                      | Kubeapps-APIs image repository                                                                                          | `bitnami/kubeapps-apis` |
