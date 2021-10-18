@@ -1795,6 +1795,11 @@
   resolved "https://registry.yarnpkg.com/@lit/reactive-element/-/reactive-element-1.0.0.tgz#7b6e6a85709cda0370c47e425ac2f3b553696a4b"
   integrity sha512-Kpgenb8UNFsKCsFhggiVvUkCbcFQSd6N8hffYEEGjz27/4rw3cTSsmP9t3q1EHOAsdum60Wo64HvuZDFpEwexA==
 
+"@makenowjust-labo/recheck@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@makenowjust-labo/recheck/-/recheck-3.1.0.tgz#0a28c798514e53ae885557946c368525dbd5bde1"
+  integrity sha512-XScxA5y1/jzKRrSX65OY/xBerM4NhSIpLbg9Uzd205EFxBsBUTxkzDL8R4x6isV7aJpxCBTZs1xT1UxPBqfwCg==
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -5921,6 +5926,14 @@ eslint-plugin-react@^7.21.5:
     semver "^6.3.0"
     string.prototype.matchall "^4.0.5"
 
+eslint-plugin-redos@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-redos/-/eslint-plugin-redos-1.2.0.tgz#0731a5591eb0d4a1b3e3c2197b9c247ed06d2c84"
+  integrity sha512-DE3lAegOs6qz8hg9jb9Bsc/NSAUA7OSUDPBcuMm8P3J2Ppq9IeFauEeW2d+4uDrB2T6On2xiOYbPpl1sRoGFmQ==
+  dependencies:
+    "@makenowjust-labo/recheck" "^3.1.0"
+    inflected "^2.1.0"
+
 eslint-plugin-testing-library@^3.9.2:
   version "3.10.2"
   resolved "https://registry.yarnpkg.com/eslint-plugin-testing-library/-/eslint-plugin-testing-library-3.10.2.tgz#609ec2b0369da7cf2e6d9edff5da153cc31d87bd"
@@ -7449,6 +7462,11 @@ infer-owner@^1.0.3, infer-owner@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/infer-owner/-/infer-owner-1.0.4.tgz#c4cefcaa8e51051c2a40ba2ce8a3d27295af9467"
   integrity sha512-IClj+Xz94+d7irH5qRyfJonOdfTzuDaifE6ZPWfx0N0+/ATZCbuTPq2prFl526urkQd90WyUKIh1DfBQ2hMz9A==
+
+inflected@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/inflected/-/inflected-2.1.0.tgz#2816ac17a570bbbc8303ca05bca8bf9b3f959687"
+  integrity sha512-hAEKNxvHf2Iq3H60oMBHkB4wl5jn3TPF3+fXek/sRwAB5gP9xWs4r7aweSF95f99HFoz69pnZTcu8f0SIHV18w==
 
 inflight@^1.0.4:
   version "1.0.6"
