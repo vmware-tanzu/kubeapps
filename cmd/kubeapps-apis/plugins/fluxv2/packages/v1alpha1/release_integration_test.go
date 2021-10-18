@@ -37,6 +37,10 @@ import (
 //    at this point.
 // 3) run './kind-cluster-setup.sh deploy' once prior to these tests
 
+// TODO (gfichtenholt) currently core server's has broken logic inside plugins.go
+// createConfigGetterWithParams(...). Refer to my comment in there. I had to make suggested changes
+// locally to make these tests pass
+
 const (
 	// the only repo these tests use so far. This is local copy of the first few entries
 	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
@@ -54,6 +58,7 @@ type integrationTestCreateSpec struct {
 	expectedPodPrefix    string
 	expectInstallFailure bool
 	noCleanup            bool
+	unauthorized         bool
 }
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
@@ -95,11 +100,19 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			expectedDetail:       expected_detail_install_fails,
 			expectInstallFailure: true,
 		},
+		{
+			testName:     "unauthorized",
+			repoUrl:      podinfo_repo_url,
+			request:      create_request_basic,
+			unauthorized: true,
+		},
 	}
+
+	grpcContext := newGrpcContext(t, "test-create-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			createAndWaitForHelmRelease(t, tc, fluxPluginClient)
+			createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcContext)
 		})
 	}
 }
@@ -109,6 +122,7 @@ type integrationTestUpdateSpec struct {
 	request *corev1.UpdateInstalledPackageRequest
 	// this is expected AFTER the update call completes
 	expectedDetailAfterUpdate *corev1.InstalledPackageDetail
+	unauthorized              bool
 }
 
 func TestKindClusterUpdateInstalledPackage(t *testing.T) {
@@ -170,19 +184,41 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			request:                   update_request_5,
 			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_6,
 		},
+		{
+			integrationTestCreateSpec: integrationTestCreateSpec{
+				testName:          "update unauthorized test",
+				repoUrl:           podinfo_repo_url,
+				request:           create_request_podinfo_7,
+				expectedDetail:    expected_detail_podinfo_7,
+				expectedPodPrefix: "@TARGET_NS@-my-podinfo-11-",
+			},
+			request:      update_request_6,
+			unauthorized: true,
+		},
 	}
+
+	grpcContext := newGrpcContext(t, "test-update-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreateSpec, fluxPluginClient)
+			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
-			_, err := fluxPluginClient.UpdateInstalledPackage(context.TODO(), tc.request)
-			if err != nil {
+			ctx := grpcContext
+			if tc.unauthorized {
+				ctx = context.TODO()
+			}
+			_, err := fluxPluginClient.UpdateInstalledPackage(ctx, tc.request)
+			if tc.unauthorized {
+				if status.Code(err) != codes.Unauthenticated {
+					t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+				}
+				return // done, nothing more to check
+			} else if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			actualRespAfterUpdate := waitUntilInstallCompletes(t, fluxPluginClient, installedRef, false)
+			actualRespAfterUpdate := waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedRef, false)
 
 			tc.expectedDetailAfterUpdate.PostInstallationNotes = strings.ReplaceAll(
 				tc.expectedDetailAfterUpdate.PostInstallationNotes,
@@ -198,34 +234,67 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	}
 }
 
+type integrationTestDeleteSpec struct {
+	integrationTestCreateSpec
+	unauthorized bool
+}
+
 func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	fluxPluginClient := checkEnv(t)
 
-	testCases := []integrationTestCreateSpec{
+	testCases := []integrationTestDeleteSpec{
 		{
-			testName:          "delete test (simplest case)",
-			repoUrl:           podinfo_repo_url,
-			request:           create_request_podinfo_for_delete_1,
-			expectedDetail:    expected_detail_podinfo_for_delete_1,
-			expectedPodPrefix: "@TARGET_NS@-my-podinfo-11-",
-			noCleanup:         true,
+			integrationTestCreateSpec: integrationTestCreateSpec{
+				testName:          "delete test (simplest case)",
+				repoUrl:           podinfo_repo_url,
+				request:           create_request_podinfo_for_delete_1,
+				expectedDetail:    expected_detail_podinfo_for_delete_1,
+				expectedPodPrefix: "@TARGET_NS@-my-podinfo-12-",
+				noCleanup:         true,
+			},
+		},
+		{
+			integrationTestCreateSpec: integrationTestCreateSpec{
+				testName:          "delete test (unauthorized)",
+				repoUrl:           podinfo_repo_url,
+				request:           create_request_podinfo_for_delete_2,
+				expectedDetail:    expected_detail_podinfo_for_delete_2,
+				expectedPodPrefix: "@TARGET_NS@-my-podinfo-13-",
+				noCleanup:         true,
+			},
+			unauthorized: true,
 		},
 	}
 
+	grpcContext := newGrpcContext(t, "test-delete-admin")
+
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient)
+			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
 
-			_, err := fluxPluginClient.DeleteInstalledPackage(context.TODO(), &corev1.DeleteInstalledPackageRequest{
+			ctx := grpcContext
+			if tc.unauthorized {
+				ctx = context.TODO()
+			}
+			_, err := fluxPluginClient.DeleteInstalledPackage(ctx, &corev1.DeleteInstalledPackageRequest{
 				InstalledPackageRef: installedRef,
 			})
-			if err != nil {
+			if tc.unauthorized {
+				if status.Code(err) != codes.Unauthenticated {
+					t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+				}
+				// still need to delete the release though
+				if err = kubeDeleteHelmRelease(t, installedRef.Identifier, installedRef.Context.Namespace); err != nil {
+					t.Logf("Failed to delete helm release due to %v", err)
+				}
+				return // done, nothing more to check
+			} else if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
 			const maxWait = 25
 			for i := 0; i <= maxWait; i++ {
-				_, err := fluxPluginClient.GetInstalledPackageDetail(context.TODO(), &corev1.GetInstalledPackageDetailRequest{
+				_, err := fluxPluginClient.GetInstalledPackageDetail(grpcContext, &corev1.GetInstalledPackageDetailRequest{
 					InstalledPackageRef: installedRef,
 				})
 				if err != nil {
@@ -253,6 +322,8 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 
 			// flux is supposed to clean up or "garbage collect" artifacts created by the release,
 			// in the targetNamespace, except the namespace itself. Wait to make sure this is done
+			// (https://fluxcd.io/docs/components/helm/) it clearly says: Prunes Helm releases removed
+			// from cluster (garbage collection)
 			expectedPodPrefix := strings.ReplaceAll(
 				tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 			for i := 0; i <= maxWait; i++ {
@@ -276,7 +347,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
-func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient) *corev1.InstalledPackageReference {
+func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
 	err := kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
@@ -293,13 +364,13 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	// need to wait until repo is index by flux plugin
 	const maxWait = 25
 	for i := 0; i <= maxWait; i++ {
-		_, err := fluxPluginClient.GetAvailablePackageDetail(
-			context.TODO(),
+		resp, err := fluxPluginClient.GetAvailablePackageDetail(
+			grpcContext,
 			&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 		if err == nil {
 			break
 		} else if i == maxWait {
-			t.Fatalf("Timed out waiting for available package [%s], last error: [%v]", availablePackageRef, err)
+			t.Fatalf("Timed out waiting for available package [%s], last response: %v, last error: [%v]", availablePackageRef, resp, err)
 		} else {
 			t.Logf("Waiting 1s for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
 			time.Sleep(1 * time.Second)
@@ -307,18 +378,30 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	}
 
 	if tc.request.ReconciliationOptions != nil && tc.request.ReconciliationOptions.ServiceAccountName != "" {
-		err = kubeCreateServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+		_, err = kubeCreateAdminServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-		if !tc.noCleanup {
-			t.Cleanup(func() {
-				err = kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
-				if err != nil {
-					t.Logf("Failed to delete service account due to [%v]", err)
+		// it appears that if service account is deleted before the helmrelease object that uses it,
+		// when you try to delete the helmrelease, the "delete" operation gets stuck and the only
+		// way to get it "unstuck" is to edit the CRD and remove the finalizer.
+		// So we'll cleanup the service account only after the corresponding helmrelease has been deleted
+		t.Cleanup(func() {
+			if !tc.expectInstallFailure {
+				for i := 0; i < 20; i++ {
+					exists, _ := kubeExistsHelmRelease(t, tc.expectedDetail.InstalledPackageRef.Identifier, tc.expectedDetail.InstalledPackageRef.Context.Namespace)
+					if exists {
+						time.Sleep(300 * time.Millisecond)
+					} else {
+						break
+					}
 				}
-			})
-		}
+			}
+			err := kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+			if err != nil {
+				t.Logf("Failed to delete service account due to [%v]", err)
+			}
+		})
 	}
 
 	// generate a unique target namespace for each test to avoid situations when tests are
@@ -328,8 +411,17 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		tc.request.TargetContext.Namespace += "-" + randSeq(4)
 	}
 
-	resp, err := fluxPluginClient.CreateInstalledPackage(context.TODO(), tc.request)
-	if err != nil {
+	ctx := grpcContext
+	if tc.unauthorized {
+		ctx = context.TODO()
+	}
+	resp, err := fluxPluginClient.CreateInstalledPackage(ctx, tc.request)
+	if tc.unauthorized {
+		if status.Code(err) != codes.Unauthenticated {
+			t.Fatalf("Expected Unathenticated, got: %v", err)
+		}
+		return nil // done, nothing more to check
+	} else if err != nil {
 		t.Fatalf("%+v", err)
 	}
 
@@ -345,7 +437,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 
 	if !tc.noCleanup {
 		t.Cleanup(func() {
-			err = kubeForceDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
+			err = kubeDeleteHelmRelease(t, installedPackageRef.Identifier, installedPackageRef.Context.Namespace)
 			if err != nil {
 				t.Logf("Failed to delete helm release due to [%v]", err)
 			}
@@ -359,7 +451,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		}
 	})
 
-	actualResp := waitUntilInstallCompletes(t, fluxPluginClient, installedPackageRef, tc.expectInstallFailure)
+	actualResp := waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedPackageRef, tc.expectInstallFailure)
 
 	tc.expectedDetail.PostInstallationNotes = strings.ReplaceAll(
 		tc.expectedDetail.PostInstallationNotes, "@TARGET_NS@", tc.request.TargetContext.Namespace)
@@ -388,11 +480,11 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	return installedPackageRef
 }
 
-func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, installedPackageRef *corev1.InstalledPackageReference, expectInstallFailure bool) (actualResp *corev1.GetInstalledPackageDetailResponse) {
+func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context, installedPackageRef *corev1.InstalledPackageReference, expectInstallFailure bool) (actualResp *corev1.GetInstalledPackageDetailResponse) {
 	const maxWait = 25
 	for i := 0; i <= maxWait; i++ {
 		resp2, err := fluxPluginClient.GetInstalledPackageDetail(
-			context.TODO(),
+			grpcContext,
 			&corev1.GetInstalledPackageDetailRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -411,9 +503,9 @@ func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2P
 				break
 			}
 		}
-		t.Logf("Waiting 1s due to: [%s], userReason: [%s], attempt: [%d/%d]...",
+		t.Logf("Waiting 2s until install completes due to: [%s], userReason: [%s], attempt: [%d/%d]...",
 			resp2.InstalledPackageDetail.Status.Reason, resp2.InstalledPackageDetail.Status.UserReason, i+1, maxWait)
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	if actualResp == nil {
@@ -828,6 +920,34 @@ var (
 		AvailablePackageRef: availableRef("podinfo-10/podinfo", "default"),
 	}
 
+	create_request_podinfo_7 = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-11/podinfo", "default"),
+		Name:                "my-podinfo-11",
+		TargetContext: &corev1.Context{
+			Namespace: "test-11",
+		},
+	}
+
+	expected_detail_podinfo_7 = &corev1.InstalledPackageDetail{
+		InstalledPackageRef: installedRef("my-podinfo-11", "kubeapps"),
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		Name: "my-podinfo-11",
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "6.0.0",
+			AppVersion: "6.0.0",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: 60,
+		},
+		Status: statusInstalled,
+		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-11 8080:9898\n",
+		AvailablePackageRef: availableRef("podinfo-11/podinfo", "default"),
+	}
+
 	update_request_1 = &corev1.UpdateInstalledPackageRequest{
 		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
 		PkgVersionReference: &corev1.VersionReference{
@@ -867,11 +987,19 @@ var (
 		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
 	}
 
+	update_request_6 = &corev1.UpdateInstalledPackageRequest{
+		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "=5.2.1",
+		},
+		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+	}
+
 	create_request_podinfo_for_delete_1 = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-11/podinfo", "default"),
-		Name:                "my-podinfo-11",
+		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
+		Name:                "my-podinfo-12",
 		TargetContext: &corev1.Context{
-			Namespace: "test-11",
+			Namespace: "test-12",
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
@@ -879,11 +1007,11 @@ var (
 	}
 
 	expected_detail_podinfo_for_delete_1 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-11", "kubeapps"),
+		InstalledPackageRef: installedRef("my-podinfo-12", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-11",
+		Name: "my-podinfo-12",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
@@ -894,7 +1022,38 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-11 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-11/podinfo", "default"),
+			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-12 8080:9898\n",
+		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
+	}
+
+	create_request_podinfo_for_delete_2 = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-13/podinfo", "default"),
+		Name:                "my-podinfo-13",
+		TargetContext: &corev1.Context{
+			Namespace: "test-13",
+		},
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "=5.2.1",
+		},
+	}
+
+	expected_detail_podinfo_for_delete_2 = &corev1.InstalledPackageDetail{
+		InstalledPackageRef: installedRef("my-podinfo-13", "kubeapps"),
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "=5.2.1",
+		},
+		Name: "my-podinfo-13",
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "5.2.1",
+			AppVersion: "5.2.1",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: 60,
+		},
+		Status: statusInstalled,
+		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-13 8080:9898\n",
+		AvailablePackageRef: availableRef("podinfo-13/podinfo", "default"),
 	}
 )

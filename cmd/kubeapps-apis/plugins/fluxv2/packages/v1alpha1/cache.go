@@ -56,7 +56,9 @@ type cacheValueDeleter func(string, map[string]interface{}) (bool, error)
 // TODO (gfichtenholt) rename this to just Config when caching is separated out into core server
 // and/or caching-rleated code is moved into a separate package?
 type cacheConfig struct {
-	gvr          schema.GroupVersionResource
+	gvr schema.GroupVersionResource
+	// this clientGetter is for running out-of-request interactions with the Kubernetes API server,
+	// such as watching for resource changes
 	clientGetter clientGetter
 	// 'onAdd' and 'onModify' hooks are called when a new or modified object comes about and
 	// allows the plug-in to return information about WHETHER OR NOT and WHAT is to be stored
@@ -114,22 +116,18 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 
 	if redisCli == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
-	}
-
-	if config.clientGetter == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with configGetter")
-	}
-
-	if config.onAdd == nil || config.onModify == nil || config.onDelete == nil || config.onGet == nil {
+	} else if config.clientGetter == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with clientGetter")
+	} else if config.onAdd == nil || config.onModify == nil || config.onDelete == nil || config.onGet == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with expected cache hooks")
 	}
 
 	// sanity check that the redis client is connected
-	pong, err := redisCli.Ping(redisCli.Context()).Result()
-	if err != nil {
+	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
 		return nil, err
+	} else {
+		log.Infof("[PING] -> [%s]", pong)
 	}
-	log.Infof("[PING] -> [%s]", pong)
 
 	c := NamespacedResourceWatcherCache{
 		config:                  config,
@@ -138,7 +136,7 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	}
 
 	// sanity check that the specified GVR is a valid registered CRD
-	if err = c.isGvrValid(); err != nil {
+	if err := c.isGvrValid(); err != nil {
 		return nil, err
 	}
 
@@ -176,14 +174,14 @@ func (c NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 
 	name := fmt.Sprintf("%s.%s", c.config.gvr.Resource, c.config.gvr.Group)
-	crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
+	if crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{}); err != nil {
 		return err
-	}
-	for _, condition := range crd.Status.Conditions {
-		if condition.Type == apiextv1.Established &&
-			condition.Status == apiextv1.ConditionTrue {
-			return nil
+	} else {
+		for _, condition := range crd.Status.Conditions {
+			if condition.Type == apiextv1.Established &&
+				condition.Status == apiextv1.ConditionTrue {
+				return nil
+			}
 		}
 	}
 	return status.Errorf(codes.FailedPrecondition, "CRD [%s] is not valid", c.config.gvr)
@@ -246,12 +244,10 @@ func (c NamespacedResourceWatcherCache) resync() (string, error) {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
-	// TODO: (gfichtenholt) RBAC check whether I list and watch specified GVR?
-	// Currently you'll need to run with the unsafe dev-only service account, since the plugin sets
-	// up background jobs that are running outside of requests from the user (ie. we're not using the
-	// users' token for those). Longer term, the plan is to create a separate RBAC yaml specific to
-	// the plugin that will need to be applied for using the plugin (nice and explicit),
-	// granting additional RBAC privs to the service account used by kubeapps-apis
+	// This code runs in the background, i.e. not in a context of any specific user request.
+	// As such, it requires RBAC to be set up properly during install to be able to list specified GVR
+	// (e.g. flux CRDs). For further details, see https://github.com/kubeapps/kubeapps/pull/3551 and
+	// see helm chart templates/kubeappsapis/rbac_fluxv2.yaml
 
 	// Notice, we are not setting resourceVersion in ListOptions, which means
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/

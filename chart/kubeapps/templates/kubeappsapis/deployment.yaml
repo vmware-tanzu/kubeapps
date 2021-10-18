@@ -1,4 +1,3 @@
-{{- if .Values.featureFlags.kubeappsAPIsServer }}
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
@@ -29,9 +28,7 @@ spec:
         {{- end }}
     spec:
       {{- include "kubeapps.imagePullSecrets" . | indent 6 }}
-       {{- if .Values.kubeappsapis.unsafeUseDemoSA }}
       serviceAccountName: {{ template "kubeapps.kubeappsapis.fullname" . }}
-      {{- end }}
       {{- if .Values.kubeappsapis.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.hostAliases "context" $) | nindent 8 }}
       {{- end }}
@@ -80,9 +77,6 @@ spec:
             {{- end }}
             {{- if .Values.pinnipedProxy.enabled }}
             - --pinniped-proxy-url=http://{{ template "kubeapps.pinniped-proxy.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.pinnipedProxy.containerPort }}
-            {{- end }}
-            {{- if .Values.kubeappsapis.unsafeUseDemoSA }}
-            - --unsafe-use-demo-sa=true
             {{- end }}
           env:
             - name: PORT
@@ -164,4 +158,3 @@ spec:
         - name: ca-certs
           emptyDir: {}
       {{- end }}
-{{- end }}

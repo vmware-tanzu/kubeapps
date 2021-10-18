@@ -37,14 +37,6 @@ deploy-dev-kubeapps:
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml
 
-deploy-dev-kubeapps-with-apis:
-	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
-		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
-		--set kubeappsapis.unsafeUseDemoSA=true
-
-
 deploy-dev: deploy-dependencies deploy-dev-kubeapps
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
@@ -65,7 +57,7 @@ deploy-kapp-controller:
 
 # Add the flux controllers used for testing the kubeapps-apis integration.
 deploy-flux-controllers:
-	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.17.2/install.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.18.1/install.yaml
 
 reset-dev:
 	helm --kubeconfig=${CLUSTER_CONFIG} -n kubeapps delete kubeapps  || true

@@ -73,11 +73,6 @@ export interface IPackageState {
     values?: string;
     schema?: JSONSchemaType<any>;
   };
-  deployed: {
-    availablePackageDetail?: AvailablePackageDetail;
-    values?: string;
-    schema?: JSONSchemaType<any>;
-  };
   items: AvailablePackageSummary[];
   categories: string[];
   size: number;

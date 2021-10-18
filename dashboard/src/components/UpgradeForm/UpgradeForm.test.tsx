@@ -1,4 +1,5 @@
 import actions from "actions";
+import DeploymentFormBody from "components/DeploymentFormBody/DeploymentFormBody";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import {
@@ -6,18 +7,21 @@ import {
   AvailablePackageReference,
   Context,
   InstalledPackageReference,
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
   Maintainer,
   PackageAppVersion,
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route } from "react-router";
 import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IPackageState, IStoreState } from "shared/types";
+import { CustomInstalledPackageDetail, FetchError, IAppState, IPackageState } from "shared/types";
 import * as url from "shared/url";
-import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
+import UpgradeForm from "./UpgradeForm";
 
 const testVersion: PackageAppVersion = {
   pkgVersion: "1.2.3",
@@ -26,134 +30,157 @@ const testVersion: PackageAppVersion = {
 
 const schema = { properties: { foo: { type: "string" } } };
 
-const availablePkgDetails = [
-  {
-    name: "foo",
-    categories: [""],
-    displayName: "foo",
-    iconUrl: "https://icon.com",
-    repoUrl: "https://repo.com",
-    homeUrl: "https://example.com",
-    sourceUrls: ["test"],
-    shortDescription: "test",
-    longDescription: "test",
-    availablePackageRef: {
-      identifier: "foo/foo",
-      context: { cluster: "", namespace: "package-namespace" } as Context,
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-    },
-    valuesSchema: "test",
-    defaultValues: "test",
-    maintainers: [{ name: "test", email: "test" }] as Maintainer[],
-    readme: "test",
-    version: {
-      appVersion: testVersion.appVersion,
-      pkgVersion: testVersion.pkgVersion,
-    } as PackageAppVersion,
-  },
-  {
-    name: "foo",
-    categories: [""],
-    displayName: "foo",
-    iconUrl: "https://icon.com",
-    repoUrl: "https://repo.com",
-    homeUrl: "https://example.com",
-    sourceUrls: ["test"],
-    shortDescription: "test",
-    longDescription: "test",
-    availablePackageRef: {
-      identifier: "foo/foo",
-      context: { cluster: "", namespace: "package-namespace" } as Context,
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-    },
-    valuesSchema: "test",
-    defaultValues: "test",
-    maintainers: [{ name: "test", email: "test" }] as Maintainer[],
-    readme: "test",
-    version: {
-      appVersion: testVersion.appVersion,
-      pkgVersion: testVersion.pkgVersion,
-    } as PackageAppVersion,
-  },
-] as AvailablePackageDetail[];
-
 const defaultProps = {
-  appCurrentVersion: "1.0.0",
-  appCurrentValues: "foo: bar",
-  packageId: "my-package",
-  packagesIsFetching: false,
+  packageId: "stable/bar",
   namespace: "default",
   cluster: "default",
   releaseName: "my-release",
-  repo: "my-repo",
   repoNamespace: "kubeapps",
-  error: undefined,
-  apps: { isFetching: false },
-  packages: { isFetching: false },
-  selected: {
-    versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
-    availablePackageDetail: { name: "test" } as AvailablePackageDetail,
-  } as IPackageState["selected"],
-  deployed: {} as IPackageState["deployed"],
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-} as IUpgradeFormProps;
-
-const populatedProps = {
-  ...defaultProps,
-  selected: {
-    error: undefined,
-    availablePackageDetail: availablePkgDetails[0],
-    pkgVersion: testVersion.pkgVersion,
-    appVersion: testVersion.appVersion,
-    readme: "readme",
-    readmeError: undefined,
-    values: "initial: values",
-    versions: [testVersion],
-    schema: schema as any,
-  } as IPackageState["selected"],
-  deployed: {
-    availablePackageDetail: availablePkgDetails[0],
-    schema: schema as any,
-    values: "foo:",
-  } as IPackageState["deployed"],
 };
+
+const availablePkgDetail = {
+  name: "foo",
+  categories: [""],
+  displayName: "foo",
+  iconUrl: "https://icon.com",
+  repoUrl: "https://repo.com",
+  homeUrl: "https://example.com",
+  sourceUrls: ["test"],
+  shortDescription: "test",
+  longDescription: "test",
+  availablePackageRef: {
+    identifier: "foo/foo",
+    context: { cluster: "", namespace: "package-namespace" } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+  },
+  valuesSchema: '"$schema": "http://json-schema.org/schema#"',
+  defaultValues: "default: values",
+  maintainers: [{ name: "test", email: "test" }] as Maintainer[],
+  readme: "test",
+  version: {
+    appVersion: testVersion.appVersion,
+    pkgVersion: testVersion.pkgVersion,
+  } as PackageAppVersion,
+} as AvailablePackageDetail;
+
+const installedPkgDetail = {
+  name: "test",
+  postInstallationNotes: "test",
+  valuesApplied: "foo:",
+  availablePackageRef: {
+    identifier: "stable/bar",
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+  } as AvailablePackageReference,
+  currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+  installedPackageRef: {
+    identifier: "stable/bar",
+    pkgVersion: "1.0.0",
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
+    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+  } as InstalledPackageReference,
+  latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+  latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+  pkgVersionReference: { version: "1" } as VersionReference,
+  reconciliationOptions: {},
+  status: {
+    ready: true,
+    reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+    userReason: "deployed",
+  } as InstalledPackageStatus,
+} as CustomInstalledPackageDetail;
+
+const selectedPkg = {
+  availablePackageDetail: availablePkgDetail,
+  pkgVersion: testVersion.pkgVersion,
+  appVersion: testVersion.appVersion,
+  readme: "readme",
+  values: "initial: values",
+  versions: [testVersion],
+  schema: schema as any,
+};
+
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.releaseName}/upgrade`;
+const routePath = "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName/upgrade";
 
 describe("it behaves like a loading component", () => {
   it("if the app is being fetched", () => {
+    const state = {
+      ...defaultStore,
+      apps: {
+        isFetching: true,
+      } as IPackageState,
+    };
     expect(
       mountWrapper(
-        getStore({ apps: { isFetching: true } } as IStoreState),
-        <UpgradeForm {...defaultProps} />,
+        getStore({ ...state }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <UpgradeForm />,
+          </Route>
+        </MemoryRouter>,
       ).find(LoadingWrapper),
     ).toExist();
   });
 
   it("if the package is being fetched", () => {
+    const state = {
+      ...defaultStore,
+      packages: {
+        isFetching: true,
+      } as IPackageState,
+    };
     expect(
       mountWrapper(
-        getStore({ packages: { isFetching: true } } as IStoreState),
-        <UpgradeForm {...defaultProps} />,
+        getStore({ ...state }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <UpgradeForm />,
+          </Route>
+        </MemoryRouter>,
       ).find(LoadingWrapper),
     ).toExist();
   });
-
   it("if there are no versions", () => {
+    const state = {
+      ...defaultStore,
+      packages: {
+        selected: {
+          versions: [] as PackageAppVersion[],
+        },
+      } as IPackageState,
+    };
     expect(
       mountWrapper(
-        defaultStore,
-        <UpgradeForm {...defaultProps} selected={{ ...defaultProps.selected, versions: [] }} />,
+        getStore({ ...state }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <UpgradeForm />,
+          </Route>
+        </MemoryRouter>,
       ).find(LoadingWrapper),
     ).toExist();
   });
 
   it("if there is no version", () => {
+    const state = {
+      ...defaultStore,
+      packages: {
+        selected: {
+          availablePackageDetail: undefined,
+        },
+      } as IPackageState,
+    };
+
     expect(
       mountWrapper(
-        defaultStore,
-        <UpgradeForm
-          {...defaultProps}
-          selected={{ ...defaultProps.selected, availablePackageDetail: undefined }}
-        />,
+        getStore({ ...state }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <UpgradeForm />,
+          </Route>
+        </MemoryRouter>,
       ).find(LoadingWrapper),
     ).toExist();
   });
@@ -162,7 +189,23 @@ describe("it behaves like a loading component", () => {
 it("fetches the available versions", () => {
   const getAvailablePackageVersions = jest.fn();
   PackagesService.getAvailablePackageVersions = getAvailablePackageVersions;
-  mountWrapper(defaultStore, <UpgradeForm {...defaultProps} />);
+
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: installedPkgDetail,
+      selectedDetails: availablePkgDetail,
+      isFetching: false,
+    } as IAppState,
+  };
+  mountWrapper(
+    getStore({ ...state }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
+  );
   expect(getAvailablePackageVersions).toHaveBeenCalledWith({
     context: {
       cluster: defaultProps.cluster,
@@ -173,56 +216,64 @@ it("fetches the available versions", () => {
   } as AvailablePackageReference);
 });
 
-it("fetches the current package version even if there is already one in the state", () => {
-  const deployed = {
-    availablePackageDetail: availablePkgDetails[1],
-  };
-
-  const selected = {
-    availablePackageDetail: availablePkgDetails[0],
-    pkgVersion: testVersion.pkgVersion,
-    appVersion: testVersion.appVersion,
-    readme: "readme",
-    values: "values",
-    versions: [testVersion],
-    schema: schema as any,
-  };
-
+it("does not fetch the current package version if there is already one in the state", () => {
   const getAvailablePackageDetail = jest.fn();
   PackagesService.getAvailablePackageDetail = getAvailablePackageDetail;
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: installedPkgDetail,
+      selectedDetails: availablePkgDetail,
+      isFetching: false,
+    } as IAppState,
+    packages: {
+      selected: selectedPkg,
+    } as IPackageState,
+  };
   mountWrapper(
-    defaultStore,
-    <UpgradeForm {...defaultProps} selected={selected} deployed={deployed} />,
+    getStore({ ...state }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
   );
-  expect(getAvailablePackageDetail).toHaveBeenCalledWith(
-    {
-      context: {
-        cluster: availablePkgDetails[0].availablePackageRef?.context?.cluster,
-        namespace: defaultProps.repoNamespace,
-      },
-      identifier: defaultProps.packageId,
-      plugin: defaultProps.plugin,
-    } as AvailablePackageReference,
-    deployed.availablePackageDetail.version?.pkgVersion,
-  );
+  expect(getAvailablePackageDetail).not.toHaveBeenCalled();
 });
 
 describe("renders an error", () => {
   it("renders an alert if the deployment failed", () => {
-    const selected = {
-      availablePackageDetail: { name: "foo" } as AvailablePackageDetail,
-      pkgVersion: "10.0.0",
-      appVersion: "1.2.3",
-      versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
-      schema: schema as any,
-      error: new FetchError("wrong format!"),
+    const state = {
+      ...defaultStore,
+      apps: {
+        selected: installedPkgDetail,
+        selectedDetails: availablePkgDetail,
+        isFetching: false,
+        error: new FetchError("wrong format!"),
+      } as IAppState,
+      packages: {
+        selected: {
+          availablePackageDetail: availablePkgDetail,
+          pkgVersion: testVersion.pkgVersion,
+          appVersion: testVersion.appVersion,
+          readme: "readme",
+          values: "initial: values",
+          versions: [testVersion],
+          schema: schema as any,
+        },
+      } as IPackageState,
     };
+
     const wrapper = mountWrapper(
-      defaultStore,
-      <UpgradeForm {...defaultProps} selected={selected} />,
+      getStore({ ...state }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <UpgradeForm />,
+        </Route>
+      </MemoryRouter>,
     );
     expect(wrapper.find(Alert).exists()).toBe(true);
-    expect(wrapper.find(Alert).html()).toContain("wrong format!");
+    expect(wrapper.find(Alert).first()).toIncludeText("wrong format!");
   });
 });
 
@@ -230,34 +281,89 @@ it("defaults the upgrade version to the current version", () => {
   // helm upgrade is the only way to update the values.yaml, so upgrade is
   // often used by users to update values only, so we can't default to the
   // latest version on the assumption that they always want to upgrade.
-  const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: installedPkgDetail,
+      selectedDetails: availablePkgDetail,
+      isFetching: false,
+    } as IAppState,
+    packages: {
+      selected: selectedPkg,
+    } as IPackageState,
+  };
+
+  const wrapper = mountWrapper(
+    getStore({ ...state }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
+  );
   expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("1.0.0");
 });
 
 it("forwards the appValues when modified", () => {
-  const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: { ...installedPkgDetail, valuesApplied: "foo: not-bar" },
+      selectedDetails: { ...availablePkgDetail, defaultValues: "# A comment\nfoo: bar\n" },
+      isFetching: false,
+    } as IAppState,
+    packages: {
+      selected: { ...selectedPkg, values: "initial: values" },
+    } as IPackageState,
+  };
+  const wrapper = mountWrapper(
+    getStore({ ...state }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
+  );
+
+  const handleValuesChange: (v: string) => void = wrapper
+    .find(DeploymentFormBody)
+    .prop("setValues");
   act(() => {
-    const handleValuesChange: (v: string) => void = wrapper
-      .find(DeploymentFormBody)
-      .prop("setValues");
     handleValuesChange("foo: bar");
   });
-  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("initial: values\nfoo: bar\n");
+  wrapper.update();
+
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
 });
 
 it("triggers an upgrade when submitting the form", async () => {
   const mockDispatch = jest.fn().mockReturnValue(true);
   jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  const { namespace, releaseName } = defaultProps;
+  const updateInstalledPackage = jest.fn();
+  actions.apps.updateInstalledPackage = updateInstalledPackage;
+
   const appValues = "initial: values\nfoo: bar\n";
-  const updateInstalledPackage = jest
-    .spyOn(actions.apps, "updateInstalledPackage")
-    .mockImplementation(() => {
-      return jest.fn();
-    });
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: { ...installedPkgDetail, valuesApplied: appValues },
+      selectedDetails: availablePkgDetail,
+      isFetching: false,
+    } as IAppState,
+    packages: {
+      selected: selectedPkg,
+    } as IPackageState,
+  };
+
   const wrapper = mountWrapper(
-    defaultStore,
-    <UpgradeForm {...populatedProps} namespace={namespace} />,
+    getStore({
+      ...state,
+    }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
   );
 
   await act(async () => {
@@ -271,24 +377,14 @@ it("triggers an upgrade when submitting the form", async () => {
     });
   });
   expect(updateInstalledPackage).toHaveBeenCalledWith(
-    {
-      context: { cluster: defaultProps.cluster, namespace: namespace },
-      identifier: releaseName,
-      plugin: { name: "my.plugin", version: "0.0.1" },
-    } as InstalledPackageReference,
-    availablePkgDetails[0],
+    installedPkgDetail.installedPackageRef,
+    availablePkgDetail,
     appValues,
     schema,
   );
   expect(mockDispatch).toHaveBeenCalledWith({
     payload: {
-      args: [
-        url.app.apps.get({
-          context: { cluster: defaultProps.cluster, namespace: namespace },
-          identifier: releaseName,
-          plugin: { name: "my.plugin", version: "0.0.1" },
-        } as InstalledPackageReference),
-      ],
+      args: [url.app.apps.get(installedPkgDetail.installedPackageRef)],
       method: "push",
     },
     type: "@@router/CALL_HISTORY_METHOD",
@@ -297,41 +393,91 @@ it("triggers an upgrade when submitting the form", async () => {
 
 describe("when receiving new props", () => {
   it("should calculate the modifications from the default and the current values", () => {
+    const defaultValues = "initial: values\na: b\n";
+    const deployedValues = "a: b\n";
     const currentValues = "a: b\nc: d\n";
-    const defaultValues = "a: b\n";
+    const expectedValues = "initial: values\na: b\nc: d\n";
+
+    const state = {
+      ...defaultStore,
+      apps: {
+        selected: { ...installedPkgDetail, valuesApplied: currentValues },
+        selectedDetails: { ...availablePkgDetail, defaultValues: deployedValues },
+        isFetching: false,
+      } as IAppState,
+      packages: {
+        selected: { ...selectedPkg, values: defaultValues },
+      } as IPackageState,
+    };
+
     const wrapper = mountWrapper(
-      defaultStore,
-      <UpgradeForm {...populatedProps} appCurrentValues={currentValues} />,
+      getStore({
+        ...state,
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <UpgradeForm />,
+        </Route>
+      </MemoryRouter>,
     );
+
     wrapper.setProps({ deployed: { values: defaultValues } });
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(
-      "initial: values\n" + currentValues,
-    );
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(expectedValues);
   });
 
   it("should apply modifications if a new version is selected", () => {
     const defaultValues = "a: b\n";
     const deployedValues = "a: B\n";
     const currentValues = "a: B\nc: d\n";
+    const expectedValues = "a: b\nc: d\n";
+    const state = {
+      ...defaultStore,
+      apps: {
+        selected: { ...installedPkgDetail, valuesApplied: currentValues },
+        selectedDetails: { ...availablePkgDetail, defaultValues: deployedValues },
+        isFetching: false,
+      } as IAppState,
+      packages: {
+        selected: { ...selectedPkg, values: defaultValues },
+      } as IPackageState,
+    };
     const wrapper = mountWrapper(
-      defaultStore,
-      <UpgradeForm
-        {...populatedProps}
-        deployed={{ values: deployedValues }}
-        appCurrentValues={currentValues}
-        selected={{
-          versions: [testVersion],
-          availablePackageDetail: availablePkgDetails[1],
-          values: defaultValues,
-        }}
-      />,
+      getStore({
+        ...state,
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <UpgradeForm />,
+        </Route>
+      </MemoryRouter>,
     );
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual("a: b\nc: d\n");
+
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(expectedValues);
   });
 
   it("won't apply changes if the values have been manually modified", () => {
     const userValues = "a: b\n";
-    const wrapper = mountWrapper(defaultStore, <UpgradeForm {...populatedProps} />);
+    const state = {
+      ...defaultStore,
+      apps: {
+        selected: installedPkgDetail,
+        selectedDetails: availablePkgDetail,
+        isFetching: false,
+      } as IAppState,
+      packages: {
+        selected: selectedPkg,
+      } as IPackageState,
+    };
+    const wrapper = mountWrapper(
+      getStore({
+        ...state,
+      }),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <UpgradeForm />,
+        </Route>
+      </MemoryRouter>,
+    );
     act(() => {
       const handleValuesChange: (v: string) => void = wrapper
         .find(DeploymentFormBody)
@@ -342,7 +488,7 @@ describe("when receiving new props", () => {
         .prop("setValuesModified");
       setValuesModified();
     });
-    wrapper.setProps({ selected: { versions: [testVersion], version: availablePkgDetails[1] } });
+    wrapper.setProps({ selected: { versions: [testVersion], version: availablePkgDetail } });
     wrapper.update();
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(userValues);
   });
@@ -418,23 +564,43 @@ describe("when receiving new props", () => {
     },
   ].forEach(t => {
     it(t.description, () => {
-      const deployed = {
-        values: t.defaultValues,
-        requested: true,
+      const state = {
+        ...defaultStore,
+        apps: {
+          selected: { ...installedPkgDetail, valuesApplied: t.deployedValues },
+          selectedDetails: { ...availablePkgDetail, defaultValues: t.defaultValues },
+          isFetching: false,
+        } as IAppState,
+        packages: {
+          selected: { ...selectedPkg, values: "initial: values" },
+        } as IPackageState,
       };
-      const newSelected = {
-        ...populatedProps.selected,
-        version: availablePkgDetails[1],
-        values: t.newDefaultValues,
+      const newState = {
+        ...state,
+        apps: {
+          ...state.apps,
+          selected: {
+            ...state.apps.selected,
+            values: t.deployedValues,
+          },
+        } as IAppState,
+        packages: {
+          selected: {
+            ...state.packages.selected,
+            values: t.newDefaultValues,
+          },
+        } as IPackageState,
       };
+
       const wrapper = mountWrapper(
-        defaultStore,
-        <UpgradeForm
-          {...populatedProps}
-          appCurrentValues={t.deployedValues}
-          deployed={deployed}
-          selected={newSelected}
-        />,
+        getStore({
+          ...newState,
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <UpgradeForm />,
+          </Route>
+        </MemoryRouter>,
       );
       expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(t.result);
     });
@@ -442,14 +608,32 @@ describe("when receiving new props", () => {
 });
 
 it("shows, by default, the default values of the deployed package plus any modification", () => {
-  const wrapper = mountWrapper(
-    defaultStore,
-    <UpgradeForm
-      {...populatedProps}
-      deployed={{ values: "# A comment\nfoo: bar\n" }}
-      appCurrentValues="foo: not-bar"
-    />,
-  );
+  const defaultValues = "initial: values";
+  const deployedValues = "# A comment\nfoo: bar\n";
+  const currentValues = "foo: not-bar";
   const expectedValues = "# A comment\nfoo: not-bar\n";
+
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: { ...installedPkgDetail, valuesApplied: currentValues },
+      selectedDetails: { ...availablePkgDetail, defaultValues: deployedValues },
+      isFetching: false,
+    } as IAppState,
+    packages: {
+      selected: { ...selectedPkg, values: defaultValues },
+    } as IPackageState,
+  };
+  const wrapper = mountWrapper(
+    getStore({
+      ...state,
+    }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
+  );
+
   expect(wrapper.find(DeploymentFormBody).prop("deployedValues")).toBe(expectedValues);
 });

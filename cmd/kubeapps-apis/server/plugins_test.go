@@ -270,11 +270,11 @@ func TestExtractToken(t *testing.T) {
 			expectedErr:   fmt.Errorf("malformed authorization metadata"),
 		},
 		{
-			name:          "it returns no token and no error if the 'authorization' is empty",
+			name:          "it returns no token and expected error if the 'authorization' is empty",
 			contextKey:    "",
 			contextValue:  "",
 			expectedToken: "",
-			expectedErr:   nil,
+			expectedErr:   fmt.Errorf("missing authorization metadata"),
 		},
 	}
 
@@ -347,19 +347,19 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			expectedErrMsg: status.Errorf(codes.Unauthenticated, "invalid authorization metadata: malformed authorization metadata"),
 		},
 		{
-			name:            "it creates the config for the default cluster when no authorization metadata is passed",
+			name:            "it doesn't create the config and throws a grpc error for the default cluster when no authorization metadata is passed",
 			contextKey:      "",
 			contextValue:    "",
 			expectedAPIHost: DefaultK8sAPI,
-			expectedErrMsg:  nil,
+			expectedErrMsg:  status.Errorf(codes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
 		},
 		{
-			name:            "it creates the config for the other cluster",
+			name:            "it doesn't create the config and throws a grpc error for the other cluster",
 			contextKey:      "",
 			contextValue:    "",
 			cluster:         OtherClusterName,
 			expectedAPIHost: OtherK8sAPI,
-			expectedErrMsg:  nil,
+			expectedErrMsg:  status.Errorf(codes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
 		},
 	}
 
@@ -372,7 +372,6 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			serveOpts := ServeOptions{
 				ClustersConfigPath: "/config.yaml",
 				PinnipedProxyURL:   "http://example.com",
-				UnsafeUseDemoSA:    false,
 			}
 			configGetter, err := createConfigGetterWithParams(inClusterConfig, serveOpts, clustersConfig)
 			if err != nil {

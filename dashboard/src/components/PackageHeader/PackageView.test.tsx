@@ -74,7 +74,6 @@ const defaultPackageState = {
     values: "values",
     versions: [testVersion],
   } as IPackageState["selected"],
-  deployed: {} as IPackageState["deployed"],
   items: [],
   categories: [],
   size: 20,

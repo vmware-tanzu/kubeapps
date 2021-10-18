@@ -70,24 +70,6 @@ export const receiveSelectedAvailablePackageVersions = createAction(
 
 // No reset action
 
-// ** DeployedAvailablePackage actions **
-// related to the already deployed package in the state
-
-// Request action
-export const requestDeployedAvailablePackageDetail = createAction(
-  "REQUEST_DEPLOYED_AVAILABLE_PACKAGE_DETAIL",
-);
-
-// Receive action
-export const receiveDeployedAvailablePackageDetail = createAction(
-  "RECEIVE_DEPLOYED_AVAILABLE_PACKAGE_DETAIL",
-  resolve => {
-    return (availablePackageDetail: AvailablePackageDetail) => resolve({ availablePackageDetail });
-  },
-);
-
-// No reset action
-
 // ** Error actions **
 // for handling the erros thrown by the rest of the actions
 
@@ -108,8 +90,6 @@ const allActions = [
   resetSelectedAvailablePackageDetail,
   requestSelectedAvailablePackageVersions,
   receiveSelectedAvailablePackageVersions,
-  requestDeployedAvailablePackageDetail,
-  receiveDeployedAvailablePackageDetail,
   createErrorPackage,
   clearErrorPackage,
 ];
@@ -171,26 +151,6 @@ export function fetchAndSelectAvailablePackageDetail(
         dispatch(receiveSelectedAvailablePackageDetail(response.availablePackageDetail));
       } else {
         dispatch(createErrorPackage(new FetchError("could not find package version")));
-      }
-    } catch (e: any) {
-      dispatch(createErrorPackage(new FetchError(e.message)));
-    }
-  };
-}
-
-export function fetchDeployedAvailablePackageDetail(
-  availablePackageReference?: AvailablePackageReference,
-  version?: string,
-): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
-  return async dispatch => {
-    try {
-      dispatch(requestDeployedAvailablePackageDetail());
-      const response = await PackagesService.getAvailablePackageDetail(
-        availablePackageReference,
-        version,
-      );
-      if (response.availablePackageDetail) {
-        dispatch(receiveDeployedAvailablePackageDetail(response.availablePackageDetail));
       }
     } catch (e: any) {
       dispatch(createErrorPackage(new FetchError(e.message)));

@@ -38,7 +38,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--plugin-dir", "foo01",
 				"--clusters-config-path", "foo02",
 				"--pinniped-proxy-url", "foo03",
-				"--unsafe-use-demo-sa", "true",
 				"--unsafe-local-dev-kubeconfig", "true",
 			},
 			server.ServeOptions{
@@ -46,7 +45,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 				PluginDirs:               []string{"foo01"},
 				ClustersConfigPath:       "foo02",
 				PinnipedProxyURL:         "foo03",
-				UnsafeUseDemoSA:          true,
 				UnsafeLocalDevKubeconfig: true,
 			},
 		},

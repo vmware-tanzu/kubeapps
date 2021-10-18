@@ -321,15 +321,10 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 		if cluster == "" {
 			cluster = clustersConfig.KubeappsClusterName
 		}
-		if cluster == clustersConfig.KubeappsClusterName && serveOpts.UnsafeUseDemoSA {
-			// If using the priviledged servicceAccount, just use the default inClusterConfig
-			// instead of creating a user config with authentication
-			config = inClusterConfig
-		} else {
-			config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
-			if err != nil {
-				return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
-			}
+
+		config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 		}
 		return config, nil
 	}, nil
@@ -339,11 +334,12 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 // It is equivalent to the "Authorization" usual HTTP 1 header
 // For instance: authorization="Bearer abc" will return "abc"
 func extractToken(ctx context.Context) (string, error) {
-	// per https://github.com/kubeapps/kubeapps/pull/3044
-	// extractToken() to return an empty token with a nil error if there is no metadata with the context.
+	// per https://github.com/kubeapps/kubeapps/issues/3560
+	// extractToken() to raise an error if there is no metadata with the context.
+	// note, the caller will wrap this as a codes.Unauthenticated status
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", nil
+		return "", fmt.Errorf("missing authorization metadata")
 	}
 
 	// metadata is always lowercased
@@ -354,8 +350,8 @@ func extractToken(ctx context.Context) (string, error) {
 			return "", fmt.Errorf("malformed authorization metadata")
 		}
 	} else {
-		// No authorization header found, no error here, we will delegate it to the RBAC
-		return "", nil
+		// No authorization header found, see comment above
+		return "", fmt.Errorf("missing authorization metadata")
 	}
 }
 

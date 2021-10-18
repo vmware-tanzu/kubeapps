@@ -14,7 +14,6 @@ export const initialState: IPackageState = {
   selected: {
     versions: [],
   },
-  deployed: {},
   size: 20,
 };
 
@@ -96,21 +95,6 @@ const packageReducer = (
         ...state,
         isFetching: false,
         selected: selectedPackageReducer(state.selected, action),
-      };
-    case getType(actions.packages.requestDeployedAvailablePackageDetail):
-      return {
-        ...state,
-        deployed: {},
-      };
-    case getType(actions.packages.receiveDeployedAvailablePackageDetail):
-      return {
-        ...state,
-        isFetching: false,
-        deployed: {
-          availablePackageDetail: action.payload.availablePackageDetail,
-          schema: action.payload.availablePackageDetail.valuesSchema as any,
-          values: action.payload.availablePackageDetail.defaultValues,
-        },
       };
     case getType(actions.packages.resetAvailablePackageSummaries):
       return {
