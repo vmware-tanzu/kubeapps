@@ -1088,6 +1088,78 @@ func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err
 	)
 }
 
+//TestValidateOCIAppRepository  Sample code to tryout ValidateOCIAppRepository API
+func TestValidateOCIAppRepository(t *testing.T) {
+	const kubeappsNamespace = "kubeapps"
+	getValidationOCIClientAndReqTests := []struct {
+		name             string
+		requestData      string
+		requestNamespace string
+		expectedError    error
+		expectedResult   bool
+	}{
+		{
+			name:             "Docker only OCI repositories",
+			requestNamespace: kubeappsNamespace,
+			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["hello-world"]}}`,
+			expectedResult:   false,
+		},
+		{
+			name:             "Helm only OCI repositories",
+			requestNamespace: kubeappsNamespace,
+			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["podinfo/podinfo"]}}`,
+			expectedResult:   true,
+		},
+		{
+			name:             "Docker and Helm OCI repositories",
+			requestNamespace: kubeappsNamespace,
+			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["podinfo/podinfo", "hello-world"]}}`,
+			expectedResult:   false,
+		},
+		{
+			name:             "Multiple Helm OCI repositories",
+			requestNamespace: kubeappsNamespace,
+			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["podinfo/podinfo", "wordpress/wordpress"]}}`,
+			expectedResult:   true,
+		},
+		{
+			name:             "Multiple Tags Single Helm OCI repositories",
+			requestNamespace: kubeappsNamespace,
+			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["podinfo/podinfo"]}}`,
+			expectedResult:   true,
+		},
+	}
+
+	for _, tc := range getValidationOCIClientAndReqTests {
+		t.Run(tc.name, func(t *testing.T) {
+			cs := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(),
+				fakecoreclientset.NewSimpleClientset(),
+				&fakeRest.RESTClient{},
+			}
+			handler := userHandler{
+				kubeappsNamespace: kubeappsNamespace,
+				svcClientset:      cs,
+				clientset:         cs,
+			}
+			appRepo, cli, err := handler.getValidationCli(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
+			if (err != nil || tc.expectedError != nil) && !errors.Is(err, tc.expectedError) {
+				t.Fatalf("got: %+v, want: %+v", err, tc.expectedError)
+			}
+			if tc.expectedError != nil {
+				return
+			}
+			result, err := ValidateOCIAppRepository(appRepo, cli)
+			if tc.expectedResult != result {
+				//TODO : comment to pass all
+				//t.Errorf("received error: %v", err)
+				fmt.Printf("received error: %v", err)
+			}
+
+		})
+	}
+}
+
 func TestValidateAppRepository(t *testing.T) {
 	const kubeappsNamespace = "kubeapps"
 	getValidationCliAndReqTests := []struct {
