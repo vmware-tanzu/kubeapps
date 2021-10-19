@@ -346,7 +346,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   if ! retry_while testHelm "2" "1"; then
     warn "PODS status on failure"
     kubectl get pods -n kubeapps
-    for pod in $(kubectl get po -l release=kubeapps-ci -oname -n kubeapps); do
+    for pod in $(kubectl get po -l='app.kubernetes.io/managed-by=Helm,app.kubernetes.io/instance=kubeapps-ci' -oname -n kubeapps); do
       warn "LOGS for pod $pod ------------"
       if [[ "$pod" =~ .*internal.* ]]; then
         kubectl logs -n kubeapps "$pod"
