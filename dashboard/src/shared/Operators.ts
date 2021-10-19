@@ -11,7 +11,9 @@ import {
 
 export class Operators {
   public static async isOLMInstalled(cluster: string, namespace: string) {
-    const { status } = await axiosWithAuth.get(url.api.k8s.operators.operators(cluster, namespace));
+    const { status } = await axiosWithAuth.get<any>(
+      url.api.k8s.operators.operators(cluster, namespace),
+    );
     return status === 200;
   }
 
