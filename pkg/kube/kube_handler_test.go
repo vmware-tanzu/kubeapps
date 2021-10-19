@@ -45,7 +45,6 @@ import (
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	fakeapprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 )
 
 type repoStub struct {
@@ -1088,78 +1087,6 @@ func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err
 	)
 }
 
-//TestValidateOCIAppRepository  Sample code to tryout ValidateOCIAppRepository API
-func TestValidateOCIAppRepository(t *testing.T) {
-	const kubeappsNamespace = "kubeapps"
-	getValidationOCIClientAndReqTests := []struct {
-		name             string
-		requestData      string
-		requestNamespace string
-		expectedError    error
-		expectedResult   bool
-	}{
-		{
-			name:             "Docker only OCI repositories",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["hello-world"]}}`,
-			expectedResult:   false,
-		},
-		{
-			name:             "Helm only OCI repositories",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["podinfo/podinfo"]}}`,
-			expectedResult:   true,
-		},
-		{
-			name:             "Docker and Helm OCI repositories",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["podinfo/podinfo", "hello-world"]}}`,
-			expectedResult:   false,
-		},
-		{
-			name:             "Multiple Helm OCI repositories",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["podinfo/podinfo", "wordpress/wordpress"]}}`,
-			expectedResult:   true,
-		},
-		{
-			name:             "Multiple Tags Single Helm OCI repositories",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test10", "repoURL": "https://example.com/test10", "type":"oci", "ociRepositories": ["podinfo/podinfo"]}}`,
-			expectedResult:   true,
-		},
-	}
-
-	for _, tc := range getValidationOCIClientAndReqTests {
-		t.Run(tc.name, func(t *testing.T) {
-			cs := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
-			}
-			handler := userHandler{
-				kubeappsNamespace: kubeappsNamespace,
-				svcClientset:      cs,
-				clientset:         cs,
-			}
-			appRepo, cli, err := handler.getValidationCli(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
-			if (err != nil || tc.expectedError != nil) && !errors.Is(err, tc.expectedError) {
-				t.Fatalf("got: %+v, want: %+v", err, tc.expectedError)
-			}
-			if tc.expectedError != nil {
-				return
-			}
-			result, err := ValidateOCIAppRepository(appRepo, cli)
-			if tc.expectedResult != result {
-				//TODO : comment to pass all
-				//t.Errorf("received error: %v", err)
-				fmt.Printf("received error: %v", err)
-			}
-
-		})
-	}
-}
-
 func TestValidateAppRepository(t *testing.T) {
 	const kubeappsNamespace = "kubeapps"
 	getValidationCliAndReqTests := []struct {
@@ -1170,12 +1097,18 @@ func TestValidateAppRepository(t *testing.T) {
 		expectedHeaders            http.Header
 		expectedError              error
 		expectedReqResolutionError error
+		err                        error
+		response                   *http.Response
+		expectedResult             *ValidationResponse
 	}{
 		{
 			name:             "it parses the repo URL",
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo"}}`,
 			expectedURLs:     []string{"http://example.com/test-repo/index.yaml"},
+			err:              nil,
+			response:         &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
+			expectedResult:   &ValidationResponse{Code: 401, Message: "Boom"},
 		},
 		{
 			name:             "it includes the auth creds",
@@ -1183,24 +1116,35 @@ func TestValidateAppRepository(t *testing.T) {
 			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "authHeader": "test-me"}}`,
 			expectedURLs:     []string{"http://example.com/test-repo/index.yaml"},
 			expectedHeaders:  http.Header{"Authorization": []string{"test-me"}},
+			err:              nil,
+			response:         &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
+			expectedResult:   &ValidationResponse{Code: 401, Message: "Boom"},
 		},
 		{
 			name:             "validation fails if docker registry secrets included for a global repo",
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "registrySecrets": ["secret-1"]}}`,
 			expectedError:    ErrGlobalRepositoryWithSecrets,
+			err:              nil,
+			response:         &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
+			expectedResult:   &ValidationResponse{Code: 401, Message: "Boom"},
 		},
 		{
 			name:             "validates OCI repositories",
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "type":"oci", "ociRepositories": ["apache", "jenkins"]}}`,
-			expectedURLs:     []string{"http://example.com/v2/test-repo/apache/tags/list?n=1", "http://example.com/v2/test-repo/jenkins/tags/list?n=1"},
+			err:              errors.New("OCI Repo Tag is NOT available"),
+			response:         &http.Response{StatusCode: 400, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
+			expectedResult:   &ValidationResponse{Code: 400, Message: "OCI Repo Tag is NOT available"},
 		},
 		{
 			name:                       "validation fails for an OCI repo if no repositories are given",
 			requestNamespace:           kubeappsNamespace,
 			requestData:                `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "type":"oci"}}`,
 			expectedReqResolutionError: ErrEmptyOCIRegistry,
+			err:                        errors.New("OCI Repo Tag is NOT available"),
+			response:                   &http.Response{StatusCode: 400, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
+			expectedResult:             &ValidationResponse{Code: 400, Message: "OCI Repo Tag is NOT available"},
 		},
 	}
 
@@ -1223,64 +1167,25 @@ func TestValidateAppRepository(t *testing.T) {
 			if tc.expectedError != nil {
 				return
 			}
-			reqs, err := getRequests(appRepo, cli)
+			httpValidator, err := getValidator(appRepo, cli)
 			if (err != nil || tc.expectedReqResolutionError != nil) && !errors.Is(err, tc.expectedReqResolutionError) {
 				t.Fatalf("got: %+v, want: %+v", err, tc.expectedReqResolutionError)
 			}
 			if tc.expectedReqResolutionError != nil {
 				return
 			}
-			reqURLs := []string{}
-			for _, req := range reqs {
-				reqURLs = append(reqURLs, req.URL.String())
-			}
-			if !cmp.Equal(tc.expectedURLs, reqURLs) {
-				t.Errorf("Unexpected URLS: %v", cmp.Diff(tc.expectedURLs, reqURLs))
-			}
-			if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders))
-			}
-		})
-	}
-
-	doValidationRequestTests := []struct {
-		name           string
-		err            error
-		response       *http.Response
-		expectedResult *ValidationResponse
-	}{
-		{
-			name:           "returns nil if there is no error and the response is okay",
-			err:            nil,
-			response:       &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
-			expectedResult: &ValidationResponse{Code: 200, Message: "OK"},
-		},
-		{
-			name:           "returns an error",
-			err:            fmt.Errorf("Boom"),
-			response:       &http.Response{},
-			expectedResult: &ValidationResponse{Code: 400, Message: "Boom"},
-		},
-		{
-			name:           "returns an error from the response",
-			err:            nil,
-			response:       &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
-			expectedResult: &ValidationResponse{Code: 401, Message: "Boom"},
-		},
-	}
-	for _, tc := range doValidationRequestTests {
-		t.Run(tc.name, func(t *testing.T) {
-			cli := &fakeHTTPCli{
+			fakeClient := &fakeHTTPCli{
 				response: tc.response,
 				err:      tc.err,
 			}
-			got, err := doValidationRequest(cli, &http.Request{})
-			if err != nil {
+			got, err := httpValidator.IsValid(fakeClient)
+			if err != tc.err {
 				t.Errorf("Unexpected error %v", err)
 			}
 			if want := tc.expectedResult; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
+
 		})
 	}
 }
