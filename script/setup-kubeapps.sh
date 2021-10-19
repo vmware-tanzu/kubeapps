@@ -120,7 +120,6 @@ info "Waiting for Kubeapps components to be ready..."
 deployments=(
     "kubeapps"
     "kubeapps-internal-apprepository-controller"
-    "kubeapps-internal-assetsvc"
     "kubeapps-internal-dashboard"
 )
 

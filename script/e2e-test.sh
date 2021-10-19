@@ -188,7 +188,6 @@ installOrUpgradeKubeapps() {
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
     --set frontend.replicaCount=1
     --set kubeops.replicaCount=1
-    --set assetsvc.replicaCount=1
     --set dashboard.replicaCount=1
     --set postgresql.replication.enabled=false
     --set postgresql.postgresqlPassword=password
@@ -305,10 +304,9 @@ info "Waiting for Kubeapps components to be ready..."
 deployments=(
   "kubeapps-ci"
   "kubeapps-ci-internal-apprepository-controller"
-  "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
-  "kubeapps-ci-internal-kubeops"
   "kubeapps-ci-internal-kubeappsapis"
+  "kubeapps-ci-internal-kubeops"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
@@ -330,8 +328,9 @@ kubectl get pods -n kubeapps -o wide
 kubectl get ep --namespace=kubeapps
 svcs=(
   "kubeapps-ci"
-  "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
+  "kubeapps-ci-internal-kubeappsapis"
+  "kubeapps-ci-internal-kubeops"
 )
 for svc in "${svcs[@]}"; do
   k8s_wait_for_endpoints kubeapps "$svc" 1
@@ -347,7 +346,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   if ! retry_while testHelm "2" "1"; then
     warn "PODS status on failure"
     kubectl get pods -n kubeapps
-    for pod in $(kubectl get po -l release=kubeapps-ci -oname -n kubeapps); do
+    for pod in $(kubectl get po -l='app.kubernetes.io/managed-by=Helm,app.kubernetes.io/instance=kubeapps-ci' -oname -n kubeapps); do
       warn "LOGS for pod $pod ------------"
       if [[ "$pod" =~ .*internal.* ]]; then
         kubectl logs -n kubeapps "$pod"
@@ -357,8 +356,6 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
       fi
     done
     echo
-    warn "LOGS for assetsvc tests --------"
-    kubectl logs kubeapps-ci-assetsvc-test --namespace kubeapps
     warn "LOGS for dashboard tests --------"
     kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
     exit 1
