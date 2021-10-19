@@ -51,7 +51,6 @@ type testSpecGetAvailablePackageSummaries struct {
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
-	const KubeappsCluster = "default"
 	testCases := []struct {
 		name              string
 		request           *corev1.GetAvailablePackageSummariesRequest

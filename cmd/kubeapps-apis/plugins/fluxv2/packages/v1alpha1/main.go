@@ -40,7 +40,7 @@ func init() {
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter, clustersConfig kube.ClustersConfig) (interface{}, error) {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
-	svr, err := NewServer(configGetter)
+	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName)
 	if err != nil {
 		return nil, err
 	}
