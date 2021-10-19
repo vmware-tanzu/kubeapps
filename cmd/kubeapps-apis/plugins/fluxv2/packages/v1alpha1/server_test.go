@@ -35,6 +35,8 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+const KubeappsCluster = "default"
+
 func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -255,7 +257,8 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
-		cache: cache,
+		cache:           cache,
+		kubeappsCluster: KubeappsCluster,
 	}
 	return s, mock, nil
 }
