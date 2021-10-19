@@ -51,11 +51,13 @@ type testSpecGetAvailablePackageSummaries struct {
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
+	const KubeappsCluster = "default"
 	testCases := []struct {
-		name             string
-		request          *corev1.GetAvailablePackageSummariesRequest
-		repos            []testSpecGetAvailablePackageSummaries
-		expectedResponse *corev1.GetAvailablePackageSummariesResponse
+		name              string
+		request           *corev1.GetAvailablePackageSummariesRequest
+		repos             []testSpecGetAvailablePackageSummaries
+		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode codes.Code
 	}{
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
@@ -83,6 +85,24 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: valid_index_package_summaries,
+			},
+		},
+		{
+			name: "it returns a couple of fluxv2 packages from the cluster (when request cluster is specified and matches the kubeapps cluster)",
+			repos: []testSpecGetAvailablePackageSummaries{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "default",
+			}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: valid_index_package_summaries,
 			},
@@ -442,6 +462,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				NextPageToken:             "",
 			},
 		},
+		{
+			name: "it returns an error if a cluster other than the kubeapps cluster is specified",
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
+				Cluster: "not-kubeapps-cluster",
+			}},
+			expectedErrorCode: codes.Unimplemented,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -467,8 +494,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
-			if err != nil {
-				t.Fatalf("%v", err)
+			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+				t.Fatalf("got: %v, want: %v", got, want)
+			}
+			// If an error code was expected, then no need to continue checking
+			// the response.
+			if tc.expectedErrorCode != codes.OK {
+				return
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
