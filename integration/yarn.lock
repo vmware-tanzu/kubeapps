@@ -493,15 +493,15 @@
     "@types/istanbul-lib-coverage" "^2.0.0"
     collect-v8-coverage "^1.0.0"
 
-"@jest/test-sequencer@^27.3.0":
-  version "27.3.0"
-  resolved "https://registry.yarnpkg.com/@jest/test-sequencer/-/test-sequencer-27.3.0.tgz#ac245f4f29ce7f81ae5afa441e5bf7bbdd342ef4"
-  integrity sha512-6eQHyBUCtK06sPfsufzEVijZtAtT7yGR1qaAZBlcz6P+FGJ569VW2O5o7mZc+L++uZc7BH4X2Ks7SMIgy1npJw==
+"@jest/test-sequencer@^27.3.0", "@jest/test-sequencer@^27.3.1":
+  version "27.3.1"
+  resolved "https://registry.yarnpkg.com/@jest/test-sequencer/-/test-sequencer-27.3.1.tgz#4b3bde2dbb05ee74afdae608cf0768e3354683b1"
+  integrity sha512-siySLo07IMEdSjA4fqEnxfIX8lB/lWYsBPwNFtkOvsFQvmBrL3yj3k3uFNZv/JDyApTakRpxbKLJ3CT8UGVCrA==
   dependencies:
-    "@jest/test-result" "^27.3.0"
+    "@jest/test-result" "^27.3.1"
     graceful-fs "^4.2.4"
-    jest-haste-map "^27.3.0"
-    jest-runtime "^27.3.0"
+    jest-haste-map "^27.3.1"
+    jest-runtime "^27.3.1"
 
 "@jest/transform@^27.3.0":
   version "27.3.0"
@@ -1875,27 +1875,7 @@ jest-get-type@^27.3.1:
   resolved "https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-27.3.1.tgz#a8a2b0a12b50169773099eee60a0e6dd11423eff"
   integrity sha512-+Ilqi8hgHSAdhlQ3s12CAVNd8H96ZkQBfYoXmArzZnOfAtVAJEiPDBirjByEblvG/4LPJmkL+nBqPO3A1YJAEg==
 
-jest-haste-map@^27.3.0:
-  version "27.3.0"
-  resolved "https://registry.yarnpkg.com/jest-haste-map/-/jest-haste-map-27.3.0.tgz#06305f57064af766fdbb54da4c4bc663f72e8a78"
-  integrity sha512-HV7BXCWhHFuQyLCnmy+VzvYQDccTdt5gpmt2abwIrWTnQiHNAklLB3Djq7Ze3OypTmWBMLgF8AHcKNmLKx8Rzw==
-  dependencies:
-    "@jest/types" "^27.2.5"
-    "@types/graceful-fs" "^4.1.2"
-    "@types/node" "*"
-    anymatch "^3.0.3"
-    fb-watchman "^2.0.0"
-    graceful-fs "^4.2.4"
-    jest-regex-util "^27.0.6"
-    jest-serializer "^27.0.6"
-    jest-util "^27.3.0"
-    jest-worker "^27.3.0"
-    micromatch "^4.0.4"
-    walker "^1.0.7"
-  optionalDependencies:
-    fsevents "^2.3.2"
-
-jest-haste-map@^27.3.1:
+jest-haste-map@^27.3.0, jest-haste-map@^27.3.1:
   version "27.3.1"
   resolved "https://registry.yarnpkg.com/jest-haste-map/-/jest-haste-map-27.3.1.tgz#7656fbd64bf48bda904e759fc9d93e2c807353ee"
   integrity sha512-lYfNZIzwPccDJZIyk9Iz5iQMM/MH56NIIcGj7AFU1YyA4ewWFBl8z+YPJuSCRML/ee2cCt2y3W4K3VXPT6Nhzg==
