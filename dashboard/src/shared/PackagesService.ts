@@ -7,7 +7,7 @@ import {
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class PackagesService {
-  private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
 
   public static async getAvailablePackageSummaries(
     cluster: string,
