@@ -43,7 +43,7 @@ export class Auth {
     }
     return [
       // Trimming the b64 padding character ("=") as it is not accepted by k8s
-      // https://github.com/kubernetes/apiserver/blob/master/pkg/authentication/request/websocket/protocol.go#L38
+      // https://github.com/kubernetes/apiserver/blob/release-1.22/pkg/authentication/request/websocket/protocol.go#L38
       "base64url.bearer.authorization.k8s.io." + btoa(token).replaceAll("=", ""),
       "binary.k8s.io",
     ];
