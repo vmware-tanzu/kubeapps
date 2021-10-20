@@ -55,10 +55,10 @@ function AppListItem(props: IAppListItemProps) {
     <></>
   );
 
-  return (
+  return app?.installedPackageRef ? (
     <InfoCard
       key={app.installedPackageRef?.identifier}
-      link={url.app.apps.get(app?.installedPackageRef)}
+      link={url.app.apps.get(app.installedPackageRef)}
       title={app.name}
       icon={icon}
       info={
@@ -79,6 +79,8 @@ function AppListItem(props: IAppListItemProps) {
       tooltip={tooltip}
       bgIcon={getPluginIcon(app.installedPackageRef?.plugin)}
     />
+  ) : (
+    <></>
   );
 }
 

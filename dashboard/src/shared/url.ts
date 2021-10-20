@@ -1,51 +1,55 @@
 import {
-  AvailablePackageDetail,
+  AvailablePackageReference,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { IRepo } from "./types";
 
 export const app = {
   apps: {
     new: (
       cluster: string,
       namespace: string,
-      availablePackageDetail: AvailablePackageDetail,
-      version: string,
-      globalNamespace: string,
       plugin: Plugin,
+      packageId: string,
+      version: string,
+      isGlobal: boolean,
     ) => {
-      const repoNamespace = availablePackageDetail.availablePackageRef?.context?.namespace;
-      const newSegment = globalNamespace !== repoNamespace ? "new" : "new-from-global";
-      // TODO(agamez): get the repo name once available
-      // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
-      const repoName =
-        availablePackageDetail.availablePackageRef?.identifier.split("/")?.[0] ?? globalNamespace;
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${plugin.name}/${
-        plugin.version
-      }/${encodeURIComponent(availablePackageDetail.name)}/versions/${version}`;
+      const globalSegment = isGlobal ? "new-from-global" : "new";
+      return `/c/${cluster}/ns/${namespace}/apps/${globalSegment}/${plugin?.name}/${
+        plugin?.version
+      }/${encodeURIComponent(packageId)}/versions/${version}`;
     },
     list: (cluster?: string, namespace?: string) => `/c/${cluster}/ns/${namespace}/apps`,
-    get: (ref?: InstalledPackageReference) =>
-      `${app.apps.list(ref?.context?.cluster, ref?.context?.namespace)}/${ref?.plugin?.name}/${
-        ref?.plugin?.version
-      }/${ref?.identifier}`,
-    upgrade: (ref?: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
+    get: (installedPackageReference: InstalledPackageReference) => {
+      const pkgCluster = installedPackageReference?.context?.cluster;
+      const pkgNamespace = installedPackageReference?.context?.namespace;
+      const pkgPluginName = installedPackageReference?.plugin?.name;
+      const pkgPluginVersion = installedPackageReference?.plugin?.version;
+      const pkgId = installedPackageReference?.identifier || "";
+      return `${app.apps.list(
+        pkgCluster,
+        pkgNamespace,
+      )}/${pkgPluginName}/${pkgPluginVersion}/${pkgId}`;
+    },
+    upgrade: (ref: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
+    upgradeTo: (ref: InstalledPackageReference, version?: string) =>
+      `${app.apps.get(ref)}/upgrade/${version}`,
   },
   catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
   packages: {
     get: (
       cluster: string,
       namespace: string,
-      packageName: string,
-      repo: IRepo,
-      globalNamespace: string,
-      plugin: Plugin,
+      availablePackageReference: AvailablePackageReference,
+      isGlobal: boolean,
     ) => {
-      const packagesSegment = globalNamespace === repo.namespace ? "global-packages" : "packages";
-      return `/c/${cluster}/ns/${namespace}/${packagesSegment}/${repo.name}/${plugin.name}/${
-        plugin.version
-      }/${encodeURIComponent(packageName)}`;
+      const pkgPluginName = availablePackageReference?.plugin?.name;
+      const pkgPluginVersion = availablePackageReference?.plugin?.version;
+      const pkgId = availablePackageReference?.identifier || "";
+      const globalSegment = isGlobal ? "global-packages" : "packages";
+      return `/c/${cluster}/ns/${namespace}/${globalSegment}/${pkgPluginName}/${pkgPluginVersion}/${encodeURIComponent(
+        pkgId,
+      )}`;
     },
   },
   operators: {

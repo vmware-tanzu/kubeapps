@@ -23,40 +23,38 @@ import PackageReadme from "./PackageReadme";
 interface IRouteParams {
   cluster: string;
   namespace: string;
-  repo: string;
   global: string;
   pluginName: string;
   pluginVersion: string;
-  id: string;
-  version?: string;
+  packageId: string;
+  packageVersion?: string;
 }
 
 export default function PackageView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+  const location = ReactRouter.useLocation();
   const {
-    cluster,
-    namespace,
-    repo,
+    cluster: targetCluster,
+    namespace: targetNamespace,
     global,
+    packageId,
     pluginName,
     pluginVersion,
-    id,
-    version: queryVersion,
+    packageVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
     config,
-    packages: { isFetching, selected },
+    packages: { isFetching, selected: selectedPackage },
   } = useSelector((state: IStoreState) => state);
-  const { availablePackageDetail, versions, pkgVersion, readmeError, error, readme } = selected;
-
-  const packageId = `${repo}/${id}`;
-  const packageNamespace = global === "global" ? config.kubeappsNamespace : namespace;
-  const packageCluster = global === "global" ? config.kubeappsCluster : cluster;
-  const kubeappsNamespace = config.kubeappsNamespace;
-
-  const location = ReactRouter.useLocation();
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
+
+  const isGlobal = global === "global";
+
+  // Use the cluster/namespace from the URL unless it comes from a "global" repository.
+  // In that case, use the cluster/namespace from where kubeapps has been installed on
+  const packageCluster = isGlobal ? config.kubeappsCluster : targetCluster;
+  const packageNamespace = isGlobal ? config.kubeappsNamespace : targetNamespace;
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
@@ -67,11 +65,11 @@ export default function PackageView() {
           plugin: pluginObj,
           identifier: packageId,
         } as AvailablePackageReference,
-        queryVersion,
+        packageVersion,
       ),
     );
     return () => {};
-  }, [dispatch, packageId, packageNamespace, packageCluster, queryVersion, pluginObj]);
+  }, [dispatch, packageId, packageNamespace, packageCluster, packageVersion, pluginObj]);
 
   // Fetch all versions
   useEffect(() => {
@@ -82,6 +80,7 @@ export default function PackageView() {
         identifier: packageId,
       } as AvailablePackageReference),
     );
+    return () => {};
   }, [dispatch, packageId, packageNamespace, packageCluster, pluginName, pluginVersion]);
 
   // Select version handler
@@ -92,33 +91,35 @@ export default function PackageView() {
       dispatch(push(location.pathname.replace(versionRegex, `/versions/${event.target.value}`)));
     } else {
       // Otherwise, append the version
-      dispatch(push(location.pathname.concat(`/versions/${event.target.value}`)));
+      const trimmedPath = location.pathname.endsWith("/")
+        ? location.pathname.slice(0, -1)
+        : location.pathname;
+      dispatch(push(trimmedPath.concat(`/versions/${event.target.value}`)));
     }
   };
 
-  if (error) {
-    return <Alert theme="danger">Unable to fetch package: {error.message}</Alert>;
+  if (selectedPackage.error) {
+    return <Alert theme="danger">Unable to fetch package: {selectedPackage.error.message}</Alert>;
   }
-  if (isFetching || !availablePackageDetail) {
+  if (isFetching || !selectedPackage.availablePackageDetail || !selectedPackage.pkgVersion) {
     return <LoadingWrapper loaded={false} />;
   }
-
   return (
     <section>
       <div>
         <PackageHeader
-          availablePackageDetail={availablePackageDetail}
-          versions={versions}
+          availablePackageDetail={selectedPackage.availablePackageDetail}
+          versions={selectedPackage.versions}
           onSelect={selectVersion}
           deployButton={
             <Link
               to={app.apps.new(
-                cluster,
-                namespace,
-                availablePackageDetail,
-                pkgVersion!,
-                kubeappsNamespace,
+                targetCluster,
+                targetNamespace,
                 pluginObj,
+                packageId,
+                selectedPackage.pkgVersion,
+                isGlobal,
               )}
             >
               <CdsButton status="primary">
@@ -126,26 +127,26 @@ export default function PackageView() {
               </CdsButton>
             </Link>
           }
-          selectedVersion={pkgVersion}
+          selectedVersion={selectedPackage.pkgVersion}
         />
       </div>
 
       <section>
         <Row>
           <Column span={3}>
-            <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
+            <AvailablePackageDetailExcerpt pkg={selectedPackage.availablePackageDetail} />
           </Column>
           <Column span={9}>
-            <PackageReadme readme={readme} error={readmeError} />
+            <PackageReadme readme={selectedPackage.readme} error={selectedPackage.readmeError} />
             <div className="after-readme-button">
               <Link
                 to={app.apps.new(
-                  cluster,
-                  namespace,
-                  availablePackageDetail,
-                  pkgVersion!,
-                  kubeappsNamespace,
+                  targetCluster,
+                  targetNamespace,
                   pluginObj,
+                  packageId,
+                  selectedPackage.pkgVersion,
+                  isGlobal,
                 )}
               >
                 <CdsButton status="primary">

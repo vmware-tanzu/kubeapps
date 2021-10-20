@@ -21,74 +21,64 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 interface IRouteParams {
   cluster: string;
   namespace: string;
-  repo: string;
   global: string;
-  id: string;
   pluginName: string;
   pluginVersion: string;
-  version?: any;
+  packageId: string;
+  packageVersion?: string;
 }
 
 export default function DeploymentForm() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const {
-    cluster,
-    namespace,
-    repo,
+    cluster: targetCluster,
+    namespace: targetNamespace,
     global,
-    id,
+    packageId,
     pluginName,
     pluginVersion,
-    version: packageVersion,
+    packageVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
-    apps,
     config,
-    packages: { isFetching: packagesIsFetching, selected },
+    packages: { isFetching: packagesIsFetching, selected: selectedPackage },
   } = useSelector((state: IStoreState) => state);
-  const packageId = `${repo}/${id}`;
-  const packageNamespace = global === "global" ? config.kubeappsNamespace : namespace;
-  const packageCluster = global === "global" ? config.kubeappsCluster : cluster;
-  const error = apps.error || selected.error;
-  const kubeappsNamespace = config.kubeappsNamespace;
-  const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
+
   const [isDeploying, setDeploying] = useState(false);
   const [releaseName, setReleaseName] = useState("");
-  const [appValues, setAppValues] = useState(values || "");
+  const [appValues, setAppValues] = useState(selectedPackage.values || "");
   const [valuesModified, setValuesModified] = useState(false);
-  const [pluginObj] = useState(
-    selected.availablePackageDetail?.availablePackageRef?.plugin ??
-      ({ name: pluginName, version: pluginVersion } as Plugin),
-  );
+
+  const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
+
+  // Use the cluster/namespace from the URL unless it comes from a "global" repository.
+  // In that case, use the cluster/namespace from where kubeapps has been installed on
+  const isGlobal = global === "global";
+  const [packageReference] = useState({
+    context: {
+      cluster: isGlobal ? config.kubeappsCluster : targetCluster,
+      namespace: isGlobal ? config.kubeappsNamespace : targetNamespace,
+    },
+    plugin: pluginObj,
+    identifier: packageId,
+  } as AvailablePackageReference);
 
   useEffect(() => {
+    // Get the package details
     dispatch(
-      actions.packages.fetchAvailablePackageVersions({
-        context: { cluster: packageCluster, namespace: packageNamespace },
-        plugin: pluginObj,
-        identifier: packageId,
-      } as AvailablePackageReference),
+      actions.packages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
     );
-  }, [dispatch, packageCluster, packageNamespace, packageId, pluginObj]);
+    // Populate the rest of packages versions
+    dispatch(actions.packages.fetchAvailablePackageVersions(packageReference));
+    return () => {};
+  }, [dispatch, packageReference, packageVersion]);
 
   useEffect(() => {
     if (!valuesModified) {
-      setAppValues(values || "");
+      setAppValues(selectedPackage.values || "");
     }
-  }, [values, valuesModified]);
-
-  useEffect(() => {
-    dispatch(
-      actions.packages.fetchAndSelectAvailablePackageDetail(
-        {
-          context: { cluster: packageCluster, namespace: packageNamespace },
-          plugin: pluginObj,
-          identifier: packageId,
-        } as AvailablePackageReference,
-        packageVersion,
-      ),
-    );
-  }, [packageCluster, packageNamespace, packageId, packageVersion, dispatch, pluginObj]);
+    return () => {};
+  }, [selectedPackage.values, valuesModified]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
@@ -105,23 +95,26 @@ export default function DeploymentForm() {
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setDeploying(true);
-    if (availablePackageDetail) {
+    if (selectedPackage.availablePackageDetail) {
       const deployed = await dispatch(
+        // Installation always happen in the cluster/namespace passed in the URL
         actions.apps.installPackage(
-          cluster,
-          namespace,
-          availablePackageDetail,
+          targetCluster,
+          targetNamespace,
+          selectedPackage.availablePackageDetail,
           releaseName,
           appValues,
-          schema,
+          selectedPackage.schema,
         ),
       );
       setDeploying(false);
       if (deployed) {
         dispatch(
           push(
+            // Redirect to the installed package, note that the cluster/ns are the ones passed
+            // in the URL, not the ones from the package.
             url.app.apps.get({
-              context: { cluster: cluster, namespace: namespace },
+              context: { cluster: targetCluster, namespace: targetNamespace },
               plugin: pluginObj,
               identifier: releaseName,
             } as AvailablePackageReference),
@@ -135,37 +128,37 @@ export default function DeploymentForm() {
     dispatch(
       push(
         url.app.apps.new(
-          cluster,
-          namespace,
-          availablePackageDetail!,
-          e.currentTarget.value,
-          kubeappsNamespace,
+          targetCluster,
+          targetNamespace,
           pluginObj,
+          packageId,
+          e.currentTarget.value,
+          isGlobal,
         ),
       ),
     );
   };
 
-  if (error?.constructor === FetchError) {
+  if (selectedPackage.error?.constructor === FetchError) {
     return (
-      error && (
+      selectedPackage.error && (
         <Alert theme="danger">
-          Unable to retrieve the current app: {(error as FetchError).message}
+          Unable to retrieve the current app: {(selectedPackage.error as FetchError).message}
         </Alert>
       )
     );
   }
 
-  if (!availablePackageDetail) {
+  if (!selectedPackage.availablePackageDetail) {
     return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
   }
   return (
     <section>
       <PackageHeader
-        availablePackageDetail={availablePackageDetail}
-        versions={versions}
+        availablePackageDetail={selectedPackage.availablePackageDetail}
+        versions={selectedPackage.versions}
         onSelect={selectVersion}
-        selectedVersion={pkgVersion}
+        selectedVersion={selectedPackage.pkgVersion}
       />
       {isDeploying && (
         <h3 className="center" style={{ marginBottom: "1.2rem" }}>
@@ -175,10 +168,12 @@ export default function DeploymentForm() {
       <LoadingWrapper loaded={!isDeploying}>
         <Row>
           <Column span={3}>
-            <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
+            <AvailablePackageDetailExcerpt pkg={selectedPackage.availablePackageDetail} />
           </Column>
           <Column span={9}>
-            {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+            {selectedPackage.error && (
+              <Alert theme="danger">An error occurred: {selectedPackage.error.message}</Alert>
+            )}
             <form onSubmit={handleDeploy}>
               <div>
                 <label
@@ -200,9 +195,9 @@ export default function DeploymentForm() {
               <DeploymentFormBody
                 deploymentEvent="install"
                 packageId={packageId}
-                packageVersion={packageVersion}
+                packageVersion={packageVersion!}
                 packagesIsFetching={packagesIsFetching}
-                selected={selected}
+                selected={selectedPackage}
                 setValues={handleValuesChange}
                 appValues={appValues}
                 setValuesModified={setValuesModifiedTrue}
