@@ -42,10 +42,6 @@ describe("App", () => {
         },
         expectedClientArg: {
           context: { cluster, namespace },
-          filterOptions: {
-            query: "",
-            repositories: [""],
-          },
           paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize }
         },
       },
@@ -63,7 +59,6 @@ describe("App", () => {
           context: { cluster, namespace },
           filterOptions: {
             query: "cms",
-            repositories: [""],
           },
           paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize }
         },
@@ -81,7 +76,6 @@ describe("App", () => {
         expectedClientArg: {
           context: { cluster, namespace },
           filterOptions: {
-            query: "",
             repositories: ["repo1", "repo2"],
           },
           paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize }
