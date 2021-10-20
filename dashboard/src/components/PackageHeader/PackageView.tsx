@@ -70,7 +70,7 @@ export default function PackageView() {
         queryVersion,
       ),
     );
-    return;
+    return () => {};
   }, [dispatch, packageId, packageNamespace, packageCluster, queryVersion, pluginObj]);
 
   // Fetch all versions
