@@ -30,13 +30,14 @@
     "plugin:react/recommended",
     "plugin:prettier/recommended"
   ],
-  "plugins": ["@typescript-eslint", "import", "jest", "jsx-a11y", "react", "react-hooks"],
+  "plugins": ["@typescript-eslint", "import", "jest", "jsx-a11y", "react", "react-hooks", "redos"],
   "env": {
     "browser": true,
     "es6": true,
     "jest": true
   },
   "rules": {
+    "redos/no-vulnerable": "error", // avoid ReDoS vulnerable regex
     "quotes": [
       "error", // enforce double quotes
       "double",

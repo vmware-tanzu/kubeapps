@@ -9,7 +9,7 @@ import { IK8sList, IKubeItem, IResource, IServiceSpec, IStoreState } from "share
 import { flattenResources } from "shared/utils";
 import LoadingWrapper from "../../../components/LoadingWrapper/LoadingWrapper";
 import isSomeResourceLoading from "../helpers";
-import { GetURLItemFromIngress, IsURL } from "./AccessURLItem/AccessURLIngressHelper";
+import { GetURLItemFromIngress, ShouldGenerateLink } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 import "./AccessURLTable.css";
 
@@ -197,7 +197,7 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
               ? GetURLItemFromIngress(ingress.item).URLs.map(
                   // check whether each URL is, indeed, a valid URL.
                   // If so, render the <a>, othersiwe, render a simple <span>
-                  url => (IsURL(url) ? getAnchor(url) : getSpan(url)),
+                  url => (ShouldGenerateLink(url) ? getAnchor(url) : getSpan(url)),
                 )
               : [getUnknown(index.toString())], // render a simple span with "unknown"
             type: "Ingress",

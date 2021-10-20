@@ -149,7 +149,6 @@ it("changes the bgIcon based on the plugin name - helm", () => {
   } as ICatalogItemsProps;
 
   const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
-  console.log(wrapper.debug());
   expect(
     wrapper
       .find(InfoCard)

@@ -316,10 +316,12 @@ describe("App", () => {
       },
     ].forEach(t => {
       it(t.description, async () => {
+        // eslint-disable-next-line redos/no-vulnerable
         moxios.stubRequest(/.*api\/v1/, t.apiV1Response);
         const groups: any[] = [];
         t.groups.forEach((g: any) => {
           groups.push(g.input);
+          // eslint-disable-next-line redos/no-vulnerable
           moxios.stubOnce("GET", /.*apis\/.*/, g.apiResponse);
         });
         expect(await Kube.getResourceKinds("cluster", groups)).toEqual(t.result);
