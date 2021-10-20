@@ -41,6 +41,7 @@ function AppUpgrade() {
 
   // Initial fetch using the params in the URL
   useEffect(() => {
+    dispatch(actions.packages.resetSelectedAvailablePackageDetail());
     dispatch(
       actions.apps.getApp({
         context: { cluster: cluster, namespace: namespace },
