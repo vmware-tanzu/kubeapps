@@ -42,7 +42,7 @@ describe("App", () => {
         },
         expectedClientArg: {
           context: { cluster, namespace },
-          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize }
+          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
         },
       },
       {
@@ -60,7 +60,7 @@ describe("App", () => {
           filterOptions: {
             query: "cms",
           },
-          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize }
+          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
         },
       },
       {
@@ -78,7 +78,7 @@ describe("App", () => {
           filterOptions: {
             repositories: ["repo1", "repo2"],
           },
-          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize }
+          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
         },
       },
       {
@@ -97,7 +97,7 @@ describe("App", () => {
             query: "cms",
             repositories: ["repo1", "repo2"],
           },
-          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize }
+          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
         },
       },
     ].forEach(t => {
@@ -113,10 +113,8 @@ describe("App", () => {
         let mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
         jest
           .spyOn(mockClient, "GetAvailablePackageSummaries")
-          .mockImplementation(mockClientGetAvailablePackageSummaries)
-        jest
-          .spyOn(PackagesService, "client")
-          .mockImplementation(() => mockClient);
+          .mockImplementation(mockClientGetAvailablePackageSummaries);
+        jest.spyOn(PackagesService, "client").mockImplementation(() => mockClient);
         const availablePackageSummaries = await PackagesService.getAvailablePackageSummaries(
           t.args.cluster,
           t.args.namespace,

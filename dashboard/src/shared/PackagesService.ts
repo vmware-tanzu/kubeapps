@@ -17,14 +17,35 @@ export default class PackagesService {
     size: number,
     query?: string,
   ): Promise<GetAvailablePackageSummariesResponse> {
-    return await this.client().GetAvailablePackageSummaries({
+    let request = {
       context: { cluster: cluster, namespace: namespace },
-      filterOptions: {
-        query: query,
-        repositories: repos.split(","),
-      },
       paginationOptions: { pageSize: size, pageToken: page.toString() },
-    });
+    };
+
+    // Add filter options only as needed.
+    let filterOptions;
+    if (query) {
+      filterOptions = Object.assign({}, { query });
+    }
+    if (repos) {
+      filterOptions = Object.assign(
+        {},
+        {
+          ...filterOptions,
+          repositories: repos.split(","),
+        },
+      );
+    }
+    if (!!repos || !!query) {
+      request = Object.assign(
+        {},
+        {
+          ...request,
+          filterOptions,
+        },
+      );
+    }
+    return await this.client().GetAvailablePackageSummaries(request);
   }
 
   public static async getAvailablePackageVersions(
