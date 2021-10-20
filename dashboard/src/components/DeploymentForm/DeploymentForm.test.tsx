@@ -82,7 +82,10 @@ describe("renders an error", () => {
   it("renders a custom error if the deployment failed", () => {
     const wrapper = mountWrapper(
       getStore({
-        packages: { selected: { ...defaultSelectedPkg, error: new Error("wrong format!") } },
+        packages: {
+          selected: { ...defaultSelectedPkg },
+        },
+        apps: { error: new Error("wrong format!") },
       }),
       <Router history={history}>
         <Route path={routePath}>
@@ -90,6 +93,7 @@ describe("renders an error", () => {
         </Route>
       </Router>,
     );
+    console.log(wrapper.debug());
     expect(wrapper.find(Alert)).toExist();
     expect(
       wrapper.find(Alert).findWhere(a => a.html().includes("An error occurred: wrong format!")),
@@ -101,6 +105,7 @@ describe("renders an error", () => {
     const wrapper = mountWrapper(
       getStore({
         packages: { selected: { ...defaultSelectedPkg, error: new FetchError("not found") } },
+        apps: { error: undefined },
       }),
       <Router history={history}>
         <Route path={routePath}>

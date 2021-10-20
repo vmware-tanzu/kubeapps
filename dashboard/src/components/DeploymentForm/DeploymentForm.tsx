@@ -1,9 +1,9 @@
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import PackageHeader from "components/PackageHeader/PackageHeader";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import PackageHeader from "components/PackageHeader/PackageHeader";
 import { push } from "connected-react-router";
 import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
@@ -42,12 +42,15 @@ export default function DeploymentForm() {
   const {
     config,
     packages: { isFetching: packagesIsFetching, selected: selectedPackage },
+    apps,
   } = useSelector((state: IStoreState) => state);
 
   const [isDeploying, setDeploying] = useState(false);
   const [releaseName, setReleaseName] = useState("");
   const [appValues, setAppValues] = useState(selectedPackage.values || "");
   const [valuesModified, setValuesModified] = useState(false);
+
+  const error = apps.error || selectedPackage.error;
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
@@ -139,11 +142,11 @@ export default function DeploymentForm() {
     );
   };
 
-  if (selectedPackage.error?.constructor === FetchError) {
+  if (error?.constructor === FetchError) {
     return (
-      selectedPackage.error && (
+      error && (
         <Alert theme="danger">
-          Unable to retrieve the current app: {(selectedPackage.error as FetchError).message}
+          Unable to retrieve the current app: {(error as FetchError).message}
         </Alert>
       )
     );
@@ -171,9 +174,7 @@ export default function DeploymentForm() {
             <AvailablePackageDetailExcerpt pkg={selectedPackage.availablePackageDetail} />
           </Column>
           <Column span={9}>
-            {selectedPackage.error && (
-              <Alert theme="danger">An error occurred: {selectedPackage.error.message}</Alert>
-            )}
+            {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
             <form onSubmit={handleDeploy}>
               <div>
                 <label
