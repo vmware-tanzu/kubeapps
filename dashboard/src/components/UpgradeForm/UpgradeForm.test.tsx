@@ -384,7 +384,7 @@ it("triggers an upgrade when submitting the form", async () => {
   );
   expect(mockDispatch).toHaveBeenCalledWith({
     payload: {
-      args: [url.app.apps.get(installedPkgDetail.installedPackageRef)],
+      args: [url.app.apps.get(installedPkgDetail.installedPackageRef!)],
       method: "push",
     },
     type: "@@router/CALL_HISTORY_METHOD",

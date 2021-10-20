@@ -42,7 +42,7 @@ const testProps: IPackageHeaderProps = {
 
 it("renders a header for the package", () => {
   const wrapper = mount(<PackageHeader {...testProps} />);
-  expect(wrapper.text()).toContain("testrepo/test");
+  expect(wrapper.text()).toContain("testrepo/foo");
 });
 
 it("displays the appVersion", () => {

@@ -229,7 +229,7 @@ context("when apps available", () => {
     const wrapper = mountWrapper(getStore(state), <AppList />);
     const itemList = wrapper.find(AppListItem);
     expect(itemList).toExist();
-    expect(itemList.key()).toBe("bar/foo");
+    expect(itemList.key()).toBe("foobar-bar/foo");
   });
 
   it("filters apps", () => {
@@ -239,7 +239,7 @@ context("when apps available", () => {
         installedPackageRef: {
           identifier: "foo/bar",
           pkgVersion: "1.0.0",
-          context: { cluster: "", namespace: "foobar" } as Context,
+          context: { cluster: "", namespace: "fooNs" } as Context,
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         } as InstalledPackageReference,
         status: {
@@ -257,7 +257,7 @@ context("when apps available", () => {
         installedPackageRef: {
           identifier: "foobar/bar",
           pkgVersion: "1.0.0",
-          context: { cluster: "", namespace: "foobar" } as Context,
+          context: { cluster: "", namespace: "fooNs" } as Context,
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         } as InstalledPackageReference,
         status: {
@@ -280,7 +280,7 @@ context("when apps available", () => {
         <AppList />
       </MemoryRouter>,
     );
-    expect(wrapper.find(AppListItem).key()).toBe("foobar/bar");
+    expect(wrapper.find(AppListItem).key()).toBe("fooNs-foobar/bar");
   });
 });
 

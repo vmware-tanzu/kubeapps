@@ -21,13 +21,21 @@ const defaultProps = {
   pkgName: "foo",
   cluster: "default",
   namespace: "default",
-  repo: "repo",
   releaseName: "my-release",
+  version: "0.0.1",
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.pkgName}/versions/`;
+
+const defaultSelectedPkg = {
+  versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" } as PackageAppVersion],
+  availablePackageDetail: { name: "test" } as AvailablePackageDetail,
+  pkgVersion: "1.2.4",
+  values: "bar: foo",
+};
+
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.pkgName}/versions/${defaultProps.version}`;
 const routePath =
-  "/c/:cluster/ns/:namespace/apps/new/:repo/:pluginName/:pluginVersion/:id/versions";
+  "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageId/versions/:packageVersion";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -63,42 +71,54 @@ it("fetches the available versions", () => {
   expect(fetchAvailablePackageVersions).toHaveBeenCalledWith(
     {
       context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
-      identifier: `${defaultProps.repo}/${defaultProps.pkgName}`,
+      identifier: defaultProps.pkgName,
       plugin: defaultProps.plugin,
     } as AvailablePackageReference,
-    undefined,
+    defaultProps.version,
   );
 });
 
 describe("renders an error", () => {
   it("renders a custom error if the deployment failed", () => {
     const wrapper = mountWrapper(
-      getStore({ apps: { error: new FetchError("wrong format!") } }),
-      <DeploymentForm />,
+      getStore({
+        packages: { selected: { ...defaultSelectedPkg, error: new Error("wrong format!") } },
+      }),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
     );
-    expect(wrapper.find(Alert).exists()).toBe(true);
-    expect(wrapper.find(Alert).html()).toContain("wrong format!");
+    expect(wrapper.find(Alert).exists());
+    expect(wrapper.find(Alert).findWhere(a => a.html().includes("An error occurred: wrong format!"))).toExist();
+    expect(wrapper.find(PackageHeader)).toExist();
   });
 
   it("renders a fetch error only", () => {
     const wrapper = mountWrapper(
-      getStore({ apps: { error: new FetchError("wrong format!") } }),
-      <DeploymentForm />,
+      getStore({
+        packages: { selected: { ...defaultSelectedPkg, error: new FetchError("not found") } },
+      }),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
     );
     expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(Alert).findWhere(a => a.html().includes("Unable to retrieve the current app: not found"))).toExist();
     expect(wrapper.find(PackageHeader)).not.toExist();
   });
 
   it("forwards the appValues when modified", () => {
-    const selected = {
-      versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" } as PackageAppVersion],
-      availablePackageDetail: { name: "test" } as AvailablePackageDetail,
-      pkgVersion: "1.2.4",
-      values: "bar: foo",
-    };
     const wrapper = mountWrapper(
-      getStore({ packages: { selected: selected } } as IStoreState),
-      <DeploymentForm />,
+      getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
     );
 
     const handleValuesChange: (v: string) => void = wrapper
@@ -113,29 +133,25 @@ describe("renders an error", () => {
   });
 
   it("changes values if the version changes and it has not been modified", () => {
-    const selected = {
-      versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" } as PackageAppVersion],
-      availablePackageDetail: { name: "test" } as AvailablePackageDetail,
-      pkgVersion: "1.2.4",
-      values: "bar: foo",
-    };
     const wrapper = mountWrapper(
-      getStore({ packages: { selected: selected } } as IStoreState),
-      <DeploymentForm />,
+      getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
     );
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("bar: foo");
   });
 
   it("keep values if the version changes", () => {
-    const selected = {
-      versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" } as PackageAppVersion],
-      availablePackageDetail: { name: "test" } as AvailablePackageDetail,
-      pkgVersion: "1.2.4",
-      values: "bar: foo",
-    };
     const wrapper = mountWrapper(
-      getStore({ packages: { selected: selected } } as IStoreState),
-      <DeploymentForm />,
+      getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
     );
 
     const handleValuesChange: (v: string) => void = wrapper
@@ -152,7 +168,7 @@ describe("renders an error", () => {
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
 
     wrapper.find("select").simulate("change", { target: { value: "1.2.4" } });
-    wrapper.setProps({ selected: { ...selected, values: "bar: foo" } });
+    wrapper.setProps({ selected: { ...defaultSelectedPkg, values: "bar: foo" } });
     wrapper.update();
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
   });
@@ -166,13 +182,7 @@ describe("renders an error", () => {
     const appValues = "foo: bar";
     const schema = { properties: { foo: { type: "string", form: true } } };
     const availablePackageDetail = { name: "test" };
-    const selected = {
-      versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" } as PackageAppVersion],
-      availablePackageDetail: availablePackageDetail,
-      pkgVersion: "1.2.4",
-      values: appValues,
-      schema: schema,
-    };
+    const selected = { ...defaultSelectedPkg, values: appValues, schema: schema };
 
     const wrapper = mountWrapper(
       getStore({ packages: { selected: selected } } as unknown as IStoreState),
@@ -219,7 +229,7 @@ describe("renders an error", () => {
     );
 
     expect(history.location.pathname).toBe(
-      "/c/default/ns/default/apps/new/repo/my.plugin/0.0.1/foo/versions/",
+      "/c/default/ns/default/apps/new/my.plugin/0.0.1/foo/versions/0.0.1",
     );
   });
 });
