@@ -47,14 +47,15 @@ const (
 )
 
 type integrationTestCreateSpec struct {
-	testName             string
-	repoUrl              string
-	request              *corev1.CreateInstalledPackageRequest
-	expectedDetail       *corev1.InstalledPackageDetail
-	expectedPodPrefix    string
+	testName          string
+	repoUrl           string
+	request           *corev1.CreateInstalledPackageRequest
+	expectedDetail    *corev1.InstalledPackageDetail
+	expectedPodPrefix string
+	// different from expectedStatusCode due to async nature of install
 	expectInstallFailure bool
 	noCleanup            bool
-	unauthorized         bool
+	expectedStatusCode   codes.Code
 }
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
@@ -62,32 +63,36 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 
 	testCases := []integrationTestCreateSpec{
 		{
-			testName:          "create test (simplest case)",
-			repoUrl:           podinfo_repo_url,
-			request:           create_request_basic,
-			expectedDetail:    expected_detail_basic,
-			expectedPodPrefix: "@TARGET_NS@-my-podinfo-",
+			testName:           "create test (simplest case)",
+			repoUrl:            podinfo_repo_url,
+			request:            create_request_basic,
+			expectedDetail:     expected_detail_basic,
+			expectedPodPrefix:  "@TARGET_NS@-my-podinfo-",
+			expectedStatusCode: codes.OK,
 		},
 		{
-			testName:          "create package (semver constraint)",
-			repoUrl:           podinfo_repo_url,
-			request:           create_request_semver_constraint,
-			expectedDetail:    expected_detail_semver_constraint,
-			expectedPodPrefix: "@TARGET_NS@-my-podinfo-2-",
+			testName:           "create package (semver constraint)",
+			repoUrl:            podinfo_repo_url,
+			request:            create_request_semver_constraint,
+			expectedDetail:     expected_detail_semver_constraint,
+			expectedPodPrefix:  "@TARGET_NS@-my-podinfo-2-",
+			expectedStatusCode: codes.OK,
 		},
 		{
-			testName:          "create package (reconcile options)",
-			repoUrl:           podinfo_repo_url,
-			request:           create_request_reconcile_options,
-			expectedDetail:    expected_detail_reconcile_options,
-			expectedPodPrefix: "@TARGET_NS@-my-podinfo-3-",
+			testName:           "create package (reconcile options)",
+			repoUrl:            podinfo_repo_url,
+			request:            create_request_reconcile_options,
+			expectedDetail:     expected_detail_reconcile_options,
+			expectedPodPrefix:  "@TARGET_NS@-my-podinfo-3-",
+			expectedStatusCode: codes.OK,
 		},
 		{
-			testName:          "create package (with values)",
-			repoUrl:           podinfo_repo_url,
-			request:           create_request_with_values,
-			expectedDetail:    expected_detail_with_values,
-			expectedPodPrefix: "@TARGET_NS@-my-podinfo-4-",
+			testName:           "create package (with values)",
+			repoUrl:            podinfo_repo_url,
+			request:            create_request_with_values,
+			expectedDetail:     expected_detail_with_values,
+			expectedPodPrefix:  "@TARGET_NS@-my-podinfo-4-",
+			expectedStatusCode: codes.OK,
 		},
 		{
 			testName:             "install fails",
@@ -95,12 +100,19 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			request:              create_request_install_fails,
 			expectedDetail:       expected_detail_install_fails,
 			expectInstallFailure: true,
+			expectedStatusCode:   codes.OK,
 		},
 		{
-			testName:     "unauthorized",
-			repoUrl:      podinfo_repo_url,
-			request:      create_request_basic,
-			unauthorized: true,
+			testName:           "unauthorized",
+			repoUrl:            podinfo_repo_url,
+			request:            create_request_basic,
+			expectedStatusCode: codes.Unauthenticated,
+		},
+		{
+			testName:           "wrong cluster",
+			repoUrl:            podinfo_repo_url,
+			request:            create_request_wrong_cluster,
+			expectedStatusCode: codes.Unimplemented,
 		},
 	}
 
@@ -409,13 +421,13 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	}
 
 	ctx := grpcContext
-	if tc.unauthorized {
+	if tc.expectedStatusCode == codes.Unauthenticated {
 		ctx = context.TODO()
 	}
 	resp, err := fluxPluginClient.CreateInstalledPackage(ctx, tc.request)
-	if tc.unauthorized {
-		if status.Code(err) != codes.Unauthenticated {
-			t.Fatalf("Expected Unathenticated, got: %v", err)
+	if tc.expectedStatusCode != codes.OK {
+		if status.Code(err) != tc.expectedStatusCode {
+			t.Fatalf("Expected %v, got: %v", tc.expectedStatusCode, err)
 		}
 		return nil // done, nothing more to check
 	} else if err != nil {
@@ -478,7 +490,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 }
 
 func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context, installedPackageRef *corev1.InstalledPackageReference, expectInstallFailure bool) (actualResp *corev1.GetInstalledPackageDetailResponse) {
-	const maxWait = 25
+	const maxWait = 30
 	for i := 0; i <= maxWait; i++ {
 		resp2, err := fluxPluginClient.GetInstalledPackageDetail(
 			grpcContext,
@@ -518,6 +530,7 @@ var (
 		Name:                "my-podinfo",
 		TargetContext: &corev1.Context{
 			Namespace: "test-1",
+			Cluster:   KubeappsCluster,
 		},
 	}
 
@@ -546,6 +559,7 @@ var (
 		Name:                "my-podinfo-2",
 		TargetContext: &corev1.Context{
 			Namespace: "test-2",
+			Cluster:   KubeappsCluster,
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "> 5",
@@ -577,6 +591,7 @@ var (
 		Name:                "my-podinfo-3",
 		TargetContext: &corev1.Context{
 			Namespace: "test-3",
+			Cluster:   KubeappsCluster,
 		},
 		ReconciliationOptions: &corev1.ReconciliationOptions{
 			Interval:           60,
@@ -612,6 +627,7 @@ var (
 		Name:                "my-podinfo-4",
 		TargetContext: &corev1.Context{
 			Namespace: "test-4",
+			Cluster:   KubeappsCluster,
 		},
 		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
 	}
@@ -642,6 +658,7 @@ var (
 		Name:                "my-podinfo-5",
 		TargetContext: &corev1.Context{
 			Namespace: "test-5",
+			Cluster:   KubeappsCluster,
 		},
 		Values: "{\"replicaCount\": \"what we do in the shadows\" }",
 	}
@@ -679,6 +696,7 @@ var (
 		Name:                "my-podinfo-6",
 		TargetContext: &corev1.Context{
 			Namespace: "test-6",
+			Cluster:   KubeappsCluster,
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
@@ -730,6 +748,7 @@ var (
 		Name:                "my-podinfo-7",
 		TargetContext: &corev1.Context{
 			Namespace: "test-7",
+			Cluster:   KubeappsCluster,
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
@@ -782,6 +801,7 @@ var (
 		Name:                "my-podinfo-8",
 		TargetContext: &corev1.Context{
 			Namespace: "test-8",
+			Cluster:   KubeappsCluster,
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
@@ -836,6 +856,7 @@ var (
 		Name:                "my-podinfo-9",
 		TargetContext: &corev1.Context{
 			Namespace: "test-9",
+			Cluster:   KubeappsCluster,
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
@@ -889,6 +910,7 @@ var (
 		Name:                "my-podinfo-10",
 		TargetContext: &corev1.Context{
 			Namespace: "test-10",
+			Cluster:   KubeappsCluster,
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
@@ -922,6 +944,7 @@ var (
 		Name:                "my-podinfo-11",
 		TargetContext: &corev1.Context{
 			Namespace: "test-11",
+			Cluster:   KubeappsCluster,
 		},
 	}
 
@@ -997,6 +1020,7 @@ var (
 		Name:                "my-podinfo-12",
 		TargetContext: &corev1.Context{
 			Namespace: "test-12",
+			Cluster:   KubeappsCluster,
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
@@ -1028,6 +1052,7 @@ var (
 		Name:                "my-podinfo-13",
 		TargetContext: &corev1.Context{
 			Namespace: "test-13",
+			Cluster:   KubeappsCluster,
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
@@ -1052,5 +1077,14 @@ var (
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-13 8080:9898\n",
 		AvailablePackageRef: availableRef("podinfo-13/podinfo", "default"),
+	}
+
+	create_request_wrong_cluster = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-14/podinfo", "default"),
+		Name:                "my-podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: "test-14",
+			Cluster:   "this is not the cluster you're looking for",
+		},
 	}
 )
