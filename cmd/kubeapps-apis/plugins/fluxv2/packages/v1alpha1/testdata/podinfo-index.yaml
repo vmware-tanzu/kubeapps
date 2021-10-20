@@ -1,3 +1,6 @@
+# This is local copy of the first few entries
+# on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
+# urls modified to link to .tgz files also within the local cluster
 apiVersion: v1
 entries:
   podinfo:
@@ -32,3 +35,4 @@ entries:
       urls:
       - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-5.2.1.tgz
       version: 5.2.1
+generated: "2021-06-16T12:51:07.135685319Z"

@@ -194,7 +194,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		// TODO (gfichtenholt) Categories?
 		// Just happened to notice that helm plug-in returning this.
 		// Never discussed this and the design doc appears to have a lot of back-and-forth comments
-		// about this
+		// about this, semantics aren't very clear
 	}, nil
 }
 

@@ -37,10 +37,6 @@ import (
 //    at this point.
 // 3) run './kind-cluster-setup.sh deploy' once prior to these tests
 
-// TODO (gfichtenholt) currently core server's has broken logic inside plugins.go
-// createConfigGetterWithParams(...). Refer to my comment in there. I had to make suggested changes
-// locally to make these tests pass
-
 const (
 	// the only repo these tests use so far. This is local copy of the first few entries
 	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
@@ -195,6 +191,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			request:      update_request_6,
 			unauthorized: true,
 		},
+		// TODO (gfichtenholt) test automatic upgrade to new version when it becomes available
 	}
 
 	grpcContext := newGrpcContext(t, "test-update-admin")
