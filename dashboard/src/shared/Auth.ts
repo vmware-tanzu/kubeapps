@@ -62,7 +62,7 @@ export class Auth {
         headers: { Authorization: `Bearer ${token}` },
       });
     } catch (e: any) {
-      const res = e.response as AxiosResponse;
+      const res = e.response as AxiosResponse<any>;
       if (res.status === 401) {
         throw new Error("invalid token");
       }
@@ -86,7 +86,7 @@ export class Auth {
   // upstream result). Hence encapsulating this ugliness here so we can fix
   // it in the one spot. We may need to query `/oauth2/info` to avoid potential
   // false positives.
-  public static is403FromAuthProxy(r: AxiosResponse): boolean {
+  public static is403FromAuthProxy(r: AxiosResponse<any>): boolean {
     if (r.data && typeof r.data === "string" && r.data.match("system:serviceaccount")) {
       // If the error message is related to a service account is not from the auth proxy
       return false;
@@ -99,7 +99,7 @@ export class Auth {
   // the k8s api server nowadays defaults to allowing anonymous
   // requests, so that rather than returning a 401, a 403 is returned if
   // RBAC does not allow the anonymous user access.
-  public static isAnonymous(response: AxiosResponse): boolean {
+  public static isAnonymous(response: AxiosResponse<any>): boolean {
     const msg = get(response, "data.message") || get(response, "data");
     return typeof msg === "string" && msg.includes("system:anonymous");
   }
@@ -111,7 +111,7 @@ export class Auth {
     try {
       await Axios.get(url.api.k8s.base(cluster) + "/");
     } catch (e: any) {
-      const response = e.response as AxiosResponse;
+      const response = e.response as AxiosResponse<any>;
       // The only error response which can possibly mean we did authenticate is
       // a 403 from the k8s api server (ie. we got through to k8s api server
       // but RBAC doesn't authorize us).

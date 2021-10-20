@@ -1,3 +1,4 @@
+{{- if .Values.assetsvc.enabled }}
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
@@ -95,3 +96,4 @@ spec:
           {{- if .Values.assetsvc.resource }}
           resources: {{- toYaml .Values.assetsvc.resources | nindent 12 }}
           {{- end }}
+{{- end }}

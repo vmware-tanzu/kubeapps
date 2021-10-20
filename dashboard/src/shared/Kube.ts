@@ -95,7 +95,7 @@ export class Kube {
   }
 
   public static async getAPIGroups(cluster: string) {
-    const { data: apiGroups } = await axiosWithAuth.get(`${url.api.k8s.base(cluster)}/apis`);
+    const { data: apiGroups } = await axiosWithAuth.get<any>(`${url.api.k8s.base(cluster)}/apis`);
     return apiGroups.groups;
   }
 
@@ -112,7 +112,7 @@ export class Kube {
       }
     };
     // Handle v1 separately
-    const { data: coreResourceList } = await axiosWithAuth.get(
+    const { data: coreResourceList } = await axiosWithAuth.get<any>(
       `${url.api.k8s.base(cluster)}/api/v1`,
     );
     coreResourceList.resources?.forEach((r: any) => addResource(r, "v1"));
@@ -120,7 +120,7 @@ export class Kube {
     await Promise.all(
       groups.map(async (g: any) => {
         const groupVersion = g.preferredVersion.groupVersion;
-        const { data: resourceList } = await axiosWithAuth.get(
+        const { data: resourceList } = await axiosWithAuth.get<any>(
           `${url.api.k8s.base(cluster)}/apis/${groupVersion}`,
         );
         resourceList.resources?.forEach((r: any) => addResource(r, groupVersion));

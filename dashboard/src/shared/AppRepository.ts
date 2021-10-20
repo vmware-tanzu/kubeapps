@@ -7,12 +7,14 @@ export class AppRepository {
   public static async list(cluster: string, namespace: string) {
     const {
       data: { appRepository },
-    } = await axiosWithAuth.get(url.backend.apprepositories.list(cluster, namespace));
+    } = await axiosWithAuth.get<any>(url.backend.apprepositories.list(cluster, namespace));
     return appRepository;
   }
 
   public static async get(cluster: string, namespace: string, name: string) {
-    const { data } = await axiosWithAuth.get(AppRepository.getSelfLink(cluster, namespace, name));
+    const { data } = await axiosWithAuth.get<any>(
+      AppRepository.getSelfLink(cluster, namespace, name),
+    );
     return data;
   }
 

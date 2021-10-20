@@ -41,6 +41,8 @@ type helmActionConfigGetter func(ctx context.Context, namespace string) (*action
 type Server struct {
 	v1alpha1.UnimplementedFluxV2PackagesServiceServer
 
+	// kubeappsCluster specifies the cluster on which Kubeapps is installed.
+	kubeappsCluster string
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
@@ -52,7 +54,7 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
+func NewServer(configGetter server.KubernetesConfigGetter, kubeappsCluster string) (*Server, error) {
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -73,6 +75,7 @@ func NewServer(configGetter server.KubernetesConfigGetter) (*Server, error) {
 			clientGetter:       newClientGetter(configGetter),
 			actionConfigGetter: newHelmActionConfigGetter(configGetter),
 			cache:              cache,
+			kubeappsCluster:    kubeappsCluster,
 		}, nil
 	}
 }
@@ -144,7 +147,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 
 	// grpc compiles in getters for you which automatically return a default (empty) struct if the pointer was nil
-	if request != nil && request.GetContext().GetCluster() != "" {
+	cluster := request.GetContext().GetCluster()
+	if request != nil && cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"not supported yet: request.Context.Cluster: [%v]",

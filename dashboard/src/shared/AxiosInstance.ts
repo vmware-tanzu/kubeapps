@@ -17,7 +17,7 @@ import {
 export function addAuthHeaders(axiosInstance: AxiosInstance) {
   axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
     const authToken = Auth.getAuthToken();
-    if (authToken) {
+    if (authToken && config?.headers) {
       config.headers.Authorization = `Bearer ${authToken}`;
     }
     return config;
@@ -29,7 +29,7 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
     response => response,
     e => {
       const dispatch = store.dispatch as ThunkDispatch<IStoreState, null, Action>;
-      const err: AxiosError = e;
+      const err: AxiosError<any, any> = e;
       if (
         err.code === undefined &&
         err.message === "Network Error" &&
@@ -56,7 +56,7 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
         // logout either way.
         dispatch(actions.auth.expireSession());
       };
-      const response = err.response as AxiosResponse;
+      const response = err.response as AxiosResponse<any>;
       switch (response && response.status) {
         case 401:
           dispatchErrorAndLogout(message);
