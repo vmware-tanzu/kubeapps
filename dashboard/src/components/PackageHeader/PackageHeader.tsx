@@ -31,15 +31,9 @@ export default function PackageHeader({
   return (
     <PageHeader
       title={
-        // TODO(agamez): get the repo name once available
-        // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
         releaseName
-          ? `${releaseName} (${
-              availablePackageDetail?.availablePackageRef?.identifier.split("/")[0]
-            }/${decodeURIComponent(availablePackageDetail?.name)})`
-          : `${
-              availablePackageDetail?.availablePackageRef?.identifier.split("/")[0]
-            }/${decodeURIComponent(availablePackageDetail?.name)}`
+          ? `${releaseName} (${availablePackageDetail?.availablePackageRef?.identifier})`
+          : `${availablePackageDetail?.availablePackageRef?.identifier}`
       }
       titleSize="md"
       icon={availablePackageDetail?.iconUrl ? availablePackageDetail.iconUrl : placeholder}
