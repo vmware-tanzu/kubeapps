@@ -337,6 +337,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 | Name                                             | Description                                                                               | Value               |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------- |
+| `assetsvc.enabled`                               | Specifies whether this deprecated component should be installed.                          | `false`             |
 | `assetsvc.image.registry`                        | Kubeapps Assetsvc image registry                                                          | `docker.io`         |
 | `assetsvc.image.repository`                      | Kubeapps Assetsvc image repository                                                        | `kubeapps/assetsvc` |
 | `assetsvc.image.tag`                             | Kubeapps Assetsvc image tag (immutable tags are recommended)                              | `latest`            |

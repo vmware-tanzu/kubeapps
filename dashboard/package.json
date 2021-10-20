@@ -5,9 +5,9 @@
   "homepage": "./",
   "dependencies": {
     "@cds/city": "^1.1.0",
-    "@cds/core": "^5.5.7",
-    "@cds/react": "^5.5.7",
-    "@clr/ui": "^12.0.5",
+    "@cds/core": "^5.5.8",
+    "@cds/react": "^5.5.8",
+    "@clr/ui": "^12.0.6",
     "@improbable-eng/grpc-web": "^0.14.1",
     "@paciolan/remote-component": "^2.11.0",
     "ajv": "^8.6.3",
@@ -88,7 +88,7 @@
     ]
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.3.1",
+    "@formatjs/cli": "^4.3.2",
     "@improbable-eng/grpc-web-fake-transport": "^0.14.1",
     "@types/enzyme": "^3.10.9",
     "@types/enzyme-adapter-react-16": "^1.0.6",
@@ -127,7 +127,7 @@
     "sass": "^1.43.2",
     "shx": "^0.3.3",
     "stylelint": "^13.13.1",
-    "stylelint-config-prettier": "^9.0.2",
+    "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-recommended-scss": "^4.3.0",
     "stylelint-scss": "^3.21.0",
     "ts-jest": "^27.0.7",
