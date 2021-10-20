@@ -108,7 +108,7 @@ const history = createMemoryHistory({ initialEntries: [routePathParam] });
 it("triggers the fetchAvailablePackageVersions when mounting", () => {
   const spy = jest.fn();
   actions.packages.fetchAvailablePackageVersions = spy;
-  const w = mountWrapper(
+  mountWrapper(
     getStore(defaultState),
     <Router history={history}>
       <Route path={routePath}>

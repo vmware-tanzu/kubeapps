@@ -90,8 +90,10 @@ describe("renders an error", () => {
         </Route>
       </Router>,
     );
-    expect(wrapper.find(Alert).exists());
-    expect(wrapper.find(Alert).findWhere(a => a.html().includes("An error occurred: wrong format!"))).toExist();
+    expect(wrapper.find(Alert)).toExist();
+    expect(
+      wrapper.find(Alert).findWhere(a => a.html().includes("An error occurred: wrong format!")),
+    ).toExist();
     expect(wrapper.find(PackageHeader)).toExist();
   });
 
@@ -107,7 +109,11 @@ describe("renders an error", () => {
       </Router>,
     );
     expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.find(Alert).findWhere(a => a.html().includes("Unable to retrieve the current app: not found"))).toExist();
+    expect(
+      wrapper
+        .find(Alert)
+        .findWhere(a => a.html().includes("Unable to retrieve the current app: not found")),
+    ).toExist();
     expect(wrapper.find(PackageHeader)).not.toExist();
   });
 
