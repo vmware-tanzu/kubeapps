@@ -34,7 +34,6 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
     DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
-  "/c/:cluster/ns/:namespace/catalog/:repo": Catalog,
   "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageId": PackageView,
   "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
     PackageView,
