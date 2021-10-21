@@ -28,8 +28,8 @@ KUBEAPPS_REPO="kubeapps/kubeapps"
 CHART_REPO_PATH="bitnami/kubeapps"
 PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
-PR_INTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/PR_internal_chart_template.md"
-PR_EXTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/PR_external_chart_template.md"
+PR_INTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_internal_chart_template.md"
+PR_EXTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_external_chart_template.md"
 
 # Returns the tag for the latest release
 latestReleaseTag() {

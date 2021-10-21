@@ -19,7 +19,7 @@ function get_release_notes {
   local repo_name=${3:?}
   local commits=$(commit_list $tag $repo_domain $repo_name)
   local current_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)
-  local release_notes=$(echo "$(cat $current_dir/release_notes.tpl)${commits}" | sed 's/<<TAG>>/'"${tag}"'/g')
+  local release_notes=$(echo "$(cat $current_dir/tpl/release_notes.tpl)${commits}" | sed 's/<<TAG>>/'"${tag}"'/g')
   local escaped_release_notes=$(echo "$release_notes" | sed -n -e 'H;${x;s/\n/\\\n/g;s/"/\\\"/g;p;}')
   echo "${escaped_release_notes}"
 }

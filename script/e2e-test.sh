@@ -35,11 +35,11 @@ fi
 
 # Load Generic Libraries
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libtest.sh"
+. "${ROOT_DIR}/script/lib/libtest.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/liblog.sh"
+. "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libutil.sh"
+. "${ROOT_DIR}/script/lib/libutil.sh"
 
 # Auxiliar functions
 
