@@ -267,6 +267,34 @@ it("renders the upgrade form when the repo is available, clears state and fetche
   });
 });
 
+it("renders the upgrade form with the version property", () => {
+  const state = {
+    apps: {
+      selected: installedPackage1,
+      selectedDetails: availablePackageDetail,
+    } as IAppState,
+    repos: {
+      repo: repo1,
+      repos: [repo1],
+      isFetching: false,
+    } as IAppRepositoryState,
+    packages: { selected: selectedPackage } as IPackageState,
+  };
+  const wrapper = mountWrapper(
+    getStore({
+      ...defaultStore,
+      ...state,
+    }),
+    <MemoryRouter initialEntries={[routePathParam + "/0.0.1"]}>
+      <Route path={routePath + "/:version"}>
+        <AppUpgrade />,
+      </Route>
+    </MemoryRouter>,
+  );
+  expect(wrapper.find(UpgradeForm)).toExist();
+  expect(wrapper.find(UpgradeForm)).toHaveProp("version", "0.0.1");
+});
+
 it("skips the repo selection form if the app contains upgrade info", () => {
   const state = {
     apps: {

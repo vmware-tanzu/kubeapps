@@ -304,6 +304,30 @@ it("defaults the upgrade version to the current version", () => {
   expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("1.0.0");
 });
 
+it("uses the selected version passed in the component's props", () => {
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: installedPkgDetail,
+      selectedDetails: availablePkgDetail,
+      isFetching: false,
+    } as IAppState,
+    packages: {
+      selected: selectedPkg,
+    } as IPackageState,
+  };
+
+  const wrapper = mountWrapper(
+    getStore({ ...state }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm version={"0.0.1"}/>,
+      </Route>
+    </MemoryRouter>,
+  );
+  expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("0.0.1");
+});
+
 it("forwards the appValues when modified", () => {
   const state = {
     ...defaultStore,
