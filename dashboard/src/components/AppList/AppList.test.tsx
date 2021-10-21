@@ -282,6 +282,76 @@ context("when apps available", () => {
     );
     expect(wrapper.find(AppListItem).key()).toBe("fooNs-foobar/bar");
   });
+
+  it("filters apps (same name, different ns)", () => {
+    state.apps.listOverview = [
+      {
+        name: "foo",
+        installedPackageRef: {
+          identifier: "foo/bar",
+          pkgVersion: "1.0.0",
+          context: { cluster: "", namespace: "fooNs" } as Context,
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as InstalledPackageReference,
+        status: {
+          ready: true,
+          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          userReason: "deployed",
+        } as InstalledPackageStatus,
+        latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        currentVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        pkgVersionReference: { version: "1" } as VersionReference,
+      } as InstalledPackageSummary,
+      {
+        name: "bar",
+        installedPackageRef: {
+          identifier: "foobar/bar",
+          pkgVersion: "1.0.0",
+          context: { cluster: "", namespace: "fooNs" } as Context,
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as InstalledPackageReference,
+        status: {
+          ready: true,
+          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          userReason: "deployed",
+        } as InstalledPackageStatus,
+        latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        currentVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        pkgVersionReference: { version: "1" } as VersionReference,
+      } as InstalledPackageSummary,
+      {
+        name: "bar",
+        installedPackageRef: {
+          identifier: "foobar/bar",
+          pkgVersion: "1.0.0",
+          context: { cluster: "", namespace: "barNs" } as Context,
+          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+        } as InstalledPackageReference,
+        status: {
+          ready: true,
+          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          userReason: "deployed",
+        } as InstalledPackageStatus,
+        latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        latestVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        currentVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+        pkgVersionReference: { version: "1" } as VersionReference,
+      } as InstalledPackageSummary,
+    ];
+    jest.spyOn(qs, "parse").mockReturnValue({
+      q: "bar",
+    });
+    const wrapper = mountWrapper(
+      getStore(state),
+      <MemoryRouter initialEntries={["/foo?q=bar"]}>
+        <AppList />
+      </MemoryRouter>,
+    );
+    expect(wrapper.find(AppListItem).first().key()).toBe("fooNs-foobar/bar");
+    expect(wrapper.find(AppListItem).last().key()).toBe("barNs-foobar/bar");
+  });
 });
 
 context("when custom resources available", () => {
