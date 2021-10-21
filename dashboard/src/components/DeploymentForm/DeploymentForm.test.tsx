@@ -1,6 +1,7 @@
 import actions from "actions";
-import PackageHeader from "components/PackageHeader/PackageHeader";
+import { JSONSchemaType } from "ajv";
 import Alert from "components/js/Alert";
+import PackageHeader from "components/PackageHeader/PackageHeader";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -13,7 +14,7 @@ import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IStoreState } from "shared/types";
+import { FetchError, IPackageState, IStoreState } from "shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
 
@@ -28,7 +29,10 @@ const defaultProps = {
 
 const defaultSelectedPkg = {
   versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" } as PackageAppVersion],
-  availablePackageDetail: { name: "test" } as AvailablePackageDetail,
+  availablePackageDetail: {
+    name: "test",
+    availablePackageRef: { identifier: "test/test" },
+  } as AvailablePackageDetail,
   pkgVersion: "1.2.4",
   values: "bar: foo",
 };
@@ -93,7 +97,6 @@ describe("renders an error", () => {
         </Route>
       </Router>,
     );
-    console.log(wrapper.debug());
     expect(wrapper.find(Alert)).toExist();
     expect(
       wrapper.find(Alert).findWhere(a => a.html().includes("An error occurred: wrong format!")),
@@ -191,12 +194,13 @@ describe("renders an error", () => {
     spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
 
     const appValues = "foo: bar";
-    const schema = { properties: { foo: { type: "string", form: true } } };
-    const availablePackageDetail = { name: "test" };
+    const schema = {
+      properties: { foo: { type: "string", form: true } },
+    } as unknown as JSONSchemaType<any>;
     const selected = { ...defaultSelectedPkg, values: appValues, schema: schema };
 
     const wrapper = mountWrapper(
-      getStore({ packages: { selected: selected } } as unknown as IStoreState),
+      getStore({ packages: { selected: selected } } as IStoreState),
 
       <Router history={history}>
         <Route path={routePath}>
@@ -233,7 +237,7 @@ describe("renders an error", () => {
     expect(installPackage).toHaveBeenCalledWith(
       defaultProps.cluster,
       defaultProps.namespace,
-      availablePackageDetail,
+      defaultSelectedPkg.availablePackageDetail,
       defaultProps.releaseName,
       appValues,
       schema,

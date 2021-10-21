@@ -320,7 +320,7 @@ describe("renders errors", () => {
       getStore({
         ...defaultState,
         packages: { ...defaultPackageState, selected: { error: new Error("Boom!") } },
-      } as unknown as IStoreState),
+      } as IStoreState),
       <Router history={history}>
         <Route path={routePath}>
           <PackageView />

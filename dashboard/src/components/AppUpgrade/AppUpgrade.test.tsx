@@ -67,14 +67,14 @@ const installedPackage1 = {
   } as InstalledPackageStatus,
 } as CustomInstalledPackageDetail;
 
-const installedPackageDetail = {
+const availablePackageDetail = {
   availablePackageRef: {
     context: { cluster: "default", namespace: "my-ns" },
     identifier: "test",
     plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
   },
-  currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
-} as InstalledPackageDetail;
+  version: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
+} as AvailablePackageDetail;
 
 const selectedPackage = {
   versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
@@ -204,8 +204,8 @@ describe("when an error exists", () => {
       apps: {
         error: upgradeError,
         selected: installedPackage1,
-        selectedDetails: installedPackageDetail,
-      } as unknown as IAppState,
+        selectedDetails: availablePackageDetail,
+      } as IAppState,
       packages: { selected: selectedPackage } as IPackageState,
     };
 
@@ -229,8 +229,8 @@ it("renders the upgrade form when the repo is available", () => {
   const state = {
     apps: {
       selected: installedPackage1,
-      selectedDetails: installedPackageDetail,
-    } as unknown as IAppState,
+      selectedDetails: availablePackageDetail,
+    } as IAppState,
     repos: {
       repo: repo1,
       repos: [repo1],
@@ -258,8 +258,8 @@ it("skips the repo selection form if the app contains upgrade info", () => {
   const state = {
     apps: {
       selected: installedPackage1,
-      selectedDetails: installedPackageDetail,
-    } as unknown as IAppState,
+      selectedDetails: availablePackageDetail,
+    } as IAppState,
     repos: {
       repo: repo1,
       repos: [repo1],
