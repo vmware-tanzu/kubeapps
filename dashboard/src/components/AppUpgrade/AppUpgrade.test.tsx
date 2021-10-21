@@ -1,10 +1,10 @@
+import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
   Context,
-  InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
@@ -225,7 +225,13 @@ describe("when an error exists", () => {
   });
 });
 
-it("renders the upgrade form when the repo is available", () => {
+it("renders the upgrade form when the repo is available, clears state and fetches app", () => {
+  const getApp = jest.fn();
+  actions.apps.getApp = getApp;
+  const resetSelectedAvailablePackageDetail = jest
+    .spyOn(actions.packages, "resetSelectedAvailablePackageDetail")
+    .mockImplementation(jest.fn());
+
   const state = {
     apps: {
       selected: installedPackage1,
@@ -252,6 +258,13 @@ it("renders the upgrade form when the repo is available", () => {
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
+
+  expect(resetSelectedAvailablePackageDetail).toHaveBeenCalled();
+  expect(getApp).toHaveBeenCalledWith({
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
+    identifier: defaultProps.releaseName,
+    plugin: defaultProps.plugin,
+  });
 });
 
 it("skips the repo selection form if the app contains upgrade info", () => {
