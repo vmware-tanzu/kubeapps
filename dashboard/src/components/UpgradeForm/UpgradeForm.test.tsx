@@ -305,6 +305,11 @@ it("defaults the upgrade version to the current version", () => {
 });
 
 it("uses the selected version passed in the component's props", () => {
+  const mockDispatch = jest.fn().mockReturnValue(true);
+  jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  const fetchAndSelectAvailablePackageDetail = jest.fn();
+  actions.packages.fetchAndSelectAvailablePackageDetail = fetchAndSelectAvailablePackageDetail;
+
   const state = {
     ...defaultStore,
     apps: {
@@ -313,19 +318,33 @@ it("uses the selected version passed in the component's props", () => {
       isFetching: false,
     } as IAppState,
     packages: {
-      selected: selectedPkg,
+      selected: {
+        ...selectedPkg,
+        versions: [] as PackageAppVersion[],
+      },
     } as IPackageState,
   };
 
-  const wrapper = mountWrapper(
+  mountWrapper(
     getStore({ ...state }),
-    <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm version={"0.0.1"} />,
+    <MemoryRouter initialEntries={[routePathParam + "/1.5.0"]}>
+      <Route path={routePath + "/:version"}>
+        <UpgradeForm version={"1.5.0"} />,
       </Route>
     </MemoryRouter>,
   );
-  expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("0.0.1");
+
+  expect(fetchAndSelectAvailablePackageDetail).toHaveBeenCalledWith(
+    {
+      context: {
+        cluster: defaultProps.cluster,
+        namespace: defaultProps.repoNamespace,
+      },
+      identifier: defaultProps.packageId,
+      plugin: defaultProps.plugin,
+    },
+    "1.5.0",
+  );
 });
 
 it("forwards the appValues when modified", () => {
