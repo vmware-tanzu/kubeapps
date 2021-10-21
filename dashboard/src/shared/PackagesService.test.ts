@@ -42,6 +42,10 @@ describe("App", () => {
         },
         expectedClientArg: {
           context: { cluster, namespace },
+          filterOptions: {
+            query: "",
+            repositories: [],
+          },
           paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
         },
       },
@@ -59,6 +63,7 @@ describe("App", () => {
           context: { cluster, namespace },
           filterOptions: {
             query: "cms",
+            repositories: [],
           },
           paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
         },
@@ -76,6 +81,7 @@ describe("App", () => {
         expectedClientArg: {
           context: { cluster, namespace },
           filterOptions: {
+            query: "",
             repositories: ["repo1", "repo2"],
           },
           paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
@@ -110,7 +116,7 @@ describe("App", () => {
           } as GetAvailablePackageSummariesResponse),
         );
         // Create a real client, but we'll stub out the function we're interested in.
-        const mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
+        let mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
         jest
           .spyOn(mockClient, "GetAvailablePackageSummaries")
           .mockImplementation(mockClientGetAvailablePackageSummaries);
