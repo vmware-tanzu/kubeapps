@@ -144,14 +144,13 @@ func namespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedNa
 	return &types.NamespacedName{Name: name, Namespace: namespace}, nil
 }
 
-func newHelmActionConfigGetter(configGetter server.KubernetesConfigGetter) helmActionConfigGetter {
+func newHelmActionConfigGetter(configGetter server.KubernetesConfigGetter, cluster string) helmActionConfigGetter {
 	return func(ctx context.Context, namespace string) (*action.Configuration, error) {
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
 		// The Flux plugin currently supports interactions with the default (kubeapps)
 		// cluster only:
-		cluster := ""
 		config, err := configGetter(ctx, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
@@ -173,14 +172,13 @@ func newHelmActionConfigGetter(configGetter server.KubernetesConfigGetter) helmA
 	}
 }
 
-func newClientGetter(configGetter server.KubernetesConfigGetter) clientGetter {
+func newClientGetter(configGetter server.KubernetesConfigGetter, cluster string) clientGetter {
 	return func(ctx context.Context) (dynamic.Interface, apiext.Interface, error) {
 		if configGetter == nil {
 			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
 		// The Flux plugin currently supports interactions with the default (kubeapps)
 		// cluster only:
-		cluster := ""
 		if config, err := configGetter(ctx, cluster); err != nil {
 			if status.Code(err) == codes.Unauthenticated {
 				// want to make sure we return same status in this case
