@@ -41,13 +41,16 @@ export const app = {
       cluster: string,
       namespace: string,
       availablePackageReference: AvailablePackageReference,
-      isGlobal: boolean,
     ) => {
       const pkgPluginName = availablePackageReference?.plugin?.name;
       const pkgPluginVersion = availablePackageReference?.plugin?.version;
       const pkgId = availablePackageReference?.identifier || "";
-      const globalSegment = isGlobal ? "global-packages" : "packages";
-      return `/c/${cluster}/ns/${namespace}/${globalSegment}/${pkgPluginName}/${pkgPluginVersion}/${encodeURIComponent(
+      // Some plugins may not be cluster-aware nor support multi-cluster, so
+      // if the returned available package ref doesn't set cluster, use the current
+      // one.
+      const pkgCluster = availablePackageReference?.context?.cluster || cluster;
+      const pkgNamespace = availablePackageReference?.context?.namespace;
+      return `/c/${cluster}/ns/${namespace}/packages/${pkgPluginName}/${pkgPluginVersion}/${pkgCluster}/${pkgNamespace}/${encodeURIComponent(
         pkgId,
       )}`;
     },
