@@ -9,7 +9,7 @@ import PackageHeader, { IPackageHeaderProps } from "./PackageHeader";
 const testProps: IPackageHeaderProps = {
   availablePackageDetail: {
     shortDescription: "A Test Package",
-    name: "test",
+    name: "foo",
     categories: [""],
     displayName: "foo",
     iconUrl: "api/assetsvc/test.jpg",
