@@ -321,7 +321,7 @@ it("uses the selected version passed in the component's props", () => {
     getStore({ ...state }),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
-        <UpgradeForm version={"0.0.1"}/>,
+        <UpgradeForm version={"0.0.1"} />,
       </Route>
     </MemoryRouter>,
   );
