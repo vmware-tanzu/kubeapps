@@ -7,7 +7,7 @@ import {
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class PackagesService {
-  private static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
 
   public static async getAvailablePackageSummaries(
     cluster: string,
@@ -21,7 +21,7 @@ export default class PackagesService {
       context: { cluster: cluster, namespace: namespace },
       filterOptions: {
         query: query,
-        repositories: repos.split(","),
+        repositories: repos ? repos.split(",") : [],
       },
       paginationOptions: { pageSize: size, pageToken: page.toString() },
     });

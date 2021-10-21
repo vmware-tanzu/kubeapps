@@ -55,6 +55,7 @@ type Server struct {
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(configGetter server.KubernetesConfigGetter, kubeappsCluster string) (*Server, error) {
+	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v])", kubeappsCluster)
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -72,8 +73,8 @@ func NewServer(configGetter server.KubernetesConfigGetter, kubeappsCluster strin
 		return nil, err
 	} else {
 		return &Server{
-			clientGetter:       newClientGetter(configGetter),
-			actionConfigGetter: newHelmActionConfigGetter(configGetter),
+			clientGetter:       newClientGetter(configGetter, kubeappsCluster),
+			actionConfigGetter: newHelmActionConfigGetter(configGetter, kubeappsCluster),
 			cache:              cache,
 			kubeappsCluster:    kubeappsCluster,
 		}, nil
@@ -113,7 +114,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 		return nil, status.Errorf(codes.InvalidArgument, "no context provided")
 	}
 
-	if request.Context.Cluster != "" {
+	cluster := request.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"not supported yet: request.Context.Cluster: [%v]",
@@ -191,10 +193,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if pageSize > 0 && len(packageSummaries) == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
+
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: packageSummaries,
 		NextPageToken:             nextPageToken,
 		// TODO (gfichtenholt) Categories?
+		// Just happened to notice that helm plug-in returning this.
+		// Never discussed this and the design doc appears to have a lot of back-and-forth comments
+		// about this, semantics aren't very clear
 	}, nil
 }
 
@@ -366,7 +372,8 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	if request.TargetContext == nil || request.TargetContext.Namespace == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
 	}
-	if request.TargetContext.Cluster != "" {
+	cluster := request.GetTargetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"not supported yet: request.TargetContext.Cluster: [%v]",

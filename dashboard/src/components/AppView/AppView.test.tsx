@@ -218,7 +218,6 @@ describe("AppView", () => {
       </MemoryRouter>,
     );
 
-    console.log(wrapper.debug());
     expect(wrapper.find(UpgradeButton)).toExist();
     expect(wrapper.find(RollbackButton)).toExist();
     expect(wrapper.find(DeleteButton)).toExist();

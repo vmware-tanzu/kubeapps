@@ -13,8 +13,9 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/gob"
 	"fmt"
 	"time"
 
@@ -265,12 +266,13 @@ func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (int
 			return nil, false, err
 		}
 
-		jsonBytes, err := json.Marshal(charts)
-		if err != nil {
+		// use gob encoding instead of json, it peforms much better
+		var buf bytes.Buffer
+		enc := gob.NewEncoder(&buf)
+		if err = enc.Encode(charts); err != nil {
 			return nil, false, err
 		}
-
-		return jsonBytes, true, nil
+		return buf.Bytes(), true, nil
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
@@ -280,16 +282,17 @@ func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (int
 }
 
 func onGetRepo(key string, value interface{}) (interface{}, error) {
-	bytes, ok := value.([]byte)
+	b, ok := value.([]byte)
 	if !ok {
 		return nil, status.Errorf(codes.Internal, "unexpected value found in cache for key [%s]: %v", key, value)
 	}
 
+	dec := gob.NewDecoder(bytes.NewReader(b))
 	var charts []models.Chart
-	err := json.Unmarshal(bytes, &charts)
-	if err != nil {
+	if err := dec.Decode(&charts); err != nil {
 		return nil, err
 	}
+
 	return charts, nil
 }
 
