@@ -6,12 +6,11 @@ replace (
 	// required by Oras https://github.com/deislabs/oras/blob/main/go.mod until we update Helm to >3.6.3
 	// because v3.6.3 still depends on Oras v0.11.1 with depends on Containerd 1.4.4 (not higher versions)
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker => github.com/moby/moby v20.10.6+incompatible
+	github.com/docker/docker => github.com/moby/moby v20.10.9+incompatible
 
 	// k8s.io/kubernetes is not intended to be used as a module, so versions are not being properly resolved.
 	// This replacement is required, see https://github.com/kubernetes/kubernetes/issues/79384
 	// As we support new k8s versions, this replacements should be also updated accordingly.
-
 	k8s.io/api => k8s.io/api v0.20.8
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.20.8
 	k8s.io/apimachinery => k8s.io/apimachinery v0.20.8
@@ -106,15 +105,15 @@ require (
 	github.com/bugsnag/bugsnag-go v2.1.2+incompatible // indirect
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/containerd/cgroups v0.0.0-20200531161412-0dbf7f05ba59 // indirect
+	github.com/containerd/cgroups v1.0.2 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/docker/cli v20.10.5+incompatible // indirect
+	github.com/docker/cli v20.10.9+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible // indirect
-	github.com/docker/docker-credential-helpers v0.6.3 // indirect
+	github.com/docker/docker v20.10.9+incompatible // indirect
+	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
@@ -169,7 +168,7 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/moby/term v0.0.0-20200312100748-672ec06f55cd // indirect
+	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
