@@ -28,12 +28,14 @@ export default function PackageHeader({
   deployButton,
   selectedVersion,
 }: IPackageHeaderProps) {
-  return (
+  return availablePackageDetail?.availablePackageRef?.identifier ? (
     <PageHeader
       title={
         releaseName
-          ? `${releaseName} (${availablePackageDetail?.availablePackageRef?.identifier})`
-          : `${availablePackageDetail?.availablePackageRef?.identifier}`
+          ? `${releaseName} (${decodeURIComponent(
+              availablePackageDetail.availablePackageRef.identifier,
+            )})`
+          : `${decodeURIComponent(availablePackageDetail.availablePackageRef.identifier)}`
       }
       titleSize="md"
       icon={availablePackageDetail?.iconUrl ? availablePackageDetail.iconUrl : placeholder}
@@ -69,5 +71,7 @@ export default function PackageHeader({
       }
       buttons={deployButton ? [deployButton] : undefined}
     />
+  ) : (
+    <></>
   );
 }
