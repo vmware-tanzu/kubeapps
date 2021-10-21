@@ -8,10 +8,11 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
 import { axiosWithAuth } from "./AxiosInstance";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import PackagesService from "./PackagesService";
 
-const clusterName = "cluster-name";
-const namespaceName = "namespace-name";
+const cluster = "cluster-name";
+const namespace = "namespace-name";
 const defaultPage = 1;
 const defaultSize = 0;
 describe("App", () => {
@@ -32,59 +33,94 @@ describe("App", () => {
       {
         description: "fetch availablePackageSummaries without repos, without query",
         args: {
-          cluster: clusterName,
-          namespace: namespaceName,
+          cluster: cluster,
+          namespace: namespace,
           repos: "",
           page: defaultPage,
           size: defaultSize,
           query: "",
+        },
+        expectedClientArg: {
+          context: { cluster, namespace },
+          filterOptions: {
+            query: "",
+            repositories: [],
+          },
+          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
         },
       },
       {
         description: "fetch availablePackageSummaries without repos, with query",
         args: {
-          cluster: clusterName,
-          namespace: namespaceName,
+          cluster: cluster,
+          namespace: namespace,
           repos: "",
           page: defaultPage,
           size: defaultSize,
           query: "cms",
         },
+        expectedClientArg: {
+          context: { cluster, namespace },
+          filterOptions: {
+            query: "cms",
+            repositories: [],
+          },
+          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
+        },
       },
       {
         description: "fetch availablePackageSummaries with repos, without query",
         args: {
-          cluster: clusterName,
-          namespace: namespaceName,
+          cluster: cluster,
+          namespace: namespace,
           repos: "repo1,repo2",
           page: defaultPage,
           size: defaultSize,
           query: "",
         },
+        expectedClientArg: {
+          context: { cluster, namespace },
+          filterOptions: {
+            query: "",
+            repositories: ["repo1", "repo2"],
+          },
+          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
+        },
       },
       {
         description: "fetch availablePackageSummaries with repos, with query",
         args: {
-          cluster: clusterName,
-          namespace: namespaceName,
+          cluster: cluster,
+          namespace: namespace,
           repos: "repo1,repo2",
           page: defaultPage,
           size: defaultSize,
           query: "cms",
         },
+        expectedClientArg: {
+          context: { cluster, namespace },
+          filterOptions: {
+            query: "cms",
+            repositories: ["repo1", "repo2"],
+          },
+          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
+        },
       },
     ].forEach(t => {
       it(t.description, async () => {
-        const mockGetAvailablePackageSummaries = jest.fn().mockImplementation(() =>
+        const mockClientGetAvailablePackageSummaries = jest.fn().mockImplementation(() =>
           Promise.resolve({
             availablePackageSummaries: [{ name: "foo" }],
             nextPageToken: "",
             categories: ["foo"],
           } as GetAvailablePackageSummariesResponse),
         );
+        // Create a real client, but we'll stub out the function we're interested in.
+        const mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
         jest
-          .spyOn(PackagesService, "getAvailablePackageSummaries")
-          .mockImplementation(mockGetAvailablePackageSummaries);
+          .spyOn(mockClient, "GetAvailablePackageSummaries")
+          .mockImplementation(mockClientGetAvailablePackageSummaries);
+        jest.spyOn(PackagesService, "client").mockImplementation(() => mockClient);
         const availablePackageSummaries = await PackagesService.getAvailablePackageSummaries(
           t.args.cluster,
           t.args.namespace,
@@ -98,7 +134,7 @@ describe("App", () => {
           nextPageToken: "",
           categories: ["foo"],
         } as GetAvailablePackageSummariesResponse);
-        expect(mockGetAvailablePackageSummaries).toHaveBeenCalledWith(...Object.values(t.args));
+        expect(mockClientGetAvailablePackageSummaries).toHaveBeenCalledWith(t.expectedClientArg);
       });
     });
   });
@@ -107,8 +143,8 @@ describe("App", () => {
       {
         description: "fetch availablePackageVersions",
         args: {
-          cluster: clusterName,
-          namespace: namespaceName,
+          cluster: cluster,
+          namespace: namespace,
           id: "mypackage",
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
         },
@@ -148,8 +184,8 @@ describe("App", () => {
       {
         description: "fetch availablePackageDetail with version",
         args: {
-          cluster: clusterName,
-          namespace: namespaceName,
+          cluster: cluster,
+          namespace: namespace,
           id: "mypackage",
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
           version: "v1",
@@ -158,8 +194,8 @@ describe("App", () => {
       {
         description: "fetch availablePackageDetail latest version",
         args: {
-          cluster: clusterName,
-          namespace: namespaceName,
+          cluster: cluster,
+          namespace: namespace,
           id: "mypackage",
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
           version: undefined,
