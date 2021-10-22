@@ -8,39 +8,48 @@
   .img-container {
     display: contents;
     align-items: center;
+
     img {
       max-height: 3rem;
       max-width: 7rem;
       margin: 0.2rem 0 0.2rem 0.6rem;
     }
   }
+
   .kubeapps-header-content {
     width: 100%;
+
     .kubeapps-title-section {
       display: flex;
       min-height: 60px;
+
       .kubeapps-title-block {
         display: flex;
         flex-direction: column;
         justify-content: center;
+
         h1 {
           margin: 0;
           margin-left: 0.6rem;
           padding-top: 0.2rem;
         }
+
         h3 {
           margin-left: 1rem;
           font-weight: 500;
           margin-top: 0;
         }
+
         .kubeapps-header-subtitle {
           margin-left: 1rem;
+
           img {
             max-height: 1rem;
             padding-right: 0.2rem;
             margin: 0;
             max-width: 30px;
           }
+
           span {
             color: var(--cds-global-typography-color-400, #333);
             padding-top: 0.1rem;
@@ -48,11 +57,13 @@
         }
       }
     }
+
     .control-buttons {
       display: flex;
       align-items: center;
       justify-content: flex-end;
       height: 100%;
+
       .header-button {
         margin-left: 0.5rem;
       }
@@ -66,6 +77,7 @@
     font-weight: 500;
     margin-right: 0.6rem;
   }
+
   & button {
     color: var(--cds-global-typography-color-400, #333);
   }

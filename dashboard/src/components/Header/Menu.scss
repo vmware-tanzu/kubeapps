@@ -8,18 +8,21 @@
 
 .kubeapps-menu {
   display: flex;
-  opacity: 0.75;
+  opacity: 75%;
   align-items: center;
+
   &:hover {
-    opacity: 1;
+    opacity: 100%;
     background-color: #25333d;
   }
+
   &.open {
-    opacity: 1;
+    opacity: 100%;
     background-color: #25333d;
   }
+
   button {
-    padding: 0 1.5rem 0 1.5rem;
+    padding: 0 1.5rem;
     height: 100%;
   }
 }
@@ -32,7 +35,7 @@
   left: 0;
   right: 0;
   background-color: var(--cds-global-color-gray-900, #313131);
-  opacity: 0.85;
+  opacity: 85%;
   height: calc(100vh - 3rem);
 }
 
@@ -53,7 +56,7 @@
 .dropdown-menu-label {
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  opacity: 0.8;
+  opacity: 80%;
   color: var(--cds-global-color-gray-50, #fafafa);
   font-weight: 600;
   font-size: 13px;
@@ -66,7 +69,7 @@
 }
 
 div .dropdown-menu .dropdown-divider {
-  opacity: 0.2;
+  opacity: 20%;
   border-bottom-color: var(--cds-global-color-gray-50, #fafafa);
 }
 
@@ -76,27 +79,32 @@ div .dropdown-menu .dropdown-divider {
   display: flex;
   align-items: center;
   color: var(--cds-global-color-gray-50, #fafafa);
-  padding: 0.2rem 0 0.2rem 0;
-  opacity: 0.65;
+  padding: 0.2rem 0;
+  opacity: 65%;
+
   img {
     margin-right: 0.5rem;
     max-width: 20px;
   }
+
   cds-icon {
     margin-right: 0.5rem;
   }
+
   &:hover {
     transform: translateY(-0.1rem);
     transition: border 0.2s ease, transform 0.2s;
-    opacity: 1;
+    opacity: 100%;
   }
 }
 
 .logout-button cds-button {
   display: grid;
   width: 100%;
+
   --color: var(--cds-global-color-gray-50, #fafafa);
   --border-color: var(--cds-global-color-gray-50, #fafafa);
+
   &:hover {
     --color: var(--cds-global-color-gray-50, #fafafa);
     --border-color: var(--cds-global-color-gray-50, #fafafa);
@@ -109,28 +117,33 @@ div .dropdown-menu .dropdown-divider {
   margin-bottom: 0.5rem;
   text-align: end;
   font-size: smaller;
+
   & a:link {
     color: var(--cds-global-color-blue-400, #2ec0ff);
   }
+
   & a:visited {
     color: var(--cds-global-color-blue-400, #2ec0ff);
   }
 }
 
 .transition-drawer-enter {
-  opacity: 0;
+  opacity: 0%;
   transform: translateX(15rem);
 }
+
 .transition-drawer-enter-active {
-  opacity: 1;
+  opacity: 100%;
   transform: translateX(0);
   transition: opacity 300ms, transform 300ms;
 }
+
 .transition-drawer-exit {
-  opacity: 1;
+  opacity: 100%;
 }
+
 .transition-drawer-exit-active {
-  opacity: 0;
+  opacity: 0%;
   transform: translateX(15rem);
   transition: opacity 300ms, transform 300ms;
 }

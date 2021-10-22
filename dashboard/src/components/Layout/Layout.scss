@@ -12,7 +12,7 @@
 
 .color-icon-warning {
   cds-icon {
-    --color: var(--cds-alias-status-warning, #666666);
+    --color: var(--cds-alias-status-warning, #666);
   }
 }
 
@@ -44,6 +44,7 @@
 .notification-icon {
   cds-icon {
     --color: var(--cds-alias-status-warning, #efc006);
+
     width: 7px;
     margin-left: 3px;
   }
@@ -68,7 +69,7 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overflow-x: hidden;
-    padding: 0 0.6rem 0 0.6rem;
+    padding: 0 0.6rem;
   }
 }
 
@@ -79,13 +80,16 @@
 .deployment-form {
   &-tabs {
     margin-bottom: 0.6rem;
+
     &-data {
       margin-top: 0.6rem;
       overflow-x: hidden;
     }
   }
+
   &-control-buttons {
     margin-bottom: 0.6rem;
+
     cds-button {
       margin-right: 0.6rem;
     }
@@ -94,19 +98,22 @@
 
 .filters-menu {
   padding-left: 1.2rem;
+
   h5 {
     text-transform: uppercase;
     font-size: small;
     font-weight: 500;
+
     cds-button {
       margin-top: -10px;
       padding-top: 10px;
       outline: 0;
     }
   }
+
   .filter-section {
     font-weight: 500;
-    margin: 0.7rem 0 0.5rem 0;
+    margin: 0.7rem 0 0.5rem;
   }
 }
 
@@ -116,9 +123,11 @@
   margin-top: 1.8rem;
   height: calc(100vh - 12rem);
   text-align: center;
+
   .section-description {
     text-align: left;
   }
+
   img {
     max-width: 400px;
   }
@@ -127,6 +136,7 @@
 .terminal-wrapper {
   background-color: var(--cds-global-typography-color-400, #333);
   color: var(--cds-global-typography-color-100, #fff);
+
   .terminal-code {
     padding: 0.6rem;
     white-space: pre-wrap;
@@ -147,6 +157,7 @@
 
   ul {
     margin-top: 0.6rem;
+
     li {
       p {
         display: inline;
@@ -155,22 +166,24 @@
   }
 
   blockquote {
-    margin: 1em 0 1em 0;
+    margin: 1em 0;
     border-radius: 5px;
     border: 1px solid var(--cds-global-typography-color-200, #e8e8e8);
     background-color: var(--cds-global-typography-color-100, #fff);
     padding: 0.1em 1em;
     max-width: 100%;
+
     p:first-child {
       margin-top: 0.6rem;
     }
+
     p:last-child {
       margin-bottom: 0.6rem;
     }
   }
 
-  blockquote:before,
-  blockquote:after {
+  blockquote::before,
+  blockquote::after {
     background-image: none;
   }
 
@@ -193,6 +206,7 @@
 
 .appview-first-row {
   display: flex;
+
   section {
     margin-right: 2rem;
   }
@@ -204,6 +218,7 @@
 
 .filter-summary {
   padding: 1.2rem 0 0 1.2rem;
+
   cds-icon {
     cursor: pointer;
   }
@@ -236,12 +251,15 @@
 .clr-control-container {
   width: 100%;
   margin-top: 0.3rem;
+
   .clr-input-wrapper {
     max-width: 100%;
+
     .clr-input {
       width: 100%;
     }
   }
+
   textarea {
     width: 100%;
   }
@@ -252,5 +270,5 @@
 // We need to apply the target classes manually
 .flat-btn[disabled] {
   --cds-token-color-neutral-200: transparent;
-  --border-width: 0rem;
+  --border-width: 0;
 }

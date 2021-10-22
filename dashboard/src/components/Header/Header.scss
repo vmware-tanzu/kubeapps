@@ -13,8 +13,8 @@
   position: absolute;
   content: "";
   background-color: var(--cds-global-color-gray-500, #fafafa);
-  opacity: var(--clr-header-divider-opacity, 0.15);
-  opacity: 0.15;
+  opacity: var(--clr-header-divider-opacity, 15%);
+  opacity: 15%;
   height: 2rem;
   width: 0.05rem;
   width: var(--clr-global-borderwidth, 0.05rem);
@@ -27,25 +27,31 @@
   background-color: transparent;
   border: none;
   cursor: pointer;
+
   &::before {
-    @include separator();
+    @include separator;
+
     left: 0;
   }
+
   &:hover {
     &::before {
-      @include separator();
-      opacity: 0;
+      @include separator;
+
+      opacity: 0%;
     }
   }
 }
 
 .nav-link.active::after {
-  @include separator();
-  opacity: 0;
+  @include separator;
+
+  opacity: 0%;
 }
 
 .nav-link::after {
-  @include separator();
+  @include separator;
+
   right: 0;
 }
 
@@ -61,13 +67,15 @@
 .left-menu {
   margin-top: 1.2rem;
   overflow-x: auto;
+
   &-subsection {
     border-bottom: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
     margin: 0.6rem;
     padding-bottom: 0.6rem;
+
     &-title {
       font-weight: 600;
-      margin: 0 0 0.2rem 0;
+      margin: 0 0 0.2rem;
     }
   }
 }
