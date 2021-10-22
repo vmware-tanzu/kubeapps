@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -34,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 // chart-related utilities

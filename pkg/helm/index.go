@@ -17,11 +17,11 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	helmrepo "helm.sh/helm/v3/pkg/repo"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 func parseRepoIndex(contents []byte) (*helmrepo.IndexFile, error) {

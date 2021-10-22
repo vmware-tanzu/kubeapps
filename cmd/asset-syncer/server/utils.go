@@ -37,7 +37,6 @@ import (
 	semver "github.com/Masterminds/semver/v3"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/disintegration/imaging"
-	"github.com/ghodss/yaml"
 	"github.com/itchyny/gojq"
 	"github.com/kubeapps/common/datastore"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -50,6 +49,7 @@ import (
 	"github.com/srwiley/rasterx"
 	"helm.sh/helm/v3/pkg/chart"
 	h3chart "helm.sh/helm/v3/pkg/chart"
+	"sigs.k8s.io/yaml"
 )
 
 const (
