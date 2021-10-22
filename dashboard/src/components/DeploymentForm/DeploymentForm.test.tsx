@@ -22,6 +22,8 @@ const defaultProps = {
   pkgName: "foo",
   cluster: "default",
   namespace: "default",
+  packageCluster: "default",
+  packageNamespace: "kubeapps",
   releaseName: "my-release",
   version: "0.0.1",
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
@@ -37,9 +39,9 @@ const defaultSelectedPkg = {
   values: "bar: foo",
 };
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.pkgName}/versions/${defaultProps.version}`;
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`;
 const routePath =
-  "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageId/versions/:packageVersion";
+  "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions/:packageVersion";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -74,7 +76,7 @@ it("fetches the available versions", () => {
 
   expect(fetchAvailablePackageVersions).toHaveBeenCalledWith(
     {
-      context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
+      context: { cluster: defaultProps.packageCluster, namespace: defaultProps.packageNamespace },
       identifier: defaultProps.pkgName,
       plugin: defaultProps.plugin,
     } as AvailablePackageReference,
@@ -244,7 +246,7 @@ describe("renders an error", () => {
     );
 
     expect(history.location.pathname).toBe(
-      "/c/default/ns/default/apps/new/my.plugin/0.0.1/foo/versions/0.0.1",
+      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/my.plugin/0.0.1/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/foo/versions/0.0.1`,
     );
   });
 });

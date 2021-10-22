@@ -2,22 +2,26 @@ import {
   AvailablePackageReference,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 
 export const app = {
   apps: {
     new: (
       cluster: string,
       namespace: string,
-      plugin: Plugin,
-      packageId: string,
+      availablePackageReference: AvailablePackageReference,
       version: string,
-      isGlobal: boolean,
     ) => {
-      const globalSegment = isGlobal ? "new-from-global" : "new";
-      return `/c/${cluster}/ns/${namespace}/apps/${globalSegment}/${plugin?.name}/${
-        plugin?.version
-      }/${encodeURIComponent(packageId)}/versions/${version}`;
+      const pkgPluginName = availablePackageReference?.plugin?.name;
+      const pkgPluginVersion = availablePackageReference?.plugin?.version;
+      const pkgId = availablePackageReference?.identifier || "";
+      // Some plugins may not be cluster-aware nor support multi-cluster, so
+      // if the returned available package ref doesn't set cluster, use the current
+      // one.
+      const pkgCluster = availablePackageReference?.context?.cluster || cluster;
+      const pkgNamespace = availablePackageReference?.context?.namespace;
+      return `/c/${cluster}/ns/${namespace}/apps/new/${pkgPluginName}/${pkgPluginVersion}/${pkgCluster}/${pkgNamespace}/${encodeURIComponent(
+        pkgId,
+      )}/versions/${version}`;
     },
     list: (cluster?: string, namespace?: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (installedPackageReference: InstalledPackageReference) => {
