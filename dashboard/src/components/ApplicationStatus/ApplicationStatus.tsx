@@ -116,7 +116,7 @@ export default function ApplicationStatus({
 
   if (isSomeResourceLoading(deployments.concat(statefulsets).concat(daemonsets))) {
     return (
-      <div className="statusLoadingWrapper margin-t-xl">
+      <div className="status-loading-wrapper margin-t-xl">
         <LoadingWrapper loadingText="Loading..." size={"md"} />
       </div>
     );

@@ -1,3 +1,5 @@
+/* stylelint-disable selector-class-pattern  */
+
 .swagger-ui .info .title small pre {
   border: 0;
 }
@@ -141,7 +143,7 @@
 .swagger-ui .models svg,
 .swagger-ui .model-toggle::after,
 .swagger-ui .loading-container {
-  filter: invert(1) brightness(80%) saturate(0%);
+  filter: color.invert(1) color.brightness(80%) color.saturate(0%);
 }
 
 .swagger-ui .opblock-body pre.microlight {
