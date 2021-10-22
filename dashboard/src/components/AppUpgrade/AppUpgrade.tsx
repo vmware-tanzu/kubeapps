@@ -18,11 +18,12 @@ interface IRouteParams {
   releaseName: string;
   pluginName: string;
   pluginVersion: string;
+  version?: string;
 }
 
 function AppUpgrade() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName, pluginName, pluginVersion } =
+  const { cluster, namespace, releaseName, pluginName, pluginVersion, version } =
     ReactRouter.useParams() as IRouteParams;
 
   const {
@@ -41,6 +42,7 @@ function AppUpgrade() {
 
   // Initial fetch using the params in the URL
   useEffect(() => {
+    dispatch(actions.packages.resetSelectedAvailablePackageDetail());
     dispatch(
       actions.apps.getApp({
         context: { cluster: cluster, namespace: namespace },
@@ -70,7 +72,7 @@ function AppUpgrade() {
   if (installedAppAvailablePackageDetail && installedAppInstalledPackageDetail && selectedPackage) {
     return (
       <div>
-        <UpgradeForm />
+        <UpgradeForm version={version} />
       </div>
     );
   }

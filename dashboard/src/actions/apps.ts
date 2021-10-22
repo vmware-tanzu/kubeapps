@@ -189,7 +189,6 @@ export function installPackage(
           { cluster: targetCluster, namespace: targetNamespace } as Context,
           releaseName,
           availablePackageDetail.availablePackageRef,
-          // TODO(agamez): check if this VersionReference we're using is what we expect
           { version: availablePackageDetail.version.pkgVersion } as VersionReference,
           values,
         );
@@ -233,7 +232,6 @@ export function updateInstalledPackage(
       if (availablePackageDetail?.version?.pkgVersion) {
         await App.UpdateInstalledPackage(
           installedPackageRef,
-          // TODO(agamez): check if this VersionReference we're using is what we expect
           { version: availablePackageDetail.version.pkgVersion } as VersionReference,
           values,
         );

@@ -52,7 +52,13 @@ function AppListGrid(props: IAppListProps) {
     <Row>
       <>
         {filteredReleases.map(r => {
-          return <AppListItem key={r.installedPackageRef?.identifier} app={r} cluster={cluster} />;
+          return (
+            <AppListItem
+              key={`${r.installedPackageRef?.context?.namespace}-${r.installedPackageRef?.identifier}`}
+              app={r}
+              cluster={cluster}
+            />
+          );
         })}
         {filteredCRs.map(r => {
           const csv = props.csvs.find(c =>
