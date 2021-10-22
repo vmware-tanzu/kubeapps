@@ -1,38 +1,53 @@
 import { useSelector } from "react-redux";
-import { IRepo, IStoreState } from "shared/types";
+import { IStoreState } from "shared/types";
 import * as url from "shared/url";
-import { getPluginIcon, trimDescription } from "shared/utils";
+import { getPluginIcon, PluginNames, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard";
 import { IPackageCatalogItem } from "./CatalogItem";
 
 export default function PackageCatalogItem(props: IPackageCatalogItem) {
-  const { icon, name, repo, version, description, namespace, id } = props;
-  const {
-    config: { kubeappsNamespace },
-  } = useSelector((state: IStoreState) => state);
-  const iconSrc = icon || placeholder;
-  const cluster = useSelector((state: IStoreState) => state.clusters.currentCluster);
-  const link = url.app.packages.get(
+  const { cluster, namespace, availablePackageSummary } = props;
+  const { config } = useSelector((state: IStoreState) => state);
+
+  // A package is "global" if its cluster and namespace are the ones in which Kubeapps is installed on
+  const isGlobal =
+    availablePackageSummary.availablePackageRef?.context?.namespace === config.kubeappsNamespace &&
+    availablePackageSummary.availablePackageRef?.context?.cluster === config.kubeappsCluster;
+
+  // Use the current cluster/namespace in the URL (passed as props here),
+  // but, if it is global a "global" segement will be included in the generated URL.
+  const packageViewLink = url.app.packages.get(
     cluster,
     namespace,
-    name,
-    repo || ({} as IRepo),
-    kubeappsNamespace,
-    props.plugin,
+    availablePackageSummary.availablePackageRef!,
+    isGlobal,
   );
-  const bgIcon = getPluginIcon(props.plugin);
+
+  // Historically, this tag is used to show the repository a given package is from,
+  // but each plugin as its own way to describe the repository right now.
+  let repositoryName;
+  switch (availablePackageSummary.availablePackageRef?.plugin?.name) {
+    case PluginNames.PACKAGES_HELM:
+      repositoryName = availablePackageSummary.availablePackageRef?.identifier.split("/")[0];
+      break;
+    // TODO: consider the fluxv2 plugin
+    default:
+      // Fallback to the plugin name
+      repositoryName = availablePackageSummary.availablePackageRef?.plugin?.name;
+      break;
+  }
 
   return (
     <InfoCard
-      key={id}
-      title={decodeURIComponent(name)}
-      link={link}
-      info={version || ""}
-      icon={iconSrc}
-      description={trimDescription(description)}
-      tag1Content={<span>{repo.name}</span>}
-      bgIcon={bgIcon}
+      key={availablePackageSummary.availablePackageRef?.identifier}
+      title={decodeURIComponent(availablePackageSummary.displayName)}
+      link={packageViewLink}
+      info={availablePackageSummary?.latestVersion?.pkgVersion || ""}
+      icon={availablePackageSummary.iconUrl || placeholder}
+      description={trimDescription(availablePackageSummary.shortDescription)}
+      tag1Content={<span>{repositoryName}</span>}
+      bgIcon={getPluginIcon(availablePackageSummary.availablePackageRef?.plugin)}
     />
   );
 }
