@@ -114,7 +114,6 @@
     "eslint-import-resolver-typescript": "^2.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-redos": "^1.2.0",
-    "husky": "^4.3.8",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
     "lint-staged": "^11.2.3",
@@ -146,11 +145,6 @@
     "transformIgnorePatterns": [
       "node_modules/(?!@cds|@clr|@lit|bail|ccount|character-entities|comma-separated-tokens|escape-string-regexp|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm|mdast-util-gfm-autolink-literal|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark|micromark-core-commonmark|parse-entities|property-information|ramda|react-markdown|react-markdown|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit|unist-util-visit-parents|util-find-and-replace|vfile|vfile-message|.*css)"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn run ts-compile-check && lint-staged"
-    }
   },
   "browserslist": {
     "production": [
