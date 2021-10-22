@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 Bitnami
+Copyright (c) 2018-2021 VMware
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,18 +31,18 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
-	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
-	helm3chart "helm.sh/helm/v3/pkg/chart"
-	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/pkg/credentialprovider"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -80,12 +80,12 @@ type Details struct {
 }
 
 // LoadHelmChart returns a helm3 Chart struct from an IOReader
-type LoadHelmChart func(in io.Reader) (*helm3chart.Chart, error)
+type LoadHelmChart func(in io.Reader) (*chart.Chart, error)
 
 // ChartClient for exposed funcs
 type ChartClient interface {
 	Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
-	GetChart(details *Details, repoURL string) (*helm3chart.Chart, error)
+	GetChart(details *Details, repoURL string) (*chart.Chart, error)
 }
 
 // HelmRepoClient struct contains the clients required to retrieve charts info
@@ -165,18 +165,38 @@ func storeIndexInCache(repoURL string, index *repo.IndexFile, sha string) {
 	repoIndexes[repoURL] = &repoIndex{sha, index}
 }
 
-func parseIndex(data []byte) (*repo.IndexFile, error) {
-	index := &repo.IndexFile{}
-	err := yaml.Unmarshal(data, index)
-	if err != nil {
-		return index, err
+// Code from Helm Registry Client. Copied here since it is not exported.
+// Use helm as a library instead once the function is publicly available.
+// https://github.com/helm/helm/blob/release-3.7/pkg/repo/index.go#L106
+func parseIndex(data []byte, source string) (*repo.IndexFile, error) {
+	i := &repo.IndexFile{}
+	if len(data) == 0 {
+		return i, fmt.Errorf("empty index.yaml file")
 	}
-	index.SortEntries()
-	return index, nil
+	if err := yaml.UnmarshalStrict(data, i); err != nil {
+		return i, err
+	}
+	for name, cvs := range i.Entries {
+		for idx := len(cvs) - 1; idx >= 0; idx-- {
+			if cvs[idx].APIVersion == "" {
+				cvs[idx].APIVersion = chart.APIVersionV1
+			}
+			if err := cvs[idx].Validate(); err != nil {
+				log.Printf("skipping loading invalid entry for chart %q %q from %s: %s", name, cvs[idx].Version, source, err)
+				cvs = append(cvs[:idx], cvs[idx+1:]...)
+			}
+		}
+	}
+	i.SortEntries()
+	if i.APIVersion == "" {
+		return i, fmt.Errorf("no API version specified")
+	}
+	return i, nil
 }
 
 // fetchRepoIndex returns a Helm repository
 func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFile, error) {
+	log.Printf("Getting repo URL: %v", repoURL)
 	req, err := getReq(repoURL)
 	if err != nil {
 		return nil, err
@@ -190,16 +210,24 @@ func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFi
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("Got repo URL data data")
 
+	log.Printf("Getting getIndexFromCache: %v", repoURL)
 	index, sha := getIndexFromCache(repoURL, data)
+	log.Printf("Got getIndexFromCache: %v", index)
 	if index == nil {
 		// index not found in the cache, parse it
-		index, err = parseIndex(data)
+		log.Printf("Parsing parseIndex")
+		index, err = parseIndex(data, repoURL)
+		log.Printf("Parsed parseIndex: %v", index)
 		if err != nil {
 			return nil, err
 		}
+		log.Printf("Storing parseIndex: %v", sha)
 		storeIndexInCache(repoURL, index, sha)
+		log.Printf("Stored parseIndex: %v", sha)
 	}
+	log.Printf("Returning index: %v", index)
 	return index, nil
 }
 
@@ -232,7 +260,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Chart, error) {
+func fetchChart(netClient *httpclient.Client, chartURL string) (*chart.Chart, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -246,7 +274,7 @@ func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Char
 	if err != nil {
 		return nil, err
 	}
-	return helm3loader.LoadArchive(bytes.NewReader(data))
+	return loader.LoadArchive(bytes.NewReader(data))
 }
 
 // ParseDetails return Chart details
@@ -323,11 +351,11 @@ func (c *HelmRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *co
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
 	if c.netClient == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	var chart *helm3chart.Chart
+	var chart *chart.Chart
 	indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
 	repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
 	if err != nil {
@@ -407,7 +435,7 @@ func (c *OCIRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *cor
 }
 
 // GetChart retrieves and loads a Chart from a OCI registry
-func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
@@ -422,7 +450,7 @@ func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.
 		return nil, err
 	}
 
-	return helm3loader.LoadArchive(chartBuffer)
+	return loader.LoadArchive(chartBuffer)
 }
 
 // ChartClientFactoryInterface defines how a ChartClientFactory implementation
