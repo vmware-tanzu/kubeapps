@@ -11,8 +11,8 @@ deploy-dex-for-pinniped: devel/dex.crt-for-pinniped devel/dex.key-for-pinniped
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -n dex create secret tls dex-web-server-tls \
 		--key ./devel/dex.key \
 		--cert ./devel/dex.crt
-	helm --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} repo add stable https://charts.helm.sh/stable
-	helm --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} install dex stable/dex --namespace dex  --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+	helm --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} repo add dex https://charts.dexidp.io
+	helm --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} install dex dex/dex --version 0.5.0 --namespace dex --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
 
 deploy-openldap-for-pinniped:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} create namespace ldap
@@ -30,10 +30,12 @@ deploy-dependencies-for-pinniped: deploy-dex-for-pinniped deploy-openldap-for-pi
 		--from-literal=postgresql-password=dev-only-fake-password
 
 deploy-pinniped:
-	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.12.0/install-pinniped-concierge-crds.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.12.0/install-pinniped-concierge.yaml
 
 deploy-pinniped-additional:
-	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.12.0/install-pinniped-concierge-crds.yaml
+	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.12.0/install-pinniped-concierge.yaml
 
 add-pinniped-jwt-authenticator:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f ./docs/user/manifests/kubeapps-pinniped-jwt-authenticator.yaml
