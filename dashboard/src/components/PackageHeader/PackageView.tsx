@@ -52,7 +52,7 @@ export default function PackageView() {
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
   const isGlobal =
-    packageCluster == config.kubeappsCluster && packageNamespace == config.kubeappsNamespace;
+    packageCluster === config.kubeappsCluster && packageNamespace === config.kubeappsNamespace;
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
