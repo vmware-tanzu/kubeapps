@@ -63,7 +63,6 @@ test("Upgrades an application", async () => {
       await expect(page).toMatch(initialPackageVersion);
 
       let screenshotFilename = `../${screenshotsFolder}/${testName}-check-initial-selected-version.png`;
-      console.log(`Saving screenshot to ${screenshotFilename}`);
       await page.screenshot({
         path: path.join(__dirname, screenshotFilename),
       });
