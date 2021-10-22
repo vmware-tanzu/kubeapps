@@ -64,7 +64,7 @@ export default function PackageView() {
       actions.packages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
     );
     return () => {};
-  }, [dispatch, packageId, packageNamespace, packageCluster, packageVersion, pluginObj]);
+  }, [dispatch, packageReference, packageVersion]);
 
   // Fetch all versions
   useEffect(() => {
