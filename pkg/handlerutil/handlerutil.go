@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -93,6 +94,7 @@ func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository
 	if err != nil {
 		return nil, err
 	}
+	runtime.GC()
 	return ch, nil
 }
 

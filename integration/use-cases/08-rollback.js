@@ -57,11 +57,11 @@ test("Rolls back an application", async () => {
       // Check that the Changes tab reflects the change
       await expect(page).toClick("li", { text: "Changes" });
       await expect(page).toMatch("replicaCount: 2");
+      await expect(page).toClick("cds-button", { text: "Deploy" });
     },
     testName,
   );
 
-  await expect(page).toClick("cds-button", { text: "Deploy" });
 
   // Rollback to the previous revision (default selected value)
   await page.waitForTimeout(2000);
@@ -69,7 +69,7 @@ test("Rolls back an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatchElement(".application-status-pie-chart h5", { text: "Ready" });
+      await expect(page).toMatchElement(".application-status-pie-chart h5", { text: "Ready", timeout: 60000 });
       await expect(page).toClick("cds-button", { text: "Rollback" });
       await expect(page).not.toMatch("Loading");
       await expect(page).toMatch("(current: 2)");
@@ -100,7 +100,7 @@ test("Rolls back an application", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatchElement(".application-status-pie-chart h5", { text: "Ready" });
+      await expect(page).toMatchElement(".application-status-pie-chart h5", { text: "Ready", timeout: 60000 });
       await expect(page).toClick("cds-button", { text: "Rollback" });
       await expect(page).not.toMatch("Loading");
       await expect(page).toMatch("(current: 4)");
