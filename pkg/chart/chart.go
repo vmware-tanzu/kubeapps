@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
@@ -196,7 +197,6 @@ func parseIndex(data []byte, source string) (*repo.IndexFile, error) {
 
 // fetchRepoIndex returns a Helm repository
 func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFile, error) {
-	log.Printf("Getting repo URL: %v", repoURL)
 	req, err := getReq(repoURL)
 	if err != nil {
 		return nil, err
@@ -210,24 +210,15 @@ func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFi
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Got repo URL data data")
-
-	log.Printf("Getting getIndexFromCache: %v", repoURL)
 	index, sha := getIndexFromCache(repoURL, data)
-	log.Printf("Got getIndexFromCache: %v", index)
 	if index == nil {
 		// index not found in the cache, parse it
-		log.Printf("Parsing parseIndex")
 		index, err = parseIndex(data, repoURL)
-		log.Printf("Parsed parseIndex: %v", index)
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("Storing parseIndex: %v", sha)
 		storeIndexInCache(repoURL, index, sha)
-		log.Printf("Stored parseIndex: %v", sha)
 	}
-	log.Printf("Returning index: %v", index)
 	return index, nil
 }
 
@@ -372,7 +363,7 @@ func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Char
 	if err != nil {
 		return nil, err
 	}
-
+	runtime.GC()
 	return chart, nil
 }
 

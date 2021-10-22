@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/pprof"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
@@ -133,11 +134,25 @@ func Serve(serveOpts ServeOptions) error {
 		}
 	}()
 
+	log.Infof("Starting... PROFILER, addr=%v", "6060")
+	go func() {
+		log.Infof("Started PROFILER, addr=%v", "6060")
+		myMux := http.NewServeMux()
+
+		myMux.HandleFunc("/debug/pprof/", pprof.Index)
+		myMux.HandleFunc("/debug/pprof/{action}", pprof.Index)
+		myMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+
+		if err := http.ListenAndServe(":6060", myMux); err != nil {
+			log.Fatalf("Error when starting or running http server: %v", err)
+		}
+	}()
+
 	if serveOpts.UnsafeLocalDevKubeconfig {
 		log.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
 	}
 
-	log.Infof("Starting server on :%d", serveOpts.Port)
+	log.Infof("Starting server MODIFICADO on :%d", serveOpts.Port)
 	if err := mux.Serve(); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
 	}
