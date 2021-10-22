@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2018-2020 Bitnami
+# Copyright 2018-2021 VMware. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ fi
 
 # Load Generic Libraries
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libtest.sh"
+. "${ROOT_DIR}/script/lib/libtest.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/liblog.sh"
+. "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libutil.sh"
+. "${ROOT_DIR}/script/lib/libutil.sh"
 
 # Auxiliar functions
 

@@ -1122,7 +1122,6 @@ func TestValidateAppRepository(t *testing.T) {
 			name:             "validates OCI repositories",
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "type":"oci", "ociRepositories": ["apache", "jenkins"]}}`,
-			expectedURLs:     []string{"http://example.com/v2/test-repo/apache/tags/list?n=1", "http://example.com/v2/test-repo/jenkins/tags/list?n=1"},
 		},
 		{
 			name:                       "validation fails for an OCI repo if no repositories are given",
@@ -1151,22 +1150,30 @@ func TestValidateAppRepository(t *testing.T) {
 			if tc.expectedError != nil {
 				return
 			}
-			reqs, err := getRequests(appRepo, cli)
+			httpValidator, err := getValidator(appRepo, cli)
 			if (err != nil || tc.expectedReqResolutionError != nil) && !errors.Is(err, tc.expectedReqResolutionError) {
 				t.Fatalf("got: %+v, want: %+v", err, tc.expectedReqResolutionError)
 			}
 			if tc.expectedReqResolutionError != nil {
 				return
 			}
-			reqURLs := []string{}
-			for _, req := range reqs {
+			if appRepo.Spec.Type != "oci" {
+
+				req := httpValidator.getReq()
+				reqURLs := []string{}
 				reqURLs = append(reqURLs, req.URL.String())
-			}
-			if !cmp.Equal(tc.expectedURLs, reqURLs) {
-				t.Errorf("Unexpected URLS: %v", cmp.Diff(tc.expectedURLs, reqURLs))
-			}
-			if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders))
+
+				if !cmp.Equal(tc.expectedURLs, reqURLs) {
+					t.Errorf("Unexpected URLS: %v", cmp.Diff(tc.expectedURLs, reqURLs))
+				}
+				if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders))
+				}
+			} else {
+				httpValidatorAppRepo := httpValidator.getAppRepo()
+				if httpValidatorAppRepo != appRepo {
+					t.Errorf("Unexpected Repos: %v", cmp.Diff(appRepo, httpValidatorAppRepo))
+				}
 			}
 		})
 	}
@@ -1176,33 +1183,38 @@ func TestValidateAppRepository(t *testing.T) {
 		err            error
 		response       *http.Response
 		expectedResult *ValidationResponse
+		httpValidator  HttpValidator
 	}{
 		{
 			name:           "returns nil if there is no error and the response is okay",
 			err:            nil,
 			response:       &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
 			expectedResult: &ValidationResponse{Code: 200, Message: "OK"},
+			httpValidator:  HelmNonOCIValidator{req: nil},
 		},
 		{
 			name:           "returns an error",
 			err:            fmt.Errorf("Boom"),
 			response:       &http.Response{},
 			expectedResult: &ValidationResponse{Code: 400, Message: "Boom"},
+			httpValidator:  HelmNonOCIValidator{req: nil},
 		},
 		{
 			name:           "returns an error from the response",
 			err:            nil,
 			response:       &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
 			expectedResult: &ValidationResponse{Code: 401, Message: "Boom"},
+			httpValidator:  HelmNonOCIValidator{req: nil},
 		},
 	}
 	for _, tc := range doValidationRequestTests {
 		t.Run(tc.name, func(t *testing.T) {
-			cli := &fakeHTTPCli{
+			fakeClient := &fakeHTTPCli{
 				response: tc.response,
 				err:      tc.err,
 			}
-			got, err := doValidationRequest(cli, &http.Request{})
+
+			got, err := tc.httpValidator.IsValid(fakeClient)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}

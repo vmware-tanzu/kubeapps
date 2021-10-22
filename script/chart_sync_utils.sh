@@ -1,5 +1,6 @@
 #!/bin/bash
-# Copyright (c) 2018 Bitnami
+
+# Copyright 2018-2021 VMware. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +29,8 @@ KUBEAPPS_REPO="kubeapps/kubeapps"
 CHART_REPO_PATH="bitnami/kubeapps"
 PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
-PR_INTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/PR_internal_chart_template.md"
-PR_EXTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/PR_external_chart_template.md"
+PR_INTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_internal_chart_template.md"
+PR_EXTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_external_chart_template.md"
 
 # Returns the tag for the latest release
 latestReleaseTag() {

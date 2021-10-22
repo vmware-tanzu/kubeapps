@@ -176,10 +176,11 @@ export default function Catalog() {
     if (!supportedCluster || namespace === kubeappsNamespace) {
       // Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepos(kubeappsNamespace));
-      return;
+      return () => {};
     }
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepos(namespace, true));
+    return () => {};
   }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {

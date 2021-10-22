@@ -9,7 +9,7 @@ import PackageHeader, { IPackageHeaderProps } from "./PackageHeader";
 const testProps: IPackageHeaderProps = {
   availablePackageDetail: {
     shortDescription: "A Test Package",
-    name: "test",
+    name: "foo",
     categories: [""],
     displayName: "foo",
     iconUrl: "api/assetsvc/test.jpg",
@@ -42,7 +42,7 @@ const testProps: IPackageHeaderProps = {
 
 it("renders a header for the package", () => {
   const wrapper = mount(<PackageHeader {...testProps} />);
-  expect(wrapper.text()).toContain("testrepo/test");
+  expect(wrapper.text()).toContain("testrepo/foo");
 });
 
 it("displays the appVersion", () => {

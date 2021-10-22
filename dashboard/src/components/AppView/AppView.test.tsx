@@ -35,9 +35,10 @@ const routeParams = {
   cluster: "cluster-1",
   namespace: "default",
   releaseName: "mr-sunshine",
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
-const routePathParam = `/foo/${routeParams.cluster}/${routeParams.namespace}/${routeParams.releaseName}`;
-const routePath = "/foo/:cluster/:namespace/:releaseName";
+const routePathParam = `/c/${routeParams.cluster}/ns/${routeParams.namespace}/apps/${routeParams.plugin.name}/${routeParams.plugin.version}/${routeParams.releaseName}`;
+const routePath = "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName";
 let spyOnUseDispatch: jest.SpyInstance;
 const appActions = { ...actions.apps };
 const kubeaActions = { ...actions.kube };

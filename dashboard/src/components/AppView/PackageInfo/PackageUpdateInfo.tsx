@@ -37,10 +37,17 @@ export default function PackageUpdateInfo({ installedPackageDetail }: IPackageUp
     );
   }
   // App is up to date
-  return alertContent ? (
+  return alertContent && installedPackageDetail?.installedPackageRef ? (
     <Alert>
       {alertContent}
-      <Link to={appURL.apps.upgrade(installedPackageDetail.installedPackageRef)}>Update Now</Link>
+      <Link
+        to={appURL.apps.upgradeTo(
+          installedPackageDetail.installedPackageRef,
+          installedPackageDetail.latestVersion?.pkgVersion,
+        )}
+      >
+        Update Now
+      </Link>
     </Alert>
   ) : (
     <div className="color-icon-success">

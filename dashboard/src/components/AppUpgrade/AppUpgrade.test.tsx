@@ -1,10 +1,10 @@
+import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
   Context,
-  InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
@@ -67,14 +67,14 @@ const installedPackage1 = {
   } as InstalledPackageStatus,
 } as CustomInstalledPackageDetail;
 
-const installedPackageDetail = {
+const availablePackageDetail = {
   availablePackageRef: {
     context: { cluster: "default", namespace: "my-ns" },
     identifier: "test",
     plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
   },
-  currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
-} as InstalledPackageDetail;
+  version: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
+} as AvailablePackageDetail;
 
 const selectedPackage = {
   versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }],
@@ -204,8 +204,8 @@ describe("when an error exists", () => {
       apps: {
         error: upgradeError,
         selected: installedPackage1,
-        selectedDetails: installedPackageDetail,
-      } as unknown as IAppState,
+        selectedDetails: availablePackageDetail,
+      } as IAppState,
       packages: { selected: selectedPackage } as IPackageState,
     };
 
@@ -225,12 +225,18 @@ describe("when an error exists", () => {
   });
 });
 
-it("renders the upgrade form when the repo is available", () => {
+it("renders the upgrade form when the repo is available, clears state and fetches app", () => {
+  const getApp = jest.fn();
+  actions.apps.getApp = getApp;
+  const resetSelectedAvailablePackageDetail = jest
+    .spyOn(actions.packages, "resetSelectedAvailablePackageDetail")
+    .mockImplementation(jest.fn());
+
   const state = {
     apps: {
       selected: installedPackage1,
-      selectedDetails: installedPackageDetail,
-    } as unknown as IAppState,
+      selectedDetails: availablePackageDetail,
+    } as IAppState,
     repos: {
       repo: repo1,
       repos: [repo1],
@@ -252,14 +258,49 @@ it("renders the upgrade form when the repo is available", () => {
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(Alert)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
+
+  expect(resetSelectedAvailablePackageDetail).toHaveBeenCalled();
+  expect(getApp).toHaveBeenCalledWith({
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
+    identifier: defaultProps.releaseName,
+    plugin: defaultProps.plugin,
+  });
+});
+
+it("renders the upgrade form with the version property", () => {
+  const state = {
+    apps: {
+      selected: installedPackage1,
+      selectedDetails: availablePackageDetail,
+    } as IAppState,
+    repos: {
+      repo: repo1,
+      repos: [repo1],
+      isFetching: false,
+    } as IAppRepositoryState,
+    packages: { selected: selectedPackage } as IPackageState,
+  };
+  const wrapper = mountWrapper(
+    getStore({
+      ...defaultStore,
+      ...state,
+    }),
+    <MemoryRouter initialEntries={[routePathParam + "/0.0.1"]}>
+      <Route path={routePath + "/:version"}>
+        <AppUpgrade />,
+      </Route>
+    </MemoryRouter>,
+  );
+  expect(wrapper.find(UpgradeForm)).toExist();
+  expect(wrapper.find(UpgradeForm)).toHaveProp("version", "0.0.1");
 });
 
 it("skips the repo selection form if the app contains upgrade info", () => {
   const state = {
     apps: {
       selected: installedPackage1,
-      selectedDetails: installedPackageDetail,
-    } as unknown as IAppState,
+      selectedDetails: availablePackageDetail,
+    } as IAppState,
     repos: {
       repo: repo1,
       repos: [repo1],

@@ -2,7 +2,7 @@
 #
 # Test functions Library
 
-# Copyright (c) 2018-2020 Bitnami
+# Copyright 2018-2021 VMware. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 
 # Load Generic Libraries
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/liblog.sh"
+. "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libutil.sh"
+. "${ROOT_DIR}/script/lib/libutil.sh"
 
 export TEST_MAX_RETRIES=600
 export TEXT_TIME_STEP=5
