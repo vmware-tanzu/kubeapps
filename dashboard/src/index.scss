@@ -19,7 +19,7 @@ svg.icon {
 // CSS tweaks the dark mode theme theme
 [cds-theme~="dark"] {
   %convert-to-white {
-    filter: color.invert(1) color.brightness(100%) color.saturate(0%);
+    filter: invert(1) brightness(100%) saturate(0%); /* stylelint-disable-line scss/no-global-function-names */
   }
 
   .section-not-found img {

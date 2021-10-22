@@ -143,7 +143,7 @@
 .swagger-ui .models svg,
 .swagger-ui .model-toggle::after,
 .swagger-ui .loading-container {
-  filter: color.invert(1) color.brightness(80%) color.saturate(0%);
+  filter: invert(1) brightness(80%) saturate(0%); /* stylelint-disable-line scss/no-global-function-names */
 }
 
 .swagger-ui .opblock-body pre.microlight {
