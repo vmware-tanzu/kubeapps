@@ -16,7 +16,12 @@ const appsReducer = (
 ): IAppState => {
   switch (action.type) {
     case getType(actions.apps.requestApps):
-      return { ...state, isFetching: true };
+      return {
+        ...state,
+        isFetching: true,
+        selected: undefined,
+        selectedDetails: undefined,
+      };
     case getType(actions.apps.errorApp):
       return { ...state, isFetching: false, error: action.payload };
     case getType(actions.apps.selectApp):

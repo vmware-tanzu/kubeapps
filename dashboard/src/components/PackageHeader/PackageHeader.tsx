@@ -28,18 +28,14 @@ export default function PackageHeader({
   deployButton,
   selectedVersion,
 }: IPackageHeaderProps) {
-  return (
+  return availablePackageDetail?.availablePackageRef?.identifier ? (
     <PageHeader
       title={
-        // TODO(agamez): get the repo name once available
-        // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
         releaseName
-          ? `${releaseName} (${
-              availablePackageDetail?.availablePackageRef?.identifier.split("/")[0]
-            }/${decodeURIComponent(availablePackageDetail?.name)})`
-          : `${
-              availablePackageDetail?.availablePackageRef?.identifier.split("/")[0]
-            }/${decodeURIComponent(availablePackageDetail?.name)}`
+          ? `${releaseName} (${decodeURIComponent(
+              availablePackageDetail.availablePackageRef.identifier,
+            )})`
+          : `${decodeURIComponent(availablePackageDetail.availablePackageRef.identifier)}`
       }
       titleSize="md"
       icon={availablePackageDetail?.iconUrl ? availablePackageDetail.iconUrl : placeholder}
@@ -75,5 +71,7 @@ export default function PackageHeader({
       }
       buttons={deployButton ? [deployButton] : undefined}
     />
+  ) : (
+    <></>
   );
 }

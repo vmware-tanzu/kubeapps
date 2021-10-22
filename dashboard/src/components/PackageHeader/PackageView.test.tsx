@@ -26,7 +26,6 @@ const defaultProps = {
   selected: { versions: [] } as IPackageState["selected"],
   version: undefined,
   kubeappsNamespace: "kubeapps",
-  repo: "testrepo",
   id: "test",
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
@@ -102,8 +101,8 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.packageNamespace}/packages/${defaultProps.repo}/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
-const routePath = "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.packageNamespace}/packages/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
+const routePath = "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageId";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("triggers the fetchAvailablePackageVersions when mounting", () => {
@@ -119,7 +118,7 @@ it("triggers the fetchAvailablePackageVersions when mounting", () => {
   );
   expect(spy).toHaveBeenCalledWith({
     context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
-    identifier: `${defaultProps.repo}/${defaultProps.id}`,
+    identifier: defaultProps.id,
     plugin: defaultProps.plugin,
   } as AvailablePackageReference);
 });
@@ -139,7 +138,7 @@ describe("when receiving new props", () => {
     expect(spy).toHaveBeenCalledWith(
       {
         context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
-        identifier: "testrepo/test",
+        identifier: defaultProps.id,
         plugin: defaultProps.plugin,
       } as AvailablePackageReference,
       undefined,
@@ -267,7 +266,9 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
       const wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          packages: { selected: { availablePackageDetail: myAvailablePkgDetail } },
+          packages: {
+            selected: { availablePackageDetail: myAvailablePkgDetail, pkgVersion: "0.0.1" },
+          },
         } as IStoreState),
         <Router history={history}>
           <Route path={routePath}>
@@ -288,7 +289,7 @@ it("renders the sources links when set", () => {
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
-      packages: { selected: { availablePackageDetail: myAvailablePkgDetail } },
+      packages: { selected: { availablePackageDetail: myAvailablePkgDetail, pkgVersion: "0.0.1" } },
     } as IStoreState),
     <Router history={history}>
       <Route path={routePath}>
@@ -319,7 +320,7 @@ describe("renders errors", () => {
       getStore({
         ...defaultState,
         packages: { ...defaultPackageState, selected: { error: new Error("Boom!") } },
-      } as unknown as IStoreState),
+      } as IStoreState),
       <Router history={history}>
         <Route path={routePath}>
           <PackageView />
