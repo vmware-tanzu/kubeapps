@@ -1,5 +1,6 @@
 #!/bin/bash
-# Copyright (c) 2021 Bitnami
+
+# Copyright 2021 VMware. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

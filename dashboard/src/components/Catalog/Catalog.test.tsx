@@ -165,7 +165,7 @@ it("should render a message if there are no elements in the catalog and the fetc
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
-      packages: { hasFinishedFetching: true } as unknown as IStoreState,
+      packages: { hasFinishedFetching: true } as IPackageState,
     }),
     <Catalog />,
   );
