@@ -45,29 +45,26 @@ export default function PackageView() {
     packageVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
-    config,
     packages: { isFetching, selected: selectedPackage },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
-
-  const isGlobal =
-    packageCluster === config.kubeappsCluster && packageNamespace === config.kubeappsNamespace;
+  const [packageReference] = useState({
+    context: {
+      cluster: packageCluster,
+      namespace: packageNamespace,
+    },
+    plugin: pluginObj,
+    identifier: packageId,
+  } as AvailablePackageReference);
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.packages.fetchAndSelectAvailablePackageDetail(
-        {
-          context: { cluster: packageCluster, namespace: packageNamespace },
-          plugin: pluginObj,
-          identifier: packageId,
-        } as AvailablePackageReference,
-        packageVersion,
-      ),
+      actions.packages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
     );
     return () => {};
-  }, [dispatch, packageId, packageNamespace, packageCluster, packageVersion, pluginObj]);
+  }, [dispatch, packageReference, packageVersion]);
 
   // Fetch all versions
   useEffect(() => {
@@ -114,10 +111,8 @@ export default function PackageView() {
               to={app.apps.new(
                 targetCluster,
                 targetNamespace,
-                pluginObj,
-                packageId,
+                packageReference,
                 selectedPackage.pkgVersion,
-                isGlobal,
               )}
             >
               <CdsButton status="primary">
@@ -141,10 +136,8 @@ export default function PackageView() {
                 to={app.apps.new(
                   targetCluster,
                   targetNamespace,
-                  pluginObj,
-                  packageId,
+                  packageReference,
                   selectedPackage.pkgVersion,
-                  isGlobal,
                 )}
               >
                 <CdsButton status="primary">

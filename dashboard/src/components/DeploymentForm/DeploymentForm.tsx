@@ -21,9 +21,10 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 interface IRouteParams {
   cluster: string;
   namespace: string;
-  global: string;
   pluginName: string;
   pluginVersion: string;
+  packageCluster: string;
+  packageNamespace: string;
   packageId: string;
   packageVersion?: string;
 }
@@ -33,14 +34,14 @@ export default function DeploymentForm() {
   const {
     cluster: targetCluster,
     namespace: targetNamespace,
-    global,
     packageId,
     pluginName,
     pluginVersion,
+    packageCluster,
+    packageNamespace,
     packageVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
-    config,
     packages: { isFetching: packagesIsFetching, selected: selectedPackage },
     apps,
   } = useSelector((state: IStoreState) => state);
@@ -54,13 +55,10 @@ export default function DeploymentForm() {
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
-  // Use the cluster/namespace from the URL unless it comes from a "global" repository.
-  // In that case, use the cluster/namespace from where kubeapps has been installed on
-  const isGlobal = global === "global";
   const [packageReference] = useState({
     context: {
-      cluster: isGlobal ? config.kubeappsCluster : targetCluster,
-      namespace: isGlobal ? config.kubeappsNamespace : targetNamespace,
+      cluster: packageCluster,
+      namespace: packageNamespace,
     },
     plugin: pluginObj,
     identifier: packageId,
@@ -130,14 +128,7 @@ export default function DeploymentForm() {
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
       push(
-        url.app.apps.new(
-          targetCluster,
-          targetNamespace,
-          pluginObj,
-          packageId,
-          e.currentTarget.value,
-          isGlobal,
-        ),
+        url.app.apps.new(targetCluster, targetNamespace, packageReference, e.currentTarget.value),
       ),
     );
   };
