@@ -1,5 +1,3 @@
-import { useSelector } from "react-redux";
-import { IStoreState } from "shared/types";
 import * as url from "shared/url";
 import { getPluginIcon, PluginNames, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
@@ -8,12 +6,6 @@ import { IPackageCatalogItem } from "./CatalogItem";
 
 export default function PackageCatalogItem(props: IPackageCatalogItem) {
   const { cluster, namespace, availablePackageSummary } = props;
-  const { config } = useSelector((state: IStoreState) => state);
-
-  // A package is "global" if its cluster and namespace are the ones in which Kubeapps is installed on
-  const isGlobal =
-    availablePackageSummary.availablePackageRef?.context?.namespace === config.kubeappsNamespace &&
-    availablePackageSummary.availablePackageRef?.context?.cluster === config.kubeappsCluster;
 
   // Use the current cluster/namespace in the URL (passed as props here),
   // but, if it is global a "global" segement will be included in the generated URL.
@@ -21,7 +13,6 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
     cluster,
     namespace,
     availablePackageSummary.availablePackageRef!,
-    isGlobal,
   );
 
   // Historically, this tag is used to show the repository a given package is from,

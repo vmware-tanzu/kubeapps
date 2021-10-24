@@ -34,12 +34,9 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
     DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
-  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageId": PackageView,
-  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
+  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId":
     PackageView,
-  "/c/:cluster/ns/:namespace/:global(global)-packages/:pluginName/:pluginVersion/:packageId":
-    PackageView,
-  "/c/:cluster/ns/:namespace/:global(global)-packages/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
+  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions/:packageVersion":
     PackageView,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,

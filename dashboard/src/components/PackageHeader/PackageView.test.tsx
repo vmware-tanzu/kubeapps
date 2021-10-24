@@ -101,8 +101,9 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.packageNamespace}/packages/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.id}`;
-const routePath = "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageId";
+const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/packages/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.cluster}/${defaultProps.packageNamespace}/${defaultProps.id}`;
+const routePath =
+  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("triggers the fetchAvailablePackageVersions when mounting", () => {

@@ -23,9 +23,10 @@ import PackageReadme from "./PackageReadme";
 interface IRouteParams {
   cluster: string;
   namespace: string;
-  global: string;
   pluginName: string;
   pluginVersion: string;
+  packageCluster: string;
+  packageNamespace: string;
   packageId: string;
   packageVersion?: string;
 }
@@ -36,10 +37,11 @@ export default function PackageView() {
   const {
     cluster: targetCluster,
     namespace: targetNamespace,
-    global,
     packageId,
     pluginName,
     pluginVersion,
+    packageCluster,
+    packageNamespace,
     packageVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
@@ -49,12 +51,8 @@ export default function PackageView() {
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
-  const isGlobal = global === "global";
-
-  // Use the cluster/namespace from the URL unless it comes from a "global" repository.
-  // In that case, use the cluster/namespace from where kubeapps has been installed on
-  const packageCluster = isGlobal ? config.kubeappsCluster : targetCluster;
-  const packageNamespace = isGlobal ? config.kubeappsNamespace : targetNamespace;
+  const isGlobal =
+    packageCluster === config.kubeappsCluster && packageNamespace === config.kubeappsNamespace;
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
