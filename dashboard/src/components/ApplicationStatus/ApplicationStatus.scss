@@ -3,31 +3,36 @@
   justify-content: center;
   text-align: center;
   margin-bottom: -50px;
+
   &-title {
     margin-top: 1.2rem;
     margin-bottom: 0.6rem;
   }
+
   &-label {
     position: relative;
     bottom: 3.9rem;
   }
+
   &-number {
     margin: 0;
     font-size: 1.5em;
   }
+
   &-text {
-    margin: -5px 0 0 0;
+    margin: -5px 0 0;
   }
 }
 
 .application-status-table {
   text-align: left;
-  border-spacing: 1em 0em;
+  border-spacing: 1em 0;
+
   th {
     text-transform: uppercase;
   }
 }
 
-.statusLoadingWrapper {
+.status-loading-wrapper {
   min-width: 140px;
 }

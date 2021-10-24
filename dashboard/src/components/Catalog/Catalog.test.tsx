@@ -216,7 +216,7 @@ it("should not render a message if there are no more elements", () => {
     getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
     <Catalog />,
   );
-  const message = wrapper.find(".endPageMessage");
+  const message = wrapper.find(".end-page-message");
   expect(message).not.toExist();
 });
 
@@ -229,7 +229,7 @@ it("should not render a message if there are no more elements but it's searching
       </Route>
     </MemoryRouter>,
   );
-  const message = wrapper.find(".endPageMessage");
+  const message = wrapper.find(".end-page-message");
   expect(message).not.toExist();
 });
 
@@ -238,7 +238,7 @@ it("should render the scroll handler if not finished", () => {
     getStore({ ...populatedState, packages: { hasFinishedFetching: false } }),
     <Catalog />,
   );
-  const scroll = wrapper.find(".scrollHandler");
+  const scroll = wrapper.find(".scroll-handler");
   expect(scroll).toExist();
   expect(scroll).toHaveProperty("ref");
 });
@@ -248,7 +248,7 @@ it("should not render the scroll handler if finished", () => {
     getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
     <Catalog />,
   );
-  const scroll = wrapper.find(".scrollHandler");
+  const scroll = wrapper.find(".scroll-handler");
   expect(scroll).not.toExist();
 });
 
