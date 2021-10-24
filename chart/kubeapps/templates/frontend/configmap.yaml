@@ -142,6 +142,7 @@ data:
         proxy_pass {{ include "kubeapps.frontend-config.proxy_pass" . -}};
       }
 
+    {{- if .Values.featureFlags.kubeappsAPIsServer }}
       location ~* /apis {
         rewrite ^ $request_uri; # pass the encoded url downstream as is,
         rewrite /apis/([^?]*) /$1 break;
@@ -158,6 +159,7 @@ data:
 
         proxy_pass {{ include "kubeapps.kubeappsapis.proxy_pass" . -}};
       }
+    {{- end }}
 
       # The route for the Kubeapps backend API is not prefixed.
       location ~* /api/ {
