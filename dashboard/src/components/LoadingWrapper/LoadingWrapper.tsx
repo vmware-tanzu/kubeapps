@@ -14,7 +14,7 @@ function LoadingWrapper(props: ILoadingWrapperProps) {
     props.children
   ) : (
     <div className={props.className || ""}>
-      {props.loadingText && <div className="flex-h-center loadingText">{props.loadingText}</div>}
+      {props.loadingText && <div className="flex-h-center loading-text">{props.loadingText}</div>}
       <div className="flex-h-center margin-t-md">
         <CdsProgressCircle size={props.size || "xxl"} status="info" />
       </div>

@@ -432,7 +432,7 @@ export default function Catalog() {
                   return null;
                 })}
               </div>
-              <div className="catalogContainer">
+              <div className="catalog-container">
                 <Row>
                   <>
                     <CatalogItems
@@ -447,7 +447,7 @@ export default function Catalog() {
                     {!hasFinishedFetching &&
                       (!filters[filterNames.TYPE].length ||
                         filters[filterNames.TYPE].find((type: string) => type === "Packages")) && (
-                        <div className="endPageMessage">
+                        <div className="end-page-message">
                           <LoadingWrapper loaded={false} />
                           {error && !hasFinishedFetching && (
                             <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
@@ -458,7 +458,7 @@ export default function Catalog() {
                         </div>
                       )}
                     {!hasFinishedFetching && !isFetching && (
-                      <div className="scrollHandler" ref={observeBorder} />
+                      <div className="scroll-handler" ref={observeBorder} />
                     )}
                   </>
                 </Row>

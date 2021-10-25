@@ -15,7 +15,7 @@
   margin: 0 10px 0 0;
 }
 
-.block:before {
+.block::before {
   content: "";
   display: inline-block;
   height: 100%;
@@ -27,12 +27,13 @@
 }
 
 .basic-deployment-form-param {
-  padding: 0.6rem 0 0.6rem 0;
+  padding: 0.6rem 0;
 }
 
 .deployment-form-label {
   font-weight: 600;
   margin-bottom: 0.2rem;
+
   &-text-param {
     display: block;
   }
@@ -48,13 +49,16 @@
 
 .slider-block {
   display: flex;
+
   .slider-input-and-unit {
     margin-left: 0.6rem;
   }
+
   .slider-content {
     width: 30vw;
     margin-left: 10px;
   }
+
   .slider-input {
     width: 50%;
   }

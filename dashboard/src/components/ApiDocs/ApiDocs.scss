@@ -1,3 +1,5 @@
+/* stylelint-disable selector-class-pattern  */
+
 .swagger-ui .info .title small pre {
   border: 0;
 }
@@ -139,9 +141,9 @@
 .swagger-ui .expand-methods svg,
 .swagger-ui .expand-operation svg,
 .swagger-ui .models svg,
-.swagger-ui .model-toggle:after,
+.swagger-ui .model-toggle::after,
 .swagger-ui .loading-container {
-  filter: invert(1) brightness(80%) saturate(0%);
+  filter: invert(1) brightness(80%) saturate(0%); /* stylelint-disable-line scss/no-global-function-names */
 }
 
 .swagger-ui .opblock-body pre.microlight {
