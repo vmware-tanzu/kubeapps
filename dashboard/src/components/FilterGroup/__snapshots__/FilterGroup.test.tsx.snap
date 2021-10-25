@@ -16,6 +16,7 @@ exports[`renders a multicheckbox 1`] = `
   <IntlProvider
     defaultFormats={Object {}}
     defaultLocale="en"
+    fallbackOnEmptyString={true}
     formats={Object {}}
     key="en"
     locale="en"
