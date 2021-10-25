@@ -1,11 +1,11 @@
 .diff {
-  height: 500px;
   overflow: auto;
+  height: 500px;
   margin-bottom: 0.6rem;
 }
 
 .diff pre {
+  border: none;
   font: 15px / normal, Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
   line-height: 12px !important;
-  border: none;
 }

@@ -1,24 +1,24 @@
 .description {
+  display: block;
   color: var(--cds-global-typography-color-300, #454545);
   font-size: 0.9em;
-  display: block;
 }
 
 .subsection {
+  padding: 10px;
   border: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
   border-radius: 5px;
-  padding: 10px;
 }
 
 .react-switch {
-  vertical-align: middle;
   margin: 0 10px 0 0;
+  vertical-align: middle;
 }
 
 .block::before {
-  content: "";
   display: inline-block;
   height: 100%;
+  content: "";
   vertical-align: middle;
 }
 
@@ -31,8 +31,8 @@
 }
 
 .deployment-form-label {
-  font-weight: 600;
   margin-bottom: 0.2rem;
+  font-weight: 600;
 
   &-text-param {
     display: block;

@@ -1,11 +1,11 @@
 .app-repo-list-header {
   display: flex;
-  justify-content: space-between;
   width: 100%;
+  justify-content: space-between;
 
   .refresh-all-button {
-    margin: 0 0 0 0.6rem;
     display: inline;
+    margin: 0 0 0 0.6rem;
   }
 }
 

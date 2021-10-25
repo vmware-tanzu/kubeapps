@@ -24,10 +24,10 @@
 
 .center {
   display: grid;
-  height: 100%;
   width: 100%;
-  justify-content: center;
+  height: 100%;
   align-items: center;
+  justify-content: center;
 }
 
 .flex-h-center {
@@ -52,24 +52,24 @@
 
 .layout {
   display: flex;
-  min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
+  min-height: 100vh;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .kubeapps-main-container {
   display: flex;
-  flex: 1 1 auto;
-  min-height: 1px;
   height: calc(100vh - 3rem);
+  min-height: 1px;
+  flex: 1 1 auto;
 
   .content-area {
     flex: 1 1 auto;
-    overflow-y: auto;
+    padding: 0 0.6rem;
     -webkit-overflow-scrolling: touch;
     overflow-x: hidden;
-    padding: 0 0.6rem;
+    overflow-y: auto;
   }
 }
 
@@ -100,28 +100,28 @@
   padding-left: 1.2rem;
 
   h5 {
-    text-transform: uppercase;
     font-size: small;
     font-weight: 500;
+    text-transform: uppercase;
 
     cds-button {
-      margin-top: -10px;
       padding-top: 10px;
+      margin-top: -10px;
       outline: 0;
     }
   }
 
   .filter-section {
-    font-weight: 500;
     margin: 0.7rem 0 0.5rem;
+    font-weight: 500;
   }
 }
 
 .section-not-found {
   display: grid;
+  height: calc(100vh - 12rem);
   justify-content: center;
   margin-top: 1.8rem;
-  height: calc(100vh - 12rem);
   text-align: center;
 
   .section-description {
@@ -139,19 +139,19 @@
 
   .terminal-code {
     padding: 0.6rem;
-    white-space: pre-wrap;
-    text-align: left;
     overflow-x: scroll;
+    text-align: left;
+    white-space: pre-wrap;
   }
 }
 
 .application-readme {
   pre {
-    margin: 0.625em 0;
-    border-radius: 5px;
     overflow: auto;
     padding: 0.6rem;
+    margin: 0.625em 0;
     background-color: var(--cds-global-typography-color-400, #333);
+    border-radius: 5px;
     color: var(--cds-global-typography-color-100, #fff);
   }
 
@@ -166,12 +166,12 @@
   }
 
   blockquote {
-    margin: 1em 0;
-    border-radius: 5px;
-    border: 1px solid var(--cds-global-typography-color-200, #e8e8e8);
-    background-color: var(--cds-global-typography-color-100, #fff);
-    padding: 0.1em 1em;
     max-width: 100%;
+    padding: 0.1em 1em;
+    border: 1px solid var(--cds-global-typography-color-200, #e8e8e8);
+    margin: 1em 0;
+    background-color: var(--cds-global-typography-color-100, #fff);
+    border-radius: 5px;
 
     p:first-child {
       margin-top: 0.6rem;
@@ -193,15 +193,15 @@
 }
 
 .after-readme-button {
-  padding: 1.2rem 0.6rem 1.2rem 0;
   display: flex;
-  justify-content: flex-end;
   width: 100%;
+  justify-content: flex-end;
+  padding: 1.2rem 0.6rem 1.2rem 0;
 }
 
 .appview-separator {
-  border-bottom: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
   padding-bottom: 1.2rem;
+  border-bottom: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
 }
 
 .appview-first-row {

@@ -1,50 +1,50 @@
 .drawer {
   position: absolute;
-  overflow: hidden;
-  bottom: 0;
   right: 0;
+  bottom: 0;
   left: 0;
+  overflow: hidden;
 }
 
 .kubeapps-menu {
   display: flex;
-  opacity: 0.75;
   align-items: center;
+  opacity: 0.75;
 
   &:hover {
-    opacity: 1;
     background-color: #25333d;
+    opacity: 1;
   }
 
   &.open {
-    opacity: 1;
     background-color: #25333d;
+    opacity: 1;
   }
 
   button {
-    padding: 0 1.5rem;
     height: 100%;
+    padding: 0 1.5rem;
   }
 }
 
 .drawer-backdrop {
-  z-index: 1015;
   position: absolute;
+  z-index: 1015;
   top: 3rem;
+  right: 0;
   bottom: 0;
   left: 0;
-  right: 0;
+  height: calc(100vh - 3rem);
   background-color: var(--cds-global-color-gray-900, #313131);
   opacity: 0.85;
-  height: calc(100vh - 3rem);
 }
 
 .dropdown-configuration-menu {
-  height: calc(100vh - 3rem);
-  z-index: 1017;
   position: absolute;
+  z-index: 1017;
   right: 0;
   display: flex;
+  height: calc(100vh - 3rem);
   flex-direction: column;
   justify-content: space-between;
 }
@@ -54,12 +54,12 @@
 }
 
 .dropdown-menu-label {
-  text-transform: uppercase;
+  color: var(--cds-global-color-gray-50, #fafafa);
+  font-size: 13px;
+  font-weight: 600;
   letter-spacing: 0.02em;
   opacity: 0.8;
-  color: var(--cds-global-color-gray-50, #fafafa);
-  font-weight: 600;
-  font-size: 13px;
+  text-transform: uppercase;
 }
 
 .dropdown-menu-link {
@@ -69,22 +69,22 @@
 }
 
 div .dropdown-menu .dropdown-divider {
-  opacity: 0.2;
   border-bottom-color: var(--cds-global-color-gray-50, #fafafa);
+  opacity: 0.2;
 }
 
 .dropdown-menu-item {
-  margin-left: 1rem;
-  font-weight: 500;
   display: flex;
   align-items: center;
-  color: var(--cds-global-color-gray-50, #fafafa);
   padding: 0.2rem 0;
+  margin-left: 1rem;
+  color: var(--cds-global-color-gray-50, #fafafa);
+  font-weight: 500;
   opacity: 0.65;
 
   img {
-    margin-right: 0.5rem;
     max-width: 20px;
+    margin-right: 0.5rem;
   }
 
   cds-icon {
@@ -92,9 +92,9 @@ div .dropdown-menu .dropdown-divider {
   }
 
   &:hover {
+    opacity: 1;
     transform: translateY(-0.1rem);
     transition: border 0.2s ease, transform 0.2s;
-    opacity: 1;
   }
 }
 
@@ -112,11 +112,11 @@ div .dropdown-menu .dropdown-divider {
 }
 
 .dropdown-menu-subtext {
-  margin-right: 1rem;
   margin-top: 2rem;
+  margin-right: 1rem;
   margin-bottom: 0.5rem;
-  text-align: end;
   font-size: smaller;
+  text-align: end;
 
   & a:link {
     color: var(--cds-global-color-blue-400, #2ec0ff);
