@@ -27,18 +27,19 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,
   "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName": AppView,
   "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName/upgrade": AppUpgrade,
-  "/c/:cluster/ns/:namespace/apps/new/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+  "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName/upgrade/:version":
+    AppUpgrade,
+  "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
     DeploymentForm,
-  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
     DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
-  "/c/:cluster/ns/:namespace/catalog/:repo": Catalog,
-  "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id": PackageView,
-  "/c/:cluster/ns/:namespace/packages/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageId": PackageView,
+  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
     PackageView,
-  "/c/:cluster/ns/:namespace/:global(global)-packages/:repo/:pluginName/:pluginVersion/:id":
+  "/c/:cluster/ns/:namespace/:global(global)-packages/:pluginName/:pluginVersion/:packageId":
     PackageView,
-  "/c/:cluster/ns/:namespace/:global(global)-packages/:repo/:pluginName/:pluginVersion/:id/versions/:version":
+  "/c/:cluster/ns/:namespace/:global(global)-packages/:pluginName/:pluginVersion/:packageId/versions/:packageVersion":
     PackageView,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,

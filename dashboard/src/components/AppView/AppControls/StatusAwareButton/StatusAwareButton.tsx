@@ -27,9 +27,8 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
       "The application is being deleted.",
     [InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING]:
       "The application is pending installation.",
-    // 7: "The application is pending upgrade.", // TODO(agamez): do we have a standard code for that?
-    // 8: "The application is pending rollback.", // TODO(agamez): do we have a standard code for that?
   };
+
   const tooltip = releaseStatus?.reason ? tooltips[releaseStatus.reason] : undefined;
   return (
     <>

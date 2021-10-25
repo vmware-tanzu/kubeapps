@@ -207,12 +207,12 @@ export default function AppView() {
 
   useEffect(() => {
     if (!app || !app.manifest) {
-      return;
+      return () => {};
     }
 
     if (Object.values(resourceRefs).some(ref => ref.length)) {
       // Already populated, skip
-      return;
+      return () => {};
     }
 
     let parsedManifest: IResource[] = YAML.parseAllDocuments(app.manifest).map(
@@ -231,6 +231,7 @@ export default function AppView() {
       // Avoid setting refs if the manifest is empty
       setResourceRefs(parsedRefs);
     }
+    return () => {};
   }, [app, cluster, kinds, resourceRefs]);
 
   useEffect(() => {

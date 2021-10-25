@@ -7,28 +7,20 @@ import PackageHeader from "components/PackageHeader/PackageHeader";
 import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
 import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
-import {
-  AvailablePackageDetail,
-  InstalledPackageDetail,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { deleteValue, setValue } from "../../shared/schema";
-import { IPackageState, IStoreState } from "../../shared/types";
+import { IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./UpgradeForm.css";
 
 export interface IUpgradeFormProps {
-  installedAppAvailablePackageDetail: AvailablePackageDetail;
-  installedAppInstalledPackageDetail: InstalledPackageDetail;
-  selectedPackage: IPackageState["selected"];
-  chartsIsFetching: boolean;
-  error?: Error;
+  version?: string;
 }
 
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
@@ -47,7 +39,7 @@ function applyModifications(mods: jsonpatch.Operation[], values: string) {
   return values;
 }
 
-function UpgradeForm() {
+function UpgradeForm(props: IUpgradeFormProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const {
@@ -89,12 +81,22 @@ function UpgradeForm() {
           ),
         );
       }
+      // If a version has been manually selected (eg. in the URL), fetch it explicitly
+      if (props.version) {
+        dispatch(
+          actions.packages.fetchAndSelectAvailablePackageDetail(
+            installedAppInstalledPackageDetail?.availablePackageRef,
+            props.version,
+          ),
+        );
+      }
     }
   }, [
     dispatch,
     installedAppInstalledPackageDetail?.availablePackageRef,
     selectedPackage.versions.length,
     installedAppAvailablePackageDetail,
+    props.version,
   ]);
 
   useEffect(() => {

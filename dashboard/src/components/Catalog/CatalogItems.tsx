@@ -1,10 +1,12 @@
 import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useMemo } from "react";
 import { getIcon } from "shared/Operators";
-import { IClusterServiceVersion, IRepo } from "shared/types";
-import placeholder from "../../placeholder.png";
-import CatalogItem, { ICatalogItemProps } from "./CatalogItem";
+import { IClusterServiceVersion } from "shared/types";
+import CatalogItem, {
+  ICatalogItemProps,
+  IOperatorCatalogItem,
+  IPackageCatalogItem,
+} from "./CatalogItem";
 export interface ICatalogItemsProps {
   availablePackageSummaries: AvailablePackageSummary[];
   csvs: IClusterServiceVersion[];
@@ -28,25 +30,16 @@ export default function CatalogItems({
     () =>
       availablePackageSummaries.map(c => {
         return {
+          // TODO: this should be simplified once the operators are also implemented as a plugin
           type: `${c.availablePackageRef?.plugin?.name}/${c.availablePackageRef?.plugin?.version}`,
           id: `package/${c.availablePackageRef?.identifier}`,
           item: {
-            plugin: c.availablePackageRef?.plugin ?? ({ name: "", version: "" } as Plugin),
-            id: `package/${c.availablePackageRef?.identifier}/${c.latestVersion?.pkgVersion}`,
             name: c.displayName,
-            icon: c.iconUrl ?? placeholder,
-            version: c.latestVersion?.pkgVersion ?? "",
-            description: c.shortDescription,
-            // TODO(agamez): get the repo name once available
-            // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
-            repo: {
-              name: c.availablePackageRef?.identifier.split("/")[0],
-              namespace: c.availablePackageRef?.context?.namespace,
-            } as IRepo,
             cluster,
             namespace,
-          },
-        };
+            availablePackageSummary: c,
+          } as IPackageCatalogItem,
+        } as ICatalogItemProps;
       }),
     [availablePackageSummaries, cluster, namespace],
   );
@@ -68,8 +61,8 @@ export default function CatalogItems({
                   csv: csv.metadata.name,
                   cluster,
                   namespace,
-                },
-              };
+                } as IOperatorCatalogItem,
+              } as ICatalogItemProps;
             });
           } else {
             return [];
