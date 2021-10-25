@@ -2,12 +2,14 @@
   .info-card-header {
     display: flex;
     justify-content: space-between;
+
     .card-title {
       max-width: calc(100% - 24px);
       overflow-x: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 0px;
+      margin-bottom: 0;
     }
+
     .card-tooltip {
       align-self: flex-end;
     }
@@ -15,11 +17,12 @@
 }
 
 .bg-img {
-  width: 0px;
-  opacity: 0.05;
+  width: 0;
+  opacity: 5%;
   position: relative;
   right: 80px;
   bottom: 10px;
+
   img {
     height: 100px;
   }
@@ -28,24 +31,29 @@
 .card-block {
   height: 4.5rem;
   overflow: hidden;
+
   .info-card-block {
     display: flex;
+
     .card-icon {
       display: flex;
       align-items: center;
       text-align: center;
       width: 64px;
       height: 64px;
+
       img {
         width: 64px;
         max-height: 64px;
       }
     }
+
     .card-description-wrapper {
       display: grid;
       height: 64px;
       width: 100%;
       align-items: center;
+
       .card-description {
         max-height: 64px;
         padding-left: 0.6rem;
@@ -59,10 +67,12 @@
   justify-content: space-between;
   width: 100%;
   overflow-x: auto;
+
   .kubeapps-card-footer-col1 {
     width: 100%;
-    margin: 0 0.6rem 0 0.6rem;
+    margin: 0 0.6rem;
   }
+
   .kubeapps-card-footer-col2 {
     margin: 0 0.5rem 0 0;
   }
