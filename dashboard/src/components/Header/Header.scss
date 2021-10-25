@@ -13,8 +13,8 @@
   position: absolute;
   content: "";
   background-color: var(--cds-global-color-gray-500, #fafafa);
-  opacity: var(--clr-header-divider-opacity, 15%);
-  opacity: 15%;
+  opacity: var(--clr-header-divider-opacity, 0.15);
+  opacity: 0.15;
   height: 2rem;
   width: 0.05rem;
   width: var(--clr-global-borderwidth, 0.05rem);
@@ -38,7 +38,7 @@
     &::before {
       @include separator;
 
-      opacity: 0%;
+      opacity: 0;
     }
   }
 }
@@ -46,7 +46,7 @@
 .nav-link.active::after {
   @include separator;
 
-  opacity: 0%;
+  opacity: 0;
 }
 
 .nav-link::after {
