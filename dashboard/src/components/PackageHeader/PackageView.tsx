@@ -23,9 +23,10 @@ import PackageReadme from "./PackageReadme";
 interface IRouteParams {
   cluster: string;
   namespace: string;
-  global: string;
   pluginName: string;
   pluginVersion: string;
+  packageCluster: string;
+  packageNamespace: string;
   packageId: string;
   packageVersion?: string;
 }
@@ -36,40 +37,34 @@ export default function PackageView() {
   const {
     cluster: targetCluster,
     namespace: targetNamespace,
-    global,
     packageId,
     pluginName,
     pluginVersion,
+    packageCluster,
+    packageNamespace,
     packageVersion,
   } = ReactRouter.useParams() as IRouteParams;
   const {
-    config,
     packages: { isFetching, selected: selectedPackage },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
-
-  const isGlobal = global === "global";
-
-  // Use the cluster/namespace from the URL unless it comes from a "global" repository.
-  // In that case, use the cluster/namespace from where kubeapps has been installed on
-  const packageCluster = isGlobal ? config.kubeappsCluster : targetCluster;
-  const packageNamespace = isGlobal ? config.kubeappsNamespace : targetNamespace;
+  const [packageReference] = useState({
+    context: {
+      cluster: packageCluster,
+      namespace: packageNamespace,
+    },
+    plugin: pluginObj,
+    identifier: packageId,
+  } as AvailablePackageReference);
 
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.packages.fetchAndSelectAvailablePackageDetail(
-        {
-          context: { cluster: packageCluster, namespace: packageNamespace },
-          plugin: pluginObj,
-          identifier: packageId,
-        } as AvailablePackageReference,
-        packageVersion,
-      ),
+      actions.packages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
     );
     return () => {};
-  }, [dispatch, packageId, packageNamespace, packageCluster, packageVersion, pluginObj]);
+  }, [dispatch, packageReference, packageVersion]);
 
   // Fetch all versions
   useEffect(() => {
@@ -116,10 +111,8 @@ export default function PackageView() {
               to={app.apps.new(
                 targetCluster,
                 targetNamespace,
-                pluginObj,
-                packageId,
+                packageReference,
                 selectedPackage.pkgVersion,
-                isGlobal,
               )}
             >
               <CdsButton status="primary">
@@ -143,10 +136,8 @@ export default function PackageView() {
                 to={app.apps.new(
                   targetCluster,
                   targetNamespace,
-                  pluginObj,
-                  packageId,
+                  packageReference,
                   selectedPackage.pkgVersion,
-                  isGlobal,
                 )}
               >
                 <CdsButton status="primary">
