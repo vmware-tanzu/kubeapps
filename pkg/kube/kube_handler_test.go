@@ -24,7 +24,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -58,11 +61,13 @@ type secretStub struct {
 }
 
 type fakeHTTPCli struct {
+	request  *http.Request
 	response *http.Response
 	err      error
 }
 
-func (f *fakeHTTPCli) Do(*http.Request) (*http.Response, error) {
+func (f *fakeHTTPCli) Do(r *http.Request) (*http.Response, error) {
+	f.request = r
 	return f.response, f.err
 }
 
@@ -1088,137 +1093,523 @@ func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err
 	)
 }
 
-func TestValidateAppRepository(t *testing.T) {
+func TestGetValidator(t *testing.T) {
 	const kubeappsNamespace = "kubeapps"
-	getValidationCliAndReqTests := []struct {
-		name                       string
-		requestData                string
-		requestNamespace           string
-		expectedURLs               []string
-		expectedHeaders            http.Header
-		expectedError              error
-		expectedReqResolutionError error
+	testCases := []struct {
+		name              string
+		appRepo           *v1alpha1.AppRepository
+		expectedValidator HttpValidator
+		expectedError     error
 	}{
 		{
-			name:             "it parses the repo URL",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo"}}`,
-			expectedURLs:     []string{"http://example.com/test-repo/index.yaml"},
+			name: "it returns a validator with a request to the repo index.yaml",
+			appRepo: &v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: v1alpha1.AppRepositorySpec{
+					URL: "http://example.com/test-repo",
+				},
+			},
+			expectedValidator: HelmNonOCIValidator{
+				Req: &http.Request{
+					Method: "GET",
+					URL: &url.URL{
+						Scheme: "http",
+						Host:   "example.com",
+						Path:   "/test-repo/index.yaml",
+					},
+					Header: http.Header{},
+					Host:   "example.com",
+				},
+			},
 		},
 		{
-			name:             "it includes the auth creds",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "authHeader": "test-me"}}`,
-			expectedURLs:     []string{"http://example.com/test-repo/index.yaml"},
-			expectedHeaders:  http.Header{"Authorization": []string{"test-me"}},
+			name: "it returns an OCI validator for an OCI repo",
+			appRepo: &v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: v1alpha1.AppRepositorySpec{
+					URL:             "http://example.com/test-repo",
+					Type:            "oci",
+					OCIRepositories: []string{"apache", "jenkins"},
+				},
+			},
+			expectedValidator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: v1alpha1.AppRepositorySpec{
+						URL:             "http://example.com/test-repo",
+						Type:            "oci",
+						OCIRepositories: []string{"apache", "jenkins"},
+					},
+				},
+			},
 		},
 		{
-			name:             "validation fails if docker registry secrets included for a global repo",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "registrySecrets": ["secret-1"]}}`,
-			expectedError:    ErrGlobalRepositoryWithSecrets,
-		},
-		{
-			name:             "validates OCI repositories",
-			requestNamespace: kubeappsNamespace,
-			requestData:      `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "type":"oci", "ociRepositories": ["apache", "jenkins"]}}`,
-		},
-		{
-			name:                       "validation fails for an OCI repo if no repositories are given",
-			requestNamespace:           kubeappsNamespace,
-			requestData:                `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "type":"oci"}}`,
-			expectedReqResolutionError: ErrEmptyOCIRegistry,
+			name: "it returns an error for an OCI repo if no repositories are given",
+			appRepo: &v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: v1alpha1.AppRepositorySpec{
+					URL:             "http://example.com/test-repo",
+					Type:            "oci",
+					OCIRepositories: []string{},
+				},
+			},
+			expectedError: ErrEmptyOCIRegistry,
 		},
 	}
 
-	for _, tc := range getValidationCliAndReqTests {
+	cmpOpts := []cmp.Option{cmpopts.IgnoreUnexported(http.Request{})}
+	cmpOpts = append(cmpOpts, cmpopts.IgnoreFields(http.Request{}, "Proto", "ProtoMajor", "ProtoMinor"))
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cs := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
-			}
-			handler := userHandler{
-				kubeappsNamespace: kubeappsNamespace,
-				svcClientset:      cs,
-				clientset:         cs,
-			}
-			appRepo, cli, err := handler.getValidationCli(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
-			if (err != nil || tc.expectedError != nil) && !errors.Is(err, tc.expectedError) {
+
+			httpValidator, err := getValidator(tc.appRepo)
+			if got, want := err, tc.expectedError; got != want {
 				t.Fatalf("got: %+v, want: %+v", err, tc.expectedError)
-			}
-			if tc.expectedError != nil {
+			} else if tc.expectedError != nil {
 				return
 			}
-			httpValidator, err := getValidator(appRepo, cli)
-			if (err != nil || tc.expectedReqResolutionError != nil) && !errors.Is(err, tc.expectedReqResolutionError) {
-				t.Fatalf("got: %+v, want: %+v", err, tc.expectedReqResolutionError)
-			}
-			if tc.expectedReqResolutionError != nil {
-				return
-			}
-			if appRepo.Spec.Type != "oci" {
 
-				req := httpValidator.getReq()
-				reqURLs := []string{}
-				reqURLs = append(reqURLs, req.URL.String())
-
-				if !cmp.Equal(tc.expectedURLs, reqURLs) {
-					t.Errorf("Unexpected URLS: %v", cmp.Diff(tc.expectedURLs, reqURLs))
-				}
-				if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*httpclient.ClientWithDefaults).DefaultHeaders))
-				}
-			} else {
-				httpValidatorAppRepo := httpValidator.getAppRepo()
-				if httpValidatorAppRepo != appRepo {
-					t.Errorf("Unexpected Repos: %v", cmp.Diff(appRepo, httpValidatorAppRepo))
-				}
+			if got, want := httpValidator, tc.expectedValidator; !cmp.Equal(got, want, cmpOpts...) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpOpts...))
 			}
 		})
 	}
+}
 
-	doValidationRequestTests := []struct {
-		name           string
-		err            error
-		response       *http.Response
-		expectedResult *ValidationResponse
-		httpValidator  HttpValidator
+func TestNonOCIValidate(t *testing.T) {
+	validRequest, err := http.NewRequest("GET", "http://example.com/index.yaml", strings.NewReader(""))
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	testCases := []struct {
+		name             string
+		httpValidator    HelmNonOCIValidator
+		fakeHttpError    error
+		fakeRepoResponse *http.Response
+		expectedResponse *ValidationResponse
 	}{
 		{
-			name:           "returns nil if there is no error and the response is okay",
-			err:            nil,
-			response:       &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
-			expectedResult: &ValidationResponse{Code: 200, Message: "OK"},
-			httpValidator:  HelmNonOCIValidator{req: nil},
+			name:             "it returns 200 OK validation response if there is no error and the external response is 200",
+			httpValidator:    HelmNonOCIValidator{Req: validRequest},
+			fakeRepoResponse: &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
+			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
-			name:           "returns an error",
-			err:            fmt.Errorf("Boom"),
-			response:       &http.Response{},
-			expectedResult: &ValidationResponse{Code: 400, Message: "Boom"},
-			httpValidator:  HelmNonOCIValidator{req: nil},
+			name:             "it does not include the body of the upstream response when validation succeeds",
+			httpValidator:    HelmNonOCIValidator{Req: validRequest},
+			fakeRepoResponse: &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("10 Mb of data")))},
+			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
-			name:           "returns an error from the response",
-			err:            nil,
-			response:       &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
-			expectedResult: &ValidationResponse{Code: 401, Message: "Boom"},
-			httpValidator:  HelmNonOCIValidator{req: nil},
+			name:             "it returns an error from the response with the body text if validation fails",
+			fakeRepoResponse: &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("It failed because of X and Y")))},
+			expectedResponse: &ValidationResponse{Code: 401, Message: "It failed because of X and Y"},
+			httpValidator:    HelmNonOCIValidator{Req: validRequest},
+		},
+		{
+			name:             "it returns a 400 error if the validation cannot be executed",
+			fakeHttpError:    fmt.Errorf("client.Do returns an error"),
+			expectedResponse: &ValidationResponse{Code: 400, Message: "client.Do returns an error"},
+			httpValidator:    HelmNonOCIValidator{Req: validRequest},
 		},
 	}
-	for _, tc := range doValidationRequestTests {
+
+	cmpOpts := []cmp.Option{cmpopts.IgnoreUnexported(http.Request{}, strings.Reader{})}
+	cmpOpts = append(cmpOpts, cmpopts.IgnoreFields(http.Request{}, "GetBody"))
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeClient := &fakeHTTPCli{
-				response: tc.response,
-				err:      tc.err,
+				response: tc.fakeRepoResponse,
+				err:      tc.fakeHttpError,
 			}
 
-			got, err := tc.httpValidator.IsValid(fakeClient)
+			response, err := tc.httpValidator.Validate(fakeClient)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
-			if want := tc.expectedResult; !cmp.Equal(want, got) {
+
+			if got, want := fakeClient.request, tc.httpValidator.Req; !cmp.Equal(want, got, cmpOpts...) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpOpts...))
+			}
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+type fakeOCIRepo struct {
+	tags     repoTagsList
+	manifest repoManifest
+}
+
+// makeTestOCIServer returns a small test double for an OCI server that handles requests
+// for tags/list and manifest only.
+func makeTestOCIServer(t *testing.T, registryName string, repos map[string]fakeOCIRepo, requiredAuthHeader string) *httptest.Server {
+	// Define a map of valid request/responses based on the fake repos passed in.
+	responses := map[string]string{}
+	for repoName, repo := range repos {
+		tags, err := json.Marshal(repo.tags)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		responses[path.Join("/v2", registryName, repoName, "tags", "list")] = string(tags)
+
+		manifest, err := json.Marshal(repo.manifest)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		if len(repo.tags.Tags) > 0 {
+			responses[path.Join("/v2", registryName, repoName, "manifests", repo.tags.Tags[0])] = string(manifest)
+		}
+	}
+
+	// Return a test server that responds with these canned responses only.
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Required authorization when set.
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != requiredAuthHeader {
+			w.WriteHeader(401)
+			w.Write([]byte("{}"))
+		}
+		if response, ok := responses[r.URL.Path]; !ok {
+			w.WriteHeader(404)
+			w.Write([]byte("{}"))
+		} else {
+			w.Write([]byte(response))
+		}
+	}))
+}
+
+func TestOCIValidate(t *testing.T) {
+	registryName := "bitnami"
+	testCases := []struct {
+		name             string
+		repos            map[string]fakeOCIRepo
+		validator        HelmOCIValidator
+		expectedResponse *ValidationResponse
+	}{
+		{
+			name: "it returns a valid response if all the OCI repos are of the helm type",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type:            "oci",
+						OCIRepositories: []string{"apache", "nginx"},
+					},
+				},
+			},
+			repos: map[string]fakeOCIRepo{
+				"apache": {
+					tags: repoTagsList{
+						Tags: []string{"1.1", "1.0"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+				"nginx": {
+					tags: repoTagsList{
+						Tags: []string{"2.0", "1.0"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+		{
+			name: "it returns an invalid response if just one of OCI repos is of the wrong type",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type:            "oci",
+						OCIRepositories: []string{"apache", "nginx"},
+					},
+				},
+			},
+			repos: map[string]fakeOCIRepo{
+				"apache": {
+					tags: repoTagsList{
+						Tags: []string{"1.1", "1.0"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+				"nginx": {
+					tags: repoTagsList{
+						Tags: []string{"2.0", "1.0"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.docker.container.image.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    400,
+				Message: "nginx is not a Helm OCI Repo. mediaType starting with \"application/vnd.cncf.helm.config\" expected, found \"application/vnd.docker.container.image.v1+json\"",
+			},
+		},
+		{
+			name: "it returns an invalid response if a repo does not exist",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type:            "oci",
+						OCIRepositories: []string{"apache", "nginx"},
+					},
+				},
+			},
+			repos: map[string]fakeOCIRepo{
+				"apache": {
+					tags: repoTagsList{
+						Tags: []string{"1.1", "1.0"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+				"notnginx": {},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    400,
+				Message: "Unexpected status code when querying \"nginx\": 404",
+			},
+		},
+		{
+			name: "it returns an invalid response if a manifest does not exist",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type:            "oci",
+						OCIRepositories: []string{"apache", "nginx"},
+					},
+				},
+			},
+			repos: map[string]fakeOCIRepo{
+				"apache": {
+					tags: repoTagsList{
+						Tags: []string{"1.1", "1.0"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+				"nginx": {
+					tags: repoTagsList{
+						Tags: []string{"2.0", "1.0"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := makeTestOCIServer(t, registryName, tc.repos, "")
+			defer ts.Close()
+			// Use the test servers host/port as repo url.
+			tc.validator.AppRepo.Spec.URL = fmt.Sprintf("%s/%s", ts.URL, registryName)
+
+			response, err := tc.validator.Validate(httpclient.New())
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestValidateAppRepository(t *testing.T) {
+	registryName := "bitnami"
+	testCases := []struct {
+		name               string
+		repos              map[string]fakeOCIRepo
+		requiredAuthHeader string
+		requestNamespace   string
+		requestDetails     appRepositoryRequestDetails
+		expectedResponse   *ValidationResponse
+	}{
+		{
+			name: "it returns a valid response if all the OCI repos are of the helm type",
+			requestDetails: appRepositoryRequestDetails{
+				Name:            "testrepo",
+				Type:            "oci",
+				OCIRepositories: []string{"apache"},
+			},
+			requestNamespace: kubeappsNamespace,
+			repos: map[string]fakeOCIRepo{
+				"apache": {
+					tags: repoTagsList{
+						Tags: []string{"1.1"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+		{
+			name:               "it returns a valid response for an authenticated OCI repo",
+			requiredAuthHeader: "Bearer: some-token",
+			requestDetails: appRepositoryRequestDetails{
+				Name:            "testrepo",
+				Type:            "oci",
+				OCIRepositories: []string{"apache"},
+				AuthHeader:      "Bearer: some-token",
+			},
+			requestNamespace: kubeappsNamespace,
+			repos: map[string]fakeOCIRepo{
+				"apache": {
+					tags: repoTagsList{
+						Tags: []string{"1.1"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+		{
+			name:               "it returns a validation error for an authenticated OCI repo with incorrect credentials",
+			requiredAuthHeader: "Bearer: some-token",
+			requestDetails: appRepositoryRequestDetails{
+				Name:            "testrepo",
+				Type:            "oci",
+				OCIRepositories: []string{"apache"},
+				AuthHeader:      "Bearer: some-other-token",
+			},
+			requestNamespace: kubeappsNamespace,
+			repos: map[string]fakeOCIRepo{
+				"apache": {
+					tags: repoTagsList{
+						Tags: []string{"1.1"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    400,
+				Message: "Unexpected status code when querying \"apache\": 401",
+			},
+		},
+		{
+			name: "it returns a validation error if docker registry secrets included for a global repo",
+			requestDetails: appRepositoryRequestDetails{
+				Name:            "testrepo",
+				Type:            "oci",
+				OCIRepositories: []string{"apache"},
+				RegistrySecrets: []string{"some-secret"},
+			},
+			requestNamespace: kubeappsNamespace,
+			expectedResponse: &ValidationResponse{
+				Code:    400,
+				Message: ErrGlobalRepositoryWithSecrets.Error(),
+			},
+		},
+		{
+			name: "it returns a valid response if docker registry secrets included for a non-global repo",
+			requestDetails: appRepositoryRequestDetails{
+				Name:            "testrepo",
+				Type:            "oci",
+				OCIRepositories: []string{"apache"},
+				RegistrySecrets: []string{"some-secret"},
+			},
+			requestNamespace: "other-namespace",
+			repos: map[string]fakeOCIRepo{
+				"apache": {
+					tags: repoTagsList{
+						Tags: []string{"1.1"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := makeTestOCIServer(t, registryName, tc.repos, tc.requiredAuthHeader)
+			defer ts.Close()
+			// Use the test servers host/port as repo url.
+			tc.requestDetails.RepoURL = fmt.Sprintf("%s/%s", ts.URL, registryName)
+			appRepoJson, err := json.Marshal(appRepositoryRequest{tc.requestDetails})
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			handler := userHandler{kubeappsNamespace: kubeappsNamespace}
+			response, err := handler.ValidateAppRepository(ioutil.NopCloser(bytes.NewReader(appRepoJson)), tc.requestNamespace)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
