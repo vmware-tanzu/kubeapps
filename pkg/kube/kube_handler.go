@@ -92,8 +92,10 @@ type ClusterConfig struct {
 // PinnipedConciergeConfig enables each cluster configuration to specify the
 // pinniped-concierge installation to use for any credential exchange.
 type PinnipedConciergeConfig struct {
-	// Enable flags whether this cluster should use
+	// Enabled flags whether this cluster should use
 	// pinniped to exchange credentials.
+	Enabled bool `json:"enabled"`
+	// Enable is deprecated and will be removed in a future release.
 	Enable bool `json:"enable"`
 	// The Namespace, AuthenticatorType and Authenticator name to use
 	// when exchanging credentials.
@@ -128,7 +130,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
 	}
 
-	if userToken != "" && clusterConfig.PinnipedConfig.Enable {
+	if userToken != "" && (clusterConfig.PinnipedConfig.Enabled || clusterConfig.PinnipedConfig.Enable) {
 		// Create a config for routing requests via the pinniped-proxy for credential
 		// exchange.
 		config.Host = clustersConfig.PinnipedProxyURL
