@@ -532,9 +532,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	// currently needed for CreateInstalledPackage func
-	t.Setenv("POD_NAMESPACE", "kubeapps")
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			runtimeObjs := []runtime.Object{}
@@ -590,7 +587,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			releaseObj, err := dynamicClient.Resource(releasesGvr).Namespace("kubeapps").Get(
+			releaseObj, err := dynamicClient.Resource(releasesGvr).Namespace(tc.request.TargetContext.Namespace).Get(
 				context.Background(),
 				tc.request.Name,
 				v1.GetOptions{})
@@ -1547,7 +1544,7 @@ var (
 		"kind":       "HelmRelease",
 		"metadata": map[string]interface{}{
 			"name":      "my-podinfo",
-			"namespace": "kubeapps",
+			"namespace": "test",
 		},
 		"spec": map[string]interface{}{
 			"chart": map[string]interface{}{
@@ -1560,9 +1557,6 @@ var (
 					},
 				},
 			},
-			"install": map[string]interface{}{
-				"createNamespace": true,
-			},
 			"interval":        "1m",
 			"targetNamespace": "test",
 		},
@@ -1573,7 +1567,7 @@ var (
 		"kind":       "HelmRelease",
 		"metadata": map[string]interface{}{
 			"name":      "my-podinfo",
-			"namespace": "kubeapps",
+			"namespace": "test",
 		},
 		"spec": map[string]interface{}{
 			"chart": map[string]interface{}{
@@ -1587,9 +1581,6 @@ var (
 					"version": "> 5",
 				},
 			},
-			"install": map[string]interface{}{
-				"createNamespace": true,
-			},
 			"interval":        "1m",
 			"targetNamespace": "test",
 		},
@@ -1600,7 +1591,7 @@ var (
 		"kind":       "HelmRelease",
 		"metadata": map[string]interface{}{
 			"name":      "my-podinfo",
-			"namespace": "kubeapps",
+			"namespace": "test",
 		},
 		"spec": map[string]interface{}{
 			"chart": map[string]interface{}{
@@ -1612,9 +1603,6 @@ var (
 						"namespace": "namespace-1",
 					},
 				},
-			},
-			"install": map[string]interface{}{
-				"createNamespace": true,
 			},
 			"interval":           "1m0s",
 			"serviceAccountName": "foo",
@@ -1628,7 +1616,7 @@ var (
 		"kind":       "HelmRelease",
 		"metadata": map[string]interface{}{
 			"name":      "my-podinfo",
-			"namespace": "kubeapps",
+			"namespace": "test",
 		},
 		"spec": map[string]interface{}{
 			"chart": map[string]interface{}{
@@ -1641,9 +1629,6 @@ var (
 					},
 				},
 			},
-			"install": map[string]interface{}{
-				"createNamespace": true,
-			},
 			"interval":        "1m",
 			"targetNamespace": "test",
 			"values": map[string]interface{}{
@@ -1653,7 +1638,7 @@ var (
 	}
 
 	create_installed_package_resp_my_podinfo = &corev1.CreateInstalledPackageResponse{
-		InstalledPackageRef: installedRef("my-podinfo", "kubeapps"),
+		InstalledPackageRef: installedRef("my-podinfo", "test"),
 	}
 
 	flux_helm_release_updated_1 = map[string]interface{}{

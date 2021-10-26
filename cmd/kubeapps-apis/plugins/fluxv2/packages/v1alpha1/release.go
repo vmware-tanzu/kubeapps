@@ -16,7 +16,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -331,12 +330,9 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 }
 
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
-	// HACK: just for now assume HelmRelease CRD will live in the kubeapps namespace
-	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
-	if kubeappsNamespace == "" {
-		return nil, status.Errorf(codes.FailedPrecondition, "POD_NAMESPACE not specified")
-	}
-	resourceIfc, err := s.getReleasesResourceInterface(ctx, kubeappsNamespace)
+	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
+	// the helm release CR to also be created in the target namespace (where the helm release itself is currently created)
+	resourceIfc, err := s.getReleasesResourceInterface(ctx, targetName.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -367,16 +363,18 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		}
 	}
 
-	fluxHelmRelease, err := newFluxHelmRelease(chart, kubeappsNamespace, targetName, versionRef, reconcile, values)
+	fluxHelmRelease, err := newFluxHelmRelease(chart, targetName, versionRef, reconcile, values)
 	if err != nil {
 		return nil, err
 	}
 	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			// TODO (gfichtenholt) I think in some cases we should be returning codes.PermissionDenied instead,
+			// but that has to be done consistently accross all plug-in operations, not just here
 			return nil, status.Errorf(codes.Unauthenticated, "Unable to create release due to %v", err)
 		} else {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "Unable to create release due to %v", err)
 		}
 	}
 
@@ -618,14 +616,14 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 // 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
 // 2. metadata.namespace, where this HelmRelease CRD will exist
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
-func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
+func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
 	unstructuredRel := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
 			"kind":       fluxHelmRelease,
 			"metadata": map[string]interface{}{
 				"name":      targetName.Name,
-				"namespace": releaseNamespace,
+				"namespace": targetName.Namespace,
 			},
 			"spec": map[string]interface{}{
 				"chart": map[string]interface{}{
@@ -637,9 +635,6 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 							"namespace": chart.Repo.Namespace,
 						},
 					},
-				},
-				"install": map[string]interface{}{
-					"createNamespace": true,
 				},
 				"targetNamespace": targetName.Namespace,
 			},
