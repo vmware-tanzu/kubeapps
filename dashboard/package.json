@@ -65,7 +65,7 @@
     "react-transition-group": "^4.4.2",
     "redux": "^4.1.1",
     "redux-devtools-extension": "^2.13.9",
-    "redux-thunk": "^2.3.0",
+    "redux-thunk": "^2.4.0",
     "remark-gfm": "^3.0.0",
     "swagger-ui-react": "^3.52.5",
     "typesafe-actions": "^5.1.0",
