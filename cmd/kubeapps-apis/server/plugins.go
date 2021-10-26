@@ -111,7 +111,8 @@ func sortPlugins(p []*plugins.Plugin) {
 
 // GetConfiguredPlugins returns details for each configured plugin.
 func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
-	// this gets logged twice(why?) every 10 seconds and really adds a lot of noise to the logs, so lowering verbosity
+	// this gets logged twice (liveness and readiness checks) every 10 seconds and
+	// really adds a lot of noise to the logs, so lowering verbosity
 	log.V(4).Infof("+core GetConfiguredPlugins")
 	return &plugins.GetConfiguredPluginsResponse{
 		Plugins: s.plugins,
