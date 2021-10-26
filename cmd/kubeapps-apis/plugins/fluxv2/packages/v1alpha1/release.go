@@ -76,14 +76,6 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*
 	}
 }
 
-func (s *Server) getReleaseInCluster(ctx context.Context, name types.NamespacedName) (*unstructured.Unstructured, error) {
-	releasesIfc, err := s.getReleasesResourceInterface(ctx, name.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	return releasesIfc.Get(ctx, name.Name, metav1.GetOptions{})
-}
-
 func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
 	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
 	if err != nil {
@@ -211,14 +203,18 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 }
 
 func (s *Server) installedPackageDetail(ctx context.Context, name types.NamespacedName) (*corev1.InstalledPackageDetail, error) {
-	unstructuredRelease, err := s.getReleaseInCluster(ctx, name)
+	releasesIfc, err := s.getReleasesResourceInterface(ctx, name.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	unstructuredRelease, err := releasesIfc.Get(ctx, name.Name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, status.Errorf(codes.NotFound, "%q", err)
 		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
 			return nil, status.Errorf(codes.Unauthenticated, "unable to get release due to %v", err)
 		} else {
-			return nil, status.Errorf(codes.Internal, "%q", err)
+			return nil, status.Errorf(codes.Internal, "unable to get release due to %v", err)
 		}
 	}
 
@@ -614,7 +610,8 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 
 // Potentially, there are 3 different namespaces that can be specified here
 // 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
-// 2. metadata.namespace, where this HelmRelease CRD will exist
+// 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
+//    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
 func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
 	unstructuredRel := unstructured.Unstructured{
