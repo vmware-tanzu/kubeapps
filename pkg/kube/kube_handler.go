@@ -49,6 +49,8 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+const OCIImageManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
+
 // ClusterConfig contains required info to talk to additional clusters.
 type ClusterConfig struct {
 	Name                     string `json:"name"`
@@ -751,7 +753,7 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 	}
 
 	//This header is required for a successful request
-	req.Header.Set("Accept", "application/vnd.oci.image.manifest.v1+json")
+	req.Header.Set("Accept", OCIImageManifestMediaType)
 
 	resp, err := cli.Do(req)
 	if err != nil {
@@ -807,7 +809,7 @@ func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoNam
 	}
 
 	//This header is required for a successful request
-	req.Header.Set("Accept", "application/vnd.oci.image.manifest.v1+json")
+	req.Header.Set("Accept", OCIImageManifestMediaType)
 
 	resp, err := cli.Do(req)
 
