@@ -1372,6 +1372,31 @@ func TestNewClusterConfig(t *testing.T) {
 			},
 		},
 		{
+			name:      "returns a config to proxy via pinniped-proxy using the deprecated flag enable",
+			userToken: "token-1",
+			cluster:   "default",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]ClusterConfig{
+					"default": {
+						APIServiceURL:            "https://kubernetes.default",
+						CertificateAuthorityData: "SGVsbG8K",
+						PinnipedConfig:           PinnipedConciergeConfig{Enable: true},
+					},
+				},
+				PinnipedProxyURL: "https://172.0.1.18:3333",
+			},
+			inClusterConfig: &rest.Config{
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+			},
+			expectedConfig: &rest.Config{
+				Host:            "https://172.0.1.18:3333",
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+			},
+		},
+		{
 			name:      "returns a config to proxy via pinniped-proxy without headers for kubernetes.default",
 			userToken: "token-1",
 			cluster:   "default",
