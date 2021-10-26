@@ -400,9 +400,9 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		if errors.IsNotFound(err) {
 			return nil, status.Errorf(codes.NotFound, "%q", err)
 		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "Unable to ase due to %v", err)
+			return nil, status.Errorf(codes.Unauthenticated, "Unable to get release due to %v", err)
 		} else {
-			return nil, status.Errorf(codes.Internal, "%q", err)
+			return nil, status.Errorf(codes.Internal, "Unable to get release due to %v", err)
 		}
 	}
 
@@ -465,7 +465,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
 			return nil, status.Errorf(codes.Unauthenticated, "Unable to update release due to %v", err)
 		} else {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "Unable to update release due to %v", err)
 		}
 	}
 
@@ -492,7 +492,7 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
 			return status.Errorf(codes.Unauthenticated, "Unable to delete release due to %v", err)
 		} else {
-			return status.Errorf(codes.Internal, "%q", err)
+			return status.Errorf(codes.Internal, "Unable to delete release due to %v", err)
 		}
 	}
 	return nil
