@@ -1,6 +1,6 @@
 #search {
-  color: var(--cds-global-typography-color-500, #000);
   margin-left: 0.3rem;
+  color: var(--cds-global-typography-color-500, #000);
 }
 
 #search input::placeholder {
@@ -8,6 +8,6 @@
 }
 
 header .search-box form {
-  border-radius: 0.15rem;
   margin-left: 1rem;
+  border-radius: 0.15rem;
 }

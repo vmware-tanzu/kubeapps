@@ -1,8 +1,8 @@
 :not([cds-text]).application-status-pie-chart {
   display: flex;
   justify-content: center;
-  text-align: center;
   margin-bottom: -50px;
+  text-align: center;
 
   &-title {
     margin-top: 1.2rem;
@@ -25,8 +25,8 @@
 }
 
 .application-status-table {
-  text-align: left;
   border-spacing: 1em 0;
+  text-align: left;
 
   th {
     text-transform: uppercase;

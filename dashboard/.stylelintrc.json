@@ -1,16 +1,11 @@
 {
   "extends": [
     "stylelint-config-standard-scss",
-    "stylelint-config-recommended-scss",
+    "stylelint-config-idiomatic-order",
     "stylelint-config-prettier"
   ],
   "customSyntax": "postcss-scss",
   "rules": {
-    "selector-type-no-unknown": [
-      true,
-      {
-        "ignoreTypes": ["cds-icon", "cds-button"]
-      }
-    ]
+    "alpha-value-notation": ["number"]
   }
 }
