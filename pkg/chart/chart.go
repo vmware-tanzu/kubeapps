@@ -19,15 +19,14 @@ package chart
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
@@ -36,12 +35,13 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
-	helm3chart "helm.sh/helm/v3/pkg/chart"
-	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	log "k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
@@ -80,12 +80,12 @@ type Details struct {
 }
 
 // LoadHelmChart returns a helm3 Chart struct from an IOReader
-type LoadHelmChart func(in io.Reader) (*helm3chart.Chart, error)
+type LoadHelmChart func(in io.Reader) (*chart.Chart, error)
 
 // ChartClient for exposed funcs
 type ChartClient interface {
 	Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
-	GetChart(details *Details, repoURL string) (*helm3chart.Chart, error)
+	GetChart(details *Details, repoURL string) (*chart.Chart, error)
 }
 
 // HelmRepoClient struct contains the clients required to retrieve charts info
@@ -144,21 +144,20 @@ func readResponseBody(res *http.Response) ([]byte, error) {
 	return body, nil
 }
 
-func checksum(data []byte) string {
-	hasher := sha256.New()
-	hasher.Write(data)
-	return string(hasher.Sum(nil))
-}
+// func checksum(data []byte) string {
+// 	hasher := sha256.New()
+// 	hasher.Write(data)
+// 	return string(hasher.Sum(nil))
+// }
 
 // Cache the result of parsing the repo index since parsing this YAML
 // is an expensive operation. See https://github.com/kubeapps/kubeapps/issues/1052
-func getIndexFromCache(repoURL string, data []byte) (*repo.IndexFile, string) {
-	sha := checksum(data)
-	if repoIndexes[repoURL] == nil || repoIndexes[repoURL].checksum != sha {
+func getIndexFromCache(repoURL string, cacheKey string) *repo.IndexFile {
+	if repoIndexes[repoURL] == nil || repoIndexes[repoURL].checksum != cacheKey {
 		// The repository is not in the cache or the content changed
-		return nil, sha
+		return nil
 	}
-	return repoIndexes[repoURL].index, sha
+	return repoIndexes[repoURL].index
 }
 
 func storeIndexInCache(repoURL string, index *repo.IndexFile, sha string) {
@@ -177,28 +176,52 @@ func parseIndex(data []byte) (*repo.IndexFile, error) {
 
 // fetchRepoIndex returns a Helm repository
 func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFile, error) {
-	req, err := getReq(repoURL)
+	var cacheKey string
+	var getResponse *http.Response
+	headRequest, err := http.NewRequest("HEAD", repoURL, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	res, err := (*netClient).Do(req)
+	getRequest, err := http.NewRequest("GET", repoURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	data, err := readResponseBody(res)
+	headResponse, err := (*netClient).Do(headRequest)
 	if err != nil {
 		return nil, err
 	}
-
-	index, sha := getIndexFromCache(repoURL, data)
+	log.Infof("cache key candidate (HEAD): %s", headResponse.ContentLength)
+	if headResponse.ContentLength > 0 {
+		cacheKey = strconv.Itoa(int(headResponse.ContentLength))
+	} else {
+		getResponse, err = (*netClient).Do(getRequest)
+		if err != nil {
+			return nil, err
+		}
+		cacheKey = strconv.Itoa(int(getResponse.ContentLength))
+		log.Infof("cache key candidate (GET): %s", getResponse.ContentLength)
+	}
+	index := getIndexFromCache(repoURL, cacheKey)
 	if index == nil {
+		log.Infof("cache miss: url '%s' (cache key: '%s')", repoURL, cacheKey)
 		// index not found in the cache, parse it
+		if getResponse == nil {
+			getResponse, err = (*netClient).Do(getRequest)
+			if err != nil {
+				return nil, err
+			}
+		}
+		data, err := readResponseBody(getResponse)
+		if err != nil {
+			return nil, err
+		}
 		index, err = parseIndex(data)
 		if err != nil {
 			return nil, err
 		}
-		storeIndexInCache(repoURL, index, sha)
+		storeIndexInCache(repoURL, index, cacheKey)
+	} else {
+		log.Infof("cache hit: url '%s' (cache key: '%s')", repoURL, cacheKey)
 	}
 	return index, nil
 }
@@ -232,7 +255,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Chart, error) {
+func fetchChart(netClient *httpclient.Client, chartURL string) (*chart.Chart, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -246,7 +269,7 @@ func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Char
 	if err != nil {
 		return nil, err
 	}
-	return helm3loader.LoadArchive(bytes.NewReader(data))
+	return loader.LoadArchive(bytes.NewReader(data))
 }
 
 // ParseDetails return Chart details
@@ -323,23 +346,29 @@ func (c *HelmRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *co
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
+	parsedURL, err := url.Parse(repoURL)
+	if err != nil {
+		return nil, err
+	}
+	parsedURL.RawPath = path.Join(parsedURL.RawPath, "index.yaml")
+	parsedURL.Path = path.Join(parsedURL.Path, "index.yaml")
+
 	if c.netClient == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	var chart *helm3chart.Chart
-	indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
-	repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
+	var chart *chart.Chart
+	repoIndex, err := fetchRepoIndex(&c.netClient, parsedURL.String())
 	if err != nil {
 		return nil, err
 	}
 
-	chartURL, err := findChartInRepoIndex(repoIndex, indexURL, details.ChartName, details.Version)
+	chartURL, err := findChartInRepoIndex(repoIndex, parsedURL.String(), details.ChartName, details.Version)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Downloading %s ...", chartURL)
+	log.Infof("Downloading %s ...", chartURL)
 	chart, err = fetchChart(&c.netClient, chartURL)
 	if err != nil {
 		return nil, err
@@ -407,7 +436,7 @@ func (c *OCIRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *cor
 }
 
 // GetChart retrieves and loads a Chart from a OCI registry
-func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
@@ -422,7 +451,7 @@ func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.
 		return nil, err
 	}
 
-	return helm3loader.LoadArchive(chartBuffer)
+	return loader.LoadArchive(chartBuffer)
 }
 
 // ChartClientFactoryInterface defines how a ChartClientFactory implementation
