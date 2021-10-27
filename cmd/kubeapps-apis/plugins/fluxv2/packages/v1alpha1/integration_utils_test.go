@@ -312,6 +312,23 @@ func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
 	return nil
 }
 
+func kubeCreateNamespace(t *testing.T, namespace string) error {
+	t.Logf("+kubeCreateNamespace(%s)", namespace)
+	if typedClient, err := kubeGetTypedClient(); err != nil {
+		return err
+	} else if typedClient.CoreV1().Namespaces().Create(
+		context.TODO(),
+		&kubecorev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+			},
+		},
+		metav1.CreateOptions{}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func kubeDeleteNamespace(t *testing.T, namespace string) error {
 	t.Logf("+kubeDeleteNamespace(%s)", namespace)
 	if typedClient, err := kubeGetTypedClient(); err != nil {

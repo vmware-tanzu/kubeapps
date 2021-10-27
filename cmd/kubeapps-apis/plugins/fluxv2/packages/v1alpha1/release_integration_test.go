@@ -52,8 +52,10 @@ type integrationTestCreateSpec struct {
 	request           *corev1.CreateInstalledPackageRequest
 	expectedDetail    *corev1.InstalledPackageDetail
 	expectedPodPrefix string
+	// what follows are boolean flags to test various negative scenarios
 	// different from expectedStatusCode due to async nature of install
 	expectInstallFailure bool
+	noPreCreateNs        bool
 	noCleanup            bool
 	expectedStatusCode   codes.Code
 }
@@ -113,6 +115,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoUrl:            podinfo_repo_url,
 			request:            create_request_wrong_cluster,
 			expectedStatusCode: codes.Unimplemented,
+		},
+		{
+			testName:           "target namespace does not exist",
+			repoUrl:            podinfo_repo_url,
+			request:            create_request_target_ns_doesnt_exist,
+			noPreCreateNs:      true,
+			expectedStatusCode: codes.Internal,
 		},
 	}
 
@@ -229,6 +238,12 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 
 			actualRespAfterUpdate := waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedRef, false)
 
+			tc.expectedDetailAfterUpdate.InstalledPackageRef = installedRef
+			tc.expectedDetailAfterUpdate.Name = tc.integrationTestCreateSpec.request.Name
+			tc.expectedDetailAfterUpdate.ReconciliationOptions = &corev1.ReconciliationOptions{
+				Interval: 60,
+			}
+			tc.expectedDetailAfterUpdate.AvailablePackageRef = tc.integrationTestCreateSpec.request.AvailablePackageRef
 			tc.expectedDetailAfterUpdate.PostInstallationNotes = strings.ReplaceAll(
 				tc.expectedDetailAfterUpdate.PostInstallationNotes,
 				"@TARGET_NS@",
@@ -386,8 +401,26 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		}
 	}
 
+	// generate a unique target namespace for each test to avoid situations when tests are
+	// run multiple times in a row and they fail due to the fact that the specified namespace
+	// in in 'Terminating' state
+	if tc.request.TargetContext.Namespace != "" {
+		tc.request.TargetContext.Namespace += "-" + randSeq(4)
+
+		if !tc.noPreCreateNs {
+			// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-950383123
+			kubeCreateNamespace(t, tc.request.TargetContext.Namespace)
+			t.Cleanup(func() {
+				err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace)
+				if err != nil {
+					t.Logf("Failed to delete namespace [%s] due to [%v]", tc.request.TargetContext.Namespace, err)
+				}
+			})
+		}
+	}
+
 	if tc.request.ReconciliationOptions != nil && tc.request.ReconciliationOptions.ServiceAccountName != "" {
-		_, err = kubeCreateAdminServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+		_, err = kubeCreateAdminServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, tc.request.TargetContext.Namespace)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -406,18 +439,11 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 					}
 				}
 			}
-			err := kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, "kubeapps")
+			err := kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, tc.request.TargetContext.Namespace)
 			if err != nil {
 				t.Logf("Failed to delete service account due to [%v]", err)
 			}
 		})
-	}
-
-	// generate a unique target namespace for each test to avoid situations when tests are
-	// run multiple times in a row and they fail due to the fact that the specified namespace
-	// in in 'Terminating' state
-	if tc.request.TargetContext.Namespace != "" {
-		tc.request.TargetContext.Namespace += "-" + randSeq(4)
 	}
 
 	ctx := grpcContext
@@ -432,6 +458,19 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		return nil // done, nothing more to check
 	} else if err != nil {
 		t.Fatalf("%+v", err)
+	}
+
+	if tc.expectedDetail != nil {
+		// set some of the expected fields here to values we already know to expect,
+		// the rest should be specified explictly
+		tc.expectedDetail.InstalledPackageRef = installedRef(tc.request.Name, tc.request.TargetContext.Namespace)
+		tc.expectedDetail.AvailablePackageRef = tc.request.AvailablePackageRef
+		tc.expectedDetail.Name = tc.request.Name
+		if tc.request.ReconciliationOptions == nil {
+			tc.expectedDetail.ReconciliationOptions = &corev1.ReconciliationOptions{
+				Interval: 60,
+			}
+		}
 	}
 
 	installedPackageRef := resp.InstalledPackageRef
@@ -452,13 +491,6 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 			}
 		})
 	}
-
-	t.Cleanup(func() {
-		err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace)
-		if err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", tc.request.TargetContext.Namespace, err)
-		}
-	})
 
 	actualResp := waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedPackageRef, tc.expectInstallFailure)
 
@@ -529,29 +561,27 @@ var (
 		AvailablePackageRef: availableRef("podinfo-1/podinfo", "default"),
 		Name:                "my-podinfo",
 		TargetContext: &corev1.Context{
+			// note that Namespace is just the prefix - the actual name will
+			// have a random string appended at the end, e.g. "test-1-h23r"
+			// this will happen during the running of the test
 			Namespace: "test-1",
 			Cluster:   KubeappsCluster,
 		},
 	}
 
+	// specify just the fields that cannot be easily computed based on the request
 	expected_detail_basic = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
-		Name: "my-podinfo",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 			AppVersion: "6.0.0",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-1/podinfo", "default"),
 	}
 
 	create_request_semver_constraint = &corev1.CreateInstalledPackageRequest{
@@ -567,23 +597,17 @@ var (
 	}
 
 	expected_detail_semver_constraint = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-2", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "> 5",
 		},
-		Name: "my-podinfo-2",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 			AppVersion: "6.0.0",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-2 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-2/podinfo", "default"),
 	}
 
 	create_request_reconcile_options = &corev1.CreateInstalledPackageRequest{
@@ -601,11 +625,9 @@ var (
 	}
 
 	expected_detail_reconcile_options = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-3", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
-		Name: "my-podinfo-3",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 			AppVersion: "6.0.0",
@@ -619,7 +641,6 @@ var (
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-3 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-3/podinfo", "default"),
 	}
 
 	create_request_with_values = &corev1.CreateInstalledPackageRequest{
@@ -633,8 +654,6 @@ var (
 	}
 
 	expected_detail_with_values = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-4", "kubeapps"),
-		Name:                "my-podinfo-4",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 			AppVersion: "6.0.0",
@@ -642,15 +661,11 @@ var (
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
-		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-4 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-4/podinfo", "default"),
-		ValuesApplied:       "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
+		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 	}
 
 	create_request_install_fails = &corev1.CreateInstalledPackageRequest{
@@ -664,16 +679,11 @@ var (
 	}
 
 	expected_detail_install_fails = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-5", "kubeapps"),
-		Name:                "my-podinfo-5",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 		},
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		Status: &corev1.InstalledPackageStatus{
 			Ready:  false,
@@ -687,8 +697,7 @@ var (
 			// so we'll just test the prefix
 			UserReason: "InstallFailed: ",
 		},
-		AvailablePackageRef: availableRef("podinfo-5/podinfo", "default"),
-		ValuesApplied:       "{\"replicaCount\":\"what we do in the shadows\"}",
+		ValuesApplied: "{\"replicaCount\":\"what we do in the shadows\"}",
 	}
 
 	create_request_podinfo_5_2_1 = &corev1.CreateInstalledPackageRequest{
@@ -704,43 +713,31 @@ var (
 	}
 
 	expected_detail_podinfo_5_2_1 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-6", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-6",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
 		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
-		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-6 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-6/podinfo", "default"),
 	}
 
 	expected_detail_podinfo_6_0_0 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-6", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "6.0.0",
 		},
-		Name: "my-podinfo-6",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 			AppVersion: "6.0.0",
 		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
-		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-6 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-6/podinfo", "default"),
 	}
 
 	create_request_podinfo_5_2_1_no_values = &corev1.CreateInstalledPackageRequest{
@@ -756,44 +753,32 @@ var (
 	}
 
 	expected_detail_podinfo_5_2_1_no_values = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-7", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-7",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-7 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-7/podinfo", "default"),
 	}
 
 	expected_detail_podinfo_5_2_1_values = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-7", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-7",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-7 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-7/podinfo", "default"),
 	}
 
 	create_request_podinfo_5_2_1_values_2 = &corev1.CreateInstalledPackageRequest{
@@ -810,45 +795,33 @@ var (
 	}
 
 	expected_detail_podinfo_5_2_1_values_2 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-8", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-8",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-8 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-8/podinfo", "default"),
 	}
 
 	expected_detail_podinfo_5_2_1_values_3 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-8", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-8",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		ValuesApplied: "{\"ui\":{\"message\":\"Le Bureau des Légendes\"}}",
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-8 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-8/podinfo", "default"),
 	}
 
 	create_request_podinfo_5_2_1_values_4 = &corev1.CreateInstalledPackageRequest{
@@ -865,44 +838,32 @@ var (
 	}
 
 	expected_detail_podinfo_5_2_1_values_4 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-9", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-9",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-9 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-9/podinfo", "default"),
 	}
 
 	expected_detail_podinfo_5_2_1_values_5 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-9", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-9",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-9 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-9/podinfo", "default"),
 	}
 
 	create_request_podinfo_5_2_1_values_6 = &corev1.CreateInstalledPackageRequest{
@@ -919,24 +880,18 @@ var (
 	}
 
 	expected_detail_podinfo_5_2_1_values_6 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-10", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-10",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-10 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-10/podinfo", "default"),
 	}
 
 	create_request_podinfo_7 = &corev1.CreateInstalledPackageRequest{
@@ -949,23 +904,17 @@ var (
 	}
 
 	expected_detail_podinfo_7 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-11", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
-		Name: "my-podinfo-11",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 			AppVersion: "6.0.0",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-11 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-11/podinfo", "default"),
 	}
 
 	update_request_1 = &corev1.UpdateInstalledPackageRequest{
@@ -1028,23 +977,17 @@ var (
 	}
 
 	expected_detail_podinfo_for_delete_1 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-12", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-12",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-12 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
 	}
 
 	create_request_podinfo_for_delete_2 = &corev1.CreateInstalledPackageRequest{
@@ -1060,23 +1003,17 @@ var (
 	}
 
 	expected_detail_podinfo_for_delete_2 = &corev1.InstalledPackageDetail{
-		InstalledPackageRef: installedRef("my-podinfo-13", "kubeapps"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
-		Name: "my-podinfo-13",
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "5.2.1",
 			AppVersion: "5.2.1",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
 		},
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
 			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-13 8080:9898\n",
-		AvailablePackageRef: availableRef("podinfo-13/podinfo", "default"),
 	}
 
 	create_request_wrong_cluster = &corev1.CreateInstalledPackageRequest{
@@ -1085,6 +1022,15 @@ var (
 		TargetContext: &corev1.Context{
 			Namespace: "test-14",
 			Cluster:   "this is not the cluster you're looking for",
+		},
+	}
+
+	create_request_target_ns_doesnt_exist = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-15/podinfo", "default"),
+		Name:                "my-podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: "test-15",
+			Cluster:   KubeappsCluster,
 		},
 	}
 )

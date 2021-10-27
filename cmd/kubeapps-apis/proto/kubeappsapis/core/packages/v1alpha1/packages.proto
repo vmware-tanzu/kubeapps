@@ -859,7 +859,9 @@ message ReconciliationOptions {
 
   // Suspend
   //
-  // Whether reconciliation should be suspended until otherwise enabled.
+  // Whether reconciliation should be suspended until otherwise enabled. 
+  // This can be utilized to e.g. temporarily ignore chart changes, and 
+  // prevent a Helm release from getting upgraded
   bool suspend = 2;
 
   // ServiceAccountName
