@@ -638,14 +638,20 @@ jobs:
       IMAGES: "pinniped-proxy"
     <<: *build_images
   release:
+    environment:
+      <<: *common_envars
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
+      - <<: *install_github
       - run:
-          name: Create release
+          # Assuming there is a personal access token created in GitHub granted with the scopes
+          # "repo:status", "public_repo" and "read:org"
+          # This token is passed as a GITHUB_TOKEN env var via CircleCI
+          name: Execute the create_release script
           command: |
-            REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
+            ./script/create_release.sh ${CIRCLE_TAG}
   local_e2e_tests:
     machine: true
     environment:
@@ -731,7 +737,6 @@ jobs:
             - << pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FINGERPRINT >>
             # Deployment key uploaded to the kubeapps-bot/charts repository
             - << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FINGERPRINT >>
-
       - run:
           # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
           # public key uploaded to GitHub as a deploy key with write permissions
