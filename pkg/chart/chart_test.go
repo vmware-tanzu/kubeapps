@@ -538,6 +538,7 @@ func TestGetChart(t *testing.T) {
 			ReleaseName:               "foo",
 			Version:                   tc.chartVersion,
 		}
+		clearCache()
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
 			chUtils := HelmRepoClient{
@@ -564,12 +565,13 @@ func TestGetChart(t *testing.T) {
 			}
 
 			requests := getFakeClientRequests(t, httpClient)
-			// We expect one request for the index and one for the chart.
-			if got, want := len(requests), 2; got != want {
+			// We expect 3 requests: one for the HEAD to get the length, one request for the index and one for the chart.
+			if got, want := len(requests), 3; got != want {
 				t.Fatalf("got: %d, want %d", got, want)
 			}
 
 			for i, url := range []string{
+				repoURL + "index.yaml",
 				repoURL + "index.yaml",
 				fmt.Sprintf("%s%s-%s.tgz", repoURL, target.ChartName, target.Version),
 			} {
@@ -593,14 +595,14 @@ func TestGetChart(t *testing.T) {
 
 func TestGetIndexFromCache(t *testing.T) {
 	repoURL := "https://test.com"
-	data := []byte("foo")
-	index, sha := getIndexFromCache(repoURL, data)
+	cacheKey := "foo"
+	index := getIndexFromCache(repoURL, cacheKey)
 	if index != nil {
 		t.Error("Index should be empty since it's not in the cache yet")
 	}
 	fakeIndex := &repo.IndexFile{}
-	storeIndexInCache(repoURL, fakeIndex, sha)
-	index, _ = getIndexFromCache(repoURL, data)
+	storeIndexInCache(repoURL, fakeIndex, cacheKey)
+	index = getIndexFromCache(repoURL, cacheKey)
 	if index != fakeIndex {
 		t.Error("It should return the stored index")
 	}

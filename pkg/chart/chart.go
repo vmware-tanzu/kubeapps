@@ -153,7 +153,7 @@ func readResponseBody(res *http.Response) ([]byte, error) {
 // Cache the result of parsing the repo index since parsing this YAML
 // is an expensive operation. See https://github.com/kubeapps/kubeapps/issues/1052
 func getIndexFromCache(repoURL string, cacheKey string) *repo.IndexFile {
-	if repoIndexes[repoURL] == nil || repoIndexes[repoURL].checksum != cacheKey {
+	if cacheKey == "" || repoIndexes[repoURL] == nil || repoIndexes[repoURL].checksum != cacheKey {
 		// The repository is not in the cache or the content changed
 		return nil
 	}
@@ -162,6 +162,10 @@ func getIndexFromCache(repoURL string, cacheKey string) *repo.IndexFile {
 
 func storeIndexInCache(repoURL string, index *repo.IndexFile, sha string) {
 	repoIndexes[repoURL] = &repoIndex{sha, index}
+}
+
+func clearCache() {
+	repoIndexes = map[string]*repoIndex{}
 }
 
 func parseIndex(data []byte) (*repo.IndexFile, error) {
@@ -176,7 +180,7 @@ func parseIndex(data []byte) (*repo.IndexFile, error) {
 
 // fetchRepoIndex returns a Helm repository
 func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFile, error) {
-	var cacheKey string
+	cacheKey := ""
 	var getResponse *http.Response
 	headRequest, err := http.NewRequest("HEAD", repoURL, nil)
 	if err != nil {
@@ -190,7 +194,7 @@ func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFi
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("cache key candidate (HEAD): %s", headResponse.ContentLength)
+	log.Infof("cache key candidate (HEAD): %v", headResponse.ContentLength)
 	if headResponse.ContentLength > 0 {
 		cacheKey = strconv.Itoa(int(headResponse.ContentLength))
 	} else {
@@ -198,8 +202,10 @@ func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFi
 		if err != nil {
 			return nil, err
 		}
-		cacheKey = strconv.Itoa(int(getResponse.ContentLength))
-		log.Infof("cache key candidate (GET): %s", getResponse.ContentLength)
+		log.Infof("cache key candidate (GET): %v", getResponse.ContentLength)
+		if headResponse.ContentLength > 0 {
+			cacheKey = strconv.Itoa(int(getResponse.ContentLength))
+		}
 	}
 	index := getIndexFromCache(repoURL, cacheKey)
 	if index == nil {
@@ -219,6 +225,7 @@ func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFi
 		if err != nil {
 			return nil, err
 		}
+		log.Infof("cache push: url '%s' (cache key: '%s')", repoURL, cacheKey)
 		storeIndexInCache(repoURL, index, cacheKey)
 	} else {
 		log.Infof("cache hit: url '%s' (cache key: '%s')", repoURL, cacheKey)
