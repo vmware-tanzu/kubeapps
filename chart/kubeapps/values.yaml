@@ -1500,7 +1500,7 @@ allowNamespaceDiscovery: true
 ##   serviceToken: ...
 ##   isKubeappsCluster: true
 ##   pinnipedConfig:
-##     enable: true
+##     enabled: true
 
 ##
 clusters:
@@ -1657,7 +1657,7 @@ kubeappsapis:
   resources:
     limits:
       cpu: 250m
-      memory: 256Mi
+      memory: 512Mi
     requests:
       cpu: 25m
       memory: 32Mi

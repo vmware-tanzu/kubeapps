@@ -1747,6 +1747,31 @@ func TestNewClusterConfig(t *testing.T) {
 					"default": {
 						APIServiceURL:            "https://kubernetes.default",
 						CertificateAuthorityData: "SGVsbG8K",
+						PinnipedConfig:           PinnipedConciergeConfig{Enabled: true},
+					},
+				},
+				PinnipedProxyURL: "https://172.0.1.18:3333",
+			},
+			inClusterConfig: &rest.Config{
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+			},
+			expectedConfig: &rest.Config{
+				Host:            "https://172.0.1.18:3333",
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+			},
+		},
+		{
+			name:      "returns a config to proxy via pinniped-proxy using the deprecated flag enable",
+			userToken: "token-1",
+			cluster:   "default",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]ClusterConfig{
+					"default": {
+						APIServiceURL:            "https://kubernetes.default",
+						CertificateAuthorityData: "SGVsbG8K",
 						PinnipedConfig:           PinnipedConciergeConfig{Enable: true},
 					},
 				},
@@ -1772,7 +1797,7 @@ func TestNewClusterConfig(t *testing.T) {
 					"default": {
 						APIServiceURL:            "",
 						CertificateAuthorityData: "",
-						PinnipedConfig:           PinnipedConciergeConfig{Enable: true},
+						PinnipedConfig:           PinnipedConciergeConfig{Enabled: true},
 					},
 				},
 				PinnipedProxyURL: "https://172.0.1.18:3333",
@@ -1801,7 +1826,7 @@ func TestNewClusterConfig(t *testing.T) {
 			}
 			// If the test case defined a pinniped proxy url, verify that the expected headers
 			// are added to the request.
-			if clusterConfig, ok := tc.clustersConfig.Clusters[tc.cluster]; ok && clusterConfig.PinnipedConfig.Enable {
+			if clusterConfig, ok := tc.clustersConfig.Clusters[tc.cluster]; ok && clusterConfig.PinnipedConfig.Enabled {
 				if config.WrapTransport == nil {
 					t.Errorf("expected config.WrapTransport to be set but it is nil")
 				} else {
@@ -2037,7 +2062,7 @@ func TestParseClusterConfig(t *testing.T) {
 		},
 		{
 			name:       "parses a cluster with pinniped token exchange",
-			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedConfig": {"enable": true}, "isKubeappsCluster": true}]`,
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd", "pinnipedConfig": {"enabled": true}, "isKubeappsCluster": true}]`,
 			expectedConfig: ClustersConfig{
 				KubeappsClusterName: "cluster-2",
 				Clusters: map[string]ClusterConfig{
@@ -2048,7 +2073,7 @@ func TestParseClusterConfig(t *testing.T) {
 						CertificateAuthorityDataDecoded: "ca-cert-data\n",
 						ServiceToken:                    "abcd",
 						PinnipedConfig: PinnipedConciergeConfig{
-							Enable: true,
+							Enabled: true,
 						},
 						IsKubeappsCluster: true,
 					},
