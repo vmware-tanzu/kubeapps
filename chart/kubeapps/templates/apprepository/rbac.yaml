@@ -1,3 +1,4 @@
+# todo: describe role
 {{- if .Values.rbac.create -}}
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: Role
@@ -168,6 +169,7 @@ subjects:
     name: {{ template "kubeapps.apprepository.fullname" . }}
     namespace: {{ .Release.Namespace }}
 ---
+# todo: describe role
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRole
 metadata:
@@ -194,6 +196,7 @@ rules:
     verbs:
       - '*'
 ---
+# todo: describe role
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: ClusterRole
 metadata:
