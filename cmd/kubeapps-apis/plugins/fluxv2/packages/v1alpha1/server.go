@@ -187,6 +187,11 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
+	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	for _, summary := range packageSummaries {
+		summary.AvailablePackageRef.Context.Cluster = s.kubeappsCluster
+	}
+
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
@@ -216,6 +221,14 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	// flux CRDs require a namespace, cluster-wide resources are not supported
 	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
+	}
+
+	cluster := packageRef.Context.Cluster
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.AvailablePackageRef.Context.Cluster: [%v]",
+			cluster)
 	}
 
 	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
@@ -259,6 +272,8 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
+	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	pkgDetail.AvailablePackageRef.Context.Cluster = s.kubeappsCluster
 
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: pkgDetail,
@@ -280,6 +295,14 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	namespace := packageRef.GetContext().GetNamespace()
 	if namespace == "" || packageRef.GetIdentifier() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+	}
+
+	cluster := packageRef.Context.Cluster
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.AvailablePackageRef.Context.Cluster: [%v]",
+			cluster)
 	}
 
 	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
@@ -315,6 +338,14 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			request.GetPaginationOptions().GetPageToken(), err)
 	}
 
+	cluster := request.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.Context.Cluster: [%v]",
+			cluster)
+	}
+
 	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
 	if err != nil {
 		return nil, err
@@ -348,6 +379,14 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "InstalledPackageReference is missing required 'namespace' field")
 	}
 
+	cluster := packageRef.Context.GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.InstalledPackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
 	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
 	pkgDetail, err := s.installedPackageDetail(ctx, name)
 	if err != nil {
@@ -366,13 +405,24 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
+	packageRef := request.AvailablePackageRef
+	if packageRef.GetContext().GetNamespace() == "" || packageRef.GetIdentifier() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+	}
+	cluster := packageRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.AvailablePackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
 	if request.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
 	if request.TargetContext == nil || request.TargetContext.Namespace == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
 	}
-	cluster := request.GetTargetContext().GetCluster()
+	cluster = request.TargetContext.GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
@@ -405,9 +455,18 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 
+	installedPackageRef := request.InstalledPackageRef
+	cluster := installedPackageRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.installedPackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
 	if installedRef, err := s.updateRelease(
 		ctx,
-		request.InstalledPackageRef,
+		installedPackageRef,
 		request.PkgVersionReference,
 		request.ReconciliationOptions,
 		request.Values); err != nil {
@@ -422,6 +481,19 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 // DeleteInstalledPackage deletes an installed package.
 func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
 	log.Infof("+fluxv2 DeleteInstalledPackage [%v]", request)
+
+	if request == nil || request.InstalledPackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+	}
+
+	installedPackageRef := request.InstalledPackageRef
+	cluster := installedPackageRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.installedPackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
 
 	if err := s.deleteRelease(ctx, request.InstalledPackageRef); err != nil {
 		return nil, err

@@ -1002,6 +1002,7 @@ func installedRef(id, namespace string) *corev1.InstalledPackageReference {
 	return &corev1.InstalledPackageReference{
 		Context: &corev1.Context{
 			Namespace: namespace,
+			Cluster:   KubeappsCluster,
 		},
 		Identifier: id,
 		Plugin:     fluxPlugin,

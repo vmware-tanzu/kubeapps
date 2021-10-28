@@ -266,6 +266,10 @@ func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (int
 			return nil, false, err
 		}
 
+		// launch go-routine that will download tarball and extract relevant details for each chart
+		// and cache them for fast lookup
+		//go cacheLatestChartDetails(charts)
+
 		// use gob encoding instead of json, it peforms much better
 		var buf bytes.Buffer
 		enc := gob.NewEncoder(&buf)

@@ -1064,7 +1064,7 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Scales worker nodes within agent pools",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "bitnami-1/acs-engine-autoscaler",
-			Context:    &corev1.Context{Namespace: "default"},
+			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1078,7 +1078,7 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "new description!",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "bitnami-1/wordpress",
-			Context:    &corev1.Context{Namespace: "default"},
+			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1094,7 +1094,7 @@ var cert_manager_summary = &corev1.AvailablePackageSummary{
 	ShortDescription: "A Helm chart for cert-manager",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "jetstack-1/cert-manager",
-		Context:    &corev1.Context{Namespace: "ns1"},
+		Context:    &corev1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 }
@@ -1109,7 +1109,7 @@ var elasticsearch_summary = &corev1.AvailablePackageSummary{
 	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "index-with-categories-1/elasticsearch",
-		Context:    &corev1.Context{Namespace: "default"},
+		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 }
@@ -1124,7 +1124,7 @@ var ghost_summary = &corev1.AvailablePackageSummary{
 	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "index-with-categories-1/ghost",
-		Context:    &corev1.Context{Namespace: "default"},
+		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 }
@@ -1144,7 +1144,7 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Deploy a basic Alpine Linux pod",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2"},
+			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1157,7 +1157,7 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Create a basic nginx HTTP server",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2"},
+			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1173,7 +1173,7 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Deploy a basic Alpine Linux pod",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2"},
+			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1186,7 +1186,7 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Create a basic nginx HTTP server",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2"},
+			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	}}

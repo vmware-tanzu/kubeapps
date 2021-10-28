@@ -316,7 +316,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			const maxWait = 25
+			const maxWait = 30
 			for i := 0; i <= maxWait; i++ {
 				_, err := fluxPluginClient.GetInstalledPackageDetail(grpcContext, &corev1.GetInstalledPackageDetailRequest{
 					InstalledPackageRef: installedRef,
@@ -329,9 +329,9 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					}
 				}
 				if i == maxWait {
-					t.Fatalf("Timed out waiting for delete of installed package [%s], last error: [%v]", installedRef, err)
+					t.Fatalf("Timed out waiting for delete of installed package [%s], last error: [%v]", installedRef.Identifier, err)
 				} else {
-					t.Logf("Waiting 1s for package [%s] to be deleted, attempt [%d/%d]...", installedRef, i+1, maxWait)
+					t.Logf("Waiting 1s for package [%s] to be deleted, attempt [%d/%d]...", installedRef.Identifier, i+1, maxWait)
 					time.Sleep(1 * time.Second)
 				}
 			}

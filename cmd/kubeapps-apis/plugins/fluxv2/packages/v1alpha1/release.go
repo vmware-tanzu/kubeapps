@@ -181,6 +181,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
 				Namespace: name.Namespace,
+				Cluster:   s.kubeappsCluster,
 			},
 			Identifier: name.Name,
 			Plugin:     GetPluginDetail(),
@@ -252,6 +253,8 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	if err != nil {
 		return nil, err
 	}
+	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	availablePackageRef.Context.Cluster = s.kubeappsCluster
 
 	appVersion, postInstallNotes := "", ""
 	release, err := s.helmReleaseFromUnstructured(ctx, name, obj)
@@ -273,6 +276,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
 				Namespace: name.Namespace,
+				Cluster:   s.kubeappsCluster,
 			},
 			Identifier: name.Name,
 			Plugin:     GetPluginDetail(),
@@ -333,18 +337,13 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	availablePackageNamespace := packageRef.GetContext().GetNamespace()
-	if availablePackageNamespace == "" || packageRef.GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
-	}
-
 	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
 	packageIdParts := strings.Split(unescapedChartID, "/")
-	repo := types.NamespacedName{Namespace: availablePackageNamespace, Name: packageIdParts[0]}
+	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
 	chart, err := s.fetchChartFromCache(repo, packageIdParts[1])
 	if err != nil {
 		return nil, err
@@ -379,7 +378,10 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 	return &corev1.InstalledPackageReference{
-		Context:    &corev1.Context{Namespace: name.Namespace},
+		Context: &corev1.Context{
+			Namespace: name.Namespace,
+			Cluster:   s.kubeappsCluster,
+		},
 		Identifier: name.Name,
 		Plugin:     GetPluginDetail(),
 	}, nil
@@ -468,7 +470,10 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	log.V(4).Infof("Updated release: %s", prettyPrintMap(unstructuredRel.Object))
 
 	return &corev1.InstalledPackageReference{
-		Context:    &corev1.Context{Namespace: packageRef.Context.Namespace},
+		Context: &corev1.Context{
+			Namespace: packageRef.Context.Namespace,
+			Cluster:   s.kubeappsCluster,
+		},
 		Identifier: packageRef.Identifier,
 		Plugin:     GetPluginDetail(),
 	}, nil

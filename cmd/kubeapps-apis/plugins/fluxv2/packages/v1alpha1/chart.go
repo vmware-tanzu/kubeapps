@@ -358,7 +358,6 @@ func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 			AppVersion: chart.ChartVersions[0].AppVersion,
 		}
 	}
-
 	return pkg, nil
 }
 

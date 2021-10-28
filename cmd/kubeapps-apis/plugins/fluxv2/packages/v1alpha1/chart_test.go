@@ -719,6 +719,7 @@ func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 		Identifier: id,
 		Context: &corev1.Context{
 			Namespace: namespace,
+			Cluster:   KubeappsCluster,
 		},
 		Plugin: fluxPlugin,
 	}
