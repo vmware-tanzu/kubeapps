@@ -24,11 +24,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	log "k8s.io/klog/v2"
 
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/ghodss/yaml"
@@ -36,8 +37,8 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
-	helm3chart "helm.sh/helm/v3/pkg/chart"
-	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,15 +78,17 @@ type Details struct {
 	Version string `json:"version"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
+	// TarballURL is the URL to the tarball file
+	TarballURL string `json:"tarballURL,omitempty"`
 }
 
 // LoadHelmChart returns a helm3 Chart struct from an IOReader
-type LoadHelmChart func(in io.Reader) (*helm3chart.Chart, error)
+type LoadHelmChart func(in io.Reader) (*chart.Chart, error)
 
 // ChartClient for exposed funcs
 type ChartClient interface {
 	Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
-	GetChart(details *Details, repoURL string) (*helm3chart.Chart, error)
+	GetChart(details *Details, repoURL string) (*chart.Chart, error)
 }
 
 // HelmRepoClient struct contains the clients required to retrieve charts info
@@ -232,7 +235,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Chart, error) {
+func fetchChart(netClient *httpclient.Client, chartURL string) (*chart.Chart, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -246,7 +249,7 @@ func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Char
 	if err != nil {
 		return nil, err
 	}
-	return helm3loader.LoadArchive(bytes.NewReader(data))
+	return loader.LoadArchive(bytes.NewReader(data))
 }
 
 // ParseDetails return Chart details
@@ -323,28 +326,38 @@ func (c *HelmRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *co
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
-	if c.netClient == nil {
-		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
+func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
+	var chartURL string
+	if details.TarballURL != "" {
+		chartURL = details.TarballURL
+	} else {
+		// TODO(agamez): remove this branch as it is really expensive and it is solely used in kubeops
+		log.Warning("calling GetChart without any tarball url, please note this lookup is memory-expensive")
+		parsedURL, err := url.Parse(repoURL)
+		if err != nil {
+			return nil, err
+		}
+		parsedURL.RawPath = path.Join(parsedURL.RawPath, "index.yaml")
+		parsedURL.Path = path.Join(parsedURL.Path, "index.yaml")
+
+		if c.netClient == nil {
+			return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
+		}
+		repoIndex, err := fetchRepoIndex(&c.netClient, parsedURL.String())
+		if err != nil {
+			return nil, err
+		}
+
+		chartURL, err = findChartInRepoIndex(repoIndex, parsedURL.String(), details.ChartName, details.Version)
+		if err != nil {
+			return nil, err
+		}
 	}
-	var chart *helm3chart.Chart
-	indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
-	repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
+	log.Infof("Downloading %s ...", chartURL)
+	chart, err := fetchChart(&c.netClient, chartURL)
 	if err != nil {
 		return nil, err
 	}
-
-	chartURL, err := findChartInRepoIndex(repoIndex, indexURL, details.ChartName, details.Version)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("Downloading %s ...", chartURL)
-	chart, err = fetchChart(&c.netClient, chartURL)
-	if err != nil {
-		return nil, err
-	}
-
 	return chart, nil
 }
 
@@ -407,7 +420,7 @@ func (c *OCIRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *cor
 }
 
 // GetChart retrieves and loads a Chart from a OCI registry
-func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
@@ -422,7 +435,7 @@ func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*helm3chart.
 		return nil, err
 	}
 
-	return helm3loader.LoadArchive(chartBuffer)
+	return loader.LoadArchive(chartBuffer)
 }
 
 // ChartClientFactoryInterface defines how a ChartClientFactory implementation
