@@ -206,16 +206,16 @@ func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFi
 	return index, nil
 }
 
-func resolveChartURL(index, chart string) (string, error) {
-	indexURL, err := url.Parse(strings.TrimSpace(index))
+func resolveChartURL(indexURL, chartURL string) (string, error) {
+	parsedIndexURL, err := url.Parse(strings.TrimSpace(indexURL))
 	if err != nil {
 		return "", err
 	}
-	chartURL, err := indexURL.Parse(strings.TrimSpace(chart))
+	parsedChartURL, err := parsedIndexURL.Parse(strings.TrimSpace(chartURL))
 	if err != nil {
 		return "", err
 	}
-	return chartURL.String(), nil
+	return parsedChartURL.String(), nil
 }
 
 // findChartInRepoIndex returns the URL of a chart given a Helm repository and its name and version
@@ -327,9 +327,16 @@ func (c *HelmRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *co
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
 func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
+	if c.netClient == nil {
+		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
+	}
 	var chartURL string
+	var err error
 	if details.TarballURL != "" {
-		chartURL = details.TarballURL
+		chartURL, err = resolveChartURL(repoURL, details.TarballURL)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// TODO(agamez): remove this branch as it is really expensive and it is solely used in kubeops
 		log.Warning("calling GetChart without any tarball url, please note this lookup is memory-expensive")
