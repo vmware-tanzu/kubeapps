@@ -30,6 +30,7 @@ import (
 )
 
 func TestUpdateInstalledPackage(t *testing.T) {
+	t.SkipNow()
 	testCases := []struct {
 		name               string
 		existingReleases   []releaseStub
