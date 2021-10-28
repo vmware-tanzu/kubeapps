@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/containerd/containerd/remotes"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -21,7 +22,7 @@ import (
 // TODO: Use helm as a library instead once the code is moved from "internal/experimental".
 // More info at: https://github.com/helm/helm/issues/9275
 //
-// https://github.com/helm/helm/blob/6297c021cbda1483d8c08a8ec6f4a99e38be7302/internal/experimental/registry/util.go
+// https://github.com/helm/helm/blob/v3.7.1/internal/experimental/registry/util.go
 // ctx retrieves a fresh context.
 // disable verbose logging coming from ORAS (unless debug is enabled)
 func ctx(out io.Writer, debug bool) context.Context {
@@ -33,21 +34,36 @@ func ctx(out io.Writer, debug bool) context.Context {
 	return ctx
 }
 
+// Code from Helm Registry Client. Copied here since it belongs to a internal package.
+// TODO: Use helm as a library instead once the code is moved from "internal/experimental".
+// More info at: https://github.com/helm/helm/issues/9275
+//
+// https://github.com/helm/helm/blob/v3.7.1/internal/experimental/registry/constants.go#L19
 const (
 	// HelmChartConfigMediaType is the reserved media type for the Helm chart manifest config
 	HelmChartConfigMediaType = "application/vnd.cncf.helm.config.v1+json"
 
 	// HelmChartContentLayerMediaType is the reserved media type for Helm chart package content
 	HelmChartContentLayerMediaType = "application/tar+gzip"
-)
 
-// KnownMediaTypes returns a list of layer mediaTypes that the Helm client knows about
-func KnownMediaTypes() []string {
-	return []string{
-		HelmChartConfigMediaType,
-		HelmChartContentLayerMediaType,
-	}
-}
+	// OCIScheme is the URL scheme for OCI-based requests
+	OCIScheme = "oci"
+
+	// CredentialsFileBasename is the filename for auth credentials file
+	CredentialsFileBasename = "registry.json"
+
+	// ConfigMediaType is the reserved media type for the Helm chart manifest config
+	ConfigMediaType = "application/vnd.cncf.helm.config.v1+json"
+
+	// ChartLayerMediaType is the reserved media type for Helm chart package content
+	ChartLayerMediaType = "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+
+	// ProvLayerMediaType is the reserved media type for Helm chart provenance files
+	ProvLayerMediaType = "application/vnd.cncf.helm.chart.provenance.v1.prov"
+
+	// LegacyChartLayerMediaType is the legacy reserved media type for Helm chart package content.
+	LegacyChartLayerMediaType = "application/tar+gzip"
+)
 
 // ChartPuller interface to pull a chart from an OCI registry
 type ChartPuller interface {
@@ -59,41 +75,54 @@ type OCIPuller struct {
 	Resolver remotes.Resolver
 }
 
-// PullOCIChart Code from: https://github.com/helm/helm/blob/fee2257e3493e9d06ca6caa4be7ef7660842cbdb/internal/experimental/registry/client.go
+// Code from Helm Registry Client. Copied here since it belongs to a internal package.
+// TODO: Use helm as a library instead once the code is moved from "internal/experimental".
+// More info at: https://github.com/helm/helm/issues/9275
+//
+// The code has been slightly adapted from:
+// https://github.com/helm/helm/blob/v3.7.1/internal/experimental/registry/client.go#L209
 func (p *OCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
+	ociFullName = strings.TrimPrefix(ociFullName, fmt.Sprintf("%s://", OCIScheme))
 	store := content.NewMemoryStore()
+	allowedMediaTypes := []string{
+		ConfigMediaType,
+	}
+	minNumDescriptors := 1 // 1 for the config
+	minNumDescriptors++
 
-	desc, layerDescriptors, err := oras.Pull(ctx(os.Stdout, log.GetLevel() == log.TraceLevel), p.Resolver, ociFullName, store,
+	allowedMediaTypes = append(allowedMediaTypes, ChartLayerMediaType, LegacyChartLayerMediaType)
+	manifest, descriptors, err := oras.Pull(ctx(os.Stdout, log.GetLevel() == log.TraceLevel), p.Resolver, ociFullName, store,
 		oras.WithPullEmptyNameAllowed(),
-		oras.WithAllowedMediaTypes(KnownMediaTypes()))
+		oras.WithAllowedMediaTypes(allowedMediaTypes))
 	if err != nil {
 		return nil, "", err
 	}
-
-	numLayers := len(layerDescriptors)
-	if numLayers < 1 {
-		return nil, "", fmt.Errorf("manifest does not contain at least 1 layer (total: %d)", numLayers)
+	numDescriptors := len(descriptors)
+	if numDescriptors < minNumDescriptors {
+		return nil, manifest.Digest.String(), errors.New(
+			fmt.Sprintf("manifest does not contain minimum number of descriptors (%d), descriptors found: %d",
+				minNumDescriptors, numDescriptors))
 	}
-
-	var contentLayer *ocispec.Descriptor
-	for _, layer := range layerDescriptors {
-		layer := layer
-		switch layer.MediaType {
-		case HelmChartContentLayerMediaType:
-			contentLayer = &layer
+	var chartDescriptor *ocispec.Descriptor
+	for _, descriptor := range descriptors {
+		d := descriptor
+		switch d.MediaType {
+		case ChartLayerMediaType:
+			chartDescriptor = &d
+		case LegacyChartLayerMediaType:
+			chartDescriptor = &d
+			log.Warnf("Warning: chart media type %s is deprecated\n", LegacyChartLayerMediaType)
 		}
 	}
-
-	if contentLayer == nil {
-		return nil, "", errors.New(
-			fmt.Sprintf("manifest does not contain a layer with mediatype %s",
-				HelmChartContentLayerMediaType))
+	if chartDescriptor == nil {
+		return nil, manifest.Digest.String(), errors.New(
+			fmt.Sprintf("manifest does not contain a layer with mediatype %s or %s",
+				ChartLayerMediaType, LegacyChartLayerMediaType))
 	}
-
-	_, b, ok := store.Get(*contentLayer)
+	_, chartData, ok := store.Get(*chartDescriptor)
 	if !ok {
-		return nil, "", errors.Errorf("Unable to retrieve blob with digest %s", contentLayer.Digest)
+		return nil, manifest.Digest.String(), errors.Errorf("Unable to retrieve blob with digest %s", chartDescriptor.Digest)
 	}
 
-	return bytes.NewBuffer(b), desc.Digest.String(), nil
+	return bytes.NewBuffer(chartData), manifest.Digest.String(), nil
 }
