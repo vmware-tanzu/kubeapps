@@ -77,7 +77,7 @@ parameters:
     default: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL:
     type: "string"
-    default: "BRANCH"
+    default: "master"
   CHARTS_REPO_FORKED:
     type: "string"
     default: "kubeapps-bot/charts"
