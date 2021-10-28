@@ -72,6 +72,24 @@ parameters:
   CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME:
     type: "string"
     default: "id_rsa_59812a95a654a746e515f537b34f6cad"
+  CHARTS_REPO_ORIGINAL:
+    type: "string"
+    default: "bitnami/charts"
+  BRANCH_CHARTS_REPO_ORIGINAL:
+    type: "string"
+    default: "BRANCH"
+  CHARTS_REPO_FORKED:
+    type: "string"
+    default: "kubeapps-bot/charts"
+  BRANCH_CHARTS_REPO_FORKED:
+    type: "string"
+    default: "master"
+  KUBEAPPS_REPO:
+    type: "string"
+    default: "kubeapp/kubeapps"
+  BRANCH_KUBEAPPS_REPO:
+    type: "string"
+    default: "master"
 
 ## Build conditions
 # Build on any branch or tag
@@ -651,7 +669,7 @@ jobs:
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
           name: Execute the create_release script
           command: |
-            ./script/create_release.sh ${CIRCLE_TAG}
+            ./script/create_release.sh ${CIRCLE_TAG} << pipeline.parameters.KUBEAPPS_REPO >>
   local_e2e_tests:
     machine: true
     environment:
@@ -720,7 +738,7 @@ jobs:
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
           name: Execute the chart_sync script
           command: |
-            ./script/chart_sync.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >>
+            ./script/chart_sync.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >>
   sync_chart_from_bitnami:
     environment:
       <<: *common_envars
@@ -755,7 +773,7 @@ jobs:
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
           name: Execute the check_upstream_chart script
           command: |
-            ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >>
+            ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >>
   push_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>

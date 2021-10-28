@@ -18,16 +18,14 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
+source $(dirname $0)/chart_sync_utils.sh
 
-KUBEAPPS_REPO="kubeapps/kubeapps"
-RELEASE_NOTES_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/release_notes.md"
-
-TAG=${1:?}
+TAG=${1:?Missing tag}
+KUBEAPPS_REPO=${2:?Missing kubeapps repo}
 
 if [[ -z "${TAG}" ]]; then
   echo "A git tag is required for creating a release"
   exit 1
 fi
 
-gh release create -R ${KUBEAPPS_REPO} -d "${TAG}" -t "${TAG}" -F "${RELEASE_NOTES_TEMPLATE_FILE}"
+gh release create -R "${KUBEAPPS_REPO}" -d "${TAG}" -t "${TAG}" -F "${RELEASE_NOTES_TEMPLATE_FILE}"
