@@ -65,6 +65,13 @@ const (
 	UserAgentPrefix        = "kubeapps-apis/plugins"
 )
 
+// Wapper struct to include three version constants
+type VersionsInSummary struct {
+	major int
+	minor int
+	patch int
+}
+
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedHelmPackagesServiceServer
@@ -437,6 +444,15 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 // packageAppVersionsSummary converts the model chart versions into the required version summary.
 func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.PackageAppVersion {
+	versionInSummary := VersionsInSummary{major: MajorVersionsInSummary,
+		minor: MinorVersionsInSummary,
+		patch: PatchVersionsInSummary}
+
+	return packageAppVersionsSummaryImpl(versions, versionInSummary)
+}
+
+// packageAppVersionsSummary converts the model chart versions into the required version summary.
+func packageAppVersionsSummaryImpl(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
 	pav := []*corev1.PackageAppVersion{}
 
 	// Use a version map to be able to count how many major, minor and patch versions
@@ -450,18 +466,18 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.Package
 
 		if _, ok := version_map[version.Major()]; !ok {
 			// Don't add a new major version if we already have enough
-			if len(version_map) >= MajorVersionsInSummary {
+			if len(version_map) >= versionInSummary.major {
 				continue
 			}
 		} else {
 			// If we don't yet have this minor version
 			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
 				// Don't add a new minor version if we already have enough for this major version
-				if len(version_map[version.Major()]) >= MinorVersionsInSummary {
+				if len(version_map[version.Major()]) >= versionInSummary.minor {
 					continue
 				}
 			} else {
-				if len(version_map[version.Major()][version.Minor()]) >= PatchVersionsInSummary {
+				if len(version_map[version.Major()][version.Minor()]) >= versionInSummary.patch {
 					continue
 				}
 			}
