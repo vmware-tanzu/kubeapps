@@ -1626,7 +1626,7 @@ kubeappsapis:
     pullSecrets: []
   ## @param kubeappsapis.replicaCount Number of frontend replicas to deploy
   ##
-  replicaCount: 1
+  replicaCount: 2
   ## @param kubeappsapis.terminationGracePeriodSeconds The grace time period for sig term
   ## ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
   ##
