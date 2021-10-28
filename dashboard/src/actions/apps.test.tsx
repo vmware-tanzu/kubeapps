@@ -1,6 +1,8 @@
 import {
   AvailablePackageDetail,
   InstalledPackageDetail,
+  InstalledPackageSummary,
+  GetInstalledPackageSummariesResponse,
   InstalledPackageReference,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -33,9 +35,22 @@ beforeEach(() => {
 });
 
 describe("fetches applications", () => {
+  const validInstalledPackageSummary: InstalledPackageSummary = {
+    installedPackageRef: {
+      context: { cluster: "second-cluster", namespace: "my-ns" },
+      identifier: "some-name",
+    },
+    iconUrl: "",
+    name: "foo",
+    pkgDisplayName: "foo",
+    shortDescription: "some description",
+  };
   let listAppsMock: jest.Mock;
+  let installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
   beforeEach(() => {
-    listAppsMock = jest.fn(() => []);
+    listAppsMock = jest.fn(() => ({
+      installedPackageSummaries,
+    } as GetInstalledPackageSummariesResponse));
     App.GetInstalledPackageSummaries = listAppsMock;
   });
   afterEach(() => {
@@ -51,17 +66,26 @@ describe("fetches applications", () => {
       },
       {
         type: getType(actions.apps.receiveAppList),
-        payload: undefined,
+        payload: [validInstalledPackageSummary],
         meta: undefined,
         error: undefined,
       },
     ];
-    await store.dispatch(actions.apps.fetchApps("default-cluster", "default"));
+    await store.dispatch(actions.apps.fetchApps("second-cluster", "default"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default"]);
+    expect(listAppsMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
   });
-  it("fetches applications, ignore when no data", async () => {
-    App.GetInstalledPackageSummaries = jest.fn();
+  it("fetches applications, updating cluster since some plugins don't return it", async () => {
+    installedPackageSummaries = [{
+      ...validInstalledPackageSummary,
+      installedPackageRef: {
+        ...validInstalledPackageSummary.installedPackageRef!,
+        context: {
+          namespace: validInstalledPackageSummary.installedPackageRef!.context!.namespace,
+          cluster: "other",
+        },
+      },
+    }];
     const expectedActions = [
       {
         type: getType(actions.apps.listApps),
@@ -71,15 +95,14 @@ describe("fetches applications", () => {
       },
       {
         type: getType(actions.apps.receiveAppList),
-        payload: undefined,
+        payload: [validInstalledPackageSummary],
         meta: undefined,
         error: undefined,
       },
     ];
-    await store.dispatch(actions.apps.fetchApps("default-cluster", "default"));
-    App.GetInstalledPackageSummaries = listAppsMock;
+    await store.dispatch(actions.apps.fetchApps("second-cluster", "default"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(listAppsMock.mock.calls[0]).toBeUndefined();
+    expect(listAppsMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
   });
 });
 
