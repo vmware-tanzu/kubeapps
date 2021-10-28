@@ -1657,7 +1657,7 @@ kubeappsapis:
   resources:
     limits:
       cpu: 250m
-      memory: 128Mi
+      memory: 256Mi
     requests:
       cpu: 25m
       memory: 32Mi
