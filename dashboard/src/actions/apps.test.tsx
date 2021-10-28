@@ -48,9 +48,12 @@ describe("fetches applications", () => {
   let listAppsMock: jest.Mock;
   let installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
   beforeEach(() => {
-    listAppsMock = jest.fn(() => ({
-      installedPackageSummaries,
-    } as GetInstalledPackageSummariesResponse));
+    listAppsMock = jest.fn(
+      () =>
+        ({
+          installedPackageSummaries,
+        } as GetInstalledPackageSummariesResponse),
+    );
     App.GetInstalledPackageSummaries = listAppsMock;
   });
   afterEach(() => {
@@ -76,16 +79,18 @@ describe("fetches applications", () => {
     expect(listAppsMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
   });
   it("fetches applications, updating cluster since some plugins don't return it", async () => {
-    installedPackageSummaries = [{
-      ...validInstalledPackageSummary,
-      installedPackageRef: {
-        ...validInstalledPackageSummary.installedPackageRef!,
-        context: {
-          namespace: validInstalledPackageSummary.installedPackageRef!.context!.namespace,
-          cluster: "other",
+    installedPackageSummaries = [
+      {
+        ...validInstalledPackageSummary,
+        installedPackageRef: {
+          ...validInstalledPackageSummary.installedPackageRef!,
+          context: {
+            namespace: validInstalledPackageSummary.installedPackageRef!.context!.namespace,
+            cluster: "other",
+          },
         },
       },
-    }];
+    ];
     const expectedActions = [
       {
         type: getType(actions.apps.listApps),
