@@ -172,7 +172,9 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	// shallow = true  => 8-9 sec
 	// shallow = false => 12-13 sec, so deep copy adds 50% to cost, but we need it to
 	// for GetAvailablePackageVersions()
+	log.Infof("about to call ChartsFromIndex for [%s]", repo.Name)
 	charts, err := helm.ChartsFromIndex(bytes, modelRepo, false)
+	log.Infof("done with ChartsFromIndex for [%s]", repo.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -261,6 +263,10 @@ func isHelmRepositoryReady(unstructuredObj map[string]interface{}) (complete boo
 // onAddOrModifyRepo essentially tells the cache what to store for a given key
 func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
 	if isRepoReady(unstructuredRepo) {
+
+		// TODO (gfichtenholt): I think we should to compare checksums on what's stored in the cache
+		// vs the modified object to see if the contents has really changed before embarking on
+		// expensive operation below. Kind of like pkg/chart/chart.go does in getIndexFromCache()
 		charts, err := indexOneRepo(unstructuredRepo)
 		if err != nil {
 			return nil, false, err

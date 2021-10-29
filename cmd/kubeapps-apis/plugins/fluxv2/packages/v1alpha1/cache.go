@@ -98,9 +98,6 @@ func newCache(config cacheConfig) (*NamespacedResourceWatcherCache, error) {
 		return nil, err
 	}
 
-	// TODO (gfichtenholt) do not log plain text password
-	log.Infof("newCache: redis addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB_NUM)
-
 	return newCacheWithRedisClient(
 		config,
 		redis.NewClient(&redis.Options{
@@ -112,7 +109,7 @@ func newCache(config cacheConfig) (*NamespacedResourceWatcherCache, error) {
 }
 
 func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGroup *sync.WaitGroup) (*NamespacedResourceWatcherCache, error) {
-	log.Infof("+newCacheWithRedisClient")
+	log.Infof("+newCacheWithRedisClient(%v)", redisCli)
 
 	if redisCli == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
@@ -126,7 +123,13 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
 		return nil, err
 	} else {
-		log.Infof("[PING] -> [%s]", pong)
+		log.Infof("Redis [PING] -> [%s]", pong)
+	}
+
+	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
+		return nil, err
+	} else if len(maxmemory) > 1 {
+		log.Infof("Redis config maxmemory: %v", maxmemory[1])
 	}
 
 	c := NamespacedResourceWatcherCache{
@@ -358,12 +361,19 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 
 	if setVal {
 		// Zero expiration means the key has no expiration time.
+		// TODO (gfichtenholt) currently this results in a global in-process cache that stores a potentially
+		// unbound number of entries that never expire. Hence the potential of running out of memory. Fix this ASAP.
+		log.Infof("about to call redisCli.Set()")
 		err = c.redisCli.Set(c.redisCli.Context(), key, value, 0).Err()
+		log.Infof("done with call to redisCli.Set()")
 		if err != nil {
 			log.Errorf("Failed to set value for object with key [%s] in cache due to: %v", key, err)
 			return err
 		} else {
-			log.V(4).Infof("Set value for key [%s] in cache", key)
+			if log.V(2).Enabled() {
+				usedMemory, totalMemory := c.memoryStats()
+				log.V(2).Infof("Set value for key [%s] in cache. Redis memory usage: [%s/%s]", key, usedMemory, totalMemory)
+			}
 		}
 	}
 	return nil
@@ -555,4 +565,22 @@ func (c NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstru
 	}()
 
 	wg.Wait()
+}
+
+func (c NamespacedResourceWatcherCache) memoryStats() (used, total string) {
+	used, total = "?", "?"
+	// ref: https://redis.io/commands/info
+	if meminfo, err := c.redisCli.Info(c.redisCli.Context(), "memory").Result(); err == nil {
+		for _, l := range strings.Split(meminfo, "\r\n") {
+			if used == "?" && strings.HasPrefix(l, "used_memory_rss_human:") {
+				used = strings.Split(l, ":")[1]
+			} else if total == "?" && strings.HasPrefix(l, "maxmemory_human:") {
+				total = strings.Split(l, ":")[1]
+			}
+			if used != "?" && total != "?" {
+				break
+			}
+		}
+	}
+	return used, total
 }
