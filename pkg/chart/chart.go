@@ -77,6 +77,8 @@ type Details struct {
 	Version string `json:"version"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
+	// TarballURL is the URL to the tarball file
+	TarballURL string `json:"tarballURL,omitempty"`
 }
 
 // LoadHelmChart returns a helm3 Chart struct from an IOReader
@@ -327,20 +329,28 @@ func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Char
 	if c.netClient == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	var chart *chart.Chart
-	indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
-	repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
-	if err != nil {
-		return nil, err
+	var chartURL string
+	var err error
+	if details.TarballURL != "" {
+		chartURL, err = resolveChartURL(repoURL, details.TarballURL)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// TODO(agamez): remove this branch as it is really expensive and it is solely used in a few places in kubeops
+		log.Printf("calling GetChart without any tarball url, please note this action is memory-expensive")
+		indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
+		repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
+		if err != nil {
+			return nil, err
+		}
+		chartURL, err = findChartInRepoIndex(repoIndex, indexURL, details.ChartName, details.Version)
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	chartURL, err := findChartInRepoIndex(repoIndex, indexURL, details.ChartName, details.Version)
-	if err != nil {
-		return nil, err
-	}
-
 	log.Printf("Downloading %s ...", chartURL)
-	chart, err = fetchChart(&c.netClient, chartURL)
+	chart, err := fetchChart(&c.netClient, chartURL)
 	if err != nil {
 		return nil, err
 	}

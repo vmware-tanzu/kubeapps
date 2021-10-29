@@ -1014,6 +1014,16 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	chartID := fmt.Sprintf("%s/%s", appRepo.Name, chartDetails.ChartName)
 	log.Infof("fetching chart %q with user-agent %q", chartID, userAgentString)
 
+	// Look up the cachedChart cached in our DB to populate the tarball URL
+	cachedChart, err := s.manager.GetChartVersion(chartDetails.AppRepositoryResourceNamespace, chartID, chartDetails.Version)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s (version %s) from the namespace %q: %v", chartID, chartDetails.Version, chartDetails.AppRepositoryResourceNamespace, err)
+	}
+	var tarballURL string
+	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) > 0 && cachedChart.ChartVersions[0].URLs != nil {
+		tarballURL = cachedChart.ChartVersions[0].URLs[0]
+	}
+
 	// Grab the chart itself
 	ch, err := handlerutil.GetChart(
 		&chartutils.Details{
@@ -1021,6 +1031,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 			AppRepositoryResourceNamespace: appRepo.Namespace,
 			ChartName:                      chartDetails.ChartName,
 			Version:                        chartDetails.Version,
+			TarballURL:                     tarballURL,
 		},
 		appRepo,
 		caCertSecret, authSecret,
