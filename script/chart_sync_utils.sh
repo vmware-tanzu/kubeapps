@@ -18,36 +18,39 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Remote github repostories for:
-## the upstream chart repository fork (CHARTS_REPO)
-## the upstream chart original repository (CHARTS_REPO_ORIGINAL)
-## the development chart repository (KUBEAPPS_REPO)
-CHARTS_REPO_ORIGINAL="bitnami/charts"
-CHARTS_REPO="kubeapps-bot/charts"
-KUBEAPPS_REPO="kubeapps/kubeapps"
-
-CHART_REPO_PATH="bitnami/kubeapps"
 PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
+
+# Path of the Kubeapps chart in the charts repo.
+# For instance, given "https://github.com/bitnami/charts/tree/master/bitnami/kubeapps" it should be "bitnami/kubeapps"
+CHART_REPO_PATH="bitnami/kubeapps"
+
+# Path of the Kubeapps chart in the Kubeapps repo.
+# For instance, given "https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps", it should be "chart/kubeapps"
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
+
+# Paths of the templates files, note they are also used elsewhere
 PR_INTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_internal_chart_template.md"
 PR_EXTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_external_chart_template.md"
+RELEASE_NOTES_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/release_notes.md"
 
 # Returns the tag for the latest release
 latestReleaseTag() {
-    local targetRepo=${1:?}
-    git -C "${targetRepo}/.git" fetch --tags
-    git -C "${targetRepo}/.git" describe --tags $(git rev-list --tags --max-count=1)
+    local TARGET_REPO=${1:?}
+
+    git -C "${TARGET_REPO}/.git" fetch --tags
+    git -C "${TARGET_REPO}/.git" describe --tags "$(git rev-list --tags --max-count=1)"
 }
 
 configUser() {
-    local targetRepo=${1:?}
-    local user=${2:?}
-    local email=${3:?}
-    local gpg=${4:?}
-    cd $targetRepo
-    git config user.name "$user"
-    git config user.email "$email"
-    git config user.signingkey "$gpg"
+    local TARGET_REPO=${1:?}
+    local USERNAME=${2:?}
+    local EMAIL=${3:?}
+    local GPG_KEY=${4:?}
+
+    cd "${TARGET_REPO}"
+    git config user.name "${USERNAME}"
+    git config user.email "${EMAIL}"
+    git config user.signingkey "${GPG_KEY}"
     git config --global commit.gpgSign true
     git config --global tag.gpgSign true
     git config pull.rebase false
@@ -55,23 +58,24 @@ configUser() {
 }
 
 replaceImage_latestToProduction() {
-    local service=${1:?}
-    local file=${2:?}
-    local repoName="bitnami-docker-kubeapps-${service}"
-    local currentImageEscaped="kubeapps\/${service}"
-    local targetImageEscaped="bitnami\/kubeapps-${service}"
+    local SERVICE=${1:?}
+    local FILE=${2:?}
+
+    local repoName="bitnami-docker-kubeapps-${SERVICE}"
+    local currentImageEscaped="kubeapps\/${SERVICE}"
+    local targetImageEscaped="bitnami\/kubeapps-${SERVICE}"
 
     # Prevent a wrong image name "bitnami/kubeapps-kubeapps-apis"
     # with a manual rename to "bitnami/kubeapps-apis"
-    if [ $targetImageEscaped == "bitnami\/kubeapps-kubeapps-apis" ]; then
+    if [ "${targetImageEscaped}" == "bitnami\/kubeapps-kubeapps-apis" ]; then
         targetImageEscaped="bitnami\/kubeapps-apis"
     fi
 
-    if [ $repoName == "bitnami-docker-kubeapps-kubeapps-apis" ]; then
+    if [ "${repoName}" == "bitnami-docker-kubeapps-kubeapps-apis" ]; then
         repoName="bitnami-docker-kubeapps-apis"
     fi
 
-    echo "Replacing ${service}"...
+    echo "Replacing ${SERVICE}"...
 
     local curl_opts=()
     if [[ $GITHUB_TOKEN != "" ]]; then
@@ -89,53 +93,59 @@ replaceImage_latestToProduction() {
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
         's/repository: '${currentImageEscaped}'\n    tag: latest/repository: '${targetImageEscaped}'\n    tag: '${tag}'/g' \
-        ${file}
-    rm "${file}.bk"
+        "${FILE}"
+    rm "${FILE}.bk"
 }
 
 replaceImage_productionToLatest() {
-    local service=${1:?}
-    local file=${2:?}
-    local targetTag=${3:?}
-    local repoName="bitnami-docker-kubeapps-${service}"
-    local currentImageEscaped="bitnami\/kubeapps-${service}"
-    local targetImageEscaped="kubeapps\/${service}"
+    local SERVICE=${1:?}
+    local FILE=${2:?}
+
+    local repoName="bitnami-docker-kubeapps-${SERVICE}"
+    local currentImageEscaped="bitnami\/kubeapps-${SERVICE}"
+    local targetImageEscaped="kubeapps\/${SERVICE}"
 
     # Prevent a wrong image name "bitnami/kubeapps-kubeapps-apis"
     # with a manual rename to "bitnami/kubeapps-apis"
-    if [ $currentImageEscaped == "bitnami\/kubeapps-kubeapps-apis" ]; then
+    if [ "${currentImageEscaped}" == "bitnami\/kubeapps-kubeapps-apis" ]; then
         currentImageEscaped="bitnami\/kubeapps-apis"
     fi
 
-    echo "Replacing ${service}"...
+    echo "Replacing ${SERVICE}"...
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
         's/repository: '${currentImageEscaped}'\n    tag: \S*/repository: '${targetImageEscaped}'\n    tag: latest/g' \
-        ${file}
-    rm "${file}.bk"
+        "${FILE}"
+    rm "${FILE}.bk"
 }
 
 updateRepoWithLocalChanges() {
-    local targetRepo=${1:?}
-    local targetTag=${2:?}
-    local targetTagWithoutV=${targetTag#v}
-    local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
+    local TARGET_REPO=${1:?}
+    local TARGET_TAG=${2:?}
+    local CHARTS_REPO_ORIGINAL=${3:?}
+    local BRANCH_CHARTS_REPO_ORIGINAL=${4:?}
+    local BRANCH_CHARTS_REPO_FORKED=${5:?}
+
+    local targetTagWithoutV=${TARGET_TAG#v}
+    local targetChartPath="${TARGET_REPO}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
+
     if [ ! -f "${chartYaml}" ]; then
         echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
-    git -C "${targetRepo}" pull upstream master
-    git -C "${targetRepo}" push origin master
+    git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
+    git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
+    git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
     rm -rf "${targetChartPath}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
     # Update Chart.yaml with new version
     sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTagWithoutV}"'/g' "${chartYaml}"
     rm "${targetChartPath}/Chart.yaml.bk"
     # Replace images for the latest available
+    # TODO: use the IMAGES_TO_PUSH var already set in the CI config
     replaceImage_latestToProduction dashboard "${targetChartPath}/values.yaml"
     replaceImage_latestToProduction apprepository-controller "${targetChartPath}/values.yaml"
     replaceImage_latestToProduction asset-syncer "${targetChartPath}/values.yaml"
@@ -146,24 +156,29 @@ updateRepoWithLocalChanges() {
 }
 
 updateRepoWithRemoteChanges() {
-    local targetRepo=${1:?}
-    local targetTag=${2:?}
-    local forkSSHKeyFilename=${3:?}
-    local targetTagWithoutV=${targetTag#v}
-    local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
+    local TARGET_REPO=${1:?}
+    local TARGET_TAG=${2:?}
+    local FORKED_SSH_KEY_FILENAME=${3:?}
+    local CHARTS_REPO_ORIGINAL=${4:?}
+    local BRANCH_CHARTS_REPO_ORIGINAL=${5:?}
+    local BRANCH_CHARTS_REPO_FORKED=${6:?}
+
+    local targetTagWithoutV=${TARGET_TAG#v}
+    local targetChartPath="${TARGET_REPO}/${CHART_REPO_PATH}"
     local remoteChartYaml="${targetChartPath}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
+
     if [ ! -f "${remoteChartYaml}" ]; then
         echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${targetRepo}" remote add upstream https://github.com/${CHARTS_REPO_ORIGINAL}.git
-    git -C "${targetRepo}" pull upstream master
+    git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
+    git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
 
     # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
-    git -C "${targetRepo}" config --local core.sshCommand "ssh -i ~/.ssh/${forkSSHKeyFilename} -F /dev/null"
-    git -C "${targetRepo}" push origin master
+    git -C "${TARGET_REPO}" config --local core.sshCommand "ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME} -F /dev/null"
+    git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
 
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
@@ -171,26 +186,31 @@ updateRepoWithRemoteChanges() {
     sed -i.bk "s/appVersion: "${targetTagWithoutV}"/appVersion: DEVEL/g" "${localChartYaml}"
     rm "${KUBEAPPS_CHART_DIR}/Chart.yaml.bk"
     # Replace images for the latest available
-    replaceImage_productionToLatest dashboard "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
-    replaceImage_productionToLatest apprepository-controller "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
-    replaceImage_productionToLatest asset-syncer "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
-    replaceImage_productionToLatest assetsvc "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
-    replaceImage_productionToLatest kubeops "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
-    replaceImage_productionToLatest pinniped-proxy "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
-    replaceImage_productionToLatest kubeapps-apis "${KUBEAPPS_CHART_DIR}/values.yaml" targetTag
+    # TODO: use the IMAGES_TO_PUSH var already set in the CI config
+    replaceImage_productionToLatest dashboard "${KUBEAPPS_CHART_DIR}/values.yaml"
+    replaceImage_productionToLatest apprepository-controller "${KUBEAPPS_CHART_DIR}/values.yaml"
+    replaceImage_productionToLatest asset-syncer "${KUBEAPPS_CHART_DIR}/values.yaml"
+    replaceImage_productionToLatest assetsvc "${KUBEAPPS_CHART_DIR}/values.yaml"
+    replaceImage_productionToLatest kubeops "${KUBEAPPS_CHART_DIR}/values.yaml"
+    replaceImage_productionToLatest pinniped-proxy "${KUBEAPPS_CHART_DIR}/values.yaml"
+    replaceImage_productionToLatest kubeapps-apis "${KUBEAPPS_CHART_DIR}/values.yaml"
 }
 
 commitAndSendExternalPR() {
-    local targetRepo=${1:?}
-    local targetBranch=${2:-"master"}
-    local chartVersion=${3:?}
-    local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
+    local TARGET_REPO=${1:?}
+    local TARGET_BRANCH=${2:?}
+    local CHART_VERSION=${3:?}
+    local CHARTS_REPO_ORIGINAL=${4:?}
+    local BRANCH_CHARTS_REPO_ORIGINAL=${5:?}
+
+    local targetChartPath="${TARGET_REPO}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
+
     if [ ! -f "${chartYaml}" ]; then
         echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
-    cd $targetRepo
+    cd "${TARGET_REPO}"
     if [[ ! $(git diff-index HEAD) ]]; then
         echo "Not found any change to commit" >/dev/stderr
         cd -
@@ -198,23 +218,26 @@ commitAndSendExternalPR() {
     fi
     sed -i.bk -e "s/<USER>/$(git config user.name)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     sed -i.bk -e "s/<EMAIL>/$(git config user.email)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
-    git checkout -b $targetBranch
+    git checkout -b "${TARGET_BRANCH}"
     git add --all .
-    git commit -m "kubeapps: bump chart version to $chartVersion"
+    git commit -m "kubeapps: bump chart version to ${CHART_VERSION}"
     # NOTE: This expects to have a loaded SSH key
-    if [[ $(git ls-remote origin $targetBranch | wc -l) -eq 0 ]]; then
-        git push -u origin $targetBranch
-        gh pr create -d -B master -R ${CHARTS_REPO_ORIGINAL} -F ${PR_EXTERNAL_TEMPLATE_FILE} --title "[bitnami/kubeapps] Bump chart version to $chartVersion"
+    if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
+        git push -u origin "${TARGET_BRANCH}"
+        gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "[bitnami/kubeapps] Bump chart version to ${CHART_VERSION}"
     else
-        echo "The remote branch '$targetBranch' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
+        echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
     fi
     cd -
 }
 
 commitAndSendInternalPR() {
-    local targetRepo=${1:?}
-    local targetBranch=${2:-"master"}
-    local chartVersion=${3:?}
+    local TARGET_REPO=${1:?}
+    local TARGET_BRANCH=${2:?}
+    local CHART_VERSION=${3:?}
+    local KUBEAPPS_REPO=${4:?}
+    local BRANCH_KUBEAPPS_REPO=${5:?}
+
     local targetChartPath="${KUBEAPPS_CHART_DIR}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
 
@@ -222,21 +245,21 @@ commitAndSendInternalPR() {
         echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
-    cd $targetRepo
+    cd "${TARGET_REPO}"
     if [[ ! $(git diff-index HEAD) ]]; then
         echo "Not found any change to commit" >/dev/stderr
         cd -
         return 1
     fi
-    git checkout -b $targetBranch
+    git checkout -b "${TARGET_BRANCH}"
     git add --all .
-    git commit -m "bump chart version to $chartVersion"
+    git commit -m "bump chart version to ${CHART_VERSION}"
     # NOTE: This expects to have a loaded SSH key
-    if [[ $(git ls-remote origin $targetBranch | wc -l) -eq 0 ]]; then
-        git push -u origin $targetBranch
-        gh pr create -d -B master -R ${KUBEAPPS_REPO} -F ${PR_INTERNAL_TEMPLATE_FILE} --title "Sync chart with bitnami/kubeapps chart (version $chartVersion)"
+    if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
+        git push -u origin "${TARGET_BRANCH}"
+        gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "Sync chart with bitnami/kubeapps chart (version ${CHART_VERSION})"
     else
-        echo "The remote branch '$targetBranch' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
+        echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
     fi
     cd -
 }
