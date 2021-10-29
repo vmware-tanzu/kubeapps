@@ -704,9 +704,9 @@ dependencies = [
 
 [[package]]
 name = "kube-runtime"
-version = "0.63.1"
+version = "0.63.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a168bfeebab8913a0fca198c1f30d8d8c5f04d3eee1645aa5619a27a0a656c14"
+checksum = "6018cf8410f9d460be3a3ac35deef63b71c860c368016d7bf6871994343728b4"
 dependencies = [
  "dashmap",
  "derivative",
