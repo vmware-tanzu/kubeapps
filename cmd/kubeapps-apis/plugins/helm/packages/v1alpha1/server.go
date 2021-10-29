@@ -65,6 +65,13 @@ const (
 	UserAgentPrefix        = "kubeapps-apis/plugins"
 )
 
+// Wapper struct to include three version constants
+type VersionsInSummary struct {
+	Major int
+	Minor int
+	Patch int
+}
+
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedHelmPackagesServiceServer
@@ -430,13 +437,17 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
 	}
+
+	versionInSummary := VersionsInSummary{MajorVersionsInSummary,
+		MinorVersionsInSummary, PatchVersionsInSummary}
+
 	return &corev1.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions, versionInSummary),
 	}, nil
 }
 
 // packageAppVersionsSummary converts the model chart versions into the required version summary.
-func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.PackageAppVersion {
+func packageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
 	pav := []*corev1.PackageAppVersion{}
 
 	// Use a version map to be able to count how many major, minor and patch versions
@@ -450,18 +461,18 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.Package
 
 		if _, ok := version_map[version.Major()]; !ok {
 			// Don't add a new major version if we already have enough
-			if len(version_map) >= MajorVersionsInSummary {
+			if len(version_map) >= versionInSummary.Major {
 				continue
 			}
 		} else {
 			// If we don't yet have this minor version
 			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
 				// Don't add a new minor version if we already have enough for this major version
-				if len(version_map[version.Major()]) >= MinorVersionsInSummary {
+				if len(version_map[version.Major()]) >= versionInSummary.Minor {
 					continue
 				}
 			} else {
-				if len(version_map[version.Major()][version.Minor()]) >= PatchVersionsInSummary {
+				if len(version_map[version.Major()][version.Minor()]) >= versionInSummary.Patch {
 					continue
 				}
 			}
