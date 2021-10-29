@@ -17,7 +17,6 @@ limitations under the License.
 package chart
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/json"
@@ -130,6 +129,7 @@ func getReq(rawURL string) (*http.Request, error) {
 	return req, nil
 }
 
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func readResponseBody(res *http.Response) ([]byte, error) {
 	if res != nil {
 		defer res.Body.Close()
@@ -154,6 +154,7 @@ func checksum(data []byte) string {
 
 // Cache the result of parsing the repo index since parsing this YAML
 // is an expensive operation. See https://github.com/kubeapps/kubeapps/issues/1052
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func getIndexFromCache(repoURL string, data []byte) (*repo.IndexFile, string) {
 	sha := checksum(data)
 	if repoIndexes[repoURL] == nil || repoIndexes[repoURL].checksum != sha {
@@ -163,10 +164,12 @@ func getIndexFromCache(repoURL string, data []byte) (*repo.IndexFile, string) {
 	return repoIndexes[repoURL].index, sha
 }
 
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func storeIndexInCache(repoURL string, index *repo.IndexFile, sha string) {
 	repoIndexes[repoURL] = &repoIndex{sha, index}
 }
 
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func parseIndex(data []byte) (*repo.IndexFile, error) {
 	index := &repo.IndexFile{}
 	err := yaml.Unmarshal(data, index)
@@ -178,6 +181,7 @@ func parseIndex(data []byte) (*repo.IndexFile, error) {
 }
 
 // fetchRepoIndex returns a Helm repository
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFile, error) {
 	req, err := getReq(repoURL)
 	if err != nil {
@@ -218,6 +222,7 @@ func resolveChartURL(indexURL, chartURL string) (string, error) {
 }
 
 // findChartInRepoIndex returns the URL of a chart given a Helm repository and its name and version
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVersion string) (string, error) {
 	errMsg := fmt.Sprintf("chart %q", chartName)
 	if chartVersion != "" {
@@ -244,11 +249,12 @@ func fetchChart(netClient *httpclient.Client, chartURL string) (*chart.Chart, er
 	if err != nil {
 		return nil, err
 	}
-	data, err := readResponseBody(res)
-	if err != nil {
-		return nil, err
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("chart download request failed")
 	}
-	return loader.LoadArchive(bytes.NewReader(data))
+
+	return loader.LoadArchive(res.Body)
 }
 
 // ParseDetails return Chart details
