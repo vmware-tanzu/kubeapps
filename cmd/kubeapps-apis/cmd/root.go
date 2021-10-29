@@ -96,8 +96,19 @@ func initConfig() {
 
 	viper.AutomaticEnv() // read in environment variables that match
 
+	// Set default value
+	viper.SetDefault("versioninsummary.major", server.DefaultVersionsInSummary.Major)
+	viper.SetDefault("versioninsummary.minor", server.DefaultVersionsInSummary.Minor)
+	viper.SetDefault("versioninsummary.patch", server.DefaultVersionsInSummary.Patch)
+
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+
+	serveOpts.VersionsFilter.Major = viper.GetInt("versioninsummary.major")
+	serveOpts.VersionsFilter.Minor = viper.GetInt("versioninsummary.minor")
+	serveOpts.VersionsFilter.Patch = viper.GetInt("versioninsummary.patch")
+
+	fmt.Println("version filters:", serveOpts.VersionsFilter)
 }

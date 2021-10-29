@@ -46,6 +46,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				ClustersConfigPath:       "foo02",
 				PinnipedProxyURL:         "foo03",
 				UnsafeLocalDevKubeconfig: true,
+				VersionsFilter:           server.DefaultVersionsInSummary,
 			},
 		},
 	}

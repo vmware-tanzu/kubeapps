@@ -6,6 +6,8 @@ devel/*
 .DS_Store
 
 dashboard/src/locales/
-
+dashboard/src/gen/
 dashboard/public/clr-ui-dark.min.css*
 dashboard/public/clr-ui.min.css*
+cmd/kubeapps-apis/gen
+cmd/kubeapps-apis/docs

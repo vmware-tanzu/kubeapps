@@ -224,3 +224,7 @@ require (
 	sigs.k8s.io/kustomize v2.0.3+incompatible // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.0.3 // indirect
 )
+
+replace github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server => ./cmd/kubeapps-apis/server
+
+replace github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd => ./cmd/kubeapps-apis/cmd

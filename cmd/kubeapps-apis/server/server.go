@@ -34,12 +34,23 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+// Wapper struct to include three version constants
+type VersionsInSummary struct {
+	Major int
+	Minor int
+	Patch int
+}
+
+var ConfiguredVersionsInSummary = VersionsInSummary{}
+var DefaultVersionsInSummary = VersionsInSummary{Major: 3, Minor: 3, Patch: 3}
+
 type ServeOptions struct {
 	Port                     int
 	PluginDirs               []string
 	ClustersConfigPath       string
 	PinnipedProxyURL         string
 	UnsafeLocalDevKubeconfig bool
+	VersionsFilter           VersionsInSummary
 }
 
 // Serve is the root command that is run when no other sub-commands are present.
@@ -49,6 +60,9 @@ func Serve(serveOpts ServeOptions) error {
 	// using grpcurl) or similar.
 	grpcSrv := grpc.NewServer()
 	reflection.Register(grpcSrv)
+
+	ConfiguredVersionsInSummary = serveOpts.VersionsFilter
+	log.Infof("ConfiguredVersionsInSummary :%v", ConfiguredVersionsInSummary)
 
 	// Create the http server, register our core service followed by any plugins.
 	listenAddr := fmt.Sprintf(":%d", serveOpts.Port)

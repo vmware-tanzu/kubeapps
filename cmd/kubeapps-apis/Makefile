@@ -14,8 +14,8 @@
 
 # Build the helm and kapp package plugins with the output in the devel directory.
 build-plugins:
-	go build -o devel/kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin plugins/kapp_controller/packages/v1alpha1/*.go
-	go build -o devel/fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin plugins/fluxv2/packages/v1alpha1/*.go
+#	go build -o devel/kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin plugins/kapp_controller/packages/v1alpha1/*.go
+#	go build -o devel/fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin plugins/fluxv2/packages/v1alpha1/*.go
 	go build -o devel/helm-packages-v1alpha1-plugin.so -buildmode=plugin plugins/helm/packages/v1alpha1/*.go
 
 
@@ -37,7 +37,8 @@ generate:
 	buf generate
 
 run: build-plugins
-	go run main.go --plugin-dir devel/ --unsafe-use-demo-sa=true --unsafe-local-dev-kubeconfig=true
+#	go run main.go --plugin-dir devel/ --unsafe-use-demo-sa=true --unsafe-local-dev-kubeconfig=true
+	go run main.go --plugin-dir devel/ --unsafe-local-dev-kubeconfig=true
 
 test:
 	go test ./...
