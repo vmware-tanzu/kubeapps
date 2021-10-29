@@ -79,12 +79,10 @@ data:
            exist, even with the `default` function.
            See https://github.com/helm/helm/issues/8026#issuecomment-756538254 */}}
     {{- $pinnipedConfig := .pinnipedConfig | default dict }}
-    {{- if and $.Values.pinnipedProxy.enabled (or $pinnipedConfig.enabled $pinnipedConfig.enable) }}
+    {{- if and $.Values.pinnipedProxy.enabled $pinnipedConfig.enable }}
         # If pinniped proxy is enabled *and* the current cluster is configured
         # to exchange credentials then we route via pinnipedProxy to exchange
-        # credentials for client certificates. Note, we are currently still supporting
-        # the deprecated `pinnipedConfig.enable` until the next feature release.
-        # All documentation should now reference the cluster-specific `pinnipedConfig.enabled`.
+        # credentials for client certificates.
     {{- if .apiServiceURL }}
         proxy_set_header PINNIPED_PROXY_API_SERVER_URL {{ .apiServiceURL }};
     {{- end }}
@@ -144,6 +142,7 @@ data:
         proxy_pass {{ include "kubeapps.frontend-config.proxy_pass" . -}};
       }
 
+    {{- if .Values.featureFlags.kubeappsAPIsServer }}
       location ~* /apis {
         rewrite ^ $request_uri; # pass the encoded url downstream as is,
         rewrite /apis/([^?]*) /$1 break;
@@ -160,6 +159,7 @@ data:
 
         proxy_pass {{ include "kubeapps.kubeappsapis.proxy_pass" . -}};
       }
+    {{- end }}
 
       # The route for the Kubeapps backend API is not prefixed.
       location ~* /api/ {
