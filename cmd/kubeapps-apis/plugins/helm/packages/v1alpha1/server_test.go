@@ -2211,6 +2211,7 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 	if rel.latestVersion != "" {
 		chartVersions = append(chartVersions, models.ChartVersion{
 			Version: rel.latestVersion,
+			URLs:    []string{fmt.Sprintf("https://example.com/%s-%s.tgz", rel.chartID, rel.latestVersion)},
 		})
 	}
 	chartVersions = append(chartVersions, models.ChartVersion{
