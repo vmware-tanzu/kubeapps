@@ -203,16 +203,16 @@ func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFi
 	return index, nil
 }
 
-func resolveChartURL(index, chart string) (string, error) {
-	indexURL, err := url.Parse(strings.TrimSpace(index))
+func resolveChartURL(indexURL, chartURL string) (string, error) {
+	parsedIndexURL, err := url.Parse(strings.TrimSpace(indexURL))
 	if err != nil {
 		return "", err
 	}
-	chartURL, err := indexURL.Parse(strings.TrimSpace(chart))
+	parsedChartURL, err := parsedIndexURL.Parse(strings.TrimSpace(chartURL))
 	if err != nil {
 		return "", err
 	}
-	return chartURL.String(), nil
+	return parsedChartURL.String(), nil
 }
 
 // findChartInRepoIndex returns the URL of a chart given a Helm repository and its name and version
