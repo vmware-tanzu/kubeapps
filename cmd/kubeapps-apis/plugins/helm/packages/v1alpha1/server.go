@@ -59,8 +59,18 @@ type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
 const (
-	UserAgentPrefix = "kubeapps-apis/plugins"
+	MajorVersionsInSummary = 3
+	MinorVersionsInSummary = 3
+	PatchVersionsInSummary = 3
+	UserAgentPrefix        = "kubeapps-apis/plugins"
 )
+
+// Wapper struct to include three version constants
+type VersionsInSummary struct {
+	Major int
+	Minor int
+	Patch int
+}
 
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
@@ -427,16 +437,17 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
 	}
-	//TODO : need configured but  fails more tests.
-	//server.ConfiguredVersionsInSummary
-	//server.DefaultVersionsInSummary
+
+	versionInSummary := VersionsInSummary{MajorVersionsInSummary,
+		MinorVersionsInSummary, PatchVersionsInSummary}
+
 	return &corev1.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions, server.ConfiguredVersionsInSummary),
+		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions, versionInSummary),
 	}, nil
 }
 
 // packageAppVersionsSummary converts the model chart versions into the required version summary.
-func packageAppVersionsSummary(versions []models.ChartVersion, versionInSummary server.VersionsInSummary) []*corev1.PackageAppVersion {
+func packageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
 	pav := []*corev1.PackageAppVersion{}
 
 	// Use a version map to be able to count how many major, minor and patch versions
