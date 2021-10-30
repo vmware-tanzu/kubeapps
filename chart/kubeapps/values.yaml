@@ -1085,8 +1085,13 @@ kubeops:
 ## @section Assetsvc parameters
 
 ## Assetsvc parameters
-##
+## @deprecated
 assetsvc:
+  ## @param assetsvc.enabled Specifies whether this deprecated component should be installed.
+  ## As per Kubeapps v2.4.0 it is no longer used in the UI.
+  ## In future releases, this service will get entirely removed.
+  ##
+  enabled: false
   ## Bitnami Kubeapps Assetsvc image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-assetsvc/tags/
   ## @param assetsvc.image.registry Kubeapps Assetsvc image registry
@@ -1495,7 +1500,7 @@ allowNamespaceDiscovery: true
 ##   serviceToken: ...
 ##   isKubeappsCluster: true
 ##   pinnipedConfig:
-##     enable: true
+##     enabled: true
 
 ##
 clusters:
@@ -1505,7 +1510,6 @@ clusters:
 ##
 featureFlags:
   invalidateCache: true
-  kubeappsAPIsServer: true
 ## RBAC configuration
 ##
 rbac:
@@ -1586,8 +1590,6 @@ postgresql:
 
 ## @section kubeappsapis parameters
 kubeappsapis:
-  ## @param kubeappsapis.unsafeUseDemoSA If true, replace the user's credentials by a full-granted demo service account. Just intended for development purposes.
-  unsafeUseDemoSA: false
   ## @param kubeappsapis.enabledPlugins Enabled plugins for the Kubeapps-APIs service
   ## e.g:
   ## enabledPlugins:
