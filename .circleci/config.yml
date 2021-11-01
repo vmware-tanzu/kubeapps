@@ -86,7 +86,7 @@ parameters:
     default: "master"
   KUBEAPPS_REPO:
     type: "string"
-    default: "kubeapp/kubeapps"
+    default: "kubeapps/kubeapps"
   BRANCH_KUBEAPPS_REPO:
     type: "string"
     default: "master"
