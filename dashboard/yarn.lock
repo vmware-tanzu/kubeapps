@@ -9947,10 +9947,10 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-mock-socket@^9.0.6:
-  version "9.0.6"
-  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.0.6.tgz#030559905e99c61c1d77598ad3e7087456331648"
-  integrity sha512-dbWynjkixRSxs0vKiIR/zc3UscCFp+0FG0I/fuZW7EEdXVOSEhZ1TMCurkQ97Vj+Gp5YvWMWdvpBSJTVKtvECw==
+mock-socket@^9.0.7:
+  version "9.0.7"
+  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.0.7.tgz#8596d60e65d033b6e2909ea74331707e2f8a40fa"
+  integrity sha512-jWHRwwS6ZwvYkXhl/xSGlrvoBZfz21cKRuQ2WL3A9FdVOR/f21nV9b1W8tiVCsYo3HS4oCIB5yZTIqycBp9D+g==
 
 modern-normalize@1.1.0, modern-normalize@^1.1.0:
   version "1.1.0"
