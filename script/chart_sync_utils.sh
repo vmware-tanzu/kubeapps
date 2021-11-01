@@ -163,7 +163,7 @@ updateRepoWithRemoteChanges() {
     local BRANCH_CHARTS_REPO_ORIGINAL=${5:?}
     local BRANCH_CHARTS_REPO_FORKED=${6:?}
 
-    local targetTagWithoutV=${TARGET_REPO#v}
+    local targetTagWithoutV=${TARGET_TAG#v}
     local targetChartPath="${TARGET_REPO}/${CHART_REPO_PATH}"
     local remoteChartYaml="${targetChartPath}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"

@@ -15,6 +15,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -179,7 +180,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			})
 			defer cleanup()
 			populateAssetDB(t, mockDB, tc.existingReleases)
-
+			if tc.expectedRelease != nil {
+				populateAssetForTarball(t, mockDB, fmt.Sprintf("bitnami%%%s", tc.expectedRelease.Chart.Metadata.Name), globalPackagingNamespace, tc.expectedRelease.Chart.Metadata.Version)
+			}
 			response, err := server.UpdateInstalledPackage(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
