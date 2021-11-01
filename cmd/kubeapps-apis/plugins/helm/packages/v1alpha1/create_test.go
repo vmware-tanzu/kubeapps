@@ -32,6 +32,7 @@ import (
 func TestCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
+		releaseStub        releaseStub
 		request            *corev1.CreateInstalledPackageRequest
 		expectedResponse   *corev1.CreateInstalledPackageResponse
 		expectedStatusCode codes.Code
@@ -39,6 +40,11 @@ func TestCreateInstalledPackage(t *testing.T) {
 	}{
 		{
 			name: "creates the installed package from repo without credentials",
+			// this is just for populating the mock database
+			releaseStub: releaseStub{
+				chartID:       "bitnami/apache",
+				latestVersion: "1.18.3",
+			},
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
@@ -110,13 +116,14 @@ func TestCreateInstalledPackage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
 			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), nil)
-			server, _, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
+			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "bitnami",
 					Namespace: globalPackagingNamespace,
 				},
 			})
 			defer cleanup()
+			populateAssetDB(t, mockDB, []releaseStub{tc.releaseStub})
 
 			response, err := server.CreateInstalledPackage(context.Background(), tc.request)
 
