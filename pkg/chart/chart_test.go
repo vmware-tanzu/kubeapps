@@ -512,8 +512,14 @@ func TestGetChart(t *testing.T) {
 		name          string
 		chartVersion  string
 		userAgent     string
+		tarballURL    string
 		errorExpected bool
 	}{
+		{
+			name:         "gets the chart with tarballURL",
+			chartVersion: "5.1.1-apiVersionV1",
+			tarballURL:   "http://example.com/nginx-5.1.1-apiVersionV1.tgz",
+		},
 		{
 			name:         "gets the chart without a user agent",
 			chartVersion: "5.1.1-apiVersionV1",
@@ -537,6 +543,7 @@ func TestGetChart(t *testing.T) {
 			ChartName:                 "nginx",
 			ReleaseName:               "foo",
 			Version:                   tc.chartVersion,
+			TarballURL:                tc.tarballURL,
 		}
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
@@ -564,15 +571,23 @@ func TestGetChart(t *testing.T) {
 			}
 
 			requests := getFakeClientRequests(t, httpClient)
-			// We expect one request for the index and one for the chart.
-			if got, want := len(requests), 2; got != want {
-				t.Fatalf("got: %d, want %d", got, want)
+			expectedLen := 1
+			if tc.tarballURL == "" {
+				// We expect one request for the index and one for the chart
+				expectedLen = 2
 			}
 
+			if got, want := len(requests), expectedLen; got != want {
+				t.Fatalf("got: %d, want %d", got, want)
+			}
 			for i, url := range []string{
 				repoURL + "index.yaml",
 				fmt.Sprintf("%s%s-%s.tgz", repoURL, target.ChartName, target.Version),
 			} {
+				// Skip the index.yaml request if a tarballURL is passed
+				if tc.tarballURL != "" {
+					continue
+				}
 				if got, want := requests[i].URL.String(), url; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
