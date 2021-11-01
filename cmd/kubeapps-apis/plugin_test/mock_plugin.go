@@ -30,6 +30,7 @@ type TestPackagingPluginServer struct {
 	InstalledPackageSummaries []*corev1.InstalledPackageSummary
 	InstalledPackageDetail    *corev1.InstalledPackageDetail
 	PackageAppVersions        []*corev1.PackageAppVersion
+	ResourceRefs              []*corev1.ResourceRef
 	Categories                []string
 	NextPageToken             string
 	Status                    codes.Code
@@ -91,6 +92,17 @@ func (s TestPackagingPluginServer) GetAvailablePackageVersions(ctx context.Conte
 	}
 	return &packages.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: s.PackageAppVersions,
+	}, nil
+}
+
+// GetResourceRefs returns the resource references based on the request.
+func (s TestPackagingPluginServer) GetResourceRefs(ctx context.Context, request *packages.GetResourceRefsRequest) (*packages.GetResourceRefsResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &packages.GetResourceRefsResponse{
+		Context:      request.GetInstalledPackageRef().GetContext(),
+		ResourceRefs: s.ResourceRefs,
 	}, nil
 }
 
