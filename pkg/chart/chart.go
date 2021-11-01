@@ -329,8 +329,8 @@ func (c *HelmRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *co
 	return err
 }
 
-// GetChart retrieves and loads a Chart from a registry in both
-// v2 and v3 formats.
+// GetChart loads a Chart from a given tarball, if the tarball URL is not passed,
+// it will try to retrieve the chart by parsing the whole repo index
 func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
 	if c.netClient == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")

@@ -1020,7 +1020,10 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s (version %s) from the namespace %q: %v", chartID, chartDetails.Version, chartDetails.AppRepositoryResourceNamespace, err)
 	}
 	var tarballURL string
-	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) > 0 && cachedChart.ChartVersions[0].URLs != nil {
+	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) == 1 && cachedChart.ChartVersions[0].URLs != nil {
+		// The tarball URL will always be the first URL in the repo.chartVersions:
+		// https://helm.sh/docs/topics/chart_repository/#the-index-file
+		// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
 		tarballURL = cachedChart.ChartVersions[0].URLs[0]
 	}
 
