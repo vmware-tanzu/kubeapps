@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"strconv"
@@ -67,9 +68,9 @@ const (
 
 // Wapper struct to include three version constants
 type VersionsInSummary struct {
-	Major int
-	Minor int
-	Patch int
+	Major int `json:"major"`
+	Minor int `json:"minor"`
+	Patch int `json:"patch"`
 }
 
 // Server implements the helm packages v1alpha1 interface.
@@ -84,11 +85,53 @@ type Server struct {
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
 	chartClientFactory       chartutils.ChartClientFactoryInterface
+	versionsInSummary        VersionsInSummary
+}
+
+func parsePluginConfig(pluginConfigPath string) VersionsInSummary {
+
+	// In the helm plugin, for example, we are interested in config for the
+	// core.packages.v1alpha1 (which we implement) and helm.packages.v1alpha1
+	// only. So the plugin defines the following struct and parses the config:
+	type helmConfig struct {
+		Core struct {
+			Packages struct {
+				V1alpha1 struct {
+					VersionsInSummary VersionsInSummary
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"core"`
+		Helm struct {
+			Packages struct {
+				V1alpha1 struct {
+					SomeConfigOption string `json:"someConfigOption"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"helm"`
+	}
+	var config helmConfig
+
+	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	if err != nil {
+		// return default value of VersionsInSummary
+		return VersionsInSummary{MajorVersionsInSummary,
+			MinorVersionsInSummary, PatchVersionsInSummary}
+	}
+	err = json.Unmarshal([]byte(pluginConfig), &config)
+	if err != nil {
+		// return default value of VersionsInSummary
+		return VersionsInSummary{MajorVersionsInSummary,
+			MinorVersionsInSummary, PatchVersionsInSummary}
+	}
+
+	// return configured value of VersionsInSummary
+	return config.Core.Packages.V1alpha1.VersionsInSummary
+
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluster string) *Server {
+func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluster string, pluginConfigPath string) *Server {
 	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
@@ -105,6 +148,9 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
+
+	versionsInSummary := parsePluginConfig(pluginConfigPath)
+	log.Infof("NewServer: versionsInSummary %v\n", versionsInSummary)
 
 	return &Server{
 		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
@@ -158,6 +204,7 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 		globalPackagingNamespace: kubeappsNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
+		versionsInSummary:        versionsInSummary,
 	}
 }
 
@@ -438,11 +485,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
 	}
 
-	versionInSummary := VersionsInSummary{MajorVersionsInSummary,
-		MinorVersionsInSummary, PatchVersionsInSummary}
-
 	return &corev1.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions, versionInSummary),
+		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions, s.versionsInSummary),
 	}, nil
 }
 

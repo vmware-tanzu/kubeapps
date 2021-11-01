@@ -1599,6 +1599,17 @@ kubeappsapis:
   ##
   enabledPlugins:
     - helm
+  ## @param kubeappsapis.pluginConfig Additional configurations for each plugin
+  ## e.g:
+  ## versionsInSummary{major, minor, patch}
+  pluginConfig:
+    core:
+      packages:
+        v1alpha1:
+          versionsInSummary:
+            major: 3
+            minor: 3
+            patch: 3
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
