@@ -79,7 +79,7 @@ func Serve(serveOpts ServeOptions) error {
 	}
 
 	// Create the core.packages server and register it for both grpc and http.
-	packages.RegisterPackagesServiceServer(grpcSrv, NewPackagesServer(pluginsServer.packagesPlugins))
+	packages.RegisterPackagesServiceServer(grpcSrv, NewPackagesServer(pluginsServer.PackagesPlugins))
 	err = packages.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
 	if err != nil {
 		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)

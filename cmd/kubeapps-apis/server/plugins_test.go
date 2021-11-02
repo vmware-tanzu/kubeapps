@@ -63,8 +63,8 @@ func TestPluginsAvailable(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ps := pluginsServer{
-				plugins: tc.configuredPlugins,
+			ps := PluginsServer{
+				Plugins: tc.configuredPlugins,
 			}
 
 			resp, err := ps.GetConfiguredPlugins(context.TODO(), &plugins.GetConfiguredPluginsRequest{})

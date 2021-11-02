@@ -15,6 +15,11 @@ postgresql:
   existingSecret: postgresql-db
 kubeappsapis:
   replicaCount: 1
+  enabledPlugins:
+    - helm
+    - resources
+  image:
+    tag: dev13
 ingress:
   enabled: true
   hostname: localhost

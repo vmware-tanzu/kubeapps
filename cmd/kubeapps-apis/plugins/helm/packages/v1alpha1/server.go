@@ -37,6 +37,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/action"
@@ -1177,6 +1178,8 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
 	log.Infof("+helm GetResources %s %s", contextMsg, identifier)
+	md, ok := metadata.FromIncomingContext(ctx)
+	log.Infof("+helm metadata: %+v, %g", md, ok)
 
 	namespace := pkgRef.GetContext().GetNamespace()
 

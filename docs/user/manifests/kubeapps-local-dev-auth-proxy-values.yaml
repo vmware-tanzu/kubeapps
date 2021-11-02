@@ -14,6 +14,6 @@ authProxy:
     # TODO: Update to provide the dex ca via --provider-ca-file and mounting etc.
     - --ssl-insecure-skip-verify=true
     # If you need to access the actual token in the frontend for testing, uncomment the following.
-    # - --set-authorization-header=true
+    - --set-authorization-header=true
     # If you are serving Kubeapps under a subpath "example.com/subpath" it would be "proxy-prefix=/subpath/oauth2"
     # - --proxy-prefix=/subpath/oauth2

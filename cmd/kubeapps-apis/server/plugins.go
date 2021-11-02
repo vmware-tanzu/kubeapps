@@ -49,30 +49,30 @@ const (
 // KubernetesConfigGetter is a function type used by plugins to get a k8s config
 type KubernetesConfigGetter func(ctx context.Context, cluster string) (*rest.Config, error)
 
-// pkgsPluginWithServer stores the plugin detail together with its implementation.
-type pkgsPluginWithServer struct {
-	plugin *plugins.Plugin
-	server packages.PackagesServiceServer
+// PkgsPluginWithServer stores the plugin detail together with its implementation.
+type PkgsPluginWithServer struct {
+	Plugin *plugins.Plugin
+	Server packages.PackagesServiceServer
 }
 
 // coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
-type pluginsServer struct {
+type PluginsServer struct {
 	plugins.UnimplementedPluginsServiceServer
 
-	// The slice of plugins is initialised when registering plugins during NewPluginsServer.
-	plugins []*plugins.Plugin
+	// The slice of Plugins is initialised when registering Plugins during NewPluginsServer.
+	Plugins []*plugins.Plugin
 
-	// packagesPlugins contains plugin server implementations which satisfy
+	// PackagesPlugins contains plugin server implementations which satisfy
 	// the core server packages.v1alpha1 interface.
 	// TODO: Update the plugins server to be able to register different versions
 	// of core plugins.
-	packagesPlugins []*pkgsPluginWithServer
+	PackagesPlugins []*PkgsPluginWithServer
 
 	// The parsed config for clusters in a multi-cluster setup.
-	clustersConfig kube.ClustersConfig
+	ClustersConfig kube.ClustersConfig
 }
 
-func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, gwArgs gwHandlerArgs) (*pluginsServer, error) {
+func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, gwArgs gwHandlerArgs) (*PluginsServer, error) {
 	// Store the serveOptions in the global 'pluginsServeOpts' variable
 
 	// Find all .so plugins in the specified plugins directory.
@@ -81,14 +81,14 @@ func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, g
 		log.Fatalf("failed to check for plugins: %v", err)
 	}
 
-	ps := &pluginsServer{}
+	ps := &PluginsServer{}
 
 	// get the parsed kube.ClustersConfig from the serveOpts
 	clustersConfig, err := getClustersConfigFromServeOpts(serveOpts)
 	if err != nil {
 		return nil, err
 	}
-	ps.clustersConfig = clustersConfig
+	ps.ClustersConfig = clustersConfig
 
 	pluginDetails, err := ps.registerPlugins(pluginPaths, registrar, gwArgs, serveOpts)
 	if err != nil {
@@ -97,7 +97,7 @@ func NewPluginsServer(serveOpts ServeOptions, registrar grpc.ServiceRegistrar, g
 
 	sortPlugins(pluginDetails)
 
-	ps.plugins = pluginDetails
+	ps.Plugins = pluginDetails
 
 	return ps, nil
 }
@@ -110,20 +110,20 @@ func sortPlugins(p []*plugins.Plugin) {
 }
 
 // GetConfiguredPlugins returns details for each configured plugin.
-func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
+func (s *PluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
 	// this gets logged twice (liveness and readiness checks) every 10 seconds and
 	// really adds a lot of noise to the logs, so lowering verbosity
 	log.V(4).Infof("+core GetConfiguredPlugins")
 	return &plugins.GetConfiguredPluginsResponse{
-		Plugins: s.plugins,
+		Plugins: s.Plugins,
 	}, nil
 }
 
 // registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
-func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs, serveOpts ServeOptions) ([]*plugins.Plugin, error) {
+func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs gwHandlerArgs, serveOpts ServeOptions) ([]*plugins.Plugin, error) {
 	pluginDetails := []*plugins.Plugin{}
 
-	configGetter, err := createConfigGetter(serveOpts, s.clustersConfig)
+	configGetter, err := createConfigGetter(serveOpts, s.ClustersConfig)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create a ClientGetter: %w", err)
 	}
@@ -155,8 +155,7 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar,
-	clientGetter KubernetesConfigGetter, pluginConfigPath string) error {
+func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar, clientGetter KubernetesConfigGetter, pluginConfigPath string) error {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
@@ -171,7 +170,7 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
 	}
 
-	server, err := grpcFn(registrar, clientGetter, s.clustersConfig, pluginConfigPath)
+	server, err := grpcFn(registrar, clientGetter, s.ClustersConfig, pluginConfigPath)
 	if err != nil {
 		return fmt.Errorf("plug-in %q failed to register due to: %v", pluginDetail, err)
 	} else if server == nil {
@@ -184,7 +183,7 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 // registerPluginsImplementingCoreAPIs checks a plugin implementation to see
 // if it implements a core api (such as `packages.v1alpha1`) and if so,
 // keeps a (typed) reference to the implementation for use on aggregate APIs.
-func (s *pluginsServer) registerPluginsSatisfyingCoreAPIs(pluginSrv interface{}, pluginDetail *plugins.Plugin) error {
+func (s *PluginsServer) registerPluginsSatisfyingCoreAPIs(pluginSrv interface{}, pluginDetail *plugins.Plugin) error {
 	// The following check if the service implements an interface is what
 	// grpc-go itself does, see:
 	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
@@ -196,9 +195,9 @@ func (s *pluginsServer) registerPluginsSatisfyingCoreAPIs(pluginSrv interface{},
 		if !ok {
 			return fmt.Errorf("Unable to convert plugin %v to core PackagesServicesServer although it implements the same.", pluginDetail)
 		}
-		s.packagesPlugins = append(s.packagesPlugins, &pkgsPluginWithServer{
-			plugin: pluginDetail,
-			server: pkgsSrv,
+		s.PackagesPlugins = append(s.PackagesPlugins, &PkgsPluginWithServer{
+			Plugin: pluginDetail,
+			Server: pkgsSrv,
 		})
 		log.Infof("Plugin %v implements core.packages.v1alpha1. Registered for aggregation.", pluginDetail)
 	}
@@ -341,6 +340,7 @@ func extractToken(ctx context.Context) (string, error) {
 	// extractToken() to raise an error if there is no metadata with the context.
 	// note, the caller will wrap this as a codes.Unauthenticated status
 	md, ok := metadata.FromIncomingContext(ctx)
+	log.Infof("+extractToken metadata: %+v, %g", md, ok)
 	if !ok {
 		return "", fmt.Errorf("missing authorization metadata")
 	}

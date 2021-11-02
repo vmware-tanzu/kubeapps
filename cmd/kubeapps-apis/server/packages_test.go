@@ -58,7 +58,7 @@ var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 	plugins.Plugin{},
 )
 
-func makeDefaultTestPackagingPlugin(pluginName string) *pkgsPluginWithServer {
+func makeDefaultTestPackagingPlugin(pluginName string) *PkgsPluginWithServer {
 	pluginDetails := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
 	packagingPluginServer := &plugin_test.TestPackagingPluginServer{Plugin: pluginDetails}
 
@@ -79,35 +79,35 @@ func makeDefaultTestPackagingPlugin(pluginName string) *pkgsPluginWithServer {
 	packagingPluginServer.NextPageToken = "1"
 	packagingPluginServer.Categories = []string{plugin_test.DefaultCategory}
 
-	return &pkgsPluginWithServer{
-		plugin: pluginDetails,
-		server: packagingPluginServer,
+	return &PkgsPluginWithServer{
+		Plugin: pluginDetails,
+		Server: packagingPluginServer,
 	}
 }
 
-func makeOnlyStatusTestPackagingPlugin(pluginName string, statusCode codes.Code) *pkgsPluginWithServer {
+func makeOnlyStatusTestPackagingPlugin(pluginName string, statusCode codes.Code) *PkgsPluginWithServer {
 	pluginDetails := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
 	packagingPluginServer := &plugin_test.TestPackagingPluginServer{Plugin: pluginDetails}
 
 	packagingPluginServer.Status = statusCode
 
-	return &pkgsPluginWithServer{
-		plugin: pluginDetails,
-		server: packagingPluginServer,
+	return &PkgsPluginWithServer{
+		Plugin: pluginDetails,
+		Server: packagingPluginServer,
 	}
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetAvailablePackageSummariesRequest
 		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -120,10 +120,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.Plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.Plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.Plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.Plugin),
 				},
 				Categories: []string{"cat-1"},
 			},
@@ -131,7 +131,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it should successfully call and paginate (first page) the core GetAvailablePackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -145,7 +145,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.Plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "1",
@@ -154,7 +154,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it should successfully call and paginate (proper PageSize) the core GetAvailablePackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -168,10 +168,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.Plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.Plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.Plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.Plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "1",
@@ -180,7 +180,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it should successfully call and paginate (last page - 1) the core GetAvailablePackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -194,7 +194,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.Plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "4",
@@ -203,7 +203,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it should successfully call and paginate (last page) the core GetAvailablePackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -217,7 +217,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.Plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "4",
@@ -226,7 +226,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it should successfully call and paginate (last page + 1) the core GetAvailablePackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -247,7 +247,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it should fail when calling the core GetAvailablePackageSummaries operation when the package is not present in a plugin",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
@@ -289,14 +289,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetAvailablePackageDetailRequest
 		expectedResponse  *corev1.GetAvailablePackageDetailResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageDetail operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -307,19 +307,19 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "pkg-1",
-					Plugin:     mockedPackagingPlugin1.plugin,
+					Plugin:     mockedPackagingPlugin1.Plugin,
 				},
 				PkgVersion: "",
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageDetailResponse{
-				AvailablePackageDetail: plugin_test.MakeAvailablePackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
+				AvailablePackageDetail: plugin_test.MakeAvailablePackageDetail("pkg-1", mockedPackagingPlugin1.Plugin),
 			},
 			statusCode: codes.OK,
 		},
 		{
 			name: "it should fail when calling the core GetAvailablePackageDetail operation when the package is not present in a plugin",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
@@ -330,7 +330,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "pkg-1",
-					Plugin:     mockedNotFoundPackagingPlugin.plugin,
+					Plugin:     mockedNotFoundPackagingPlugin.Plugin,
 				},
 				PkgVersion: "",
 			},
@@ -363,14 +363,14 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetInstalledPackageSummariesRequest
 		expectedResponse  *corev1.GetInstalledPackageSummariesResponse
 	}{
 		{
 			name: "it should successfully call the core GetInstalledPackageSummaries operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -383,17 +383,17 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					plugin_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					plugin_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+					plugin_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin1.Plugin),
+					plugin_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin2.Plugin),
+					plugin_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin1.Plugin),
+					plugin_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin2.Plugin),
 				},
 			},
 			statusCode: codes.OK,
 		},
 		{
 			name: "it should fail when calling the core GetInstalledPackageSummaries operation when the package is not present in a plugin",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
@@ -434,14 +434,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 func TestGetInstalledPackageDetail(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetInstalledPackageDetailRequest
 		expectedResponse  *corev1.GetInstalledPackageDetailResponse
 	}{
 		{
 			name: "it should successfully call the core GetInstalledPackageDetail operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -452,18 +452,18 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "pkg-1",
-					Plugin:     mockedPackagingPlugin1.plugin,
+					Plugin:     mockedPackagingPlugin1.Plugin,
 				},
 			},
 
 			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: plugin_test.MakeInstalledPackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
+				InstalledPackageDetail: plugin_test.MakeInstalledPackageDetail("pkg-1", mockedPackagingPlugin1.Plugin),
 			},
 			statusCode: codes.OK,
 		},
 		{
 			name: "it should fail when calling the core GetInstalledPackageDetail operation when the package is not present in a plugin",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
@@ -474,7 +474,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "pkg-1",
-					Plugin:     mockedNotFoundPackagingPlugin.plugin,
+					Plugin:     mockedNotFoundPackagingPlugin.Plugin,
 				},
 			},
 
@@ -506,14 +506,14 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 func TestGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*pkgsPluginWithServer
+		configuredPlugins []*PkgsPluginWithServer
 		statusCode        codes.Code
 		request           *corev1.GetAvailablePackageVersionsRequest
 		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageVersions operation",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
@@ -524,7 +524,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "test",
-					Plugin:     mockedPackagingPlugin1.plugin,
+					Plugin:     mockedPackagingPlugin1.Plugin,
 				},
 			},
 
@@ -538,7 +538,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		},
 		{
 			name: "it should fail when calling the core GetAvailablePackageVersions operation when the package is not present in a plugin",
-			configuredPlugins: []*pkgsPluginWithServer{
+			configuredPlugins: []*PkgsPluginWithServer{
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
@@ -549,7 +549,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "test",
-					Plugin:     mockedNotFoundPackagingPlugin.plugin,
+					Plugin:     mockedNotFoundPackagingPlugin.Plugin,
 				},
 			},
 
@@ -648,11 +648,11 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			configuredPluginServers := []*pkgsPluginWithServer{}
+			configuredPluginServers := []*PkgsPluginWithServer{}
 			for _, p := range tc.configuredPlugins {
-				configuredPluginServers = append(configuredPluginServers, &pkgsPluginWithServer{
-					plugin: p,
-					server: plugin_test.TestPackagingPluginServer{Plugin: p},
+				configuredPluginServers = append(configuredPluginServers, &PkgsPluginWithServer{
+					Plugin: p,
+					Server: plugin_test.TestPackagingPluginServer{Plugin: p},
 				})
 			}
 
@@ -729,11 +729,11 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			configuredPluginServers := []*pkgsPluginWithServer{}
+			configuredPluginServers := []*PkgsPluginWithServer{}
 			for _, p := range tc.configuredPlugins {
-				configuredPluginServers = append(configuredPluginServers, &pkgsPluginWithServer{
-					plugin: p,
-					server: plugin_test.TestPackagingPluginServer{Plugin: p},
+				configuredPluginServers = append(configuredPluginServers, &PkgsPluginWithServer{
+					Plugin: p,
+					Server: plugin_test.TestPackagingPluginServer{Plugin: p},
 				})
 			}
 
@@ -802,11 +802,11 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			configuredPluginServers := []*pkgsPluginWithServer{}
+			configuredPluginServers := []*PkgsPluginWithServer{}
 			for _, p := range tc.configuredPlugins {
-				configuredPluginServers = append(configuredPluginServers, &pkgsPluginWithServer{
-					plugin: p,
-					server: plugin_test.TestPackagingPluginServer{Plugin: p},
+				configuredPluginServers = append(configuredPluginServers, &PkgsPluginWithServer{
+					Plugin: p,
+					Server: plugin_test.TestPackagingPluginServer{Plugin: p},
 				})
 			}
 
@@ -887,10 +887,10 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			server := &packagesServer{
-				plugins: []*pkgsPluginWithServer{
+				plugins: []*PkgsPluginWithServer{
 					{
-						plugin: installedPlugin,
-						server: &plugin_test.TestPackagingPluginServer{
+						Plugin: installedPlugin,
+						Server: &plugin_test.TestPackagingPluginServer{
 							Plugin:       installedPlugin,
 							ResourceRefs: tc.pluginResourceRefs,
 						},
