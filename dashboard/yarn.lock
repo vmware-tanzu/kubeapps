@@ -13805,10 +13805,10 @@ stylelint-config-recommended@^6.0.0:
   resolved "https://registry.yarnpkg.com/stylelint-config-recommended/-/stylelint-config-recommended-6.0.0.tgz#fd2523a322836005ad9bf473d3e5534719c09f9d"
   integrity sha512-ZorSSdyMcxWpROYUvLEMm0vSZud2uB7tX1hzBZwvVY9SV/uly4AvvJPPhCcymZL3fcQhEQG5AELmrxWqtmzacw==
 
-stylelint-config-standard-scss@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/stylelint-config-standard-scss/-/stylelint-config-standard-scss-2.0.0.tgz#95f5ce656429bc06ee3cbc0dee03958365627e02"
-  integrity sha512-Pfex2nCvFKSL4u4d8sECYRkQadu6w+XO7kiE521sZNmFBGxLYhhZt0RN9HwXj5oBKWcE6Y5g86IjbaiXI7zrPg==
+stylelint-config-standard-scss@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/stylelint-config-standard-scss/-/stylelint-config-standard-scss-2.0.1.tgz#b0cafad0a32c7eea13e045913c4e6a6de45be69c"
+  integrity sha512-TW5NLquUSS0mg2N31zzaSbYRbV/CMifSVLdpgo6VdGvjysgYqJOcKM/5bmXucTOsdfqomcPXetFZ3adC7nD+cg==
   dependencies:
     stylelint-config-recommended-scss "^5.0.0"
     stylelint-config-standard "^23.0.0"
