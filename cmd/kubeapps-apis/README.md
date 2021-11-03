@@ -111,7 +111,9 @@ kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 and then curling or grpcurling in another:
 
 ```bash
-$ curl -s http://localhost:8080/plugins/fluxv2/packages/v1alpha1/packagerepositories | jq .
+# TOKEN value comes from the k8s secret associated with the service account of the user on behalf of which the call below is made 
+$ export TOKEN="Bearer eyJhbGciO..."
+$ curl -s http://localhost:8080/plugins/fluxv2/packages/v1alpha1/packagerepositories?context.cluster=default -H "Authorization: $TOKEN" | jq .
 {
   "repositories": [
     {

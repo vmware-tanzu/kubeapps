@@ -19,6 +19,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/action"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -166,23 +167,12 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			request.GetPaginationOptions().GetPageToken(), err)
 	}
 
-	if s.cache == nil {
-		return nil, status.Errorf(
-			codes.FailedPrecondition,
-			"server cache has not been properly initialized")
-	}
-
-	repos, err := s.cache.listKeys(request.GetFilterOptions().GetRepositories())
+	charts, err := s.getChartsForRepos(ctx, request.GetFilterOptions().GetRepositories())
 	if err != nil {
 		return nil, err
 	}
 
-	cachedCharts, err := s.cache.fetchForMultiple(repos)
-	if err != nil {
-		return nil, err
-	}
-
-	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), pageSize, pageOffset, cachedCharts)
+	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), pageSize, pageOffset, charts)
 	if err != nil {
 		return nil, err
 	}
@@ -237,28 +227,23 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	packageIdParts := strings.Split(unescapedChartID, "/")
 
-	// check if the repo has been indexed, stored in the cache and requested
-	// package is part of it. Otherwise, there is a time window when this scenario can happen:
-	// - GetAvailablePackageSummaries() may return {} while a ready repo is being indexed
-	//   and said index is cached BUT
-	// - GetAvailablePackageDetail() may return full package detail for one of the packages
-	// in the repo
-	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
-	ok, err := s.repoExistsInCache(name)
+	// check specified repo exists and is in ready state
+	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
+
+	// this verifies that the repo exists
+	repoUnstructured, err := s.getRepoInCluster(ctx, repo)
 	if err != nil {
 		return nil, err
-	} else if !ok {
-		return nil, status.Errorf(codes.NotFound, "no fully indexed repository [%s] has been found", name)
 	}
 
-	tarUrl, err, cleanUp := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
+	tarUrl, err, cleanUp := s.getChartTarball(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
 	if cleanUp != nil {
 		defer cleanUp()
 	}
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
+	log.V(4).Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
 
 	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, tarUrl)
 	if err != nil {
@@ -266,9 +251,9 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 
 	// fix up a couple of fields that don't come from the chart tarball
-	repoUrl, err := s.getRepoUrl(ctx, name)
-	if err != nil {
-		return nil, err
+	repoUrl, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repo)
 	}
 	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
@@ -313,7 +298,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
 	packageIdParts := strings.Split(unescapedChartID, "/")
 	repo := types.NamespacedName{Namespace: namespace, Name: packageIdParts[0]}
-	chart, err := s.fetchChartFromCache(repo, packageIdParts[1])
+	chart, err := s.getChart(ctx, repo, packageIdParts[1])
 	if err != nil {
 		return nil, err
 	} else if chart != nil {

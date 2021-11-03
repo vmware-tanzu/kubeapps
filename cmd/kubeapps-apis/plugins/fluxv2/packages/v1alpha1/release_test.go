@@ -543,7 +543,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			defer ts.Close()
 
 			runtimeObjs = append(runtimeObjs, repo)
-			s, mock, _, err := newServerWithRepos(runtimeObjs...)
+			s, mock, _, _, err := newServerWithRepos(runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}

@@ -99,7 +99,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 		for i, releaseUnstructured := range releasesFromCluster.Items {
 			if startAt <= i {
-				summary, err := s.installedPkgSummaryFromRelease(releaseUnstructured.Object, chartsFromCluster)
+				summary, err := s.installedPkgSummaryFromRelease(ctx, releaseUnstructured.Object, chartsFromCluster)
 				if err != nil {
 					return nil, err
 				} else if summary == nil {
@@ -116,7 +116,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 	return installedPkgSummaries, nil
 }
 
-func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
 	if !checkGeneration(unstructuredRelease) {
 		return nil, nil
@@ -160,12 +160,12 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 			return nil, err
 		}
 
-		// according to docs repoNamespace is optional
+		// according to flux docs repoNamespace is optional
 		if repoNamespace == "" {
 			repoNamespace = name.Namespace
 		}
 		repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
-		chartFromCache, err := s.fetchChartFromCache(repo, chartName)
+		chartFromCache, err := s.getChart(ctx, repo, chartName)
 		if err != nil {
 			return nil, err
 		} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
@@ -344,7 +344,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 
 	packageIdParts := strings.Split(unescapedChartID, "/")
 	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
-	chart, err := s.fetchChartFromCache(repo, packageIdParts[1])
+	chart, err := s.getChart(ctx, repo, packageIdParts[1])
 	if err != nil {
 		return nil, err
 	}

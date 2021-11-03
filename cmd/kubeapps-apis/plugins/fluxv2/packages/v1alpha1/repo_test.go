@@ -33,6 +33,7 @@ import (
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -483,12 +484,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, repo)
 			}
 
-			s, mock, _, err := newServerWithRepos(repos...)
+			s, mock, _, _, err := newServerWithRepos(repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = beforeCallGetAvailablePackageSummaries(mock, tc.request.FilterOptions, repos...); err != nil {
+			if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, tc.request.FilterOptions, repos...); err != nil {
 				t.Fatalf("%v", err)
 			}
 
@@ -555,12 +556,12 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithRepos(repo)
+		s, mock, _, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -593,6 +594,11 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		mock.ExpectSet(key, bytes, 0).SetVal("")
 
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
+		/**
+		     TODO (gfichtenholt) shouldn't we call
+		  		if err = dyncli.Resource(repositoriesGvr).Namespace(...).Update(...) or UpdateStatus(...)
+		  	here ?
+		*/
 		watcher.Modify(repo)
 
 		s.cache.eventProcessedWaitGroup.Wait()
@@ -601,7 +607,6 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		mock.ExpectScan(0, "", 0).SetVal([]string{key}, 0)
 		mock.ExpectGet(key).SetVal(string(bytes))
 
 		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
@@ -628,12 +633,12 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 		defer ts2.Close()
-		s, mock, watcher, err := newServerWithRepos(repo)
+		s, mock, dyncli, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -654,21 +659,18 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
-		// now we are going to simulate the user deleting a HelmRepository CRD which, in turn,
+		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
 		s.cache.eventProcessedWaitGroup.Add(1)
-		key := redisKeyForRuntimeObject(repo)
-		mock.ExpectDel(key).SetVal(0)
-
+		mock.ExpectDel(redisKeyForRuntimeObject(repo)).SetVal(0)
+		if err = dyncli.Resource(repositoriesGvr).Namespace("default").Delete(context.Background(), "bitnami-1", metav1.DeleteOptions{}); err != nil {
+			t.Fatalf("%v", err)
+		}
 		watcher.Delete(repo)
-
 		s.cache.eventProcessedWaitGroup.Wait()
-
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
-
-		mock.ExpectScan(0, "", 0).SetVal([]string{}, 0)
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
@@ -696,12 +698,12 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, watcher, err := newServerWithRepos(repo)
+		s, mock, _, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -735,7 +737,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
-		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -852,7 +854,7 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
+			s, mock, _, _, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -883,11 +885,11 @@ func TestGetPackageRepositories(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
-			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+			repositoriesGvr: fluxHelmRepositoryList,
 		},
 		repos...)
 
@@ -921,7 +923,7 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 	}
 
 	s, mock, err := newServer(clientGetter, nil, repos...)
-	return s, mock, watcher, err
+	return s, mock, dynamicClient, watcher, err
 }
 
 func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
@@ -963,7 +965,7 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 	return repos
 }
 
-func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
+func redisMockBeforeCallToGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
 	mapVals := make(map[string][]byte)
 	keys := []string{}
 	for _, r := range repos {
@@ -975,7 +977,6 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOpt
 		mapVals[key] = bytes
 	}
 	if filterOptions == nil || len(filterOptions.GetRepositories()) == 0 {
-		mock.ExpectScan(0, "", 0).SetVal(keys, 0)
 		for _, k := range keys {
 			mock.ExpectGet(k).SetVal(string(mapVals[k]))
 		}
@@ -987,7 +988,6 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOpt
 					keys = append(keys, k)
 				}
 			}
-			mock.ExpectScan(0, fluxHelmRepositories+":*:"+r, 0).SetVal(keys, 0)
 			for _, k := range keys {
 				mock.ExpectGet(k).SetVal(string(mapVals[k]))
 			}
@@ -1053,6 +1053,12 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Serv
 }
 
 // misc global vars that get re-used in multiple tests scenarios
+var repositoriesGvr = schema.GroupVersionResource{
+	Group:    fluxGroup,
+	Version:  fluxVersion,
+	Resource: fluxHelmRepositories,
+}
+
 var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 	{
 		DisplayName: "acs-engine-autoscaler",

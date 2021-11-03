@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
@@ -25,6 +26,8 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -58,7 +61,7 @@ func (s *Server) getRepoResourceInterface(ctx context.Context, namespace string)
 	return client.Resource(repositoriesResource).Namespace(namespace), nil
 }
 
-// namespace maybe "", in which case repositories from all namespaces are returned
+// namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
 func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	resourceIfc, err := s.getRepoResourceInterface(ctx, namespace)
 	if err != nil {
@@ -66,12 +69,14 @@ func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*uns
 	}
 
 	if repos, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmrepositories: %v", err)
+		if errors.IsNotFound(err) {
+			return nil, status.Errorf(codes.NotFound, "%q", err)
+		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "unable to list repositories in namespace [%s] due to %v", namespace, err)
+		} else {
+			return nil, status.Errorf(codes.Internal, "unable to list repositories in namespace [%s] due to %v", namespace, err)
+		}
 	} else {
-		// TODO (gfichtenholt): should we filter out those repos that don't have .status.condition.Ready == True?
-		// like we do in GetAvailablePackageSummaries()?
-		// i.e. should GetAvailableRepos() call semantics be such that only "Ready" repos are returned
-		// ongoing slack discussion https://vmware.slack.com/archives/C4HEXCX3N/p1621846518123800
 		return repos, nil
 	}
 }
@@ -82,30 +87,132 @@ func (s *Server) getRepoInCluster(ctx context.Context, name types.NamespacedName
 		return nil, err
 	}
 
-	return resourceIfc.Get(ctx, name.Name, metav1.GetOptions{})
-}
-
-func (s *Server) repoExistsInCache(name types.NamespacedName) (bool, error) {
-	if s.cache == nil {
-		return false, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
-	}
-
-	repo, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(name))
-	return repo != nil, err
-}
-
-func (s *Server) getRepoUrl(ctx context.Context, name types.NamespacedName) (string, error) {
-	repoUnstructured, err := s.getRepoInCluster(ctx, name)
+	result, err := resourceIfc.Get(ctx, name.Name, metav1.GetOptions{})
 	if err != nil {
-		return "", status.Errorf(codes.NotFound, "Unable to find Helm repository %q due to %v", name, err)
-	} else if repoUnstructured == nil {
-		return "", status.Errorf(codes.NotFound, "Unable to find Helm repository %q", name)
+		if errors.IsNotFound(err) {
+			return nil, status.Errorf(codes.NotFound, "%q", err)
+		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "unable to get repository [%s] due to %v", name, err)
+		} else {
+			return nil, status.Errorf(codes.Internal, "unable to get repository [%s] due to %v", name, err)
+		}
+	} else if result == nil {
+		return nil, status.Errorf(codes.NotFound, "unable to find repository [%s]", name)
 	}
-	repoUrl, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
-	if err != nil || !found {
-		return "", status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", name)
+	return result, nil
+}
+
+// regexp expressions are used for matching actual names against expected patters
+func (s *Server) filterReadyReposByName(repoList *unstructured.UnstructuredList, match []string) ([]string, error) {
+	if s.cache == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
-	return repoUrl, nil
+
+	resultKeys := make([]string, 0)
+	for _, repo := range repoList.Items {
+		// first check if repo is in ready state
+		if !isRepoReady(repo.Object) {
+			// just skip it
+			continue
+		}
+		name, err := namespacedName(repo.Object)
+		if err != nil {
+			// just skip it
+			continue
+		}
+		// see if name matches the filter
+		matched := false
+		if len(match) > 0 {
+			for _, m := range match {
+				if matched, err = regexp.MatchString(m, name.Name); matched && err == nil {
+					break
+				}
+			}
+		} else {
+			matched = true
+		}
+		if matched {
+			resultKeys = append(resultKeys, s.cache.keyForNamespacedName(*name))
+		}
+	}
+	return resultKeys, nil
+}
+
+func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[string][]models.Chart, error) {
+	// 1. with flux an available package may be from a repo in any namespace
+	// 2. can't rely on cache as a real source of truth for key names
+	//    because redis may evict cache entries due to memory pressure to make room for new ones
+	repoList, err := s.listReposInCluster(ctx, apiv1.NamespaceAll)
+	if err != nil {
+		return nil, err
+	}
+
+	repoNames, err := s.filterReadyReposByName(repoList, match)
+	if err != nil {
+		return nil, err
+	}
+
+	chartsTyped := make(map[string][]models.Chart)
+
+	// at any given moment, the redis cache may only have a subset of the entire set of existing keys.
+	// Some key may have been evicted due to memory pressure and LRU eviction policy.
+	// ref: https://redis.io/topics/lru-cache
+	// so, first, let's fetch the entries that are still cached before redis evicts those
+	// this for loop should be very fast as it only covers cache hit scenarios
+	chartsUntyped, err := s.cache.fetchForMultiple(repoNames)
+	if err != nil {
+		return nil, err
+	}
+
+	// now, re-compute and fetch the ones that are are left over from the previous operation,
+	// TODO: (gfichtenholt) I think this for loop can be done for all entries processed in
+	//   parallel rather than one-at-a-time. The computation part certainly can be parallelized,
+	//   and cache PUTs can also be done in parallel, potentially forcing redis to evict recently
+	//   computed entires to make room for new ones along the way
+	// TODO: (gfichtenholt) a bit of an inconcistency here. Some keys/values may have been
+	//   added to the cache by a background go-routine running in the context of
+	//   "kubeapps-internal-kubeappsapis" service account, whereas keys/values added below are
+	//   going to be fetched from k8s on behalf of the caller which is a different service account
+	//   with different RBAC settings
+	for key, value := range chartsUntyped {
+		if value == nil {
+			// this cache miss may be due to one of these reasons:
+			// 1) key truly does not exist in k8s (there is no repo with the given name in the "Ready" state)
+			// 2) key exists and the "Ready" repo currently being indexed but has not yet completed
+			// 3) key exists in k8s but the corresponding cache entry has been evicted by redis due to
+			//    LRU maxmemory policies or entry TTL expiry (doesn't apply currently, cuz we use TTL=0
+			//    for all entries)
+			// In the 3rd case we want to re-compute the key and add it to the cache, which may potentially
+			// cause other entries to be evicted in order to make room for the ones being added
+
+			// TODO (gfichtenholt) handle (2) - there is a (small) time window during which two
+			// threads will be doing the same work. No inconsistent results will occur, but still.
+			if name, err := s.cache.fromKey(key); err != nil {
+				return nil, err
+			} else {
+				for _, repo := range repoList.Items {
+					if repoName, err := namespacedName(repo.Object); err != nil {
+						return nil, err
+					} else if *repoName == *name {
+						if err = s.cache.onAddOrModify(true, repo.Object); err == nil {
+							if value, err = s.cache.fetchForOne(key); err != nil {
+								return nil, err
+							}
+						}
+						break
+					}
+				}
+			}
+		}
+		if value != nil {
+			typedChartsValue, ok := value.([]models.Chart)
+			if !ok {
+				return nil, status.Errorf(codes.Internal, "Unexpected value fetched from cache: %v", value)
+			}
+			chartsTyped[key] = typedChartsValue
+		}
+	}
+	return chartsTyped, nil
 }
 
 //
@@ -134,8 +241,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	// this is just a future-proofing sanity check.
 	// At present, there is only one caller of indexOneRepo() and this check is already done by it,
 	// so this should never really happen
-	ready := isRepoReady(unstructuredRepo)
-	if !ready {
+	if !isRepoReady(unstructuredRepo) {
 		return nil, status.Errorf(codes.Internal,
 			"cannot index repository [%s] because it is not in 'Ready' state. error: %v",
 			repo.Name,
@@ -149,7 +255,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 			repo.Name, err)
 	}
 
-	log.Infof("indexOneRepo: [%s], index URL: [%s]", repo.Name, indexUrl)
+	log.V(4).Infof("indexOneRepo: [%s], index URL: [%s]", repo.Name, indexUrl)
 
 	// no need to provide authz, userAgent or any of the TLS details, as we are reading index.yaml file from
 	// local cluster, not some remote repo.
@@ -172,9 +278,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	// shallow = true  => 8-9 sec
 	// shallow = false => 12-13 sec, so deep copy adds 50% to cost, but we need it to
 	// for GetAvailablePackageVersions()
-	log.Infof("about to call ChartsFromIndex for [%s]", repo.Name)
 	charts, err := helm.ChartsFromIndex(bytes, modelRepo, false)
-	log.Infof("done with ChartsFromIndex for [%s]", repo.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +286,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	duration := time.Since(startTime)
 	msg := fmt.Sprintf("indexOneRepo: indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
 	if len(charts) > 0 {
-		log.Info(msg)
+		log.V(4).Info(msg)
 	} else {
 		// this is kind of a red flag - an index with 0 charts, most likely contents of index.yaml is
 		// messed up and didn't parse but the helm library didn't raise an error
