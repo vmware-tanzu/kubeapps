@@ -371,6 +371,17 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
+// this integration test is meant to test a scenario when the redis cache is confiured with maxmemory
+// to small to be able to fit all the repos needed to satisfy the request for GetAvailablePackageSummaries
+// and redis cache eviction kicks in. To set up such environment one can use
+// "-f ./docs/user/manifests/kubeapps-local-dev-redis-tiny-values.yaml" option when installing
+// kubeapps via "helm upgrade"
+//
+func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *testing.T) {
+	_ = checkEnv(t)
+	// TODO
+}
+
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")

@@ -556,7 +556,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, _, watcher, err := newServerWithRepos(repo)
+		s, mock, dyncli, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -594,7 +594,9 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		mock.ExpectSet(key, bytes, 0).SetVal("")
 
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
-		// TODO if err = dyncli.Resource(repositoriesGvr).Namespace(...).Update(...) or UpdateStatus(...)
+		if repo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(context.Background(), repo, metav1.UpdateOptions{}); err != nil {
+			t.Fatalf("%v", err)
+		}
 		watcher.Modify(repo)
 
 		s.cache.eventProcessedWaitGroup.Wait()
