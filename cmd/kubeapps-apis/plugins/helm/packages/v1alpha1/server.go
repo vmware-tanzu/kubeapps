@@ -88,11 +88,14 @@ type Server struct {
 	versionsInSummary        VersionsInSummary
 }
 
+// parsePluginConfig parses the input plugin configuration json file and return the configuration options.
 func parsePluginConfig(pluginConfigPath string) VersionsInSummary {
 
+	// Note at present VersionsInSummary is the only configurable option for this plugin,
+	// and if required this func can be enhaned to return helmConfig struct
+
 	// In the helm plugin, for example, we are interested in config for the
-	// core.packages.v1alpha1 (which we implement) and helm.packages.v1alpha1
-	// only. So the plugin defines the following struct and parses the config:
+	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
 	type helmConfig struct {
 		Core struct {
 			Packages struct {
@@ -101,13 +104,6 @@ func parsePluginConfig(pluginConfigPath string) VersionsInSummary {
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"core"`
-		Helm struct {
-			Packages struct {
-				V1alpha1 struct {
-					SomeConfigOption string `json:"someConfigOption"`
-				} `json:"v1alpha1"`
-			} `json:"packages"`
-		} `json:"helm"`
 	}
 	var config helmConfig
 

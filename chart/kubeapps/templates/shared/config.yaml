@@ -14,6 +14,4 @@ metadata:
 data:
   clusters.conf: |-
 {{ .Values.clusters | toPrettyJson | indent 4 }}
-  plugins.conf: |-
-{{ .Values.kubeappsapis.pluginConfig | toPrettyJson | indent 4 }}
 {{- end }}

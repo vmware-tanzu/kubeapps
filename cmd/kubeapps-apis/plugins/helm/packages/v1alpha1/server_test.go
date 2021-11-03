@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"sort"
 	"testing"
 
@@ -31,6 +32,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -1698,6 +1700,66 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 	}
 }
 
+func TestParsePluginConfig(t *testing.T) {
+	testCases := []struct {
+		name                    string
+		pluginYAMLConf          string
+		exp_versions_in_summary VersionsInSummary
+	}{
+		{
+			name:                    "empty plugin config",
+			pluginYAMLConf:          ``,
+			exp_versions_in_summary: VersionsInSummary{0, 0, 0},
+		},
+		{
+			name: "non-default plugin config",
+			pluginYAMLConf: `
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1
+      `,
+			exp_versions_in_summary: VersionsInSummary{4, 2, 1},
+		},
+		{
+			name: "partial params in plugin config",
+			pluginYAMLConf: `
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 1
+        `,
+			exp_versions_in_summary: VersionsInSummary{1, 0, 0},
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pluginJSONConf, err := yaml.YAMLToJSON([]byte(tc.pluginYAMLConf))
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			f, err := os.CreateTemp(".", "plugin_json_conf")
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			defer os.Remove(f.Name()) // clean up
+			if _, err := f.Write(pluginJSONConf); err != nil {
+				log.Fatalf("%s", err)
+			}
+			if err := f.Close(); err != nil {
+				log.Fatalf("%s", err)
+			}
+			if got, want := parsePluginConfig(f.Name()), tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name               string
