@@ -410,8 +410,8 @@ func (c NamespacedResourceWatcherCache) onDelete(unstructuredObj map[string]inte
 // this is effectively a cache GET operation
 func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
 	log.Infof("+fectchForOne(%s)", key)
-	// read back from cache: should be either :what we previously wrote or Redis.Nil if the key does
-	// not exist or has been evicted due to memory pressure
+	// read back from cache: should be either what we previously wrote or Redis.Nil if the key does
+	// not exist or has been evicted due to memory pressure/TTL expiry
 	// TODO (gfichtenholt) See if there might be a cleaner way than to have onGet() take []byte as
 	// a 2nd argument. In theory, I would have liked to pass in an interface{}, just like onAdd/onModify.
 	// The limitation here is caused by the fact that redis go client does not offer a
@@ -437,7 +437,7 @@ func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, er
 	return val, nil
 }
 
-// it is worth noticing that a method such as
+// it is worth noting that a method such as
 //   func (c NamespacedResourceWatcherCache) listKeys(filters []string) ([]string, error)
 // has proven to be of no use today. The problem is that such function
 // only returns the set of keys in the cache at this moment in time, which maybe a subset

@@ -594,11 +594,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		mock.ExpectSet(key, bytes, 0).SetVal("")
 
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
-		/**
-		     TODO (gfichtenholt) shouldn't we call
-		  		if err = dyncli.Resource(repositoriesGvr).Namespace(...).Update(...) or UpdateStatus(...)
-		  	here ?
-		*/
+		// TODO if err = dyncli.Resource(repositoriesGvr).Namespace(...).Update(...) or UpdateStatus(...)
 		watcher.Modify(repo)
 
 		s.cache.eventProcessedWaitGroup.Wait()
