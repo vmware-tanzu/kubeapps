@@ -1211,10 +1211,10 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^5.5.8":
-  version "5.5.8"
-  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.5.8.tgz#f1ef555fc2d1f3edfb3cc02a214d892f56c56cae"
-  integrity sha512-ve+R1WkOcLidGvmbcpkPTf+iTnVa4JEzq0V9syBY49HLjuym0dAayUMn/aqnNsIj3s3FtdPtyd94fIfQZP6q+g==
+"@cds/core@^5.6.0":
+  version "5.6.0"
+  resolved "https://registry.yarnpkg.com/@cds/core/-/core-5.6.0.tgz#a38479a4c39b046daa3639952cc51326a8951a07"
+  integrity sha512-gx5lRNeAT25WrebdYepOKJMjlh506rDr2gvL4kb88cRzIvR5SxrJ+dK447xUWuaZcXtHn4L1XfDT9E4Szj3TaA==
   dependencies:
     lit "2.0.0-rc.2"
     ramda "^0.27.1"
@@ -1224,12 +1224,12 @@
     "@types/resize-observer-browser" "^0.1.5"
     modern-normalize "1.1.0"
 
-"@cds/react@^5.5.8":
-  version "5.5.8"
-  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.5.8.tgz#b0998caaa16cadbdc72c879a255185fe87611567"
-  integrity sha512-y+NOjrn0/WCf3wQm7bL0tNi/Ets5cLFTkBzMSqQ1aTGD6QnD3rD5pm6ZtJaBokrqpYKivcJ9CgiKihErvhYTgw==
+"@cds/react@^5.6.0":
+  version "5.6.0"
+  resolved "https://registry.yarnpkg.com/@cds/react/-/react-5.6.0.tgz#62e7c8b8bd604a654ffc88d94668d59731aacf32"
+  integrity sha512-murg+wGqbSXkouCgo7g34MNzF/JxorLhirr1WUiShudjbHZNNEZ+CwzA2gRahlCgD3Yl5LduFzgvj1qpENc77A==
   dependencies:
-    "@lit-labs/react" "^1.0.0"
+    "@lit-labs/react" "^1.0.1"
     react "^16.13.1"
     react-dom "^16.13.1"
   optionalDependencies:
@@ -1785,7 +1785,7 @@
   dependencies:
     stream "^0.0.2"
 
-"@lit-labs/react@^1.0.0":
+"@lit-labs/react@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@lit-labs/react/-/react-1.0.1.tgz#35f4a8fe12501f79e3973b408e67aa75dcd45ff4"
   integrity sha512-ShvoOB34Oj0ZkSnlWdGIWzSiEBP1MUY81nC3nAsNoWqbYMS2F/EskGzwSQj7mCKNznUCbmpB272AvSMwejm3Nw==
@@ -9947,10 +9947,10 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-mock-socket@^9.0.6:
-  version "9.0.6"
-  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.0.6.tgz#030559905e99c61c1d77598ad3e7087456331648"
-  integrity sha512-dbWynjkixRSxs0vKiIR/zc3UscCFp+0FG0I/fuZW7EEdXVOSEhZ1TMCurkQ97Vj+Gp5YvWMWdvpBSJTVKtvECw==
+mock-socket@^9.0.7:
+  version "9.0.7"
+  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.0.7.tgz#8596d60e65d033b6e2909ea74331707e2f8a40fa"
+  integrity sha512-jWHRwwS6ZwvYkXhl/xSGlrvoBZfz21cKRuQ2WL3A9FdVOR/f21nV9b1W8tiVCsYo3HS4oCIB5yZTIqycBp9D+g==
 
 modern-normalize@1.1.0, modern-normalize@^1.1.0:
   version "1.1.0"
@@ -13805,10 +13805,10 @@ stylelint-config-recommended@^6.0.0:
   resolved "https://registry.yarnpkg.com/stylelint-config-recommended/-/stylelint-config-recommended-6.0.0.tgz#fd2523a322836005ad9bf473d3e5534719c09f9d"
   integrity sha512-ZorSSdyMcxWpROYUvLEMm0vSZud2uB7tX1hzBZwvVY9SV/uly4AvvJPPhCcymZL3fcQhEQG5AELmrxWqtmzacw==
 
-stylelint-config-standard-scss@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/stylelint-config-standard-scss/-/stylelint-config-standard-scss-2.0.0.tgz#95f5ce656429bc06ee3cbc0dee03958365627e02"
-  integrity sha512-Pfex2nCvFKSL4u4d8sECYRkQadu6w+XO7kiE521sZNmFBGxLYhhZt0RN9HwXj5oBKWcE6Y5g86IjbaiXI7zrPg==
+stylelint-config-standard-scss@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/stylelint-config-standard-scss/-/stylelint-config-standard-scss-2.0.1.tgz#b0cafad0a32c7eea13e045913c4e6a6de45be69c"
+  integrity sha512-TW5NLquUSS0mg2N31zzaSbYRbV/CMifSVLdpgo6VdGvjysgYqJOcKM/5bmXucTOsdfqomcPXetFZ3adC7nD+cg==
   dependencies:
     stylelint-config-recommended-scss "^5.0.0"
     stylelint-config-standard "^23.0.0"
@@ -14332,10 +14332,10 @@ ts-proto-descriptors@^1.2.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.83.3:
-  version "1.83.3"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.83.3.tgz#ada7483035ddc946aa686dad1049e4fe45ae1d0f"
-  integrity sha512-r6MKFjoc4Og2kB4cNJ/bddLebdIwhouG5plu0Rry1jJMEqp2GKA7AE4FrR/FnTCIGbNPYP4622lBqckZd7UHcQ==
+ts-proto@^1.85.0:
+  version "1.85.0"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.85.0.tgz#a46925423a4df576f2fcf483d0d4b1ff2530d0ea"
+  integrity sha512-wYDzMl8LVqV8K65oI463KSIkfAxd3ulzMqZD+5NYWawwKfkJVNfTXjK847NJEHt4UBxSLZ0+aBjuc++cFNAUvw==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"

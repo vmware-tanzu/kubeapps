@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"regexp"
 	"sort"
 	"testing"
 
@@ -2443,6 +2444,7 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 	if rel.latestVersion != "" {
 		chartVersions = append(chartVersions, models.ChartVersion{
 			Version: rel.latestVersion,
+			URLs:    []string{fmt.Sprintf("https://example.com/%s-%s.tgz", rel.chartID, rel.latestVersion)},
 		})
 	}
 	chartVersions = append(chartVersions, models.ChartVersion{
@@ -2488,6 +2490,28 @@ func populateAssetDBWithDetail(t *testing.T, mock sqlmock.Sqlmock, pkg *corev1.I
 		version:        DefaultReleaseRevision,
 	}
 	populateAssetDB(t, mock, []releaseStub{rel})
+}
+
+func populateAssetForTarball(t *testing.T, mock sqlmock.Sqlmock, chartId, namespace, version string) {
+	chart := &models.Chart{
+		Name: chartId,
+		ID:   chartId,
+		Repo: &models.Repo{
+			Namespace: globalPackagingNamespace,
+		},
+		ChartVersions: []models.ChartVersion{{
+			Version: version,
+			URLs:    []string{fmt.Sprintf("https://example.com/%s-%s.tgz", chartId, version)}}},
+	}
+	chartJSON, err := json.Marshal(chart)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	rows := sqlmock.NewRows([]string{"info"})
+	rows.AddRow(string(chartJSON))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT info FROM charts WHERE repo_namespace = $1 AND chart_id ILIKE $2")).
+		WithArgs(chart.Repo.Namespace, chart.ID).
+		WillReturnRows(rows)
 }
 
 func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []releaseStub) {
