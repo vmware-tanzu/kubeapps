@@ -46,7 +46,7 @@ describe("fetches applications", () => {
     shortDescription: "some description",
   };
   let listAppsMock: jest.Mock;
-  let installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
+  const installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
   beforeEach(() => {
     listAppsMock = jest.fn(
       () =>
