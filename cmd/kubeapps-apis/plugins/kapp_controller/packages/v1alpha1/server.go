@@ -39,20 +39,21 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type clientGetter func(context.Context) (dynamic.Interface, error)
+type clientGetter func(context.Context, string) (dynamic.Interface, error)
 
 const (
-	packagingGroup = "packaging.carvel.dev"
 
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
+	packageGroup     = "data.packaging.carvel.dev"
 	packageVersion   = "v1alpha1"
-	packageResource  = "PackageInstall"
-	packagesResource = "packageinstalls"
+	packageResource  = "Package"
+	packagesResource = "packages"
 
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
-	installPackageVersion = "v1alpha1"
-	repositoryResource    = "PackageRepository"
-	repositoriesResource  = "packagerepositories"
+	repositoryGroup      = "packaging.carvel.dev"
+	repositoryVersion    = "v1alpha1"
+	repositoryResource   = "PackageRepository"
+	repositoriesResource = "packagerepositories"
 
 	globalPackagingNamespace = "kapp-controller-packaging-global"
 )
@@ -73,13 +74,10 @@ type Server struct {
 // the k8s client config.
 func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 	return &Server{
-		clientGetter: func(ctx context.Context) (dynamic.Interface, error) {
+		clientGetter: func(ctx context.Context, cluster string) (dynamic.Interface, error) {
 			if configGetter == nil {
 				return nil, status.Errorf(codes.Internal, "configGetter arg required")
 			}
-			// The Kapp Controller plugin currently supports interactions with
-			// the default (kubeapps) cluster only:
-			cluster := ""
 			config, err := configGetter(ctx, cluster)
 			if err != nil {
 				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
@@ -94,11 +92,11 @@ func NewServer(configGetter server.KubernetesConfigGetter) *Server {
 }
 
 // getDynamicClient returns a dynamic k8s client.
-func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
+func (s *Server) getDynamicClient(ctx context.Context, cluster string) (dynamic.Interface, error) {
 	if s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	dynamicClient, err := s.clientGetter(ctx)
+	dynamicClient, err := s.clientGetter(ctx, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
@@ -107,22 +105,16 @@ func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
-	log.Infof("+kapp_controller GetAvailablePackageSummaries %s", contextMsg)
-
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
+	log.Infof("+kapp_controller GetAvailablePackageSummaries (cluster=%q, namespace:%q)", cluster, namespace)
 
-	if cluster != "" {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
-	}
-
-	client, err := s.getDynamicClient(ctx)
+	client, err := s.getDynamicClient(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	packageResource := schema.GroupVersionResource{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}
+	packageResource := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packagesResource}
 
 	pkgs, err := client.Resource(packageResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -146,16 +138,16 @@ func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*co
 	pkg := &corev1.AvailablePackageSummary{}
 
 	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-	name, found, err := unstructured.NestedString(ap.Object, "spec", "packageRef", "refName")
-	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field spec.packageRef.refName not found on kapp-controller package: %v:\n%v", err, ap.Object)
+	name, found, err := unstructured.NestedString(ap.Object, "spec", "refName")
+	if err != nil || !found || name == "" {
+		return nil, status.Errorf(codes.Internal, "required field spec.refName not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
 	pkg.DisplayName = name
 
 	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-	version, found, err := unstructured.NestedString(ap.Object, "status", "version")
+	version, found, err := unstructured.NestedString(ap.Object, "spec", "version")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field status.version not found on kapp-controller package: %v:\n%v", err, ap.Object)
+		return nil, status.Errorf(codes.Internal, "required field spec.version not found on kapp-controller package: %v:\n%v", err, ap.Object)
 	}
 	pkg.LatestVersion = &corev1.PackageAppVersion{PkgVersion: version}
 	return pkg, nil
@@ -163,28 +155,16 @@ func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*co
 
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
-	log.Infof("+kapp_controller GetPackageRepositories %s", contextMsg)
-
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
+	log.Infof("+kapp_controller GetPackageRepositories (cluster=%q, namespace=%q)", cluster, namespace)
 
-	if cluster != "" {
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: request.Context.Cluster: [%v]", request.Context.Cluster)
-	}
-
-	// If the request is for available packages on another cluster, we only
-	// return the global packages (ie. kubeapps namespace)
-	if cluster != "" && cluster != globalPackagingNamespace {
-		namespace = globalPackagingNamespace
-	}
-
-	client, err := s.getDynamicClient(ctx)
+	client, err := s.getDynamicClient(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	repositoryResource := schema.GroupVersionResource{Group: packagingGroup, Version: installPackageVersion, Resource: repositoriesResource}
+	repositoryResource := schema.GroupVersionResource{Group: repositoryGroup, Version: repositoryVersion, Resource: repositoriesResource}
 
 	// Currently checks globally. Update to handle namespaced requests (?)
 	repos, err := client.Resource(repositoryResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
