@@ -19,6 +19,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/action"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -166,25 +167,19 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			request.GetPaginationOptions().GetPageToken(), err)
 	}
 
-	if s.cache == nil {
-		return nil, status.Errorf(
-			codes.FailedPrecondition,
-			"server cache has not been properly initialized")
-	}
-
-	repos, err := s.cache.listKeys(request.GetFilterOptions().GetRepositories())
+	charts, err := s.getChartsForRepos(ctx, request.GetFilterOptions().GetRepositories())
 	if err != nil {
 		return nil, err
 	}
 
-	cachedCharts, err := s.cache.fetchForMultiple(repos)
+	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), pageSize, pageOffset, charts)
 	if err != nil {
 		return nil, err
 	}
 
-	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), pageSize, pageOffset, cachedCharts)
-	if err != nil {
-		return nil, err
+	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	for _, summary := range packageSummaries {
+		summary.AvailablePackageRef.Context.Cluster = s.kubeappsCluster
 	}
 
 	// Only return a next page token if the request was for pagination and
@@ -218,34 +213,37 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
 	}
 
+	cluster := packageRef.Context.Cluster
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.AvailablePackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
 	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 	packageIdParts := strings.Split(unescapedChartID, "/")
 
-	// check if the repo has been indexed, stored in the cache and requested
-	// package is part of it. Otherwise, there is a time window when this scenario can happen:
-	// - GetAvailablePackageSummaries() may return {} while a ready repo is being indexed
-	//   and said index is cached BUT
-	// - GetAvailablePackageDetail() may return full package detail for one of the packages
-	// in the repo
-	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
-	ok, err := s.repoExistsInCache(name)
+	// check specified repo exists and is in ready state
+	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
+
+	// this verifies that the repo exists
+	repoUnstructured, err := s.getRepoInCluster(ctx, repo)
 	if err != nil {
 		return nil, err
-	} else if !ok {
-		return nil, status.Errorf(codes.NotFound, "no fully indexed repository [%s] has been found", name)
 	}
 
-	tarUrl, err, cleanUp := s.getChartTarball(ctx, packageIdParts[0], packageIdParts[1], packageRef.Context.Namespace, request.PkgVersion)
+	tarUrl, err, cleanUp := s.getChartTarball(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
 	if cleanUp != nil {
 		defer cleanUp()
 	}
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
+	log.V(4).Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
 
 	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, tarUrl)
 	if err != nil {
@@ -253,12 +251,14 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 
 	// fix up a couple of fields that don't come from the chart tarball
-	repoUrl, err := s.getRepoUrl(ctx, name)
-	if err != nil {
-		return nil, err
+	repoUrl, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repo)
 	}
 	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
+	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	pkgDetail.AvailablePackageRef.Context.Cluster = s.kubeappsCluster
 
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: pkgDetail,
@@ -282,6 +282,14 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
 	}
 
+	cluster := packageRef.Context.Cluster
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.AvailablePackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
 	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
@@ -290,7 +298,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
 	packageIdParts := strings.Split(unescapedChartID, "/")
 	repo := types.NamespacedName{Namespace: namespace, Name: packageIdParts[0]}
-	chart, err := s.fetchChartFromCache(repo, packageIdParts[1])
+	chart, err := s.getChart(ctx, repo, packageIdParts[1])
 	if err != nil {
 		return nil, err
 	} else if chart != nil {
@@ -313,6 +321,14 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			codes.InvalidArgument,
 			"unable to intepret page token %q: %v",
 			request.GetPaginationOptions().GetPageToken(), err)
+	}
+
+	cluster := request.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.Context.Cluster: [%v]",
+			cluster)
 	}
 
 	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
@@ -348,6 +364,14 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "InstalledPackageReference is missing required 'namespace' field")
 	}
 
+	cluster := packageRef.Context.GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.InstalledPackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
 	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
 	pkgDetail, err := s.installedPackageDetail(ctx, name)
 	if err != nil {
@@ -366,13 +390,24 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
+	packageRef := request.AvailablePackageRef
+	if packageRef.GetContext().GetNamespace() == "" || packageRef.GetIdentifier() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+	}
+	cluster := packageRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.AvailablePackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
 	if request.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
 	if request.TargetContext == nil || request.TargetContext.Namespace == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
 	}
-	cluster := request.GetTargetContext().GetCluster()
+	cluster = request.TargetContext.GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
@@ -405,9 +440,18 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 
+	installedPackageRef := request.InstalledPackageRef
+	cluster := installedPackageRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.installedPackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
 	if installedRef, err := s.updateRelease(
 		ctx,
-		request.InstalledPackageRef,
+		installedPackageRef,
 		request.PkgVersionReference,
 		request.ReconciliationOptions,
 		request.Values); err != nil {
@@ -422,6 +466,19 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 // DeleteInstalledPackage deletes an installed package.
 func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
 	log.Infof("+fluxv2 DeleteInstalledPackage [%v]", request)
+
+	if request == nil || request.InstalledPackageRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+	}
+
+	installedPackageRef := request.InstalledPackageRef
+	cluster := installedPackageRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.installedPackageRef.Context.Cluster: [%v]",
+			cluster)
+	}
 
 	if err := s.deleteRelease(ctx, request.InstalledPackageRef); err != nil {
 		return nil, err

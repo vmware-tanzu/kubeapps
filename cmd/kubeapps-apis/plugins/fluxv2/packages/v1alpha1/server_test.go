@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	log "k8s.io/klog/v2"
 )
 
 const KubeappsCluster = "default"
@@ -164,13 +165,19 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, err := newServerWithRepos(tc.repo)
+			s, mock, _, _, err := newServerWithRepos(tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = beforeCallGetAvailablePackageSummaries(mock, nil); err != nil {
-				t.Fatalf("%v", err)
+			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
+			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
+			s.cache.eventProcessedWaitGroup = nil
+			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
+				key := redisKeyForRuntimeObject(tc.repo)
+				if _, err := s.cache.fromKey(key); err == nil {
+					mock.ExpectGet(key).RedisNil()
+				}
 			}
 
 			response, err := s.GetAvailablePackageSummaries(
@@ -214,6 +221,7 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 
 	if clientGetter != nil {
 		mock.ExpectPing().SetVal("PONG")
+		mock.ExpectConfigGet("maxmemory").SetVal([]interface{}{"maxmemory", "1000000"})
 	}
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
@@ -238,6 +246,9 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 				continue
 			}
 			mock.ExpectSet(key, bytes, 0).SetVal("")
+			if log.V(4).Enabled() {
+				mock.ExpectInfo("memory").SetVal("used_memory_rss_human:N/A\r\nmaxmemory_human:N/A")
+			}
 		}
 	}
 

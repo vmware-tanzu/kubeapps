@@ -308,7 +308,7 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts ServeO
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
 	return func(ctx context.Context, cluster string) (*rest.Config, error) {
-		log.Infof("+clientGetter.GetClient")
+		log.V(4).Infof("+clientGetter.GetClient")
 		var err error
 		token, err := extractToken(ctx)
 		if err != nil {

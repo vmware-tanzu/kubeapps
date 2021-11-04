@@ -543,7 +543,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			defer ts.Close()
 
 			runtimeObjs = append(runtimeObjs, repo)
-			s, mock, _, err := newServerWithRepos(runtimeObjs...)
+			s, mock, _, _, err := newServerWithRepos(runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1002,6 +1002,7 @@ func installedRef(id, namespace string) *corev1.InstalledPackageReference {
 	return &corev1.InstalledPackageReference{
 		Context: &corev1.Context{
 			Namespace: namespace,
+			Cluster:   KubeappsCluster,
 		},
 		Identifier: id,
 		Plugin:     fluxPlugin,

@@ -98,9 +98,6 @@ func newCache(config cacheConfig) (*NamespacedResourceWatcherCache, error) {
 		return nil, err
 	}
 
-	// TODO (gfichtenholt) do not log plain text password
-	log.Infof("newCache: redis addr: [%s], password: [%s], DB=[%d]", REDIS_ADDR, REDIS_PASSWORD, REDIS_DB_NUM)
-
 	return newCacheWithRedisClient(
 		config,
 		redis.NewClient(&redis.Options{
@@ -112,7 +109,7 @@ func newCache(config cacheConfig) (*NamespacedResourceWatcherCache, error) {
 }
 
 func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGroup *sync.WaitGroup) (*NamespacedResourceWatcherCache, error) {
-	log.Infof("+newCacheWithRedisClient")
+	log.Infof("+newCacheWithRedisClient(%v)", redisCli)
 
 	if redisCli == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
@@ -126,7 +123,13 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
 		return nil, err
 	} else {
-		log.Infof("[PING] -> [%s]", pong)
+		log.Infof("Redis [PING] -> [%s]", pong)
+	}
+
+	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
+		return nil, err
+	} else if len(maxmemory) > 1 {
+		log.Infof("Redis config maxmemory: %v", maxmemory[1])
 	}
 
 	c := NamespacedResourceWatcherCache{
@@ -160,6 +163,10 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	return &c, nil
 }
 
+// note that I am not using pointer receivers on any the methods, because none
+// of them need to modify the ResourceWatcherCache internal state.
+// see https://golang.org/doc/faq#methods_on_values_or_pointers
+
 func (c NamespacedResourceWatcherCache) isGvrValid() error {
 	if c.config.gvr.Empty() {
 		return status.Errorf(codes.FailedPrecondition, "server configured with empty GVR")
@@ -186,10 +193,6 @@ func (c NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 	return status.Errorf(codes.FailedPrecondition, "CRD [%s] is not valid", c.config.gvr)
 }
-
-// note that I am not using pointer receivers on any the methods, because none
-// of them need to modify the ResourceWatcherCache internal state.
-// see https://golang.org/doc/faq#methods_on_values_or_pointers
 
 func (c NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
 	for {
@@ -358,12 +361,17 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 
 	if setVal {
 		// Zero expiration means the key has no expiration time.
+		// However, cache entries may be evicted by redis in order to make room for new ones,
+		// if redis is limited by maxmemory constraint
 		err = c.redisCli.Set(c.redisCli.Context(), key, value, 0).Err()
 		if err != nil {
 			log.Errorf("Failed to set value for object with key [%s] in cache due to: %v", key, err)
 			return err
 		} else {
-			log.V(4).Infof("Set value for key [%s] in cache", key)
+			if log.V(4).Enabled() {
+				usedMemory, totalMemory := c.memoryStats()
+				log.V(4).Infof("Set value for key [%s] in cache. Redis memory usage: [%s/%s]", key, usedMemory, totalMemory)
+			}
 		}
 	}
 	return nil
@@ -396,13 +404,14 @@ func (c NamespacedResourceWatcherCache) onDelete(unstructuredObj map[string]inte
 			return err
 		}
 	}
-
 	return nil
 }
 
 // this is effectively a cache GET operation
 func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
-	// read back from cache: should be what we previously wrote or Redis.Nil
+	log.Infof("+fectchForOne(%s)", key)
+	// read back from cache: should be either what we previously wrote or Redis.Nil if the key does
+	// not exist or has been evicted due to memory pressure/TTL expiry
 	// TODO (gfichtenholt) See if there might be a cleaner way than to have onGet() take []byte as
 	// a 2nd argument. In theory, I would have liked to pass in an interface{}, just like onAdd/onModify.
 	// The limitation here is caused by the fact that redis go client does not offer a
@@ -428,52 +437,13 @@ func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, er
 	return val, nil
 }
 
-// return all keys, optionally matching a given filter (repository list)
-// currently we're caching the index of a repo using the repo name as the key
-func (c NamespacedResourceWatcherCache) listKeys(filters []string) ([]string, error) {
-	// see https://github.com/redis/redis/issues/3627:
-	// 1) we don't want to use KEYS command
-	// 2) match pattern does not support 'OR'
-	// 3) simulate a HashSet in go to make sure we have no duplicates, as SCAN may
-	// return duplicates
-	redisKeys := map[string]struct{}{}
-	match := []string{""} // everything by default
-
-	if len(filters) > 0 {
-		match = make([]string, len(filters))
-		for i, f := range filters {
-			match[i] = fmt.Sprintf("%s:*:%s", c.config.gvr.Resource, f)
-		}
-	}
-
-	for _, m := range match {
-		// https://redis.io/commands/scan An iteration starts when the cursor is set to 0,
-		// and terminates when the cursor returned by the server is 0
-		cursor := uint64(0)
-		for {
-			// glob-style pattern, you can use https://www.digitalocean.com/community/tools/glob to test
-			keys, cursor, err := c.redisCli.Scan(c.redisCli.Context(), cursor, m, 0).Result()
-			if err != nil {
-				return nil, err
-			}
-			log.V(4).Infof("listKeys: SCAN returned keys: %s, cursor: [%d]", keys, cursor)
-			for _, key := range keys {
-				redisKeys[key] = struct{}{}
-			}
-			if cursor == 0 {
-				break
-			}
-		}
-	}
-
-	resultKeys := make([]string, len(redisKeys))
-	i := 0
-	for k := range redisKeys {
-		resultKeys[i] = k
-		i++
-	}
-	return resultKeys, nil
-}
+// it is worth noting that a method such as
+//   func (c NamespacedResourceWatcherCache) listKeys(filters []string) ([]string, error)
+// has proven to be of no use today. The problem is that such function
+// only returns the set of keys in the cache at this moment in time, which maybe a subset
+// of all existing keys (due to memory pressure and eviction policies) and therefore cannot
+// be relied upon to be the "source-of-truth". So I removed it for now as I found it
+// of no use
 
 func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interface{}, error) {
 	response := make(map[string]interface{})
@@ -481,8 +451,9 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 		result, err := c.fetchForOne(key)
 		if err != nil {
 			return nil, err
+		} else {
+			response[key] = result
 		}
-		response[key] = result
 	}
 	return response, nil
 }
@@ -509,10 +480,7 @@ func (c NamespacedResourceWatcherCache) keyForNamespacedName(name types.Namespac
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, ":")
-	if len(parts) != 3 {
-		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
-	}
-	if parts[0] != c.config.gvr.Resource {
+	if len(parts) != 3 || parts[0] != c.config.gvr.Resource || len(parts[1]) == 0 || len(parts[1]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
@@ -555,4 +523,24 @@ func (c NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstru
 	}()
 
 	wg.Wait()
+}
+
+func (c NamespacedResourceWatcherCache) memoryStats() (used, total string) {
+	used, total = "?", "?"
+	// ref: https://redis.io/commands/info
+	if meminfo, err := c.redisCli.Info(c.redisCli.Context(), "memory").Result(); err == nil {
+		for _, l := range strings.Split(meminfo, "\r\n") {
+			if used == "?" && strings.HasPrefix(l, "used_memory_rss_human:") {
+				used = strings.Split(l, ":")[1]
+			} else if total == "?" && strings.HasPrefix(l, "maxmemory_human:") {
+				total = strings.Split(l, ":")[1]
+			}
+			if used != "?" && total != "?" {
+				break
+			}
+		}
+	} else {
+		log.Infof("Failed to get redis memory stats due to: %v", err)
+	}
+	return used, total
 }

@@ -111,7 +111,9 @@ kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 and then curling or grpcurling in another:
 
 ```bash
-$ curl -s http://localhost:8080/plugins/fluxv2/packages/v1alpha1/packagerepositories | jq .
+# TOKEN value comes from the k8s secret associated with the service account of the user on behalf of which the call below is made 
+$ export TOKEN="Bearer eyJhbGciO..."
+$ curl -s http://localhost:8080/plugins/fluxv2/packages/v1alpha1/packagerepositories?context.cluster=default -H "Authorization: $TOKEN" | jq .
 {
   "repositories": [
     {
@@ -130,6 +132,50 @@ $ curl -s http://localhost:8080/plugins/kapp_controller/packages/v1alpha1/packag
       "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
     }
   ]
+}
+```
+
+Here is an example that shows how to use grpcurl to get the details on package "bitnami/apache" from helm plugin
+```bash
+$ export token="Bearer eyJhbGciO..."
+$ grpcurl -plaintext -d '{"available_package_ref": {"context": {"cluster": "default", "namespace": "kubeapps"}, "plugin": {"name": "helm.packages", "version": "v1alpha1"}, "identifier": "bitnami/apache"}}' -H "Authorization: $token" localhost:8080 kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageDetail
+{
+  "availablePackageDetail": {
+    "availablePackageRef": {
+      "context": {
+        "namespace": "kubeapps"
+      },
+      "identifier": "bitnami/apache",
+      "plugin": {
+        "name": "helm.packages",
+        "version": "v1alpha1"
+      }
+    },
+    "name": "apache",
+    "version": {
+      "pkgVersion": "8.8.6",
+      "appVersion": "2.4.51"
+    },
+    "repoUrl": "https://charts.bitnami.com/bitnami",
+    "homeUrl": "https://github.com/bitnami/charts/tree/master/bitnami/apache",
+    "iconUrl": "https://bitnami.com/assets/stacks/apache/img/apache-stack-220x234.png",
+    "displayName": "apache",
+    "shortDescription": "Chart for Apache HTTP Server",
+    "readme": "...",
+    "sourceUrls": [
+      "https://github.com/bitnami/bitnami-docker-apache",
+      "https://httpd.apache.org"
+    ],
+    "maintainers": [
+      {
+        "name": "Bitnami",
+        "email": "containers@bitnami.com"
+      }
+    ],
+    "categories": [
+      "Infrastructure"
+    ]
+  }
 }
 ```
 
