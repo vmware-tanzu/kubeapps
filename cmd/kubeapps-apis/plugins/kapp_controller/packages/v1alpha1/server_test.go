@@ -45,18 +45,18 @@ func TestGetClient(t *testing.T) {
 		},
 		{
 			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
+			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
 				return nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
 		{
 			name: "returns client without error when configured correctly",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
+			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
 				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
 				), nil
 			},
@@ -67,7 +67,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			dynamicClient, err := s.getDynamicClient(context.Background())
+			dynamicClient, err := s.getDynamicClient(context.Background(), "default")
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
@@ -91,15 +91,16 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		statusCode   codes.Code
 	}{
 		{
-			name: "returns an internal error status if response does not contain packageRef.refName",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
+			name: "returns an internal error status if response does not contain spec.refName",
+			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
 				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec("1.2.3", map[string]interface{}{
-						"packageRef": map[string]interface{}{},
+					packageFromSpec(map[string]interface{}{
+						"refName": "",
+						"version": "1.2.3",
 					}, t),
 				), nil
 			},
@@ -107,16 +108,14 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns an internal error status if response does not contain version",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
+			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
 				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec(nil, map[string]interface{}{
-						"packageRef": map[string]interface{}{
-							"refName": "someName",
-						},
+					packageFromSpec(map[string]interface{}{
+						"refName": "someName",
 					}, t),
 				), nil
 			},
@@ -124,16 +123,15 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		},
 		{
 			name: "returns OK status if items contain required fields",
-			clientGetter: func(context.Context) (dynamic.Interface, error) {
+			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
 				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 					runtime.NewScheme(),
 					map[schema.GroupVersionResource]string{
-						{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 					},
-					packageFromSpec("1.2.3", map[string]interface{}{
-						"packageRef": map[string]interface{}{
-							"refName": "someName",
-						},
+					packageFromSpec(map[string]interface{}{
+						"refName": "someName",
+						"version": "1.2.3",
 					}, t),
 				), nil
 			},
@@ -159,22 +157,23 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 }
 
-func packageFromSpec(version interface{}, spec map[string]interface{}, t *testing.T) *unstructured.Unstructured {
-	pkgRef, ok := spec["packageRef"].(map[string]interface{})
+func packageFromSpec(spec map[string]interface{}, t *testing.T) *unstructured.Unstructured {
+	refName, ok := spec["refName"].(string)
 	if !ok {
-		t.Fatalf("unable to convert %+v to a map[string]interface{}", spec["packageRef"])
+		t.Fatalf("unable to convert %+v to a string", spec["refName"])
+	}
+	version, ok := spec["version"].(string)
+	if !ok {
+		version = ""
 	}
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, packageVersion),
+			"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
 			"kind":       packageResource,
 			"metadata": map[string]interface{}{
-				"name": fmt.Sprintf("%s.%s", pkgRef["refName"], version),
+				"name": fmt.Sprintf("%s.%s", refName, version),
 			},
 			"spec": spec,
-			"status": map[string]interface{}{
-				"version": version,
-			},
 		},
 	}
 }
@@ -186,7 +185,7 @@ func packagesFromSpecs(specs []map[string]interface{}, t *testing.T) []runtime.O
 		if !ok {
 			t.Fatalf("unable to convert %+v to a map[string]interface{}", s["spec"])
 		}
-		pkgs = append(pkgs, packageFromSpec(s["version"], pkgSpec, t))
+		pkgs = append(pkgs, packageFromSpec(pkgSpec, t))
 	}
 	return pkgs
 }
@@ -202,19 +201,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			packageSpecs: []map[string]interface{}{
 				{
 					"spec": map[string]interface{}{
-						"packageRef": map[string]interface{}{
-							"refName": "tetris.foo.example.com",
-						},
+						"refName": "tetris.foo.example.com",
+						"version": "1.2.3",
 					},
-					"version": "1.2.3",
 				},
 				{
 					"spec": map[string]interface{}{
-						"packageRef": map[string]interface{}{
-							"refName": "another.foo.example.com",
-						},
+						"refName": "another.foo.example.com",
+						"version": "1.2.5",
 					},
-					"version": "1.2.5",
 				},
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
@@ -234,11 +229,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pkgs := packagesFromSpecs(tc.packageSpecs, t)
 			s := Server{
-				clientGetter: func(context.Context) (dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (dynamic.Interface, error) {
 					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: packagingGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+							{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
 						},
 						pkgs...,
 					), nil
@@ -262,7 +257,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 func repositoryFromSpec(name string, spec map[string]interface{}) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", packagingGroup, installPackageVersion),
+			"apiVersion": fmt.Sprintf("%s/%s", repositoryGroup, repositoryVersion),
 			"kind":       repositoryResource,
 			"metadata": map[string]interface{}{
 				"name":      name,
@@ -341,11 +336,11 @@ func TestGetPackageRepositories(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{
-				clientGetter: func(context.Context) (dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (dynamic.Interface, error) {
 					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: packagingGroup, Version: installPackageVersion, Resource: repositoriesResource}: "PackageRepositoryList",
+							{Group: repositoryGroup, Version: repositoryVersion, Resource: repositoriesResource}: "PackageRepositoryList",
 						},
 						repositoriesFromSpecs(tc.repoSpecs)...,
 					), nil
@@ -355,7 +350,7 @@ func TestGetPackageRepositories(t *testing.T) {
 			response, err := s.GetPackageRepositories(context.Background(), &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}})
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+				t.Fatalf("got: %+v, want: %+v, err: %+v, response: %+v", got, want, err, response)
 			}
 
 			// Only check the response for OK status.
