@@ -1706,11 +1706,13 @@ func TestParsePluginConfig(t *testing.T) {
 		name                    string
 		pluginYAMLConf          string
 		exp_versions_in_summary VersionsInSummary
+		exp_status_code         codes.Code
 	}{
 		{
 			name:                    "empty plugin config",
 			pluginYAMLConf:          ``,
 			exp_versions_in_summary: VersionsInSummary{0, 0, 0},
+			exp_status_code:         codes.OK,
 		},
 		{
 			name: "non-default plugin config",
@@ -1724,6 +1726,7 @@ core:
         patch: 1
       `,
 			exp_versions_in_summary: VersionsInSummary{4, 2, 1},
+			exp_status_code:         codes.OK,
 		},
 		{
 			name: "partial params in plugin config",
@@ -1735,6 +1738,21 @@ core:
         major: 1
         `,
 			exp_versions_in_summary: VersionsInSummary{1, 0, 0},
+			exp_status_code:         codes.OK,
+		},
+		{
+			name: "invalid plugin config",
+			pluginYAMLConf: `
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1-IFC-123
+      `,
+			exp_versions_in_summary: VersionsInSummary{},
+			exp_status_code:         codes.InvalidArgument,
 		},
 	}
 	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
@@ -1755,7 +1773,13 @@ core:
 			if err := f.Close(); err != nil {
 				log.Fatalf("%s", err)
 			}
-			if got, want := parsePluginConfig(f.Name()), tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+			versions_in_summary, goterr := parsePluginConfig(f.Name())
+
+			if got, want := status.Code(goterr), tc.exp_status_code; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})
