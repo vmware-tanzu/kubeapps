@@ -102,13 +102,6 @@ export function getApp(
       // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
 
-      // Not all plugins (flux) are cluster aware.
-      if (
-        installedPackageDetail &&
-        !installedPackageDetail?.installedPackageRef?.context?.cluster
-      ) {
-        installedPackageDetail.installedPackageRef = installedPackageRef;
-      }
       // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
       let availablePackageDetail;
@@ -164,14 +157,6 @@ export function fetchApps(
     try {
       const res = await App.GetInstalledPackageSummaries(cluster, namespace);
       installedPackageSummaries = res?.installedPackageSummaries;
-
-      // Some plugins are not cluster aware, so initialize the cluster.
-      // TODO(minelson) Let's just ensure all plugins send the cluster even if
-      // they don't support multicluster?
-      installedPackageSummaries = installedPackageSummaries.map(pkg => {
-        pkg.installedPackageRef!.context!.cluster = cluster;
-        return pkg;
-      });
 
       dispatch(receiveAppList(installedPackageSummaries));
       return installedPackageSummaries;

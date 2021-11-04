@@ -78,37 +78,6 @@ describe("fetches applications", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
   });
-  it("fetches applications, updating cluster since some plugins don't return it", async () => {
-    installedPackageSummaries = [
-      {
-        ...validInstalledPackageSummary,
-        installedPackageRef: {
-          ...validInstalledPackageSummary.installedPackageRef!,
-          context: {
-            namespace: validInstalledPackageSummary.installedPackageRef!.context!.namespace,
-            cluster: "other",
-          },
-        },
-      },
-    ];
-    const expectedActions = [
-      {
-        type: getType(actions.apps.listApps),
-        payload: undefined,
-        meta: undefined,
-        error: undefined,
-      },
-      {
-        type: getType(actions.apps.receiveAppList),
-        payload: [validInstalledPackageSummary],
-        meta: undefined,
-        error: undefined,
-      },
-    ];
-    await store.dispatch(actions.apps.fetchApps("second-cluster", "default"));
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(listAppsMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
-  });
 });
 
 describe("delete applications", () => {
