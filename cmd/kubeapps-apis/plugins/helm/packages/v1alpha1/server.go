@@ -89,7 +89,7 @@ type Server struct {
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) VersionsInSummary {
+func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, error) {
 
 	// Note at present VersionsInSummary is the only configurable option for this plugin,
 	// and if required this func can be enhaned to return helmConfig struct
@@ -111,17 +111,15 @@ func parsePluginConfig(pluginConfigPath string) VersionsInSummary {
 	if err != nil {
 		// return default value of VersionsInSummary
 		return VersionsInSummary{MajorVersionsInSummary,
-			MinorVersionsInSummary, PatchVersionsInSummary}
+			MinorVersionsInSummary, PatchVersionsInSummary}, nil
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		// return default value of VersionsInSummary
-		return VersionsInSummary{MajorVersionsInSummary,
-			MinorVersionsInSummary, PatchVersionsInSummary}
+		return VersionsInSummary{}, status.Errorf(codes.InvalidArgument, "plugin-config-path: %s error: %v", string(pluginConfig), err)
 	}
 
 	// return configured value of VersionsInSummary
-	return config.Core.Packages.V1alpha1.VersionsInSummary
+	return config.Core.Packages.V1alpha1.VersionsInSummary, nil
 
 }
 
@@ -145,7 +143,10 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 		log.Fatalf("%s", err)
 	}
 
-	versionsInSummary := parsePluginConfig(pluginConfigPath)
+	versionsInSummary, err := parsePluginConfig(pluginConfigPath)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 	log.Infof("NewServer: versionsInSummary %v\n", versionsInSummary)
 
 	return &Server{
