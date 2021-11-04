@@ -14,10 +14,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -33,8 +36,6 @@ import (
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080, e.g.
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
-//    Didn't want to spend cycles writing port-forwarding code programmatically like https://github.com/anthhub/forwarder
-//    at this point.
 // 3) run './kind-cluster-setup.sh deploy' once prior to these tests
 
 const (
@@ -378,8 +379,162 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 // kubeapps via "helm upgrade"
 //
 func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *testing.T) {
-	_ = checkEnv(t)
-	// TODO
+	fluxPlugin := checkEnv(t)
+	stopChan, readyChan := make(chan struct{}, 1), make(chan struct{}, 1)
+	go func() {
+		if err := kubePortForwardToRedis(t, stopChan, readyChan); err != nil {
+			t.Errorf("%+v", err)
+		}
+	}()
+	// this will wait until port-forwarding is set up
+	<-readyChan
+	// this will stop the port forwarding
+	t.Cleanup(func() { close(stopChan) })
+	redisPwd, err := kubeGetSecret(t, "kubeapps", "kubeapps-redis", "redis-password")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	redisCli := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: redisPwd,
+		DB:       0,
+	})
+	t.Logf("redisCli = %s", redisCli)
+	maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result()
+	if err != nil {
+		t.Fatalf("%v", err)
+	} else {
+		currentMaxMemory := fmt.Sprintf("%v", maxmemory[1])
+		t.Logf("Current maxmemory = [%s]", currentMaxMemory)
+		// this is to restore values after the test is done
+		t.Cleanup(func() {
+			t.Logf("Resetting maxmemory back to [%s]", currentMaxMemory)
+			if err = redisCli.ConfigSet(redisCli.Context(), "maxmemory", currentMaxMemory).Err(); err != nil {
+				t.Logf("%v", err)
+			}
+		})
+	}
+	maxmemoryPolicy, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory-policy").Result()
+	if err != nil {
+		t.Fatalf("%v", err)
+	} else {
+		currentMaxMemoryPolicy := fmt.Sprintf("%v", maxmemoryPolicy[1])
+		t.Logf("Current maxmemory policy = [%s]", currentMaxMemoryPolicy)
+		// this is to restore values after the test is done
+		t.Cleanup(func() {
+			t.Logf("Resetting maxmemory-policy back to [%s]", currentMaxMemoryPolicy)
+			if err = redisCli.ConfigSet(redisCli.Context(), "maxmemory-policy", currentMaxMemoryPolicy).Err(); err != nil {
+				t.Logf("%v", err)
+			}
+		})
+	}
+	if err = redisCli.ConfigSet(redisCli.Context(), "maxmemory", "10mb").Err(); err != nil {
+		t.Fatalf("%v", err)
+	}
+	if err = redisCli.ConfigSet(redisCli.Context(), "maxmemory-policy", "allkeys-lru").Err(); err != nil {
+		t.Fatalf("%v", err)
+	}
+	// ref https://redis.io/topics/notifications
+	if err = redisCli.ConfigSet(redisCli.Context(), "notify-keyspace-events", "EA").Err(); err != nil {
+		t.Fatalf("%v", err)
+	}
+	t.Cleanup(func() {
+		t.Logf("Resetting notify-keyspace-events")
+		if err = redisCli.ConfigSet(redisCli.Context(), "notify-keyspace-events", "").Err(); err != nil {
+			t.Logf("%v", err)
+		}
+	})
+
+	// ref https://medium.com/nerd-for-tech/redis-getting-notified-when-a-key-is-expired-or-changed-ca3e1f1c7f0a
+	subscribe := redisCli.PSubscribe(redisCli.Context(), "__keyevent@0__:set")
+	ch := subscribe.Channel()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// now load some large repos (bitnami)
+	// I didn't want to store a large (10MB) copy of bitnami repo in our git, so for now let it fetch from bitnami website
+	for i := range []int{1, 2, 3, 4} {
+		repo := fmt.Sprintf("bitnami-%d", i)
+		if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
+			t.Fatalf("%v", err)
+		}
+		t.Cleanup(func() {
+			if err = kubeDeleteHelmRepository(t, repo, "default"); err != nil {
+				t.Logf("%v", err)
+			}
+		})
+		time.Sleep(1 * time.Second)
+	}
+
+	expected := make(map[string]struct{})
+	for i := range []int{1, 2, 3, 4} {
+		repo := fmt.Sprintf("helmrepositories:default:bitnami-%d", i)
+		expected[repo] = struct{}{}
+	}
+
+	go func() {
+		// need to wait until the plug-in has indexed all 4 repos in the background
+		t.Logf("Waiting for events from Redis now...")
+		for {
+			event, ok := <-ch
+			if !ok {
+				// let the user retry
+				t.Errorf("Redis publish channel was closed")
+				break
+			}
+			t.Logf("Redis event: Channel: [%v], Payload: [%v]", event.Channel, event.Payload)
+			if event.Channel == "__keyevent@0__:set" {
+				delete(expected, event.Payload)
+			}
+			if len(expected) == 0 {
+				wg.Done()
+				break
+			}
+		}
+	}()
+
+	// wait until all repos have been indexed and cached
+	// TODO: (gfichtenholt) if this malfunctions it will hang the test forever
+	// Potential fix is to wait with a timeout
+	// ref https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait/32840688#32840688
+	wg.Wait()
+	subscribe.Close()
+
+	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+		t.Fatalf("%v", err)
+	} else {
+		// the cache is only big enough to be able to hold 3 out of the 4 keys
+		if len(keys) != 3 {
+			t.Fatalf("Expected 3 keys in cache but got [%s]", keys)
+		}
+	}
+
+	// not realted to low laxmemory but as long as we are here might as well check this
+	_, err = fluxPlugin.GetAvailablePackageSummaries(context.TODO(), &corev1.GetAvailablePackageSummariesRequest{})
+	if err == nil || status.Code(err) != codes.Unauthenticated {
+		t.Fatalf("Expected Unauthenticated, got %v", err)
+	}
+
+	grpcContext := newGrpcContext(t, "test-create-admin")
+	resp, err := fluxPlugin.GetAvailablePackageSummaries(grpcContext, &corev1.GetAvailablePackageSummariesRequest{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	// we need to make sure that response contains packages from all 4 repositories
+	expected = make(map[string]struct{})
+	for i := range []int{1, 2, 3, 4} {
+		repo := fmt.Sprintf("bitnami-%d", i)
+		expected[repo] = struct{}{}
+	}
+	for _, s := range resp.AvailablePackageSummaries {
+		id := strings.Split(s.AvailablePackageRef.Identifier, "/")
+		delete(expected, id[0])
+	}
+
+	if len(expected) > 0 {
+		t.Fatalf("Expected to get packages from these repositories: %s, but did not get any", expected)
+	}
 }
 
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {

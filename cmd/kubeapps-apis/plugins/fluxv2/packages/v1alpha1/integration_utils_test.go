@@ -13,9 +13,13 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -36,6 +40,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
 )
 
 const (
@@ -316,7 +322,7 @@ func kubeCreateNamespace(t *testing.T, namespace string) error {
 	t.Logf("+kubeCreateNamespace(%s)", namespace)
 	if typedClient, err := kubeGetTypedClient(); err != nil {
 		return err
-	} else if typedClient.CoreV1().Namespaces().Create(
+	} else if _, err = typedClient.CoreV1().Namespaces().Create(
 		context.TODO(),
 		&kubecorev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -333,11 +339,62 @@ func kubeDeleteNamespace(t *testing.T, namespace string) error {
 	t.Logf("+kubeDeleteNamespace(%s)", namespace)
 	if typedClient, err := kubeGetTypedClient(); err != nil {
 		return err
-	} else if typedClient.CoreV1().Namespaces().Delete(
+	} else if err = typedClient.CoreV1().Namespaces().Delete(
 		context.TODO(),
 		namespace,
 		metav1.DeleteOptions{}); err != nil {
 		return err
+	}
+	return nil
+}
+
+func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error) {
+	t.Logf("+kubeGetSecret(%s, %s, %s)", namespace, name, dataKey)
+	if typedClient, err := kubeGetTypedClient(); err != nil {
+		return "", err
+	} else if secret, err := typedClient.CoreV1().Secrets(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{}); err != nil {
+		return "", err
+	} else {
+		token := secret.Data[dataKey]
+		if token == nil {
+			return "", errors.New("No data found")
+		}
+		return string(token), nil
+	}
+}
+
+func kubePortForwardToRedis(t *testing.T, stopChan <-chan struct{}, readyChan chan struct{}) error {
+	t.Logf("+kubePortForwardToRedis")
+	// ref https://github.com/kubernetes/client-go/issues/51
+	if config, err := restConfig(); err != nil {
+		return err
+	} else if roundTripper, upgrader, err := spdy.RoundTripperFor(config); err != nil {
+		return err
+	} else {
+		path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", "kubeapps", "kubeapps-redis-master-0")
+		hostIP := strings.TrimLeft(config.Host, "htps:/")
+		serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
+		dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
+		out, errOut := new(bytes.Buffer), new(bytes.Buffer)
+		if forwarder, err := portforward.New(dialer, []string{"6379"}, stopChan, readyChan, out, errOut); err != nil {
+			return err
+		} else {
+			go func() {
+				for range readyChan { // Kubernetes will close this channel when it has something to tell us.
+				}
+				if len(errOut.String()) != 0 {
+					t.Errorf("kubePortForwardToRedis: %s", errOut.String())
+				} else if len(out.String()) != 0 {
+					t.Logf("kubePortForwardToRedis: %s", out.String())
+				}
+			}()
+			if err = forwarder.ForwardPorts(); err != nil { // Locks until stopChan is closed.
+				return err
+			}
+		}
 	}
 	return nil
 }
