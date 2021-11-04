@@ -38,6 +38,7 @@ type ServeOptions struct {
 	Port                     int
 	PluginDirs               []string
 	ClustersConfigPath       string
+	PluginConfigPath         string
 	PinnipedProxyURL         string
 	UnsafeLocalDevKubeconfig bool
 }

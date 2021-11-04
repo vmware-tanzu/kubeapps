@@ -38,7 +38,8 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter, clustersConfig kube.ClustersConfig) (interface{}, error) {
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter,
+	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
 	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName)
 	if err != nil {

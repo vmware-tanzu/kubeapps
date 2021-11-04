@@ -75,6 +75,9 @@ spec:
             {{- if .Values.clusters }}
             - --clusters-config-path=/config/clusters.conf
             {{- end }}
+            {{- if .Values.kubeappsapis.pluginConfig }}
+            - --plugin-config-path=/config/kubeapps-apis/plugins.conf
+            {{- end }}
             {{- if .Values.pinnipedProxy.enabled }}
             - --pinniped-proxy-url=http://{{ template "kubeapps.pinniped-proxy.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.pinnipedProxy.containerPort }}
             {{- end }}
@@ -145,18 +148,27 @@ spec:
           {{- if .Values.kubeappsapis.resources }}
           resources: {{- toYaml .Values.kubeappsapis.resources | nindent 12 }}
           {{- end }}
-          {{- if .Values.clusters }}
           volumeMounts:
+          {{- if .Values.clusters }}
             - name: clusters-config
               mountPath: /config
             - name: ca-certs
               mountPath: /etc/additional-clusters-cafiles
           {{- end }}
-      {{- if .Values.clusters }}
+          {{- if .Values.kubeappsapis.pluginConfig }}
+            - name: plugins-config
+              mountPath: /config/kubeapps-apis
+          {{- end }}
       volumes:
+      {{- if .Values.clusters }}
         - name: clusters-config
           configMap:
             name: {{ template "kubeapps.clusters-config.fullname" . }}
         - name: ca-certs
           emptyDir: {}
+      {{- end }}
+      {{- if .Values.kubeappsapis.pluginConfig }}
+        - name: plugins-config
+          configMap:
+            name: {{ template "kubeapps.kubeappsapis.fullname" . }}-configmap
       {{- end }}

@@ -141,7 +141,7 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			pluginDetails = append(pluginDetails, pluginDetail)
 		}
 
-		if err = s.registerGRPC(p, pluginDetail, grpcReg, configGetter); err != nil {
+		if err = s.registerGRPC(p, pluginDetail, grpcReg, configGetter, serveOpts.PluginConfigPath); err != nil {
 			return nil, err
 		}
 
@@ -155,22 +155,23 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar, clientGetter KubernetesConfigGetter) error {
+func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar,
+	clientGetter KubernetesConfigGetter, pluginConfigPath string) error {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesConfigGetter, kube.ClustersConfig) (interface{}, error)
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesConfigGetter, kube.ClustersConfig, string) (interface{}, error)
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesConfigGetter, kube.ClustersConfig) (interface{}, error) {
+		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, KubernetesConfigGetter, kube.ClustersConfig, string) (interface{}, error) {
 			return nil, nil
 		}
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
 	}
 
-	server, err := grpcFn(registrar, clientGetter, s.clustersConfig)
+	server, err := grpcFn(registrar, clientGetter, s.clustersConfig, pluginConfigPath)
 	if err != nil {
 		return fmt.Errorf("plug-in %q failed to register due to: %v", pluginDetail, err)
 	} else if server == nil {
