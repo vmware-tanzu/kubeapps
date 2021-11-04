@@ -91,10 +91,17 @@ export function getApp(
   return async dispatch => {
     dispatch(requestApps());
     try {
-      // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
-      const legacyResponse = await App.getRelease(installedPackageRef);
+      // TODO(agamez/minelson): remove it once we enable the getting resources for
+      // an installed package in the API.
+      // TODO(minelson): Also remove conditional behaviour once resources can be
+      // fetched in both flux and helm plugins.
+      const legacyResponse =
+        installedPackageRef?.plugin?.name === PluginNames.PACKAGES_HELM
+          ? await App.getRelease(installedPackageRef)
+          : undefined;
       // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
+
       // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
       let availablePackageDetail;
@@ -146,10 +153,11 @@ export function fetchApps(
 ): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(listApps());
-    let installedPackageSummaries;
+    let installedPackageSummaries: InstalledPackageSummary[];
     try {
       const res = await App.GetInstalledPackageSummaries(cluster, namespace);
       installedPackageSummaries = res?.installedPackageSummaries;
+
       dispatch(receiveAppList(installedPackageSummaries));
       return installedPackageSummaries;
     } catch (e: any) {
