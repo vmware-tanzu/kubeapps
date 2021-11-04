@@ -30,8 +30,8 @@ func TestGetResources(t *testing.T) {
 	testCases := []struct {
 		name               string
 		existingReleases   []releaseStub
-		request            *corev1.GetResourceRefsRequest
-		expectedResponse   *corev1.GetResourceRefsResponse
+		request            *corev1.GetInstalledPackageResourceRefsRequest
+		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
 		expectedStatusCode codes.Code
 	}{
 		{
@@ -56,7 +56,7 @@ metadata:
 `,
 				},
 			},
-			request: &corev1.GetResourceRefsRequest{
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Cluster:   "default",
@@ -65,21 +65,21 @@ metadata:
 					Identifier: "my-apache",
 				},
 			},
-			expectedResponse: &corev1.GetResourceRefsResponse{
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
 				Context: &corev1.Context{
 					Cluster:   "default",
 					Namespace: "default",
 				},
 				ResourceRefs: []*corev1.ResourceRef{
 					{
-						Version: "v1",
-						Name:    "apache-test",
-						Kind:    "Service",
+						ApiVersion: "v1",
+						Name:       "apache-test",
+						Kind:       "Service",
 					},
 					{
-						Version: "apps/v1",
-						Name:    "apache-test",
-						Kind:    "Deployment",
+						ApiVersion: "apps/v1",
+						Name:       "apache-test",
+						Kind:       "Deployment",
 					},
 				},
 			},
@@ -106,7 +106,7 @@ metadata:
 `,
 				},
 			},
-			request: &corev1.GetResourceRefsRequest{
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Cluster:   "default",
@@ -115,16 +115,16 @@ metadata:
 					Identifier: "my-apache",
 				},
 			},
-			expectedResponse: &corev1.GetResourceRefsResponse{
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
 				Context: &corev1.Context{
 					Cluster:   "default",
 					Namespace: "default",
 				},
 				ResourceRefs: []*corev1.ResourceRef{
 					{
-						Version: "apps/v1",
-						Name:    "apache-test",
-						Kind:    "Deployment",
+						ApiVersion: "apps/v1",
+						Name:       "apache-test",
+						Kind:       "Deployment",
 					},
 				},
 			},
@@ -137,7 +137,7 @@ metadata:
 					namespace: "default",
 				},
 			},
-			request: &corev1.GetResourceRefsRequest{
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Cluster:   "default",
@@ -161,7 +161,7 @@ should not be :! parsed as yaml$
 `,
 				},
 			},
-			request: &corev1.GetResourceRefsRequest{
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Cluster:   "default",
@@ -175,7 +175,7 @@ should not be :! parsed as yaml$
 	}
 
 	ignoredFields := cmpopts.IgnoreUnexported(
-		corev1.GetResourceRefsResponse{},
+		corev1.GetInstalledPackageResourceRefsResponse{},
 		corev1.ResourceRef{},
 		corev1.Context{},
 	)
@@ -193,7 +193,7 @@ should not be :! parsed as yaml$
 			})
 			defer cleanup()
 
-			response, err := server.GetResourceRefs(context.Background(), tc.request)
+			response, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)

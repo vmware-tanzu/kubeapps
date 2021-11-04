@@ -795,11 +795,11 @@ func local_request_HelmPackagesService_RollbackInstalledPackage_0(ctx context.Co
 }
 
 var (
-	filter_HelmPackagesService_GetResourceRefs_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+	filter_HelmPackagesService_GetInstalledPackageResourceRefs_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
-func request_HelmPackagesService_GetResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetResourceRefsRequest
+func request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -842,17 +842,17 @@ func request_HelmPackagesService_GetResourceRefs_0(ctx context.Context, marshale
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_HelmPackagesService_GetResourceRefs_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_HelmPackagesService_GetInstalledPackageResourceRefs_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.GetResourceRefs(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetInstalledPackageResourceRefs(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_HelmPackagesService_GetResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetResourceRefsRequest
+func local_request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -895,11 +895,11 @@ func local_request_HelmPackagesService_GetResourceRefs_0(ctx context.Context, ma
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_HelmPackagesService_GetResourceRefs_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_HelmPackagesService_GetInstalledPackageResourceRefs_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.GetResourceRefs(ctx, &protoReq)
+	msg, err := server.GetInstalledPackageResourceRefs(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1117,18 +1117,18 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 
 	})
 
-	mux.Handle("GET", pattern_HelmPackagesService_GetResourceRefs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_HelmPackagesService_GetInstalledPackageResourceRefs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetResourceRefs", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resources"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_GetResourceRefs_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_GetInstalledPackageResourceRefs_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1136,7 +1136,7 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 			return
 		}
 
-		forward_HelmPackagesService_GetResourceRefs_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1361,23 +1361,23 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 
 	})
 
-	mux.Handle("GET", pattern_HelmPackagesService_GetResourceRefs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_HelmPackagesService_GetInstalledPackageResourceRefs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetResourceRefs", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resources"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_GetResourceRefs_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_GetInstalledPackageResourceRefs_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HelmPackagesService_GetResourceRefs_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1403,7 +1403,7 @@ var (
 
 	pattern_HelmPackagesService_RollbackInstalledPackage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9, 2, 10}, []string{"plugins", "helm", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier", "rollback"}, ""))
 
-	pattern_HelmPackagesService_GetResourceRefs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9, 2, 10}, []string{"plugins", "helm", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier", "resources"}, ""))
+	pattern_HelmPackagesService_GetInstalledPackageResourceRefs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 1, 0, 4, 1, 5, 9, 2, 10}, []string{"plugins", "helm", "packages", "v1alpha1", "installedpackages", "c", "installed_package_ref.context.cluster", "ns", "installed_package_ref.context.namespace", "installed_package_ref.identifier", "resourcerefs"}, ""))
 )
 
 var (
@@ -1425,5 +1425,5 @@ var (
 
 	forward_HelmPackagesService_RollbackInstalledPackage_0 = runtime.ForwardResponseMessage
 
-	forward_HelmPackagesService_GetResourceRefs_0 = runtime.ForwardResponseMessage
+	forward_HelmPackagesService_GetInstalledPackageResourceRefs_0 = runtime.ForwardResponseMessage
 )

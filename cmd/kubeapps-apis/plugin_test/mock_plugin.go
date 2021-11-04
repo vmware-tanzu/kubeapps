@@ -95,12 +95,12 @@ func (s TestPackagingPluginServer) GetAvailablePackageVersions(ctx context.Conte
 	}, nil
 }
 
-// GetResourceRefs returns the resource references based on the request.
-func (s TestPackagingPluginServer) GetResourceRefs(ctx context.Context, request *packages.GetResourceRefsRequest) (*packages.GetResourceRefsResponse, error) {
+// GetInstalledPackageResourceRefs returns the resource references based on the request.
+func (s TestPackagingPluginServer) GetInstalledPackageResourceRefs(ctx context.Context, request *packages.GetInstalledPackageResourceRefsRequest) (*packages.GetInstalledPackageResourceRefsResponse, error) {
 	if s.Status != codes.OK {
 		return nil, status.Errorf(s.Status, "Non-OK response")
 	}
-	return &packages.GetResourceRefsResponse{
+	return &packages.GetInstalledPackageResourceRefsResponse{
 		Context:      request.GetInstalledPackageRef().GetContext(),
 		ResourceRefs: s.ResourceRefs,
 	}, nil

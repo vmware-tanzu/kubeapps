@@ -37,9 +37,9 @@ type HelmPackagesServiceClient interface {
 	DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error)
 	// RollbackInstalledPackage updates an installed package based on the request.
 	RollbackInstalledPackage(ctx context.Context, in *RollbackInstalledPackageRequest, opts ...grpc.CallOption) (*RollbackInstalledPackageResponse, error)
-	// GetResourceRefs returns the references for the Kubernetes resources created by
+	// GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
 	// an installed package.
-	GetResourceRefs(ctx context.Context, in *v1alpha1.GetResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetResourceRefsResponse, error)
+	GetInstalledPackageResourceRefs(ctx context.Context, in *v1alpha1.GetInstalledPackageResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error)
 }
 
 type helmPackagesServiceClient struct {
@@ -131,9 +131,9 @@ func (c *helmPackagesServiceClient) RollbackInstalledPackage(ctx context.Context
 	return out, nil
 }
 
-func (c *helmPackagesServiceClient) GetResourceRefs(ctx context.Context, in *v1alpha1.GetResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetResourceRefsResponse, error) {
-	out := new(v1alpha1.GetResourceRefsResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetResourceRefs", in, out, opts...)
+func (c *helmPackagesServiceClient) GetInstalledPackageResourceRefs(ctx context.Context, in *v1alpha1.GetInstalledPackageResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error) {
+	out := new(v1alpha1.GetInstalledPackageResourceRefsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageResourceRefs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -162,9 +162,9 @@ type HelmPackagesServiceServer interface {
 	DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error)
 	// RollbackInstalledPackage updates an installed package based on the request.
 	RollbackInstalledPackage(context.Context, *RollbackInstalledPackageRequest) (*RollbackInstalledPackageResponse, error)
-	// GetResourceRefs returns the references for the Kubernetes resources created by
+	// GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
 	// an installed package.
-	GetResourceRefs(context.Context, *v1alpha1.GetResourceRefsRequest) (*v1alpha1.GetResourceRefsResponse, error)
+	GetInstalledPackageResourceRefs(context.Context, *v1alpha1.GetInstalledPackageResourceRefsRequest) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error)
 }
 
 // UnimplementedHelmPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -198,8 +198,8 @@ func (UnimplementedHelmPackagesServiceServer) DeleteInstalledPackage(context.Con
 func (UnimplementedHelmPackagesServiceServer) RollbackInstalledPackage(context.Context, *RollbackInstalledPackageRequest) (*RollbackInstalledPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RollbackInstalledPackage not implemented")
 }
-func (UnimplementedHelmPackagesServiceServer) GetResourceRefs(context.Context, *v1alpha1.GetResourceRefsRequest) (*v1alpha1.GetResourceRefsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetResourceRefs not implemented")
+func (UnimplementedHelmPackagesServiceServer) GetInstalledPackageResourceRefs(context.Context, *v1alpha1.GetInstalledPackageResourceRefsRequest) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageResourceRefs not implemented")
 }
 
 // UnsafeHelmPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -375,20 +375,20 @@ func _HelmPackagesService_RollbackInstalledPackage_Handler(srv interface{}, ctx 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HelmPackagesService_GetResourceRefs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1alpha1.GetResourceRefsRequest)
+func _HelmPackagesService_GetInstalledPackageResourceRefs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetInstalledPackageResourceRefsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HelmPackagesServiceServer).GetResourceRefs(ctx, in)
+		return srv.(HelmPackagesServiceServer).GetInstalledPackageResourceRefs(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetResourceRefs",
+		FullMethod: "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageResourceRefs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HelmPackagesServiceServer).GetResourceRefs(ctx, req.(*v1alpha1.GetResourceRefsRequest))
+		return srv.(HelmPackagesServiceServer).GetInstalledPackageResourceRefs(ctx, req.(*v1alpha1.GetInstalledPackageResourceRefsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -437,8 +437,8 @@ var HelmPackagesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _HelmPackagesService_RollbackInstalledPackage_Handler,
 		},
 		{
-			MethodName: "GetResourceRefs",
-			Handler:    _HelmPackagesService_GetResourceRefs_Handler,
+			MethodName: "GetInstalledPackageResourceRefs",
+			Handler:    _HelmPackagesService_GetInstalledPackageResourceRefs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -12,7 +12,7 @@ import {
   CreateInstalledPackageRequest,
   UpdateInstalledPackageRequest,
   DeleteInstalledPackageRequest,
-  GetResourceRefsRequest,
+  GetInstalledPackageResourceRefsRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
@@ -21,7 +21,7 @@ import {
   CreateInstalledPackageResponse,
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
-  GetResourceRefsResponse,
+  GetInstalledPackageResourceRefsResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
@@ -305,21 +305,9 @@ export const PackageRepository = {
 
   fromPartial(object: DeepPartial<PackageRepository>): PackageRepository {
     const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = object.namespace;
-    } else {
-      message.namespace = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
-    }
+    message.name = object.name ?? "";
+    message.namespace = object.namespace ?? "";
+    message.url = object.url ?? "";
     if (object.plugin !== undefined && object.plugin !== null) {
       message.plugin = Plugin.fromPartial(object.plugin);
     } else {
@@ -376,13 +364,13 @@ export interface FluxV2PackagesService {
     metadata?: grpc.Metadata,
   ): Promise<DeleteInstalledPackageResponse>;
   /**
-   * GetResourceRefs returns the references for the Kubernetes resources created by
-   * an installed package.
+   * GetInstalledPackageResourceRefs returns the references for the Kubernetes
+   * resources created by an installed package.
    */
-  GetResourceRefs(
-    request: DeepPartial<GetResourceRefsRequest>,
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
     metadata?: grpc.Metadata,
-  ): Promise<GetResourceRefsResponse>;
+  ): Promise<GetInstalledPackageResourceRefsResponse>;
 }
 
 export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
@@ -399,7 +387,7 @@ export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
-    this.GetResourceRefs = this.GetResourceRefs.bind(this);
+    this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -501,13 +489,13 @@ export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
     );
   }
 
-  GetResourceRefs(
-    request: DeepPartial<GetResourceRefsRequest>,
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
     metadata?: grpc.Metadata,
-  ): Promise<GetResourceRefsResponse> {
+  ): Promise<GetInstalledPackageResourceRefsResponse> {
     return this.rpc.unary(
-      FluxV2PackagesServiceGetResourceRefsDesc,
-      GetResourceRefsRequest.fromPartial(request),
+      FluxV2PackagesServiceGetInstalledPackageResourceRefsDesc,
+      GetInstalledPackageResourceRefsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -715,20 +703,20 @@ export const FluxV2PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinit
   } as any,
 };
 
-export const FluxV2PackagesServiceGetResourceRefsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetResourceRefs",
+export const FluxV2PackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish = {
+  methodName: "GetInstalledPackageResourceRefs",
   service: FluxV2PackagesServiceDesc,
   requestStream: false,
   responseStream: false,
   requestType: {
     serializeBinary() {
-      return GetResourceRefsRequest.encode(this).finish();
+      return GetInstalledPackageResourceRefsRequest.encode(this).finish();
     },
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
       return {
-        ...GetResourceRefsResponse.decode(data),
+        ...GetInstalledPackageResourceRefsResponse.decode(data),
         toObject() {
           return this;
         },

@@ -70,11 +70,11 @@ service FluxV2PackagesService {
     };
   }
 
-  // GetResourceRefs returns the references for the Kubernetes resources created by
-  // an installed package.
-  rpc GetResourceRefs(kubeappsapis.core.packages.v1alpha1.GetResourceRefsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetResourceRefsResponse) {
+  // GetInstalledPackageResourceRefs returns the references for the Kubernetes
+  // resources created by an installed package.
+  rpc GetInstalledPackageResourceRefs(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse) {
     option (google.api.http) = {
-      get: "/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resources"
+      get: "/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"
     };
   }
 }

@@ -255,9 +255,9 @@ func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request
 	}, nil
 }
 
-// GetResourceRefs returns the references for the Kubernetes resources created by
+// GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
 // an installed package.
-func (s *packagesServer) GetResourceRefs(ctx context.Context, request *packages.GetResourceRefsRequest) (*packages.GetResourceRefsResponse, error) {
+func (s *packagesServer) GetInstalledPackageResourceRefs(ctx context.Context, request *packages.GetInstalledPackageResourceRefsRequest) (*packages.GetInstalledPackageResourceRefsResponse, error) {
 	pkgRef := request.GetInstalledPackageRef()
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
@@ -274,7 +274,7 @@ func (s *packagesServer) GetResourceRefs(ctx context.Context, request *packages.
 	}
 
 	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.GetResourceRefs(ctx, request)
+	response, err := pluginWithServer.server.GetInstalledPackageResourceRefs(ctx, request)
 	if err != nil {
 		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the resource refs for the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
 	}

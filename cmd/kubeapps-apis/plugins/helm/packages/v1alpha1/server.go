@@ -1170,9 +1170,9 @@ func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.R
 	}, nil
 }
 
-// GetResourceRefs returns the references for the Kubernetes resources created by
-// an installed package.
-func (s *Server) GetResourceRefs(ctx context.Context, request *corev1.GetResourceRefsRequest) (*corev1.GetResourceRefsResponse, error) {
+// GetInstalledPackageResourceRefs returns the references for the Kubernetes
+// resources created by an installed package.
+func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
 	pkgRef := request.GetInstalledPackageRef()
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
@@ -1200,7 +1200,7 @@ func (s *Server) GetResourceRefs(ctx context.Context, request *corev1.GetResourc
 		return nil, err
 	}
 
-	return &corev1.GetResourceRefsResponse{
+	return &corev1.GetInstalledPackageResourceRefsResponse{
 		Context:      pkgRef.GetContext(),
 		ResourceRefs: refs,
 	}, nil
@@ -1232,9 +1232,9 @@ func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
 		}
 		if doc.Kind != "" {
 			refs = append(refs, &corev1.ResourceRef{
-				Version: doc.APIVersion,
-				Kind:    doc.Kind,
-				Name:    doc.Metadata.Name,
+				ApiVersion: doc.APIVersion,
+				Kind:       doc.Kind,
+				Name:       doc.Metadata.Name,
 			})
 		}
 	}
