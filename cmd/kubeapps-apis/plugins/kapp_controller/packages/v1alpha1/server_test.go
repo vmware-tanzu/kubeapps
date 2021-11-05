@@ -21,6 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,6 +30,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
+)
+
+var ignoreUnexported = cmpopts.IgnoreUnexported(
+	corev1.AvailablePackageReference{},
+	corev1.AvailablePackageSummary{},
+	corev1.Context{},
+	corev1.PackageAppVersion{},
+	pluginv1.Plugin{},
 )
 
 func TestGetClient(t *testing.T) {
@@ -125,27 +134,33 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		expectedStatusCode codes.Code
 	}{
 		{
-			name: "iit returns an internal error status if a package does not contain spec.refName",
-			existingObjects: packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"some-pkg.1.2.3": map[string]interface{}{
-					"refName": "",
-					"version": "1.2.3",
+			name: "it returns an internal error status if a package meta does not contain spec.displayName",
+			existingObjects: metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com": map[string]interface{}{
+					"longDescription": "Some long text",
 				},
 			}),
 			expectedStatusCode: codes.Internal,
 		},
 		{
 			name: "it returns an internal error status if a package does not contain version",
-			existingObjects: packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"some-pkg.1.2.3": map[string]interface{}{
-					"refName": "some-pkg",
+			existingObjects: metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com": map[string]interface{}{
+					"displayName": "Classic Tetris",
 				},
 			}),
 			expectedStatusCode: codes.Internal,
 		},
 		{
 			name: "it returns carvel package summaries with basic info from the cluster",
-			existingObjects: packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com": map[string]interface{}{
+					"displayName": "Classic Tetris",
+				},
+				"another.foo.example.com": map[string]interface{}{
+					"displayName": "Some Other Game",
+				},
+			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
 				"tetris.foo.example.com.1.2.3": map[string]interface{}{
 					"refName": "tetris.foo.example.com",
 					"version": "1.2.3",
@@ -154,46 +169,91 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					"refName": "another.foo.example.com",
 					"version": "1.2.5",
 				},
-			}),
+			})...),
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "another.foo.example.com",
+					},
 					Name:          "another.foo.example.com",
-					DisplayName:   "another.foo.example.com",
+					DisplayName:   "Some Other Game",
 					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
 				},
 				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tetris.foo.example.com",
+					},
 					Name:          "tetris.foo.example.com",
-					DisplayName:   "tetris.foo.example.com",
+					DisplayName:   "Classic Tetris",
 					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
 				},
 			},
 		},
 		{
-			name: "it returns carvel package summaries with metadata from the cluster",
-			existingObjects: append(packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+			name: "it returns carvel package summaries with complete metadata",
+			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com": map[string]interface{}{
+					"displayName":      "Classic Tetris",
+					"iconSVGBase64":    "Tm90IHJlYWxseSBTVkcK",
+					"shortDescription": "A great game for arcade gamers",
+					"categories":       []interface{}{"logging", "daemon-set"},
+				},
+			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
 				"tetris.foo.example.com.1.2.3": map[string]interface{}{
 					"refName": "tetris.foo.example.com",
 					"version": "1.2.3",
 				},
-				"another.foo.example.com.1.2.5": map[string]interface{}{
-					"refName": "another.foo.example.com",
-					"version": "1.2.5",
+			})...),
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tetris.foo.example.com",
+					},
+					Name:             "tetris.foo.example.com",
+					DisplayName:      "Classic Tetris",
+					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "A great game for arcade gamers",
+					Categories:       []string{"logging", "daemon-set"},
 				},
-			}), metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+			},
+		},
+		{
+			name: "it returns the latest semver version in the latest version field",
+			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
 				"tetris.foo.example.com": map[string]interface{}{
-					"displayName": "A Tetris App",
+					"displayName": "Classic Tetris",
+				},
+			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com.1.2.3": map[string]interface{}{
+					"refName": "tetris.foo.example.com",
+					"version": "1.2.3",
+				},
+				"tetris.foo.example.com.1.2.7": map[string]interface{}{
+					"refName": "tetris.foo.example.com",
+					"version": "1.2.7",
+				},
+				"tetris.foo.example.com.1.2.4": map[string]interface{}{
+					"refName": "tetris.foo.example.com",
+					"version": "1.2.4",
 				},
 			})...),
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
-					Name:          "another.foo.example.com",
-					DisplayName:   "another.foo.example.com",
-					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
-				},
-				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tetris.foo.example.com",
+					},
 					Name:          "tetris.foo.example.com",
-					DisplayName:   "A Tetris App",
-					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					DisplayName:   "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.7"},
 				},
 			},
 		},
@@ -217,16 +277,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: defaultContext})
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
-				t.Fatalf("got: %d, want: %d", got, want)
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			// If we were expecting an error, continue to the next test.
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.Context{}, corev1.PackageAppVersion{})
-			if got, want := response.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, opt1) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+			if got, want := response.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
 	}
