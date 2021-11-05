@@ -53,12 +53,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name: "returns client without error when configured correctly",
 			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
-					runtime.NewScheme(),
-					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
-					},
-				), nil
+				return dynfake.NewSimpleDynamicClient(runtime.NewScheme()), nil
 			},
 		},
 	}
@@ -84,141 +79,120 @@ func TestGetClient(t *testing.T) {
 
 }
 
-func TestGetAvailablePackagesStatus(t *testing.T) {
-	testCases := []struct {
-		name         string
-		clientGetter clientGetter
-		statusCode   codes.Code
-	}{
-		{
-			name: "returns an internal error status if response does not contain spec.refName",
-			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
-					runtime.NewScheme(),
-					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
-					},
-					packageFromSpec(map[string]interface{}{
-						"refName": "",
-						"version": "1.2.3",
-					}, t),
-				), nil
-			},
-			statusCode: codes.Internal,
-		},
-		{
-			name: "returns an internal error status if response does not contain version",
-			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
-					runtime.NewScheme(),
-					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
-					},
-					packageFromSpec(map[string]interface{}{
-						"refName": "someName",
-					}, t),
-				), nil
-			},
-			statusCode: codes.Internal,
-		},
-		{
-			name: "returns OK status if items contain required fields",
-			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-				return dynfake.NewSimpleDynamicClientWithCustomListKinds(
-					runtime.NewScheme(),
-					map[schema.GroupVersionResource]string{
-						{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
-					},
-					packageFromSpec(map[string]interface{}{
-						"refName": "someName",
-						"version": "1.2.3",
-					}, t),
-				), nil
-			},
-			statusCode: codes.OK,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			s := Server{clientGetter: tc.clientGetter}
-
-			_, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
-
-			if err == nil && tc.statusCode != codes.OK {
-				t.Fatalf("got: nil, want: error")
-			}
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
-			}
-		})
-	}
-
-}
-
-func packageFromSpec(spec map[string]interface{}, t *testing.T) *unstructured.Unstructured {
-	refName, ok := spec["refName"].(string)
-	if !ok {
-		t.Fatalf("unable to convert %+v to a string", spec["refName"])
-	}
-	version, ok := spec["version"].(string)
-	if !ok {
-		version = ""
-	}
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
-			"kind":       packageResource,
-			"metadata": map[string]interface{}{
-				"name": fmt.Sprintf("%s.%s", refName, version),
-			},
-			"spec": spec,
-		},
-	}
-}
-
-func packagesFromSpecs(specs []map[string]interface{}, t *testing.T) []runtime.Object {
+func packagesFromSpecs(t *testing.T, namespace string, specs map[string]interface{}) []runtime.Object {
 	pkgs := []runtime.Object{}
-	for _, s := range specs {
-		pkgSpec, ok := s["spec"].(map[string]interface{})
-		if !ok {
-			t.Fatalf("unable to convert %+v to a map[string]interface{}", s["spec"])
-		}
-		pkgs = append(pkgs, packageFromSpec(pkgSpec, t))
+	for name, s := range specs {
+		pkgs = append(pkgs, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
+				"kind":       packageResource,
+				"metadata": map[string]interface{}{
+					"name":      name,
+					"namespace": namespace,
+				},
+				"spec": s,
+			},
+		})
 	}
 	return pkgs
 }
 
+func metadatasFromSpecs(t *testing.T, namespace string, specs map[string]interface{}) []runtime.Object {
+	metadatas := []runtime.Object{}
+	for name, s := range specs {
+		metadatas = append(metadatas, &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
+				"kind":       packageMetadataResource,
+				"metadata": map[string]interface{}{
+					"name":      name,
+					"namespace": namespace,
+				},
+				"spec": s,
+			},
+		})
+	}
+	return metadatas
+
+}
+
 func TestGetAvailablePackageSummaries(t *testing.T) {
+	defaultContext := &corev1.Context{Cluster: "default", Namespace: "default"}
 	testCases := []struct {
-		name             string
-		packageSpecs     []map[string]interface{}
-		expectedPackages []*corev1.AvailablePackageSummary
+		name               string
+		existingObjects    []runtime.Object
+		expectedPackages   []*corev1.AvailablePackageSummary
+		expectedStatusCode codes.Code
 	}{
 		{
-			name: "it returns carvel packages from the cluster",
-			packageSpecs: []map[string]interface{}{
-				{
-					"spec": map[string]interface{}{
-						"refName": "tetris.foo.example.com",
-						"version": "1.2.3",
-					},
+			name: "iit returns an internal error status if a package does not contain spec.refName",
+			existingObjects: packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"some-pkg.1.2.3": map[string]interface{}{
+					"refName": "",
+					"version": "1.2.3",
 				},
-				{
-					"spec": map[string]interface{}{
-						"refName": "another.foo.example.com",
-						"version": "1.2.5",
-					},
+			}),
+			expectedStatusCode: codes.Internal,
+		},
+		{
+			name: "it returns an internal error status if a package does not contain version",
+			existingObjects: packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"some-pkg.1.2.3": map[string]interface{}{
+					"refName": "some-pkg",
 				},
-			},
+			}),
+			expectedStatusCode: codes.Internal,
+		},
+		{
+			name: "it returns carvel package summaries with basic info from the cluster",
+			existingObjects: packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com.1.2.3": map[string]interface{}{
+					"refName": "tetris.foo.example.com",
+					"version": "1.2.3",
+				},
+				"another.foo.example.com.1.2.5": map[string]interface{}{
+					"refName": "another.foo.example.com",
+					"version": "1.2.5",
+				},
+			}),
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
+					Name:          "another.foo.example.com",
 					DisplayName:   "another.foo.example.com",
 					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
 				},
 				{
+					Name:          "tetris.foo.example.com",
 					DisplayName:   "tetris.foo.example.com",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+				},
+			},
+		},
+		{
+			name: "it returns carvel package summaries with metadata from the cluster",
+			existingObjects: append(packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com.1.2.3": map[string]interface{}{
+					"refName": "tetris.foo.example.com",
+					"version": "1.2.3",
+				},
+				"another.foo.example.com.1.2.5": map[string]interface{}{
+					"refName": "another.foo.example.com",
+					"version": "1.2.5",
+				},
+			}), metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com": map[string]interface{}{
+					"displayName": "A Tetris App",
+				},
+			})...),
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					Name:          "another.foo.example.com",
+					DisplayName:   "another.foo.example.com",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
+				},
+				{
+					Name:          "tetris.foo.example.com",
+					DisplayName:   "A Tetris App",
 					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
 				},
 			},
@@ -227,22 +201,27 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			pkgs := packagesFromSpecs(tc.packageSpecs, t)
 			s := Server{
 				clientGetter: func(context.Context, string) (dynamic.Interface, error) {
 					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: packageGroup, Version: packageVersion, Resource: packagesResource}: "PackageList",
+							{Group: packageGroup, Version: packageVersion, Resource: packageResources}:         "PackageList",
+							{Group: packageGroup, Version: packageVersion, Resource: packageMetadataResources}: "PackageMetadataList",
 						},
-						pkgs...,
+						tc.existingObjects...,
 					), nil
 				},
 			}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
-			if err != nil {
-				t.Fatalf("%+v", err)
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: defaultContext})
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d", got, want)
+			}
+			// If we were expecting an error, continue to the next test.
+			if tc.expectedStatusCode != codes.OK {
+				return
 			}
 
 			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageSummary{}, corev1.Context{}, corev1.PackageAppVersion{})
