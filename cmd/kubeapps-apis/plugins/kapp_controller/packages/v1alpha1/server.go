@@ -125,6 +125,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
 	}
 	pkgVersions, err := pkgVersionsMap(pkgs.Items)
+	if err != nil {
+		return nil, err
+	}
 
 	metaGVR := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packageMetadataResources}
 	pkgMetadatas, err := client.Resource(metaGVR).Namespace(namespace).List(ctx, metav1.ListOptions{})
