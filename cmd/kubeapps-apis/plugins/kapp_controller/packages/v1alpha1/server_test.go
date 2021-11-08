@@ -506,3 +506,112 @@ func TestPackageRepositoryFromUnstructured(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAvailablePackageVersions(t *testing.T) {
+	defaultContext := &corev1.Context{Cluster: "default", Namespace: "default"}
+	testCases := []struct {
+		name               string
+		existingObjects    []runtime.Object
+		request            *corev1.GetAvailablePackageVersionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+	}{
+		{
+			name:               "it returns invalid argument if called without a package reference",
+			request:            nil,
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called without namespace",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{},
+					Identifier: "package-one",
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called without an identifier",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns the package version summary",
+			existingObjects: packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
+				"tetris.foo.example.com.1.2.3": map[string]interface{}{
+					"refName": "tetris.foo.example.com",
+					"version": "1.2.3",
+				},
+				"tetris.foo.example.com.1.2.7": map[string]interface{}{
+					"refName": "tetris.foo.example.com",
+					"version": "1.2.7",
+				},
+				"tetris.foo.example.com.1.2.4": map[string]interface{}{
+					"refName": "tetris.foo.example.com",
+					"version": "1.2.4",
+				},
+			}),
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: "tetris.foo.example.com",
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
+				PackageAppVersions: []*corev1.PackageAppVersion{
+					{
+						PkgVersion: "1.2.7",
+					},
+					{
+						PkgVersion: "1.2.4",
+					},
+					{
+						PkgVersion: "1.2.3",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := Server{
+				clientGetter: func(context.Context, string) (dynamic.Interface, error) {
+					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: packageGroup, Version: packageVersion, Resource: packageResources}: "PackageList",
+						},
+						tc.existingObjects...,
+					), nil
+				},
+			}
+
+			response, err := server.GetAvailablePackageVersions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
