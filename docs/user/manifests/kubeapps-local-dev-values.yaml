@@ -19,7 +19,7 @@ kubeappsapis:
     - helm
     - resources
   image:
-    tag: dev13
+    tag: dev14
 ingress:
   enabled: true
   hostname: localhost

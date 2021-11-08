@@ -55,9 +55,9 @@ func resourceRefsForObjects(t *testing.T, objects ...runtime.Object) []*pkgsv1al
 		}
 		gvk := obj.GetObjectKind().GroupVersionKind()
 		refs = append(refs, &pkgsv1alpha1.ResourceRef{
-			Version: gvk.GroupVersion().String(),
-			Kind:    gvk.Kind,
-			Name:    objMeta.Name,
+			ApiVersion: gvk.GroupVersion().String(),
+			Kind:       gvk.Kind,
+			Name:       objMeta.Name,
 		})
 	}
 	return refs
@@ -182,16 +182,16 @@ func TestGetResources(t *testing.T) {
 			expectedResources: []*v1alpha1.GetResourcesResponse{
 				{
 					ResourceRef: &pkgsv1alpha1.ResourceRef{
-						Version: "apps/v1",
-						Kind:    "Deployment",
-						Name:    "some-deployment",
+						ApiVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "some-deployment",
 					},
 				},
 				{
 					ResourceRef: &pkgsv1alpha1.ResourceRef{
-						Version: "core/v1",
-						Kind:    "Service",
-						Name:    "some-service",
+						ApiVersion: "core/v1",
+						Kind:       "Service",
+						Name:       "some-service",
 					},
 				},
 			},

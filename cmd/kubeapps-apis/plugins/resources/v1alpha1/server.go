@@ -102,7 +102,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	if len(md["authorization"]) > 0 {
 		ctxOut = metadata.AppendToOutgoingContext(ctxOut, "authorization", md["authorization"][0])
 	}
-	refsResponse, err := coreClient.GetResourceRefs(ctxOut, &corev1alpha1.GetResourceRefsRequest{
+	refsResponse, err := coreClient.GetInstalledPackageResourceRefs(ctxOut, &corev1alpha1.GetInstalledPackageResourceRefsRequest{
 		InstalledPackageRef: r.InstalledPackageRef,
 	})
 	if err != nil {
@@ -118,7 +118,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	// TODO: Filter to the resources specified in the request, and 400 if they don't
 	// exist for the package.
 	for _, ref := range refsResponse.GetResourceRefs() {
-		groupVersion, err := schema.ParseGroupVersion(ref.Version)
+		groupVersion, err := schema.ParseGroupVersion(ref.ApiVersion)
 		if err != nil {
 			// TODO: status code.
 			return err
