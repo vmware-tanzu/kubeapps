@@ -88,7 +88,7 @@
     "@types/react-helmet": "^6.1.4",
     "@types/react-router": "^5.1.17",
     "@types/react-router-dom": "^5.3.2",
-    "@types/react-router-hash-link": "^2.4.2",
+    "@types/react-router-hash-link": "^2.4.4",
     "@types/react-transition-group": "^4.4.3",
     "@types/redux-mock-store": "^1.0.3",
     "@types/swagger-ui-react": "^3.35.3",
