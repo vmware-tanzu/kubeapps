@@ -545,6 +545,11 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 
 		repoStatus := map[string]interface{}{
+			"artifact": map[string]interface{}{
+				"checksum":       "651f952130ea96823711d08345b85e82be011dc6",
+				"lastUpdateTime": "2021-07-01T05:09:45Z",
+				"revision":       "651f952130ea96823711d08345b85e82be011dc6",
+			},
 			"conditions": []interface{}{
 				map[string]interface{}{
 					"type":   "Ready",
@@ -586,19 +591,16 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
 		s.cache.eventProcessedWaitGroup.Add(1)
-
-		key, bytes, err := redisKeyValueForRuntimeObject(repo)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		mock.ExpectSet(key, bytes, 0).SetVal("")
-
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
+		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
+		key, bytes, err := redisSetValueForRepo(repo, mock)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 		if repo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(context.Background(), repo, metav1.UpdateOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
 		watcher.Modify(repo)
-
 		s.cache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -725,11 +727,11 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
 		// a cache resync
 		s.cache.eventProcessedWaitGroup.Add(1)
-		key, bytes, _ := redisKeyValueForRuntimeObject(repo)
-		mock.ExpectSet(key, bytes, 0).SetVal("")
-
 		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
-
+		mock.ExpectFlushDB().SetVal("OK")
+		if _, _, err := redisSetValueForRepo(repo, mock); err != nil {
+			t.Fatalf("%+v", err)
+		}
 		s.cache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -994,9 +996,21 @@ func redisMockBeforeCallToGetAvailablePackageSummaries(mock redismock.ClientMock
 	return nil
 }
 
+func redisSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key string, bytes []byte, err error) {
+	if key, bytes, err := redisKeyValueForRuntimeObject(repo); err != nil {
+		return "", nil, err
+	} else {
+		mock.ExpectSet(key, bytes, 0).SetVal("OK")
+		mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
+		return key, bytes, nil
+	}
+}
+
 func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
 	key := redisKeyForRuntimeObject(r)
-	bytes, _, err := onAddOrModifyRepo(key, r.(*unstructured.Unstructured).Object)
+	// we are not really adding anything to the cache here, rather just calling a
+	// onAddRepo to compute the value that *WOULD* be stored in the cache
+	bytes, _, err := onAddRepo(key, r.(*unstructured.Unstructured).Object)
 	if err != nil {
 		return "", nil, err
 	}
@@ -1038,6 +1052,11 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Serv
 	}
 
 	repoStatus := map[string]interface{}{
+		"artifact": map[string]interface{}{
+			"checksum":       "651f952130ea96823711d08345b85e82be011dc6",
+			"lastUpdateTime": "2021-07-01T05:09:45Z",
+			"revision":       "651f952130ea96823711d08345b85e82be011dc6",
+		},
 		"conditions": []interface{}{
 			map[string]interface{}{
 				"type":   "Ready",

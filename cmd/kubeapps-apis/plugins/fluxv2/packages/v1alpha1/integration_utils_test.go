@@ -27,6 +27,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc"
@@ -366,37 +367,54 @@ func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error
 	}
 }
 
-func kubePortForwardToRedis(t *testing.T, stopChan <-chan struct{}, readyChan chan struct{}) error {
+func kubePortForwardToRedis(t *testing.T) error {
 	t.Logf("+kubePortForwardToRedis")
-	// ref https://github.com/kubernetes/client-go/issues/51
-	if config, err := restConfig(); err != nil {
-		return err
-	} else if roundTripper, upgrader, err := spdy.RoundTripperFor(config); err != nil {
-		return err
-	} else {
-		path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", "kubeapps", "kubeapps-redis-master-0")
-		hostIP := strings.TrimLeft(config.Host, "htps:/")
-		serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
-		dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
-		out, errOut := new(bytes.Buffer), new(bytes.Buffer)
-		if forwarder, err := portforward.New(dialer, []string{"6379"}, stopChan, readyChan, out, errOut); err != nil {
-			return err
-		} else {
-			go func() {
-				for range readyChan { // Kubernetes will close this channel when it has something to tell us.
-				}
-				if len(errOut.String()) != 0 {
-					t.Errorf("kubePortForwardToRedis: %s", errOut.String())
-				} else if len(out.String()) != 0 {
-					t.Logf("kubePortForwardToRedis: %s", out.String())
-				}
-			}()
-			if err = forwarder.ForwardPorts(); err != nil { // Locks until stopChan is closed.
+	stopChan, readyChan := make(chan struct{}, 1), make(chan struct{}, 1)
+	go func() {
+		if err := func() error {
+			// ref https://github.com/kubernetes/client-go/issues/51
+			if config, err := restConfig(); err != nil {
 				return err
+			} else if roundTripper, upgrader, err := spdy.RoundTripperFor(config); err != nil {
+				return err
+			} else {
+				path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", "kubeapps", "kubeapps-redis-master-0")
+				hostIP := strings.TrimLeft(config.Host, "htps:/")
+				serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
+				dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
+				out, errOut := new(bytes.Buffer), new(bytes.Buffer)
+				if forwarder, err := portforward.New(dialer, []string{"6379"}, stopChan, readyChan, out, errOut); err != nil {
+					return err
+				} else {
+					go func() {
+						for range readyChan { // Kubernetes will close this channel when it has something to tell us.
+						}
+						if len(errOut.String()) != 0 {
+							t.Errorf("kubePortForwardToRedis: %s", errOut.String())
+						} else if len(out.String()) != 0 {
+							t.Logf("kubePortForwardToRedis: %s", out.String())
+						}
+					}()
+					if err = forwarder.ForwardPorts(); err != nil { // Locks until stopChan is closed.
+						return err
+					}
+				}
 			}
+			return nil
+		}(); err != nil {
+			t.Errorf("%+v", err)
 		}
+	}()
+	// this will stop the port forwarding
+	t.Cleanup(func() { close(stopChan) })
+
+	// this will wait until port-forwarding is set up
+	select {
+	case <-readyChan:
+		return nil
+	case <-time.After(10 * time.Second):
+		return errors.New("failed to start portforward in 10s")
 	}
-	return nil
 }
 
 func kubeGetHelmReleaseResourceInterface(namespace string) (dynamic.ResourceInterface, error) {
@@ -477,6 +495,30 @@ func newGrpcContext(t *testing.T, name string) context.Context {
 	return metadata.NewOutgoingContext(
 		context.TODO(),
 		metadata.Pairs("Authorization", "Bearer "+token))
+}
+
+func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMemory string) error {
+	maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result()
+	if err != nil {
+		return err
+	} else {
+		currentMaxMemory := fmt.Sprintf("%v", maxmemory[1])
+		t.Logf("Current redis maxmemory = [%s]", currentMaxMemory)
+		if currentMaxMemory != expectedMaxMemory {
+			t.Fatalf("This test requires redis config maxmemory to be set to %s", expectedMaxMemory)
+		}
+	}
+	maxmemoryPolicy, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory-policy").Result()
+	if err != nil {
+		return err
+	} else {
+		currentMaxMemoryPolicy := fmt.Sprintf("%v", maxmemoryPolicy[1])
+		t.Logf("Current maxmemory policy = [%s]", currentMaxMemoryPolicy)
+		if currentMaxMemoryPolicy != "allkeys-lru" {
+			t.Fatalf("This test requires redis config maxmemory-policy to be set to allkeys-lru")
+		}
+	}
+	return nil
 }
 
 // global vars
