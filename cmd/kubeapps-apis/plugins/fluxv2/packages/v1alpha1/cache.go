@@ -49,8 +49,9 @@ type NamespacedResourceWatcherCache struct {
 	eventProcessedWaitGroup *sync.WaitGroup
 }
 
-type cacheValueSetter func(string, map[string]interface{}) (interface{}, bool, error)
 type cacheValueGetter func(string, interface{}) (interface{}, error)
+type cacheValueAdder func(string, map[string]interface{}) (interface{}, bool, error)
+type cacheValueModifier func(string, map[string]interface{}, interface{}) (interface{}, bool, error)
 type cacheValueDeleter func(string, map[string]interface{}) (bool, error)
 
 // TODO (gfichtenholt) rename this to just Config when caching is separated out into core server
@@ -65,8 +66,8 @@ type cacheConfig struct {
 	// in the cache for a given k8s object (passed in as a untyped/unstructured map)
 	// the list of types actually supported be redis you can find in
 	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
-	onAdd    cacheValueSetter
-	onModify cacheValueSetter
+	onAdd    cacheValueAdder
+	onModify cacheValueModifier
 	// the semantics of 'onGet' hook is to convert or "reverse engineer" what was previously
 	// stored in the cache (via onAdd/onModify hooks) to an object that the plug-in understands
 	// and wishes to be returned as part of response to fetchCachedObjects() call
@@ -123,13 +124,13 @@ func newCacheWithRedisClient(config cacheConfig, redisCli *redis.Client, waitGro
 	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
 		return nil, err
 	} else {
-		log.Infof("Redis [PING] -> [%s]", pong)
+		log.Infof("Redis [PING]: %s", pong)
 	}
 
 	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
 		return nil, err
 	} else if len(maxmemory) > 1 {
-		log.Infof("Redis config maxmemory: %v", maxmemory[1])
+		log.Infof("Redis [CONFIG GET maxmemory]: %v", maxmemory[1])
 	}
 
 	c := NamespacedResourceWatcherCache{
@@ -240,8 +241,14 @@ func (c NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch
 // when it comes to consistency at any given point, as long as EVENTUALLY consistent
 // state is reached, which will be the case
 func (c NamespacedResourceWatcherCache) resync() (string, error) {
-	ctx := context.Background()
+	// clear the entire cache in one call
+	if result, err := c.redisCli.FlushDB(c.redisCli.Context()).Result(); err != nil {
+		return "", err
+	} else {
+		log.Infof("Redis [FLUSHDB]: %s", result)
+	}
 
+	ctx := context.Background()
 	dynamicClient, _, err := c.config.clientGetter(ctx)
 	if err != nil {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
@@ -269,12 +276,6 @@ func (c NamespacedResourceWatcherCache) resync() (string, error) {
 	if rv == "" {
 		// fail fast, without a valid resource version the whole workflow breaks down
 		return "", status.Errorf(codes.Internal, "List() call response does not contain resource version")
-	}
-
-	// clear the entire cache in one call
-	c.redisCli.FlushDB(c.redisCli.Context()).Err()
-	if err != nil {
-		return "", err
 	}
 
 	// re-populate the cache with current state from k8s
@@ -342,36 +343,42 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 		return nil
 	}
 
+	var oldValue []byte
+	if !add {
+		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != nil {
+			log.Errorf("Failed to get value for object with key [%s] in cache due to: %v", key, err)
+			return err
+		}
+	}
+
+	var newValue interface{}
+	var setVal bool
 	var funcName string
-	var addOrModify cacheValueSetter
-	if add {
+	if oldValue == nil {
 		funcName = "onAdd"
-		addOrModify = c.config.onAdd
+		newValue, setVal, err = c.config.onAdd(key, unstructuredObj)
 	} else {
 		funcName = "onModify"
-		addOrModify = c.config.onModify
+		newValue, setVal, err = c.config.onModify(key, unstructuredObj, oldValue)
 	}
-	value, setVal, err := addOrModify(key, unstructuredObj)
+
 	if err != nil {
 		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, prettyPrintMap(unstructuredObj), err)
 		// clear that key so cache doesn't contain any stale info for this object
 		c.redisCli.Del(c.redisCli.Context(), key)
 		return err
-	}
-
-	if setVal {
+	} else if setVal {
 		// Zero expiration means the key has no expiration time.
 		// However, cache entries may be evicted by redis in order to make room for new ones,
 		// if redis is limited by maxmemory constraint
-		err = c.redisCli.Set(c.redisCli.Context(), key, value, 0).Err()
+		result, err := c.redisCli.Set(c.redisCli.Context(), key, newValue, 0).Result()
 		if err != nil {
 			log.Errorf("Failed to set value for object with key [%s] in cache due to: %v", key, err)
 			return err
 		} else {
-			if log.V(4).Enabled() {
-				usedMemory, totalMemory := c.memoryStats()
-				log.V(4).Infof("Set value for key [%s] in cache. Redis memory usage: [%s/%s]", key, usedMemory, totalMemory)
-			}
+			// debugging an intermittent issue
+			usedMemory, totalMemory := c.memoryStats()
+			log.Infof("Redis [SET %s]: %s. Redis [INFO memory]: [%s/%s]", key, result, usedMemory, totalMemory)
 		}
 	}
 	return nil
@@ -398,10 +405,13 @@ func (c NamespacedResourceWatcherCache) onDelete(unstructuredObj map[string]inte
 	}
 
 	if delete {
-		err = c.redisCli.Del(c.redisCli.Context(), key).Err()
+		keysremoved, err := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		if err != nil {
 			log.Errorf("Failed to delete value for object [%s] from cache due to: %v", key, err)
 			return err
+		} else {
+			// debugging an intermittent failure
+			log.Infof("Redis [DEL %s]: %d", key, keysremoved)
 		}
 	}
 	return nil
@@ -409,9 +419,11 @@ func (c NamespacedResourceWatcherCache) onDelete(unstructuredObj map[string]inte
 
 // this is effectively a cache GET operation
 func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
-	log.Infof("+fectchForOne(%s)", key)
-	// read back from cache: should be either what we previously wrote or Redis.Nil if the key does
-	// not exist or has been evicted due to memory pressure/TTL expiry
+	log.V(4).Infof("+fectchForOne(%s)", key)
+	// read back from cache: should be either:
+	//  - what we previously wrote OR
+	//  - Redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry
+	//
 	// TODO (gfichtenholt) See if there might be a cleaner way than to have onGet() take []byte as
 	// a 2nd argument. In theory, I would have liked to pass in an interface{}, just like onAdd/onModify.
 	// The limitation here is caused by the fact that redis go client does not offer a
@@ -419,21 +431,21 @@ func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, er
 	// strings which can be converted to desired types as needed, e.g.
 	// redisCli.Get(ctx, key).Bytes() first gets the string and then converts it to bytes.
 	bytes, err := c.redisCli.Get(c.redisCli.Context(), key).Bytes()
+	// debugging an intermittent issue
 	if err == redis.Nil {
-		// this is normal if the key does not exist
+		log.V(4).Infof("Redis [GET %s]: Nil", key)
 		return nil, nil
 	} else if err != nil {
 		log.Errorf("Failed to get value for key [%s] from cache due to: %v", key, err)
 		return nil, err
 	}
+	log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(bytes))
 
 	val, err := c.config.onGet(key, bytes)
 	if err != nil {
 		log.Errorf("Invocation of 'onGet' for object with key [%s]\nfailed due to: %v", key, err)
 		return nil, err
 	}
-
-	//log.Infof("Fetched value for key [%s]: %v", key, val)
 	return val, nil
 }
 
@@ -445,14 +457,64 @@ func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, er
 // be relied upon to be the "source-of-truth". So I removed it for now as I found it
 // of no use
 
+// parallelize the process of value retrieval because fetchForOne() calls
+// c.config.onGet() which will de-code the data from bytes into expected struct, which
+// may be computationally expensive and thus benefit from multiple threads of execution
 func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interface{}, error) {
 	response := make(map[string]interface{})
-	for _, key := range keys {
-		result, err := c.fetchForOne(key)
-		if err != nil {
-			return nil, err
+
+	// max number of concurrent workers retrieving cache values at the same time
+	const maxWorkers = 10
+
+	type getValueJob struct {
+		key string
+	}
+	type getValueJobResult struct {
+		key   string
+		value interface{}
+		err   error
+	}
+
+	var wg sync.WaitGroup
+	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
+	requestChan := make(chan getValueJob, numWorkers)
+	responseChan := make(chan getValueJobResult, numWorkers)
+
+	// Process only at most maxWorkers at a time
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			// The following loop will only terminate when the request channel is
+			// closed (and there are no more items)
+			for job := range requestChan {
+				result, err := c.fetchForOne(job.key)
+				responseChan <- getValueJobResult{job.key, result, err}
+			}
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(responseChan)
+	}()
+
+	go func() {
+		for _, key := range keys {
+			requestChan <- getValueJob{key}
+		}
+		close(requestChan)
+	}()
+
+	// Start receiving results
+	// The following loop will only terminate when the response channel is closed, i.e.
+	// after the all the requests have been processed
+	for resp := range responseChan {
+		if resp.err == nil {
+			response[resp.key] = resp.value
 		} else {
-			response[key] = result
+			// TODO (gfichtenholt) this returns first error, see if we can return all of them
+			return nil, resp.err
 		}
 	}
 	return response, nil
@@ -506,9 +568,9 @@ func (c NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstru
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
+			// The following loop will only terminate when the request channel is
+			// closed (and there are no more items)
 			for job := range requestChan {
-				// The following loop will only terminate when the request channel is
-				// closed (and there are no more items)
 				c.onAddOrModify(true, job.item)
 			}
 			wg.Done()

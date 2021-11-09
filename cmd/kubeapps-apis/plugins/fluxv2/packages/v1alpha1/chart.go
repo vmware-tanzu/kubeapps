@@ -16,6 +16,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -188,18 +189,18 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	charts, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(repo))
+	entry, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(repo))
 	if err != nil {
 		return nil, err
 	}
 
-	if charts != nil {
-		if typedCharts, ok := charts.([]models.Chart); !ok {
+	if entry != nil {
+		if typedEntry, ok := entry.(repoCacheEntry); !ok {
 			return nil, status.Errorf(
 				codes.Internal,
-				"unexpected value fetched from cache: %v", charts)
+				"unexpected value fetched from cache: type: [%s], value: [%v]", reflect.TypeOf(entry), entry)
 		} else {
-			for _, chart := range typedCharts {
+			for _, chart := range typedEntry.Charts {
 				if chart.Name == chartName {
 					return &chart, nil // found it
 				}

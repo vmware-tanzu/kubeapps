@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"reflect"
 	"regexp"
 	"time"
 
@@ -158,7 +159,6 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 	// Some key may have been evicted due to memory pressure and LRU eviction policy.
 	// ref: https://redis.io/topics/lru-cache
 	// so, first, let's fetch the entries that are still cached before redis evicts those
-	// this for loop should be very fast as it only covers cache hit scenarios
 	chartsUntyped, err := s.cache.fetchForMultiple(repoNames)
 	if err != nil {
 		return nil, err
@@ -205,11 +205,14 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 			}
 		}
 		if value != nil {
-			typedChartsValue, ok := value.([]models.Chart)
+			typedValue, ok := value.(repoCacheEntry)
 			if !ok {
-				return nil, status.Errorf(codes.Internal, "Unexpected value fetched from cache: %v", value)
+				return nil, status.Errorf(
+					codes.Internal,
+					"unexpected value fetched from cache: type: [%s], value: [%v]",
+					reflect.TypeOf(value), value)
 			}
-			chartsTyped[key] = typedChartsValue
+			chartsTyped[key] = typedValue.Charts
 		}
 	}
 	return chartsTyped, nil
@@ -230,24 +233,17 @@ func isRepoReady(unstructuredRepo map[string]interface{}) bool {
 	return completed && success
 }
 
-func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
+// it is assumed the caller has already checked that this repo is ready
+// At present, there is only one caller of indexOneRepo() and this check is already done by it
+func indexOneRepo(unstructuredRepo map[string]interface{}) (charts []models.Chart, err error) {
 	startTime := time.Now()
 
-	repo, err := newPackageRepository(unstructuredRepo)
+	repo, err := packageRepositoryFromUnstructured(unstructuredRepo)
 	if err != nil {
 		return nil, err
 	}
 
-	// this is just a future-proofing sanity check.
-	// At present, there is only one caller of indexOneRepo() and this check is already done by it,
-	// so this should never really happen
-	if !isRepoReady(unstructuredRepo) {
-		return nil, status.Errorf(codes.Internal,
-			"cannot index repository [%s] because it is not in 'Ready' state. error: %v",
-			repo.Name,
-			err)
-	}
-
+	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 	indexUrl, found, err := unstructured.NestedString(unstructuredRepo, "status", "url")
 	if err != nil || !found {
 		return nil, status.Errorf(codes.Internal,
@@ -255,7 +251,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 			repo.Name, err)
 	}
 
-	log.V(4).Infof("indexOneRepo: [%s], index URL: [%s]", repo.Name, indexUrl)
+	log.Infof("+indexOneRepo: [%s], index URL: [%s]", repo.Name, indexUrl)
 
 	// no need to provide authz, userAgent or any of the TLS details, as we are reading index.yaml file from
 	// local cluster, not some remote repo.
@@ -278,15 +274,15 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	// shallow = true  => 8-9 sec
 	// shallow = false => 12-13 sec, so deep copy adds 50% to cost, but we need it to
 	// for GetAvailablePackageVersions()
-	charts, err := helm.ChartsFromIndex(bytes, modelRepo, false)
+	charts, err = helm.ChartsFromIndex(bytes, modelRepo, false)
 	if err != nil {
 		return nil, err
 	}
 
 	duration := time.Since(startTime)
-	msg := fmt.Sprintf("indexOneRepo: indexed [%d] packages in repository [%s] in [%d] ms", len(charts), repo.Name, duration.Milliseconds())
+	msg := fmt.Sprintf("-indexOneRepo: [%s], indexed [%d] packages in [%d] ms", repo.Name, len(charts), duration.Milliseconds())
 	if len(charts) > 0 {
-		log.V(4).Info(msg)
+		log.Info(msg)
 	} else {
 		// this is kind of a red flag - an index with 0 charts, most likely contents of index.yaml is
 		// messed up and didn't parse but the helm library didn't raise an error
@@ -295,7 +291,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	return charts, nil
 }
 
-func newPackageRepository(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
+func packageRepositoryFromUnstructured(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
 	name, err := namespacedName(unstructuredRepo)
 	if err != nil {
 		return nil, err
@@ -364,26 +360,43 @@ func isHelmRepositoryReady(unstructuredObj map[string]interface{}) (complete boo
 // implements plug-in specific cache-related functionality
 //
 
-// onAddOrModifyRepo essentially tells the cache what to store for a given key
-func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	if isRepoReady(unstructuredRepo) {
+// this is what we store in the cache for each cached repo
+// all struct fields are capitalized so they're exported by gob encoding
+type repoCacheEntry struct {
+	Checksum string
+	Charts   []models.Chart
+}
 
-		// TODO (gfichtenholt): I think we should to compare checksums on what's stored in the cache
-		// vs the modified object to see if the contents has really changed before embarking on
-		// expensive operation below. Kind of like pkg/chart/chart.go does in getIndexFromCache()
+// onAddRepo essentially tells the cache what to store for a given key
+func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
+	// first check the repo is ready
+	if isRepoReady(unstructuredRepo) {
+		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+		checksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
+		if err != nil || !found {
+			return nil, false, status.Errorf(codes.Internal,
+				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
+				prettyPrintMap(unstructuredRepo), err)
+		}
+
 		charts, err := indexOneRepo(unstructuredRepo)
 		if err != nil {
 			return nil, false, err
 		}
 
+		cacheEntry := repoCacheEntry{
+			Checksum: checksum,
+			Charts:   charts,
+		}
+
 		// launch go-routine that will download tarball and extract relevant details for each chart
 		// and cache them for fast lookup
-		//go cacheLatestChartDetails(charts)
+		// TODO (gfichtenholt) go cacheLatestChartDetails(charts)
 
 		// use gob encoding instead of json, it peforms much better
 		var buf bytes.Buffer
 		enc := gob.NewEncoder(&buf)
-		if err = enc.Encode(charts); err != nil {
+		if err = enc.Encode(cacheEntry); err != nil {
 			return nil, false, err
 		}
 		return buf.Bytes(), true, nil
@@ -395,6 +408,69 @@ func onAddOrModifyRepo(key string, unstructuredRepo map[string]interface{}) (int
 	}
 }
 
+// onModifyRepo essentially tells the cache what to store for a given key
+func onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue interface{}) (interface{}, bool, error) {
+	// first check the repo is ready
+	if isRepoReady(unstructuredRepo) {
+		// We should to compare checksums on what's stored in the cache
+		// vs the modified object to see if the contents has really changed before embarking on
+		// expensive operation indexOneRepo() below.
+		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+		newChecksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
+		if err != nil || !found {
+			return nil, false, status.Errorf(
+				codes.Internal,
+				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
+				prettyPrintMap(unstructuredRepo), err)
+		}
+
+		cacheEntryUntyped, err := onGetRepo(key, oldValue)
+		if err != nil {
+			return nil, false, err
+		}
+
+		cacheEntry, ok := cacheEntryUntyped.(repoCacheEntry)
+		if !ok {
+			return nil, false, status.Errorf(
+				codes.Internal,
+				"unexpected value found in cache for key [%s]: %v",
+				key, cacheEntryUntyped)
+		}
+
+		if cacheEntry.Checksum != newChecksum {
+			newCharts, err := indexOneRepo(unstructuredRepo)
+			if err != nil {
+				return nil, false, err
+			}
+
+			cacheEntry = repoCacheEntry{
+				Checksum: newChecksum,
+				Charts:   newCharts,
+			}
+
+			// launch go-routine that will download tarball and extract relevant details for each chart
+			// and cache them for fast lookup
+			// TODO (gfichtenholt) go cacheLatestChartDetails(charts)
+
+			// use gob encoding instead of json, it peforms much better
+			var buf bytes.Buffer
+			enc := gob.NewEncoder(&buf)
+			if err = enc.Encode(cacheEntry); err != nil {
+				return nil, false, err
+			}
+			return buf.Bytes(), true, nil
+		} else {
+			// skip because the content did not change
+			return nil, false, nil
+		}
+	} else {
+		// repo is not quite ready to be indexed - not really an error condition,
+		// just skip it eventually there will be another event when it is in ready state
+		log.V(4).Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
+		return nil, false, nil
+	}
+}
+
 func onGetRepo(key string, value interface{}) (interface{}, error) {
 	b, ok := value.([]byte)
 	if !ok {
@@ -402,12 +478,12 @@ func onGetRepo(key string, value interface{}) (interface{}, error) {
 	}
 
 	dec := gob.NewDecoder(bytes.NewReader(b))
-	var charts []models.Chart
-	if err := dec.Decode(&charts); err != nil {
+	var entry repoCacheEntry
+	if err := dec.Decode(&entry); err != nil {
 		return nil, err
 	}
 
-	return charts, nil
+	return entry, nil
 }
 
 func onDeleteRepo(key string, unstructuredRepo map[string]interface{}) (bool, error) {
