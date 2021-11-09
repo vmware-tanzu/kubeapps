@@ -345,7 +345,10 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 
 	var oldValue []byte
 	if !add {
-		oldValue, _ = c.redisCli.Get(c.redisCli.Context(), key).Bytes()
+		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != nil {
+			log.Errorf("Failed to get value for object with key [%s] in cache due to: %v", key, err)
+			return err
+		}
 	}
 
 	var newValue interface{}
@@ -454,14 +457,64 @@ func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, er
 // be relied upon to be the "source-of-truth". So I removed it for now as I found it
 // of no use
 
+// parallelize the process of value retrieval because fetchForOne() calls
+// c.config.onGet() which will de-code the data from bytes into expected struct, which
+// may be computationally expensive and thus benefit from multiple threads of execution
 func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interface{}, error) {
 	response := make(map[string]interface{})
-	for _, key := range keys {
-		result, err := c.fetchForOne(key)
-		if err != nil {
-			return nil, err
+
+	// max number of concurrent workers retrieving cache values at the same time
+	const maxWorkers = 10
+
+	type getValueJob struct {
+		key string
+	}
+	type getValueJobResult struct {
+		key   string
+		value interface{}
+		err   error
+	}
+
+	var wg sync.WaitGroup
+	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
+	requestChan := make(chan getValueJob, numWorkers)
+	responseChan := make(chan getValueJobResult, numWorkers)
+
+	// Process only at most maxWorkers at a time
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			// The following loop will only terminate when the request channel is
+			// closed (and there are no more items)
+			for job := range requestChan {
+				result, err := c.fetchForOne(job.key)
+				responseChan <- getValueJobResult{job.key, result, err}
+			}
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(responseChan)
+	}()
+
+	go func() {
+		for _, key := range keys {
+			requestChan <- getValueJob{key}
+		}
+		close(requestChan)
+	}()
+
+	// Start receiving results
+	// The following loop will only terminate when the response channel is closed, i.e.
+	// after the all the requests have been processed
+	for resp := range responseChan {
+		if resp.err == nil {
+			response[resp.key] = resp.value
 		} else {
-			response[key] = result
+			// TODO (gfichtenholt) this returns first error, see if we can return all of them
+			return nil, resp.err
 		}
 	}
 	return response, nil
@@ -515,9 +568,9 @@ func (c NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstru
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
+			// The following loop will only terminate when the request channel is
+			// closed (and there are no more items)
 			for job := range requestChan {
-				// The following loop will only terminate when the request channel is
-				// closed (and there are no more items)
 				c.onAddOrModify(true, job.item)
 			}
 			wg.Done()

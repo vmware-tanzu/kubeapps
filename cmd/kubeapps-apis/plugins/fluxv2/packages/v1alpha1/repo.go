@@ -159,7 +159,6 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 	// Some key may have been evicted due to memory pressure and LRU eviction policy.
 	// ref: https://redis.io/topics/lru-cache
 	// so, first, let's fetch the entries that are still cached before redis evicts those
-	// this for loop should be very fast as it only covers cache hit scenarios
 	chartsUntyped, err := s.cache.fetchForMultiple(repoNames)
 	if err != nil {
 		return nil, err

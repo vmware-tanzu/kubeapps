@@ -587,13 +587,22 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
+		// see below
+		key, oldValue, _ := redisKeyValueForRuntimeObject(repo)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
 		s.cache.eventProcessedWaitGroup.Add(1)
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
-		key, bytes, err := redisSetValueForRepo(repo, mock)
+		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
+		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
+		mock.ExpectGet(key).SetVal(string(oldValue))
+		key, newValue, err := redisSetValueForRepo(repo, mock)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -607,7 +616,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		mock.ExpectGet(key).SetVal(string(bytes))
+		mock.ExpectGet(key).SetVal(string(newValue))
 
 		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
 			context.Background(),
