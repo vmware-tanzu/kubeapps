@@ -284,7 +284,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return nil, err
 	}
 
-	// TODO(minelson): support configurable version summary for kapp-controller pkgs.
+	// TODO(minelson): support configurable version summary for kapp-controller pkgs
+	// as already done for Helm (see #3588 for more info).
 	versions := make([]*corev1.PackageAppVersion, len(pkgVersions[identifier]))
 	for i, v := range pkgVersions[identifier] {
 		versions[i] = &corev1.PackageAppVersion{
