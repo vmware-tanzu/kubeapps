@@ -67,7 +67,7 @@
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.4.0",
     "remark-gfm": "^3.0.1",
-    "swagger-ui-react": "^4.0.1",
+    "swagger-ui-react": "^4.1.0",
     "typesafe-actions": "^5.1.0",
     "yaml": "^1.10.2"
   },
