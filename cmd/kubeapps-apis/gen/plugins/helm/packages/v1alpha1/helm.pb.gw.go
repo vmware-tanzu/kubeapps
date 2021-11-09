@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	v1alpha1_1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -53,7 +53,7 @@ func request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Cont
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -73,7 +73,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -126,7 +126,7 @@ func request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -183,7 +183,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -236,7 +236,7 @@ func request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Conte
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -293,7 +293,7 @@ var (
 )
 
 func request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -309,7 +309,7 @@ func request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx context.Cont
 }
 
 func local_request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -329,7 +329,7 @@ var (
 )
 
 func request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -382,7 +382,7 @@ func request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.Context
 }
 
 func local_request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -435,7 +435,7 @@ func local_request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.C
 }
 
 func request_HelmPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.CreateInstalledPackageRequest
+	var protoReq v1alpha1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -452,7 +452,7 @@ func request_HelmPackagesService_CreateInstalledPackage_0(ctx context.Context, m
 }
 
 func local_request_HelmPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.CreateInstalledPackageRequest
+	var protoReq v1alpha1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -469,7 +469,7 @@ func local_request_HelmPackagesService_CreateInstalledPackage_0(ctx context.Cont
 }
 
 func request_HelmPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
+	var protoReq v1alpha1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -523,7 +523,7 @@ func request_HelmPackagesService_UpdateInstalledPackage_0(ctx context.Context, m
 }
 
 func local_request_HelmPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
+	var protoReq v1alpha1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -581,7 +581,7 @@ var (
 )
 
 func request_HelmPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
+	var protoReq v1alpha1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -634,7 +634,7 @@ func request_HelmPackagesService_DeleteInstalledPackage_0(ctx context.Context, m
 }
 
 func local_request_HelmPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
+	var protoReq v1alpha1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -799,7 +799,7 @@ var (
 )
 
 func request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -852,7 +852,7 @@ func request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.C
 }
 
 func local_request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
