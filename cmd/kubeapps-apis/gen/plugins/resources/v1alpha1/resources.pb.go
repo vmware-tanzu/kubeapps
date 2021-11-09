@@ -23,21 +23,28 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// GetResources verifies that the requested refs belong to the specified installed
-// package then sends the resources in a response stream.
+// GetResourcesRequest
+//
+// Request for GetResources that specifies the resource references to get or watch.
 type GetResourcesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// InstalledPackageRef
+	//
 	// The installed package reference for which the resources are being fetched.
 	InstalledPackageRef *v1alpha1.InstalledPackageReference `protobuf:"bytes,1,opt,name=installed_package_ref,json=installedPackageRef,proto3" json:"installed_package_ref,omitempty"`
+	// ResourceRefs
+	//
 	// The references to the resources that are to be fetched or watched.
 	// If empty, all resources for the installed package are returned when only
 	// getting the resources. It must be populated to watch resources to avoid
 	// watching all resources unnecessarily.
 	ResourceRefs []*v1alpha1.ResourceRef `protobuf:"bytes,2,rep,name=resource_refs,json=resourceRefs,proto3" json:"resource_refs,omitempty"`
-	// Watch, when true, will cause the stream to remain open with updated
+	// Watch
+	//
+	// When true, this will cause the stream to remain open with updated
 	// resources being sent as events are received from the Kubernetes API
 	// server.
 	Watch bool `protobuf:"varint,3,opt,name=watch,proto3" json:"watch,omitempty"`
@@ -101,8 +108,12 @@ type GetResourcesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The resource reference for this resource.
+	// ResourceRef
+	//
+	// The resource reference for this single resource.
 	ResourceRef *v1alpha1.ResourceRef `protobuf:"bytes,1,opt,name=resource_ref,json=resourceRef,proto3" json:"resource_ref,omitempty"`
+	// Manifest
+	//
 	// The current manifest of the requested resource.
 	// Initially the JSON manifest will be returned as an Any, enabling the
 	// existing Kubeapps UI to replace its current direct api-server getting and

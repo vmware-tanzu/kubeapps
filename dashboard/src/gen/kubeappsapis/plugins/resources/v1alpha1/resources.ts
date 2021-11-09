@@ -14,13 +14,20 @@ import { share } from "rxjs/operators";
 export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
 
 /**
- * GetResources verifies that the requested refs belong to the specified installed
- * package then sends the resources in a response stream.
+ * GetResourcesRequest
+ *
+ * Request for GetResources that specifies the resource references to get or watch.
  */
 export interface GetResourcesRequest {
-  /** The installed package reference for which the resources are being fetched. */
+  /**
+   * InstalledPackageRef
+   *
+   * The installed package reference for which the resources are being fetched.
+   */
   installedPackageRef?: InstalledPackageReference;
   /**
+   * ResourceRefs
+   *
    * The references to the resources that are to be fetched or watched.
    * If empty, all resources for the installed package are returned when only
    * getting the resources. It must be populated to watch resources to avoid
@@ -28,7 +35,9 @@ export interface GetResourcesRequest {
    */
   resourceRefs: ResourceRef[];
   /**
-   * Watch, when true, will cause the stream to remain open with updated
+   * Watch
+   *
+   * When true, this will cause the stream to remain open with updated
    * resources being sent as events are received from the Kubernetes API
    * server.
    */
@@ -36,9 +45,15 @@ export interface GetResourcesRequest {
 }
 
 export interface GetResourcesResponse {
-  /** The resource reference for this resource. */
+  /**
+   * ResourceRef
+   *
+   * The resource reference for this single resource.
+   */
   resourceRef?: ResourceRef;
   /**
+   * Manifest
+   *
    * The current manifest of the requested resource.
    * Initially the JSON manifest will be returned as an Any, enabling the
    * existing Kubeapps UI to replace its current direct api-server getting and

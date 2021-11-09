@@ -15,28 +15,39 @@ service ResourcesService {
     }
 }
 
-// GetResources verifies that the requested refs belong to the specified installed
-// package then sends the resources in a response stream.
+// GetResourcesRequest
+//
+// Request for GetResources that specifies the resource references to get or watch.
 message GetResourcesRequest {
+    // InstalledPackageRef
+    //
     // The installed package reference for which the resources are being fetched.
     kubeappsapis.core.packages.v1alpha1.InstalledPackageReference installed_package_ref = 1;
 
+    // ResourceRefs
+    //
     // The references to the resources that are to be fetched or watched.
     // If empty, all resources for the installed package are returned when only
     // getting the resources. It must be populated to watch resources to avoid
     // watching all resources unnecessarily.
     repeated kubeappsapis.core.packages.v1alpha1.ResourceRef resource_refs = 2;
 
-    // Watch, when true, will cause the stream to remain open with updated
+    // Watch
+    //
+    // When true, this will cause the stream to remain open with updated
     // resources being sent as events are received from the Kubernetes API
     // server.
     bool watch = 3;
 }
 
 message GetResourcesResponse {
-    // The resource reference for this resource.
+    // ResourceRef
+    //
+    // The resource reference for this single resource.
     kubeappsapis.core.packages.v1alpha1.ResourceRef resource_ref = 1;
 
+    // Manifest
+    //
     // The current manifest of the requested resource.
     // Initially the JSON manifest will be returned as an Any, enabling the
     // existing Kubeapps UI to replace its current direct api-server getting and

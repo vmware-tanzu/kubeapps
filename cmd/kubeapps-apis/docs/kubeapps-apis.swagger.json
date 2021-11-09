@@ -2615,7 +2615,7 @@
           },
           {
             "name": "watch",
-            "description": "Watch, when true, will cause the stream to remain open with updated\nresources being sent as events are received from the Kubernetes API\nserver.",
+            "description": "Watch. When true, this will cause the stream to remain open with updated\nresources being sent as events are received from the Kubernetes API\nserver.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -3166,11 +3166,13 @@
       "properties": {
         "resourceRef": {
           "$ref": "#/definitions/v1alpha1ResourceRef",
-          "description": "The resource reference for this resource."
+          "description": "The resource reference for this single resource.",
+          "title": "ResourceRef"
         },
         "manifest": {
           "$ref": "#/definitions/protobufAny",
-          "description": "The current manifest of the requested resource.\nInitially the JSON manifest will be returned as an Any, enabling the\nexisting Kubeapps UI to replace its current direct api-server getting and\nwatching of resources, but we may in the future pull out further\nstructured metadata into this message as needed."
+          "description": "The current manifest of the requested resource.\nInitially the JSON manifest will be returned as an Any, enabling the\nexisting Kubeapps UI to replace its current direct api-server getting and\nwatching of resources, but we may in the future pull out further\nstructured metadata into this message as needed.",
+          "title": "Manifest"
         }
       }
     },
