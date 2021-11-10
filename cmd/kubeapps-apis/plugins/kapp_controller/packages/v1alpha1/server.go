@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	// v1 "github.com/kubeapps/kubeapps/cmd/kubeapps-api-service/kubeappsapis/core/packagerepositories/v1"
 	// *sigh*, seems different versions of the k8s client.go (at the time of writing, kapp-controller
@@ -25,6 +26,7 @@ import (
 		        want (context.Context)
 	*/
 	// So instead we use the dynamic (untyped) client.
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,6 +34,7 @@ import (
 
 	log "k8s.io/klog/v2"
 
+	"github.com/Masterminds/semver/v3"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
@@ -44,10 +47,12 @@ type clientGetter func(context.Context, string) (dynamic.Interface, error)
 const (
 
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-	packageGroup     = "data.packaging.carvel.dev"
-	packageVersion   = "v1alpha1"
-	packageResource  = "Package"
-	packagesResource = "packages"
+	packageGroup             = "data.packaging.carvel.dev"
+	packageVersion           = "v1alpha1"
+	packageResource          = "Package"
+	packageResources         = "packages"
+	packageMetadataResource  = "PackageMetadata"
+	packageMetadataResources = "packagemetadatas"
 
 	// See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
 	repositoryGroup      = "packaging.carvel.dev"
@@ -114,43 +119,351 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	packageResource := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packagesResource}
-
-	pkgs, err := client.Resource(packageResource).Namespace(namespace).List(ctx, metav1.ListOptions{})
+	pkgGVR := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packageResources}
+	pkgs, err := client.Resource(pkgGVR).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
 	}
+	pkgVersions, err := pkgVersionsMap(pkgs.Items)
+	if err != nil {
+		return nil, err
+	}
 
-	responsePackages := []*corev1.AvailablePackageSummary{}
-	for _, pkgUnstructured := range pkgs.Items {
-		pkg, err := AvailablePackageSummaryFromUnstructured(&pkgUnstructured)
+	metaGVR := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packageMetadataResources}
+	pkgMetadatas, err := client.Resource(metaGVR).Namespace(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller package metadatas: %v", err))
+	}
+
+	responsePackages := make([]*corev1.AvailablePackageSummary, len(pkgMetadatas.Items))
+	for i, pkgMetadata := range pkgMetadatas.Items {
+		pkg, err := AvailablePackageSummaryFromUnstructured(&pkgMetadata, pkgVersions, cluster)
 		if err != nil {
 			return nil, err
 		}
-		responsePackages = append(responsePackages, pkg)
+		responsePackages[i] = pkg
 	}
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: responsePackages,
 	}, nil
 }
 
-func AvailablePackageSummaryFromUnstructured(ap *unstructured.Unstructured) (*corev1.AvailablePackageSummary, error) {
-	pkg := &corev1.AvailablePackageSummary{}
+type packageSemver struct {
+	pkg     *unstructured.Unstructured
+	version *semver.Version
+}
 
-	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-	name, found, err := unstructured.NestedString(ap.Object, "spec", "refName")
+// pkgVersionsMap recturns a map of packages keyed by the packagemetadataName.
+//
+// A Package CR in carvel is really a particular version of a package, so we need
+// to sort them by the package metadata name, since this is what they share in common.
+// The packages are then sorted by version.
+func pkgVersionsMap(packages []unstructured.Unstructured) (map[string][]packageSemver, error) {
+	m := map[string][]packageSemver{}
+	for _, pkgUnstructured := range packages {
+		refName, found, err := unstructured.NestedString(pkgUnstructured.Object, "spec", "refName")
+		if err != nil || !found || refName == "" {
+			return nil, status.Errorf(codes.Internal, "required field spec.refName not found on kapp-controller Package: %v\n%v", err, pkgUnstructured)
+		}
+		version, found, err := unstructured.NestedString(pkgUnstructured.Object, "spec", "version")
+		if err != nil || !found || version == "" {
+			return nil, status.Errorf(codes.Internal, "required field spec.version not found on kapp-controller Package: %v\n%v", err, pkgUnstructured)
+		}
+		semverVersion, err := semver.NewVersion(version)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "required field spec.version was not semver compatible on kapp-controller Package: %v\n%v", err, pkgUnstructured)
+		}
+
+		m[refName] = append(m[refName], packageSemver{&pkgUnstructured, semverVersion})
+	}
+
+	for _, pkgVersions := range m {
+		sort.Slice(pkgVersions, func(i, j int) bool {
+			return pkgVersions[i].version.GreaterThan(pkgVersions[j].version)
+		})
+	}
+
+	return m, nil
+}
+
+func AvailablePackageSummaryFromUnstructured(pkgMeta *unstructured.Unstructured, pkgVersions map[string][]packageSemver, cluster string) (*corev1.AvailablePackageSummary, error) {
+	summary := &corev1.AvailablePackageSummary{}
+
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata
+	name, found, err := unstructured.NestedString(pkgMeta.Object, "metadata", "name")
 	if err != nil || !found || name == "" {
-		return nil, status.Errorf(codes.Internal, "required field spec.refName not found on kapp-controller package: %v:\n%v", err, ap.Object)
+		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
 	}
-	pkg.DisplayName = name
-
-	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-	version, found, err := unstructured.NestedString(ap.Object, "spec", "version")
+	namespace, found, err := unstructured.NestedString(pkgMeta.Object, "metadata", "namespace")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal, "required field spec.version not found on kapp-controller package: %v:\n%v", err, ap.Object)
+		return nil, status.Errorf(codes.Internal, "required field metadata.namespace not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
 	}
-	pkg.LatestVersion = &corev1.PackageAppVersion{PkgVersion: version}
-	return pkg, nil
+	summary.Name = name
+	displayName, found, err := unstructured.NestedString(pkgMeta.Object, "spec", "displayName")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.Internal, "required field spec.displayName not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	summary.DisplayName = displayName
+
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata
+	versions := pkgVersions[name]
+	if len(versions) == 0 {
+		return nil, status.Errorf(codes.Internal, "no packages found for kapp-controller package metadata: %v", pkgMeta.Object)
+
+	}
+	summary.LatestVersion = &corev1.PackageAppVersion{
+		PkgVersion: versions[0].version.String(),
+	}
+
+	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
+	// a url, so convert to a data-url.
+	iconSVGBase64, found, err := unstructured.NestedString(pkgMeta.Object, "spec", "iconSVGBase64")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.iconSVGBase64 not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found && iconSVGBase64 != "" {
+		summary.IconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", iconSVGBase64)
+	}
+
+	shortDescription, found, err := unstructured.NestedString(pkgMeta.Object, "spec", "shortDescription")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.shortDescription not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found {
+		summary.ShortDescription = shortDescription
+	}
+
+	categories, found, err := unstructured.NestedStringSlice(pkgMeta.Object, "spec", "categories")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.categories not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found {
+		summary.Categories = categories
+	}
+
+	summary.AvailablePackageRef = &corev1.AvailablePackageReference{
+		Context: &corev1.Context{
+			Cluster:   cluster,
+			Namespace: namespace,
+		},
+		Plugin:     &pluginDetail,
+		Identifier: name,
+	}
+
+	return summary, nil
+}
+
+// GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
+func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
+	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
+	log.Infof("+kapp-controller GetAvailablePackageVersions (cluster=%q, namespace=%q)", cluster, namespace)
+
+	identifier := request.GetAvailablePackageRef().GetIdentifier()
+	if namespace == "" || identifier == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
+	}
+	log.Errorf("request available pkg ref was: %+v", request.GetAvailablePackageRef())
+
+	client, err := s.getDynamicClient(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the field selector to return only Package CRs that match on the spec.refName.
+	pkgGVR := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packageResources}
+	pkgs, err := client.Resource(pkgGVR).Namespace(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.refName=%s", identifier),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
+	}
+
+	pkgVersions, err := pkgVersionsMap(pkgs.Items)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO(minelson): support configurable version summary for kapp-controller pkgs
+	// as already done for Helm (see #3588 for more info).
+	versions := make([]*corev1.PackageAppVersion, len(pkgVersions[identifier]))
+	for i, v := range pkgVersions[identifier] {
+		versions[i] = &corev1.PackageAppVersion{
+			PkgVersion: v.version.String(),
+		}
+	}
+
+	return &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: versions,
+	}, nil
+}
+
+// GetAvailablePackageDetail returns the package metadata managed by the 'helm' plugin
+func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
+	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
+	log.Infof("+kapp-controller GetAvailablePackageVersions (cluster=%q, namespace=%q)", cluster, namespace)
+
+	if request.GetAvailablePackageRef().GetContext() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef.Context provided")
+	}
+
+	client, err := s.getDynamicClient(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the metadata first.
+	identifier := request.GetAvailablePackageRef().GetIdentifier()
+	metaGVR := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packageMetadataResources}
+	pkgMetadata, err := client.Resource(metaGVR).Namespace(namespace).Get(ctx, identifier, metav1.GetOptions{})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to get kapp-controller package metadatas: %v", err))
+	}
+
+	pkgGVR := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packageResources}
+	pkgs, err := client.Resource(pkgGVR).Namespace(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.refName=%s", identifier),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
+	}
+	pkgVersions, err := pkgVersionsMap(pkgs.Items)
+	if err != nil {
+		return nil, err
+	}
+	requestedPkgVersion := request.GetPkgVersion()
+	if requestedPkgVersion != "" {
+		// Ensure the version is available.
+		found := false
+		for _, v := range pkgVersions[identifier] {
+			if v.version.String() == requestedPkgVersion {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find %q package with version %q", identifier, requestedPkgVersion))
+		}
+	} else {
+		// If the pkgVersion wasn't specified, grab the packages to find the latest.
+		if len(pkgVersions[identifier]) > 0 {
+			requestedPkgVersion = pkgVersions[identifier][0].version.String()
+		} else {
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", identifier))
+		}
+	}
+
+	detail, err := AvailablePackageDetailFromUnstructured(pkgMetadata, requestedPkgVersion, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetAvailablePackageDetailResponse{
+		AvailablePackageDetail: detail,
+	}, nil
+}
+
+func AvailablePackageDetailFromUnstructured(pkgMeta *unstructured.Unstructured, version, cluster string) (*corev1.AvailablePackageDetail, error) {
+	detail := &corev1.AvailablePackageDetail{}
+
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata
+	name, found, err := unstructured.NestedString(pkgMeta.Object, "metadata", "name")
+	if err != nil || !found || name == "" {
+		return nil, status.Errorf(codes.Internal, "required field metadata.name not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	namespace, found, err := unstructured.NestedString(pkgMeta.Object, "metadata", "namespace")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.Internal, "required field metadata.namespace not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	detail.Name = name
+	displayName, found, err := unstructured.NestedString(pkgMeta.Object, "spec", "displayName")
+	if err != nil || !found {
+		return nil, status.Errorf(codes.Internal, "required field spec.displayName not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	detail.DisplayName = displayName
+
+	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
+	// a url, so convert to a data-url.
+	iconSVGBase64, found, err := unstructured.NestedString(pkgMeta.Object, "spec", "iconSVGBase64")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.iconSVGBase64 not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found && iconSVGBase64 != "" {
+		detail.IconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", iconSVGBase64)
+	}
+
+	shortDescription, found, err := unstructured.NestedString(pkgMeta.Object, "spec", "shortDescription")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.shortDescription not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found {
+		detail.ShortDescription = shortDescription
+	}
+
+	categories, found, err := unstructured.NestedStringSlice(pkgMeta.Object, "spec", "categories")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.categories not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found {
+		detail.Categories = categories
+	}
+
+	detail.Version = &corev1.PackageAppVersion{
+		PkgVersion: version,
+	}
+
+	longDescription, found, err := unstructured.NestedString(pkgMeta.Object, "spec", "longDescription")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.longDescription not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found {
+		detail.LongDescription = longDescription
+	}
+	detail.Readme = longDescription
+
+	supportDescription, found, err := unstructured.NestedString(pkgMeta.Object, "spec", "supportDescription")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.supportDescription not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found {
+		detail.Readme = detail.Readme + "\n\n" + supportDescription
+	}
+
+	maintainersUnstructured, found, err := unstructured.NestedSlice(pkgMeta.Object, "spec", "maintainers")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "required field spec.maintainers not found on kapp-controller packagemetadata: %v\n%v", err, pkgMeta.Object)
+	}
+	if found {
+		maintainers := []*corev1.Maintainer{}
+		for _, m := range maintainersUnstructured {
+			maintainerMapUnstructured, ok := m.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			maintainerMap, found, err := unstructured.NestedStringMap(maintainerMapUnstructured)
+
+			if found && err == nil {
+				maintainers = append(maintainers, &corev1.Maintainer{
+					Name:  maintainerMap["name"],
+					Email: maintainerMap["email"],
+				})
+			}
+
+		}
+		detail.Maintainers = maintainers
+	}
+
+	detail.AvailablePackageRef = &corev1.AvailablePackageReference{
+		Context: &corev1.Context{
+			Cluster:   cluster,
+			Namespace: namespace,
+		},
+		Plugin:     &pluginDetail,
+		Identifier: name,
+	}
+
+	return detail, nil
 }
 
 // GetPackageRepositories returns the package repositories based on the request.

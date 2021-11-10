@@ -433,14 +433,7 @@ export const Http = {
         message.rules.push(HttpRule.fromPartial(e));
       }
     }
-    if (
-      object.fullyDecodeReservedExpansion !== undefined &&
-      object.fullyDecodeReservedExpansion !== null
-    ) {
-      message.fullyDecodeReservedExpansion = object.fullyDecodeReservedExpansion;
-    } else {
-      message.fullyDecodeReservedExpansion = false;
-    }
+    message.fullyDecodeReservedExpansion = object.fullyDecodeReservedExpansion ?? false;
     return message;
   },
 };
@@ -608,52 +601,20 @@ export const HttpRule = {
 
   fromPartial(object: DeepPartial<HttpRule>): HttpRule {
     const message = { ...baseHttpRule } as HttpRule;
-    message.additionalBindings = [];
-    if (object.selector !== undefined && object.selector !== null) {
-      message.selector = object.selector;
-    } else {
-      message.selector = "";
-    }
-    if (object.get !== undefined && object.get !== null) {
-      message.get = object.get;
-    } else {
-      message.get = undefined;
-    }
-    if (object.put !== undefined && object.put !== null) {
-      message.put = object.put;
-    } else {
-      message.put = undefined;
-    }
-    if (object.post !== undefined && object.post !== null) {
-      message.post = object.post;
-    } else {
-      message.post = undefined;
-    }
-    if (object.delete !== undefined && object.delete !== null) {
-      message.delete = object.delete;
-    } else {
-      message.delete = undefined;
-    }
-    if (object.patch !== undefined && object.patch !== null) {
-      message.patch = object.patch;
-    } else {
-      message.patch = undefined;
-    }
+    message.selector = object.selector ?? "";
+    message.get = object.get ?? undefined;
+    message.put = object.put ?? undefined;
+    message.post = object.post ?? undefined;
+    message.delete = object.delete ?? undefined;
+    message.patch = object.patch ?? undefined;
     if (object.custom !== undefined && object.custom !== null) {
       message.custom = CustomHttpPattern.fromPartial(object.custom);
     } else {
       message.custom = undefined;
     }
-    if (object.body !== undefined && object.body !== null) {
-      message.body = object.body;
-    } else {
-      message.body = "";
-    }
-    if (object.responseBody !== undefined && object.responseBody !== null) {
-      message.responseBody = object.responseBody;
-    } else {
-      message.responseBody = "";
-    }
+    message.body = object.body ?? "";
+    message.responseBody = object.responseBody ?? "";
+    message.additionalBindings = [];
     if (object.additionalBindings !== undefined && object.additionalBindings !== null) {
       for (const e of object.additionalBindings) {
         message.additionalBindings.push(HttpRule.fromPartial(e));
@@ -721,16 +682,8 @@ export const CustomHttpPattern = {
 
   fromPartial(object: DeepPartial<CustomHttpPattern>): CustomHttpPattern {
     const message = { ...baseCustomHttpPattern } as CustomHttpPattern;
-    if (object.kind !== undefined && object.kind !== null) {
-      message.kind = object.kind;
-    } else {
-      message.kind = "";
-    }
-    if (object.path !== undefined && object.path !== null) {
-      message.path = object.path;
-    } else {
-      message.path = "";
-    }
+    message.kind = object.kind ?? "";
+    message.path = object.path ?? "";
     return message;
   },
 };

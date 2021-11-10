@@ -12,6 +12,7 @@ import {
   CreateInstalledPackageRequest,
   UpdateInstalledPackageRequest,
   DeleteInstalledPackageRequest,
+  GetInstalledPackageResourceRefsRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
@@ -20,6 +21,7 @@ import {
   CreateInstalledPackageResponse,
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
+  GetInstalledPackageResourceRefsResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
@@ -303,21 +305,9 @@ export const PackageRepository = {
 
   fromPartial(object: DeepPartial<PackageRepository>): PackageRepository {
     const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = object.namespace;
-    } else {
-      message.namespace = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
-    }
+    message.name = object.name ?? "";
+    message.namespace = object.namespace ?? "";
+    message.url = object.url ?? "";
     if (object.plugin !== undefined && object.plugin !== null) {
       message.plugin = Plugin.fromPartial(object.plugin);
     } else {
@@ -373,6 +363,14 @@ export interface KappControllerPackagesService {
     request: DeepPartial<DeleteInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeleteInstalledPackageResponse>;
+  /**
+   * GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
+   * an installed package.
+   */
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageResourceRefsResponse>;
 }
 
 export class KappControllerPackagesServiceClientImpl implements KappControllerPackagesService {
@@ -389,6 +387,7 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
+    this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -486,6 +485,17 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     return this.rpc.unary(
       KappControllerPackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageResourceRefsResponse> {
+    return this.rpc.unary(
+      KappControllerPackagesServiceGetInstalledPackageResourceRefsDesc,
+      GetInstalledPackageResourceRefsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -698,6 +708,29 @@ export const KappControllerPackagesServiceDeleteInstalledPackageDesc: UnaryMetho
     },
   } as any,
 };
+
+export const KappControllerPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageResourceRefs",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageResourceRefsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageResourceRefsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;

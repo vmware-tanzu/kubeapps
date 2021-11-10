@@ -2406,6 +2406,7 @@ func releaseForStub(t *testing.T, r releaseStub) *release.Release {
 	return &release.Release{
 		Name:      r.name,
 		Namespace: r.namespace,
+		Manifest:  r.manifest,
 		Version:   r.version,
 		Info: &release.Info{
 			Status: r.status,
@@ -2540,4 +2541,5 @@ type releaseStub struct {
 	values         string
 	notes          string
 	status         release.Status
+	manifest       string
 }
