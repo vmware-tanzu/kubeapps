@@ -14,15 +14,18 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -33,8 +36,6 @@ import (
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080, e.g.
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
-//    Didn't want to spend cycles writing port-forwarding code programmatically like https://github.com/anthhub/forwarder
-//    at this point.
 // 3) run './kind-cluster-setup.sh deploy' once prior to these tests
 
 const (
@@ -372,14 +373,152 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 }
 
 // this integration test is meant to test a scenario when the redis cache is confiured with maxmemory
-// to small to be able to fit all the repos needed to satisfy the request for GetAvailablePackageSummaries
-// and redis cache eviction kicks in. To set up such environment one can use
-// "-f ./docs/user/manifests/kubeapps-local-dev-redis-tiny-values.yaml" option when installing
+// too small to be able to fit all the repos needed to satisfy the request for GetAvailablePackageSummaries
+// and redis cache eviction kicks in. Also, the kubeapps-apis pod should have a large memory limit (1Gb) set
+// To set up such environment one can use  "-f ./docs/user/manifests/kubeapps-local-dev-redis-tiny-values.yaml" option when installing
 // kubeapps via "helm upgrade"
-//
+// It is worth noting that exactly how many copies of bitnami repo can be held in the cache at any given time varies
+// This is because the size of the index.yaml we get from bitnami does fluctuate quite a bit over time:
+// [kubeapps]$ ls -l bitnami_index.yaml
+// -rw-r--r--@ 1 gfichtenholt  staff  8432962 Jun 20 02:35 bitnami_index.yaml
+// [kubeapps]$ ls -l bitnami_index.yaml
+// -rw-rw-rw-@ 1 gfichtenholt  staff  10394218 Nov  7 19:41 bitnami_index.yaml
 func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *testing.T) {
-	_ = checkEnv(t)
-	// TODO
+	fluxPlugin := checkEnv(t)
+	if err := kubePortForwardToRedis(t); err != nil {
+		t.Fatalf("kubePortForwardToRedis failed due to %+v", err)
+	}
+	redisPwd, err := kubeGetSecret(t, "kubeapps", "kubeapps-redis", "redis-password")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	redisCli := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: redisPwd,
+		DB:       0,
+	})
+	t.Logf("redisCli: %s", redisCli)
+	// assume 15Mb redis cache for now
+	if err = redisCheckTinyMaxMemory(t, redisCli, "15728640"); err != nil {
+		t.Fatalf("%v", err)
+	}
+	// ref https://redis.io/topics/notifications
+	if err = redisCli.ConfigSet(redisCli.Context(), "notify-keyspace-events", "EA").Err(); err != nil {
+		t.Fatalf("%v", err)
+	}
+	t.Cleanup(func() {
+		t.Logf("Resetting notify-keyspace-events")
+		if err = redisCli.ConfigSet(redisCli.Context(), "notify-keyspace-events", "").Err(); err != nil {
+			t.Logf("%v", err)
+		}
+	})
+
+	// sanity check, we expect the cache to be empty at this point
+	// if it's not, it's likely that some cleanup didn't happen due to earlier an aborted test
+	// and you should be able to clean up manually
+	// $ kubectl delete helmrepositories --all
+	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+		t.Fatalf("%v", err)
+	} else {
+		if len(keys) != 0 {
+			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
+		}
+	}
+	// ref https://medium.com/nerd-for-tech/redis-getting-notified-when-a-key-is-expired-or-changed-ca3e1f1c7f0a
+	subscribe := redisCli.PSubscribe(redisCli.Context(), "__keyevent@0__:*")
+	ch := subscribe.Channel()
+	defer subscribe.Close()
+
+	const MAX_REPOS_NEVER = 100
+	// ref https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait
+	evicted := false
+	sem := semaphore.NewWeighted(MAX_REPOS_NEVER)
+	if err := sem.Acquire(context.Background(), MAX_REPOS_NEVER); err != nil {
+		t.Fatalf("%v", err)
+	}
+	go func() {
+		// need to wait until the plug-in has indexed all TOTAL_REPOS repos in the background
+		t.Logf("Listening for events from redis in the background...")
+		for {
+			event, ok := <-ch
+			if !ok {
+				t.Logf("Redis publish channel was closed")
+				break
+			}
+			t.Logf("Redis event: Channel: [%v], Payload: [%v]", event.Channel, event.Payload)
+			if event.Channel == "__keyevent@0__:set" {
+				// signal to the main thread its okay to proceed
+				sem.Release(1)
+			} else if event.Channel == "__keyevent@0__:evicted" {
+				evicted = true
+				sem.Release(1)
+			}
+		}
+	}()
+
+	// now load some large repos (bitnami)
+	// I didn't want to store a large (10MB) copy of bitnami repo in our git,
+	// so for now let it fetch from bitnami website
+	// we'll keep adding repos one at a time, until we get an event from redis
+	// about the first evicted entry
+	totalRepos := 0
+	for ; totalRepos < MAX_REPOS_NEVER && !evicted; totalRepos++ {
+		repo := fmt.Sprintf("bitnami-%d", totalRepos)
+		if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
+			t.Fatalf("%v", err)
+		}
+		t.Cleanup(func() {
+			if err = kubeDeleteHelmRepository(t, repo, "default"); err != nil {
+				t.Logf("%v", err)
+			}
+		})
+		// wait until this repo have been indexed and cached up to 5 minutes
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+		if err := sem.Acquire(ctx, 1); err != nil {
+			t.Fatalf("Timed out waiting for Redis event: %v", err)
+		}
+	}
+
+	if !evicted {
+		t.Fatalf("Failing because redis did not evict any entries")
+	}
+
+	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+		t.Fatalf("%v", err)
+	} else {
+		// the cache should only big enough to be able to (totalRepos-1) of the keys
+		if len(keys) != totalRepos-1 {
+			t.Fatalf("Expected %d keys in cache but got [%s]", totalRepos-1, keys)
+		}
+	}
+
+	// not related to low laxmemory but as long as we are here might as well check this
+	_, err = fluxPlugin.GetAvailablePackageSummaries(context.TODO(), &corev1.GetAvailablePackageSummariesRequest{})
+	if err == nil || status.Code(err) != codes.Unauthenticated {
+		t.Fatalf("Expected Unauthenticated, got %v", err)
+	}
+
+	grpcContext := newGrpcContext(t, "test-create-admin")
+	resp, err := fluxPlugin.GetAvailablePackageSummaries(grpcContext, &corev1.GetAvailablePackageSummariesRequest{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	// we need to make sure that response contains packages from all 4 repositories
+	expected := make(map[string]struct{})
+	for i := 0; i < totalRepos; i++ {
+		repo := fmt.Sprintf("bitnami-%d", i)
+		expected[repo] = struct{}{}
+	}
+	for _, s := range resp.AvailablePackageSummaries {
+		id := strings.Split(s.AvailablePackageRef.Identifier, "/")
+		delete(expected, id[0])
+	}
+
+	if len(expected) > 0 {
+		t.Fatalf("Expected to get packages from these repositories: %s, but did not get any", expected)
+	}
 }
 
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {

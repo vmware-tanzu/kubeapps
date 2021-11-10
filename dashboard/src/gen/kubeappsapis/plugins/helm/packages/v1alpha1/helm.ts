@@ -12,6 +12,7 @@ import {
   CreateInstalledPackageRequest,
   UpdateInstalledPackageRequest,
   DeleteInstalledPackageRequest,
+  GetInstalledPackageResourceRefsRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
@@ -20,6 +21,7 @@ import {
   CreateInstalledPackageResponse,
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
+  GetInstalledPackageResourceRefsResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { BrowserHeaders } from "browser-headers";
 
@@ -127,11 +129,7 @@ export const InstalledPackageDetailCustomDataHelm = {
     const message = {
       ...baseInstalledPackageDetailCustomDataHelm,
     } as InstalledPackageDetailCustomDataHelm;
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = object.releaseRevision;
-    } else {
-      message.releaseRevision = 0;
-    }
+    message.releaseRevision = object.releaseRevision ?? 0;
     return message;
   },
 };
@@ -218,11 +216,7 @@ export const RollbackInstalledPackageRequest = {
     } else {
       message.installedPackageRef = undefined;
     }
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = object.releaseRevision;
-    } else {
-      message.releaseRevision = 0;
-    }
+    message.releaseRevision = object.releaseRevision ?? 0;
     return message;
   },
 };
@@ -347,6 +341,14 @@ export interface HelmPackagesService {
     request: DeepPartial<RollbackInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<RollbackInstalledPackageResponse>;
+  /**
+   * GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
+   * an installed package.
+   */
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageResourceRefsResponse>;
 }
 
 export class HelmPackagesServiceClientImpl implements HelmPackagesService {
@@ -363,6 +365,7 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
     this.RollbackInstalledPackage = this.RollbackInstalledPackage.bind(this);
+    this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -460,6 +463,17 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
     return this.rpc.unary(
       HelmPackagesServiceRollbackInstalledPackageDesc,
       RollbackInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageResourceRefsResponse> {
+    return this.rpc.unary(
+      HelmPackagesServiceGetInstalledPackageResourceRefsDesc,
+      GetInstalledPackageResourceRefsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -659,6 +673,28 @@ export const HelmPackagesServiceRollbackInstalledPackageDesc: UnaryMethodDefinit
     deserializeBinary(data: Uint8Array) {
       return {
         ...RollbackInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish = {
+  methodName: "GetInstalledPackageResourceRefs",
+  service: HelmPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetInstalledPackageResourceRefsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetInstalledPackageResourceRefsResponse.decode(data),
         toObject() {
           return this;
         },

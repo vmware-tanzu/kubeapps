@@ -21,6 +21,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugin_test"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -41,6 +42,7 @@ var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 	corev1.GetAvailablePackageDetailResponse{},
 	corev1.GetAvailablePackageSummariesResponse{},
 	corev1.GetAvailablePackageVersionsResponse{},
+	corev1.GetInstalledPackageResourceRefsResponse{},
 	corev1.GetInstalledPackageDetailResponse{},
 	corev1.GetInstalledPackageSummariesResponse{},
 	corev1.CreateInstalledPackageResponse{},
@@ -52,6 +54,7 @@ var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 	corev1.Maintainer{},
 	corev1.PackageAppVersion{},
 	corev1.VersionReference{},
+	corev1.ResourceRef{},
 	plugins.Plugin{},
 )
 
@@ -815,6 +818,96 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+		})
+	}
+}
+
+func TestGetInstalledPackageResourceRefs(t *testing.T) {
+	installedPlugin := &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"}
+
+	testCases := []struct {
+		name               string
+		statusCode         codes.Code
+		pluginResourceRefs []*corev1.ResourceRef
+		request            *corev1.GetInstalledPackageResourceRefsRequest
+		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
+	}{
+		{
+			name: "it should successfully call the plugins GetInstalledPackageResourceRefs endpoint",
+			pluginResourceRefs: []*corev1.ResourceRef{
+				{
+					ApiVersion: "apps/v1",
+					Kind:       "Deployment",
+					Name:       "some-deployment",
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+					Identifier: "installed-pkg-1",
+					Plugin:     installedPlugin,
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "some-deployment",
+					},
+				},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it should return an invalid argument if the plugin is not specified",
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+					Identifier: "installed-pkg-1",
+				},
+			},
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it should return an invalid argument if the plugin cannot be found",
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+					Identifier: "installed-pkg-1",
+					Plugin:     &plugins.Plugin{Name: "other-plugin.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &packagesServer{
+				plugins: []*pkgsPluginWithServer{
+					{
+						plugin: installedPlugin,
+						server: &plugin_test.TestPackagingPluginServer{
+							Plugin:       installedPlugin,
+							ResourceRefs: tc.pluginResourceRefs,
+						},
+					},
+				},
+			}
+
+			resourceRefs, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				if got, want := resourceRefs, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
+				}
 			}
 		})
 	}

@@ -182,16 +182,8 @@ export const Any = {
 
   fromPartial(object: DeepPartial<Any>): Any {
     const message = { ...baseAny } as Any;
-    if (object.typeUrl !== undefined && object.typeUrl !== null) {
-      message.typeUrl = object.typeUrl;
-    } else {
-      message.typeUrl = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = object.value;
-    } else {
-      message.value = new Uint8Array();
-    }
+    message.typeUrl = object.typeUrl ?? "";
+    message.value = object.value ?? new Uint8Array();
     return message;
   },
 };

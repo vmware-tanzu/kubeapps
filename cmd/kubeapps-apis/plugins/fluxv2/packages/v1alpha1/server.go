@@ -65,8 +65,8 @@ func NewServer(configGetter server.KubernetesConfigGetter, kubeappsCluster strin
 	cacheConfig := cacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: newBackgroundClientGetter(),
-		onAdd:        onAddOrModifyRepo,
-		onModify:     onAddOrModifyRepo,
+		onAdd:        onAddRepo,
+		onModify:     onModifyRepo,
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
@@ -130,7 +130,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 
 	responseRepos := []*v1alpha1.PackageRepository{}
 	for _, repoUnstructured := range repos.Items {
-		repo, err := newPackageRepository(repoUnstructured.Object)
+		repo, err := packageRepositoryFromUnstructured(repoUnstructured.Object)
 		if err != nil {
 			return nil, err
 		}

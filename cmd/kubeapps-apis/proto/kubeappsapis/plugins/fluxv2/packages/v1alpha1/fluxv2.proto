@@ -69,6 +69,14 @@ service FluxV2PackagesService {
       delete: "/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
     };
   }
+
+  // GetInstalledPackageResourceRefs returns the references for the Kubernetes
+  // resources created by an installed package.
+  rpc GetInstalledPackageResourceRefs(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse) {
+    option (google.api.http) = {
+      get: "/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"
+    };
+  }
 }
 
 // Specific messages used by the 'fluxv2' plugin
