@@ -31,9 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	log "k8s.io/klog/v2"
 )
 
 const KubeappsCluster = "default"
@@ -220,35 +218,34 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 	mock.MatchExpectationsInOrder(false)
 
 	if clientGetter != nil {
+		// if clientGetter is nil, then none of these calls take place, as the initialization of
+		// the new Server fails before then
 		mock.ExpectPing().SetVal("PONG")
 		mock.ExpectConfigGet("maxmemory").SetVal([]interface{}{"maxmemory", "1000000"})
+
+		// if client getter returns an error, this call does not take place, because
+		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
+		if _, _, err := clientGetter(context.TODO()); err == nil {
+			mock.ExpectFlushDB().SetVal("OK")
+		}
 	}
-	repositoriesGvr := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmRepositories,
-	}
+
 	config := cacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: clientGetter,
-		onAdd:        onAddOrModifyRepo,
-		onModify:     onAddOrModifyRepo,
+		onAdd:        onAddRepo,
+		onModify:     onModifyRepo,
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
-
 	eventProcessingWaitGroup := &sync.WaitGroup{}
+
 	for _, r := range repos {
 		eventProcessingWaitGroup.Add(1)
 		if isRepoReady(r.(*unstructured.Unstructured).Object) {
-			key, bytes, err := redisKeyValueForRuntimeObject(r)
-			if err != nil {
-				continue
-			}
-			mock.ExpectSet(key, bytes, 0).SetVal("")
-			if log.V(4).Enabled() {
-				mock.ExpectInfo("memory").SetVal("used_memory_rss_human:N/A\r\nmaxmemory_human:N/A")
-			}
+			// we are willfully ignoring any errors coming from redisSetValueForRepo here
+			// and just skipping over to next repo
+			redisSetValueForRepo(r, mock)
 		}
 	}
 

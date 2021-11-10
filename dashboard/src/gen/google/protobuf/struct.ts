@@ -217,11 +217,7 @@ export const Struct_FieldsEntry = {
 
   fromPartial(object: DeepPartial<Struct_FieldsEntry>): Struct_FieldsEntry {
     const message = { ...baseStruct_FieldsEntry } as Struct_FieldsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
+    message.key = object.key ?? "";
     if (object.value !== undefined && object.value !== null) {
       message.value = Value.fromPartial(object.value);
     } else {
@@ -341,26 +337,10 @@ export const Value = {
 
   fromPartial(object: DeepPartial<Value>): Value {
     const message = { ...baseValue } as Value;
-    if (object.nullValue !== undefined && object.nullValue !== null) {
-      message.nullValue = object.nullValue;
-    } else {
-      message.nullValue = undefined;
-    }
-    if (object.numberValue !== undefined && object.numberValue !== null) {
-      message.numberValue = object.numberValue;
-    } else {
-      message.numberValue = undefined;
-    }
-    if (object.stringValue !== undefined && object.stringValue !== null) {
-      message.stringValue = object.stringValue;
-    } else {
-      message.stringValue = undefined;
-    }
-    if (object.boolValue !== undefined && object.boolValue !== null) {
-      message.boolValue = object.boolValue;
-    } else {
-      message.boolValue = undefined;
-    }
+    message.nullValue = object.nullValue ?? undefined;
+    message.numberValue = object.numberValue ?? undefined;
+    message.stringValue = object.stringValue ?? undefined;
+    message.boolValue = object.boolValue ?? undefined;
     if (object.structValue !== undefined && object.structValue !== null) {
       message.structValue = Struct.fromPartial(object.structValue);
     } else {

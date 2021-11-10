@@ -463,24 +463,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				AvailablePackageRef: availableRef("bitnami/redis", "kubeapps"),
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.PackageAppVersion{
-					{PkgVersion: "14.6.1", AppVersion: "6.2.4"},
-					{PkgVersion: "14.6.0", AppVersion: "6.2.4"},
-					{PkgVersion: "14.5.0", AppVersion: "6.2.4"},
-					{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
-					{PkgVersion: "13.0.1", AppVersion: "6.2.1"},
-					{PkgVersion: "13.0.0", AppVersion: "6.2.1"},
-					{PkgVersion: "12.10.1", AppVersion: "6.0.12"},
-					{PkgVersion: "12.10.0", AppVersion: "6.0.12"},
-					{PkgVersion: "12.9.2", AppVersion: "6.0.12"},
-					{PkgVersion: "12.9.1", AppVersion: "6.0.12"},
-					{PkgVersion: "12.9.0", AppVersion: "6.0.12"},
-					{PkgVersion: "12.8.3", AppVersion: "6.0.12"},
-					{PkgVersion: "12.8.2", AppVersion: "6.0.12"},
-					{PkgVersion: "12.8.1", AppVersion: "6.0.12"},
-				},
-			},
+			expectedResponse:   expected_versions_redis,
 		},
 		{
 			name:          "it returns error for non-existent chart",
@@ -704,5 +687,24 @@ var expected_detail_redis_2 = &corev1.AvailablePackageDetail{
 			Name:  "desaintmartin",
 			Email: "cedric@desaintmartin.fr",
 		},
+	},
+}
+
+var expected_versions_redis = &corev1.GetAvailablePackageVersionsResponse{
+	PackageAppVersions: []*corev1.PackageAppVersion{
+		{PkgVersion: "14.6.1", AppVersion: "6.2.4"},
+		{PkgVersion: "14.6.0", AppVersion: "6.2.4"},
+		{PkgVersion: "14.5.0", AppVersion: "6.2.4"},
+		{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
+		{PkgVersion: "13.0.1", AppVersion: "6.2.1"},
+		{PkgVersion: "13.0.0", AppVersion: "6.2.1"},
+		{PkgVersion: "12.10.1", AppVersion: "6.0.12"},
+		{PkgVersion: "12.10.0", AppVersion: "6.0.12"},
+		{PkgVersion: "12.9.2", AppVersion: "6.0.12"},
+		{PkgVersion: "12.9.1", AppVersion: "6.0.12"},
+		{PkgVersion: "12.9.0", AppVersion: "6.0.12"},
+		{PkgVersion: "12.8.3", AppVersion: "6.0.12"},
+		{PkgVersion: "12.8.2", AppVersion: "6.0.12"},
+		{PkgVersion: "12.8.1", AppVersion: "6.0.12"},
 	},
 }

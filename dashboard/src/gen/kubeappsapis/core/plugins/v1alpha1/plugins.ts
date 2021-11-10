@@ -220,16 +220,8 @@ export const Plugin = {
 
   fromPartial(object: DeepPartial<Plugin>): Plugin {
     const message = { ...basePlugin } as Plugin;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.version !== undefined && object.version !== null) {
-      message.version = object.version;
-    } else {
-      message.version = "";
-    }
+    message.name = object.name ?? "";
+    message.version = object.version ?? "";
     return message;
   },
 };
