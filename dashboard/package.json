@@ -82,7 +82,7 @@
     "@types/js-yaml": "^4.0.3",
     "@types/jsonwebtoken": "^8.5.5",
     "@types/lodash": "^4.14.176",
-    "@types/moxios": "^0.4.12",
+    "@types/moxios": "^0.4.13",
     "@types/qs": "^6.9.7",
     "@types/react-copy-to-clipboard": "^5.0.2",
     "@types/react-dom": "^17.0.11",
