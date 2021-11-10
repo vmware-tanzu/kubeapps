@@ -25,6 +25,9 @@
     },
     {
       "name": "KappControllerPackagesService"
+    },
+    {
+      "name": "ResourcesService"
     }
   ],
   "host": "127.0.0.1:8080",
@@ -2543,6 +2546,85 @@
           "KappControllerPackagesService"
         ]
       }
+    },
+    "/plugins/resources/v1alpha1/{installedPackageRef.plugin.name}/{installedPackageRef.plugin.version}/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}": {
+      "get": {
+        "operationId": "ResourcesService_GetResources",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1alpha1GetResourcesResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1alpha1GetResourcesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "installedPackageRef.plugin.name",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.plugin.version",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "installedPackageRef.identifier",
+            "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context).",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "watch",
+            "description": "Watch. When true, this will cause the stream to remain open with updated\nresources being sent as events are received from the Kubernetes API\nserver.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "ResourcesService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -3078,6 +3160,21 @@
       },
       "description": "Response for GetInstalledPackageSummaries",
       "title": "GetInstalledPackageSummariesResponse"
+    },
+    "v1alpha1GetResourcesResponse": {
+      "type": "object",
+      "properties": {
+        "resourceRef": {
+          "$ref": "#/definitions/v1alpha1ResourceRef",
+          "description": "The resource reference for this single resource.",
+          "title": "ResourceRef"
+        },
+        "manifest": {
+          "$ref": "#/definitions/protobufAny",
+          "description": "The current manifest of the requested resource.\nInitially the JSON manifest will be returned as an Any, enabling the\nexisting Kubeapps UI to replace its current direct api-server getting and\nwatching of resources, but we may in the future pull out further\nstructured metadata into this message as needed.",
+          "title": "Manifest"
+        }
+      }
     },
     "v1alpha1InstalledPackageDetail": {
       "type": "object",
