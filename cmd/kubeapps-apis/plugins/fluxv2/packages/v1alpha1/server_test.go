@@ -245,7 +245,7 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 		if isRepoReady(r.(*unstructured.Unstructured).Object) {
 			// we are willfully ignoring any errors coming from redisSetValueForRepo here
 			// and just skipping over to next repo
-			redisSetValueForRepo(r, mock)
+			redisMockSetValueForRepo(r, mock)
 		}
 	}
 

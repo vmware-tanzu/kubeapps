@@ -602,7 +602,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
 		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
 		mock.ExpectGet(key).SetVal(string(oldValue))
-		key, newValue, err := redisSetValueForRepo(repo, mock)
+		key, newValue, err := redisMockSetValueForRepo(repo, mock)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -734,18 +734,22 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 
 		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
-		// a cache resync
-		s.cache.eventProcessedWaitGroup.Add(1)
-		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
+		// background: a FLUSHDB followed by a SET
 		mock.ExpectFlushDB().SetVal("OK")
-		if _, _, err := redisSetValueForRepo(repo, mock); err != nil {
+		if _, _, err := redisMockSetValueForRepo(repo, mock); err != nil {
 			t.Fatalf("%+v", err)
 		}
+
+		s.cache.eventProcessedWaitGroup.Add(1)
+		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+		// wait until the ERROR event's been fully processed
 		s.cache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
+
 		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -974,38 +978,33 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 	return repos
 }
 
+// does a series of mock.ExpectGet(...)
 func redisMockBeforeCallToGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
 	mapVals := make(map[string][]byte)
-	keys := []string{}
 	for _, r := range repos {
 		key, bytes, err := redisKeyValueForRuntimeObject(r)
 		if err != nil {
 			return err
 		}
-		keys = append(keys, key)
 		mapVals[key] = bytes
 	}
 	if filterOptions == nil || len(filterOptions.GetRepositories()) == 0 {
-		for _, k := range keys {
-			mock.ExpectGet(k).SetVal(string(mapVals[k]))
+		for k, v := range mapVals {
+			mock.ExpectGet(k).SetVal(string(v))
 		}
 	} else {
 		for _, r := range filterOptions.GetRepositories() {
-			keys := []string{}
-			for k := range mapVals {
+			for k, v := range mapVals {
 				if strings.HasSuffix(k, ":"+r) {
-					keys = append(keys, k)
+					mock.ExpectGet(k).SetVal(string(v))
 				}
-			}
-			for _, k := range keys {
-				mock.ExpectGet(k).SetVal(string(mapVals[k]))
 			}
 		}
 	}
 	return nil
 }
 
-func redisSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key string, bytes []byte, err error) {
+func redisMockSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key string, bytes []byte, err error) {
 	if key, bytes, err := redisKeyValueForRuntimeObject(repo); err != nil {
 		return "", nil, err
 	} else {

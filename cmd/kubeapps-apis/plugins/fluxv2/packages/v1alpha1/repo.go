@@ -153,58 +153,16 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		return nil, err
 	}
 
-	chartsTyped := make(map[string][]models.Chart)
-
-	// at any given moment, the redis cache may only have a subset of the entire set of existing keys.
-	// Some key may have been evicted due to memory pressure and LRU eviction policy.
-	// ref: https://redis.io/topics/lru-cache
-	// so, first, let's fetch the entries that are still cached before redis evicts those
-	chartsUntyped, err := s.cache.fetchForMultiple(repoNames)
+	chartsUntyped, err := s.cache.getForMultiple(repoNames, repoList)
 	if err != nil {
 		return nil, err
 	}
 
-	// now, re-compute and fetch the ones that are are left over from the previous operation,
-	// TODO: (gfichtenholt) I think this for loop can be done for all entries processed in
-	//   parallel rather than one-at-a-time. The computation part certainly can be parallelized,
-	//   and cache PUTs can also be done in parallel, potentially forcing redis to evict recently
-	//   computed entires to make room for new ones along the way
-	// TODO: (gfichtenholt) a bit of an inconcistency here. Some keys/values may have been
-	//   added to the cache by a background go-routine running in the context of
-	//   "kubeapps-internal-kubeappsapis" service account, whereas keys/values added below are
-	//   going to be fetched from k8s on behalf of the caller which is a different service account
-	//   with different RBAC settings
+	chartsTyped := make(map[string][]models.Chart)
 	for key, value := range chartsUntyped {
 		if value == nil {
-			// this cache miss may be due to one of these reasons:
-			// 1) key truly does not exist in k8s (there is no repo with the given name in the "Ready" state)
-			// 2) key exists and the "Ready" repo currently being indexed but has not yet completed
-			// 3) key exists in k8s but the corresponding cache entry has been evicted by redis due to
-			//    LRU maxmemory policies or entry TTL expiry (doesn't apply currently, cuz we use TTL=0
-			//    for all entries)
-			// In the 3rd case we want to re-compute the key and add it to the cache, which may potentially
-			// cause other entries to be evicted in order to make room for the ones being added
-
-			// TODO (gfichtenholt) handle (2) - there is a (small) time window during which two
-			// threads will be doing the same work. No inconsistent results will occur, but still.
-			if name, err := s.cache.fromKey(key); err != nil {
-				return nil, err
-			} else {
-				for _, repo := range repoList.Items {
-					if repoName, err := namespacedName(repo.Object); err != nil {
-						return nil, err
-					} else if *repoName == *name {
-						if err = s.cache.onAddOrModify(true, repo.Object); err == nil {
-							if value, err = s.cache.fetchForOne(key); err != nil {
-								return nil, err
-							}
-						}
-						break
-					}
-				}
-			}
-		}
-		if value != nil {
+			chartsTyped[key] = nil
+		} else {
 			typedValue, ok := value.(repoCacheEntry)
 			if !ok {
 				return nil, status.Errorf(

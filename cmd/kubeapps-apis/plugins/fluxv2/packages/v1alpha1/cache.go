@@ -61,12 +61,15 @@ type cacheConfig struct {
 	// this clientGetter is for running out-of-request interactions with the Kubernetes API server,
 	// such as watching for resource changes
 	clientGetter clientGetter
-	// 'onAdd' and 'onModify' hooks are called when a new or modified object comes about and
-	// allows the plug-in to return information about WHETHER OR NOT and WHAT is to be stored
-	// in the cache for a given k8s object (passed in as a untyped/unstructured map)
-	// the list of types actually supported be redis you can find in
-	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
-	onAdd    cacheValueAdder
+	// 'onAdd' hook is called when an object comes about and the cache does not have a
+	// corresponding entry. Note this maybe happen as a result of a newly created k8s object
+	// or a modified object for which there was no entry in the cache
+	// This allows the call site to return information about WHETHER OR NOT and WHAT is to be stored
+	// in the cache for a given k8s object (passed in as a untyped/unstructured map).
+	onAdd cacheValueAdder
+	// 'onModify' hooks is called when an object for which there is a corresponding cache entry
+	// is modified. This allows the call site to return information about WHETHER OR NOT and WHAT
+	// is to be stored in the cache for a given k8s object (passed in as a untyped/unstructured map).
 	onModify cacheValueModifier
 	// the semantics of 'onGet' hook is to convert or "reverse engineer" what was previously
 	// stored in the cache (via onAdd/onModify hooks) to an object that the plug-in understands
@@ -345,8 +348,8 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 
 	var oldValue []byte
 	if !add {
-		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != nil {
-			log.Errorf("Failed to get value for object with key [%s] in cache due to: %v", key, err)
+		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
+			log.Errorf("Failed to get value for key [%s] in cache due to: %v", key, err)
 			return err
 		}
 	}
@@ -466,10 +469,10 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 	// max number of concurrent workers retrieving cache values at the same time
 	const maxWorkers = 10
 
-	type getValueJob struct {
+	type fetchValueJob struct {
 		key string
 	}
-	type getValueJobResult struct {
+	type fetchValueJobResult struct {
 		key   string
 		value interface{}
 		err   error
@@ -477,8 +480,8 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 
 	var wg sync.WaitGroup
 	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
-	requestChan := make(chan getValueJob, numWorkers)
-	responseChan := make(chan getValueJobResult, numWorkers)
+	requestChan := make(chan fetchValueJob, numWorkers)
+	responseChan := make(chan fetchValueJobResult, numWorkers)
 
 	// Process only at most maxWorkers at a time
 	for i := 0; i < numWorkers; i++ {
@@ -488,7 +491,7 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 			// closed (and there are no more items)
 			for job := range requestChan {
 				result, err := c.fetchForOne(job.key)
-				responseChan <- getValueJobResult{job.key, result, err}
+				responseChan <- fetchValueJobResult{job.key, result, err}
 			}
 			wg.Done()
 		}()
@@ -501,7 +504,7 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 
 	go func() {
 		for _, key := range keys {
-			requestChan <- getValueJob{key}
+			requestChan <- fetchValueJob{key}
 		}
 		close(requestChan)
 	}()
@@ -518,6 +521,124 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 		}
 	}
 	return response, nil
+}
+
+// the difference between 'fetchForMultiple' and 'getForMultiple' is that 'fetch' will only
+// get the value from the cache for a given or return nil if one is missing, whereas
+// 'getForMultiple' will first call 'fetch' but then for any cache misses it will force
+// a re-computation of the value, if available, and load that result into the cache.
+// The keys are expected to be in the format of the cache (the caller does that)
+func (c NamespacedResourceWatcherCache) getForMultiple(keys []string, repoList *unstructured.UnstructuredList) (map[string]interface{}, error) {
+	// at any given moment, the redis cache may only have a subset of the entire set of existing keys.
+	// Some key may have been evicted due to memory pressure and LRU eviction policy.
+	// ref: https://redis.io/topics/lru-cache
+	// so, first, let's fetch the entries that are still cached before redis evicts those
+	chartsUntyped, err := c.fetchForMultiple(keys)
+	if err != nil {
+		return nil, err
+	}
+
+	// now, re-compute and fetch the ones that are left over from the previous operation
+	// TODO: (gfichtenholt) a bit of an inconcistency here. Some keys/values may have been
+	//   added to the cache by a background go-routine running in the context of
+	//   "kubeapps-internal-kubeappsapis" service account, whereas keys/values added below are
+	//   going to be fetched from k8s on behalf of the caller which is a different service account
+	//   with different RBAC settings
+	keysLeft := []string{}
+
+	for key, value := range chartsUntyped {
+		if value == nil {
+			// this cache miss may have happened due to one of these reasons:
+			// 1) key truly does not exist in k8s (e.g. there is no repo with the given name in the "Ready" state)
+			// 2) key exists and the "Ready" repo currently being indexed but has not yet completed
+			// 3) key exists in k8s but the corresponding cache entry has been evicted by redis due to
+			//    LRU maxmemory policies or entry TTL expiry (doesn't apply currently, cuz we use TTL=0
+			//    for all entries)
+			// In the 3rd case we want to re-compute the key and add it to the cache, which may potentially
+			// cause other entries to be evicted in order to make room for the ones being added
+
+			// TODO (gfichtenholt) handle (2) - there is a (small) time window during which two
+			// threads will be doing the same work. No inconsistent results will occur, but still.
+			keysLeft = append(keysLeft, key)
+		}
+	}
+
+	// max number of concurrent workers retrieving cache values at the same time
+	const maxWorkers = 10
+
+	type computeValueJob struct {
+		key string
+	}
+	type computeValueJobResult struct {
+		key   string
+		value interface{}
+		err   error
+	}
+
+	var wg sync.WaitGroup
+	numWorkers := int(math.Min(float64(len(keysLeft)), float64(maxWorkers)))
+	requestChan := make(chan computeValueJob, numWorkers)
+	responseChan := make(chan computeValueJobResult, numWorkers)
+
+	// Process only at most maxWorkers at a time
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			// The following loop will only terminate when the request channel is
+			// closed (and there are no more items)
+			for job := range requestChan {
+				value, err := func() (interface{}, error) {
+					var value interface{}
+					if name, err := c.fromKey(job.key); err != nil {
+						return nil, err
+					} else {
+						for _, repo := range repoList.Items {
+							if repoName, err := namespacedName(repo.Object); err != nil {
+								return nil, err
+							} else if *repoName == *name {
+								if err = c.onAddOrModify(true, repo.Object); err == nil {
+									// TODO (gfichtenholt) there is a possible race condition here
+									// value might be set and immediately evicted by another thread
+									if value, err = c.fetchForOne(job.key); err != nil {
+										return nil, err
+									}
+								}
+								break
+							}
+						}
+					}
+					return value, nil
+				}()
+				responseChan <- computeValueJobResult{job.key, value, err}
+			}
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(responseChan)
+	}()
+
+	go func() {
+		for _, key := range keysLeft {
+			requestChan <- computeValueJob{key}
+		}
+		close(requestChan)
+	}()
+
+	// Start receiving results
+	// The following loop will only terminate when the response channel is closed, i.e.
+	// after the all the requests have been processed
+	for resp := range responseChan {
+		if resp.err == nil {
+			chartsUntyped[resp.key] = resp.value
+		} else {
+			// TODO (gfichtenholt) this returns first error, see if we can return all of them
+			return nil, resp.err
+		}
+	}
+	return chartsUntyped, nil
 }
 
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
