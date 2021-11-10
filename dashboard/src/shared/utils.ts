@@ -1,6 +1,8 @@
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import carvelIcon from "../icons/carvel.svg";
+import fluxIcon from "../icons/flux.svg";
 import helmIcon from "../icons/helm.svg";
-import olmIcon from "../icons/operator-framework.svg";
+import olmIcon from "../icons/olm-icon.svg";
 import placeholder from "../placeholder.png";
 import ResourceRef from "./ResourceRef";
 import { IK8sList, IKubeItem, IResource, ISecret } from "./types";
@@ -85,6 +87,10 @@ export function getPluginIcon(plugin?: Plugin | string) {
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
         return helmIcon;
+      case PluginNames.PACKAGES_FLUX:
+        return fluxIcon;
+      case PluginNames.PACKAGES_KAPP:
+        return carvelIcon;
       default:
         return placeholder;
     }
