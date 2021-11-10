@@ -155,3 +155,13 @@
 .swagger-ui section.models {
   border-color: var(--cds-alias-object-interaction-border-color);
 }
+
+.swagger-ui input[type="email"],
+.swagger-ui input[type="file"],
+.swagger-ui input[type="password"],
+.swagger-ui input[type="search"],
+.swagger-ui input[type="text"],
+.swagger-ui textarea {
+  background-color: var(--cds-global-typography-color-100, #333);
+  color: var(--cds-global-typography-color-500, #fff);
+}

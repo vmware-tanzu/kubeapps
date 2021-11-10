@@ -905,7 +905,7 @@ paths:
               schema:
                 type: string
   # Temporarily manually extracted from /cmd/kubeapps-apis/docs/kubeapps-apis.swagger.json
-  /core/packages/v1alpha1/availablepackages:
+  /apis/core/packages/v1alpha1/availablepackages:
     get:
       operationId: PackagesService_GetAvailablePackageSummaries
       responses:
@@ -1017,7 +1017,7 @@ paths:
             format: int32
       tags:
         - PackagesService
-  "/core/packages/v1alpha1/availablepackages/plugin/{availablePackageRef.plugin.name}/{availablePackageRef.plugin.version}/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}":
+  "/apis/core/packages/v1alpha1/availablepackages/plugin/{availablePackageRef.plugin.name}/{availablePackageRef.plugin.version}/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}":
     get:
       operationId: PackagesService_GetAvailablePackageDetail
       responses:
@@ -1133,7 +1133,7 @@ paths:
             type: string
       tags:
         - PackagesService
-  "/core/packages/v1alpha1/availablepackages/plugin/{availablePackageRef.plugin.name}/{availablePackageRef.plugin.version}/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
+  "/apis/core/packages/v1alpha1/availablepackages/plugin/{availablePackageRef.plugin.name}/{availablePackageRef.plugin.version}/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
     get:
       operationId: PackagesService_GetAvailablePackageVersions
       responses:
@@ -1252,7 +1252,7 @@ paths:
             type: string
       tags:
         - PackagesService
-  /core/packages/v1alpha1/installedpackages:
+  /apis/core/packages/v1alpha1/installedpackages:
     get:
       operationId: PackagesService_GetInstalledPackageSummaries
       responses:
@@ -1353,7 +1353,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1CreateInstalledPackageRequest"
       tags:
         - PackagesService
-  "/core/packages/v1alpha1/installedpackages/plugin/{installedPackageRef.plugin.name}/{installedPackageRef.plugin.version}/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
+  "/apis/core/packages/v1alpha1/installedpackages/plugin/{installedPackageRef.plugin.name}/{installedPackageRef.plugin.version}/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
     get:
       operationId: PackagesService_GetInstalledPackageDetail
       responses:
@@ -1606,7 +1606,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
       tags:
         - PackagesService
-  /core/plugins/v1alpha1/configured-plugins:
+  /apis/core/plugins/v1alpha1/configured-plugins:
     get:
       summary: GetConfiguredPlugins returns a map of short and longnames for the
         configured plugins.
@@ -1746,7 +1746,7 @@ paths:
             format: int32
       tags:
         - FluxV2PackagesService
-  "/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}":
+  "/apis/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}":
     get:
       summary: GetAvailablePackageDetail returns the package metadata managed by the
         'fluxv2' plugin
@@ -1858,7 +1858,7 @@ paths:
             type: string
       tags:
         - FluxV2PackagesService
-  "/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
+  "/apis/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
     get:
       summary: GetAvailablePackageVersions returns the package versions managed by the
         'fluxv2' plugin
@@ -1973,7 +1973,7 @@ paths:
             type: string
       tags:
         - FluxV2PackagesService
-  /plugins/fluxv2/packages/v1alpha1/installedpackages:
+  /apis/plugins/fluxv2/packages/v1alpha1/installedpackages:
     get:
       summary: GetInstalledPackageSummaries returns the installed packages managed by
         the 'fluxv2' plugin
@@ -2077,7 +2077,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1CreateInstalledPackageRequest"
       tags:
         - FluxV2PackagesService
-  "/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
+  "/apis/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
     get:
       summary: GetInstalledPackageDetail returns the requested installed package
         managed by the 'fluxv2' plugin
@@ -2303,7 +2303,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
       tags:
         - FluxV2PackagesService
-  /plugins/fluxv2/packages/v1alpha1/packagerepositories:
+  /apis/plugins/fluxv2/packages/v1alpha1/packagerepositories:
     get:
       summary: GetPackageRepositories returns the repositories managed by the 'fluxv2'
         plugin
@@ -2359,7 +2359,7 @@ paths:
             type: string
       tags:
         - FluxV2PackagesService
-  /plugins/helm/packages/v1alpha1/availablepackages:
+  /apis/plugins/helm/packages/v1alpha1/availablepackages:
     get:
       summary: GetAvailablePackageSummaries returns the available packages managed by
         the 'helm' plugin
@@ -2473,7 +2473,7 @@ paths:
             format: int32
       tags:
         - HelmPackagesService
-  "/plugins/helm/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}":
+  "/apis/plugins/helm/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}":
     get:
       summary: GetAvailablePackageDetail returns the package details managed by the
         'helm' plugin
@@ -2585,7 +2585,7 @@ paths:
             type: string
       tags:
         - HelmPackagesService
-  "/plugins/helm/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
+  "/apis/plugins/helm/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
     get:
       summary: GetAvailablePackageVersions returns the package versions managed by the
         'helm' plugin
@@ -2700,7 +2700,7 @@ paths:
             type: string
       tags:
         - HelmPackagesService
-  /plugins/helm/packages/v1alpha1/installedpackages:
+  /apis/plugins/helm/packages/v1alpha1/installedpackages:
     get:
       summary: GetInstalledPackageSummaries returns the installed packages managed by
         the 'helm' plugin
@@ -2804,7 +2804,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1CreateInstalledPackageRequest"
       tags:
         - HelmPackagesService
-  "/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
+  "/apis/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
     get:
       summary: GetInstalledPackageDetail returns the requested installed package
         managed by the 'helm' plugin
@@ -3030,7 +3030,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
       tags:
         - HelmPackagesService
-  "/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/rollback":
+  "/apis/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/rollback":
     put:
       summary: RollbackInstalledPackage updates an installed package based on the
         request.
@@ -3103,7 +3103,7 @@ paths:
         required: true
       tags:
         - HelmPackagesService
-  /plugins/kapp_controller/packages/v1alpha1/availablepackages:
+  /apis/plugins/kapp_controller/packages/v1alpha1/availablepackages:
     get:
       summary: GetAvailablePackageSummaries returns the available packages managed by
         the 'kapp_controller' plugin
@@ -3217,7 +3217,7 @@ paths:
             format: int32
       tags:
         - KappControllerPackagesService
-  "/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}":
+  "/apis/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}":
     get:
       summary: GetAvailablePackageDetail returns the package details managed by the
         'kapp_controller' plugin
@@ -3329,7 +3329,7 @@ paths:
             type: string
       tags:
         - KappControllerPackagesService
-  "/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
+  "/apis/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
     get:
       summary: GetAvailablePackageVersions returns the package versions managed by the
         'kapp_controller' plugin
@@ -3444,7 +3444,7 @@ paths:
             type: string
       tags:
         - KappControllerPackagesService
-  /plugins/kapp_controller/packages/v1alpha1/installedpackages:
+  /apis/plugins/kapp_controller/packages/v1alpha1/installedpackages:
     get:
       summary: GetInstalledPackageSummaries returns the installed packages managed by
         the 'kapp_controller' plugin
@@ -3548,7 +3548,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1CreateInstalledPackageRequest"
       tags:
         - KappControllerPackagesService
-  "/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
+  "/apis/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
     get:
       summary: GetInstalledPackageDetail returns the requested installed package
         managed by the 'kapp_controller' plugin
@@ -3774,7 +3774,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
       tags:
         - KappControllerPackagesService
-  /plugins/kapp_controller/packages/v1alpha1/packagerepositories:
+  /apis/plugins/kapp_controller/packages/v1alpha1/packagerepositories:
     get:
       summary: GetPackageRepositories returns the repositories managed by the
         'kapp_controller' plugin
