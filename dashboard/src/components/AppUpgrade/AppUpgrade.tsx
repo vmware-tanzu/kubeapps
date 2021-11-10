@@ -63,7 +63,7 @@ function AppUpgrade() {
       "package";
     return (
       <LoadingWrapper
-        loadingText={`Fetching ${loadingPkgName} version...`}
+        loadingText={`Fetching ${decodeURIComponent(loadingPkgName)} version...`}
         className="margin-t-xxl"
         loaded={false}
       />
