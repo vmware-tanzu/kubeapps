@@ -253,6 +253,51 @@ func AvailablePackageSummaryFromUnstructured(pkgMeta *unstructured.Unstructured,
 	return summary, nil
 }
 
+// GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
+func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
+	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
+	log.Infof("+kapp-controller GetAvailablePackageVersions (cluster=%q, namespace=%q)", cluster, namespace)
+
+	identifier := request.GetAvailablePackageRef().GetIdentifier()
+	if namespace == "" || identifier == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
+	}
+	log.Errorf("request available pkg ref was: %+v", request.GetAvailablePackageRef())
+
+	client, err := s.getDynamicClient(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the field selector to return only Package CRs that match on the spec.refName.
+	pkgGVR := schema.GroupVersionResource{Group: packageGroup, Version: packageVersion, Resource: packageResources}
+	pkgs, err := client.Resource(pkgGVR).Namespace(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.refName=%s", identifier),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to list kapp-controller packages: %v", err))
+	}
+
+	pkgVersions, err := pkgVersionsMap(pkgs.Items)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO(minelson): support configurable version summary for kapp-controller pkgs
+	// as already done for Helm (see #3588 for more info).
+	versions := make([]*corev1.PackageAppVersion, len(pkgVersions[identifier]))
+	for i, v := range pkgVersions[identifier] {
+		versions[i] = &corev1.PackageAppVersion{
+			PkgVersion: v.version.String(),
+		}
+	}
+
+	return &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: versions,
+	}, nil
+}
+
 // GetPackageRepositories returns the package repositories based on the request.
 func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
 	namespace := request.GetContext().GetNamespace()
