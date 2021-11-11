@@ -75,11 +75,6 @@ type VersionsInSummary struct {
 	Patch int `json:"patch"`
 }
 
-var (
-	ErrFileNotFound = fmt.Errorf("file not found")
-	ErrUnmarshal    = fmt.Errorf("json unmarshal failed")
-)
-
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedHelmPackagesServiceServer
@@ -116,11 +111,11 @@ func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, error) {
 
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		return VersionsInSummary{}, fmt.Errorf("plugin-config-path: %s error: %w", pluginConfigPath, ErrFileNotFound)
+		return VersionsInSummary{}, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		return VersionsInSummary{}, fmt.Errorf("plugin-config: %s error: %w", string(pluginConfig), ErrUnmarshal)
+		return VersionsInSummary{}, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
 	}
 
 	// return configured value of VersionsInSummary

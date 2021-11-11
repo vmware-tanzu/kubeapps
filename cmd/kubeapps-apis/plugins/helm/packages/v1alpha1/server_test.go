@@ -16,13 +16,13 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"regexp"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -1707,13 +1707,13 @@ func TestParsePluginConfig(t *testing.T) {
 		name                    string
 		pluginYAMLConf          []byte
 		exp_versions_in_summary VersionsInSummary
-		exp_error               error
+		exp_error_str           string
 	}{
 		{
 			name:                    "non existing plugin-config file",
 			pluginYAMLConf:          nil,
 			exp_versions_in_summary: VersionsInSummary{0, 0, 0},
-			exp_error:               ErrFileNotFound,
+			exp_error_str:           "no such file or directory",
 		},
 		{
 			name: "non-default plugin config",
@@ -1727,7 +1727,7 @@ core:
         patch: 1
       `),
 			exp_versions_in_summary: VersionsInSummary{4, 2, 1},
-			exp_error:               nil,
+			exp_error_str:           "",
 		},
 		{
 			name: "partial params in plugin config",
@@ -1739,7 +1739,7 @@ core:
         major: 1
         `),
 			exp_versions_in_summary: VersionsInSummary{1, 0, 0},
-			exp_error:               nil,
+			exp_error_str:           "",
 		},
 		{
 			name: "invalid plugin config",
@@ -1753,7 +1753,7 @@ core:
         patch: 1-IFC-123
       `),
 			exp_versions_in_summary: VersionsInSummary{},
-			exp_error:               ErrUnmarshal,
+			exp_error_str:           "json: cannot unmarshal",
 		},
 	}
 	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
@@ -1779,9 +1779,8 @@ core:
 				filename = f.Name()
 			}
 			versions_in_summary, goterr := parsePluginConfig(filename)
-
-			if got, want := errors.Is(goterr, tc.exp_error), true; got != want {
-				t.Errorf("got: %t, want: %t", got, want)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
 			}
 			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
