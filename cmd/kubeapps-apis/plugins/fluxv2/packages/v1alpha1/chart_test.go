@@ -490,12 +490,17 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			redisKey, bytes, err := redisKeyValueForRuntimeObject(repo)
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+
+			key, bytes, err := redisKeyValueForRuntimeObject(repo)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			mock.ExpectGet(redisKey).SetVal(string(bytes))
+			mock.ExpectGet(key).SetVal(string(bytes))
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
 

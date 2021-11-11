@@ -88,15 +88,15 @@ func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*un
 // returns the url from which chart .tgz can be downloaded
 // here chartVersion string, if specified at all, should be specific, like "14.4.0",
 // not an expression like ">14 <15"
-func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstructured.Unstructured, chartName, chartVersion string) (tarUrl string, err error, cleanUp func()) {
+func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstructured.Unstructured, chartName, chartVersion string) (tarUrl string, cleanUp func(), err error) {
 	repo, err := namespacedName(repoUnstructured.Object)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	}
 
 	// repo should be in ready state
 	if !isRepoReady(repoUnstructured.Object) {
-		return "", status.Errorf(codes.Internal, "repository [%s] is not in 'Ready' state", repo), nil
+		return "", nil, status.Errorf(codes.Internal, "repository [%s] is not in 'Ready' state", repo)
 	}
 
 	// see if we the chart already exists
@@ -113,7 +113,7 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 
 	tarUrl, err = findUrlForChartInList(chartList, repo.Name, chartName, chartVersion)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	} else if tarUrl != "" {
 		return tarUrl, nil, nil
 	}
@@ -129,22 +129,22 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 	// So we may not necessarily want to follow what flux does today
 	unstructuredChart, err := newFluxHelmChart(chartName, repo.Name, chartVersion)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	}
 
 	resourceIfc, err := s.getChartsResourceInterface(ctx, repo.Namespace)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	}
 
 	newChart, err := resourceIfc.Create(ctx, unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return "", status.Errorf(codes.NotFound, "%q", err), nil
+			return "", nil, status.Errorf(codes.NotFound, "%q", err)
 		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return "", status.Errorf(codes.Unauthenticated, "unable to creare charts due to %v", err), nil
+			return "", nil, status.Errorf(codes.Unauthenticated, "unable to creare charts due to %v", err)
 		} else {
-			return "", status.Errorf(codes.Internal, "unable to create charts due to %v", err), nil
+			return "", nil, status.Errorf(codes.Internal, "unable to create charts due to %v", err)
 		}
 	}
 
@@ -165,11 +165,11 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 	})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return "", status.Errorf(codes.NotFound, "%q", err), cleanUp
+			return "", cleanUp, status.Errorf(codes.NotFound, "%q", err)
 		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return "", status.Errorf(codes.Unauthenticated, "unable to creare chart watch due to %v", err), cleanUp
+			return "", cleanUp, status.Errorf(codes.Unauthenticated, "unable to creare chart watch due to %v", err)
 		} else {
-			return "", status.Errorf(codes.Internal, "unable to create chart watch due to %v", err), cleanUp
+			return "", cleanUp, status.Errorf(codes.Internal, "unable to create chart watch due to %v", err)
 		}
 	}
 
@@ -181,7 +181,7 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 	watcher.Stop()
 	// only the caller should call cleanUp() when it's done with the url,
 	// if we call it here, the caller will end up with a dangling link
-	return tarUrl, err, cleanUp
+	return tarUrl, cleanUp, err
 }
 
 func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {
@@ -189,9 +189,30 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	entry, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(repo))
+	key := s.cache.keyForNamespacedName(repo)
+	entry, err := s.cache.fetchForOne(key)
 	if err != nil {
 		return nil, err
+	} else if entry == nil {
+		// cache miss
+		// see repo.go getChartsForRepos() for an explanation why we may get a nil
+		unstructuredRepo, err := s.getRepoInCluster(ctx, repo)
+		if err != nil {
+			return nil, err
+		}
+		if isRepoReady(unstructuredRepo.Object) {
+			// a little bit in-efficient: onAddOrModify() will call onAdd() which encode the
+			// data as []byte before storing it in the cache. so to get back the original data
+			// we have to decode it via onGet(). It'd nice if there was a shortcut and skip
+			// the cycles spent decoding data from []byte to repoCacheEntry
+			if newValue, err := s.cache.onAddOrModify(true, unstructuredRepo.Object); err != nil {
+				return nil, err
+			} else if newValue != nil {
+				if entry, err = s.cache.config.onGet(key, newValue); err != nil {
+					return nil, err
+				}
+			}
+		}
 	}
 
 	if entry != nil {
@@ -204,18 +225,6 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 				if chart.Name == chartName {
 					return &chart, nil // found it
 				}
-			}
-		}
-	} else {
-		// see repo.go getChartsForRepos() for an explanation why we may get a nil
-		unstructuredRepo, err := s.getRepoInCluster(ctx, repo)
-		if err != nil {
-			return nil, err
-		}
-		if isRepoReady(unstructuredRepo.Object) {
-			if err = s.cache.onAddOrModify(true, unstructuredRepo.Object); err == nil {
-				// call recursively
-				return s.getChart(ctx, repo, chartName)
 			}
 		}
 	}

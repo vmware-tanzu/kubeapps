@@ -66,14 +66,20 @@ type cacheConfig struct {
 	// or a modified object for which there was no entry in the cache
 	// This allows the call site to return information about WHETHER OR NOT and WHAT is to be stored
 	// in the cache for a given k8s object (passed in as a untyped/unstructured map).
+	// The call site may return []byte, but it doesn't have to be that.
+	// The list of all types actually supported by redis you can find in
+	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
 	onAdd cacheValueAdder
 	// 'onModify' hooks is called when an object for which there is a corresponding cache entry
 	// is modified. This allows the call site to return information about WHETHER OR NOT and WHAT
 	// is to be stored in the cache for a given k8s object (passed in as a untyped/unstructured map).
+	// The call site may return []byte, but it doesn't have to be that.
+	// The list of all types actually supported by redis you can find in
+	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
 	onModify cacheValueModifier
 	// the semantics of 'onGet' hook is to convert or "reverse engineer" what was previously
-	// stored in the cache (via onAdd/onModify hooks) to an object that the plug-in understands
-	// and wishes to be returned as part of response to fetchCachedObjects() call
+	// stored in the cache (via onAdd/onModify hooks) to an object that the call site understands
+	// and wishes to be returned as part of response to various flavors of 'fetch' call
 	onGet cacheValueGetter
 	// onDelete hook is called on the plug-in when the corresponding object is deleted in k8s cluster
 	onDelete cacheValueDeleter
@@ -308,16 +314,27 @@ func (c NamespacedResourceWatcherCache) receive(ch <-chan watch.Event) {
 		log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, prettyPrintObject(event.Object))
 		switch event.Type {
 		case watch.Added, watch.Modified, watch.Deleted:
-			unstructuredRepo, ok := event.Object.(*unstructured.Unstructured)
-			if !ok {
+			if unstructuredRepo, ok := event.Object.(*unstructured.Unstructured); !ok {
 				log.Errorf("Could not cast to unstructured.Unstructured")
 			} else {
 				if event.Type == watch.Added {
-					go c.onAddOrModify(true, unstructuredRepo.Object)
+					go func() {
+						if _, err := c.onAddOrModify(true, unstructuredRepo.Object); err != nil {
+							log.Errorf("onAddOrModify failed due to %+v", err)
+						}
+					}()
 				} else if event.Type == watch.Modified {
-					go c.onAddOrModify(false, unstructuredRepo.Object)
+					go func() {
+						if _, err := c.onAddOrModify(false, unstructuredRepo.Object); err != nil {
+							log.Errorf("onAddOrModify failed due to %+v", err)
+						}
+					}()
 				} else {
-					go c.onDelete(unstructuredRepo.Object)
+					go func() {
+						if err := c.onDelete(unstructuredRepo.Object); err != nil {
+							log.Errorf("onDelete failed due to %+v", err)
+						}
+					}()
 				}
 			}
 		case watch.Error:
@@ -332,8 +349,7 @@ func (c NamespacedResourceWatcherCache) receive(ch <-chan watch.Event) {
 }
 
 // this is effectively a cache PUT operation
-// TODO (gfichtenholt) this func should return error if it happens, (see below for)
-func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string]interface{}) error {
+func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj map[string]interface{}) (newValue interface{}, err error) {
 	defer func() {
 		if c.eventProcessedWaitGroup != nil {
 			c.eventProcessedWaitGroup.Done()
@@ -343,18 +359,17 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 	key, err := c.keyFor(unstructuredObj)
 	if err != nil {
 		log.Errorf("Failed to get redis key due to: %v", err)
-		return nil
+		return nil, err
 	}
 
 	var oldValue []byte
 	if !add {
 		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
 			log.Errorf("Failed to get value for key [%s] in cache due to: %v", key, err)
-			return err
+			return nil, err
 		}
 	}
 
-	var newValue interface{}
 	var setVal bool
 	var funcName string
 	if oldValue == nil {
@@ -368,8 +383,9 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 	if err != nil {
 		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, prettyPrintMap(unstructuredObj), err)
 		// clear that key so cache doesn't contain any stale info for this object
+		log.Infof("Redis [DEL %s]", key)
 		c.redisCli.Del(c.redisCli.Context(), key)
-		return err
+		return nil, err
 	} else if setVal {
 		// Zero expiration means the key has no expiration time.
 		// However, cache entries may be evicted by redis in order to make room for new ones,
@@ -377,14 +393,14 @@ func (c NamespacedResourceWatcherCache) onAddOrModify(add bool, unstructuredObj 
 		result, err := c.redisCli.Set(c.redisCli.Context(), key, newValue, 0).Result()
 		if err != nil {
 			log.Errorf("Failed to set value for object with key [%s] in cache due to: %v", key, err)
-			return err
+			return nil, err
 		} else {
 			// debugging an intermittent issue
 			usedMemory, totalMemory := c.memoryStats()
 			log.Infof("Redis [SET %s]: %s. Redis [INFO memory]: [%s/%s]", key, result, usedMemory, totalMemory)
 		}
 	}
-	return nil
+	return newValue, nil
 }
 
 // this is effectively a cache DEL operation
@@ -454,10 +470,10 @@ func (c NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, er
 
 // it is worth noting that a method such as
 //   func (c NamespacedResourceWatcherCache) listKeys(filters []string) ([]string, error)
-// has proven to be of no use today. The problem is that such function
-// only returns the set of keys in the cache at this moment in time, which maybe a subset
+// has proven to be of no use today. The problem is that such a function can
+// only return the set of keys in the cache *AT A GIVEN MONENT IN TIME*, which maybe a subset
 // of all existing keys (due to memory pressure and eviction policies) and therefore cannot
-// be relied upon to be the "source-of-truth". So I removed it for now as I found it
+// be relied upon to be the "source of truth". So I removed it for now as I found it
 // of no use
 
 // parallelize the process of value retrieval because fetchForOne() calls
@@ -473,7 +489,7 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 		key string
 	}
 	type fetchValueJobResult struct {
-		key   string
+		fetchValueJob
 		value interface{}
 		err   error
 	}
@@ -491,7 +507,7 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 			// closed (and there are no more items)
 			for job := range requestChan {
 				result, err := c.fetchForOne(job.key)
-				responseChan <- fetchValueJobResult{job.key, result, err}
+				responseChan <- fetchValueJobResult{job, result, err}
 			}
 			wg.Done()
 		}()
@@ -527,8 +543,10 @@ func (c NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 // get the value from the cache for a given or return nil if one is missing, whereas
 // 'getForMultiple' will first call 'fetch' but then for any cache misses it will force
 // a re-computation of the value, if available, and load that result into the cache.
+// So 'getForMultiple' provides a guarantee that if a key exists, it's value will be returned,
+// whereas 'fetchForMultiple' does not guarantee that.
 // The keys are expected to be in the format of the cache (the caller does that)
-func (c NamespacedResourceWatcherCache) getForMultiple(keys []string, repoList *unstructured.UnstructuredList) (map[string]interface{}, error) {
+func (c NamespacedResourceWatcherCache) getForMultiple(keys []string, itemList *unstructured.UnstructuredList) (map[string]interface{}, error) {
 	// at any given moment, the redis cache may only have a subset of the entire set of existing keys.
 	// Some key may have been evicted due to memory pressure and LRU eviction policy.
 	// ref: https://redis.io/topics/lru-cache
@@ -563,6 +581,9 @@ func (c NamespacedResourceWatcherCache) getForMultiple(keys []string, repoList *
 		}
 	}
 
+	// this functionality is similar to that of populateWith() func,
+	// but different enough so I did not see the value of re-using the code
+
 	// max number of concurrent workers retrieving cache values at the same time
 	const maxWorkers = 10
 
@@ -570,7 +591,7 @@ func (c NamespacedResourceWatcherCache) getForMultiple(keys []string, repoList *
 		key string
 	}
 	type computeValueJobResult struct {
-		key   string
+		computeValueJob
 		value interface{}
 		err   error
 	}
@@ -592,15 +613,20 @@ func (c NamespacedResourceWatcherCache) getForMultiple(keys []string, repoList *
 					if name, err := c.fromKey(job.key); err != nil {
 						return nil, err
 					} else {
-						for _, repo := range repoList.Items {
-							if repoName, err := namespacedName(repo.Object); err != nil {
+						for _, item := range itemList.Items {
+							if itemName, err := namespacedName(item.Object); err != nil {
 								return nil, err
-							} else if *repoName == *name {
-								if err = c.onAddOrModify(true, repo.Object); err == nil {
-									// TODO (gfichtenholt) there is a possible race condition here
-									// value might be set and immediately evicted by another thread
-									if value, err = c.fetchForOne(job.key); err != nil {
-										return nil, err
+							} else if *itemName == *name {
+								// we are willfully skipping over any error that onAddOrModify() may return
+								// from any specific because the whole operation semantics is defined as
+								// 'get me a list of valid entries', as opposed to, say, 'get me a specific entry value'
+								if value, err = c.onAddOrModify(true, item.Object); err != nil {
+									// just log an error and move on
+									log.Errorf("onAddOrModify() for [%s] failed due to %+v", itemName, err)
+								} else if value != nil {
+									if value, err = c.config.onGet(job.key, value); err != nil {
+										// just log an error and move on
+										log.Errorf("onGet() for [%s] failed due to %+v", itemName, err)
 									}
 								}
 								break
@@ -609,7 +635,7 @@ func (c NamespacedResourceWatcherCache) getForMultiple(keys []string, repoList *
 					}
 					return value, nil
 				}()
-				responseChan <- computeValueJobResult{job.key, value, err}
+				responseChan <- computeValueJobResult{job, value, err}
 			}
 			wg.Done()
 		}()
@@ -672,7 +698,6 @@ func (c NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedNa
 // computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
-// returns true if all was ok, false and logs any error(s) otherwise
 func (c NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
 	// max number of concurrent workers computing cache values at the same time
 	const maxWorkers = 10
@@ -692,7 +717,10 @@ func (c NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstru
 			// The following loop will only terminate when the request channel is
 			// closed (and there are no more items)
 			for job := range requestChan {
-				c.onAddOrModify(true, job.item)
+				if _, err := c.onAddOrModify(true, job.item); err != nil {
+					// log an error and move on
+					log.Errorf("onAddOrModify failed due to %+v", err)
+				}
 			}
 			wg.Done()
 		}()

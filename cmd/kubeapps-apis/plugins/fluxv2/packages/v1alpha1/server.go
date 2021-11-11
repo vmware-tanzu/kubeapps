@@ -237,7 +237,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	tarUrl, err, cleanUp := s.getChartTarball(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
+	tarUrl, cleanUp, err := s.getChartTarball(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
 	if cleanUp != nil {
 		defer cleanUp()
 	}
@@ -269,6 +269,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 // GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageVersions [%v]", request)
+	defer log.Infof("-GetAvailablePackageVersions")
 
 	if request.GetPkgVersion() != "" {
 		return nil, status.Errorf(
