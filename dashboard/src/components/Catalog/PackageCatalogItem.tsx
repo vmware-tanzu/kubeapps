@@ -15,17 +15,24 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
     availablePackageSummary.availablePackageRef!,
   );
 
-  // Historically, this tag is used to show the repository a given package is from,
-  // but each plugin as its own way to describe the repository right now.
-  let repositoryName;
+  let pkgRepository;
+  let pkgPlugin;
+
   switch (availablePackageSummary.availablePackageRef?.plugin?.name) {
     case PluginNames.PACKAGES_HELM:
-      repositoryName = availablePackageSummary.availablePackageRef?.identifier.split("/")[0];
+      pkgRepository = availablePackageSummary.availablePackageRef?.identifier.split("/")[0];
+      pkgPlugin = "helm";
       break;
-    // TODO: consider the fluxv2 plugin
+    case PluginNames.PACKAGES_FLUX:
+      // TODO: get repo from flux
+      pkgPlugin = "flux";
+      break;
+    case PluginNames.PACKAGES_KAPP:
+      pkgPlugin = "carvel";
+      break;
     default:
       // Fallback to the plugin name
-      repositoryName = availablePackageSummary.availablePackageRef?.plugin?.name;
+      pkgPlugin = availablePackageSummary.availablePackageRef?.plugin?.name;
       break;
   }
 
@@ -37,7 +44,9 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
       info={availablePackageSummary?.latestVersion?.pkgVersion || ""}
       icon={availablePackageSummary.iconUrl || placeholder}
       description={trimDescription(availablePackageSummary.shortDescription)}
-      tag1Content={<span>{repositoryName}</span>}
+      tag1Content={pkgRepository}
+      tag2Content={pkgPlugin}
+      tag2Class={"label-info-secondary"}
       bgIcon={getPluginIcon(availablePackageSummary.availablePackageRef?.plugin)}
     />
   );

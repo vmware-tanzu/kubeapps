@@ -69,7 +69,6 @@
   overflow-x: auto;
 
   .kubeapps-card-footer-col1 {
-    width: 100%;
     margin: 0 0.6rem;
   }
 
@@ -85,4 +84,9 @@
 
 .footer-tags {
   text-align: right;
+}
+
+.label.label-info-secondary {
+  background: var(--cds-alias-status-neutral-tint, #e3f5fc);
+  border-color: var(--cds-alias-status-neutral-shade, #00567a);
 }
