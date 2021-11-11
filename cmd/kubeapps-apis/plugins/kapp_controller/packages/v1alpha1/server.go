@@ -35,9 +35,9 @@ import (
 	log "k8s.io/klog/v2"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -77,7 +77,7 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter server.KubernetesConfigGetter) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter) *Server {
 	return &Server{
 		clientGetter: func(ctx context.Context, cluster string) (dynamic.Interface, error) {
 			if configGetter == nil {

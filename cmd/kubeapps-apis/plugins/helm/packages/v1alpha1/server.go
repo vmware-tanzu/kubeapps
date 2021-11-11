@@ -28,10 +28,10 @@ import (
 	"github.com/kubeapps/common/datastore"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -129,7 +129,7 @@ func parsePluginConfig(pluginConfigPath string) VersionsInSummary {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluster string, pluginConfigPath string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, pluginConfigPath string) *Server {
 	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")

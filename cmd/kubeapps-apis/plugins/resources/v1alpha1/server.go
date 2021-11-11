@@ -13,8 +13,8 @@ limitations under the License.
 package main
 
 import (
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 )
 
 // Currently just a stub unimplemented server. More to come in following PRs.
@@ -22,6 +22,6 @@ type Server struct {
 	v1alpha1.UnimplementedResourcesServiceServer
 }
 
-func NewServer(configGetter server.KubernetesConfigGetter) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter) *Server {
 	return &Server{}
 }
