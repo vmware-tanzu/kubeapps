@@ -106,7 +106,12 @@ function DeploymentFormBody({
     );
   }
   if (packagesIsFetching || !availablePackageDetail || !versions.length) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
+    return (
+      <LoadingWrapper
+        className="margin-t-xxl"
+        loadingText={`Fetching ${decodeURIComponent(packageId)}...`}
+      />
+    );
   }
   const tabColumns = [
     "YAML",
