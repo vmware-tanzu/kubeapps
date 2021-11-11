@@ -33,7 +33,7 @@ it("renders a Helm subtitle", () => {
 
 it("renders an Operator subtitle", () => {
   const wrapper = mount(<PageHeader {...defaultProps} operator={true} />);
-  expect(wrapper.find("img").prop("src")).toBe("operator-framework.svg");
+  expect(wrapper.find("img").prop("src")).toBe("olm-icon.svg");
   expect(wrapper.text()).toContain("Operator");
 });
 
