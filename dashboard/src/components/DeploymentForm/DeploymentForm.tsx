@@ -144,7 +144,12 @@ export default function DeploymentForm() {
   }
 
   if (!selectedPackage.availablePackageDetail) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
+    return (
+      <LoadingWrapper
+        className="margin-t-xxl"
+        loadingText={`Fetching ${decodeURIComponent(packageId)}...`}
+      />
+    );
   }
   return (
     <section>
