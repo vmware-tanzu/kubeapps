@@ -36,7 +36,10 @@ it("renders a Helm subtitle", () => {
 
 it("renders a Flux subtitle", () => {
   const wrapper = mount(
-    <PageHeader {...defaultProps} plugin={{ name: "fluxv2.packages", version: "0.0.1" } as Plugin} />,
+    <PageHeader
+      {...defaultProps}
+      plugin={{ name: "fluxv2.packages", version: "0.0.1" } as Plugin}
+    />,
   );
   expect(wrapper.find("img").prop("src")).toBe("flux.svg");
   expect(wrapper.text()).toContain("Helm Chart");
@@ -44,7 +47,10 @@ it("renders a Flux subtitle", () => {
 
 it("renders a Carvel subtitle", () => {
   const wrapper = mount(
-    <PageHeader {...defaultProps} plugin={{ name: "kapp_controller.packages", version: "0.0.1" } as Plugin} />,
+    <PageHeader
+      {...defaultProps}
+      plugin={{ name: "kapp_controller.packages", version: "0.0.1" } as Plugin}
+    />,
   );
   expect(wrapper.find("img").prop("src")).toBe("carvel.svg");
   expect(wrapper.text()).toContain("Carvel Package");
