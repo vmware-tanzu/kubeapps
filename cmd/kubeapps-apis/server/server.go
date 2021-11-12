@@ -28,9 +28,10 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	pluginsv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
-	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	packagesv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/packages/v1alpha1"
+	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
+	packagesGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -62,13 +63,12 @@ func Serve(serveOpts core.ServeOptions) error {
 
 	// Create the core.plugins.v1alpha1 server which handles registration of
 	// plugins, and register it for both grpc and http.
-	pluginsServer, err := pluginsv1.NewPluginsServer(serveOpts, grpcSrv, gwArgs)
+	pluginsServer, err := pluginsv1alpha1.NewPluginsServer(serveOpts, grpcSrv, gwArgs)
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
-	plugins.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
-	// TODO(minelson): should no longer need to split up the gw args now.
-	err = plugins.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
+	pluginsGRPCv1alpha1.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
+	err = pluginsGRPCv1alpha1.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
 	if err != nil {
 		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
 	}
@@ -78,15 +78,15 @@ func Serve(serveOpts core.ServeOptions) error {
 	// The argument for the reflect.TypeOf is based on what grpc-go
 	// does itself at:
 	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
-	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packages.PackagesServiceServer)(nil)).Elem())
+	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.PackagesServiceServer)(nil)).Elem())
 
 	// Create the core.packages server and register it for both grpc and http.
-	packagesServer, err := NewPackagesServer(packagingPlugins)
+	packagesServer, err := packagesv1alpha1.NewPackagesServer(packagingPlugins)
 	if err != nil {
 		return fmt.Errorf("failed to create core.packages.v1alpha1 server: %w", err)
 	}
-	packages.RegisterPackagesServiceServer(grpcSrv, packagesServer)
-	err = packages.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
+	packagesGRPCv1alpha1.RegisterPackagesServiceServer(grpcSrv, packagesServer)
+	err = packagesGRPCv1alpha1.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
 	if err != nil {
 		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)
 	}
