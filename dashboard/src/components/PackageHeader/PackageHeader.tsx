@@ -39,7 +39,7 @@ export default function PackageHeader({
       }
       titleSize="md"
       icon={availablePackageDetail?.iconUrl ? availablePackageDetail.iconUrl : placeholder}
-      helm={true}
+      plugin={availablePackageDetail.availablePackageRef.plugin}
       version={
         <>
           <label className="header-version-label" htmlFor="package-versions">
