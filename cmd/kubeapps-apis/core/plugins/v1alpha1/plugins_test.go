@@ -10,7 +10,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package server
+package v1alpha1
 
 import (
 	"context"
@@ -21,6 +21,8 @@ import (
 	"testing/fstest"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	"google.golang.org/grpc/codes"
@@ -29,22 +31,31 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+var ignoreUnexported = cmpopts.IgnoreUnexported(
+	PluginWithServer{},
+	plugins.Plugin{},
+)
+
 func TestPluginsAvailable(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*plugins.Plugin
+		configuredPlugins []PluginWithServer
 		expectedPlugins   []*plugins.Plugin
 	}{
 		{
 			name: "it returns the configured plugins verbatim",
-			configuredPlugins: []*plugins.Plugin{
+			configuredPlugins: []PluginWithServer{
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1alpha1",
+					},
 				},
 				{
-					Name:    "kapp_controller.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "kapp_controller.packages",
+						Version: "v1alpha1",
+					},
 				},
 			},
 			expectedPlugins: []*plugins.Plugin{
@@ -64,7 +75,7 @@ func TestPluginsAvailable(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ps := pluginsServer{
-				plugins: tc.configuredPlugins,
+				pluginsWithServers: tc.configuredPlugins,
 			}
 
 			resp, err := ps.GetConfiguredPlugins(context.TODO(), &plugins.GetConfiguredPluginsRequest{})
@@ -72,90 +83,118 @@ func TestPluginsAvailable(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := resp.Plugins, tc.expectedPlugins; !cmp.Equal(want, got, cmp.Comparer(pluginEqual)) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmp.Comparer(pluginEqual)))
+			if got, want := resp.Plugins, tc.expectedPlugins; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
 	}
 }
 
-func pluginEqual(a, b *plugins.Plugin) bool {
-	return a.Name == b.Name && a.Version == b.Version
+func pluginEqual(a, b PluginWithServer) bool {
+	return a.Plugin.Name == b.Plugin.Name && a.Plugin.Version == b.Plugin.Version
 }
 
 func TestSortPlugins(t *testing.T) {
 	testCases := []struct {
 		name              string
-		configuredPlugins []*plugins.Plugin
-		expectedPlugins   []*plugins.Plugin
+		configuredPlugins []PluginWithServer
+		expectedPlugins   []PluginWithServer
 	}{
 		{
 			name: "it sorts plugins by name",
-			configuredPlugins: []*plugins.Plugin{
+			configuredPlugins: []PluginWithServer{
 				{
-					Name:    "kapp_controller.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "kapp_controller.packages",
+						Version: "v1alpha1",
+					},
 				},
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1alpha1",
+					},
 				},
 			},
-			expectedPlugins: []*plugins.Plugin{
+			expectedPlugins: []PluginWithServer{
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1alpha1",
+					},
 				},
 				{
-					Name:    "kapp_controller.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "kapp_controller.packages",
+						Version: "v1alpha1",
+					},
 				},
 			},
 		},
 		{
 			name: "it sorts plugins by version (alpha-ordering) when names equal",
-			configuredPlugins: []*plugins.Plugin{
+			configuredPlugins: []PluginWithServer{
 				{
-					Name:    "kapp_controller.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "kapp_controller.packages",
+						Version: "v1alpha1",
+					},
 				},
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1alpha1",
+					},
 				},
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1",
+					},
 				},
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1alpha2",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1alpha2",
+					},
 				},
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1beta1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1beta1",
+					},
 				},
 			},
-			expectedPlugins: []*plugins.Plugin{
+			expectedPlugins: []PluginWithServer{
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1",
+					},
 				},
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1alpha1",
+					},
 				},
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1alpha2",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1alpha2",
+					},
 				},
 				{
-					Name:    "fluxv2.packages",
-					Version: "v1beta1",
+					Plugin: &plugins.Plugin{
+						Name:    "fluxv2.packages",
+						Version: "v1beta1",
+					},
 				},
 				{
-					Name:    "kapp_controller.packages",
-					Version: "v1alpha1",
+					Plugin: &plugins.Plugin{
+						Name:    "kapp_controller.packages",
+						Version: "v1alpha1",
+					},
 				},
 			},
 		},
@@ -369,7 +408,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 				tc.contextKey: tc.contextValue,
 			}))
 
-			serveOpts := ServeOptions{
+			serveOpts := core.ServeOptions{
 				ClustersConfigPath: "/config.yaml",
 				PinnipedProxyURL:   "http://example.com",
 			}

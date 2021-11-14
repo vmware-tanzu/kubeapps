@@ -18,6 +18,7 @@ import (
 	"strconv"
 
 	. "github.com/ahmetb/go-linq/v3"
+	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
@@ -25,19 +26,39 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+// pkgPluginsWithServer stores the plugin detail together with its implementation.
+type pkgPluginsWithServer struct {
+	plugin *v1alpha1.Plugin
+	server packages.PackagesServiceServer
+}
+
 // packagesServer implements the API defined in proto/kubeappsapis/core/packages/v1alpha1/packages.proto
 type packagesServer struct {
 	packages.UnimplementedPackagesServiceServer
 
-	// plugins is a slice of all registered plugins which satisfy the core.packages.v1alpha1
+	// pluginsWithServers is a slice of all registered pluginsWithServers which satisfy the core.packages.v1alpha1
 	// interface.
-	plugins []*pkgsPluginWithServer
+	pluginsWithServers []pkgPluginsWithServer
 }
 
-func NewPackagesServer(plugins []*pkgsPluginWithServer) *packagesServer {
-	return &packagesServer{
-		plugins: plugins,
+func NewPackagesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*packagesServer, error) {
+	// Verify that each plugin is indeed a packaging plugin while
+	// casting.
+	pluginsWithServer := make([]pkgPluginsWithServer, len(pkgingPlugins))
+	for i, p := range pkgingPlugins {
+		pkgsSrv, ok := p.Server.(packages.PackagesServiceServer)
+		if !ok {
+			return nil, fmt.Errorf("Unable to convert plugin %v to core PackagesServicesServer", p)
+		}
+		pluginsWithServer[i] = pkgPluginsWithServer{
+			plugin: p.Plugin,
+			server: pkgsSrv,
+		}
+		log.Infof("Registered %v for core.packaging.v1alpha1 aggregation.", p.Plugin)
 	}
+	return &packagesServer{
+		pluginsWithServers: pluginsWithServer,
+	}, nil
 }
 
 // GetAvailablePackages returns the packages based on the request.
@@ -63,7 +84,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	categories := []string{}
 
 	// TODO: We can do these in parallel in separate go routines.
-	for _, p := range s.plugins {
+	for _, p := range s.pluginsWithServers {
 		log.Infof("Items now: %d/%d", len(pkgs), (pageOffset*int(pageSize) + int(pageSize)))
 		if pageSize == 0 || len(pkgs) <= (pageOffset*int(pageSize)+int(pageSize)) {
 			log.Infof("Should enter")
@@ -161,7 +182,7 @@ func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, reques
 	// Aggregate the response for each plugin
 	pkgs := []*packages.InstalledPackageSummary{}
 	// TODO: We can do these in parallel in separate go routines.
-	for _, p := range s.plugins {
+	for _, p := range s.pluginsWithServers {
 		response, err := p.server.GetInstalledPackageSummaries(ctx, request)
 		if err != nil {
 			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetInstalledPackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
@@ -364,12 +385,12 @@ func (s packagesServer) DeleteInstalledPackage(ctx context.Context, request *pac
 	return response, nil
 }
 
-// getPluginWithServer returns the *pkgsPluginWithServer from a given packagesServer
+// getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer
 // matching the plugin name
-func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgsPluginWithServer {
-	for _, p := range s.plugins {
+func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgPluginsWithServer {
+	for _, p := range s.pluginsWithServers {
 		if plugin.Name == p.plugin.Name {
-			return p
+			return &p
 		}
 	}
 	return nil
