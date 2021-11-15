@@ -142,11 +142,22 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 		log.Fatalf("%s", err)
 	}
 
-	versionsInSummary, err := parsePluginConfig(pluginConfigPath)
-	if err != nil {
-		log.Fatalf("%s", err)
+	// If no config is provided, we default to the existing values for backwards
+	// compatibility.
+	versionsInSummary := VersionsInSummary{
+		Major: MajorVersionsInSummary,
+		Minor: MinorVersionsInSummary,
+		Patch: PatchVersionsInSummary,
 	}
-	log.Infof("NewServer: versionsInSummary %v\n", versionsInSummary)
+	if pluginConfigPath != "" {
+		versionsInSummary, err = parsePluginConfig(pluginConfigPath)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		log.Infof("+helm using custom packages config with %v\n", versionsInSummary)
+	} else {
+		log.Infof("+helm using default config since pluginConfigPath is empty")
+	}
 
 	return &Server{
 		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
