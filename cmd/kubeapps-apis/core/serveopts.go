@@ -19,9 +19,12 @@ package core
 import (
 	"context"
 
+	"flag"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"k8s.io/client-go/rest"
+	klogv2 "k8s.io/klog/v2"
 )
 
 // ServeOptions encapsulates the available command-line options.
@@ -47,3 +50,45 @@ type GatewayHandlerArgs struct {
 // that call-sites don't need to know how to obtain an authenticated client, but
 // rather can just pass the request context and the cluster to get one.
 type KubernetesConfigGetter func(ctx context.Context, cluster string) (*rest.Config, error)
+
+type Logger interface {
+	Fatal(args ...interface{})
+	Fatalf(format string, args ...interface{})
+	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
+	Info(args ...interface{})
+	Infof(format string, args ...interface{})
+}
+
+type KubeappsApisLogger struct {
+	//use "k8s.io/klog/v2" as default
+}
+
+func NewBuiltinKlogger() KubeappsApisLogger {
+	klogv2.InitFlags(nil) // initializing the flags
+	flag.Set("v", "5")
+	flag.Parse()
+	//defer klogv2.Flush() // flushes all pending log I/O
+	return KubeappsApisLogger{}
+}
+func (l KubeappsApisLogger) Error(args ...interface{}) {
+	klogv2.Error(args...)
+}
+
+func (l KubeappsApisLogger) Errorf(format string, args ...interface{}) {
+	klogv2.Errorf(format, args...)
+}
+func (l KubeappsApisLogger) Info(args ...interface{}) {
+	klogv2.Info(args...)
+}
+
+func (l KubeappsApisLogger) Infof(format string, args ...interface{}) {
+	klogv2.Infof(format, args...)
+}
+func (l KubeappsApisLogger) Fatal(args ...interface{}) {
+	klogv2.Fatal(args...)
+}
+
+func (l KubeappsApisLogger) Fatalf(format string, args ...interface{}) {
+	klogv2.Fatalf(format, args...)
+}

@@ -38,7 +38,7 @@ func init() {
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.KubernetesConfigGetter,
-	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
+	clustersConfig kube.ClustersConfig, pluginConfigPath string, logger core.Logger) (interface{}, error) {
 	svr := NewServer(configGetter)
 	v1alpha1.RegisterKappControllerPackagesServiceServer(s, svr)
 	return svr, nil
