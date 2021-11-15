@@ -103,14 +103,34 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		return err
 	}
 
+	var resourcesToReturn []*pkgsGRPCv1alpha1.ResourceRef
+	// If the request didn't specify a filter of resource refs,
+	// we return all those found for the installed package. Otherwise
+	// we only return the requested ones.
+	if len(r.GetResourceRefs()) == 0 {
+		resourcesToReturn = refsResponse.GetResourceRefs()
+	} else {
+		for _, requestedRef := range r.GetResourceRefs() {
+			found := false
+			for _, pkgRef := range refsResponse.GetResourceRefs() {
+				if resourceRefsEqual(pkgRef, requestedRef) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return status.Errorf(codes.InvalidArgument, "requested resource %+v does not belong to installed package %+v", requestedRef, r.GetInstalledPackageRef())
+			}
+		}
+		resourcesToReturn = r.GetResourceRefs()
+	}
+
 	// Then look up each referenced resource and send it down the stream.
-	// TODO(minelson): Filter to the resources specified in the request, and 400
-	// if they don't exist for the package.
 	_, dynamicClient, err := s.clientGetter(stream.Context(), cluster)
 	if err != nil {
 		return err
 	}
-	for _, ref := range refsResponse.GetResourceRefs() {
+	for _, ref := range resourcesToReturn {
 		groupVersion, err := schema.ParseGroupVersion(ref.ApiVersion)
 		if err != nil {
 			return status.Errorf(codes.Internal, "unable to parse group version from %q: %s", ref.ApiVersion, err.Error())
@@ -153,4 +173,10 @@ func copyAuthorizationMetadataForOutgoing(ctx context.Context) (context.Context,
 	}
 
 	return metadata.AppendToOutgoingContext(ctx, "authorization", md["authorization"][0]), nil
+}
+
+func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {
+	return r1.ApiVersion == r2.ApiVersion &&
+		r1.Kind == r2.Kind &&
+		r1.Name == r2.Name
 }

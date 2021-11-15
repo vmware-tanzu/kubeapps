@@ -146,7 +146,7 @@ func TestGetResources(t *testing.T) {
 			expectedErrorCode: codes.PermissionDenied,
 		},
 		{
-			name: "it returns resources for an installed app",
+			name: "it gets all resources for an installed app when the filter is empty",
 			request: &v1alpha1.GetResourcesRequest{
 				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Context: &pkgsGRPCv1alpha1.Context{
@@ -196,6 +196,91 @@ func TestGetResources(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "it gets only requested resources for an installed app when the filter is specified",
+			request: &v1alpha1.GetResourcesRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "some-package",
+					Plugin:     fakePkgsPlugin,
+				},
+				ResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
+					{
+						ApiVersion: "core/v1",
+						Kind:       "Service",
+						Name:       "some-service",
+					},
+				},
+			},
+			clusterObjects: []runtime.Object{
+				&apps.Deployment{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Deployment",
+						APIVersion: "apps/v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "some-deployment",
+						Namespace: "default",
+					},
+				},
+				&core.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: "core/v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "some-service",
+						Namespace: "default",
+					},
+				},
+			},
+			expectedErrorCode: codes.OK,
+			expectedResources: []*v1alpha1.GetResourcesResponse{
+				{
+					ResourceRef: &pkgsGRPCv1alpha1.ResourceRef{
+						ApiVersion: "core/v1",
+						Kind:       "Service",
+						Name:       "some-service",
+					},
+				},
+			},
+		},
+		{
+			name: "it returns invalid argument if a requested resource isn't part of the installed package",
+			request: &v1alpha1.GetResourcesRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "some-package",
+					Plugin:     fakePkgsPlugin,
+				},
+				ResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
+					{
+						ApiVersion: "core/v1",
+						Kind:       "Secret",
+						Name:       "some-secret",
+					},
+				},
+			},
+			clusterObjects: []runtime.Object{
+				&apps.Deployment{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Deployment",
+						APIVersion: "apps/v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "some-deployment",
+						Namespace: "default",
+					},
+				},
+			},
+			expectedErrorCode: codes.InvalidArgument,
 		},
 	}
 
