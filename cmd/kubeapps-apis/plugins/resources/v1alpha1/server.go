@@ -119,7 +119,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 				}
 			}
 			if !found {
-				return status.Errorf(codes.InvalidArgument, "requested resource %+v does not belonge to installed package %+v", requestedRef, r.GetInstalledPackageRef())
+				return status.Errorf(codes.InvalidArgument, "requested resource %+v does not belong to installed package %+v", requestedRef, r.GetInstalledPackageRef())
 			}
 		}
 		resourcesToReturn = r.GetResourceRefs()
