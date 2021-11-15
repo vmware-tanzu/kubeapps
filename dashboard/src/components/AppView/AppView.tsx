@@ -275,7 +275,7 @@ export default function AppView() {
           <PageHeader
             title={releaseName}
             titleSize="md"
-            helm={true}
+            plugin={app?.availablePackageRef?.plugin}
             icon={icon}
             buttons={getButtons(app, error, revision)}
           />

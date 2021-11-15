@@ -15,6 +15,7 @@ function AppListItem(props: IAppListItemProps) {
   const { app } = props;
   const icon = app.iconUrl ?? placeholder;
   const appStatus = app.status?.userReason?.toLocaleLowerCase();
+  const appReady = app.status?.ready ?? false;
   let tooltipContent;
 
   if (
@@ -75,7 +76,7 @@ function AppListItem(props: IAppListItemProps) {
       }
       description={app.shortDescription}
       tag1Content={appStatus}
-      tag1Class={appStatus === "deployed" ? "label-success" : "label-warning"}
+      tag1Class={appReady ? "label-success" : "label-warning"}
       tooltip={tooltip}
       bgIcon={getPluginIcon(app.installedPackageRef?.plugin)}
     />

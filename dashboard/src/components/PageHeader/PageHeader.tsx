@@ -1,15 +1,16 @@
 import Icon from "components/Icon/Icon";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import { getPluginIcon } from "shared/utils";
+import { getPluginIcon, getPluginPackageName } from "shared/utils";
 import "./PageHeader.css";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 
 export interface IPageHeaderProps {
   title: string;
   titleSize?: "lg" | "md";
   icon?: any;
   filter?: JSX.Element;
-  helm?: boolean;
+  plugin?: Plugin;
   operator?: boolean;
   buttons?: JSX.Element[];
   version?: JSX.Element;
@@ -20,7 +21,7 @@ function PageHeader({
   icon,
   filter,
   buttons,
-  helm,
+  plugin,
   version,
   operator,
 }: IPageHeaderProps) {
@@ -33,16 +34,16 @@ function PageHeader({
               <div className="img-container">{icon && <Icon icon={icon} />}</div>
               <div className="kubeapps-title-block">
                 {titleSize === "lg" ? <h1>{title}</h1> : <h3>{title}</h3>}
-                {helm && (
+                {plugin && (
                   <div className="kubeapps-header-subtitle">
-                    <img src={getPluginIcon("chart")} alt="helm-icon" />
-                    <span>Helm Chart</span>
+                    <img src={getPluginIcon(plugin)} alt="helm-icon" />
+                    <span>{getPluginPackageName(plugin)}</span>
                   </div>
                 )}
                 {operator && (
                   <div className="kubeapps-header-subtitle">
                     <img src={getPluginIcon("operator")} alt="olm-icon" />
-                    <span>Operator</span>
+                    <span>{getPluginPackageName("operator")}</span>
                   </div>
                 )}
               </div>
