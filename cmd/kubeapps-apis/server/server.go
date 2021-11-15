@@ -32,6 +32,7 @@ import (
 	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packagesGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/interceptors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -43,7 +44,13 @@ import (
 func Serve(serveOpts core.ServeOptions) error {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(
+		// Here we add the chaining of interceptors, they will execute in order
+		grpc.ChainUnaryInterceptor(
+			interceptors.VerifyUnaryServer,
+			interceptors.LogRequest,
+		),
+	)
 	reflection.Register(grpcSrv)
 
 	// Create the http server, register our core service followed by any plugins.
