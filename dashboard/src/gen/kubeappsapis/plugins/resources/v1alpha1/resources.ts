@@ -109,17 +109,12 @@ export const GetResourcesRequest = {
 
   fromJSON(object: any): GetResourcesRequest {
     const message = { ...baseGetResourcesRequest } as GetResourcesRequest;
-    message.resourceRefs = [];
     if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
       message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
     } else {
       message.installedPackageRef = undefined;
     }
-    if (object.resourceRefs !== undefined && object.resourceRefs !== null) {
-      for (const e of object.resourceRefs) {
-        message.resourceRefs.push(ResourceRef.fromJSON(e));
-      }
-    }
+    message.resourceRefs = (object.resourceRefs ?? []).map((e: any) => ResourceRef.fromJSON(e));
     if (object.watch !== undefined && object.watch !== null) {
       message.watch = Boolean(object.watch);
     } else {
@@ -152,12 +147,7 @@ export const GetResourcesRequest = {
     } else {
       message.installedPackageRef = undefined;
     }
-    message.resourceRefs = [];
-    if (object.resourceRefs !== undefined && object.resourceRefs !== null) {
-      for (const e of object.resourceRefs) {
-        message.resourceRefs.push(ResourceRef.fromPartial(e));
-      }
-    }
+    message.resourceRefs = (object.resourceRefs ?? []).map(e => ResourceRef.fromPartial(e));
     message.watch = object.watch ?? false;
     return message;
   },
