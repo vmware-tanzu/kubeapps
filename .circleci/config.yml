@@ -20,7 +20,7 @@ parameters:
     default: "v3.7.0"
   OLM_VERSION:
     type: "string"
-    default: "v0.18.3"
+    default: "v0.19.1"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.3"

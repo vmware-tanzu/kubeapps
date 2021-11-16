@@ -23,7 +23,7 @@ import (
 	"sync"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -146,7 +146,7 @@ func namespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedNa
 	return &types.NamespacedName{Name: name, Namespace: namespace}, nil
 }
 
-func newHelmActionConfigGetter(configGetter server.KubernetesConfigGetter, cluster string) helmActionConfigGetter {
+func newHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster string) helmActionConfigGetter {
 	return func(ctx context.Context, namespace string) (*action.Configuration, error) {
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
@@ -174,7 +174,7 @@ func newHelmActionConfigGetter(configGetter server.KubernetesConfigGetter, clust
 	}
 }
 
-func newClientGetter(configGetter server.KubernetesConfigGetter, cluster string) clientGetter {
+func newClientGetter(configGetter core.KubernetesConfigGetter, cluster string) clientGetter {
 	return func(ctx context.Context) (dynamic.Interface, apiext.Interface, error) {
 		if configGetter == nil {
 			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")

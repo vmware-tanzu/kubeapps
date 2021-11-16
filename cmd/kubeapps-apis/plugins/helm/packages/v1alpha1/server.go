@@ -28,10 +28,10 @@ import (
 	"github.com/kubeapps/common/datastore"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -91,7 +91,7 @@ type Server struct {
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) VersionsInSummary {
+func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, error) {
 
 	// Note at present VersionsInSummary is the only configurable option for this plugin,
 	// and if required this func can be enhaned to return helmConfig struct
@@ -111,25 +111,20 @@ func parsePluginConfig(pluginConfigPath string) VersionsInSummary {
 
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		// return default value of VersionsInSummary
-		return VersionsInSummary{MajorVersionsInSummary,
-			MinorVersionsInSummary, PatchVersionsInSummary}
+		return VersionsInSummary{}, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		// return default value of VersionsInSummary
-		return VersionsInSummary{MajorVersionsInSummary,
-			MinorVersionsInSummary, PatchVersionsInSummary}
+		return VersionsInSummary{}, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
 	}
 
 	// return configured value of VersionsInSummary
-	return config.Core.Packages.V1alpha1.VersionsInSummary
-
+	return config.Core.Packages.V1alpha1.VersionsInSummary, nil
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluster string, pluginConfigPath string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, pluginConfigPath string) *Server {
 	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
@@ -147,8 +142,22 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 		log.Fatalf("%s", err)
 	}
 
-	versionsInSummary := parsePluginConfig(pluginConfigPath)
-	log.Infof("NewServer: versionsInSummary %v\n", versionsInSummary)
+	// If no config is provided, we default to the existing values for backwards
+	// compatibility.
+	versionsInSummary := VersionsInSummary{
+		Major: MajorVersionsInSummary,
+		Minor: MinorVersionsInSummary,
+		Patch: PatchVersionsInSummary,
+	}
+	if pluginConfigPath != "" {
+		versionsInSummary, err = parsePluginConfig(pluginConfigPath)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		log.Infof("+helm using custom packages config with %v\n", versionsInSummary)
+	} else {
+		log.Infof("+helm using default config since pluginConfigPath is empty")
+	}
 
 	return &Server{
 		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {

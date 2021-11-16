@@ -22,6 +22,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -1704,17 +1705,19 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {
 		name                    string
-		pluginYAMLConf          string
+		pluginYAMLConf          []byte
 		exp_versions_in_summary VersionsInSummary
+		exp_error_str           string
 	}{
 		{
-			name:                    "empty plugin config",
-			pluginYAMLConf:          ``,
+			name:                    "non existing plugin-config file",
+			pluginYAMLConf:          nil,
 			exp_versions_in_summary: VersionsInSummary{0, 0, 0},
+			exp_error_str:           "no such file or directory",
 		},
 		{
 			name: "non-default plugin config",
-			pluginYAMLConf: `
+			pluginYAMLConf: []byte(`
 core:
   packages:
     v1alpha1:
@@ -1722,40 +1725,64 @@ core:
         major: 4
         minor: 2
         patch: 1
-      `,
+      `),
 			exp_versions_in_summary: VersionsInSummary{4, 2, 1},
+			exp_error_str:           "",
 		},
 		{
 			name: "partial params in plugin config",
-			pluginYAMLConf: `
+			pluginYAMLConf: []byte(`
 core:
   packages:
     v1alpha1:
       versionsInSummary:
         major: 1
-        `,
+        `),
 			exp_versions_in_summary: VersionsInSummary{1, 0, 0},
+			exp_error_str:           "",
+		},
+		{
+			name: "invalid plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1-IFC-123
+      `),
+			exp_versions_in_summary: VersionsInSummary{},
+			exp_error_str:           "json: cannot unmarshal",
 		},
 	}
 	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			pluginJSONConf, err := yaml.YAMLToJSON([]byte(tc.pluginYAMLConf))
-			if err != nil {
-				log.Fatalf("%s", err)
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
 			}
-			f, err := os.CreateTemp(".", "plugin_json_conf")
-			if err != nil {
-				log.Fatalf("%s", err)
+			versions_in_summary, goterr := parsePluginConfig(filename)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
 			}
-			defer os.Remove(f.Name()) // clean up
-			if _, err := f.Write(pluginJSONConf); err != nil {
-				log.Fatalf("%s", err)
-			}
-			if err := f.Close(); err != nil {
-				log.Fatalf("%s", err)
-			}
-			if got, want := parsePluginConfig(f.Name()), tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})

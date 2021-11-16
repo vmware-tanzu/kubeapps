@@ -1,6 +1,8 @@
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import carvelIcon from "../icons/carvel.svg";
+import fluxIcon from "../icons/flux.svg";
 import helmIcon from "../icons/helm.svg";
-import olmIcon from "../icons/operator-framework.svg";
+import olmIcon from "../icons/olm-icon.svg";
 import placeholder from "../placeholder.png";
 import ResourceRef from "./ResourceRef";
 import { IK8sList, IKubeItem, IResource, ISecret } from "./types";
@@ -68,6 +70,8 @@ export function flattenResources(
   return result;
 }
 
+// Perhaps the logic of these functions should be provided by each plugin itself, namely:
+// i) return its icon; ii) return its user-faced name; iii) return its user-faced package name
 export function getPluginIcon(plugin?: Plugin | string) {
   // Temporary case while operators are not supported as kubeapps apis plugin
   if (typeof plugin === "string") {
@@ -85,8 +89,66 @@ export function getPluginIcon(plugin?: Plugin | string) {
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
         return helmIcon;
+      case PluginNames.PACKAGES_FLUX:
+        return fluxIcon;
+      case PluginNames.PACKAGES_KAPP:
+        return carvelIcon;
       default:
         return placeholder;
+    }
+  }
+}
+
+export function getPluginName(plugin?: Plugin | string) {
+  // Temporary case while operators are not supported as kubeapps apis plugin
+  if (typeof plugin === "string") {
+    switch (plugin) {
+      case "chart":
+        return "Helm";
+      case "helm":
+        return "Helm";
+      case "operator":
+        return "Operator";
+      default:
+        return "unknown plugin";
+    }
+  } else {
+    switch (plugin?.name) {
+      case PluginNames.PACKAGES_HELM:
+        return "Helm";
+      case PluginNames.PACKAGES_FLUX:
+        return "Flux";
+      case PluginNames.PACKAGES_KAPP:
+        return "Carvel";
+      default:
+        return plugin?.name;
+    }
+  }
+}
+
+export function getPluginPackageName(plugin?: Plugin | string) {
+  // Temporary case while operators are not supported as kubeapps apis plugin
+  if (typeof plugin === "string") {
+    switch (plugin) {
+      case "chart":
+        return "Helm Chart";
+      case "helm":
+        return "Helm Chart";
+      case "operator":
+        return "Operator";
+      default:
+        return "unknown plugin package";
+    }
+  } else {
+    switch (plugin?.name) {
+      case PluginNames.PACKAGES_HELM:
+        return "Helm Chart";
+      case PluginNames.PACKAGES_FLUX:
+        return "Helm Chart via Flux";
+      case PluginNames.PACKAGES_KAPP:
+        return "Carvel Package";
+      default:
+        return `${plugin?.name} package`;
     }
   }
 }

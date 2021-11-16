@@ -1,5 +1,5 @@
 import * as url from "shared/url";
-import { getPluginIcon, PluginNames, trimDescription } from "shared/utils";
+import { getPluginIcon, getPluginName, PluginNames, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard";
 import { IPackageCatalogItem } from "./CatalogItem";
@@ -15,17 +15,19 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
     availablePackageSummary.availablePackageRef!,
   );
 
-  // Historically, this tag is used to show the repository a given package is from,
-  // but each plugin as its own way to describe the repository right now.
-  let repositoryName;
+  let pkgRepository;
+  const pkgPluginName = getPluginName(availablePackageSummary.availablePackageRef?.plugin);
+
+  // Get the pkg repository for the plugins that have one.
   switch (availablePackageSummary.availablePackageRef?.plugin?.name) {
     case PluginNames.PACKAGES_HELM:
-      repositoryName = availablePackageSummary.availablePackageRef?.identifier.split("/")[0];
+      pkgRepository = availablePackageSummary.availablePackageRef?.identifier.split("/")[0];
       break;
-    // TODO: consider the fluxv2 plugin
-    default:
-      // Fallback to the plugin name
-      repositoryName = availablePackageSummary.availablePackageRef?.plugin?.name;
+    case PluginNames.PACKAGES_FLUX:
+      // TODO: get repo from flux
+      break;
+    case PluginNames.PACKAGES_KAPP:
+      // TODO: get repo from kapp-controller
       break;
   }
 
@@ -37,7 +39,9 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
       info={availablePackageSummary?.latestVersion?.pkgVersion || ""}
       icon={availablePackageSummary.iconUrl || placeholder}
       description={trimDescription(availablePackageSummary.shortDescription)}
-      tag1Content={<span>{repositoryName}</span>}
+      tag1Content={pkgRepository}
+      tag2Content={pkgPluginName}
+      tag2Class={"label-info-secondary"}
       bgIcon={getPluginIcon(availablePackageSummary.availablePackageRef?.plugin)}
     />
   );
