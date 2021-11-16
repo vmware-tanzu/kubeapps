@@ -52,11 +52,11 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
-	github.com/improbable-eng/grpc-web v0.14.1
+	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.5
 	github.com/jinzhu/copier v0.3.2
 	github.com/kubeapps/common v0.0.0-20200304064434-f6ba82e79f47
-	github.com/lib/pq v1.10.3
+	github.com/lib/pq v1.10.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pkg/errors v0.9.1
@@ -64,13 +64,14 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
-	github.com/srwiley/oksvg v0.0.0-20210519022825-9fc0c575d5fe
+	github.com/srwiley/oksvg v0.0.0-20211104221756-aeb4ca2c1505
 	github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/negroni v1.0.0
-	golang.org/x/net v0.0.0-20211020060615-d418f374d309
-	google.golang.org/genproto v0.0.0-20211021150943-2b146023228c
-	google.golang.org/grpc v1.41.0
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	google.golang.org/genproto v0.0.0-20211115160612-a5da7257a6f7
+	google.golang.org/grpc v1.42.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -100,6 +101,7 @@ require (
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.2 // indirect
 	github.com/bugsnag/bugsnag-go v2.1.2+incompatible // indirect
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
+	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/containerd/cgroups v1.0.2 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
@@ -118,7 +120,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/garyburd/redigo v1.6.2 // indirect
+	github.com/garyburd/redigo v1.6.3 // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-errors/errors v1.4.1 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
@@ -186,7 +188,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
-	github.com/unrolled/render v1.4.0 // indirect
+	github.com/unrolled/render v1.4.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
@@ -195,11 +197,10 @@ require (
 	github.com/yvasiyarov/gorelic v0.0.7 // indirect
 	github.com/yvasiyarov/newrelic_platform_go v0.0.0-20160601141957-9c099fbc30e9 // indirect
 	go.starlark.net v0.0.0-20211013185944-b0039bd2cfe3 // indirect
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
-	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d // indirect
-	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1 // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211023085530-d6a326fbbf70 // indirect
+	golang.org/x/crypto v0.0.0-20211115234514-b4de73f9ece8 // indirect
+	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
+	golang.org/x/sys v0.0.0-20211116061358-0a5406a5449c // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
@@ -208,7 +209,7 @@ require (
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/ini.v1 v1.63.2 // indirect
+	gopkg.in/ini.v1 v1.64.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/apiserver v0.22.2 // indirect
 	k8s.io/component-base v0.22.2 // indirect
