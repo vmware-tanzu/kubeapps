@@ -398,7 +398,23 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		Password: redisPwd,
 		DB:       0,
 	})
-	defer redisCli.Close()
+	t.Cleanup(func() {
+		// we want to make sure at the end of the test the cache is empty just as it was when
+		// we started
+		const maxWait = 60
+		for i := 0; i < maxWait; i++ {
+			if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+				t.Errorf("redisCli.Keys() failed due to: %+v", err)
+			} else {
+				if len(keys) == 0 {
+					break
+				}
+				t.Logf("Waiting 2s until cache is empty. Current number of keys: [%d]", len(keys))
+				time.Sleep(2 * time.Second)
+			}
+		}
+		redisCli.Close()
+	})
 	t.Logf("redisCli: %s", redisCli)
 	// assume 15Mb redis cache for now
 	if err = redisCheckTinyMaxMemory(t, redisCli, "15728640"); err != nil {
@@ -429,7 +445,9 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	// ref https://medium.com/nerd-for-tech/redis-getting-notified-when-a-key-is-expired-or-changed-ca3e1f1c7f0a
 	subscribe := redisCli.PSubscribe(redisCli.Context(), "__keyevent@0__:*")
 	ch := subscribe.Channel()
-	defer subscribe.Close()
+	t.Cleanup(func() {
+		subscribe.Close()
+	})
 
 	const MAX_REPOS_NEVER = 100
 	// ref https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait

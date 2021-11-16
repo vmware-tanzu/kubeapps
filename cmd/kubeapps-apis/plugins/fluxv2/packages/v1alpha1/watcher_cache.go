@@ -421,14 +421,14 @@ func (c namespacedResourceWatcherCache) syncHandler(key string) error {
 		}
 	}
 
-	if _, err = c.onAddOrModify(unstructuredObj.Object); err != nil {
+	if _, err = c.onAddOrModify(true, unstructuredObj.Object); err != nil {
 		return err
 	}
 	return nil
 }
 
 // this is effectively a cache SET operation
-func (c namespacedResourceWatcherCache) onAddOrModify(unstructuredObj map[string]interface{}) (newValue interface{}, err error) {
+func (c namespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj map[string]interface{}) (newValue interface{}, err error) {
 	defer func() {
 		// for unit testing purposes
 		if c.eventProcessedWaitGroup != nil {
@@ -442,8 +442,10 @@ func (c namespacedResourceWatcherCache) onAddOrModify(unstructuredObj map[string
 	}
 
 	var oldValue []byte
-	if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
-		return nil, fmt.Errorf("failed to get value for key [%s] in cache due to: %v", key, err)
+	if checkOldValue {
+		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
+			return nil, fmt.Errorf("failed to get value for key [%s] in cache due to: %v", key, err)
+		}
 	}
 
 	var setVal bool
@@ -458,43 +460,6 @@ func (c namespacedResourceWatcherCache) onAddOrModify(unstructuredObj map[string
 
 	if err != nil {
 		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, prettyPrintMap(unstructuredObj), err)
-		// clear that key so cache doesn't contain any stale info for this object
-		c.redisCli.Del(c.redisCli.Context(), key)
-		return nil, err
-	} else if setVal {
-		// Zero expiration means the key has no expiration time.
-		// However, cache entries may be evicted by redis in order to make room for new ones,
-		// if redis is limited by maxmemory constraint
-		result, err := c.redisCli.Set(c.redisCli.Context(), key, newValue, 0).Result()
-		if err != nil {
-			return nil, fmt.Errorf("failed to set value for object with key [%s] in cache due to: %v", key, err)
-		} else {
-			// debugging an intermittent issue
-			usedMemory, totalMemory := c.memoryStats()
-			log.Infof("Redis [SET %s]: %s. Redis [INFO memory]: [%s/%s]", key, result, usedMemory, totalMemory)
-		}
-	}
-	return newValue, nil
-}
-
-// this is effectively a cache SET operation
-func (c namespacedResourceWatcherCache) onAdd(unstructuredObj map[string]interface{}) (newValue interface{}, err error) {
-	defer func() {
-		// for unit testing purposes
-		if c.eventProcessedWaitGroup != nil {
-			c.eventProcessedWaitGroup.Done()
-		}
-	}()
-
-	key, err := c.keyFor(unstructuredObj)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get redis key due to: %v", err)
-	}
-
-	newValue, setVal, err := c.config.onAdd(key, unstructuredObj)
-
-	if err != nil {
-		log.Errorf("Invocation of [onAdd] for object %s\nfailed due to: %v", prettyPrintMap(unstructuredObj), err)
 		// clear that key so cache doesn't contain any stale info for this object
 		c.redisCli.Del(c.redisCli.Context(), key)
 		return nil, err
@@ -819,7 +784,8 @@ func (c namespacedResourceWatcherCache) populateWith(items []unstructured.Unstru
 			// The following loop will only terminate when the request channel is
 			// closed (and there are no more items)
 			for job := range requestChan {
-				if _, err := c.onAdd(job.item); err != nil {
+				// don't need to check old value since we just flushed the whole cache
+				if _, err := c.onAddOrModify(false, job.item); err != nil {
 					// log an error and move on
 					log.Errorf("%+v", err)
 				}
@@ -847,17 +813,21 @@ func (c namespacedResourceWatcherCache) populateOneAndGet(key string, obj *unstr
 	// TODO (gfichtenholt) watch out for concurrent Redis GET and SET/DEL done by syncHandler
 	// Example race condition:
 	// - Setup: Redis does not have an entry for a given exisiting repo for whatever reason.
-	//   For example, the entry may have been evicted due to memory constraints)
-	// - Thread 1: User 1 has invoked getChart() operation, and since Redis has no entry, the code gets the
-	//   corresponding object from k8s and begins this routine. Before it gets a chance to finish:
-	// - Thread 2: At this point, user 2 deletes the corresonding repo. So the end state MUST be such
-	//   that there is no entry in Redis cache, as there is no corresponding entry in k8s. Eventually
-	//   syncHandler() begins a processing based on the watch.Deleted event received from k8s. And
-	//   completes its job.
-	// - Now Thread 1 kicks back in, computes the value and sets it in cache. The end state is that there is
-	//   an entry in the cache => BAD
+	//   For example, the entry may have been evicted due to memory constraints
+	// - Thread 1: User 1 has invoked getChart() operation, and since Redis has no entry,
+	//   the caller gets the corresponding object from k8s and begins this routine.
+	//   Before it gets a chance to finish:
+	// - Thread 2: At this point, user 2 deletes the corresonding repo in k8s.
+	//   ** So the end state MUST be such that there is no entry in Redis cache, as there is
+	//   no longer a corresponding entry in k8s **
+	//   Eventually, syncHandler() begins processing based on the watch.Deleted event received
+	//   from k8s and completes its job.
+	// - Now Thread 1 kicks back in, computes the value and sets it in cache. The end state is that
+	//   there is an entry in the cache => BAD
 	// Having a bit of trouble thinking of a clean solution to this at the moment. Will come back to it
-	if newValue, err := c.onAdd(obj.Object); err != nil {
+
+	// no need to check the old value since this is always called after a cache miss
+	if newValue, err := c.onAddOrModify(false, obj.Object); err != nil {
 		return nil, err
 	} else if newValue != nil {
 		if entry, err := c.config.onGet(key, newValue); err != nil {
