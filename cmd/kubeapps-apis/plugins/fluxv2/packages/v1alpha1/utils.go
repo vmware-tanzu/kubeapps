@@ -17,10 +17,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"google.golang.org/grpc/codes"
@@ -217,4 +219,49 @@ func clientGetterHelper(config *rest.Config) (dynamic.Interface, apiext.Interfac
 		return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
 	}
 	return dynamicClient, apiExtensions, nil
+}
+
+// https://github.com/kubeapps/kubeapps/pull/3044#discussion_r662733334
+// small preference for reading all config in the main.go
+// (whether from env vars or cmd-line options) only in the one spot and passing
+// explicitly to functions (so functions are less dependent on env state).
+func newRedisClientFromEnv() (*redis.Client, error) {
+	REDIS_ADDR, ok := os.LookupEnv("REDIS_ADDR")
+	if !ok {
+		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_ADDR")
+	}
+	REDIS_PASSWORD, ok := os.LookupEnv("REDIS_PASSWORD")
+	if !ok {
+		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_PASSWORD")
+	}
+	REDIS_DB, ok := os.LookupEnv("REDIS_DB")
+	if !ok {
+		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_DB")
+	}
+
+	REDIS_DB_NUM, err := strconv.Atoi(REDIS_DB)
+	if err != nil {
+		return nil, err
+	}
+
+	redisCli := redis.NewClient(&redis.Options{
+		Addr:     REDIS_ADDR,
+		Password: REDIS_PASSWORD,
+		DB:       REDIS_DB_NUM,
+	})
+
+	// sanity check that the redis client is connected
+	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
+		return nil, err
+	} else {
+		log.Infof("Redis [PING]: %s", pong)
+	}
+
+	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
+		return nil, err
+	} else if len(maxmemory) > 1 {
+		log.Infof("Redis [CONFIG GET maxmemory]: %v", maxmemory[1])
+	}
+
+	return redisCli, nil
 }

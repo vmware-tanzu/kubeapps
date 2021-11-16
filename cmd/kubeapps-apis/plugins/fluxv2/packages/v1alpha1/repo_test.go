@@ -596,7 +596,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		s.cache.eventProcessedWaitGroup.Add(1)
+		s.repoCache.eventProcessedWaitGroup.Add(1)
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
@@ -610,7 +610,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 		watcher.Modify(repo)
-		s.cache.eventProcessedWaitGroup.Wait()
+		s.repoCache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -670,13 +670,13 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
-		s.cache.eventProcessedWaitGroup.Add(1)
+		s.repoCache.eventProcessedWaitGroup.Add(1)
 		mock.ExpectDel(redisKeyForRuntimeObject(repo)).SetVal(0)
 		if err = dyncli.Resource(repositoriesGvr).Namespace("default").Delete(context.Background(), "bitnami-1", metav1.DeleteOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
 		watcher.Delete(repo)
-		s.cache.eventProcessedWaitGroup.Wait()
+		s.repoCache.eventProcessedWaitGroup.Wait()
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -741,10 +741,10 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		s.cache.eventProcessedWaitGroup.Add(1)
+		s.repoCache.eventProcessedWaitGroup.Add(1)
 		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
 		// wait until the ERROR event's been fully processed
-		s.cache.eventProcessedWaitGroup.Wait()
+		s.repoCache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)

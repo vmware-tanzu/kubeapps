@@ -50,7 +50,8 @@ type Server struct {
 	clientGetter       clientGetter
 	actionConfigGetter helmActionConfigGetter
 
-	cache *NamespacedResourceWatcherCache
+	repoCache  *namespacedResourceWatcherCache
+	chartCache *chartCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -62,7 +63,7 @@ func NewServer(configGetter server.KubernetesConfigGetter, kubeappsCluster strin
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories,
 	}
-	cacheConfig := cacheConfig{
+	repoCacheConfig := namespacedResourceWatcherCacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: newBackgroundClientGetter(),
 		onAdd:        onAddRepo,
@@ -70,13 +71,18 @@ func NewServer(configGetter server.KubernetesConfigGetter, kubeappsCluster strin
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
-	if cache, err := newCache(cacheConfig); err != nil {
+	if redisCli, err := newRedisClientFromEnv(); err != nil {
+		return nil, err
+	} else if repoCache, err := newNamespacedResourceWatcherCache(repoCacheConfig, redisCli, nil); err != nil {
+		return nil, err
+	} else if chartCache, err := newChartCache(redisCli, repoCache); err != nil {
 		return nil, err
 	} else {
 		return &Server{
 			clientGetter:       newClientGetter(configGetter, kubeappsCluster),
 			actionConfigGetter: newHelmActionConfigGetter(configGetter, kubeappsCluster),
-			cache:              cache,
+			repoCache:          repoCache,
+			chartCache:         chartCache,
 			kubeappsCluster:    kubeappsCluster,
 		}, nil
 	}
@@ -237,7 +243,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	tarUrl, cleanUp, err := s.getChartTarball(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
+	tarUrl, cleanUp, err := s.getChartTarballUrl(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
 	if cleanUp != nil {
 		defer cleanUp()
 	}

@@ -170,10 +170,10 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
 			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
-			s.cache.eventProcessedWaitGroup = nil
+			s.repoCache.eventProcessedWaitGroup = nil
 			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
 				key := redisKeyForRuntimeObject(tc.repo)
-				if _, err := s.cache.fromKey(key); err == nil {
+				if _, err := s.repoCache.fromKey(key); err == nil {
 					mock.ExpectGet(key).RedisNil()
 				}
 			}
@@ -218,11 +218,6 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 	mock.MatchExpectationsInOrder(false)
 
 	if clientGetter != nil {
-		// if clientGetter is nil, then none of these calls take place, as the initialization of
-		// the new Server fails before then
-		mock.ExpectPing().SetVal("PONG")
-		mock.ExpectConfigGet("maxmemory").SetVal([]interface{}{"maxmemory", "1000000"})
-
 		// if client getter returns an error, this call does not take place, because
 		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
 		if _, _, err := clientGetter(context.TODO()); err == nil {
@@ -230,7 +225,7 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 		}
 	}
 
-	config := cacheConfig{
+	config := namespacedResourceWatcherCacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: clientGetter,
 		onAdd:        onAddRepo,
@@ -249,7 +244,7 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 		}
 	}
 
-	cache, err := newCacheWithRedisClient(config, redisCli, eventProcessingWaitGroup)
+	cache, err := newNamespacedResourceWatcherCache(config, redisCli, eventProcessingWaitGroup)
 	if err != nil {
 		return nil, mock, err
 	}
@@ -265,7 +260,7 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
-		cache:           cache,
+		repoCache:       cache,
 		kubeappsCluster: KubeappsCluster,
 	}
 	return s, mock, nil

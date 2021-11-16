@@ -88,7 +88,7 @@ func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*un
 // returns the url from which chart .tgz can be downloaded
 // here chartVersion string, if specified at all, should be specific, like "14.4.0",
 // not an expression like ">14 <15"
-func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstructured.Unstructured, chartName, chartVersion string) (tarUrl string, cleanUp func(), err error) {
+func (s *Server) getChartTarballUrl(ctx context.Context, repoUnstructured *unstructured.Unstructured, chartName, chartVersion string) (tarUrl string, cleanUp func(), err error) {
 	repo, err := namespacedName(repoUnstructured.Object)
 	if err != nil {
 		return "", nil, err
@@ -185,32 +185,22 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 }
 
 func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {
-	if s.cache == nil {
+	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	key := s.cache.keyForNamespacedName(repo)
-	entry, err := s.cache.fetchForOne(key)
+	key := s.repoCache.keyForNamespacedName(repo)
+	entry, err := s.repoCache.fetchForOne(key)
 	if err != nil {
 		return nil, err
 	} else if entry == nil {
 		// cache miss
 		// see repo.go getChartsForRepos() for an explanation why we may get a nil
-		unstructuredRepo, err := s.getRepoInCluster(ctx, repo)
-		if err != nil {
+		if unstructuredRepo, err := s.getRepoInCluster(ctx, repo); err != nil {
 			return nil, err
-		}
-		if isRepoReady(unstructuredRepo.Object) {
-			// a little bit in-efficient: onAddOrModify() will call onAdd() which encode the
-			// data as []byte before storing it in the cache. so to get back the original data
-			// we have to decode it via onGet(). It'd nice if there was a shortcut and skip
-			// the cycles spent decoding data from []byte to repoCacheEntry
-			if newValue, err := s.cache.onAddOrModify(true, unstructuredRepo.Object); err != nil {
+		} else if isRepoReady(unstructuredRepo.Object) {
+			if entry, err = s.repoCache.populateOneAndGet(key, unstructuredRepo); err != nil {
 				return nil, err
-			} else if newValue != nil {
-				if entry, err = s.cache.config.onGet(key, newValue); err != nil {
-					return nil, err
-				}
 			}
 		}
 	}
@@ -465,22 +455,20 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 		startAt = int(pageSize) * pageOffset
 	}
 	for _, packages := range charts {
-		if packages != nil {
-			for _, chart := range packages {
-				if passesFilter(chart, filters) {
-					i++
-					if startAt < i {
-						pkg, err := availablePackageSummaryFromChart(&chart)
-						if err != nil {
-							return nil, status.Errorf(
-								codes.Internal,
-								"Unable to parse chart to an AvailablePackageSummary: %v",
-								err)
-						}
-						summaries = append(summaries, pkg)
-						if pageSize > 0 && len(summaries) == int(pageSize) {
-							return summaries, nil
-						}
+		for _, chart := range packages {
+			if passesFilter(chart, filters) {
+				i++
+				if startAt < i {
+					pkg, err := availablePackageSummaryFromChart(&chart)
+					if err != nil {
+						return nil, status.Errorf(
+							codes.Internal,
+							"Unable to parse chart to an AvailablePackageSummary: %v",
+							err)
+					}
+					summaries = append(summaries, pkg)
+					if pageSize > 0 && len(summaries) == int(pageSize) {
+						return summaries, nil
 					}
 				}
 			}

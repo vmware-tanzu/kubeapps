@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -397,6 +398,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		Password: redisPwd,
 		DB:       0,
 	})
+	defer redisCli.Close()
 	t.Logf("redisCli: %s", redisCli)
 	// assume 15Mb redis cache for now
 	if err = redisCheckTinyMaxMemory(t, redisCli, "15728640"); err != nil {
@@ -447,11 +449,10 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 			}
 			t.Logf("Redis event: Channel: [%v], Payload: [%v]", event.Channel, event.Payload)
 			if event.Channel == "__keyevent@0__:set" {
-				// signal to the main thread its okay to proceed
+				// signal to the main thread it's okay to proceed
 				sem.Release(1)
 			} else if event.Channel == "__keyevent@0__:evicted" {
 				evicted = true
-				sem.Release(1)
 			}
 		}
 	}()
@@ -464,6 +465,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	totalRepos := 0
 	for ; totalRepos < MAX_REPOS_NEVER && !evicted; totalRepos++ {
 		repo := fmt.Sprintf("bitnami-%d", totalRepos)
+		// this is to make sure we allow enough time for repository to be created and come to ready state
 		if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -487,9 +489,10 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
 		t.Fatalf("%v", err)
 	} else {
-		// the cache should only big enough to be able to (totalRepos-1) of the keys
-		if len(keys) != totalRepos-1 {
-			t.Fatalf("Expected %d keys in cache but got [%s]", totalRepos-1, keys)
+		// the cache should only big enough to be able to hold at most (totalRepos-1) of the keys
+		// one (or more) entries may have been evicted
+		if len(keys) > totalRepos-1 {
+			t.Fatalf("Expected at most %d keys in cache but got [%s]", totalRepos-1, keys)
 		}
 	}
 
@@ -517,7 +520,69 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	}
 
 	if len(expected) > 0 {
-		t.Fatalf("Expected to get packages from these repositories: %s, but did not get any", expected)
+		t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
+			reflect.ValueOf(expected).MapKeys())
+	}
+}
+
+// this test is testing a scenario when a repo that takes a long time to index is added
+// and while the indexing is in progress this repo is deleted by another request.
+// The goal is to make sure that the events are processed by the cache fully in the order
+// they were received and the cache does not end up in inconsistent state
+func TestKindClusterAddThenDeleteRepo(t *testing.T) {
+	_ = checkEnv(t)
+
+	if err := kubePortForwardToRedis(t); err != nil {
+		t.Fatalf("kubePortForwardToRedis failed due to %+v", err)
+	}
+	redisPwd, err := kubeGetSecret(t, "kubeapps", "kubeapps-redis", "redis-password")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	redisCli := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: redisPwd,
+		DB:       0,
+	})
+	defer redisCli.Close()
+	t.Logf("redisCli: %s", redisCli)
+
+	// sanity check, we expect the cache to be empty at this point
+	// if it's not, it's likely that some cleanup didn't happen due to earlier an aborted test
+	// and you should be able to clean up manually
+	// $ kubectl delete helmrepositories --all
+	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+		t.Fatalf("%v", err)
+	} else {
+		if len(keys) != 0 {
+			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
+		}
+	}
+
+	// now load some large repos (bitnami)
+	// I didn't want to store a large (10MB) copy of bitnami repo in our git,
+	// so for now let it fetch from bitnami website
+	if err = kubeCreateHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default"); err != nil {
+		t.Fatalf("%v", err)
+	}
+	// wait until this repo reaches 'Ready' state so that long indexation process kicks in
+	if err = kubeWaitUntilHelmRepositoryIsReady(t, "bitnami-1", "default"); err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	if err = kubeDeleteHelmRepository(t, "bitnami-1", "default"); err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	t.Logf("waiting up to 30 seconds...")
+	time.Sleep(30 * time.Second)
+
+	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+		t.Fatalf("%v", err)
+	} else {
+		if len(keys) != 0 {
+			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
+		}
 	}
 }
 

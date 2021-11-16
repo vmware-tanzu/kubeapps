@@ -105,7 +105,7 @@ func (s *Server) getRepoInCluster(ctx context.Context, name types.NamespacedName
 
 // regexp expressions are used for matching actual names against expected patters
 func (s *Server) filterReadyReposByName(repoList *unstructured.UnstructuredList, match []string) ([]string, error) {
-	if s.cache == nil {
+	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
@@ -133,7 +133,7 @@ func (s *Server) filterReadyReposByName(repoList *unstructured.UnstructuredList,
 			matched = true
 		}
 		if matched {
-			resultKeys = append(resultKeys, s.cache.keyForNamespacedName(*name))
+			resultKeys = append(resultKeys, s.repoCache.keyForNamespacedName(*name))
 		}
 	}
 	return resultKeys, nil
@@ -153,7 +153,7 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		return nil, err
 	}
 
-	chartsUntyped, err := s.cache.getForMultiple(repoNames, repoList)
+	chartsUntyped, err := s.repoCache.getForMultiple(repoNames, repoList)
 	if err != nil {
 		return nil, err
 	}
@@ -325,9 +325,9 @@ type repoCacheEntry struct {
 	Charts   []models.Chart
 }
 
-// onAddRepo essentially tells the cache what to store for a given key
+// onAddRepo essentially tells the cache whether to and what to store for a given key
 func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	// first check the repo is ready
+	// first, check the repo is ready
 	if isRepoReady(unstructuredRepo) {
 		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 		checksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
@@ -336,28 +336,7 @@ func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}
 				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
 				prettyPrintMap(unstructuredRepo), err)
 		}
-
-		charts, err := indexOneRepo(unstructuredRepo)
-		if err != nil {
-			return nil, false, err
-		}
-
-		cacheEntry := repoCacheEntry{
-			Checksum: checksum,
-			Charts:   charts,
-		}
-
-		// launch go-routine that will download tarball and extract relevant details for each chart
-		// and cache them for fast lookup
-		// TODO (gfichtenholt) go cacheLatestChartDetails(charts)
-
-		// use gob encoding instead of json, it peforms much better
-		var buf bytes.Buffer
-		enc := gob.NewEncoder(&buf)
-		if err = enc.Encode(cacheEntry); err != nil {
-			return nil, false, err
-		}
-		return buf.Bytes(), true, nil
+		return indexAndEncode(checksum, unstructuredRepo)
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
@@ -366,7 +345,7 @@ func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}
 	}
 }
 
-// onModifyRepo essentially tells the cache what to store for a given key
+// onModifyRepo essentially tells the cache whether to and what to store for a given key
 func onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue interface{}) (interface{}, bool, error) {
 	// first check the repo is ready
 	if isRepoReady(unstructuredRepo) {
@@ -396,27 +375,7 @@ func onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue 
 		}
 
 		if cacheEntry.Checksum != newChecksum {
-			newCharts, err := indexOneRepo(unstructuredRepo)
-			if err != nil {
-				return nil, false, err
-			}
-
-			cacheEntry = repoCacheEntry{
-				Checksum: newChecksum,
-				Charts:   newCharts,
-			}
-
-			// launch go-routine that will download tarball and extract relevant details for each chart
-			// and cache them for fast lookup
-			// TODO (gfichtenholt) go cacheLatestChartDetails(charts)
-
-			// use gob encoding instead of json, it peforms much better
-			var buf bytes.Buffer
-			enc := gob.NewEncoder(&buf)
-			if err = enc.Encode(cacheEntry); err != nil {
-				return nil, false, err
-			}
-			return buf.Bytes(), true, nil
+			return indexAndEncode(newChecksum, unstructuredRepo)
 		} else {
 			// skip because the content did not change
 			return nil, false, nil
@@ -440,10 +399,29 @@ func onGetRepo(key string, value interface{}) (interface{}, error) {
 	if err := dec.Decode(&entry); err != nil {
 		return nil, err
 	}
-
 	return entry, nil
 }
 
-func onDeleteRepo(key string, unstructuredRepo map[string]interface{}) (bool, error) {
+func onDeleteRepo(key string) (bool, error) {
 	return true, nil
+}
+
+func indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([]byte, bool, error) {
+	charts, err := indexOneRepo(unstructuredRepo)
+	if err != nil {
+		return nil, false, err
+	}
+
+	cacheEntry := repoCacheEntry{
+		Checksum: checksum,
+		Charts:   charts,
+	}
+
+	// use gob encoding instead of json, it peforms much better
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err = enc.Encode(cacheEntry); err != nil {
+		return nil, false, err
+	}
+	return buf.Bytes(), true, nil
 }

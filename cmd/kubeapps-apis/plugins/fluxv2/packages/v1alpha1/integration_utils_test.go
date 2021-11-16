@@ -37,6 +37,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -174,10 +175,48 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
 
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
-	} else if _, err = ifc.Create(context.TODO(), &unstructuredRepo, metav1.CreateOptions{}); err != nil {
+	} else if _, err := ifc.Create(context.TODO(), &unstructuredRepo, metav1.CreateOptions{}); err != nil {
 		return err
+	} else {
+		return nil
 	}
-	return nil
+}
+
+func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
+	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
+		return err
+	} else {
+		if watcher, err := ifc.Watch(context.TODO(), metav1.ListOptions{}); err != nil {
+			return err
+		} else {
+			ch := watcher.ResultChan()
+			defer watcher.Stop()
+			for {
+				event, ok := <-ch
+				if !ok {
+					return errors.New("Channel was closed unexpectedly")
+				}
+				if event.Type == "" {
+					// not quite sure why this happens (the docs don't say), but it seems to happen quite often
+					continue
+				}
+				switch event.Type {
+				case watch.Added, watch.Modified:
+					if unstructuredRepo, ok := event.Object.(*unstructured.Unstructured); !ok {
+						return errors.New("Could not cast to unstructured.Unstructured")
+					} else {
+						hour, minute, second := time.Now().Clock()
+						complete, success, reason := isHelmRepositoryReady(unstructuredRepo.Object)
+						t.Logf("[%d:%d:%d] Got event: type: [%v], reason [%s]", hour, minute, second, event.Type, reason)
+						if complete && success {
+							return nil
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // this should eventually be replaced with flux plugin's DeleteRepository()
