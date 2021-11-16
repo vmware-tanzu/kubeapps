@@ -101,7 +101,7 @@
     "eslint-plugin-redos": "^1.2.0",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
-    "mock-socket": "^9.0.7",
+    "mock-socket": "^9.0.8",
     "moxios": "^0.4.0",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.3.11",
@@ -117,7 +117,7 @@
     "stylelint-config-standard-scss": "^2.0.1",
     "stylelint-scss": "^4.0.0",
     "ts-jest": "^27.0.7",
-    "ts-proto": "^1.85.0",
+    "ts-proto": "^1.86.0",
     "typescript": "^4.4.4"
   },
   "resolutions": {
