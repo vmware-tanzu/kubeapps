@@ -60,8 +60,8 @@ export interface Struct_FieldsEntry {
 /**
  * `Value` represents a dynamically typed value which can be either
  * null, a number, a string, a boolean, a recursive struct value, or a
- * list of values. A producer of value is expected to set one of that
- * variants, absence of any variant indicates an error.
+ * list of values. A producer of value is expected to set one of these
+ * variants. Absence of any variant indicates an error.
  *
  * The JSON representation for `Value` is JSON value.
  */
@@ -386,12 +386,7 @@ export const ListValue = {
 
   fromJSON(object: any): ListValue {
     const message = { ...baseListValue } as ListValue;
-    message.values = [];
-    if (object.values !== undefined && object.values !== null) {
-      for (const e of object.values) {
-        message.values.push(Value.fromJSON(e));
-      }
-    }
+    message.values = (object.values ?? []).map((e: any) => Value.fromJSON(e));
     return message;
   },
 
@@ -407,12 +402,7 @@ export const ListValue = {
 
   fromPartial(object: DeepPartial<ListValue>): ListValue {
     const message = { ...baseListValue } as ListValue;
-    message.values = [];
-    if (object.values !== undefined && object.values !== null) {
-      for (const e of object.values) {
-        message.values.push(Value.fromPartial(e));
-      }
-    }
+    message.values = (object.values ?? []).map(e => Value.fromPartial(e));
     return message;
   },
 };

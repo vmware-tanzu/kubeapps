@@ -396,12 +396,7 @@ export const Http = {
 
   fromJSON(object: any): Http {
     const message = { ...baseHttp } as Http;
-    message.rules = [];
-    if (object.rules !== undefined && object.rules !== null) {
-      for (const e of object.rules) {
-        message.rules.push(HttpRule.fromJSON(e));
-      }
-    }
+    message.rules = (object.rules ?? []).map((e: any) => HttpRule.fromJSON(e));
     if (
       object.fullyDecodeReservedExpansion !== undefined &&
       object.fullyDecodeReservedExpansion !== null
@@ -427,12 +422,7 @@ export const Http = {
 
   fromPartial(object: DeepPartial<Http>): Http {
     const message = { ...baseHttp } as Http;
-    message.rules = [];
-    if (object.rules !== undefined && object.rules !== null) {
-      for (const e of object.rules) {
-        message.rules.push(HttpRule.fromPartial(e));
-      }
-    }
+    message.rules = (object.rules ?? []).map(e => HttpRule.fromPartial(e));
     message.fullyDecodeReservedExpansion = object.fullyDecodeReservedExpansion ?? false;
     return message;
   },
@@ -523,7 +513,6 @@ export const HttpRule = {
 
   fromJSON(object: any): HttpRule {
     const message = { ...baseHttpRule } as HttpRule;
-    message.additionalBindings = [];
     if (object.selector !== undefined && object.selector !== null) {
       message.selector = String(object.selector);
     } else {
@@ -569,11 +558,9 @@ export const HttpRule = {
     } else {
       message.responseBody = "";
     }
-    if (object.additionalBindings !== undefined && object.additionalBindings !== null) {
-      for (const e of object.additionalBindings) {
-        message.additionalBindings.push(HttpRule.fromJSON(e));
-      }
-    }
+    message.additionalBindings = (object.additionalBindings ?? []).map((e: any) =>
+      HttpRule.fromJSON(e),
+    );
     return message;
   },
 
@@ -614,12 +601,9 @@ export const HttpRule = {
     }
     message.body = object.body ?? "";
     message.responseBody = object.responseBody ?? "";
-    message.additionalBindings = [];
-    if (object.additionalBindings !== undefined && object.additionalBindings !== null) {
-      for (const e of object.additionalBindings) {
-        message.additionalBindings.push(HttpRule.fromPartial(e));
-      }
-    }
+    message.additionalBindings = (object.additionalBindings ?? []).map(e =>
+      HttpRule.fromPartial(e),
+    );
     return message;
   },
 };

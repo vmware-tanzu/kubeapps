@@ -160,7 +160,6 @@ export const Any = {
 
   fromJSON(object: any): Any {
     const message = { ...baseAny } as Any;
-    message.value = new Uint8Array();
     if (object.typeUrl !== undefined && object.typeUrl !== null) {
       message.typeUrl = String(object.typeUrl);
     } else {
@@ -168,6 +167,8 @@ export const Any = {
     }
     if (object.value !== undefined && object.value !== null) {
       message.value = bytesFromBase64(object.value);
+    } else {
+      message.value = new Uint8Array();
     }
     return message;
   },
