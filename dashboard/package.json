@@ -36,7 +36,7 @@
     "connected-react-router": "^6.9.1",
     "fast-json-patch": "^3.1.0",
     "google-protobuf": "^3.19.1",
-    "history": "^4.10.1",
+    "history": "^5.1.0",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
