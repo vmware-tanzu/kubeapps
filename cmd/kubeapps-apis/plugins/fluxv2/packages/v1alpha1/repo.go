@@ -153,7 +153,7 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		return nil, err
 	}
 
-	chartsUntyped, err := s.repoCache.getForMultiple(repoNames, repoList)
+	chartsUntyped, err := s.repoCache.getForMultiple(repoNames)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) (charts []models.Char
 		log.Info(msg)
 	} else {
 		// this is kind of a red flag - an index with 0 charts, most likely contents of index.yaml is
-		// messed up and didn't parse but the helm library didn't raise an error
+		// messed up and didn't parse successfully but the helm library didn't raise an error
 		log.Warning(msg)
 	}
 	return charts, nil

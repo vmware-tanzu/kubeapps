@@ -275,7 +275,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 // GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageVersions [%v]", request)
-	defer log.Infof("-GetAvailablePackageVersions")
+	defer log.Infof("-fluxv2 GetAvailablePackageVersions")
 
 	if request.GetPkgVersion() != "" {
 		return nil, status.Errorf(

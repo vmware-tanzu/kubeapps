@@ -175,6 +175,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				key := redisKeyForRuntimeObject(tc.repo)
 				if _, err := s.repoCache.fromKey(key); err == nil {
 					mock.ExpectGet(key).RedisNil()
+					mock.ExpectGet(key).RedisNil()
 				}
 			}
 

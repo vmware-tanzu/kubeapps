@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	errorutil "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
@@ -64,7 +65,8 @@ type namespacedResourceWatcherCache struct {
 	// - multiple rapid updates to a single resource will be collapsed into the latest version
 	//   by the cache/queue
 	// ref: https://engineering.bitnami.com/articles/a-deep-dive-into-kubernetes-controllers.html#workqueue
-	queue workqueue.RateLimitingInterface
+	queue            workqueue.RateLimitingInterface
+	syncHandlerMutex *sync.Mutex
 
 	// this WaitGroup is used exclusively by unit tests to block until all expected objects have
 	// been 'processed' by the go routine running in the background. The creation of the WaitGroup object
@@ -73,10 +75,10 @@ type namespacedResourceWatcherCache struct {
 	eventProcessedWaitGroup *sync.WaitGroup
 }
 
-type cacheValueGetter func(string, interface{}) (interface{}, error)
-type cacheValueAdder func(string, map[string]interface{}) (interface{}, bool, error)
-type cacheValueModifier func(string, map[string]interface{}, interface{}) (interface{}, bool, error)
-type cacheValueDeleter func(string) (bool, error)
+type valueGetterFunc func(string, interface{}) (interface{}, error)
+type valueAdderFunc func(string, map[string]interface{}) (interface{}, bool, error)
+type valueModifierFunc func(string, map[string]interface{}, interface{}) (interface{}, bool, error)
+type keyDeleterFunc func(string) (bool, error)
 
 type namespacedResourceWatcherCacheConfig struct {
 	gvr schema.GroupVersionResource
@@ -91,20 +93,20 @@ type namespacedResourceWatcherCacheConfig struct {
 	// The call site may return []byte, but it doesn't have to be that.
 	// The list of all types actually supported by redis you can find in
 	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
-	onAdd cacheValueAdder
+	onAdd valueAdderFunc
 	// 'onModify' hooks is called when an object for which there is a corresponding cache entry
 	// is modified. This allows the call site to return information about WHETHER OR NOT and WHAT
 	// is to be stored in the cache for a given k8s object (passed in as a untyped/unstructured map).
 	// The call site may return []byte, but it doesn't have to be that.
 	// The list of all types actually supported by redis you can find in
 	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
-	onModify cacheValueModifier
+	onModify valueModifierFunc
 	// the semantics of 'onGet' hook is to convert or "reverse engineer" what was previously
 	// stored in the cache (via onAdd/onModify hooks) to an object that the call site understands
 	// and wishes to be returned as part of response to various flavors of 'fetch' call
-	onGet cacheValueGetter
+	onGet valueGetterFunc
 	// onDelete hook is called on the plug-in when the corresponding object is deleted in k8s cluster
-	onDelete cacheValueDeleter
+	onDelete keyDeleterFunc
 }
 
 func newNamespacedResourceWatcherCache(config namespacedResourceWatcherCacheConfig, redisCli *redis.Client, waitGroup *sync.WaitGroup) (*namespacedResourceWatcherCache, error) {
@@ -124,6 +126,7 @@ func newNamespacedResourceWatcherCache(config namespacedResourceWatcherCacheConf
 		config:                  config,
 		redisCli:                redisCli,
 		queue:                   queue,
+		syncHandlerMutex:        &sync.Mutex{},
 		eventProcessedWaitGroup: waitGroup,
 	}
 
@@ -140,7 +143,8 @@ func newNamespacedResourceWatcherCache(config namespacedResourceWatcherCacheConf
 		return nil, err
 	}
 
-	// dummy channel for now
+	// dummy channel for now. Ideally, this would be passed in as an input argument
+	// and the caller would indicate when to stop
 	stopCh := make(chan struct{})
 	// this will launch a single worker that processes items on the work queue as they come in
 	// runWorker will loop until "something bad" happens.  The .Until will
@@ -198,6 +202,8 @@ func (c namespacedResourceWatcherCache) isGvrValid() error {
 // workqueue.
 func (c namespacedResourceWatcherCache) runWorker() {
 	log.Infof("+runWorker")
+	defer log.Infof("-runWorker")
+
 	for c.processNextWorkItem() {
 	}
 }
@@ -235,19 +241,19 @@ func (c namespacedResourceWatcherCache) processNextWorkItem() bool {
 		} else {
 			// Run the syncHandler, passing it the namespace/name string of the
 			// resource to be synced.
-			if err := c.syncHandler(key); err != nil {
-				return fmt.Errorf("error syncing '%s': %s", key, err.Error())
+			if _, err := c.syncHandler(key); err != nil {
+				return fmt.Errorf("error syncing key [%s] due to: %v", key, err)
 			}
 			// Finally, if no error occurs we Forget this item so it does not
 			// get queued again until another change happens.
 			c.queue.Forget(obj)
-			log.Infof("Successfully synced '%s'", key)
+			log.Infof("Done syncing key [%s]", key)
 			return nil
 		}
 	}(obj)
+
 	if err != nil {
 		runtime.HandleError(err)
-		return true
 	}
 	return true
 }
@@ -390,41 +396,37 @@ func (c namespacedResourceWatcherCache) processWatchEvents(ch <-chan watch.Event
 }
 
 // syncs the current state of the given resource in k8s with that in the cache
-func (c namespacedResourceWatcherCache) syncHandler(key string) error {
+func (c namespacedResourceWatcherCache) syncHandler(key string) (interface{}, error) {
+	log.Infof("+syncHandler(%s)", key)
+	c.syncHandlerMutex.Lock()
+	defer c.syncHandlerMutex.Unlock()
+
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		return fmt.Errorf("invalid resource key: %s", key)
+	if err != nil || namespace == "" || name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid resource key: %s", key)
 	}
 
 	// Get the resource with this namespace/name
 	ctx := context.Background()
-
 	dynamicClient, _, err := c.config.clientGetter(ctx)
 	if err != nil {
-		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
 	// If an error occurs during Get/Create/Update/Delete, we'll requeue the item so we can
-	// attempt processing again later. This could have been caused by a
-	// temporary network failure, or any other transient reason.
+	// attempt processing again later. This could have been caused by a temporary network
+	// failure, or any other transient reason.
 	unstructuredObj, err := dynamicClient.Resource(c.config.gvr).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		// The resource may no longer exist, in which case we stop processing.
 		if errors.IsNotFound(err) {
-			if err = c.onDelete(namespace, name); err != nil {
-				return err
-			}
-			return nil
+			return nil, c.onDelete(namespace, name)
 		} else {
-			return fmt.Errorf("error fetching object with key [%s]: %v", key, err)
+			return nil, status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
 		}
 	}
-
-	if _, err = c.onAddOrModify(true, unstructuredObj.Object); err != nil {
-		return err
-	}
-	return nil
+	return c.onAddOrModify(true, unstructuredObj.Object)
 }
 
 // this is effectively a cache SET operation
@@ -481,6 +483,7 @@ func (c namespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstru
 
 // this is effectively a cache DEL operation
 func (c namespacedResourceWatcherCache) onDelete(namespace, name string) error {
+	log.Infof("+onDelete(%s, %s)", namespace, name)
 	defer func() {
 		if c.eventProcessedWaitGroup != nil {
 			c.eventProcessedWaitGroup.Done()
@@ -508,17 +511,11 @@ func (c namespacedResourceWatcherCache) onDelete(namespace, name string) error {
 
 // this is effectively a cache GET operation
 func (c namespacedResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
-	log.V(4).Infof("+fectchForOne(%s)", key)
+	log.Infof("+fetchForOne(%s)", key)
 	// read back from cache: should be either:
 	//  - what we previously wrote OR
 	//  - redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry
 	//
-	// TODO (gfichtenholt) See if there might be a cleaner way than to have onGet() take []byte as
-	// a 2nd argument. In theory, I would have liked to pass in an interface{}, just like onAdd/onModify.
-	// The limitation here is caused by the fact that redis go client does not offer a
-	// generic Get() method that would work with interface{}. Instead, all results are returned as
-	// strings which can be converted to desired types as needed, e.g.
-	// redisCli.Get(ctx, key).Bytes() first gets the string and then converts it to bytes.
 	bytes, err := c.redisCli.Get(c.redisCli.Context(), key).Bytes()
 	// debugging an intermittent issue
 	if err == redis.Nil {
@@ -529,6 +526,12 @@ func (c namespacedResourceWatcherCache) fetchForOne(key string) (interface{}, er
 	}
 	log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(bytes))
 
+	// TODO (gfichtenholt) See if there might be a cleaner way than to have onGet() take []byte as
+	// a 2nd argument. In theory, I would have liked to pass in an interface{}, just like onAdd/onModify.
+	// The limitation here is caused by the fact that redis go client does not offer a
+	// generic Get() method that would work with interface{}. Instead, all results are returned as
+	// strings which can be converted to desired types as needed, e.g.
+	// redisCli.Get(ctx, key).Bytes() first gets the string and then converts it to bytes.
 	val, err := c.config.onGet(key, bytes)
 	if err != nil {
 		log.Errorf("Invocation of 'onGet' for object with key [%s]\nfailed due to: %v", key, err)
@@ -597,15 +600,15 @@ func (c namespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 	// Start receiving results
 	// The following loop will only terminate when the response channel is closed, i.e.
 	// after the all the requests have been processed
+	errs := []error{}
 	for resp := range responseChan {
 		if resp.err == nil {
 			response[resp.key] = resp.value
 		} else {
-			// TODO (gfichtenholt) this returns first error, see if we can return all of them
-			return nil, resp.err
+			errs = append(errs, resp.err)
 		}
 	}
-	return response, nil
+	return response, errorutil.NewAggregate(errs)
 }
 
 // the difference between 'fetchForMultiple' and 'getForMultiple' is that 'fetch' will only
@@ -616,11 +619,13 @@ func (c namespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[str
 // it's value will be returned,
 // whereas 'fetchForMultiple' does not guarantee that.
 // The keys are expected to be in the format of the cache (the caller does that)
-func (c namespacedResourceWatcherCache) getForMultiple(keys []string, itemList *unstructured.UnstructuredList) (map[string]interface{}, error) {
+func (c namespacedResourceWatcherCache) getForMultiple(keys []string) (map[string]interface{}, error) {
+	log.Infof("+getForMultiple(%s)", keys)
 	// at any given moment, the redis cache may only have a subset of the entire set of existing keys.
 	// Some key may have been evicted due to memory pressure and LRU eviction policy.
 	// ref: https://redis.io/topics/lru-cache
-	// so, first, let's fetch the entries that are still cached before redis evicts those
+	// so, first, let's fetch the entries that are still cached at this moment
+	// before redis maybe forced to evict those in order to make room for new ones
 	chartsUntyped, err := c.fetchForMultiple(keys)
 	if err != nil {
 		return nil, err
@@ -679,27 +684,21 @@ func (c namespacedResourceWatcherCache) getForMultiple(keys []string, itemList *
 			// closed (and there are no more items)
 			for job := range requestChan {
 				value, err := func() (interface{}, error) {
-					var value interface{}
+					var v interface{}
 					if name, err := c.fromKey(job.key); err != nil {
 						return nil, err
-					} else {
-						for _, item := range itemList.Items {
-							if itemName, err := namespacedName(item.Object); err != nil {
-								return nil, err
-							} else if *itemName == *name {
-								// we are willfully skipping over any error that populateWithAndGet() may return
-								// for any specific item because the whole operation semantics is defined as
-								// 'get me a list of valid entries', as opposed to, say, 'get me a specific
-								// entry value'
-								if value, err = c.populateOneAndGet(job.key, &item); err != nil {
-									// just log an error and move on
-									log.Errorf("populateOneAndGet() for [%s] failed due to %+v", itemName, err)
-								}
-								break
-							}
+					} else if valueEncoded, err := c.syncHandler(name.String()); err != nil {
+						// we are willfully skipping over any error that syncHandler() may return
+						// for any specific item because the whole operation semantics is defined as
+						// 'get me a list of values for valid entries', as opposed to, say,
+						// 'get me the value of an entry with key XYZ'. So just log an error and move on
+						log.Errorf("syncHandler() for [%s] failed due to: %+v", name, err)
+					} else if valueEncoded != nil {
+						if v, err = c.config.onGet(job.key, valueEncoded); err != nil {
+							return nil, err
 						}
 					}
-					return value, nil
+					return v, nil
 				}()
 				responseChan <- computeValueJobResult{job, value, err}
 			}
@@ -722,15 +721,15 @@ func (c namespacedResourceWatcherCache) getForMultiple(keys []string, itemList *
 	// Start receiving results
 	// The following loop will only terminate when the response channel is closed, i.e.
 	// after the all the requests have been processed
+	errs := []error{}
 	for resp := range responseChan {
 		if resp.err == nil {
 			chartsUntyped[resp.key] = resp.value
 		} else {
-			// TODO (gfichtenholt) this returns first error, see if we can return all of them
-			return nil, resp.err
+			errs = append(errs, resp.err)
 		}
 	}
-	return chartsUntyped, nil
+	return chartsUntyped, errorutil.NewAggregate(errs)
 }
 
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
@@ -804,39 +803,42 @@ func (c namespacedResourceWatcherCache) populateWith(items []unstructured.Unstru
 	wg.Wait()
 }
 
-func (c namespacedResourceWatcherCache) populateOneAndGet(key string, obj *unstructured.Unstructured) (interface{}, error) {
-	// a little bit in-efficient: onAdd will call config.onAdd() which encode the
-	// data as []byte before storing it in the cache. so to get back the original data
-	// we have to decode it via config.onGet(). It'd nice if there was a shortcut and skip
-	// the cycles spent decoding data from []byte to repoCacheEntry
+// like fetchForOne() but if there is a cache miss, it will check the k8s for
+// the corresponding object, process it and then add it to the cache and return the
+// result.
 
-	// TODO (gfichtenholt) watch out for concurrent Redis GET and SET/DEL done by syncHandler
-	// Example race condition:
-	// - Setup: Redis does not have an entry for a given exisiting repo for whatever reason.
-	//   For example, the entry may have been evicted due to memory constraints
-	// - Thread 1: User 1 has invoked getChart() operation, and since Redis has no entry,
-	//   the caller gets the corresponding object from k8s and begins this routine.
-	//   Before it gets a chance to finish:
-	// - Thread 2: At this point, user 2 deletes the corresonding repo in k8s.
-	//   ** So the end state MUST be such that there is no entry in Redis cache, as there is
-	//   no longer a corresponding entry in k8s **
-	//   Eventually, syncHandler() begins processing based on the watch.Deleted event received
-	//   from k8s and completes its job.
-	// - Now Thread 1 kicks back in, computes the value and sets it in cache. The end state is that
-	//   there is an entry in the cache => BAD
-	// Having a bit of trouble thinking of a clean solution to this at the moment. Will come back to it
+// TODO I spent quite a while thinking about this and I am still not 100% in
+// love with this solution. I don't like the fact that there are multiple concurrent
+// writers (worker thread processing events from a queue as part of the watch event loop
+// and one here). Ideally, what I'd want to do here instead is to enqueue key into c.queue,
+// wait for it to get processed by worker thread and then return the result.
+// That way there is a single writer. But I am having a bit of trouble implementing this
+// approach as an atomic operation
 
-	// no need to check the old value since this is always called after a cache miss
-	if newValue, err := c.onAddOrModify(false, obj.Object); err != nil {
+// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
+// which encode the data as []byte before storing it in the cache. That part is fine.
+// But to get back the original data we have to decode it via config.onGet().
+// It'd nice if there was a shortcut and skip the cycles spent decoding data from
+// []byte to repoCacheEntry
+func (c namespacedResourceWatcherCache) getForOne(key string) (interface{}, error) {
+	log.Infof("+getForOne(%s)", key)
+	var value interface{}
+	var err error
+	if value, err = c.fetchForOne(key); err != nil {
 		return nil, err
-	} else if newValue != nil {
-		if entry, err := c.config.onGet(key, newValue); err != nil {
+	} else if value == nil {
+		// cache miss
+		if name, err := c.fromKey(key); err != nil {
 			return nil, err
-		} else {
-			return entry, nil
+		} else if valueEncoded, err := c.syncHandler(name.String()); err != nil {
+			return nil, err
+		} else if valueEncoded != nil {
+			if value, err = c.config.onGet(key, valueEncoded); err != nil {
+				return nil, err
+			}
 		}
 	}
-	return nil, nil
+	return value, nil
 }
 
 func (c namespacedResourceWatcherCache) memoryStats() (used, total string) {

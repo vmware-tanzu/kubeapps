@@ -190,22 +190,9 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 	}
 
 	key := s.repoCache.keyForNamespacedName(repo)
-	entry, err := s.repoCache.fetchForOne(key)
-	if err != nil {
+	if entry, err := s.repoCache.getForOne(key); err != nil {
 		return nil, err
-	} else if entry == nil {
-		// cache miss
-		// see repo.go getChartsForRepos() for an explanation why we may get a nil
-		if unstructuredRepo, err := s.getRepoInCluster(ctx, repo); err != nil {
-			return nil, err
-		} else if isRepoReady(unstructuredRepo.Object) {
-			if entry, err = s.repoCache.populateOneAndGet(key, unstructuredRepo); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if entry != nil {
+	} else if entry != nil {
 		if typedEntry, ok := entry.(repoCacheEntry); !ok {
 			return nil, status.Errorf(
 				codes.Internal,

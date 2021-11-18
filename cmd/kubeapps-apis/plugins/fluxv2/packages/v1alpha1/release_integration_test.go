@@ -451,7 +451,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	const MAX_REPOS_NEVER = 100
 	// ref https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait
-	evicted := false
+	evicted := make(map[string]struct{})
 	sem := semaphore.NewWeighted(MAX_REPOS_NEVER)
 	if err := sem.Acquire(context.Background(), MAX_REPOS_NEVER); err != nil {
 		t.Fatalf("%v", err)
@@ -470,7 +470,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 				// signal to the main thread it's okay to proceed
 				sem.Release(1)
 			} else if event.Channel == "__keyevent@0__:evicted" {
-				evicted = true
+				evicted[event.Payload] = struct{}{}
 			}
 		}
 	}()
@@ -481,7 +481,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	// we'll keep adding repos one at a time, until we get an event from redis
 	// about the first evicted entry
 	totalRepos := 0
-	for ; totalRepos < MAX_REPOS_NEVER && !evicted; totalRepos++ {
+	for ; totalRepos < MAX_REPOS_NEVER && len(evicted) == 0; totalRepos++ {
 		repo := fmt.Sprintf("bitnami-%d", totalRepos)
 		// this is to make sure we allow enough time for repository to be created and come to ready state
 		if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
@@ -500,7 +500,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		}
 	}
 
-	if !evicted {
+	if len(evicted) == 0 {
 		t.Fatalf("Failing because redis did not evict any entries")
 	}
 
@@ -514,14 +514,71 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		}
 	}
 
-	// not related to low laxmemory but as long as we are here might as well check this
+	// one particular code path I'd like to test:
+	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
+	grpcContext := newGrpcContext(t, "test-create-admin")
+	// copy the evicted list because before for loop below will modify it in a goroutine
+	evictedCopy := []string{}
+	for k := range evicted {
+		evictedCopy = append(evictedCopy, k)
+	}
+	for _, k := range evictedCopy {
+		name := strings.Split(k, ":")[2]
+		resp, err := fluxPlugin.GetAvailablePackageVersions(
+			grpcContext, &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: name + "/apache",
+				},
+			})
+		if err != nil {
+			t.Fatalf("%v", err)
+		} else if len(resp.PackageAppVersions) < 5 {
+			t.Fatalf("Expected at least 5 versions for apache chart, got: %s", resp)
+		}
+	}
+
+	// above loop should cause a few more entries to be evicted, but just to be sure lets load a few more copies
+	// of bitnami repo into the cache
+	for ; totalRepos < MAX_REPOS_NEVER && len(evicted) == len(evictedCopy); totalRepos++ {
+		repo := fmt.Sprintf("bitnami-%d", totalRepos)
+		// this is to make sure we allow enough time for repository to be created and come to ready state
+		if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
+			t.Fatalf("%v", err)
+		}
+		t.Cleanup(func() {
+			if err = kubeDeleteHelmRepository(t, repo, "default"); err != nil {
+				t.Logf("%v", err)
+			}
+		})
+		// wait until this repo have been indexed and cached up to 5 minutes
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+		if err := sem.Acquire(ctx, 1); err != nil {
+			t.Fatalf("Timed out waiting for Redis event: %v", err)
+		}
+	}
+
+	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+		t.Fatalf("%v", err)
+	} else {
+		// the cache should only big enough to be able to hold at most (totalRepos-1) of the keys
+		// one (or more) entries MUST have been evicted
+		if len(keys) > totalRepos-1 {
+			t.Fatalf("Expected at most %d keys in cache but got [%s]", totalRepos-1, keys)
+		}
+	}
+
+	// not related to low maxmemory but as long as we are here might as well check that
+	// there is a Unauthenticated failure when there are no credenitals in the request
 	_, err = fluxPlugin.GetAvailablePackageSummaries(context.TODO(), &corev1.GetAvailablePackageSummariesRequest{})
 	if err == nil || status.Code(err) != codes.Unauthenticated {
 		t.Fatalf("Expected Unauthenticated, got %v", err)
 	}
 
-	grpcContext := newGrpcContext(t, "test-create-admin")
-	resp, err := fluxPlugin.GetAvailablePackageSummaries(grpcContext, &corev1.GetAvailablePackageSummariesRequest{})
+	resp2, err := fluxPlugin.GetAvailablePackageSummaries(grpcContext, &corev1.GetAvailablePackageSummariesRequest{})
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -532,7 +589,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		repo := fmt.Sprintf("bitnami-%d", i)
 		expected[repo] = struct{}{}
 	}
-	for _, s := range resp.AvailablePackageSummaries {
+	for _, s := range resp2.AvailablePackageSummaries {
 		id := strings.Split(s.AvailablePackageRef.Identifier, "/")
 		delete(expected, id[0])
 	}
@@ -789,6 +846,7 @@ func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2P
 }
 
 // global vars
+// why define these here? see https://github.com/kubeapps/kubeapps/pull/3736#discussion_r745246398
 var (
 	create_request_basic = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-1/podinfo", "default"),
