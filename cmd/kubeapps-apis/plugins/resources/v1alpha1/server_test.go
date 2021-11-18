@@ -31,6 +31,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
+	rbac "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,6 +63,7 @@ func resourceRefsForObjects(t *testing.T, objects ...runtime.Object) []*pkgsGRPC
 			ApiVersion: gvk.GroupVersion().String(),
 			Kind:       gvk.Kind,
 			Name:       objMeta.Name,
+			Namespace:  objMeta.Namespace,
 		})
 	}
 	return refs
@@ -91,6 +93,7 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 	pkgsGRPCv1alpha1.RegisterPackagesServiceServer(s, fakePkgsPluginServer)
 
 	scheme := runtime.NewScheme()
+	t.Logf("loading fake client with objects: %+v", objects)
 	fakeDynamicClient := dynfake.NewSimpleDynamicClient(
 		scheme,
 		objects...,
@@ -195,6 +198,7 @@ func TestGetResources(t *testing.T) {
 						ApiVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "some-deployment",
+						Namespace:  "default",
 					},
 				},
 				{
@@ -202,6 +206,7 @@ func TestGetResources(t *testing.T) {
 						ApiVersion: "core/v1",
 						Kind:       "Service",
 						Name:       "some-service",
+						Namespace:  "default",
 					},
 				},
 			},
@@ -222,6 +227,7 @@ func TestGetResources(t *testing.T) {
 						ApiVersion: "core/v1",
 						Kind:       "Service",
 						Name:       "some-service",
+						Namespace:  "default",
 					},
 				},
 			},
@@ -254,6 +260,7 @@ func TestGetResources(t *testing.T) {
 						ApiVersion: "core/v1",
 						Kind:       "Service",
 						Name:       "some-service",
+						Namespace:  "default",
 					},
 				},
 			},
@@ -305,6 +312,91 @@ func TestGetResources(t *testing.T) {
 				Watch: true,
 			},
 			expectedErrorCode: codes.InvalidArgument,
+		},
+		{
+			name: "it gets requested resources from different namespaces when they belong to the installed package",
+			request: &v1alpha1.GetResourcesRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "some-package",
+					Plugin:     fakePkgsPlugin,
+				},
+				ResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
+					{
+						ApiVersion: "core/v1",
+						Kind:       "Service",
+						Name:       "some-service",
+						Namespace:  "other-namespace",
+					},
+				},
+			},
+			clusterObjects: []runtime.Object{
+				&core.Service{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: "core/v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "some-service",
+						Namespace: "other-namespace",
+					},
+				},
+			},
+			expectedErrorCode: codes.OK,
+			expectedResources: []*v1alpha1.GetResourcesResponse{
+				{
+					ResourceRef: &pkgsGRPCv1alpha1.ResourceRef{
+						ApiVersion: "core/v1",
+						Kind:       "Service",
+						Name:       "some-service",
+						Namespace:  "other-namespace",
+					},
+				},
+			},
+		},
+		{
+			name: "it gets non-namespaced requested resources when they belong to the installed package",
+			request: &v1alpha1.GetResourcesRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "some-package",
+					Plugin:     fakePkgsPlugin,
+				},
+				ResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
+					{
+						ApiVersion: "rbac/v1",
+						Kind:       "ClusterRole",
+						Name:       "some-cluster-role",
+					},
+				},
+			},
+			clusterObjects: []runtime.Object{
+				&rbac.ClusterRole{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ClusterRole",
+						APIVersion: "rbac/v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "some-cluster-role",
+					},
+				},
+			},
+			expectedErrorCode: codes.OK,
+			expectedResources: []*v1alpha1.GetResourcesResponse{
+				{
+					ResourceRef: &pkgsGRPCv1alpha1.ResourceRef{
+						ApiVersion: "rbac/v1",
+						Kind:       "ClusterRole",
+						Name:       "some-cluster-role",
+					},
+				},
+			},
 		},
 		// TODO(minelson): test a watch request also. I've spent quite a bit of
 		// time trying to do so by putting the call to `GetResources` in a go
