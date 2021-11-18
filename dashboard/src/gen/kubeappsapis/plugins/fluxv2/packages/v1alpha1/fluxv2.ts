@@ -121,11 +121,10 @@ export const GetPackageRepositoriesRequest = {
     const message = {
       ...baseGetPackageRepositoriesRequest,
     } as GetPackageRepositoriesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
     return message;
   },
 
@@ -140,11 +139,10 @@ export const GetPackageRepositoriesRequest = {
     const message = {
       ...baseGetPackageRepositoriesRequest,
     } as GetPackageRepositoriesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     return message;
   },
 };
@@ -262,26 +260,14 @@ export const PackageRepository = {
 
   fromJSON(object: any): PackageRepository {
     const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = String(object.namespace);
-    } else {
-      message.namespace = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = String(object.url);
-    } else {
-      message.url = "";
-    }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromJSON(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.namespace =
+      object.namespace !== undefined && object.namespace !== null ? String(object.namespace) : "";
+    message.url = object.url !== undefined && object.url !== null ? String(object.url) : "";
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromJSON(object.plugin)
+        : undefined;
     return message;
   },
 
@@ -300,11 +286,10 @@ export const PackageRepository = {
     message.name = object.name ?? "";
     message.namespace = object.namespace ?? "";
     message.url = object.url ?? "";
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromPartial(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromPartial(object.plugin)
+        : undefined;
     return message;
   },
 };

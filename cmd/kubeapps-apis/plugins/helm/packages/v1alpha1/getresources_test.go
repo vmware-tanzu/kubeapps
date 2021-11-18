@@ -47,12 +47,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: apache-test
+  namespace: default
 ---
 # Source: apache/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: apache-test
+  namespace: default
 `,
 				},
 			},
@@ -74,11 +76,64 @@ metadata:
 					{
 						ApiVersion: "v1",
 						Name:       "apache-test",
+						Namespace:  "default",
 						Kind:       "Service",
 					},
 					{
 						ApiVersion: "apps/v1",
 						Name:       "apache-test",
+						Namespace:  "default",
+						Kind:       "Deployment",
+					},
+				},
+			},
+		},
+		{
+			name: "returns resource references for resources in other namespaces",
+			existingReleases: []releaseStub{
+				{
+					name:      "my-apache",
+					namespace: "default",
+					manifest: `
+---
+apiVersion: v1
+kind: ClusterRole
+metadata:
+  name: test-cluster-role
+---
+# Source: apache/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-other-namespace
+  namespace: some-other-namespace
+`,
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "v1",
+						Name:       "test-cluster-role",
+						Kind:       "ClusterRole",
+					},
+					{
+						ApiVersion: "apps/v1",
+						Name:       "test-other-namespace",
+						Namespace:  "some-other-namespace",
 						Kind:       "Deployment",
 					},
 				},

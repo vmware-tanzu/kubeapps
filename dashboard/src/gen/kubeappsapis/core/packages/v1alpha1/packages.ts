@@ -972,7 +972,7 @@ export interface PackageAppVersion {
  * Resource reference
  *
  * A reference to a Kubernetes resource related to a specific installed package.
- * The context (cluster, namespace) for each resource is that of the related
+ * The context (cluster) for each resource is that of the related
  * installed package.
  */
 export interface ResourceRef {
@@ -988,6 +988,13 @@ export interface ResourceRef {
   kind: string;
   /** The name of the specific resource in the context of the installed package. */
   name: string;
+  /**
+   * The namespace of the specific resource in the context of the installed
+   * package. In most cases this will be identical to the namespace of the
+   * installed package. Exceptions will be non-namespaced resources and packages
+   * that install resources in other namespaces for special reasons.
+   */
+  namespace: string;
 }
 
 const baseGetAvailablePackageSummariesRequest: object = {};
@@ -1039,21 +1046,18 @@ export const GetAvailablePackageSummariesRequest = {
     const message = {
       ...baseGetAvailablePackageSummariesRequest,
     } as GetAvailablePackageSummariesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
-    if (object.filterOptions !== undefined && object.filterOptions !== null) {
-      message.filterOptions = FilterOptions.fromJSON(object.filterOptions);
-    } else {
-      message.filterOptions = undefined;
-    }
-    if (object.paginationOptions !== undefined && object.paginationOptions !== null) {
-      message.paginationOptions = PaginationOptions.fromJSON(object.paginationOptions);
-    } else {
-      message.paginationOptions = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    message.filterOptions =
+      object.filterOptions !== undefined && object.filterOptions !== null
+        ? FilterOptions.fromJSON(object.filterOptions)
+        : undefined;
+    message.paginationOptions =
+      object.paginationOptions !== undefined && object.paginationOptions !== null
+        ? PaginationOptions.fromJSON(object.paginationOptions)
+        : undefined;
     return message;
   },
 
@@ -1078,21 +1082,18 @@ export const GetAvailablePackageSummariesRequest = {
     const message = {
       ...baseGetAvailablePackageSummariesRequest,
     } as GetAvailablePackageSummariesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
-    if (object.filterOptions !== undefined && object.filterOptions !== null) {
-      message.filterOptions = FilterOptions.fromPartial(object.filterOptions);
-    } else {
-      message.filterOptions = undefined;
-    }
-    if (object.paginationOptions !== undefined && object.paginationOptions !== null) {
-      message.paginationOptions = PaginationOptions.fromPartial(object.paginationOptions);
-    } else {
-      message.paginationOptions = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    message.filterOptions =
+      object.filterOptions !== undefined && object.filterOptions !== null
+        ? FilterOptions.fromPartial(object.filterOptions)
+        : undefined;
+    message.paginationOptions =
+      object.paginationOptions !== undefined && object.paginationOptions !== null
+        ? PaginationOptions.fromPartial(object.paginationOptions)
+        : undefined;
     return message;
   },
 };
@@ -1143,16 +1144,14 @@ export const GetAvailablePackageDetailRequest = {
     const message = {
       ...baseGetAvailablePackageDetailRequest,
     } as GetAvailablePackageDetailRequest;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
-    } else {
-      message.availablePackageRef = undefined;
-    }
-    if (object.pkgVersion !== undefined && object.pkgVersion !== null) {
-      message.pkgVersion = String(object.pkgVersion);
-    } else {
-      message.pkgVersion = "";
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromJSON(object.availablePackageRef)
+        : undefined;
+    message.pkgVersion =
+      object.pkgVersion !== undefined && object.pkgVersion !== null
+        ? String(object.pkgVersion)
+        : "";
     return message;
   },
 
@@ -1172,13 +1171,10 @@ export const GetAvailablePackageDetailRequest = {
     const message = {
       ...baseGetAvailablePackageDetailRequest,
     } as GetAvailablePackageDetailRequest;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromPartial(
-        object.availablePackageRef,
-      );
-    } else {
-      message.availablePackageRef = undefined;
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+        : undefined;
     message.pkgVersion = object.pkgVersion ?? "";
     return message;
   },
@@ -1230,16 +1226,14 @@ export const GetAvailablePackageVersionsRequest = {
     const message = {
       ...baseGetAvailablePackageVersionsRequest,
     } as GetAvailablePackageVersionsRequest;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
-    } else {
-      message.availablePackageRef = undefined;
-    }
-    if (object.pkgVersion !== undefined && object.pkgVersion !== null) {
-      message.pkgVersion = String(object.pkgVersion);
-    } else {
-      message.pkgVersion = "";
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromJSON(object.availablePackageRef)
+        : undefined;
+    message.pkgVersion =
+      object.pkgVersion !== undefined && object.pkgVersion !== null
+        ? String(object.pkgVersion)
+        : "";
     return message;
   },
 
@@ -1259,13 +1253,10 @@ export const GetAvailablePackageVersionsRequest = {
     const message = {
       ...baseGetAvailablePackageVersionsRequest,
     } as GetAvailablePackageVersionsRequest;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromPartial(
-        object.availablePackageRef,
-      );
-    } else {
-      message.availablePackageRef = undefined;
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+        : undefined;
     message.pkgVersion = object.pkgVersion ?? "";
     return message;
   },
@@ -1314,16 +1305,14 @@ export const GetInstalledPackageSummariesRequest = {
     const message = {
       ...baseGetInstalledPackageSummariesRequest,
     } as GetInstalledPackageSummariesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
-    if (object.paginationOptions !== undefined && object.paginationOptions !== null) {
-      message.paginationOptions = PaginationOptions.fromJSON(object.paginationOptions);
-    } else {
-      message.paginationOptions = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    message.paginationOptions =
+      object.paginationOptions !== undefined && object.paginationOptions !== null
+        ? PaginationOptions.fromJSON(object.paginationOptions)
+        : undefined;
     return message;
   },
 
@@ -1344,16 +1333,14 @@ export const GetInstalledPackageSummariesRequest = {
     const message = {
       ...baseGetInstalledPackageSummariesRequest,
     } as GetInstalledPackageSummariesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
-    if (object.paginationOptions !== undefined && object.paginationOptions !== null) {
-      message.paginationOptions = PaginationOptions.fromPartial(object.paginationOptions);
-    } else {
-      message.paginationOptions = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    message.paginationOptions =
+      object.paginationOptions !== undefined && object.paginationOptions !== null
+        ? PaginationOptions.fromPartial(object.paginationOptions)
+        : undefined;
     return message;
   },
 };
@@ -1398,11 +1385,10 @@ export const GetInstalledPackageDetailRequest = {
     const message = {
       ...baseGetInstalledPackageDetailRequest,
     } as GetInstalledPackageDetailRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
     return message;
   },
 
@@ -1421,13 +1407,10 @@ export const GetInstalledPackageDetailRequest = {
     const message = {
       ...baseGetInstalledPackageDetailRequest,
     } as GetInstalledPackageDetailRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     return message;
   },
 };
@@ -1505,36 +1488,25 @@ export const CreateInstalledPackageRequest = {
     const message = {
       ...baseCreateInstalledPackageRequest,
     } as CreateInstalledPackageRequest;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
-    } else {
-      message.availablePackageRef = undefined;
-    }
-    if (object.targetContext !== undefined && object.targetContext !== null) {
-      message.targetContext = Context.fromJSON(object.targetContext);
-    } else {
-      message.targetContext = undefined;
-    }
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
-      message.pkgVersionReference = VersionReference.fromJSON(object.pkgVersionReference);
-    } else {
-      message.pkgVersionReference = undefined;
-    }
-    if (object.values !== undefined && object.values !== null) {
-      message.values = String(object.values);
-    } else {
-      message.values = "";
-    }
-    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
-      message.reconciliationOptions = ReconciliationOptions.fromJSON(object.reconciliationOptions);
-    } else {
-      message.reconciliationOptions = undefined;
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromJSON(object.availablePackageRef)
+        : undefined;
+    message.targetContext =
+      object.targetContext !== undefined && object.targetContext !== null
+        ? Context.fromJSON(object.targetContext)
+        : undefined;
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.pkgVersionReference =
+      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+        ? VersionReference.fromJSON(object.pkgVersionReference)
+        : undefined;
+    message.values =
+      object.values !== undefined && object.values !== null ? String(object.values) : "";
+    message.reconciliationOptions =
+      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+        ? ReconciliationOptions.fromJSON(object.reconciliationOptions)
+        : undefined;
     return message;
   },
 
@@ -1565,32 +1537,24 @@ export const CreateInstalledPackageRequest = {
     const message = {
       ...baseCreateInstalledPackageRequest,
     } as CreateInstalledPackageRequest;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromPartial(
-        object.availablePackageRef,
-      );
-    } else {
-      message.availablePackageRef = undefined;
-    }
-    if (object.targetContext !== undefined && object.targetContext !== null) {
-      message.targetContext = Context.fromPartial(object.targetContext);
-    } else {
-      message.targetContext = undefined;
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+        : undefined;
+    message.targetContext =
+      object.targetContext !== undefined && object.targetContext !== null
+        ? Context.fromPartial(object.targetContext)
+        : undefined;
     message.name = object.name ?? "";
-    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
-      message.pkgVersionReference = VersionReference.fromPartial(object.pkgVersionReference);
-    } else {
-      message.pkgVersionReference = undefined;
-    }
+    message.pkgVersionReference =
+      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+        ? VersionReference.fromPartial(object.pkgVersionReference)
+        : undefined;
     message.values = object.values ?? "";
-    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
-      message.reconciliationOptions = ReconciliationOptions.fromPartial(
-        object.reconciliationOptions,
-      );
-    } else {
-      message.reconciliationOptions = undefined;
-    }
+    message.reconciliationOptions =
+      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+        ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
+        : undefined;
     return message;
   },
 };
@@ -1656,26 +1620,20 @@ export const UpdateInstalledPackageRequest = {
     const message = {
       ...baseUpdateInstalledPackageRequest,
     } as UpdateInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
-      message.pkgVersionReference = VersionReference.fromJSON(object.pkgVersionReference);
-    } else {
-      message.pkgVersionReference = undefined;
-    }
-    if (object.values !== undefined && object.values !== null) {
-      message.values = String(object.values);
-    } else {
-      message.values = "";
-    }
-    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
-      message.reconciliationOptions = ReconciliationOptions.fromJSON(object.reconciliationOptions);
-    } else {
-      message.reconciliationOptions = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
+    message.pkgVersionReference =
+      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+        ? VersionReference.fromJSON(object.pkgVersionReference)
+        : undefined;
+    message.values =
+      object.values !== undefined && object.values !== null ? String(object.values) : "";
+    message.reconciliationOptions =
+      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+        ? ReconciliationOptions.fromJSON(object.reconciliationOptions)
+        : undefined;
     return message;
   },
 
@@ -1701,26 +1659,19 @@ export const UpdateInstalledPackageRequest = {
     const message = {
       ...baseUpdateInstalledPackageRequest,
     } as UpdateInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
-      message.pkgVersionReference = VersionReference.fromPartial(object.pkgVersionReference);
-    } else {
-      message.pkgVersionReference = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
+    message.pkgVersionReference =
+      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+        ? VersionReference.fromPartial(object.pkgVersionReference)
+        : undefined;
     message.values = object.values ?? "";
-    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
-      message.reconciliationOptions = ReconciliationOptions.fromPartial(
-        object.reconciliationOptions,
-      );
-    } else {
-      message.reconciliationOptions = undefined;
-    }
+    message.reconciliationOptions =
+      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+        ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
+        : undefined;
     return message;
   },
 };
@@ -1765,11 +1716,10 @@ export const DeleteInstalledPackageRequest = {
     const message = {
       ...baseDeleteInstalledPackageRequest,
     } as DeleteInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
     return message;
   },
 
@@ -1786,13 +1736,10 @@ export const DeleteInstalledPackageRequest = {
     const message = {
       ...baseDeleteInstalledPackageRequest,
     } as DeleteInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     return message;
   },
 };
@@ -1837,11 +1784,10 @@ export const GetInstalledPackageResourceRefsRequest = {
     const message = {
       ...baseGetInstalledPackageResourceRefsRequest,
     } as GetInstalledPackageResourceRefsRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
     return message;
   },
 
@@ -1860,13 +1806,10 @@ export const GetInstalledPackageResourceRefsRequest = {
     const message = {
       ...baseGetInstalledPackageResourceRefsRequest,
     } as GetInstalledPackageResourceRefsRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     return message;
   },
 };
@@ -1930,11 +1873,10 @@ export const GetAvailablePackageSummariesResponse = {
     message.availablePackageSummaries = (object.availablePackageSummaries ?? []).map((e: any) =>
       AvailablePackageSummary.fromJSON(e),
     );
-    if (object.nextPageToken !== undefined && object.nextPageToken !== null) {
-      message.nextPageToken = String(object.nextPageToken);
-    } else {
-      message.nextPageToken = "";
-    }
+    message.nextPageToken =
+      object.nextPageToken !== undefined && object.nextPageToken !== null
+        ? String(object.nextPageToken)
+        : "";
     message.categories = (object.categories ?? []).map((e: any) => String(e));
     return message;
   },
@@ -2012,13 +1954,10 @@ export const GetAvailablePackageDetailResponse = {
     const message = {
       ...baseGetAvailablePackageDetailResponse,
     } as GetAvailablePackageDetailResponse;
-    if (object.availablePackageDetail !== undefined && object.availablePackageDetail !== null) {
-      message.availablePackageDetail = AvailablePackageDetail.fromJSON(
-        object.availablePackageDetail,
-      );
-    } else {
-      message.availablePackageDetail = undefined;
-    }
+    message.availablePackageDetail =
+      object.availablePackageDetail !== undefined && object.availablePackageDetail !== null
+        ? AvailablePackageDetail.fromJSON(object.availablePackageDetail)
+        : undefined;
     return message;
   },
 
@@ -2037,13 +1976,10 @@ export const GetAvailablePackageDetailResponse = {
     const message = {
       ...baseGetAvailablePackageDetailResponse,
     } as GetAvailablePackageDetailResponse;
-    if (object.availablePackageDetail !== undefined && object.availablePackageDetail !== null) {
-      message.availablePackageDetail = AvailablePackageDetail.fromPartial(
-        object.availablePackageDetail,
-      );
-    } else {
-      message.availablePackageDetail = undefined;
-    }
+    message.availablePackageDetail =
+      object.availablePackageDetail !== undefined && object.availablePackageDetail !== null
+        ? AvailablePackageDetail.fromPartial(object.availablePackageDetail)
+        : undefined;
     return message;
   },
 };
@@ -2166,11 +2102,10 @@ export const GetInstalledPackageSummariesResponse = {
     message.installedPackageSummaries = (object.installedPackageSummaries ?? []).map((e: any) =>
       InstalledPackageSummary.fromJSON(e),
     );
-    if (object.nextPageToken !== undefined && object.nextPageToken !== null) {
-      message.nextPageToken = String(object.nextPageToken);
-    } else {
-      message.nextPageToken = "";
-    }
+    message.nextPageToken =
+      object.nextPageToken !== undefined && object.nextPageToken !== null
+        ? String(object.nextPageToken)
+        : "";
     return message;
   },
 
@@ -2241,13 +2176,10 @@ export const GetInstalledPackageDetailResponse = {
     const message = {
       ...baseGetInstalledPackageDetailResponse,
     } as GetInstalledPackageDetailResponse;
-    if (object.installedPackageDetail !== undefined && object.installedPackageDetail !== null) {
-      message.installedPackageDetail = InstalledPackageDetail.fromJSON(
-        object.installedPackageDetail,
-      );
-    } else {
-      message.installedPackageDetail = undefined;
-    }
+    message.installedPackageDetail =
+      object.installedPackageDetail !== undefined && object.installedPackageDetail !== null
+        ? InstalledPackageDetail.fromJSON(object.installedPackageDetail)
+        : undefined;
     return message;
   },
 
@@ -2266,13 +2198,10 @@ export const GetInstalledPackageDetailResponse = {
     const message = {
       ...baseGetInstalledPackageDetailResponse,
     } as GetInstalledPackageDetailResponse;
-    if (object.installedPackageDetail !== undefined && object.installedPackageDetail !== null) {
-      message.installedPackageDetail = InstalledPackageDetail.fromPartial(
-        object.installedPackageDetail,
-      );
-    } else {
-      message.installedPackageDetail = undefined;
-    }
+    message.installedPackageDetail =
+      object.installedPackageDetail !== undefined && object.installedPackageDetail !== null
+        ? InstalledPackageDetail.fromPartial(object.installedPackageDetail)
+        : undefined;
     return message;
   },
 };
@@ -2317,11 +2246,10 @@ export const CreateInstalledPackageResponse = {
     const message = {
       ...baseCreateInstalledPackageResponse,
     } as CreateInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
     return message;
   },
 
@@ -2338,13 +2266,10 @@ export const CreateInstalledPackageResponse = {
     const message = {
       ...baseCreateInstalledPackageResponse,
     } as CreateInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     return message;
   },
 };
@@ -2389,11 +2314,10 @@ export const UpdateInstalledPackageResponse = {
     const message = {
       ...baseUpdateInstalledPackageResponse,
     } as UpdateInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
     return message;
   },
 
@@ -2410,13 +2334,10 @@ export const UpdateInstalledPackageResponse = {
     const message = {
       ...baseUpdateInstalledPackageResponse,
     } as UpdateInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     return message;
   },
 };
@@ -2509,11 +2430,10 @@ export const GetInstalledPackageResourceRefsResponse = {
     const message = {
       ...baseGetInstalledPackageResourceRefsResponse,
     } as GetInstalledPackageResourceRefsResponse;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
     message.resourceRefs = (object.resourceRefs ?? []).map((e: any) => ResourceRef.fromJSON(e));
     return message;
   },
@@ -2536,11 +2456,10 @@ export const GetInstalledPackageResourceRefsResponse = {
     const message = {
       ...baseGetInstalledPackageResourceRefsResponse,
     } as GetInstalledPackageResourceRefsResponse;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     message.resourceRefs = (object.resourceRefs ?? []).map(e => ResourceRef.fromPartial(e));
     return message;
   },
@@ -2626,36 +2545,25 @@ export const AvailablePackageSummary = {
     const message = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
-    } else {
-      message.availablePackageRef = undefined;
-    }
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.latestVersion !== undefined && object.latestVersion !== null) {
-      message.latestVersion = PackageAppVersion.fromJSON(object.latestVersion);
-    } else {
-      message.latestVersion = undefined;
-    }
-    if (object.iconUrl !== undefined && object.iconUrl !== null) {
-      message.iconUrl = String(object.iconUrl);
-    } else {
-      message.iconUrl = "";
-    }
-    if (object.displayName !== undefined && object.displayName !== null) {
-      message.displayName = String(object.displayName);
-    } else {
-      message.displayName = "";
-    }
-    if (object.shortDescription !== undefined && object.shortDescription !== null) {
-      message.shortDescription = String(object.shortDescription);
-    } else {
-      message.shortDescription = "";
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromJSON(object.availablePackageRef)
+        : undefined;
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.latestVersion =
+      object.latestVersion !== undefined && object.latestVersion !== null
+        ? PackageAppVersion.fromJSON(object.latestVersion)
+        : undefined;
+    message.iconUrl =
+      object.iconUrl !== undefined && object.iconUrl !== null ? String(object.iconUrl) : "";
+    message.displayName =
+      object.displayName !== undefined && object.displayName !== null
+        ? String(object.displayName)
+        : "";
+    message.shortDescription =
+      object.shortDescription !== undefined && object.shortDescription !== null
+        ? String(object.shortDescription)
+        : "";
     message.categories = (object.categories ?? []).map((e: any) => String(e));
     return message;
   },
@@ -2686,19 +2594,15 @@ export const AvailablePackageSummary = {
     const message = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromPartial(
-        object.availablePackageRef,
-      );
-    } else {
-      message.availablePackageRef = undefined;
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+        : undefined;
     message.name = object.name ?? "";
-    if (object.latestVersion !== undefined && object.latestVersion !== null) {
-      message.latestVersion = PackageAppVersion.fromPartial(object.latestVersion);
-    } else {
-      message.latestVersion = undefined;
-    }
+    message.latestVersion =
+      object.latestVersion !== undefined && object.latestVersion !== null
+        ? PackageAppVersion.fromPartial(object.latestVersion)
+        : undefined;
     message.iconUrl = object.iconUrl ?? "";
     message.displayName = object.displayName ?? "";
     message.shortDescription = object.shortDescription ?? "";
@@ -2846,74 +2750,50 @@ export const AvailablePackageDetail = {
 
   fromJSON(object: any): AvailablePackageDetail {
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
-    } else {
-      message.availablePackageRef = undefined;
-    }
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.version !== undefined && object.version !== null) {
-      message.version = PackageAppVersion.fromJSON(object.version);
-    } else {
-      message.version = undefined;
-    }
-    if (object.repoUrl !== undefined && object.repoUrl !== null) {
-      message.repoUrl = String(object.repoUrl);
-    } else {
-      message.repoUrl = "";
-    }
-    if (object.homeUrl !== undefined && object.homeUrl !== null) {
-      message.homeUrl = String(object.homeUrl);
-    } else {
-      message.homeUrl = "";
-    }
-    if (object.iconUrl !== undefined && object.iconUrl !== null) {
-      message.iconUrl = String(object.iconUrl);
-    } else {
-      message.iconUrl = "";
-    }
-    if (object.displayName !== undefined && object.displayName !== null) {
-      message.displayName = String(object.displayName);
-    } else {
-      message.displayName = "";
-    }
-    if (object.shortDescription !== undefined && object.shortDescription !== null) {
-      message.shortDescription = String(object.shortDescription);
-    } else {
-      message.shortDescription = "";
-    }
-    if (object.longDescription !== undefined && object.longDescription !== null) {
-      message.longDescription = String(object.longDescription);
-    } else {
-      message.longDescription = "";
-    }
-    if (object.readme !== undefined && object.readme !== null) {
-      message.readme = String(object.readme);
-    } else {
-      message.readme = "";
-    }
-    if (object.defaultValues !== undefined && object.defaultValues !== null) {
-      message.defaultValues = String(object.defaultValues);
-    } else {
-      message.defaultValues = "";
-    }
-    if (object.valuesSchema !== undefined && object.valuesSchema !== null) {
-      message.valuesSchema = String(object.valuesSchema);
-    } else {
-      message.valuesSchema = "";
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromJSON(object.availablePackageRef)
+        : undefined;
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.version =
+      object.version !== undefined && object.version !== null
+        ? PackageAppVersion.fromJSON(object.version)
+        : undefined;
+    message.repoUrl =
+      object.repoUrl !== undefined && object.repoUrl !== null ? String(object.repoUrl) : "";
+    message.homeUrl =
+      object.homeUrl !== undefined && object.homeUrl !== null ? String(object.homeUrl) : "";
+    message.iconUrl =
+      object.iconUrl !== undefined && object.iconUrl !== null ? String(object.iconUrl) : "";
+    message.displayName =
+      object.displayName !== undefined && object.displayName !== null
+        ? String(object.displayName)
+        : "";
+    message.shortDescription =
+      object.shortDescription !== undefined && object.shortDescription !== null
+        ? String(object.shortDescription)
+        : "";
+    message.longDescription =
+      object.longDescription !== undefined && object.longDescription !== null
+        ? String(object.longDescription)
+        : "";
+    message.readme =
+      object.readme !== undefined && object.readme !== null ? String(object.readme) : "";
+    message.defaultValues =
+      object.defaultValues !== undefined && object.defaultValues !== null
+        ? String(object.defaultValues)
+        : "";
+    message.valuesSchema =
+      object.valuesSchema !== undefined && object.valuesSchema !== null
+        ? String(object.valuesSchema)
+        : "";
     message.sourceUrls = (object.sourceUrls ?? []).map((e: any) => String(e));
     message.maintainers = (object.maintainers ?? []).map((e: any) => Maintainer.fromJSON(e));
     message.categories = (object.categories ?? []).map((e: any) => String(e));
-    if (object.customDetail !== undefined && object.customDetail !== null) {
-      message.customDetail = Any.fromJSON(object.customDetail);
-    } else {
-      message.customDetail = undefined;
-    }
+    message.customDetail =
+      object.customDetail !== undefined && object.customDetail !== null
+        ? Any.fromJSON(object.customDetail)
+        : undefined;
     return message;
   },
 
@@ -2957,19 +2837,15 @@ export const AvailablePackageDetail = {
 
   fromPartial(object: DeepPartial<AvailablePackageDetail>): AvailablePackageDetail {
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromPartial(
-        object.availablePackageRef,
-      );
-    } else {
-      message.availablePackageRef = undefined;
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+        : undefined;
     message.name = object.name ?? "";
-    if (object.version !== undefined && object.version !== null) {
-      message.version = PackageAppVersion.fromPartial(object.version);
-    } else {
-      message.version = undefined;
-    }
+    message.version =
+      object.version !== undefined && object.version !== null
+        ? PackageAppVersion.fromPartial(object.version)
+        : undefined;
     message.repoUrl = object.repoUrl ?? "";
     message.homeUrl = object.homeUrl ?? "";
     message.iconUrl = object.iconUrl ?? "";
@@ -2982,11 +2858,10 @@ export const AvailablePackageDetail = {
     message.sourceUrls = (object.sourceUrls ?? []).map(e => e);
     message.maintainers = (object.maintainers ?? []).map(e => Maintainer.fromPartial(e));
     message.categories = (object.categories ?? []).map(e => e);
-    if (object.customDetail !== undefined && object.customDetail !== null) {
-      message.customDetail = Any.fromPartial(object.customDetail);
-    } else {
-      message.customDetail = undefined;
-    }
+    message.customDetail =
+      object.customDetail !== undefined && object.customDetail !== null
+        ? Any.fromPartial(object.customDetail)
+        : undefined;
     return message;
   },
 };
@@ -3087,56 +2962,41 @@ export const InstalledPackageSummary = {
     const message = {
       ...baseInstalledPackageSummary,
     } as InstalledPackageSummary;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
-      message.pkgVersionReference = VersionReference.fromJSON(object.pkgVersionReference);
-    } else {
-      message.pkgVersionReference = undefined;
-    }
-    if (object.currentVersion !== undefined && object.currentVersion !== null) {
-      message.currentVersion = PackageAppVersion.fromJSON(object.currentVersion);
-    } else {
-      message.currentVersion = undefined;
-    }
-    if (object.iconUrl !== undefined && object.iconUrl !== null) {
-      message.iconUrl = String(object.iconUrl);
-    } else {
-      message.iconUrl = "";
-    }
-    if (object.pkgDisplayName !== undefined && object.pkgDisplayName !== null) {
-      message.pkgDisplayName = String(object.pkgDisplayName);
-    } else {
-      message.pkgDisplayName = "";
-    }
-    if (object.shortDescription !== undefined && object.shortDescription !== null) {
-      message.shortDescription = String(object.shortDescription);
-    } else {
-      message.shortDescription = "";
-    }
-    if (object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null) {
-      message.latestMatchingVersion = PackageAppVersion.fromJSON(object.latestMatchingVersion);
-    } else {
-      message.latestMatchingVersion = undefined;
-    }
-    if (object.latestVersion !== undefined && object.latestVersion !== null) {
-      message.latestVersion = PackageAppVersion.fromJSON(object.latestVersion);
-    } else {
-      message.latestVersion = undefined;
-    }
-    if (object.status !== undefined && object.status !== null) {
-      message.status = InstalledPackageStatus.fromJSON(object.status);
-    } else {
-      message.status = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.pkgVersionReference =
+      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+        ? VersionReference.fromJSON(object.pkgVersionReference)
+        : undefined;
+    message.currentVersion =
+      object.currentVersion !== undefined && object.currentVersion !== null
+        ? PackageAppVersion.fromJSON(object.currentVersion)
+        : undefined;
+    message.iconUrl =
+      object.iconUrl !== undefined && object.iconUrl !== null ? String(object.iconUrl) : "";
+    message.pkgDisplayName =
+      object.pkgDisplayName !== undefined && object.pkgDisplayName !== null
+        ? String(object.pkgDisplayName)
+        : "";
+    message.shortDescription =
+      object.shortDescription !== undefined && object.shortDescription !== null
+        ? String(object.shortDescription)
+        : "";
+    message.latestMatchingVersion =
+      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+        ? PackageAppVersion.fromJSON(object.latestMatchingVersion)
+        : undefined;
+    message.latestVersion =
+      object.latestVersion !== undefined && object.latestVersion !== null
+        ? PackageAppVersion.fromJSON(object.latestVersion)
+        : undefined;
+    message.status =
+      object.status !== undefined && object.status !== null
+        ? InstalledPackageStatus.fromJSON(object.status)
+        : undefined;
     return message;
   },
 
@@ -3175,42 +3035,34 @@ export const InstalledPackageSummary = {
     const message = {
       ...baseInstalledPackageSummary,
     } as InstalledPackageSummary;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     message.name = object.name ?? "";
-    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
-      message.pkgVersionReference = VersionReference.fromPartial(object.pkgVersionReference);
-    } else {
-      message.pkgVersionReference = undefined;
-    }
-    if (object.currentVersion !== undefined && object.currentVersion !== null) {
-      message.currentVersion = PackageAppVersion.fromPartial(object.currentVersion);
-    } else {
-      message.currentVersion = undefined;
-    }
+    message.pkgVersionReference =
+      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+        ? VersionReference.fromPartial(object.pkgVersionReference)
+        : undefined;
+    message.currentVersion =
+      object.currentVersion !== undefined && object.currentVersion !== null
+        ? PackageAppVersion.fromPartial(object.currentVersion)
+        : undefined;
     message.iconUrl = object.iconUrl ?? "";
     message.pkgDisplayName = object.pkgDisplayName ?? "";
     message.shortDescription = object.shortDescription ?? "";
-    if (object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null) {
-      message.latestMatchingVersion = PackageAppVersion.fromPartial(object.latestMatchingVersion);
-    } else {
-      message.latestMatchingVersion = undefined;
-    }
-    if (object.latestVersion !== undefined && object.latestVersion !== null) {
-      message.latestVersion = PackageAppVersion.fromPartial(object.latestVersion);
-    } else {
-      message.latestVersion = undefined;
-    }
-    if (object.status !== undefined && object.status !== null) {
-      message.status = InstalledPackageStatus.fromPartial(object.status);
-    } else {
-      message.status = undefined;
-    }
+    message.latestMatchingVersion =
+      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+        ? PackageAppVersion.fromPartial(object.latestMatchingVersion)
+        : undefined;
+    message.latestVersion =
+      object.latestVersion !== undefined && object.latestVersion !== null
+        ? PackageAppVersion.fromPartial(object.latestVersion)
+        : undefined;
+    message.status =
+      object.status !== undefined && object.status !== null
+        ? InstalledPackageStatus.fromPartial(object.status)
+        : undefined;
     return message;
   },
 };
@@ -3324,66 +3176,51 @@ export const InstalledPackageDetail = {
 
   fromJSON(object: any): InstalledPackageDetail {
     const message = { ...baseInstalledPackageDetail } as InstalledPackageDetail;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
-      message.pkgVersionReference = VersionReference.fromJSON(object.pkgVersionReference);
-    } else {
-      message.pkgVersionReference = undefined;
-    }
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.currentVersion !== undefined && object.currentVersion !== null) {
-      message.currentVersion = PackageAppVersion.fromJSON(object.currentVersion);
-    } else {
-      message.currentVersion = undefined;
-    }
-    if (object.valuesApplied !== undefined && object.valuesApplied !== null) {
-      message.valuesApplied = String(object.valuesApplied);
-    } else {
-      message.valuesApplied = "";
-    }
-    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
-      message.reconciliationOptions = ReconciliationOptions.fromJSON(object.reconciliationOptions);
-    } else {
-      message.reconciliationOptions = undefined;
-    }
-    if (object.status !== undefined && object.status !== null) {
-      message.status = InstalledPackageStatus.fromJSON(object.status);
-    } else {
-      message.status = undefined;
-    }
-    if (object.postInstallationNotes !== undefined && object.postInstallationNotes !== null) {
-      message.postInstallationNotes = String(object.postInstallationNotes);
-    } else {
-      message.postInstallationNotes = "";
-    }
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
-    } else {
-      message.availablePackageRef = undefined;
-    }
-    if (object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null) {
-      message.latestMatchingVersion = PackageAppVersion.fromJSON(object.latestMatchingVersion);
-    } else {
-      message.latestMatchingVersion = undefined;
-    }
-    if (object.latestVersion !== undefined && object.latestVersion !== null) {
-      message.latestVersion = PackageAppVersion.fromJSON(object.latestVersion);
-    } else {
-      message.latestVersion = undefined;
-    }
-    if (object.customDetail !== undefined && object.customDetail !== null) {
-      message.customDetail = Any.fromJSON(object.customDetail);
-    } else {
-      message.customDetail = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
+    message.pkgVersionReference =
+      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+        ? VersionReference.fromJSON(object.pkgVersionReference)
+        : undefined;
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.currentVersion =
+      object.currentVersion !== undefined && object.currentVersion !== null
+        ? PackageAppVersion.fromJSON(object.currentVersion)
+        : undefined;
+    message.valuesApplied =
+      object.valuesApplied !== undefined && object.valuesApplied !== null
+        ? String(object.valuesApplied)
+        : "";
+    message.reconciliationOptions =
+      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+        ? ReconciliationOptions.fromJSON(object.reconciliationOptions)
+        : undefined;
+    message.status =
+      object.status !== undefined && object.status !== null
+        ? InstalledPackageStatus.fromJSON(object.status)
+        : undefined;
+    message.postInstallationNotes =
+      object.postInstallationNotes !== undefined && object.postInstallationNotes !== null
+        ? String(object.postInstallationNotes)
+        : "";
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromJSON(object.availablePackageRef)
+        : undefined;
+    message.latestMatchingVersion =
+      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+        ? PackageAppVersion.fromJSON(object.latestMatchingVersion)
+        : undefined;
+    message.latestVersion =
+      object.latestVersion !== undefined && object.latestVersion !== null
+        ? PackageAppVersion.fromJSON(object.latestVersion)
+        : undefined;
+    message.customDetail =
+      object.customDetail !== undefined && object.customDetail !== null
+        ? Any.fromJSON(object.customDetail)
+        : undefined;
     return message;
   },
 
@@ -3430,60 +3267,45 @@ export const InstalledPackageDetail = {
 
   fromPartial(object: DeepPartial<InstalledPackageDetail>): InstalledPackageDetail {
     const message = { ...baseInstalledPackageDetail } as InstalledPackageDetail;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null) {
-      message.pkgVersionReference = VersionReference.fromPartial(object.pkgVersionReference);
-    } else {
-      message.pkgVersionReference = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
+    message.pkgVersionReference =
+      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+        ? VersionReference.fromPartial(object.pkgVersionReference)
+        : undefined;
     message.name = object.name ?? "";
-    if (object.currentVersion !== undefined && object.currentVersion !== null) {
-      message.currentVersion = PackageAppVersion.fromPartial(object.currentVersion);
-    } else {
-      message.currentVersion = undefined;
-    }
+    message.currentVersion =
+      object.currentVersion !== undefined && object.currentVersion !== null
+        ? PackageAppVersion.fromPartial(object.currentVersion)
+        : undefined;
     message.valuesApplied = object.valuesApplied ?? "";
-    if (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null) {
-      message.reconciliationOptions = ReconciliationOptions.fromPartial(
-        object.reconciliationOptions,
-      );
-    } else {
-      message.reconciliationOptions = undefined;
-    }
-    if (object.status !== undefined && object.status !== null) {
-      message.status = InstalledPackageStatus.fromPartial(object.status);
-    } else {
-      message.status = undefined;
-    }
+    message.reconciliationOptions =
+      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+        ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
+        : undefined;
+    message.status =
+      object.status !== undefined && object.status !== null
+        ? InstalledPackageStatus.fromPartial(object.status)
+        : undefined;
     message.postInstallationNotes = object.postInstallationNotes ?? "";
-    if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
-      message.availablePackageRef = AvailablePackageReference.fromPartial(
-        object.availablePackageRef,
-      );
-    } else {
-      message.availablePackageRef = undefined;
-    }
-    if (object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null) {
-      message.latestMatchingVersion = PackageAppVersion.fromPartial(object.latestMatchingVersion);
-    } else {
-      message.latestMatchingVersion = undefined;
-    }
-    if (object.latestVersion !== undefined && object.latestVersion !== null) {
-      message.latestVersion = PackageAppVersion.fromPartial(object.latestVersion);
-    } else {
-      message.latestVersion = undefined;
-    }
-    if (object.customDetail !== undefined && object.customDetail !== null) {
-      message.customDetail = Any.fromPartial(object.customDetail);
-    } else {
-      message.customDetail = undefined;
-    }
+    message.availablePackageRef =
+      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+        : undefined;
+    message.latestMatchingVersion =
+      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+        ? PackageAppVersion.fromPartial(object.latestMatchingVersion)
+        : undefined;
+    message.latestVersion =
+      object.latestVersion !== undefined && object.latestVersion !== null
+        ? PackageAppVersion.fromPartial(object.latestVersion)
+        : undefined;
+    message.customDetail =
+      object.customDetail !== undefined && object.customDetail !== null
+        ? Any.fromPartial(object.customDetail)
+        : undefined;
     return message;
   },
 };
@@ -3524,16 +3346,10 @@ export const Context = {
 
   fromJSON(object: any): Context {
     const message = { ...baseContext } as Context;
-    if (object.cluster !== undefined && object.cluster !== null) {
-      message.cluster = String(object.cluster);
-    } else {
-      message.cluster = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = String(object.namespace);
-    } else {
-      message.namespace = "";
-    }
+    message.cluster =
+      object.cluster !== undefined && object.cluster !== null ? String(object.cluster) : "";
+    message.namespace =
+      object.namespace !== undefined && object.namespace !== null ? String(object.namespace) : "";
     return message;
   },
 
@@ -3598,21 +3414,18 @@ export const AvailablePackageReference = {
     const message = {
       ...baseAvailablePackageReference,
     } as AvailablePackageReference;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
-    if (object.identifier !== undefined && object.identifier !== null) {
-      message.identifier = String(object.identifier);
-    } else {
-      message.identifier = "";
-    }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromJSON(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    message.identifier =
+      object.identifier !== undefined && object.identifier !== null
+        ? String(object.identifier)
+        : "";
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromJSON(object.plugin)
+        : undefined;
     return message;
   },
 
@@ -3630,17 +3443,15 @@ export const AvailablePackageReference = {
     const message = {
       ...baseAvailablePackageReference,
     } as AvailablePackageReference;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     message.identifier = object.identifier ?? "";
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromPartial(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromPartial(object.plugin)
+        : undefined;
     return message;
   },
 };
@@ -3681,16 +3492,8 @@ export const Maintainer = {
 
   fromJSON(object: any): Maintainer {
     const message = { ...baseMaintainer } as Maintainer;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.email !== undefined && object.email !== null) {
-      message.email = String(object.email);
-    } else {
-      message.email = "";
-    }
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.email = object.email !== undefined && object.email !== null ? String(object.email) : "";
     return message;
   },
 
@@ -3771,23 +3574,17 @@ export const FilterOptions = {
 
   fromJSON(object: any): FilterOptions {
     const message = { ...baseFilterOptions } as FilterOptions;
-    if (object.query !== undefined && object.query !== null) {
-      message.query = String(object.query);
-    } else {
-      message.query = "";
-    }
+    message.query = object.query !== undefined && object.query !== null ? String(object.query) : "";
     message.categories = (object.categories ?? []).map((e: any) => String(e));
     message.repositories = (object.repositories ?? []).map((e: any) => String(e));
-    if (object.pkgVersion !== undefined && object.pkgVersion !== null) {
-      message.pkgVersion = String(object.pkgVersion);
-    } else {
-      message.pkgVersion = "";
-    }
-    if (object.appVersion !== undefined && object.appVersion !== null) {
-      message.appVersion = String(object.appVersion);
-    } else {
-      message.appVersion = "";
-    }
+    message.pkgVersion =
+      object.pkgVersion !== undefined && object.pkgVersion !== null
+        ? String(object.pkgVersion)
+        : "";
+    message.appVersion =
+      object.appVersion !== undefined && object.appVersion !== null
+        ? String(object.appVersion)
+        : "";
     return message;
   },
 
@@ -3856,16 +3653,10 @@ export const PaginationOptions = {
 
   fromJSON(object: any): PaginationOptions {
     const message = { ...basePaginationOptions } as PaginationOptions;
-    if (object.pageToken !== undefined && object.pageToken !== null) {
-      message.pageToken = String(object.pageToken);
-    } else {
-      message.pageToken = "";
-    }
-    if (object.pageSize !== undefined && object.pageSize !== null) {
-      message.pageSize = Number(object.pageSize);
-    } else {
-      message.pageSize = 0;
-    }
+    message.pageToken =
+      object.pageToken !== undefined && object.pageToken !== null ? String(object.pageToken) : "";
+    message.pageSize =
+      object.pageSize !== undefined && object.pageSize !== null ? Number(object.pageSize) : 0;
     return message;
   },
 
@@ -3930,21 +3721,18 @@ export const InstalledPackageReference = {
     const message = {
       ...baseInstalledPackageReference,
     } as InstalledPackageReference;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
-    if (object.identifier !== undefined && object.identifier !== null) {
-      message.identifier = String(object.identifier);
-    } else {
-      message.identifier = "";
-    }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromJSON(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    message.identifier =
+      object.identifier !== undefined && object.identifier !== null
+        ? String(object.identifier)
+        : "";
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromJSON(object.plugin)
+        : undefined;
     return message;
   },
 
@@ -3962,17 +3750,15 @@ export const InstalledPackageReference = {
     const message = {
       ...baseInstalledPackageReference,
     } as InstalledPackageReference;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     message.identifier = object.identifier ?? "";
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromPartial(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromPartial(object.plugin)
+        : undefined;
     return message;
   },
 };
@@ -4007,11 +3793,8 @@ export const VersionReference = {
 
   fromJSON(object: any): VersionReference {
     const message = { ...baseVersionReference } as VersionReference;
-    if (object.version !== undefined && object.version !== null) {
-      message.version = String(object.version);
-    } else {
-      message.version = "";
-    }
+    message.version =
+      object.version !== undefined && object.version !== null ? String(object.version) : "";
     return message;
   },
 
@@ -4074,21 +3857,16 @@ export const InstalledPackageStatus = {
 
   fromJSON(object: any): InstalledPackageStatus {
     const message = { ...baseInstalledPackageStatus } as InstalledPackageStatus;
-    if (object.ready !== undefined && object.ready !== null) {
-      message.ready = Boolean(object.ready);
-    } else {
-      message.ready = false;
-    }
-    if (object.reason !== undefined && object.reason !== null) {
-      message.reason = installedPackageStatus_StatusReasonFromJSON(object.reason);
-    } else {
-      message.reason = 0;
-    }
-    if (object.userReason !== undefined && object.userReason !== null) {
-      message.userReason = String(object.userReason);
-    } else {
-      message.userReason = "";
-    }
+    message.ready =
+      object.ready !== undefined && object.ready !== null ? Boolean(object.ready) : false;
+    message.reason =
+      object.reason !== undefined && object.reason !== null
+        ? installedPackageStatus_StatusReasonFromJSON(object.reason)
+        : 0;
+    message.userReason =
+      object.userReason !== undefined && object.userReason !== null
+        ? String(object.userReason)
+        : "";
     return message;
   },
 
@@ -4156,21 +3934,14 @@ export const ReconciliationOptions = {
 
   fromJSON(object: any): ReconciliationOptions {
     const message = { ...baseReconciliationOptions } as ReconciliationOptions;
-    if (object.interval !== undefined && object.interval !== null) {
-      message.interval = Number(object.interval);
-    } else {
-      message.interval = 0;
-    }
-    if (object.suspend !== undefined && object.suspend !== null) {
-      message.suspend = Boolean(object.suspend);
-    } else {
-      message.suspend = false;
-    }
-    if (object.serviceAccountName !== undefined && object.serviceAccountName !== null) {
-      message.serviceAccountName = String(object.serviceAccountName);
-    } else {
-      message.serviceAccountName = "";
-    }
+    message.interval =
+      object.interval !== undefined && object.interval !== null ? Number(object.interval) : 0;
+    message.suspend =
+      object.suspend !== undefined && object.suspend !== null ? Boolean(object.suspend) : false;
+    message.serviceAccountName =
+      object.serviceAccountName !== undefined && object.serviceAccountName !== null
+        ? String(object.serviceAccountName)
+        : "";
     return message;
   },
 
@@ -4228,16 +3999,14 @@ export const PackageAppVersion = {
 
   fromJSON(object: any): PackageAppVersion {
     const message = { ...basePackageAppVersion } as PackageAppVersion;
-    if (object.pkgVersion !== undefined && object.pkgVersion !== null) {
-      message.pkgVersion = String(object.pkgVersion);
-    } else {
-      message.pkgVersion = "";
-    }
-    if (object.appVersion !== undefined && object.appVersion !== null) {
-      message.appVersion = String(object.appVersion);
-    } else {
-      message.appVersion = "";
-    }
+    message.pkgVersion =
+      object.pkgVersion !== undefined && object.pkgVersion !== null
+        ? String(object.pkgVersion)
+        : "";
+    message.appVersion =
+      object.appVersion !== undefined && object.appVersion !== null
+        ? String(object.appVersion)
+        : "";
     return message;
   },
 
@@ -4256,7 +4025,12 @@ export const PackageAppVersion = {
   },
 };
 
-const baseResourceRef: object = { apiVersion: "", kind: "", name: "" };
+const baseResourceRef: object = {
+  apiVersion: "",
+  kind: "",
+  name: "",
+  namespace: "",
+};
 
 export const ResourceRef = {
   encode(message: ResourceRef, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -4268,6 +4042,9 @@ export const ResourceRef = {
     }
     if (message.name !== "") {
       writer.uint32(26).string(message.name);
+    }
+    if (message.namespace !== "") {
+      writer.uint32(34).string(message.namespace);
     }
     return writer;
   },
@@ -4288,6 +4065,9 @@ export const ResourceRef = {
         case 3:
           message.name = reader.string();
           break;
+        case 4:
+          message.namespace = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -4298,21 +4078,14 @@ export const ResourceRef = {
 
   fromJSON(object: any): ResourceRef {
     const message = { ...baseResourceRef } as ResourceRef;
-    if (object.apiVersion !== undefined && object.apiVersion !== null) {
-      message.apiVersion = String(object.apiVersion);
-    } else {
-      message.apiVersion = "";
-    }
-    if (object.kind !== undefined && object.kind !== null) {
-      message.kind = String(object.kind);
-    } else {
-      message.kind = "";
-    }
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
+    message.apiVersion =
+      object.apiVersion !== undefined && object.apiVersion !== null
+        ? String(object.apiVersion)
+        : "";
+    message.kind = object.kind !== undefined && object.kind !== null ? String(object.kind) : "";
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.namespace =
+      object.namespace !== undefined && object.namespace !== null ? String(object.namespace) : "";
     return message;
   },
 
@@ -4321,6 +4094,7 @@ export const ResourceRef = {
     message.apiVersion !== undefined && (obj.apiVersion = message.apiVersion);
     message.kind !== undefined && (obj.kind = message.kind);
     message.name !== undefined && (obj.name = message.name);
+    message.namespace !== undefined && (obj.namespace = message.namespace);
     return obj;
   },
 
@@ -4329,6 +4103,7 @@ export const ResourceRef = {
     message.apiVersion = object.apiVersion ?? "";
     message.kind = object.kind ?? "";
     message.name = object.name ?? "";
+    message.namespace = object.namespace ?? "";
     return message;
   },
 };
