@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
@@ -34,16 +35,28 @@ import (
 	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	log "k8s.io/klog/v2"
 )
+
+// LogRequest is a gRPC UnaryServerInterceptor that will log the API call
+func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
+	start := time.Now()
+	res, err := handler(ctx, req)
+	log.Infof("LogRequest - %s %v %s\n",
+		time.Since(start),
+		status.Code(err),
+		info.FullMethod)
+	return res, err
+}
 
 // Serve is the root command that is run when no other sub-commands are present.
 // It runs the gRPC service, registering the configured plugins.
 func Serve(serveOpts core.ServeOptions) error {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(LogRequest))
 	reflection.Register(grpcSrv)
 
 	// Create the http server, register our core service followed by any plugins.
