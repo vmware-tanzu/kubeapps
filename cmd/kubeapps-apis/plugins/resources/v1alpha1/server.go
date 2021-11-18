@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"sync"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,10 +26,16 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	log "k8s.io/klog/v2"
 
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
@@ -47,9 +54,45 @@ type Server struct {
 	// corePackagesClientGetter holds a function to obtain the core.packages.v1alpha1
 	// client. It is similarly initialised in NewServer() below.
 	corePackagesClientGetter func() (pkgsGRPCv1alpha1.PackagesServiceClient, error)
+
+	// We keep a restmapper to cache discovery of REST mappings from GVK->GVR.
+	restMapper meta.RESTMapper
+
+	// kindToResource is a function to convert a GVK to GVR. Can be replaced
+	// in tests with a dummy version using the unsafe helpers while the real
+	// implementation queries the k8s API for a REST mapper.
+	kindToResource func(meta.RESTMapper, schema.GroupVersionKind) (schema.GroupVersionResource, error)
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter) *Server {
+// createRESTMapper returns a rest mapper configured with the APIs of the
+// local k8s API server. This is used to convert between the GroupVersionKinds
+// of the resource references to the GroupVersionResource used by the API server.
+func createRESTMapper() (meta.RESTMapper, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+	// To use the config with RESTClientFor, extra fields are required.
+	// See https://github.com/kubernetes/client-go/issues/657#issuecomment-842960258
+	config.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
+	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+	client, err := rest.RESTClientFor(config)
+	if err != nil {
+		return nil, err
+	}
+	discoveryClient := discovery.NewDiscoveryClient(client)
+	groupResources, err := restmapper.GetAPIGroupResources(discoveryClient)
+	if err != nil {
+		return nil, err
+	}
+	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
+}
+
+func NewServer(configGetter core.KubernetesConfigGetter) (*Server, error) {
+	mapper, err := createRESTMapper()
+	if err != nil {
+		return nil, err
+	}
 	return &Server{
 		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
 			if configGetter == nil {
@@ -77,7 +120,15 @@ func NewServer(configGetter core.KubernetesConfigGetter) *Server {
 			}
 			return pkgsGRPCv1alpha1.NewPackagesServiceClient(conn), nil
 		},
-	}
+		restMapper: mapper,
+		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+			mapping, err := mapper.RESTMapping(gvk.GroupKind())
+			if err != nil {
+				return schema.GroupVersionResource{}, err
+			}
+			return mapping.Resource, nil
+		},
+	}, nil
 }
 
 // GetResources returns the resources for an installed package.
@@ -108,6 +159,9 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	// we return all those found for the installed package. Otherwise
 	// we only return the requested ones.
 	if len(r.GetResourceRefs()) == 0 {
+		if r.GetWatch() {
+			return status.Errorf(codes.InvalidArgument, "resource refs must be specified in request when watching resources")
+		}
 		resourcesToReturn = refsResponse.GetResourceRefs()
 	} else {
 		for _, requestedRef := range r.GetResourceRefs() {
@@ -130,32 +184,163 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	if err != nil {
 		return err
 	}
+	var watchers []*ResourceWatcher
 	for _, ref := range resourcesToReturn {
 		groupVersion, err := schema.ParseGroupVersion(ref.ApiVersion)
 		if err != nil {
 			return status.Errorf(codes.Internal, "unable to parse group version from %q: %s", ref.ApiVersion, err.Error())
 		}
 		gvk := groupVersion.WithKind(ref.Kind)
-		// TODO(minelson): Find alternative to UnsafeGuessKindToResource.
-		gvr, _ := meta.UnsafeGuessKindToResource(gvk)
-		resource, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+
+		gvr, err := s.kindToResource(s.restMapper, gvk)
 		if err != nil {
-			return status.Errorf(codes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
+			return status.Errorf(codes.Internal, "unable to map group-kind %v to resource: %s", gvk.GroupKind(), err.Error())
 		}
 
-		resourceBytes, err := json.Marshal(resource)
-		if err != nil {
-			return status.Errorf(codes.Internal, "unable to marshal json for resource: %s", err.Error())
+		if !r.GetWatch() {
+			resource, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+			if err != nil {
+				return status.Errorf(codes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
+			}
+
+			err = sendResourceData(ref, resource, stream)
+			if err != nil {
+				return err
+			}
+
+			continue
 		}
-		stream.Send(&v1alpha1.GetResourcesResponse{
+
+		watcher, err := dynamicClient.Resource(gvr).Namespace(namespace).Watch(stream.Context(), metav1.ListOptions{})
+		if err != nil {
+			return status.Errorf(codes.Internal, "unable to watch resource %v", ref)
+		}
+		watchers = append(watchers, &ResourceWatcher{
 			ResourceRef: ref,
-			Manifest: &anypb.Any{
-				Value: resourceBytes,
-			},
+			Watcher:     watcher,
 		})
 	}
 
+	// If we're not watching, we're done.
+	if watchers == nil {
+		return nil
+	}
+
+	// Otherwise merge the watchers into a single resourceWatcher and stream the
+	// data as it arrives.
+	resourceWatcher := mergeWatchers(watchers)
+	for e := range resourceWatcher.ResultChan() {
+		sendResourceData(e.ResourceRef, e.Object, stream)
+	}
+
 	return nil
+}
+
+// sendResourceData just DRYs up this functionality shared between requests to
+// watch or get resources.
+func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1alpha1.ResourcesService_GetResourcesServer) error {
+	resourceBytes, err := json.Marshal(obj)
+	if err != nil {
+		return status.Errorf(codes.Internal, "unable to marshal json for resource: %s", err.Error())
+	}
+	s.Send(&v1alpha1.GetResourcesResponse{
+		ResourceRef: ref,
+		Manifest: &anypb.Any{
+			Value: resourceBytes,
+		},
+	})
+
+	return nil
+}
+
+// ResourceEvent embeds a watch.Event and adds the resource ref.
+type ResourceEvent struct {
+	watch.Event
+	ResourceRef *pkgsGRPCv1alpha1.ResourceRef
+}
+
+// mergeWatchers returns a single watcher for many.
+// Inspired by the fan-in merge at https://go.dev/blog/pipelines
+func mergeWatchers(watchers []*ResourceWatcher) *MultiResourceWatcher {
+	var wg sync.WaitGroup
+	out := make(chan ResourceEvent)
+
+	// Start an output goroutine for each input channel in watchers.  output
+	// copies values from c to out until c is closed, then calls wg.Done.
+	output := func(c <-chan ResourceEvent) {
+		for e := range c {
+			log.Errorf("Event received: %+v", e)
+			out <- e
+		}
+		wg.Done()
+	}
+	wg.Add(len(watchers))
+	for _, w := range watchers {
+		go output(w.ResultChan())
+	}
+
+	// Start a goroutine to close out once all the output goroutines are
+	// done.  This must start after the wg.Add call.
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	return &MultiResourceWatcher{
+		StopFn: func() {
+			for _, w := range watchers {
+				w.Stop()
+			}
+		},
+		ResultChanFn: func() <-chan ResourceEvent {
+			return out
+		},
+	}
+}
+
+type MultiResourceWatcher struct {
+	StopFn       func()
+	ResultChanFn func() <-chan ResourceEvent
+}
+
+func (mw *MultiResourceWatcher) Stop() {
+	mw.StopFn()
+}
+
+func (mw *MultiResourceWatcher) ResultChan() <-chan ResourceEvent {
+	return mw.ResultChanFn()
+}
+
+// ResourceWatcher is a watcher that knows the resource its watching.
+type ResourceWatcher struct {
+	Watcher     watch.Interface
+	ResourceRef *pkgsGRPCv1alpha1.ResourceRef
+	resultChan  chan ResourceEvent
+}
+
+func (rw *ResourceWatcher) Stop() {
+	// Calling Watcher.Stop() will close the watcher's result channel
+	// which will cascade below in ResultChan() to close the
+	rw.Watcher.Stop()
+}
+
+func (rw *ResourceWatcher) ResultChan() <-chan ResourceEvent {
+	if rw.resultChan != nil {
+		return rw.resultChan
+	}
+
+	rw.resultChan = make(chan ResourceEvent)
+
+	// Start a go-routine that copies the actual watcher events but with
+	// the extra resource ref.
+	go func() {
+		for e := range rw.Watcher.ResultChan() {
+			rw.resultChan <- ResourceEvent{e, rw.ResourceRef}
+		}
+		close(rw.resultChan)
+	}()
+
+	return rw.resultChan
 }
 
 // copyAuthorizationMetadataForOutgoing explicitly copies the authz from the

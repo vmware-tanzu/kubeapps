@@ -20,6 +20,7 @@ import (
 	"net"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -30,8 +31,10 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
@@ -68,7 +71,7 @@ func resourceRefsForObjects(t *testing.T, objects ...runtime.Object) []*pkgsGRPC
 // and a test core packages service, but using a buf connection (ie. no need for
 // slow network port etc.). More at
 // https://stackoverflow.com/a/52080545
-func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.ResourcesServiceClient, func()) {
+func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.ResourcesServiceClient, *dynfake.FakeDynamicClient, func()) {
 	lis := bufconn.Listen(bufSize)
 	s := grpc.NewServer()
 	bufDialer := func(context.Context, string) (net.Conn, error) {
@@ -87,22 +90,28 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 	}
 	pkgsGRPCv1alpha1.RegisterPackagesServiceServer(s, fakePkgsPluginServer)
 
+	scheme := runtime.NewScheme()
+	fakeDynamicClient := dynfake.NewSimpleDynamicClient(
+		scheme,
+		objects...,
+	)
 	// Create the resources service server.
 	v1alpha1.RegisterResourcesServiceServer(s, &Server{
 		// Use a client getter that returns a dynamic client prepped with the
 		// specified objects.
 		clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-			scheme := runtime.NewScheme()
-			fakeDynamicClient := dynfake.NewSimpleDynamicClient(
-				scheme,
-				objects...,
-			)
 			return nil, fakeDynamicClient, nil
 		},
 		// Use a corePackagesClientGetter that returns a client connected to our
 		// running test service.
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
 			return pkgsGRPCv1alpha1.NewPackagesServiceClient(conn), nil
+		},
+		// For testing, define a kindToResource converter that doesn't require
+		// a rest mapper.
+		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+			gvr, _ := meta.UnsafeGuessKindToResource(gvk)
+			return gvr, nil
 		},
 	})
 
@@ -115,7 +124,7 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 		}
 	}()
 
-	return v1alpha1.NewResourcesServiceClient(conn), func() {
+	return v1alpha1.NewResourcesServiceClient(conn), fakeDynamicClient, func() {
 		conn.Close()
 		lis.Close()
 	}
@@ -282,6 +291,27 @@ func TestGetResources(t *testing.T) {
 			},
 			expectedErrorCode: codes.InvalidArgument,
 		},
+		{
+			name: "it returns invalid argument if request is to watch all packages implicitly (ie. empty resource refs filter in request)",
+			request: &v1alpha1.GetResourcesRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "some-package",
+					Plugin:     fakePkgsPlugin,
+				},
+				Watch: true,
+			},
+			expectedErrorCode: codes.InvalidArgument,
+		},
+		// TODO(minelson): test a watch request also. I've spent quite a bit of
+		// time trying to do so by putting the call to `GetResources` in a go
+		// routine (and passing the results out via response and error channels)
+		// and then deleting the resources via the fake k8s client's object
+		// tracker. From the source code, this should trigger the watch event,
+		// but I didn't succeed (yet).
 	}
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
@@ -292,10 +322,13 @@ func TestGetResources(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			client, cleanup := getResourcesClient(t, tc.clusterObjects...)
+			client, _, cleanup := getResourcesClient(t, tc.clusterObjects...)
 			defer cleanup()
 
-			ctx := context.Background()
+			// Use a context with a timeout to ensure that if a test unexpectedly
+			// waits beyond expectations, we'll see the failure.
+			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+			defer cancel()
 			if !tc.withoutAuthz {
 				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "some-auth-token")
 			}
@@ -305,21 +338,22 @@ func TestGetResources(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			resources := []*v1alpha1.GetResourcesResponse{}
-			for {
+			var resources []*v1alpha1.GetResourcesResponse
+			for numResponses := 0; numResponses < len(tc.expectedResources); numResponses++ {
 				resource, err := responseStream.Recv()
 				if err == io.EOF {
 					break
 				}
 				if err != nil {
 					if got, want := status.Code(err), tc.expectedErrorCode; got != want {
-						t.Fatalf("got: %s, want: %s", got, want)
+						t.Fatalf("got: %s, want: %s, err: %+v", got, want, err)
 					}
 					// If it was an expected error, we continue to the next test.
 					return
 				}
 				resources = append(resources, resource)
 			}
+			responseStream.CloseSend()
 
 			if got, want := resources, tc.expectedResources; !cmp.Equal(got, want, ignoredUnexported, ignoreManifest) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported, ignoreManifest))

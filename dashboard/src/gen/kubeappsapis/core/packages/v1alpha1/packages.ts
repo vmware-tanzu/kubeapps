@@ -1927,26 +1927,15 @@ export const GetAvailablePackageSummariesResponse = {
     const message = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
-    message.availablePackageSummaries = [];
-    message.categories = [];
-    if (
-      object.availablePackageSummaries !== undefined &&
-      object.availablePackageSummaries !== null
-    ) {
-      for (const e of object.availablePackageSummaries) {
-        message.availablePackageSummaries.push(AvailablePackageSummary.fromJSON(e));
-      }
-    }
+    message.availablePackageSummaries = (object.availablePackageSummaries ?? []).map((e: any) =>
+      AvailablePackageSummary.fromJSON(e),
+    );
     if (object.nextPageToken !== undefined && object.nextPageToken !== null) {
       message.nextPageToken = String(object.nextPageToken);
     } else {
       message.nextPageToken = "";
     }
-    if (object.categories !== undefined && object.categories !== null) {
-      for (const e of object.categories) {
-        message.categories.push(String(e));
-      }
-    }
+    message.categories = (object.categories ?? []).map((e: any) => String(e));
     return message;
   },
 
@@ -1974,22 +1963,11 @@ export const GetAvailablePackageSummariesResponse = {
     const message = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
-    message.availablePackageSummaries = [];
-    if (
-      object.availablePackageSummaries !== undefined &&
-      object.availablePackageSummaries !== null
-    ) {
-      for (const e of object.availablePackageSummaries) {
-        message.availablePackageSummaries.push(AvailablePackageSummary.fromPartial(e));
-      }
-    }
+    message.availablePackageSummaries = (object.availablePackageSummaries ?? []).map(e =>
+      AvailablePackageSummary.fromPartial(e),
+    );
     message.nextPageToken = object.nextPageToken ?? "";
-    message.categories = [];
-    if (object.categories !== undefined && object.categories !== null) {
-      for (const e of object.categories) {
-        message.categories.push(e);
-      }
-    }
+    message.categories = (object.categories ?? []).map(e => e);
     return message;
   },
 };
@@ -2108,12 +2086,9 @@ export const GetAvailablePackageVersionsResponse = {
     const message = {
       ...baseGetAvailablePackageVersionsResponse,
     } as GetAvailablePackageVersionsResponse;
-    message.packageAppVersions = [];
-    if (object.packageAppVersions !== undefined && object.packageAppVersions !== null) {
-      for (const e of object.packageAppVersions) {
-        message.packageAppVersions.push(PackageAppVersion.fromJSON(e));
-      }
-    }
+    message.packageAppVersions = (object.packageAppVersions ?? []).map((e: any) =>
+      PackageAppVersion.fromJSON(e),
+    );
     return message;
   },
 
@@ -2135,12 +2110,9 @@ export const GetAvailablePackageVersionsResponse = {
     const message = {
       ...baseGetAvailablePackageVersionsResponse,
     } as GetAvailablePackageVersionsResponse;
-    message.packageAppVersions = [];
-    if (object.packageAppVersions !== undefined && object.packageAppVersions !== null) {
-      for (const e of object.packageAppVersions) {
-        message.packageAppVersions.push(PackageAppVersion.fromPartial(e));
-      }
-    }
+    message.packageAppVersions = (object.packageAppVersions ?? []).map(e =>
+      PackageAppVersion.fromPartial(e),
+    );
     return message;
   },
 };
@@ -2191,15 +2163,9 @@ export const GetInstalledPackageSummariesResponse = {
     const message = {
       ...baseGetInstalledPackageSummariesResponse,
     } as GetInstalledPackageSummariesResponse;
-    message.installedPackageSummaries = [];
-    if (
-      object.installedPackageSummaries !== undefined &&
-      object.installedPackageSummaries !== null
-    ) {
-      for (const e of object.installedPackageSummaries) {
-        message.installedPackageSummaries.push(InstalledPackageSummary.fromJSON(e));
-      }
-    }
+    message.installedPackageSummaries = (object.installedPackageSummaries ?? []).map((e: any) =>
+      InstalledPackageSummary.fromJSON(e),
+    );
     if (object.nextPageToken !== undefined && object.nextPageToken !== null) {
       message.nextPageToken = String(object.nextPageToken);
     } else {
@@ -2227,15 +2193,9 @@ export const GetInstalledPackageSummariesResponse = {
     const message = {
       ...baseGetInstalledPackageSummariesResponse,
     } as GetInstalledPackageSummariesResponse;
-    message.installedPackageSummaries = [];
-    if (
-      object.installedPackageSummaries !== undefined &&
-      object.installedPackageSummaries !== null
-    ) {
-      for (const e of object.installedPackageSummaries) {
-        message.installedPackageSummaries.push(InstalledPackageSummary.fromPartial(e));
-      }
-    }
+    message.installedPackageSummaries = (object.installedPackageSummaries ?? []).map(e =>
+      InstalledPackageSummary.fromPartial(e),
+    );
     message.nextPageToken = object.nextPageToken ?? "";
     return message;
   },
@@ -2549,17 +2509,12 @@ export const GetInstalledPackageResourceRefsResponse = {
     const message = {
       ...baseGetInstalledPackageResourceRefsResponse,
     } as GetInstalledPackageResourceRefsResponse;
-    message.resourceRefs = [];
     if (object.context !== undefined && object.context !== null) {
       message.context = Context.fromJSON(object.context);
     } else {
       message.context = undefined;
     }
-    if (object.resourceRefs !== undefined && object.resourceRefs !== null) {
-      for (const e of object.resourceRefs) {
-        message.resourceRefs.push(ResourceRef.fromJSON(e));
-      }
-    }
+    message.resourceRefs = (object.resourceRefs ?? []).map((e: any) => ResourceRef.fromJSON(e));
     return message;
   },
 
@@ -2586,12 +2541,7 @@ export const GetInstalledPackageResourceRefsResponse = {
     } else {
       message.context = undefined;
     }
-    message.resourceRefs = [];
-    if (object.resourceRefs !== undefined && object.resourceRefs !== null) {
-      for (const e of object.resourceRefs) {
-        message.resourceRefs.push(ResourceRef.fromPartial(e));
-      }
-    }
+    message.resourceRefs = (object.resourceRefs ?? []).map(e => ResourceRef.fromPartial(e));
     return message;
   },
 };
@@ -2676,7 +2626,6 @@ export const AvailablePackageSummary = {
     const message = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
-    message.categories = [];
     if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
       message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
     } else {
@@ -2707,11 +2656,7 @@ export const AvailablePackageSummary = {
     } else {
       message.shortDescription = "";
     }
-    if (object.categories !== undefined && object.categories !== null) {
-      for (const e of object.categories) {
-        message.categories.push(String(e));
-      }
-    }
+    message.categories = (object.categories ?? []).map((e: any) => String(e));
     return message;
   },
 
@@ -2757,12 +2702,7 @@ export const AvailablePackageSummary = {
     message.iconUrl = object.iconUrl ?? "";
     message.displayName = object.displayName ?? "";
     message.shortDescription = object.shortDescription ?? "";
-    message.categories = [];
-    if (object.categories !== undefined && object.categories !== null) {
-      for (const e of object.categories) {
-        message.categories.push(e);
-      }
-    }
+    message.categories = (object.categories ?? []).map(e => e);
     return message;
   },
 };
@@ -2906,9 +2846,6 @@ export const AvailablePackageDetail = {
 
   fromJSON(object: any): AvailablePackageDetail {
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
-    message.sourceUrls = [];
-    message.maintainers = [];
-    message.categories = [];
     if (object.availablePackageRef !== undefined && object.availablePackageRef !== null) {
       message.availablePackageRef = AvailablePackageReference.fromJSON(object.availablePackageRef);
     } else {
@@ -2969,21 +2906,9 @@ export const AvailablePackageDetail = {
     } else {
       message.valuesSchema = "";
     }
-    if (object.sourceUrls !== undefined && object.sourceUrls !== null) {
-      for (const e of object.sourceUrls) {
-        message.sourceUrls.push(String(e));
-      }
-    }
-    if (object.maintainers !== undefined && object.maintainers !== null) {
-      for (const e of object.maintainers) {
-        message.maintainers.push(Maintainer.fromJSON(e));
-      }
-    }
-    if (object.categories !== undefined && object.categories !== null) {
-      for (const e of object.categories) {
-        message.categories.push(String(e));
-      }
-    }
+    message.sourceUrls = (object.sourceUrls ?? []).map((e: any) => String(e));
+    message.maintainers = (object.maintainers ?? []).map((e: any) => Maintainer.fromJSON(e));
+    message.categories = (object.categories ?? []).map((e: any) => String(e));
     if (object.customDetail !== undefined && object.customDetail !== null) {
       message.customDetail = Any.fromJSON(object.customDetail);
     } else {
@@ -3054,24 +2979,9 @@ export const AvailablePackageDetail = {
     message.readme = object.readme ?? "";
     message.defaultValues = object.defaultValues ?? "";
     message.valuesSchema = object.valuesSchema ?? "";
-    message.sourceUrls = [];
-    if (object.sourceUrls !== undefined && object.sourceUrls !== null) {
-      for (const e of object.sourceUrls) {
-        message.sourceUrls.push(e);
-      }
-    }
-    message.maintainers = [];
-    if (object.maintainers !== undefined && object.maintainers !== null) {
-      for (const e of object.maintainers) {
-        message.maintainers.push(Maintainer.fromPartial(e));
-      }
-    }
-    message.categories = [];
-    if (object.categories !== undefined && object.categories !== null) {
-      for (const e of object.categories) {
-        message.categories.push(e);
-      }
-    }
+    message.sourceUrls = (object.sourceUrls ?? []).map(e => e);
+    message.maintainers = (object.maintainers ?? []).map(e => Maintainer.fromPartial(e));
+    message.categories = (object.categories ?? []).map(e => e);
     if (object.customDetail !== undefined && object.customDetail !== null) {
       message.customDetail = Any.fromPartial(object.customDetail);
     } else {
@@ -3861,23 +3771,13 @@ export const FilterOptions = {
 
   fromJSON(object: any): FilterOptions {
     const message = { ...baseFilterOptions } as FilterOptions;
-    message.categories = [];
-    message.repositories = [];
     if (object.query !== undefined && object.query !== null) {
       message.query = String(object.query);
     } else {
       message.query = "";
     }
-    if (object.categories !== undefined && object.categories !== null) {
-      for (const e of object.categories) {
-        message.categories.push(String(e));
-      }
-    }
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(String(e));
-      }
-    }
+    message.categories = (object.categories ?? []).map((e: any) => String(e));
+    message.repositories = (object.repositories ?? []).map((e: any) => String(e));
     if (object.pkgVersion !== undefined && object.pkgVersion !== null) {
       message.pkgVersion = String(object.pkgVersion);
     } else {
@@ -3912,18 +3812,8 @@ export const FilterOptions = {
   fromPartial(object: DeepPartial<FilterOptions>): FilterOptions {
     const message = { ...baseFilterOptions } as FilterOptions;
     message.query = object.query ?? "";
-    message.categories = [];
-    if (object.categories !== undefined && object.categories !== null) {
-      for (const e of object.categories) {
-        message.categories.push(e);
-      }
-    }
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(e);
-      }
-    }
+    message.categories = (object.categories ?? []).map(e => e);
+    message.repositories = (object.repositories ?? []).map(e => e);
     message.pkgVersion = object.pkgVersion ?? "";
     message.appVersion = object.appVersion ?? "";
     return message;

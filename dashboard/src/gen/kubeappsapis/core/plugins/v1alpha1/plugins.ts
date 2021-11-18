@@ -129,12 +129,7 @@ export const GetConfiguredPluginsResponse = {
     const message = {
       ...baseGetConfiguredPluginsResponse,
     } as GetConfiguredPluginsResponse;
-    message.plugins = [];
-    if (object.plugins !== undefined && object.plugins !== null) {
-      for (const e of object.plugins) {
-        message.plugins.push(Plugin.fromJSON(e));
-      }
-    }
+    message.plugins = (object.plugins ?? []).map((e: any) => Plugin.fromJSON(e));
     return message;
   },
 
@@ -152,12 +147,7 @@ export const GetConfiguredPluginsResponse = {
     const message = {
       ...baseGetConfiguredPluginsResponse,
     } as GetConfiguredPluginsResponse;
-    message.plugins = [];
-    if (object.plugins !== undefined && object.plugins !== null) {
-      for (const e of object.plugins) {
-        message.plugins.push(Plugin.fromPartial(e));
-      }
-    }
+    message.plugins = (object.plugins ?? []).map(e => Plugin.fromPartial(e));
     return message;
   },
 };
