@@ -31,8 +31,10 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
@@ -104,6 +106,12 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 		// running test service.
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
 			return pkgsGRPCv1alpha1.NewPackagesServiceClient(conn), nil
+		},
+		// For testing, define a kindToResource converter that doesn't require
+		// a rest mapper.
+		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+			gvr, _ := meta.UnsafeGuessKindToResource(gvk)
+			return gvr, nil
 		},
 	})
 
