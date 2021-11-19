@@ -127,3 +127,46 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 	return response, nil
 }
+
+// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
+func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
+	log.Infof("+kapp-controller GetAvailablePackageVersions")
+
+	// Retrieve the proper parameters from the request
+	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
+	identifier := request.GetAvailablePackageRef().GetIdentifier()
+
+	// Validate the request
+	if namespace == "" || identifier == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
+	}
+
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+
+	// Use the field selector to return only Package CRs that match on the spec.refName.
+	fieldSelector := fmt.Sprintf("spec.refName=%s", identifier)
+	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+	if err != nil {
+		return nil, errorByStatus("get", "Package", "", err)
+	}
+	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO(minelson): support configurable version summary for kapp-controller pkgs
+	// as already done for Helm (see #3588 for more info).
+	versions := make([]*corev1.PackageAppVersion, len(pkgVersionsMap[identifier]))
+	for i, v := range pkgVersionsMap[identifier] {
+		versions[i] = &corev1.PackageAppVersion{
+			PkgVersion: v.version.String(),
+		}
+	}
+
+	return &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: versions,
+	}, nil
+}
