@@ -19,6 +19,7 @@ import (
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	log "k8s.io/klog/v2"
 )
 
 func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.AvailablePackageSummary, error) {
@@ -183,4 +184,127 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 		},
 	}
 	return installedPackageSummary, nil
+}
+
+func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, app *kappctrlv1alpha1.App, valuesApplied, cluster string) (*corev1.InstalledPackageDetail, error) {
+	// get the versions associated with the package
+	versions := pkgVersionsMap[pkgMetadata.Name]
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name)
+	}
+
+	deployStdout := ""
+	deployStderr := ""
+	fetchStdout := ""
+	fetchStderr := ""
+	inspectStdout := ""
+	inspectStderr := ""
+
+	if app.Status.Deploy != nil {
+		deployStdout = app.Status.Deploy.Stdout
+		deployStderr = app.Status.Deploy.Stderr
+	}
+	if app.Status.Fetch != nil {
+		fetchStdout = app.Status.Fetch.Stdout
+		fetchStderr = app.Status.Fetch.Stderr
+	}
+	if app.Status.Inspect != nil {
+		inspectStdout = app.Status.Inspect.Stdout
+		inspectStderr = app.Status.Inspect.Stderr
+	}
+
+	// Build some custom installation notes based on the available stdout + stderr
+	// TODO(agamez): this is just a temporary solution until come up with a better UX solution
+	// short-term improvement is to just display those values != ""
+	postInstallationNotes := fmt.Sprintf(`## Installation output
+
+
+### Deploy:
+%s
+
+
+### Fetch:
+%s
+
+
+### Inspect:
+%s
+
+
+## Errors
+
+
+### Deploy:
+%s
+
+
+### Fetch:
+%s
+
+
+### Inspect:
+%s
+
+`, deployStdout, fetchStdout, inspectStdout, deployStderr, fetchStderr, inspectStderr)
+
+	if len(pkgInstall.Status.Conditions) > 1 {
+		log.Warningf("The package install %s has more than one status conditions. Using the first one: %s", pkgInstall.Name, pkgInstall.Status.Conditions[0])
+	}
+
+	installedPackageDetail := &corev1.InstalledPackageDetail{
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: pkgMetadata.Namespace,
+				Cluster:   cluster,
+			},
+			Plugin:     &pluginDetail,
+			Identifier: pkgInstall.Name,
+		},
+		PkgVersionReference: &corev1.VersionReference{
+			Version: pkgInstall.Status.LastAttemptedVersion,
+		},
+		Name: pkgInstall.Name,
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
+			AppVersion: pkgInstall.Status.LastAttemptedVersion,
+		},
+		ValuesApplied: valuesApplied,
+
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			ServiceAccountName: pkgInstall.Spec.ServiceAccountName,
+		},
+		PostInstallationNotes: postInstallationNotes,
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Context: &corev1.Context{
+				Namespace: pkgMetadata.Namespace,
+				Cluster:   cluster,
+			},
+			Identifier: pkgInstall.Spec.PackageRef.RefName,
+			Plugin:     &pluginDetail,
+		},
+		LatestMatchingVersion: &corev1.PackageAppVersion{
+			PkgVersion: versions[0].version.String(),
+			AppVersion: versions[0].version.String(),
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: versions[0].version.String(),
+			AppVersion: versions[0].version.String(),
+		},
+	}
+
+	// Some fields would require an extra nil check before being populated
+	if app.Spec.SyncPeriod != nil {
+		installedPackageDetail.ReconciliationOptions.Interval = int32(app.Spec.SyncPeriod.Seconds())
+	}
+
+	if pkgInstall.Status.Conditions != nil && &pkgInstall.Status.Conditions[0].Type != nil {
+		installedPackageDetail.Status = &corev1.InstalledPackageStatus{
+			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
+			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
+			UserReason: userReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
+		}
+		installedPackageDetail.ReconciliationOptions.Suspend = pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.Reconciling
+	}
+
+	return installedPackageDetail, nil
 }

@@ -15,6 +15,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -22,6 +23,8 @@ import (
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
 )
 
@@ -340,6 +343,88 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	response := &corev1.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: installedPkgSummariesNilSafe,
 		NextPageToken:             nextPageToken,
+	}
+	return response, nil
+}
+
+// GetInstalledPackageDetail returns the package metadata managed by the 'kapp_controller' plugin
+func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
+	log.Infof("+kapp-controller GetInstalledPackageDetail")
+
+	// Retrieve the proper parameters from the request
+	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
+	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
+	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
+
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+
+	typedClient, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	// fetch the package install
+	pkgInstall, err := s.getPkgInstall(ctx, cluster, namespace, installedPackageRefId)
+	if err != nil {
+		return nil, errorByStatus("get", "PackageInstall", installedPackageRefId, err)
+	}
+
+	// fetch the resulting deployed app after the installation
+	app, err := s.getApp(ctx, cluster, namespace, installedPackageRefId)
+	if err != nil {
+		return nil, errorByStatus("get", "App", installedPackageRefId, err)
+	}
+
+	// retrieve the package metadata associated with this installed package
+	pkgName := pkgInstall.Spec.PackageRef.RefName
+	pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, pkgName)
+	if err != nil {
+		return nil, errorByStatus("get", "PackageMetadata", pkgName, err)
+	}
+
+	// Use the field selector to return only Package CRs that match on the spec.refName.
+	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
+	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+	if err != nil {
+		return nil, errorByStatus("get", "Package", "", err)
+	}
+	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
+	if err != nil {
+		return nil, err
+	}
+
+	// get the values applies i) get the secret name where it is stored; 2) get the values from the secret
+	valuesApplied := ""
+	// retrieve every value and build a single string containing all of them
+	for _, pkgInstallValue := range pkgInstall.Spec.Values {
+		secretRefName := pkgInstallValue.SecretRef.Name
+		// if there is a secret containing the applied values of this installed package, get the them
+		if secretRefName != "" {
+			values, err := typedClient.CoreV1().Secrets(namespace).Get(ctx, secretRefName, metav1.GetOptions{})
+			if err != nil {
+				if errors.IsNotFound(err) {
+					log.Warningf("The referenced secret does not exist: %s", errorByStatus("get", "Secret", secretRefName, err).Error())
+				} else {
+					return nil, errorByStatus("delete", "Secret", secretRefName, err)
+				}
+			}
+			for fileName, valuesContent := range values.Data {
+				valuesApplied = fmt.Sprintf("%s\n# %s\n%s\n---", valuesApplied, fileName, valuesContent)
+			}
+		}
+	}
+	// trim the new doc separator in the last element
+	valuesApplied = strings.Trim(valuesApplied, "---")
+
+	installedPackageDetail, err := s.getInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageDetail: %v", err))
+	}
+
+	response := &corev1.GetInstalledPackageDetailResponse{
+		InstalledPackageDetail: installedPackageDetail,
 	}
 	return response, nil
 }
