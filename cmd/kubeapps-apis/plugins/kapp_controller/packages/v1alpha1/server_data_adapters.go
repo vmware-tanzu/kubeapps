@@ -16,6 +16,8 @@ import (
 	"fmt"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
@@ -133,4 +135,52 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 	}
 
 	return availablePackageDetail, nil
+}
+
+func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.InstalledPackageSummary, error) {
+	// get the versions associated with the package
+	versions := pkgVersionsMap[pkgInstall.Spec.PackageRef.RefName]
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no package versions for the package %q", pkgInstall.Spec.PackageRef.RefName)
+	}
+
+	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
+	// a url, so convert to a data-url.
+	iconUrl := ""
+	if pkgMetadata.Spec.IconSVGBase64 != "" {
+		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+	}
+
+	installedPackageSummary := &corev1.InstalledPackageSummary{
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
+		},
+		IconUrl: iconUrl,
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: pkgMetadata.Namespace,
+				Cluster:   cluster,
+			},
+			Plugin:     &pluginDetail,
+			Identifier: pkgInstall.Name,
+		},
+		LatestMatchingVersion: &corev1.PackageAppVersion{
+			PkgVersion: versions[0].version.String(),
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: versions[0].version.String(),
+		},
+		Name:           pkgInstall.Name,
+		PkgDisplayName: pkgMetadata.Spec.DisplayName,
+		PkgVersionReference: &corev1.VersionReference{
+			Version: pkgInstall.Status.LastAttemptedVersion,
+		},
+		ShortDescription: pkgMetadata.Spec.ShortDescription,
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
+			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
+			UserReason: userReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
+		},
+	}
+	return installedPackageSummary, nil
 }

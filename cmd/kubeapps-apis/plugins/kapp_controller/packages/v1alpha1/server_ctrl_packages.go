@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -237,4 +238,108 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: availablePackageDetail,
 	}, nil
+}
+
+// GetInstalledPackageSummaries returns the installed packagesmanaged by the 'kapp_controller' plugin
+func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
+	log.Infof("+kapp-controller GetInstalledPackageSummaries")
+	// Retrieve the proper parameters from the request
+	namespace := request.GetContext().GetNamespace()
+	cluster := request.GetContext().GetCluster()
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+	}
+
+	// Assume the default cluster if none is specified
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+
+	// retrieve the list of installed packages
+	pkgInstalls, err := s.getPkgInstalls(ctx, cluster, namespace)
+	if err != nil {
+		return nil, errorByStatus("get", "PackageInstall", "", err)
+	}
+
+	// paginate the list of results
+	installedPkgSummaries := make([]*corev1.InstalledPackageSummary, len(pkgInstalls))
+
+	// create the waiting group for processing each item aynchronously
+	var wg sync.WaitGroup
+	if len(pkgInstalls) > 0 {
+		startAt := -1
+		if pageSize > 0 {
+			startAt = int(pageSize) * pageOffset
+		}
+		for i, pkgInstall := range pkgInstalls {
+			wg.Add(1)
+			if startAt <= i {
+				go func(i int, pkgInstall *packagingv1alpha1.PackageInstall) error {
+					defer wg.Done()
+					// fetch additional information from the package metadata
+					// TODO(agamez): if the repository where the package belongs to is not installed, it will throw an error;
+					// decide whether we should ignore it or it is ok with returning an error
+					pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, pkgInstall.Spec.PackageRef.RefName)
+					if err != nil {
+						return errorByStatus("get", "PackageMetadata", pkgInstall.Spec.PackageRef.RefName, err)
+					}
+
+					// Use the field selector to return only Package CRs that match on the spec.refName.
+					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgInstall.Spec.PackageRef.RefName)
+					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+					if err != nil {
+						return errorByStatus("get", "Package", "", err)
+					}
+					pkgVersionsMap, err := getPkgVersionsMap(pkgs)
+					if err != nil {
+						return err
+					}
+
+					// generate the installedPackageSummary from the fetched information
+					installedPackageSummary, err := s.getInstalledPackageSummary(pkgInstall, pkgMetadata, pkgVersionsMap, cluster)
+					if err != nil {
+						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
+					}
+
+					// append the availablePackageSummary to the slice
+					installedPkgSummaries[i] = installedPackageSummary
+
+					return nil
+				}(i, pkgInstall)
+			}
+			// if we've reached the end of the page, stop iterating
+			if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
+				break
+			}
+		}
+	}
+	// Wait until each goroutine has finished
+	wg.Wait()
+
+	// TODO(agamez): the slice with make is filled with <nil>, in case of an error in the
+	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
+	// been able so far.
+	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
+
+	// filter out <nil> values
+	installedPkgSummariesNilSafe := []*corev1.InstalledPackageSummary{}
+	for _, installedPkgSummary := range installedPkgSummaries {
+		if installedPkgSummary != nil {
+			installedPkgSummariesNilSafe = append(installedPkgSummariesNilSafe, installedPkgSummary)
+		}
+	}
+
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+	if pageSize > 0 && len(installedPkgSummariesNilSafe) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	}
+	response := &corev1.GetInstalledPackageSummariesResponse{
+		InstalledPackageSummaries: installedPkgSummariesNilSafe,
+		NextPageToken:             nextPageToken,
+	}
+	return response, nil
 }
