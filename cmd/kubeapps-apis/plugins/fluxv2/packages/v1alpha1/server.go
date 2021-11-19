@@ -66,10 +66,10 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 	repoCacheConfig := namespacedResourceWatcherCacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: newBackgroundClientGetter(),
-		onAdd:        onAddRepo,
-		onModify:     onModifyRepo,
-		onGet:        onGetRepo,
-		onDelete:     onDeleteRepo,
+		onAddFunc:    onAddRepo,
+		onModifyFunc: onModifyRepo,
+		onGetFunc:    onGetRepo,
+		onDeleteFunc: onDeleteRepo,
 	}
 	if redisCli, err := newRedisClientFromEnv(); err != nil {
 		return nil, err

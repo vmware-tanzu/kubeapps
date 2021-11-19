@@ -524,11 +524,11 @@ func randSeq(n int) string {
 func newGrpcContext(t *testing.T, name string) context.Context {
 	token, err := kubeCreateAdminServiceAccount(t, name, "default")
 	if err != nil {
-		t.Fatalf("%+v", err)
+		t.Fatalf("Failed to create service account due to: %+v", err)
 	}
 	t.Cleanup(func() {
 		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
-			t.Logf("Failed to delete service account due to [%v]", err)
+			t.Logf("Failed to delete service account due to: %+v", err)
 		}
 	})
 	return metadata.NewOutgoingContext(

@@ -671,7 +671,11 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
 		s.repoCache.eventProcessedWaitGroup.Add(1)
-		mock.ExpectDel(redisKeyForRuntimeObject(repo)).SetVal(0)
+		if key, err := redisKeyForRuntimeObject(repo); err != nil {
+			t.Fatalf("%v", err)
+		} else {
+			mock.ExpectDel(key).SetVal(0)
+		}
 		if err = dyncli.Resource(repositoriesGvr).Namespace("default").Delete(context.Background(), "bitnami-1", metav1.DeleteOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -1005,7 +1009,11 @@ func redisMockBeforeCallToGetAvailablePackageSummaries(mock redismock.ClientMock
 }
 
 func redisMockSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key string, bytes []byte, err error) {
+	if _, err = redisKeyForRuntimeObject(repo); err != nil {
+		return "", nil, err
+	}
 	if key, bytes, err := redisKeyValueForRuntimeObject(repo); err != nil {
+		mock.ExpectDel(key).SetVal(0)
 		return "", nil, err
 	} else {
 		mock.ExpectSet(key, bytes, 0).SetVal("OK")
@@ -1015,17 +1023,20 @@ func redisMockSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (k
 }
 
 func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
-	key := redisKeyForRuntimeObject(r)
-	// we are not really adding anything to the cache here, rather just calling a
-	// onAddRepo to compute the value that *WOULD* be stored in the cache
-	bytes, _, err := onAddRepo(key, r.(*unstructured.Unstructured).Object)
-	if err != nil {
+	if key, err := redisKeyForRuntimeObject(r); err != nil {
 		return "", nil, err
+	} else {
+		// we are not really adding anything to the cache here, rather just calling a
+		// onAddRepo to compute the value that *WOULD* be stored in the cache
+		bytes, _, err := onAddRepo(key, r.(*unstructured.Unstructured).Object)
+		if err != nil {
+			return key, nil, err
+		}
+		return key, bytes.([]byte), nil
 	}
-	return key, bytes.([]byte), nil
 }
 
-func redisKeyForRuntimeObject(r runtime.Object) string {
+func redisKeyForRuntimeObject(r runtime.Object) (string, error) {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
@@ -1035,12 +1046,15 @@ func redisKeyForRuntimeObject(r runtime.Object) string {
 		Name:      r.(*unstructured.Unstructured).GetName()})
 }
 
-func redisKeyForNamespacedName(name types.NamespacedName) string {
+func redisKeyForNamespacedName(name types.NamespacedName) (string, error) {
+	if name.Name == "" || name.Namespace == "" {
+		return "", fmt.Errorf("invalid key: [%s]", name)
+	}
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name)
+	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
 func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Server, *unstructured.Unstructured, error) {

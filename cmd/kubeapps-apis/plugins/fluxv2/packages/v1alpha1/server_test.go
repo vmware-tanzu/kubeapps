@@ -172,10 +172,14 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
 			s.repoCache.eventProcessedWaitGroup = nil
 			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
-				key := redisKeyForRuntimeObject(tc.repo)
-				if _, err := s.repoCache.fromKey(key); err == nil {
+				if key, err := redisKeyForRuntimeObject(tc.repo); err == nil {
+					// TODO explain why 3 calls to ExpectGet. It has to do with the way
+					// the caching internals work: a call such as GetAvailablePackageSummaries
+					// will cause multiple fetches
 					mock.ExpectGet(key).RedisNil()
 					mock.ExpectGet(key).RedisNil()
+					mock.ExpectGet(key).RedisNil()
+					mock.ExpectDel(key).SetVal(0)
 				}
 			}
 
@@ -183,19 +187,11 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				context.Background(),
 				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 
-			if err == nil && tc.statusCode != codes.OK {
-				t.Fatalf("got: nil, want: error")
-			}
-
 			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Errorf("got: %+v, error: %v, want: %+v", got, err, want)
-
-				if got == codes.OK {
-					if len(response.AvailablePackageSummaries) != 0 {
-						t.Errorf("unexpected response: %v", response)
-					} else if response != nil {
-						t.Errorf("unexpected response: %v", response)
-					}
+				t.Fatalf("got: %+v, error: %v, want: %+v", got, err, want)
+			} else if got == codes.OK {
+				if response == nil || len(response.AvailablePackageSummaries) != 0 {
+					t.Fatalf("unexpected response: %v", response)
 				}
 			}
 
@@ -219,7 +215,7 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 	mock.MatchExpectationsInOrder(false)
 
 	if clientGetter != nil {
-		// if client getter returns an error, this call does not take place, because
+		// if client getter returns an error, FLUSHDB call does not take place, because
 		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
 		if _, _, err := clientGetter(context.TODO()); err == nil {
 			mock.ExpectFlushDB().SetVal("OK")
@@ -229,18 +225,18 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 	config := namespacedResourceWatcherCacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: clientGetter,
-		onAdd:        onAddRepo,
-		onModify:     onModifyRepo,
-		onGet:        onGetRepo,
-		onDelete:     onDeleteRepo,
+		onAddFunc:    onAddRepo,
+		onModifyFunc: onModifyRepo,
+		onGetFunc:    onGetRepo,
+		onDeleteFunc: onDeleteRepo,
 	}
 	eventProcessingWaitGroup := &sync.WaitGroup{}
 
 	for _, r := range repos {
 		eventProcessingWaitGroup.Add(1)
 		if isRepoReady(r.(*unstructured.Unstructured).Object) {
-			// we are willfully ignoring any errors coming from redisSetValueForRepo here
-			// and just skipping over to next repo
+			// we are willfully ignoring any errors coming from redisMockSetValueForRepo()
+			// here and just skipping over to next repo
 			redisMockSetValueForRepo(r, mock)
 		}
 	}
