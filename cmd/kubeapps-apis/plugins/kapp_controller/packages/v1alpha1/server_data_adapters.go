@@ -17,6 +17,7 @@ import (
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -311,6 +312,37 @@ func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.Package
 	}
 
 	return installedPackageDetail, nil
+}
+
+func getPackageRepository(pr *packagingv1alpha1.PackageRepository) (*v1alpha1.PackageRepository, error) {
+	// See the PackageRepository CR at
+	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
+	urlPaths := []string{
+		pr.Spec.Fetch.ImgpkgBundle.Image,
+		pr.Spec.Fetch.Image.URL,
+		pr.Spec.Fetch.HTTP.URL,
+		pr.Spec.Fetch.Git.URL,
+	}
+
+	repoURL := ""
+	for _, url := range urlPaths {
+		if url != "" {
+			repoURL = url
+			break
+		}
+	}
+	if repoURL == "" {
+		return nil, fmt.Errorf("packagerepository without fetch of one of imgpkgBundle, image, http or git: %v", pr)
+	}
+
+	repo := &v1alpha1.PackageRepository{
+		Name:      pr.Name,
+		Namespace: pr.Namespace,
+		Url:       repoURL,
+		Plugin:    &pluginDetail,
+	}
+
+	return repo, nil
 }
 
 func (s *Server) newSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
