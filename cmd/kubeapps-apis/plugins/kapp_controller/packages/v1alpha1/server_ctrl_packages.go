@@ -170,3 +170,71 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		PackageAppVersions: versions,
 	}, nil
 }
+
+// GetAvailablePackageDetail returns the package metadata managed by the 'kapp_controller' plugin
+func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
+	log.Infof("+kapp-controller GetAvailablePackageDetail")
+
+	// Validate the request
+	if request.GetAvailablePackageRef().GetContext() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef.Context provided")
+	}
+
+	// Retrieve the proper parameters from the request
+	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
+	identifier := request.GetAvailablePackageRef().GetIdentifier()
+	requestedPkgVersion := request.GetPkgVersion()
+
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+
+	// fetch the package metadata
+	pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, identifier)
+	if err != nil {
+		return nil, errorByStatus("get", "PackageMetadata", identifier, err)
+	}
+
+	// Use the field selector to return only Package CRs that match on the spec.refName.
+	fieldSelector := fmt.Sprintf("spec.refName=%s", identifier)
+	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+	if err != nil {
+		return nil, errorByStatus("get", "Package", identifier, err)
+	}
+	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
+	if err != nil {
+		return nil, err
+	}
+
+	var foundPkgSemver = &pkgSemver{}
+	if requestedPkgVersion != "" {
+		// Ensure the version is available.
+		for _, v := range pkgVersionsMap[identifier] {
+			if v.version.String() == requestedPkgVersion {
+				foundPkgSemver = &v
+				break
+			}
+		}
+		if foundPkgSemver.version == nil {
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find %q package with version %q", identifier, requestedPkgVersion))
+		}
+	} else {
+		// If the pkgVersion wasn't specified, grab the packages to find the latest.
+		if len(pkgVersionsMap[identifier]) > 0 {
+			foundPkgSemver = &pkgVersionsMap[identifier][0]
+			requestedPkgVersion = foundPkgSemver.version.String()
+		} else {
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", identifier))
+		}
+	}
+
+	availablePackageDetail, err := s.getAvailablePackageDetail(pkgMetadata, requestedPkgVersion, foundPkgSemver, cluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageDetail: %v", err))
+	}
+
+	return &corev1.GetAvailablePackageDetailResponse{
+		AvailablePackageDetail: availablePackageDetail,
+	}, nil
+}
