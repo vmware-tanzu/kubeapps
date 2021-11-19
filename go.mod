@@ -68,6 +68,8 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/negroni v1.0.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.30.0
+	github.com/vmware-tanzu/carvel-vendir v0.23.0
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/genproto v0.0.0-20211115160612-a5da7257a6f7
