@@ -22,6 +22,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
@@ -89,7 +90,7 @@ func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*un
 // here chartVersion string, if specified at all, should be specific, like "14.4.0",
 // not an expression like ">14 <15"
 func (s *Server) getChartTarballUrl(ctx context.Context, repoUnstructured *unstructured.Unstructured, chartName, chartVersion string) (tarUrl string, cleanUp func(), err error) {
-	repo, err := namespacedName(repoUnstructured.Object)
+	repo, err := common.NamespacedName(repoUnstructured.Object)
 	if err != nil {
 		return "", nil, err
 	}
@@ -148,7 +149,7 @@ func (s *Server) getChartTarballUrl(ctx context.Context, repoUnstructured *unstr
 		}
 	}
 
-	log.V(4).Infof("Created chart: [%v]", prettyPrintMap(newChart.Object))
+	log.V(4).Infof("Created chart: [%v]", common.PrettyPrintMap(newChart.Object))
 
 	// Delete the created helm chart regardless of success or failure. At the end of
 	// GetAvailablePackageDetail(), we've already collected the information we need,
@@ -156,7 +157,7 @@ func (s *Server) getChartTarballUrl(ctx context.Context, repoUnstructured *unstr
 	// Over time, they could accumulate to a very large number...
 	cleanUp = func() {
 		if err = resourceIfc.Delete(ctx, newChart.GetName(), metav1.DeleteOptions{}); err != nil {
-			log.Errorf("Failed to delete flux helm chart [%v]", prettyPrintMap(newChart.Object))
+			log.Errorf("Failed to delete flux helm chart [%v]", common.PrettyPrintMap(newChart.Object))
 		}
 	}
 
@@ -189,8 +190,8 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	key := s.repoCache.keyForNamespacedName(repo)
-	if entry, err := s.repoCache.getForOne(key); err != nil {
+	key := s.repoCache.KeyForNamespacedName(repo)
+	if entry, err := s.repoCache.GetForOne(key); err != nil {
 		return nil, err
 	} else if entry != nil {
 		if typedEntry, ok := entry.(repoCacheEntry); !ok {
@@ -232,7 +233,7 @@ func waitUntilChartPullComplete(ctx context.Context, watcher watch.Interface) (s
 
 	// unit test-related trigger that allows another concurrently running goroutine to
 	// mock sending a watch Modify event to the channel at this point
-	wg, ok := fromContext(ctx)
+	wg, ok := common.FromContext(ctx)
 	if ok && wg != nil {
 		wg.Done()
 	}

@@ -23,6 +23,8 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -39,7 +41,7 @@ const KubeappsCluster = "default"
 func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter clientGetter
+		clientGetter common.ClientGetterFunc
 		statusCode   codes.Code
 	}{
 		{
@@ -170,7 +172,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
 			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
-			s.repoCache.eventProcessedWaitGroup = nil
+			s.repoCache.EventProcessedWaitGroup = nil
 			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
 				if key, err := redisKeyForRuntimeObject(tc.repo); err == nil {
 					// TODO explain why 3 calls to ExpectGet. It has to do with the way
@@ -210,7 +212,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 // a call to fake.NewSimpleDynamicClientWithCustomListKinds. The reason for argument repos
 // (unlike charts or releases) is that repos are treated special because
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
-func newServer(clientGetter clientGetter, actionConfig *action.Configuration, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
+func newServer(clientGetter common.ClientGetterFunc, actionConfig *action.Configuration, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
 	redisCli, mock := redismock.NewClientMock()
 	mock.MatchExpectationsInOrder(false)
 
@@ -222,13 +224,13 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 		}
 	}
 
-	config := namespacedResourceWatcherCacheConfig{
-		gvr:          repositoriesGvr,
-		clientGetter: clientGetter,
-		onAddFunc:    onAddRepo,
-		onModifyFunc: onModifyRepo,
-		onGetFunc:    onGetRepo,
-		onDeleteFunc: onDeleteRepo,
+	config := cache.NamespacedResourceWatcherCacheConfig{
+		Gvr:          repositoriesGvr,
+		ClientGetter: clientGetter,
+		OnAddFunc:    onAddRepo,
+		OnModifyFunc: onModifyRepo,
+		OnGetFunc:    onGetRepo,
+		OnDeleteFunc: onDeleteRepo,
 	}
 	eventProcessingWaitGroup := &sync.WaitGroup{}
 
@@ -241,7 +243,7 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 		}
 	}
 
-	cache, err := newNamespacedResourceWatcherCache(config, redisCli, eventProcessingWaitGroup)
+	cache, err := cache.NewNamespacedResourceWatcherCache(config, redisCli, eventProcessingWaitGroup)
 	if err != nil {
 		return nil, mock, err
 	}

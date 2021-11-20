@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -116,7 +117,7 @@ func (s *Server) filterReadyReposByName(repoList *unstructured.UnstructuredList,
 			// just skip it
 			continue
 		}
-		name, err := namespacedName(repo.Object)
+		name, err := common.NamespacedName(repo.Object)
 		if err != nil {
 			// just skip it
 			continue
@@ -133,7 +134,7 @@ func (s *Server) filterReadyReposByName(repoList *unstructured.UnstructuredList,
 			matched = true
 		}
 		if matched {
-			resultKeys = append(resultKeys, s.repoCache.keyForNamespacedName(*name))
+			resultKeys = append(resultKeys, s.repoCache.KeyForNamespacedName(*name))
 		}
 	}
 	return resultKeys, nil
@@ -153,7 +154,7 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		return nil, err
 	}
 
-	chartsUntyped, err := s.repoCache.getForMultiple(repoNames)
+	chartsUntyped, err := s.repoCache.GetForMultiple(repoNames)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +184,7 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 func isRepoReady(unstructuredRepo map[string]interface{}) bool {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
 	// Confirm the state we are observing is for the current generation
-	if !checkGeneration(unstructuredRepo) {
+	if !common.CheckGeneration(unstructuredRepo) {
 		return false
 	}
 
@@ -250,7 +251,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) (charts []models.Char
 }
 
 func packageRepositoryFromUnstructured(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
-	name, err := namespacedName(unstructuredRepo)
+	name, err := common.NamespacedName(unstructuredRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +260,7 @@ func packageRepositoryFromUnstructured(unstructuredRepo map[string]interface{}) 
 	if err != nil || !found {
 		return nil, status.Errorf(
 			codes.Internal,
-			"required field spec.url not found on HelmRepository:\n%s, error: %v", prettyPrintMap(unstructuredRepo), err)
+			"required field spec.url not found on HelmRepository:\n%s, error: %v", common.PrettyPrintMap(unstructuredRepo), err)
 	}
 	return &v1alpha1.PackageRepository{
 		Name:      name.Name,
@@ -275,7 +276,7 @@ func packageRepositoryFromUnstructured(unstructuredRepo map[string]interface{}) 
 // docs:
 // 1. https://fluxcd.io/docs/components/source/helmrepositories/#status-examples
 func isHelmRepositoryReady(unstructuredObj map[string]interface{}) (complete bool, success bool, reason string) {
-	if !checkGeneration(unstructuredObj) {
+	if !common.CheckGeneration(unstructuredObj) {
 		return false, false, ""
 	}
 
@@ -334,7 +335,7 @@ func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}
 		if err != nil || !found {
 			return nil, false, status.Errorf(codes.Internal,
 				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
-				prettyPrintMap(unstructuredRepo), err)
+				common.PrettyPrintMap(unstructuredRepo), err)
 		}
 		return indexAndEncode(checksum, unstructuredRepo)
 	} else {
@@ -358,7 +359,7 @@ func onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue 
 			return nil, false, status.Errorf(
 				codes.Internal,
 				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
-				prettyPrintMap(unstructuredRepo), err)
+				common.PrettyPrintMap(unstructuredRepo), err)
 		}
 
 		cacheEntryUntyped, err := onGetRepo(key, oldValue)

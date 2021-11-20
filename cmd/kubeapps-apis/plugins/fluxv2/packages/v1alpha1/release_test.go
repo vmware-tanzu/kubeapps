@@ -27,6 +27,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -255,7 +256,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			for i, existing := range tc.existingObjs {
 				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
-					pageOffset, err := pageOffsetFromPageToken(tc.request.GetPaginationOptions().GetPageToken())
+					pageOffset, err := common.PageOffsetFromPageToken(tc.request.GetPaginationOptions().GetPageToken())
 					if err != nil {
 						t.Fatalf("%+v", err)
 					}

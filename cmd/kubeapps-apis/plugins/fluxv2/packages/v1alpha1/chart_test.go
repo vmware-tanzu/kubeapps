@@ -28,6 +28,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -146,7 +147,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			chartCountBefore := createdChartCount
 
-			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
+			response, err := s.GetAvailablePackageDetail(common.NewContext(context.Background(), &wg), tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -360,7 +361,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				watcher.Modify(chart)
 			}()
 
-			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
+			response, err := s.GetAvailablePackageDetail(common.NewContext(context.Background(), &wg), tc.request)
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}

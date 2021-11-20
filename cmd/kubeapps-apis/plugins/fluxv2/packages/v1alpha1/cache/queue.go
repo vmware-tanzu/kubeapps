@@ -14,15 +14,13 @@ Inspired by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/
          by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/rate_limiting_queue.go
 	but adds a critical WaitUntilDoneWith() func
 */
-package main
+package cache
 
 import (
 	"sync"
-	"time"
 
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/client-go/util/workqueue"
-	log "k8s.io/klog/v2"
 )
 
 // rateLimitingInterface is an interface that rate limits items being added to the queue.
@@ -73,7 +71,8 @@ func newQueue() *Type {
 	}
 }
 
-// Type is a work queue (see the package comment).
+// Type is a work queue.
+// Ref https://pkg.go.dev/k8s.io/client-go/util/workqueue
 type Type struct {
 	// queue defines the order in which we will work on items. Every
 	// element of queue should be in the dirty set and not in the
@@ -93,8 +92,7 @@ type Type struct {
 
 	shuttingDown bool
 
-	unfinishedWorkUpdatePeriod time.Duration
-	clock                      clock.Clock
+	clock clock.Clock
 }
 
 type empty struct{}
@@ -116,8 +114,6 @@ func (s set) delete(item t) {
 
 // Add marks item as needing processing.
 func (q *Type) Add(item interface{}) {
-	log.Infof("+Add(%s)", item)
-	defer log.Infof("-Add()")
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 	if q.shuttingDown {
@@ -149,8 +145,6 @@ func (q *Type) Len() int {
 // the caller should end their goroutine. You must call Done with item when you
 // have finished processing it.
 func (q *Type) Get() (item interface{}, shutdown bool) {
-	log.Infof("+Get()")
-	defer log.Infof("-Get()")
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 	for {

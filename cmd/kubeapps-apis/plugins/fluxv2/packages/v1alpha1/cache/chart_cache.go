@@ -10,7 +10,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package cache
 
 import (
 	"github.com/go-redis/redis/v8"
@@ -19,19 +19,19 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-type chartCache struct {
+type ChartCache struct {
 	redisCli  *redis.Client
-	repoCache *namespacedResourceWatcherCache
+	repoCache *NamespacedResourceWatcherCache
 }
 
-func newChartCache(redisCli *redis.Client, repoCache *namespacedResourceWatcherCache) (*chartCache, error) {
-	log.Infof("+newChartCache(%v)", redisCli)
+func NewChartCache(redisCli *redis.Client, repoCache *NamespacedResourceWatcherCache) (*ChartCache, error) {
+	log.Infof("+NewChartCache(%v)", redisCli)
 
 	if redisCli == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
 	}
 
-	c := chartCache{
+	c := ChartCache{
 		redisCli:  redisCli,
 		repoCache: repoCache,
 	}

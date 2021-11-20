@@ -17,8 +17,6 @@ import (
 	"fmt"
 	"strings"
 
-	"helm.sh/helm/v3/pkg/action"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,6 +25,8 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -34,9 +34,6 @@ import (
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
-
-type clientGetter func(context.Context) (dynamic.Interface, apiext.Interface, error)
-type helmActionConfigGetter func(ctx context.Context, namespace string) (*action.Configuration, error)
 
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
@@ -47,11 +44,11 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter       clientGetter
-	actionConfigGetter helmActionConfigGetter
+	clientGetter       common.ClientGetterFunc
+	actionConfigGetter common.HelmActionConfigGetterFunc
 
-	repoCache  *namespacedResourceWatcherCache
-	chartCache *chartCache
+	repoCache  *cache.NamespacedResourceWatcherCache
+	chartCache *cache.ChartCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -63,24 +60,24 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories,
 	}
-	repoCacheConfig := namespacedResourceWatcherCacheConfig{
-		gvr:          repositoriesGvr,
-		clientGetter: newBackgroundClientGetter(),
-		onAddFunc:    onAddRepo,
-		onModifyFunc: onModifyRepo,
-		onGetFunc:    onGetRepo,
-		onDeleteFunc: onDeleteRepo,
+	repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
+		Gvr:          repositoriesGvr,
+		ClientGetter: common.NewBackgroundClientGetter(),
+		OnAddFunc:    onAddRepo,
+		OnModifyFunc: onModifyRepo,
+		OnGetFunc:    onGetRepo,
+		OnDeleteFunc: onDeleteRepo,
 	}
-	if redisCli, err := newRedisClientFromEnv(); err != nil {
+	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
 		return nil, err
-	} else if repoCache, err := newNamespacedResourceWatcherCache(repoCacheConfig, redisCli, nil); err != nil {
+	} else if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli, nil); err != nil {
 		return nil, err
-	} else if chartCache, err := newChartCache(redisCli, repoCache); err != nil {
+	} else if chartCache, err := cache.NewChartCache(redisCli, repoCache); err != nil {
 		return nil, err
 	} else {
 		return &Server{
-			clientGetter:       newClientGetter(configGetter, kubeappsCluster),
-			actionConfigGetter: newHelmActionConfigGetter(configGetter, kubeappsCluster),
+			clientGetter:       common.NewClientGetter(configGetter, kubeappsCluster),
+			actionConfigGetter: common.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
 			repoCache:          repoCache,
 			chartCache:         chartCache,
 			kubeappsCluster:    kubeappsCluster,
@@ -166,7 +163,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := common.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
@@ -228,7 +225,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
+	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +295,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 			cluster)
 	}
 
-	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
+	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +320,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetInstalledPackageSummaries [%v]", request)
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := common.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
