@@ -12,20 +12,21 @@ limitations under the License.
 
 Inspired by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/queue.go and
          by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/rate_limiting_queue.go
-	but adds a critical WaitUntilDoneWith() func
+	but adds a couple of funcs: Expect() and WaitUntilDoneWith()
 */
 package cache
 
 import (
 	"sync"
 
-	"k8s.io/apimachinery/pkg/util/clock"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"k8s.io/client-go/util/workqueue"
 )
 
 // rateLimitingInterface is an interface that rate limits items being added to the queue.
 type rateLimitingInterface interface {
 	workqueue.RateLimitingInterface
+	ExpectAdd(item interface{})
 	WaitUntilDoneWith(item interface{})
 }
 
@@ -58,15 +59,19 @@ func (q *rateLimitingType) Forget(item interface{}) {
 	q.rateLimiter.Forget(item)
 }
 
+func (q *rateLimitingType) ExpectAdd(item interface{}) {
+	q.queue.expectAdd(item)
+}
+
 func (q *rateLimitingType) WaitUntilDoneWith(item interface{}) {
 	q.queue.waitUntilDoneWith(item)
 }
 
 func newQueue() *Type {
 	return &Type{
-		clock:      clock.RealClock{},
-		dirty:      set{},
-		processing: set{},
+		expected:   common.HashSet{},
+		dirty:      common.HashSet{},
+		processing: common.HashSet{},
 		cond:       sync.NewCond(&sync.Mutex{}),
 	}
 }
@@ -77,54 +82,41 @@ type Type struct {
 	// queue defines the order in which we will work on items. Every
 	// element of queue should be in the dirty set and not in the
 	// processing set.
-	queue []t
+	queue []common.T
+
+	// expected defines all of the items that are expected to be processed.
+	// Used in unit tests only
+	expected common.HashSet
 
 	// dirty defines all of the items that need to be processed.
-	dirty set
+	dirty common.HashSet
 
 	// Things that are currently being processed are in the processing set.
 	// These things may be simultaneously in the dirty set. When we finish
 	// processing something and remove it from this set, we'll check if
 	// it's in the dirty set, and if so, add it to the queue.
-	processing set
+	processing common.HashSet
 
 	cond *sync.Cond
 
 	shuttingDown bool
-
-	clock clock.Clock
-}
-
-type empty struct{}
-type t interface{}
-type set map[t]empty
-
-func (s set) has(item t) bool {
-	_, exists := s[item]
-	return exists
-}
-
-func (s set) insert(item t) {
-	s[item] = empty{}
-}
-
-func (s set) delete(item t) {
-	delete(s, item)
 }
 
 // Add marks item as needing processing.
 func (q *Type) Add(item interface{}) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
+
 	if q.shuttingDown {
 		return
 	}
-	if q.dirty.has(item) {
+	q.expected.Delete(item)
+	if q.dirty.Has(item) {
 		return
 	}
 
-	q.dirty.insert(item)
-	if q.processing.has(item) {
+	q.dirty.Insert(item)
+	if q.processing.Has(item) {
 		return
 	}
 
@@ -138,6 +130,7 @@ func (q *Type) Add(item interface{}) {
 func (q *Type) Len() int {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
+
 	return len(q.queue)
 }
 
@@ -156,8 +149,8 @@ func (q *Type) Get() (item interface{}, shutdown bool) {
 			return nil, true
 		} else if len(q.queue) > 0 {
 			item, q.queue = q.queue[0], q.queue[1:]
-			q.processing.insert(item)
-			q.dirty.delete(item)
+			q.processing.Insert(item)
+			q.dirty.Delete(item)
 			return item, false
 		}
 	}
@@ -170,8 +163,8 @@ func (q *Type) Done(item interface{}) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
-	q.processing.delete(item)
-	if q.dirty.has(item) {
+	q.processing.Delete(item)
+	if q.dirty.Has(item) {
 		q.queue = append(q.queue, item)
 	}
 	q.cond.Broadcast()
@@ -195,12 +188,25 @@ func (q *Type) ShuttingDown() bool {
 	return q.shuttingDown
 }
 
+// Add marks item as expected to be processed in the near future
+// Used in unit tests only
+func (q *Type) expectAdd(item interface{}) {
+	q.cond.L.Lock()
+	defer q.cond.L.Unlock()
+
+	if q.shuttingDown {
+		return
+	}
+
+	q.expected.Insert(item)
+}
+
 // this func is the whole reason for the existence of this queue
 func (q *Type) waitUntilDoneWith(item interface{}) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
-	for q.dirty.has(item) || q.processing.has(item) {
+	for q.expected.Has(item) || q.dirty.Has(item) || q.processing.Has(item) {
 		q.cond.Wait()
 	}
 }

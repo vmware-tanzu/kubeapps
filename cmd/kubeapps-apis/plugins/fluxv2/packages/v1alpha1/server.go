@@ -70,7 +70,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 	}
 	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
 		return nil, err
-	} else if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli, nil); err != nil {
+	} else if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli); err != nil {
 		return nil, err
 	} else if chartCache, err := cache.NewChartCache(redisCli, repoCache); err != nil {
 		return nil, err

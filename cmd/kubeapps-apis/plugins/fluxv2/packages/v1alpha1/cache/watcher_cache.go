@@ -64,16 +64,12 @@ type NamespacedResourceWatcherCache struct {
 	// as well as for other features:
 	// - multiple rapid updates to a single resource will be collapsed into the latest version
 	//   by the cache/queue
+	// ref: https://pkg.go.dev/k8s.io/client-go/util/workqueue
 	// ref: https://engineering.bitnami.com/articles/a-deep-dive-into-kubernetes-controllers.html#workqueue
 	queue rateLimitingInterface
 
-	// this WaitGroup is used exclusively by unit tests to block until all expected objects have
-	// been 'processed' by the goroutine running in the background. The creation of the WaitGroup object
-	// and to call to .Add() is expected to be done by the unit test client. The server-side only signals
-	// .Done() when processing one object is complete
-	// exported field so that unit tests can easily access this
-	// TODO (gfichtenholt) abstract this out so its not exported
-	EventProcessedWaitGroup *sync.WaitGroup
+	// unit test-related
+	resyncCond *sync.Cond
 }
 
 type ValueGetterFunc func(string, interface{}) (interface{}, error)
@@ -110,7 +106,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	OnDeleteFunc KeyDeleterFunc
 }
 
-func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client, waitGroup *sync.WaitGroup) (*NamespacedResourceWatcherCache, error) {
+func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client) (*NamespacedResourceWatcherCache, error) {
 	log.Infof("+NewNamespacedResourceWatcherCache(%v, %v)", config.Gvr, redisCli)
 
 	if redisCli == nil {
@@ -122,10 +118,10 @@ func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConf
 	}
 
 	c := NamespacedResourceWatcherCache{
-		config:                  config,
-		redisCli:                redisCli,
-		queue:                   newRateLimitingQueue(),
-		EventProcessedWaitGroup: waitGroup,
+		config:     config,
+		redisCli:   redisCli,
+		queue:      newRateLimitingQueue(),
+		resyncCond: sync.NewCond(&sync.Mutex{}),
 	}
 
 	// sanity check that the specified GVR is a valid registered CRD
@@ -205,8 +201,8 @@ func (c *NamespacedResourceWatcherCache) runWorker() {
 // processNextWorkItem will read a single work item off the work queue and
 // attempt to process it, by calling the syncHandler.
 func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
-	log.Infof("+processNextWorkItem")
-	defer log.Infof("-processNextWorkItem")
+	log.V(4).Infof("+processNextWorkItem")
+	defer log.V(4).Infof("-processNextWorkItem")
 	obj, shutdown := c.queue.Get()
 
 	if shutdown {
@@ -300,6 +296,11 @@ func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watc
 // when it comes to consistency at any given point, as long as EVENTUALLY consistent
 // state is reached, which will be the case
 func (c *NamespacedResourceWatcherCache) resync() (string, error) {
+	defer func() {
+		//		c.resyncCond.L.Unlock()
+		c.resyncCond.Broadcast()
+	}()
+
 	// clear the entire cache in one call
 	if result, err := c.redisCli.FlushDB(c.redisCli.Context()).Result(); err != nil {
 		return "", err
@@ -425,15 +426,8 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) (interface{}, e
 
 // this is effectively a cache SET operation
 func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj map[string]interface{}) (newValue interface{}, err error) {
-	log.Infof("+onAddOrModify")
-	defer log.Infof("-onAddOrModify")
-
-	defer func() {
-		// for unit testing purposes
-		if c.EventProcessedWaitGroup != nil {
-			c.EventProcessedWaitGroup.Done()
-		}
-	}()
+	log.V(4).Infof("+onAddOrModify")
+	defer log.V(4).Infof("-onAddOrModify")
 
 	key, err := c.keyFor(unstructuredObj)
 	if err != nil {
@@ -486,12 +480,8 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 
 // this is effectively a cache DEL operation
 func (c *NamespacedResourceWatcherCache) onDelete(namespace, name string) error {
-	log.Infof("+onDelete(%s, %s)", namespace, name)
-	defer func() {
-		if c.EventProcessedWaitGroup != nil {
-			c.EventProcessedWaitGroup.Done()
-		}
-	}()
+	log.V(4).Infof("+onDelete(%s, %s)", namespace, name)
+	defer log.V(4).Infof("-onDelete")
 
 	key := c.KeyForNamespacedName(types.NamespacedName{Namespace: namespace, Name: name})
 	delete, err := c.config.OnDeleteFunc(key)
@@ -749,10 +739,13 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-// This is only called after emptying the cache via FLUSHDB.
-// computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
+// This func is only called after emptying the cache via FLUSHDB, i.e. on startup or after
+// some major (network) failure as part of resync().
+// Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
+// TODO (gfichtenholt) we are bypassing the queue and directly writing to the cache via onAddOrModify()
+// therefore need to make sure that runWorker does not write either
 func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
 	// max number of concurrent workers computing cache values at the same time
 	const maxWorkers = 10
@@ -792,10 +785,9 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 	wg.Wait()
 }
 
-// GetForOne is like fetchForOne() but if there is a cache miss, it will also check the
+// GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the
 // k8s for the corresponding object, process it and then add it to the cache and return the
 // result.
-
 func (c *NamespacedResourceWatcherCache) GetForOne(key string) (interface{}, error) {
 	log.Infof("+GetForOne(%s)", key)
 	var value interface{}
@@ -847,4 +839,34 @@ func (c *NamespacedResourceWatcherCache) memoryStats() (used, total string) {
 		log.Warningf("Failed to get redis memory stats due to: %v", err)
 	}
 	return used, total
+}
+
+// this func is used by unit tests only
+func (c *NamespacedResourceWatcherCache) ExpectAddToQueue(key string) error {
+	if name, err := c.fromKey(key); err != nil {
+		return err
+	} else {
+		c.queue.ExpectAdd(name.String())
+		return nil
+	}
+}
+
+// this func is used by unit tests only
+func (c *NamespacedResourceWatcherCache) WaitUntilQueueDoneWith(key string) error {
+	if name, err := c.fromKey(key); err != nil {
+		return err
+	} else {
+		c.queue.WaitUntilDoneWith(name.String())
+		return nil
+	}
+}
+
+// this func is used by unit tests only
+func (c *NamespacedResourceWatcherCache) ExpectResync() {
+	c.resyncCond.L.Lock()
+}
+
+// this func is used by unit tests only
+func (c *NamespacedResourceWatcherCache) WaitUntilResyncComplete() {
+	c.resyncCond.Wait()
 }

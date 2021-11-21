@@ -16,7 +16,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
@@ -172,7 +171,6 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
 			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
-			s.repoCache.EventProcessedWaitGroup = nil
 			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
 				if key, err := redisKeyForRuntimeObject(tc.repo); err == nil {
 					// TODO explain why 3 calls to ExpectGet. It has to do with the way
@@ -232,10 +230,8 @@ func newServer(clientGetter common.ClientGetterFunc, actionConfig *action.Config
 		OnGetFunc:    onGetRepo,
 		OnDeleteFunc: onDeleteRepo,
 	}
-	eventProcessingWaitGroup := &sync.WaitGroup{}
 
 	for _, r := range repos {
-		eventProcessingWaitGroup.Add(1)
 		if isRepoReady(r.(*unstructured.Unstructured).Object) {
 			// we are willfully ignoring any errors coming from redisMockSetValueForRepo()
 			// here and just skipping over to next repo
@@ -243,12 +239,10 @@ func newServer(clientGetter common.ClientGetterFunc, actionConfig *action.Config
 		}
 	}
 
-	cache, err := cache.NewNamespacedResourceWatcherCache(config, redisCli, eventProcessingWaitGroup)
+	cache, err := cache.NewNamespacedResourceWatcherCache(config, redisCli)
 	if err != nil {
 		return nil, mock, err
 	}
-
-	eventProcessingWaitGroup.Wait()
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		return nil, mock, err

@@ -15,7 +15,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -26,6 +25,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -451,7 +451,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	const MAX_REPOS_NEVER = 100
 	// ref https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait
-	evicted := make(map[string]struct{})
+	evicted := common.HashSet{}
 	sem := semaphore.NewWeighted(MAX_REPOS_NEVER)
 	if err := sem.Acquire(context.Background(), MAX_REPOS_NEVER); err != nil {
 		t.Fatalf("%v", err)
@@ -470,7 +470,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 				// signal to the main thread it's okay to proceed
 				sem.Release(1)
 			} else if event.Channel == "__keyevent@0__:evicted" {
-				evicted[event.Payload] = struct{}{}
+				evicted.Insert(event.Payload)
 			}
 		}
 	}()
@@ -481,7 +481,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	// we'll keep adding repos one at a time, until we get an event from redis
 	// about the first evicted entry
 	totalRepos := 0
-	for ; totalRepos < MAX_REPOS_NEVER && len(evicted) == 0; totalRepos++ {
+	for ; totalRepos < MAX_REPOS_NEVER && evicted.IsEmpty(); totalRepos++ {
 		repo := fmt.Sprintf("bitnami-%d", totalRepos)
 		// this is to make sure we allow enough time for repository to be created and come to ready state
 		if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
@@ -500,7 +500,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		}
 	}
 
-	if len(evicted) == 0 {
+	if evicted.IsEmpty() {
 		t.Fatalf("Failing because redis did not evict any entries")
 	}
 
@@ -518,12 +518,9 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
 	grpcContext := newGrpcContext(t, "test-create-admin")
 	// copy the evicted list because before for loop below will modify it in a goroutine
-	evictedCopy := []string{}
-	for k := range evicted {
-		evictedCopy = append(evictedCopy, k)
-	}
-	for _, k := range evictedCopy {
-		name := strings.Split(k, ":")[2]
+	evictedCopy := evicted.DeepCopy()
+	evictedCopy.ForEach(func(k common.T) {
+		name := strings.Split(k.(string), ":")[2]
 		resp, err := fluxPlugin.GetAvailablePackageVersions(
 			grpcContext, &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -538,7 +535,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		} else if len(resp.PackageAppVersions) < 5 {
 			t.Fatalf("Expected at least 5 versions for apache chart, got: %s", resp)
 		}
-	}
+	})
 
 	// above loop should cause a few more entries to be evicted, but just to be sure lets load a few more copies
 	// of bitnami repo into the cache
@@ -584,19 +581,19 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	}
 
 	// we need to make sure that response contains packages from all 4 repositories
-	expected := make(map[string]struct{})
+	expected := common.HashSet{}
 	for i := 0; i < totalRepos; i++ {
 		repo := fmt.Sprintf("bitnami-%d", i)
-		expected[repo] = struct{}{}
+		expected.Insert(repo)
 	}
 	for _, s := range resp2.AvailablePackageSummaries {
 		id := strings.Split(s.AvailablePackageRef.Identifier, "/")
-		delete(expected, id[0])
+		expected.Delete(id[0])
 	}
 
-	if len(expected) > 0 {
+	if !expected.IsEmpty() {
 		t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
-			reflect.ValueOf(expected).MapKeys())
+			expected.Values())
 	}
 }
 

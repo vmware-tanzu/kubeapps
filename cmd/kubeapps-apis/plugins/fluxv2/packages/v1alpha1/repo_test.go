@@ -588,7 +588,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 
 		// see below
-		key, oldValue, _ := redisKeyValueForRuntimeObject(repo)
+		key, oldValue, err := redisKeyValueForRuntimeObject(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -596,7 +596,6 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		s.repoCache.EventProcessedWaitGroup.Add(1)
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
@@ -609,8 +608,14 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		if repo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(context.Background(), repo, metav1.UpdateOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
+
+		if err = s.repoCache.ExpectAddToQueue(key); err != nil {
+			t.Fatalf("%v", err)
+		}
 		watcher.Modify(repo)
-		s.repoCache.EventProcessedWaitGroup.Wait()
+		if err = s.repoCache.WaitUntilQueueDoneWith(key); err != nil {
+			t.Fatalf("%v", err)
+		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -670,8 +675,8 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
-		s.repoCache.EventProcessedWaitGroup.Add(1)
-		if key, err := redisKeyForRuntimeObject(repo); err != nil {
+		key, err := redisKeyForRuntimeObject(repo)
+		if err != nil {
 			t.Fatalf("%v", err)
 		} else {
 			mock.ExpectDel(key).SetVal(0)
@@ -679,8 +684,14 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		if err = dyncli.Resource(repositoriesGvr).Namespace("default").Delete(context.Background(), "bitnami-1", metav1.DeleteOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
+		if err = s.repoCache.ExpectAddToQueue(key); err != nil {
+			t.Fatalf("%v", err)
+		}
 		watcher.Delete(repo)
-		s.repoCache.EventProcessedWaitGroup.Wait()
+		if err = s.repoCache.WaitUntilQueueDoneWith(key); err != nil {
+			t.Fatalf("%v", err)
+		}
+
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -745,10 +756,9 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		s.repoCache.EventProcessedWaitGroup.Add(1)
+		s.repoCache.ExpectResync()
 		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
-		// wait until the ERROR event's been fully processed
-		s.repoCache.EventProcessedWaitGroup.Wait()
+		s.repoCache.WaitUntilResyncComplete()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
