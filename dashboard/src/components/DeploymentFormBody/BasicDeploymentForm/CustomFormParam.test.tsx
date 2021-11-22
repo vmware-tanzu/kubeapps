@@ -29,15 +29,15 @@ const xhrMock: Partial<XMLHttpRequest> = {
   setRequestHeader: jest.fn(),
   readyState: 4,
   status: 200,
-  response: 'Hello World!'
+  response: "Hello World!",
 };
 
 beforeAll((): void => {
-  jest.spyOn(window, 'XMLHttpRequest').mockImplementation(() => xhrMock as XMLHttpRequest);
+  jest.spyOn(window, "XMLHttpRequest").mockImplementation(() => xhrMock as XMLHttpRequest);
 });
 afterEach((): void => {
   mockOpen.mockReset();
-})
+});
 
 it("should render a custom form component", () => {
   const wrapper = mountWrapper(
