@@ -105,7 +105,7 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 			Plugin:     &pluginDetail,
 			Identifier: pkgMetadata.Name,
 		},
-		Name:             pkgMetadata.Spec.DisplayName,
+		Name:             pkgMetadata.Name,
 		IconUrl:          iconUrl,
 		DisplayName:      pkgMetadata.Spec.DisplayName,
 		ShortDescription: pkgMetadata.Spec.ShortDescription,

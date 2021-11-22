@@ -20,6 +20,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -555,6 +556,271 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
+func TestGetAvailablePackageDetail(t *testing.T) {
+	testCases := []struct {
+		name            string
+		existingObjects []runtime.Object
+		expectedPackage *corev1.AvailablePackageDetail
+		statusCode      codes.Code
+		request         *corev1.GetAvailablePackageDetailRequest
+	}{
+		{
+			name: "it returns an availablePackageDetail of the latest version",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    defaultContext,
+					Identifier: "tetris.foo.example.com",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:      "Classic Tetris",
+						IconSVGBase64:    "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription: "A great game for arcade gamers",
+						LongDescription:  "A few sentences but not really a readme",
+						Categories:       []string{"logging", "daemon-set"},
+						Maintainers:      []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
+				},
+			},
+			expectedPackage: &corev1.AvailablePackageDetail{
+				Name:             "tetris.foo.example.com",
+				DisplayName:      "Classic Tetris",
+				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+				Categories:       []string{"logging", "daemon-set"},
+				ShortDescription: "A great game for arcade gamers",
+				LongDescription:  "A few sentences but not really a readme",
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "1.2.3",
+				},
+				Readme: fmt.Sprintf(`## Details
+
+
+### Capactiy requirements:
+%s
+
+
+### Release Notes:
+%s
+
+
+### Licenses:
+%s
+
+
+### ReleasedAt:
+%s
+
+
+`,
+					"",
+					"",
+					[]string{""},
+					&metav1.Time{},
+				),
+				Maintainers: []*corev1.Maintainer{
+					{Name: "person1"},
+					{Name: "person2"},
+				},
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    defaultContext,
+					Identifier: "tetris.foo.example.com",
+					Plugin:     &pluginv1.Plugin{Name: "kapp_controller.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it combines long description and support description for readme field",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    defaultContext,
+					Identifier: "tetris.foo.example.com",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						LongDescription:    "A few sentences but not really a readme",
+						SupportDescription: "Some support info",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
+				},
+			},
+			expectedPackage: &corev1.AvailablePackageDetail{
+				Name:            "tetris.foo.example.com",
+				DisplayName:     "Classic Tetris",
+				LongDescription: "A few sentences but not really a readme",
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "1.2.3",
+				},
+				Maintainers: []*v1alpha1.Maintainer{},
+				Readme: fmt.Sprintf(`## Details
+
+
+### Capactiy requirements:
+%s
+
+
+### Release Notes:
+%s
+
+
+### Licenses:
+%s
+
+
+### ReleasedAt:
+%s
+
+
+`,
+					"",
+					"",
+					[]string{""},
+					&metav1.Time{},
+				),
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    defaultContext,
+					Identifier: "tetris.foo.example.com",
+					Plugin:     &pluginv1.Plugin{Name: "kapp_controller.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it returns an invalid arg error status if no context is provided",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "foo/bar",
+				},
+			},
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns not found error status if the requested package version doesn't exist",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    defaultContext,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersion: "1.2.4",
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						LongDescription:    "A few sentences but not really a readme",
+						SupportDescription: "Some support info",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
+				},
+			},
+			statusCode: codes.NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         "PackageList",
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: "PackageMetadataList",
+						},
+						unstructuredObjects...,
+					), nil
+				},
+			}
+			availablePackageDetail, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				if got, want := availablePackageDetail.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+				}
 			}
 		})
 	}
