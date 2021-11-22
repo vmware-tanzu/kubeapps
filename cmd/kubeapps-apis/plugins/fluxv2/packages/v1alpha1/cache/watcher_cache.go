@@ -351,7 +351,10 @@ func (c *NamespacedResourceWatcherCache) resync() (string, error) {
 	}
 
 	// re-populate the cache with current state from k8s
-	c.populateWith(listItems.Items)
+	if err = c.populateWith(listItems.Items); err != nil {
+		// for now, just log the error(s)
+		log.Errorf("populateWith failed due to: %+v", err)
+	}
 	return rv, nil
 }
 
@@ -676,12 +679,10 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 			// The following loop will only terminate when the request channel is
 			// closed (and there are no more items)
 			for job := range requestChan {
-				value, err := func() (interface{}, error) {
-					// see GetForOne() for explanation of what is happening below
-					c.queue.Add(job.key)
-					c.queue.WaitUntilDoneWith(job.key)
-					return c.fetchForOne(job.key)
-				}()
+				// see GetForOne() for explanation of what is happening below
+				c.queue.Add(job.key)
+				c.queue.WaitUntilDoneWith(job.key)
+				value, err := c.fetchForOne(job.key)
 				responseChan <- computeValueJobResult{job, value, err}
 			}
 			wg.Done()
@@ -749,21 +750,29 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 // Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
-func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
-
-	// TODO: (gfichtenholt) I'd like to make sure this is called within the context
+func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) error {
+	// Sanity check I'd like to make sure this is called within the context
 	// of resync, i.e. resync.Cond.L is locked by this goroutine. How?
+	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
+		return status.Errorf(codes.Internal, "Invalid state of the cache in populateWith()")
+	}
 
 	// max number of concurrent workers computing cache values at the same time
 	const maxWorkers = 10
 
-	type syncValueJob struct {
+	type populateJob struct {
 		item map[string]interface{}
+	}
+
+	type populateJobResult struct {
+		populateJob
+		err error
 	}
 
 	var wg sync.WaitGroup
 	numWorkers := int(math.Min(float64(len(items)), float64(maxWorkers)))
-	requestChan := make(chan syncValueJob, numWorkers)
+	requestChan := make(chan populateJob, numWorkers)
+	responseChan := make(chan populateJobResult, numWorkers)
 
 	// Process only at most maxWorkers at a time
 	for i := 0; i < numWorkers; i++ {
@@ -773,23 +782,35 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 			// closed (and there are no more items)
 			for job := range requestChan {
 				// don't need to check old value since we just flushed the whole cache
-				if _, err := c.onAddOrModify(false, job.item); err != nil {
-					// log an error and move on
-					log.Errorf("populateWith: %+v", err)
-				}
+				_, err := c.onAddOrModify(false, job.item)
+				responseChan <- populateJobResult{job, err}
 			}
 			wg.Done()
 		}()
 	}
 
 	go func() {
+		wg.Wait()
+		close(responseChan)
+	}()
+
+	go func() {
 		for _, item := range items {
-			requestChan <- syncValueJob{item.Object}
+			requestChan <- populateJob{item.Object}
 		}
 		close(requestChan)
 	}()
 
-	wg.Wait()
+	// Start receiving results
+	// The following loop will only terminate when the response channel is closed, i.e.
+	// after the all the requests have been processed
+	errs := []error{}
+	for resp := range responseChan {
+		if resp.err != nil {
+			errs = append(errs, resp.err)
+		}
+	}
+	return errorutil.NewAggregate(errs)
 }
 
 // GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the
