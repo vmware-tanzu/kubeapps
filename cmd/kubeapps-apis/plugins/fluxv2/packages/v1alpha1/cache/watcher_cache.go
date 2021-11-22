@@ -68,8 +68,17 @@ type NamespacedResourceWatcherCache struct {
 	// ref: https://engineering.bitnami.com/articles/a-deep-dive-into-kubernetes-controllers.html#workqueue
 	queue rateLimitingInterface
 
-	// unit test-related
+	// I am using a Read/Write Mutex to gate access to cache's resync() operation, which is
+	// significant in that it flushes the whole redis cache and re-populates the state from k8s.
+	// When that happens we don't really want any concurrent access to the cache until the resync()
+	// operation is complete. In other words, we want to:
+	//  - be able to have multiple concurrent readers (goroutines doing GetForOne()/GetForMultiple())
+	//  - only a single writer (goroutine doing a resync()) is allowed, and while its doing its job
+	//    no readers are allowed
 	resyncCond *sync.Cond
+
+	// used exclusively by unit tests
+	expectResync bool
 }
 
 type ValueGetterFunc func(string, interface{}) (interface{}, error)
@@ -121,7 +130,7 @@ func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConf
 		config:     config,
 		redisCli:   redisCli,
 		queue:      newRateLimitingQueue(),
-		resyncCond: sync.NewCond(&sync.Mutex{}),
+		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
 	// sanity check that the specified GVR is a valid registered CRD
@@ -191,8 +200,8 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 // processNextWorkItem function in order to read and process a message on the
 // workqueue.
 func (c *NamespacedResourceWatcherCache) runWorker() {
-	log.Infof("+runWorker")
-	defer log.Infof("-runWorker")
+	log.Infof("+runWorker()")
+	defer log.Infof("-runWorker()")
 
 	for c.processNextWorkItem() {
 	}
@@ -201,9 +210,13 @@ func (c *NamespacedResourceWatcherCache) runWorker() {
 // processNextWorkItem will read a single work item off the work queue and
 // attempt to process it, by calling the syncHandler.
 func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
-	log.V(4).Infof("+processNextWorkItem")
-	defer log.V(4).Infof("-processNextWorkItem")
+	log.V(4).Infof("+processNextWorkItem()")
+	defer log.V(4).Infof("-processNextWorkItem()")
+
 	obj, shutdown := c.queue.Get()
+	// ref https://go101.org/article/concurrent-synchronization-more.html
+	c.resyncCond.L.(*sync.RWMutex).RLock()
+	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
 	if shutdown {
 		log.Info("Shutting down...")
@@ -290,16 +303,16 @@ func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watc
 	return dynamicClient.Resource(c.config.Gvr).Namespace(apiv1.NamespaceAll).Watch(ctx, options)
 }
 
-// TODO (gfichtenholt) we may need to introduce a mutex to guard against the scenario
-// where someone is trying to fetch something out of the cache while its in the middle
-// of a re-sync. It seems the current requirements of kubeapps catalog are pretty loose
-// when it comes to consistency at any given point, as long as EVENTUALLY consistent
-// state is reached, which will be the case
 func (c *NamespacedResourceWatcherCache) resync() (string, error) {
+	c.resyncCond.L.Lock()
 	defer func() {
-		//		c.resyncCond.L.Unlock()
+		c.expectResync = false
+		c.resyncCond.L.Unlock()
 		c.resyncCond.Broadcast()
+		log.Infof("-resync()")
 	}()
+
+	log.Infof("+resync()")
 
 	// clear the entire cache in one call
 	if result, err := c.redisCli.FlushDB(c.redisCli.Context()).Result(); err != nil {
@@ -613,6 +626,9 @@ func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[st
 // whereas 'fetchForMultiple' does not guarantee that.
 // The keys are expected to be in the format of the cache (the caller does that)
 func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[string]interface{}, error) {
+	c.resyncCond.L.(*sync.RWMutex).RLock()
+	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
+
 	log.Infof("+GetForMultiple(%s)", keys)
 	// at any given moment, the redis cache may only have a subset of the entire set of existing keys.
 	// Some key may have been evicted due to memory pressure and LRU eviction policy.
@@ -672,7 +688,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 					if name, err := c.fromKey(job.key); err != nil {
 						return nil, err
 					} else {
-						// see getForOne() for explanation of what is happening below
+						// see GetForOne() for explanation of what is happening below
 						c.queue.Add(name.String())
 						c.queue.WaitUntilDoneWith(name.String())
 						return c.fetchForOne(job.key)
@@ -739,13 +755,12 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-// This func is only called after emptying the cache via FLUSHDB, i.e. on startup or after
-// some major (network) failure as part of resync().
+// This func is only called in the context of a resync() operation,
+// after emptying the cache via FLUSHDB, i.e. on startup or after
+// some major (network) failure.
 // Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
-// TODO (gfichtenholt) we are bypassing the queue and directly writing to the cache via onAddOrModify()
-// therefore need to make sure that runWorker does not write either
 func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
 	// max number of concurrent workers computing cache values at the same time
 	const maxWorkers = 10
@@ -789,6 +804,9 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 // k8s for the corresponding object, process it and then add it to the cache and return the
 // result.
 func (c *NamespacedResourceWatcherCache) GetForOne(key string) (interface{}, error) {
+	c.resyncCond.L.(*sync.RWMutex).RLock()
+	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
+
 	log.Infof("+GetForOne(%s)", key)
 	var value interface{}
 	var err error
@@ -842,7 +860,7 @@ func (c *NamespacedResourceWatcherCache) memoryStats() (used, total string) {
 }
 
 // this func is used by unit tests only
-func (c *NamespacedResourceWatcherCache) ExpectAddToQueue(key string) error {
+func (c *NamespacedResourceWatcherCache) ExpectAdd(key string) error {
 	if name, err := c.fromKey(key); err != nil {
 		return err
 	} else {
@@ -852,7 +870,7 @@ func (c *NamespacedResourceWatcherCache) ExpectAddToQueue(key string) error {
 }
 
 // this func is used by unit tests only
-func (c *NamespacedResourceWatcherCache) WaitUntilQueueDoneWith(key string) error {
+func (c *NamespacedResourceWatcherCache) WaitUntilDoneWith(key string) error {
 	if name, err := c.fromKey(key); err != nil {
 		return err
 	} else {
@@ -864,9 +882,17 @@ func (c *NamespacedResourceWatcherCache) WaitUntilQueueDoneWith(key string) erro
 // this func is used by unit tests only
 func (c *NamespacedResourceWatcherCache) ExpectResync() {
 	c.resyncCond.L.Lock()
+	defer c.resyncCond.L.Unlock()
+
+	c.expectResync = true
 }
 
 // this func is used by unit tests only
 func (c *NamespacedResourceWatcherCache) WaitUntilResyncComplete() {
-	c.resyncCond.Wait()
+	c.resyncCond.L.Lock()
+	defer c.resyncCond.L.Unlock()
+
+	for c.expectResync {
+		c.resyncCond.Wait()
+	}
 }

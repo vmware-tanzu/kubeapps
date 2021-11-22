@@ -609,11 +609,11 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if err = s.repoCache.ExpectAddToQueue(key); err != nil {
+		if err = s.repoCache.ExpectAdd(key); err != nil {
 			t.Fatalf("%v", err)
 		}
 		watcher.Modify(repo)
-		if err = s.repoCache.WaitUntilQueueDoneWith(key); err != nil {
+		if err = s.repoCache.WaitUntilDoneWith(key); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -684,11 +684,11 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		if err = dyncli.Resource(repositoriesGvr).Namespace("default").Delete(context.Background(), "bitnami-1", metav1.DeleteOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
-		if err = s.repoCache.ExpectAddToQueue(key); err != nil {
+		if err = s.repoCache.ExpectAdd(key); err != nil {
 			t.Fatalf("%v", err)
 		}
 		watcher.Delete(repo)
-		if err = s.repoCache.WaitUntilQueueDoneWith(key); err != nil {
+		if err = s.repoCache.WaitUntilDoneWith(key); err != nil {
 			t.Fatalf("%v", err)
 		}
 
