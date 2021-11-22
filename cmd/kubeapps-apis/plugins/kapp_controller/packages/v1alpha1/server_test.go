@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -26,6 +27,8 @@ import (
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -116,6 +119,298 @@ func TestGetClient(t *testing.T) {
 				if typedClient == nil {
 					t.Errorf("got: nil, want: kubernetes.Interface")
 				}
+			}
+		})
+	}
+}
+
+func TestGetAvailablePackageSummaries(t *testing.T) {
+	testCases := []struct {
+		name               string
+		existingObjects    []runtime.Object
+		expectedPackages   []*corev1.AvailablePackageSummary
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "it returns a not found error status if a package meta does not contain spec.displayName",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						LongDescription: "Classic Tetris",
+					},
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name: "it returns an not found error status if a package does not contain version",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "Classic Tetris",
+					},
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name: "it returns carvel package summaries with basic info from the cluster",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "Classic Tetris",
+					},
+				},
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "Tombi!",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com.1.2.5",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tombi.foo.example.com",
+						Version: "1.2.5",
+					},
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tetris.foo.example.com",
+					},
+					Name:          "tetris.foo.example.com",
+					DisplayName:   "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+				},
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tombi.foo.example.com",
+					},
+					Name:          "tombi.foo.example.com",
+					DisplayName:   "Tombi!",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
+				},
+			},
+		},
+		{
+			name: "it returns carvel package summaries with complete metadata",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						Categories:         []string{"logging", "daemon-set"},
+						LongDescription:    "A great game for arcade gamers",
+						ProviderName:       "Tetris inc.",
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "foo"}},
+						SupportDescription: "Block support team",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tetris.foo.example.com",
+					},
+					Name:             "tetris.foo.example.com",
+					DisplayName:      "Classic Tetris",
+					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "A great game for arcade gamers",
+					Categories:       []string{"logging", "daemon-set"},
+				},
+			},
+		},
+		{
+			name: "it returns the latest semver version in the latest version field",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "Classic Tetris",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.7",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.7",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.4",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.4",
+					},
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tetris.foo.example.com",
+					},
+					Name:          "tetris.foo.example.com",
+					DisplayName:   "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.7"},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         "PackageList",
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: "PackageMetadataList",
+						},
+						unstructuredObjects...,
+					), nil
+				},
+			}
+
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: defaultContext})
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+			// If we were expecting an error, continue to the next test.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			if got, want := response.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
 	}
