@@ -59,6 +59,20 @@ const defaultProps = {
   appDetails: {} as AvailablePackageDetail,
 };
 
+// Ensure remote-component doesn't trigger external requests during this test.
+const xhrMock: Partial<XMLHttpRequest> = {
+  open: jest.fn(),
+  send: jest.fn(),
+  setRequestHeader: jest.fn(),
+  readyState: 4,
+  status: 200,
+  response: "Hello World!",
+};
+
+beforeAll((): void => {
+  jest.spyOn(window, "XMLHttpRequest").mockImplementation(() => xhrMock as XMLHttpRequest);
+});
+
 it("should render a custom app view", () => {
   const wrapper = mountWrapper(getStore(defaultState), <CustomAppView {...defaultProps} />);
   expect(wrapper.find(CustomAppView)).toExist();
