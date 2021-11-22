@@ -1,4 +1,5 @@
 import { mount } from "enzyme";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import PageHeader from "./PageHeader";
 
 const defaultProps = {
@@ -26,14 +27,38 @@ it("includes a filter component", () => {
 });
 
 it("renders a Helm subtitle", () => {
-  const wrapper = mount(<PageHeader {...defaultProps} helm={true} />);
+  const wrapper = mount(
+    <PageHeader {...defaultProps} plugin={{ name: "helm.packages", version: "0.0.1" } as Plugin} />,
+  );
   expect(wrapper.find("img").prop("src")).toBe("helm.svg");
   expect(wrapper.text()).toContain("Helm Chart");
 });
 
+it("renders a Flux subtitle", () => {
+  const wrapper = mount(
+    <PageHeader
+      {...defaultProps}
+      plugin={{ name: "fluxv2.packages", version: "0.0.1" } as Plugin}
+    />,
+  );
+  expect(wrapper.find("img").prop("src")).toBe("flux.svg");
+  expect(wrapper.text()).toContain("Helm Chart");
+});
+
+it("renders a Carvel subtitle", () => {
+  const wrapper = mount(
+    <PageHeader
+      {...defaultProps}
+      plugin={{ name: "kapp_controller.packages", version: "0.0.1" } as Plugin}
+    />,
+  );
+  expect(wrapper.find("img").prop("src")).toBe("carvel.svg");
+  expect(wrapper.text()).toContain("Carvel Package");
+});
+
 it("renders an Operator subtitle", () => {
   const wrapper = mount(<PageHeader {...defaultProps} operator={true} />);
-  expect(wrapper.find("img").prop("src")).toBe("operator-framework.svg");
+  expect(wrapper.find("img").prop("src")).toBe("olm-icon.svg");
   expect(wrapper.text()).toContain("Operator");
 });
 

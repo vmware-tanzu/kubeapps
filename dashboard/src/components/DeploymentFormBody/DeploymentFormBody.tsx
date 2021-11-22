@@ -5,7 +5,7 @@ import Tabs from "components/Tabs";
 import { isEqual } from "lodash";
 import { useEffect, useState } from "react";
 import { parseValues, retrieveBasicFormParams, setValue } from "../../shared/schema";
-import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
+import { DeploymentEvent, IBasicFormParam, IPackageState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
@@ -17,10 +17,10 @@ import DifferentialTab from "./DifferentialTab";
 export interface IDeploymentFormBodyProps {
   deploymentEvent: DeploymentEvent;
   packageId: string;
-  chartVersion: string;
+  packageVersion: string;
   deployedValues?: string;
-  chartsIsFetching: boolean;
-  selected: IChartState["selected"];
+  packagesIsFetching: boolean;
+  selected: IPackageState["selected"];
   appValues: string;
   setValues: (values: string) => void;
   setValuesModified: () => void;
@@ -29,9 +29,9 @@ export interface IDeploymentFormBodyProps {
 function DeploymentFormBody({
   deploymentEvent,
   packageId,
-  chartVersion,
+  packageVersion,
   deployedValues,
-  chartsIsFetching,
+  packagesIsFetching,
   selected,
   appValues,
   setValues,
@@ -101,12 +101,17 @@ function DeploymentFormBody({
   if (error) {
     return (
       <Alert theme="danger">
-        Unable to fetch package "{packageId}" ({chartVersion}): Got {error.message}
+        Unable to fetch package "{packageId}" ({packageVersion}): Got {error.message}
       </Alert>
     );
   }
-  if (chartsIsFetching || !availablePackageDetail || !versions.length) {
-    return <LoadingWrapper className="margin-t-xxl" loadingText={`Fetching ${packageId}...`} />;
+  if (packagesIsFetching || !availablePackageDetail || !versions.length) {
+    return (
+      <LoadingWrapper
+        className="margin-t-xxl"
+        loadingText={`Fetching ${decodeURIComponent(packageId)}...`}
+      />
+    );
   }
   const tabColumns = [
     "YAML",

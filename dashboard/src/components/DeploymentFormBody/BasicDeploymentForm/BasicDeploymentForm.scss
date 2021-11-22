@@ -1,24 +1,24 @@
 .description {
+  display: block;
   color: var(--cds-global-typography-color-300, #454545);
   font-size: 0.9em;
-  display: block;
 }
 
 .subsection {
+  padding: 10px;
   border: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
   border-radius: 5px;
-  padding: 10px;
 }
 
 .react-switch {
-  vertical-align: middle;
   margin: 0 10px 0 0;
+  vertical-align: middle;
 }
 
-.block:before {
-  content: "";
+.block::before {
   display: inline-block;
   height: 100%;
+  content: "";
   vertical-align: middle;
 }
 
@@ -27,12 +27,13 @@
 }
 
 .basic-deployment-form-param {
-  padding: 0.6rem 0 0.6rem 0;
+  padding: 0.6rem 0;
 }
 
 .deployment-form-label {
-  font-weight: 600;
   margin-bottom: 0.2rem;
+  font-weight: 600;
+
   &-text-param {
     display: block;
   }
@@ -48,13 +49,16 @@
 
 .slider-block {
   display: flex;
+
   .slider-input-and-unit {
     margin-left: 0.6rem;
   }
+
   .slider-content {
     width: 30vw;
     margin-left: 10px;
   }
+
   .slider-input {
     width: 50%;
   }

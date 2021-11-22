@@ -1,42 +1,26 @@
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import ChartHeader from "components/ChartView/ChartHeader";
-import ChartVersionSelector from "components/ChartView/ChartVersionSelector";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import PackageHeader from "components/PackageHeader/PackageHeader";
+import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
 import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
-import {
-  AvailablePackageReference,
-  InstalledPackageReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { deleteValue, setValue } from "../../shared/schema";
-import { IChartState, IStoreState } from "../../shared/types";
+import { IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./UpgradeForm.css";
 
 export interface IUpgradeFormProps {
-  appCurrentVersion: string;
-  appCurrentValues?: string;
-  packageId: string;
-  chartsIsFetching: boolean;
-  namespace: string;
-  cluster: string;
-  releaseName: string;
-  repoNamespace: string;
-  error?: Error;
-  selected: IChartState["selected"];
-  deployed: IChartState["deployed"];
-  plugin: Plugin;
+  version?: string;
 }
 
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
@@ -55,88 +39,95 @@ function applyModifications(mods: jsonpatch.Operation[], values: string) {
   return values;
 }
 
-function UpgradeForm({
-  appCurrentVersion,
-  appCurrentValues,
-  packageId,
-  chartsIsFetching,
-  namespace,
-  cluster,
-  releaseName,
-  repoNamespace,
-  error,
-  selected,
-  deployed,
-  plugin,
-}: IUpgradeFormProps) {
-  const [appValues, setAppValues] = useState(appCurrentValues || "");
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [valuesModified, setValuesModified] = useState(false);
+function UpgradeForm(props: IUpgradeFormProps) {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
+
+  const {
+    apps: {
+      selected: installedAppInstalledPackageDetail,
+      isFetching: appsIsFetching,
+      error,
+      selectedDetails: installedAppAvailablePackageDetail,
+    },
+    packages: { isFetching: chartsIsFetching, selected: selectedPackage },
+  } = useSelector((state: IStoreState) => state);
+
+  const isFetching = appsIsFetching || chartsIsFetching;
+  const { availablePackageDetail, versions, schema, values, pkgVersion } = selectedPackage;
+
+  const [appValues, setAppValues] = useState("");
   const [modifications, setModifications] = useState(
     undefined as undefined | jsonpatch.Operation[],
   );
-  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-
   const [deployedValues, setDeployedValues] = useState("");
-
-  const { availablePackageDetail, versions, schema, values, pkgVersion } = selected;
-
-  const {
-    apps: { isFetching: appsFetching },
-    charts: { isFetching: chartsFetching },
-  } = useSelector((state: IStoreState) => state);
-  const isFetching = appsFetching || chartsFetching;
-  const pluginObj = plugin ?? selected.availablePackageDetail?.availablePackageRef?.plugin;
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [valuesModified, setValuesModified] = useState(false);
 
   useEffect(() => {
-    dispatch(
-      actions.charts.fetchChartVersions({
-        context: { cluster: cluster, namespace: repoNamespace },
-        plugin: pluginObj,
-        identifier: packageId,
-      } as AvailablePackageReference),
-    );
-  }, [dispatch, cluster, repoNamespace, packageId, pluginObj]);
+    // This block just will be executed once, given that populating
+    // the list of versions does not depend on anything else
+    if (selectedPackage.versions.length === 0) {
+      dispatch(
+        actions.packages.fetchAvailablePackageVersions(
+          installedAppInstalledPackageDetail?.availablePackageRef,
+        ),
+      );
+      if (installedAppAvailablePackageDetail) {
+        // Additionally, mark the current installed package version as the selected,
+        // next time, the selection will be handled by selectVersion()
+        dispatch(
+          actions.packages.receiveSelectedAvailablePackageDetail(
+            installedAppAvailablePackageDetail,
+          ),
+        );
+      }
+      // If a version has been manually selected (eg. in the URL), fetch it explicitly
+      if (props.version) {
+        dispatch(
+          actions.packages.fetchAndSelectAvailablePackageDetail(
+            installedAppInstalledPackageDetail?.availablePackageRef,
+            props.version,
+          ),
+        );
+      }
+    }
+  }, [
+    dispatch,
+    installedAppInstalledPackageDetail?.availablePackageRef,
+    selectedPackage.versions.length,
+    installedAppAvailablePackageDetail,
+    props.version,
+  ]);
 
   useEffect(() => {
-    if (deployed.values && !modifications) {
+    if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
       // Calculate modifications from the default values
-      const defaultValuesObj = yaml.load(deployed.values);
-      const deployedValuesObj = yaml.load(appCurrentValues || "");
+      const defaultValuesObj = yaml.load(installedAppAvailablePackageDetail?.defaultValues);
+      const deployedValuesObj = yaml.load(installedAppInstalledPackageDetail?.valuesApplied || "");
       const newModifications = jsonpatch.compare(defaultValuesObj as any, deployedValuesObj as any);
-      const values = applyModifications(newModifications, deployed.values);
+      const values = applyModifications(
+        newModifications,
+        installedAppAvailablePackageDetail?.defaultValues,
+      );
       setModifications(newModifications);
       setAppValues(values);
     }
-  }, [deployed.values, appCurrentValues, modifications]);
+  }, [
+    installedAppAvailablePackageDetail?.defaultValues,
+    installedAppInstalledPackageDetail?.valuesApplied,
+    modifications,
+  ]);
 
   useEffect(() => {
-    if (deployed.values) {
+    if (installedAppAvailablePackageDetail?.defaultValues) {
       // Apply modifications to deployed values
-      const values = applyModifications(modifications || [], deployed.values);
+      const values = applyModifications(
+        modifications || [],
+        installedAppAvailablePackageDetail?.defaultValues,
+      );
       setDeployedValues(values);
     }
-  }, [deployed.values, modifications]);
-
-  useEffect(() => {
-    dispatch(
-      actions.charts.fetchChartVersion(
-        {
-          context: { cluster: cluster, namespace: repoNamespace },
-          plugin: pluginObj,
-          identifier: packageId,
-        } as AvailablePackageReference,
-        deployed.chartVersion?.version?.pkgVersion,
-      ),
-    );
-  }, [
-    dispatch,
-    cluster,
-    repoNamespace,
-    packageId,
-    deployed.chartVersion?.version?.pkgVersion,
-    pluginObj,
-  ]);
+  }, [installedAppAvailablePackageDetail?.defaultValues, modifications]);
 
   useEffect(() => {
     if (!valuesModified && values) {
@@ -158,12 +149,8 @@ function UpgradeForm({
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      actions.charts.fetchChartVersion(
-        {
-          context: { cluster: cluster, namespace: repoNamespace },
-          plugin: pluginObj,
-          identifier: packageId,
-        } as AvailablePackageReference,
+      actions.packages.fetchAndSelectAvailablePackageDetail(
+        installedAppInstalledPackageDetail?.availablePackageRef,
         e.currentTarget.value,
       ),
     );
@@ -172,31 +159,22 @@ function UpgradeForm({
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsDeploying(true);
-    if (availablePackageDetail) {
+    if (
+      availablePackageDetail &&
+      installedAppInstalledPackageDetail?.installedPackageRef &&
+      installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace
+    ) {
       const deployedSuccess = await dispatch(
-        actions.apps.upgradeApp(
-          {
-            context: { cluster: cluster, namespace: namespace },
-            identifier: releaseName,
-            plugin: pluginObj,
-          } as InstalledPackageReference,
+        actions.apps.updateInstalledPackage(
+          installedAppInstalledPackageDetail?.installedPackageRef,
           availablePackageDetail,
-          repoNamespace,
           appValues,
           schema,
         ),
       );
       setIsDeploying(false);
       if (deployedSuccess) {
-        dispatch(
-          push(
-            url.app.apps.get({
-              context: { cluster: cluster, namespace: namespace },
-              plugin: pluginObj,
-              identifier: releaseName,
-            } as AvailablePackageReference),
-          ),
-        );
+        dispatch(push(url.app.apps.get(installedAppInstalledPackageDetail?.installedPackageRef)));
       }
     }
   };
@@ -217,12 +195,12 @@ function UpgradeForm({
           <></>
         ) : (
           <>
-            <ChartHeader
-              releaseName={releaseName}
-              chartAttrs={availablePackageDetail}
+            <PackageHeader
+              releaseName={installedAppInstalledPackageDetail?.installedPackageRef?.identifier}
+              availablePackageDetail={availablePackageDetail}
               versions={versions}
               onSelect={selectVersion}
-              currentVersion={deployed.chartVersion?.version?.pkgVersion}
+              currentVersion={installedAppAvailablePackageDetail?.version?.pkgVersion}
               selectedVersion={pkgVersion}
             />
             <LoadingWrapper
@@ -230,38 +208,50 @@ function UpgradeForm({
                 !isDeploying && !isFetching && versions?.length > 0 && !!availablePackageDetail
               }
             >
-              <Row>
-                <Column span={3}>
-                  <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
-                </Column>
-                <Column span={9}>
-                  <form onSubmit={handleDeploy}>
-                    <div className="upgrade-form-version-selector">
-                      <label className="centered deployment-form-label deployment-form-label-text-param">
-                        Upgrade to Version
-                      </label>
-                      <ChartVersionSelector
-                        versions={versions}
-                        selectedVersion={pkgVersion}
-                        onSelect={selectVersion}
-                        currentVersion={appCurrentVersion}
-                        chartAttrs={availablePackageDetail}
-                      />
-                    </div>
-                    <DeploymentFormBody
-                      deploymentEvent="upgrade"
-                      packageId={packageId}
-                      chartVersion={appCurrentVersion}
-                      deployedValues={deployedValues}
-                      chartsIsFetching={chartsIsFetching}
-                      selected={selected}
-                      setValues={handleValuesChange}
-                      appValues={appValues}
-                      setValuesModified={setValuesModifiedTrue}
-                    />
-                  </form>
-                </Column>
-              </Row>
+              {!installedAppInstalledPackageDetail?.availablePackageRef?.identifier ||
+              !installedAppInstalledPackageDetail?.currentVersion?.pkgVersion ? (
+                <></>
+              ) : (
+                <>
+                  <Row>
+                    <Column span={3}>
+                      <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
+                    </Column>
+                    <Column span={9}>
+                      <form onSubmit={handleDeploy}>
+                        <div className="upgrade-form-version-selector">
+                          <label className="centered deployment-form-label deployment-form-label-text-param">
+                            Upgrade to Version
+                          </label>
+                          <PackageVersionSelector
+                            versions={versions}
+                            selectedVersion={pkgVersion}
+                            onSelect={selectVersion}
+                            currentVersion={
+                              installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
+                            }
+                          />
+                        </div>
+                        <DeploymentFormBody
+                          deploymentEvent="upgrade"
+                          packageId={
+                            installedAppInstalledPackageDetail?.availablePackageRef?.identifier
+                          }
+                          packageVersion={
+                            installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
+                          }
+                          deployedValues={deployedValues}
+                          packagesIsFetching={isFetching}
+                          selected={selectedPackage}
+                          setValues={handleValuesChange}
+                          appValues={appValues}
+                          setValuesModified={setValuesModifiedTrue}
+                        />
+                      </form>
+                    </Column>
+                  </Row>
+                </>
+              )}
             </LoadingWrapper>
           </>
         )}

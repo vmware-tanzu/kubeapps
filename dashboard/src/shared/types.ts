@@ -54,12 +54,12 @@ export interface IRepo {
   url: string;
 }
 
-export interface IReceiveChartsActionPayload {
+export interface IReceivePackagesActionPayload {
   response: GetAvailablePackageSummariesResponse;
   page: number;
 }
 
-export interface IChartState {
+export interface IPackageState {
   isFetching: boolean;
   hasFinishedFetching: boolean;
   selected: {
@@ -70,11 +70,6 @@ export interface IChartState {
     versions: PackageAppVersion[];
     readme?: string;
     readmeError?: string;
-    values?: string;
-    schema?: JSONSchemaType<any>;
-  };
-  deployed: {
-    chartVersion?: AvailablePackageDetail;
     values?: string;
     schema?: JSONSchemaType<any>;
   };
@@ -305,7 +300,7 @@ export interface IStoreState {
   router: RouterState;
   apps: IAppState;
   auth: IAuthState;
-  charts: IChartState;
+  packages: IPackageState;
   config: IConfigState;
   kube: IKubeState;
   repos: IAppRepositoryState;

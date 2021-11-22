@@ -19,7 +19,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
+	"regexp"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -31,6 +34,8 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"sigs.k8s.io/yaml"
+
 	"github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
@@ -52,10 +57,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
-
-	// TODO(mnelson): models.Chart.Maintainers is depending on the old v1 chart
-	// code. I don't expect there is any reason other than a historical one.
-	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
 	log "k8s.io/klog/v2"
 )
 
@@ -270,7 +271,7 @@ func TestIsValidChart(t *testing.T) {
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me"}},
+				Maintainers: []chart.Maintainer{{Name: "me"}},
 			},
 			expected: true,
 		},
@@ -284,7 +285,7 @@ func TestIsValidChart(t *testing.T) {
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me"}, {Email: "you"}},
+				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
 			},
 			expected: false,
 		},
@@ -321,7 +322,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 				ChartVersions: []models.ChartVersion{
 					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
 					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
@@ -417,7 +418,7 @@ func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions
 		Description: DefaultChartDescription,
 		Home:        DefaultChartHomeURL,
 		Icon:        DefaultChartIconURL,
-		Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
+		Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 		Sources:     []string{"http://source-1"},
 		Repo: &models.Repo{
 			Name:      repo_name,
@@ -509,6 +510,8 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
+		versionsInSummary: VersionsInSummary{MajorVersionsInSummary,
+			MinorVersionsInSummary, PatchVersionsInSummary},
 	}, mock, cleanup
 }
 
@@ -1375,9 +1378,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 func TestPackageAppVersionsSummary(t *testing.T) {
 	testCases := []struct {
-		name            string
-		chart_versions  []models.ChartVersion
-		version_summary []*corev1.PackageAppVersion
+		name                      string
+		chart_versions            []models.ChartVersion
+		version_summary           []*corev1.PackageAppVersion
+		input_versions_in_summary VersionsInSummary
 	}{
 		{
 			name: "it includes the latest three major versions only",
@@ -1392,6 +1396,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{PkgVersion: "7.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
 			},
+			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
 		},
 		{
 			name: "it includes the latest three minor versions for each major version only",
@@ -1406,6 +1411,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{PkgVersion: "8.4.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.3.6", AppVersion: DefaultAppVersion},
 			},
+			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
 		},
 		{
 			name: "it includes the latest three patch versions for each minor version only",
@@ -1420,6 +1426,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
 			},
+			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
 		},
 		{
 			name: "it includes the latest three patch versions of the latest three minor versions of the latest three major versions only",
@@ -1518,6 +1525,169 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{PkgVersion: "4.3.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "4.3.4", AppVersion: DefaultAppVersion},
 			},
+			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
+		},
+		{
+			name: "it includes the latest four patch versions of the latest one minor versions of the latest two major versions only",
+			chart_versions: []models.ChartVersion{
+				{Version: "8.5.6", AppVersion: DefaultAppVersion},
+				{Version: "8.5.5", AppVersion: DefaultAppVersion},
+				{Version: "8.5.4", AppVersion: DefaultAppVersion},
+				{Version: "8.5.3", AppVersion: DefaultAppVersion},
+				{Version: "8.4.6", AppVersion: DefaultAppVersion},
+				{Version: "8.4.5", AppVersion: DefaultAppVersion},
+				{Version: "8.4.4", AppVersion: DefaultAppVersion},
+				{Version: "8.4.3", AppVersion: DefaultAppVersion},
+				{Version: "8.3.6", AppVersion: DefaultAppVersion},
+				{Version: "8.3.5", AppVersion: DefaultAppVersion},
+				{Version: "8.3.4", AppVersion: DefaultAppVersion},
+				{Version: "8.3.3", AppVersion: DefaultAppVersion},
+				{Version: "8.2.6", AppVersion: DefaultAppVersion},
+				{Version: "8.2.5", AppVersion: DefaultAppVersion},
+				{Version: "8.2.4", AppVersion: DefaultAppVersion},
+				{Version: "8.2.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.6", AppVersion: DefaultAppVersion},
+				{Version: "6.5.5", AppVersion: DefaultAppVersion},
+				{Version: "6.5.4", AppVersion: DefaultAppVersion},
+				{Version: "6.5.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.2", AppVersion: DefaultAppVersion},
+				{Version: "6.5.1", AppVersion: DefaultAppVersion},
+				{Version: "6.4.6", AppVersion: DefaultAppVersion},
+				{Version: "6.4.5", AppVersion: DefaultAppVersion},
+				{Version: "6.4.4", AppVersion: DefaultAppVersion},
+				{Version: "6.4.3", AppVersion: DefaultAppVersion},
+				{Version: "6.3.6", AppVersion: DefaultAppVersion},
+				{Version: "6.3.5", AppVersion: DefaultAppVersion},
+				{Version: "6.3.4", AppVersion: DefaultAppVersion},
+				{Version: "6.3.3", AppVersion: DefaultAppVersion},
+				{Version: "6.2.6", AppVersion: DefaultAppVersion},
+				{Version: "6.2.5", AppVersion: DefaultAppVersion},
+				{Version: "6.2.4", AppVersion: DefaultAppVersion},
+				{Version: "6.2.3", AppVersion: DefaultAppVersion},
+				{Version: "4.5.6", AppVersion: DefaultAppVersion},
+				{Version: "4.5.5", AppVersion: DefaultAppVersion},
+				{Version: "4.5.4", AppVersion: DefaultAppVersion},
+				{Version: "4.5.3", AppVersion: DefaultAppVersion},
+				{Version: "4.4.6", AppVersion: DefaultAppVersion},
+				{Version: "4.4.5", AppVersion: DefaultAppVersion},
+				{Version: "4.4.4", AppVersion: DefaultAppVersion},
+				{Version: "4.4.3", AppVersion: DefaultAppVersion},
+				{Version: "4.3.6", AppVersion: DefaultAppVersion},
+				{Version: "4.3.5", AppVersion: DefaultAppVersion},
+				{Version: "4.3.4", AppVersion: DefaultAppVersion},
+				{Version: "4.3.3", AppVersion: DefaultAppVersion},
+				{Version: "4.2.6", AppVersion: DefaultAppVersion},
+				{Version: "4.2.5", AppVersion: DefaultAppVersion},
+				{Version: "4.2.4", AppVersion: DefaultAppVersion},
+				{Version: "4.2.3", AppVersion: DefaultAppVersion},
+				{Version: "2.5.6", AppVersion: DefaultAppVersion},
+				{Version: "2.5.5", AppVersion: DefaultAppVersion},
+				{Version: "2.5.4", AppVersion: DefaultAppVersion},
+				{Version: "2.5.3", AppVersion: DefaultAppVersion},
+				{Version: "2.4.6", AppVersion: DefaultAppVersion},
+				{Version: "2.4.5", AppVersion: DefaultAppVersion},
+				{Version: "2.4.4", AppVersion: DefaultAppVersion},
+				{Version: "2.4.3", AppVersion: DefaultAppVersion},
+				{Version: "2.3.6", AppVersion: DefaultAppVersion},
+				{Version: "2.3.5", AppVersion: DefaultAppVersion},
+				{Version: "2.3.4", AppVersion: DefaultAppVersion},
+				{Version: "2.3.3", AppVersion: DefaultAppVersion},
+				{Version: "2.2.6", AppVersion: DefaultAppVersion},
+				{Version: "2.2.5", AppVersion: DefaultAppVersion},
+				{Version: "2.2.4", AppVersion: DefaultAppVersion},
+				{Version: "2.2.3", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.PackageAppVersion{
+				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.3", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.3", AppVersion: DefaultAppVersion},
+			},
+			input_versions_in_summary: VersionsInSummary{Major: 2,
+				Minor: 1,
+				Patch: 4},
+		},
+		{
+			name: "it includes the latest zero patch versions of the latest zero minor versions of the latest six major versions only",
+			chart_versions: []models.ChartVersion{
+				{Version: "8.5.6", AppVersion: DefaultAppVersion},
+				{Version: "8.5.5", AppVersion: DefaultAppVersion},
+				{Version: "8.5.4", AppVersion: DefaultAppVersion},
+				{Version: "8.5.3", AppVersion: DefaultAppVersion},
+				{Version: "8.4.6", AppVersion: DefaultAppVersion},
+				{Version: "8.4.5", AppVersion: DefaultAppVersion},
+				{Version: "8.4.4", AppVersion: DefaultAppVersion},
+				{Version: "8.4.3", AppVersion: DefaultAppVersion},
+				{Version: "8.3.6", AppVersion: DefaultAppVersion},
+				{Version: "8.3.5", AppVersion: DefaultAppVersion},
+				{Version: "8.3.4", AppVersion: DefaultAppVersion},
+				{Version: "8.3.3", AppVersion: DefaultAppVersion},
+				{Version: "8.2.6", AppVersion: DefaultAppVersion},
+				{Version: "8.2.5", AppVersion: DefaultAppVersion},
+				{Version: "8.2.4", AppVersion: DefaultAppVersion},
+				{Version: "8.2.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.6", AppVersion: DefaultAppVersion},
+				{Version: "6.5.5", AppVersion: DefaultAppVersion},
+				{Version: "6.5.4", AppVersion: DefaultAppVersion},
+				{Version: "6.5.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.2", AppVersion: DefaultAppVersion},
+				{Version: "6.5.1", AppVersion: DefaultAppVersion},
+				{Version: "6.4.6", AppVersion: DefaultAppVersion},
+				{Version: "6.4.5", AppVersion: DefaultAppVersion},
+				{Version: "6.4.4", AppVersion: DefaultAppVersion},
+				{Version: "6.4.3", AppVersion: DefaultAppVersion},
+				{Version: "6.3.6", AppVersion: DefaultAppVersion},
+				{Version: "6.3.5", AppVersion: DefaultAppVersion},
+				{Version: "6.3.4", AppVersion: DefaultAppVersion},
+				{Version: "6.3.3", AppVersion: DefaultAppVersion},
+				{Version: "6.2.6", AppVersion: DefaultAppVersion},
+				{Version: "6.2.5", AppVersion: DefaultAppVersion},
+				{Version: "6.2.4", AppVersion: DefaultAppVersion},
+				{Version: "6.2.3", AppVersion: DefaultAppVersion},
+				{Version: "4.5.6", AppVersion: DefaultAppVersion},
+				{Version: "4.5.5", AppVersion: DefaultAppVersion},
+				{Version: "4.5.4", AppVersion: DefaultAppVersion},
+				{Version: "4.5.3", AppVersion: DefaultAppVersion},
+				{Version: "4.4.6", AppVersion: DefaultAppVersion},
+				{Version: "4.4.5", AppVersion: DefaultAppVersion},
+				{Version: "4.4.4", AppVersion: DefaultAppVersion},
+				{Version: "4.4.3", AppVersion: DefaultAppVersion},
+				{Version: "4.3.6", AppVersion: DefaultAppVersion},
+				{Version: "4.3.5", AppVersion: DefaultAppVersion},
+				{Version: "4.3.4", AppVersion: DefaultAppVersion},
+				{Version: "4.3.3", AppVersion: DefaultAppVersion},
+				{Version: "4.2.6", AppVersion: DefaultAppVersion},
+				{Version: "4.2.5", AppVersion: DefaultAppVersion},
+				{Version: "4.2.4", AppVersion: DefaultAppVersion},
+				{Version: "4.2.3", AppVersion: DefaultAppVersion},
+				{Version: "3.4.6", AppVersion: DefaultAppVersion},
+				{Version: "3.4.5", AppVersion: DefaultAppVersion},
+				{Version: "3.4.4", AppVersion: DefaultAppVersion},
+				{Version: "2.4.3", AppVersion: DefaultAppVersion},
+				{Version: "2.3.6", AppVersion: DefaultAppVersion},
+				{Version: "2.3.5", AppVersion: DefaultAppVersion},
+				{Version: "2.3.4", AppVersion: DefaultAppVersion},
+				{Version: "2.3.3", AppVersion: DefaultAppVersion},
+				{Version: "1.2.6", AppVersion: DefaultAppVersion},
+				{Version: "1.2.5", AppVersion: DefaultAppVersion},
+				{Version: "1.2.4", AppVersion: DefaultAppVersion},
+				{Version: "1.2.3", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.PackageAppVersion{
+				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "3.4.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "2.4.3", AppVersion: DefaultAppVersion},
+				{PkgVersion: "1.2.6", AppVersion: DefaultAppVersion},
+			},
+			input_versions_in_summary: VersionsInSummary{Major: 6,
+				Minor: 0,
+				Patch: 0},
 		},
 	}
 
@@ -1525,13 +1695,99 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := packageAppVersionsSummary(tc.chart_versions), tc.version_summary; !cmp.Equal(want, got, opts) {
+			if got, want := packageAppVersionsSummary(tc.chart_versions, tc.input_versions_in_summary), tc.version_summary; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})
 	}
 }
 
+func TestParsePluginConfig(t *testing.T) {
+	testCases := []struct {
+		name                    string
+		pluginYAMLConf          []byte
+		exp_versions_in_summary VersionsInSummary
+		exp_error_str           string
+	}{
+		{
+			name:                    "non existing plugin-config file",
+			pluginYAMLConf:          nil,
+			exp_versions_in_summary: VersionsInSummary{0, 0, 0},
+			exp_error_str:           "no such file or directory",
+		},
+		{
+			name: "non-default plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1
+      `),
+			exp_versions_in_summary: VersionsInSummary{4, 2, 1},
+			exp_error_str:           "",
+		},
+		{
+			name: "partial params in plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 1
+        `),
+			exp_versions_in_summary: VersionsInSummary{1, 0, 0},
+			exp_error_str:           "",
+		},
+		{
+			name: "invalid plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1-IFC-123
+      `),
+			exp_versions_in_summary: VersionsInSummary{},
+			exp_error_str:           "json: cannot unmarshal",
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			versions_in_summary, goterr := parsePluginConfig(filename)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
+			}
+			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name               string
@@ -2177,6 +2433,7 @@ func releaseForStub(t *testing.T, r releaseStub) *release.Release {
 	return &release.Release{
 		Name:      r.name,
 		Namespace: r.namespace,
+		Manifest:  r.manifest,
 		Version:   r.version,
 		Info: &release.Info{
 			Status: r.status,
@@ -2215,6 +2472,7 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 	if rel.latestVersion != "" {
 		chartVersions = append(chartVersions, models.ChartVersion{
 			Version: rel.latestVersion,
+			URLs:    []string{fmt.Sprintf("https://example.com/%s-%s.tgz", rel.chartID, rel.latestVersion)},
 		})
 	}
 	chartVersions = append(chartVersions, models.ChartVersion{
@@ -2262,6 +2520,28 @@ func populateAssetDBWithDetail(t *testing.T, mock sqlmock.Sqlmock, pkg *corev1.I
 	populateAssetDB(t, mock, []releaseStub{rel})
 }
 
+func populateAssetForTarball(t *testing.T, mock sqlmock.Sqlmock, chartId, namespace, version string) {
+	chart := &models.Chart{
+		Name: chartId,
+		ID:   chartId,
+		Repo: &models.Repo{
+			Namespace: globalPackagingNamespace,
+		},
+		ChartVersions: []models.ChartVersion{{
+			Version: version,
+			URLs:    []string{fmt.Sprintf("https://example.com/%s-%s.tgz", chartId, version)}}},
+	}
+	chartJSON, err := json.Marshal(chart)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	rows := sqlmock.NewRows([]string{"info"})
+	rows.AddRow(string(chartJSON))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT info FROM charts WHERE repo_namespace = $1 AND chart_id ILIKE $2")).
+		WithArgs(chart.Repo.Namespace, chart.ID).
+		WillReturnRows(rows)
+}
+
 func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []releaseStub) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
@@ -2288,4 +2568,5 @@ type releaseStub struct {
 	values         string
 	notes          string
 	status         release.Status
+	manifest       string
 }

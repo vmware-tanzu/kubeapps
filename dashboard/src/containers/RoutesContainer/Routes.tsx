@@ -2,7 +2,7 @@ import AppList from "components/AppList/AppList";
 import AppUpgrade from "components/AppUpgrade";
 import AppView from "components/AppView";
 import Catalog from "components/Catalog/Catalog";
-import ChartView from "components/ChartView";
+import PackageView from "components/PackageHeader";
 import AppRepoList from "components/Config/AppRepoList";
 import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
@@ -27,23 +27,15 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,
   "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName": AppView,
   "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName/upgrade": AppUpgrade,
-  "/c/:cluster/ns/:namespace/apps/new/:repo/:pluginName/:pluginVersion/:id/versions/:version":
-    DeploymentForm,
-  "/c/:cluster/ns/:namespace/apps/new/:repo/:pluginName/:pluginVersion/:id/versions/":
-    DeploymentForm,
-  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:pluginName/:pluginVersion/:id/versions/:version":
-    DeploymentForm,
-  "/c/:cluster/ns/:namespace/apps/new-from-:global(global)/:repo/:pluginName/:pluginVersion/:id/versions/":
+  "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName/upgrade/:version":
+    AppUpgrade,
+  "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions/:packageVersion":
     DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
-  "/c/:cluster/ns/:namespace/catalog/:repo": Catalog,
-  "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id": ChartView,
-  "/c/:cluster/ns/:namespace/charts/:repo/:pluginName/:pluginVersion/:id/versions/:version":
-    ChartView,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:pluginName/:pluginVersion/:id":
-    ChartView,
-  "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:pluginName/:pluginVersion/:id/versions/:version":
-    ChartView,
+  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId":
+    PackageView,
+  "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions/:packageVersion":
+    PackageView,
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
   "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,

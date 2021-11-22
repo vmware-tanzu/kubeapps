@@ -42,6 +42,8 @@ The versions used there _must_ match the ones used for building the container im
 - `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](../../dashboard/Dockerfile).
 - `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml).
 
+Besides, the `GKE_STABLE_VERSION_XX` and the `GKE_REGULAR_VERSION_XX` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
+
 > As part of this release process, these variables _must_ be updated accordingly. Other variable changes _should_ be tracked in a separate PR.
 
 #### 0.2.2 - CI integration image and dependencies
@@ -165,11 +167,27 @@ Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls)
 
 Now create a Pull Request containing all these changes (only if no major versions have been bumped up) and wait until for another Kubeapps maintainer to review and accept so you can merge it.
 
-## 1 - Select the commit to tag and perform a manual test
+## 1 - Select the commit to be tagged and perform some tests
 
-Once the dependencies have been updated and the chart changes merged, the next step is to choose the proper commit so that we can base the release on it. It is, usually, the latest commit in the main branch.
+Once the dependencies have been updated and the chart changes merged, the next step is to choose the proper commit so that we can base the release on it. It is, usually, the latest commit in the main branch. Then, some manual and automated tests should be performed to ensure the stability and reliability of the release.
 
-Even though the existing test base in our repository, we still _should_ perform a manual review of the application as it is in the selected commit. To do so, follow these instructions:
+## 1.1 - Trigger a `prerelease` CI flow
+
+One of the CI flows we have defined is the `prerelease` one. It is being triggered once a commit is pushed to the `prerelease` branch in the Kubeapps repository. Although the precise instructions may differ depending on your git configuration, the main steps are:
+
+```bash
+# assuming you are in the main branch, with the latest changes pulled locally
+# and you already have a `prerelease` local branch
+git checkout prerelease
+git merge master
+git push origin prerelease # replace `origin` by your remote name
+```
+
+Then, check out the workflow that has just been created in CircleCI: [https://app.circleci.com/pipelines/github/kubeapps/kubeapps?branch=prerelease](https://app.circleci.com/pipelines/github/kubeapps/kubeapps?branch=prerelease).
+
+## 1.2 - Perform a manual test
+
+Even though we have a thorough test suite in our repository, we still _must_ perform a manual review of the application as it is in the selected commit. To do so, follow these instructions:
 
 - Perform a checkout of the chosen commit.
 - Install Kubeapps using the development chart: `helm install kubeapps ./chart/kubeapps/ -n kubeapps`
@@ -190,7 +208,7 @@ For doing so, execute the following commands:
 ```bash
 export VERSION_NAME="v1.0.0-beta.1" # edit it accordingly
 
-git tag ${VERSION_NAME}
+git tag ${VERSION_NAME} -m ${VERSION_NAME}
 git push origin ${VERSION_NAME} # replace `origin` by your remote name
 ```
 

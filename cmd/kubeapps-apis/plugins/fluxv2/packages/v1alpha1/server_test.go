@@ -31,9 +31,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
+
+const KubeappsCluster = "default"
 
 func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
@@ -162,13 +163,19 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, err := newServerWithRepos(tc.repo)
+			s, mock, _, _, err := newServerWithRepos(tc.repo)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = beforeCallGetAvailablePackageSummaries(mock, nil); err != nil {
-				t.Fatalf("%v", err)
+			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
+			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
+			s.cache.eventProcessedWaitGroup = nil
+			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
+				key := redisKeyForRuntimeObject(tc.repo)
+				if _, err := s.cache.fromKey(key); err == nil {
+					mock.ExpectGet(key).RedisNil()
+				}
 			}
 
 			response, err := s.GetAvailablePackageSummaries(
@@ -211,31 +218,34 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 	mock.MatchExpectationsInOrder(false)
 
 	if clientGetter != nil {
+		// if clientGetter is nil, then none of these calls take place, as the initialization of
+		// the new Server fails before then
 		mock.ExpectPing().SetVal("PONG")
+		mock.ExpectConfigGet("maxmemory").SetVal([]interface{}{"maxmemory", "1000000"})
+
+		// if client getter returns an error, this call does not take place, because
+		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
+		if _, _, err := clientGetter(context.TODO()); err == nil {
+			mock.ExpectFlushDB().SetVal("OK")
+		}
 	}
-	repositoriesGvr := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmRepositories,
-	}
+
 	config := cacheConfig{
 		gvr:          repositoriesGvr,
 		clientGetter: clientGetter,
-		onAdd:        onAddOrModifyRepo,
-		onModify:     onAddOrModifyRepo,
+		onAdd:        onAddRepo,
+		onModify:     onModifyRepo,
 		onGet:        onGetRepo,
 		onDelete:     onDeleteRepo,
 	}
-
 	eventProcessingWaitGroup := &sync.WaitGroup{}
+
 	for _, r := range repos {
 		eventProcessingWaitGroup.Add(1)
 		if isRepoReady(r.(*unstructured.Unstructured).Object) {
-			key, bytes, err := redisKeyValueForRuntimeObject(r)
-			if err != nil {
-				continue
-			}
-			mock.ExpectSet(key, bytes, 0).SetVal("")
+			// we are willfully ignoring any errors coming from redisSetValueForRepo here
+			// and just skipping over to next repo
+			redisSetValueForRepo(r, mock)
 		}
 	}
 
@@ -255,7 +265,8 @@ func newServer(clientGetter clientGetter, actionConfig *action.Configuration, re
 		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
-		cache: cache,
+		cache:           cache,
+		kubeappsCluster: KubeappsCluster,
 	}
 	return s, mock, nil
 }

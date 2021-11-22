@@ -16,7 +16,12 @@ const appsReducer = (
 ): IAppState => {
   switch (action.type) {
     case getType(actions.apps.requestApps):
-      return { ...state, isFetching: true };
+      return {
+        ...state,
+        isFetching: true,
+        selected: undefined,
+        selectedDetails: undefined,
+      };
     case getType(actions.apps.errorApp):
       return { ...state, isFetching: false, error: action.payload };
     case getType(actions.apps.selectApp):
@@ -47,17 +52,17 @@ const appsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveAppList):
       return { ...state, isFetching: false, listOverview: action.payload };
-    case getType(actions.apps.requestDeleteApp):
+    case getType(actions.apps.requestDeleteInstalledPackage):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveDeleteApp):
+    case getType(actions.apps.receiveDeleteInstalledPackage):
       return { ...state, isFetching: false };
-    case getType(actions.apps.requestDeployApp):
+    case getType(actions.apps.requestInstallPackage):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveDeployApp):
+    case getType(actions.apps.receiveInstallPackage):
       return { ...state, isFetching: false };
-    case getType(actions.apps.requestRollbackApp):
+    case getType(actions.apps.requestRollbackInstalledPackage):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveRollbackApp):
+    case getType(actions.apps.receiveRollbackInstalledPackage):
       return { ...state, isFetching: false };
     case LOCATION_CHANGE:
       return {

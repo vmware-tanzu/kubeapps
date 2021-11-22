@@ -13,6 +13,7 @@ import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import {
+  CustomInstalledPackageDetail,
   DeleteError,
   FetchError,
   FetchWarning,
@@ -21,6 +22,7 @@ import {
   IResource,
   IStoreState,
 } from "shared/types";
+import { PluginNames } from "shared/utils";
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -34,7 +36,7 @@ import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
-import ChartInfo from "./ChartInfo/ChartInfo";
+import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 
@@ -122,6 +124,48 @@ function parseResources(
   return result;
 }
 
+function getButtons(app: CustomInstalledPackageDetail, error: any, revision: number) {
+  if (!app || !app?.installedPackageRef || !app.installedPackageRef.plugin) {
+    return [];
+  }
+
+  const buttons = [];
+
+  // Upgrade is a core operation, it will always be available
+  buttons.push(
+    <UpgradeButton
+      key="upgrade-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+      disabled={error !== undefined}
+    />,
+  );
+
+  // Rollback is a helm-only operation, it will only be available for helm-plugin packages
+  if (app.installedPackageRef.plugin.name === PluginNames.PACKAGES_HELM) {
+    buttons.push(
+      <RollbackButton
+        key="rollback-button"
+        installedPackageRef={app.installedPackageRef}
+        revision={revision}
+        releaseStatus={app?.status}
+        disabled={error !== undefined}
+      />,
+    );
+  }
+
+  // Delete is a core operation, it will always be available
+  buttons.push(
+    <DeleteButton
+      key="delete-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+    />,
+  );
+
+  return buttons;
+}
+
 export interface IRouteParams {
   cluster: string;
   namespace: string;
@@ -163,12 +207,12 @@ export default function AppView() {
 
   useEffect(() => {
     if (!app || !app.manifest) {
-      return;
+      return () => {};
     }
 
     if (Object.values(resourceRefs).some(ref => ref.length)) {
       // Already populated, skip
-      return;
+      return () => {};
     }
 
     let parsedManifest: IResource[] = YAML.parseAllDocuments(app.manifest).map(
@@ -187,6 +231,7 @@ export default function AppView() {
       // Avoid setting refs if the manifest is empty
       setResourceRefs(parsedRefs);
     }
+    return () => {};
   }, [app, cluster, kinds, resourceRefs]);
 
   useEffect(() => {
@@ -230,28 +275,9 @@ export default function AppView() {
           <PageHeader
             title={releaseName}
             titleSize="md"
-            helm={true}
+            plugin={app?.availablePackageRef?.plugin}
             icon={icon}
-            buttons={[
-              <UpgradeButton
-                key="upgrade-button"
-                installedPackageRef={app.installedPackageRef}
-                releaseStatus={app?.status}
-                disabled={error !== undefined}
-              />,
-              <RollbackButton
-                key="rollback-button"
-                installedPackageRef={app.installedPackageRef}
-                revision={revision}
-                releaseStatus={app?.status}
-                disabled={error !== undefined}
-              />,
-              <DeleteButton
-                key="delete-button"
-                installedPackageRef={app.installedPackageRef}
-                releaseStatus={app?.status}
-              />,
-            ]}
+            buttons={getButtons(app, error, revision)}
           />
           {error &&
             (error.constructor === FetchWarning ? (
@@ -270,7 +296,7 @@ export default function AppView() {
           ) : (
             <Row>
               <Column span={3}>
-                <ChartInfo installedPackageDetail={app} availablePackageDetail={appDetails!} />
+                <PackageInfo installedPackageDetail={app} availablePackageDetail={appDetails!} />
               </Column>
               <Column span={9}>
                 <div className="appview-separator">

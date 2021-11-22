@@ -1,24 +1,30 @@
 .login {
   &-wrapper {
     width: calc(100vw + 0.6rem);
+
     .login {
       min-height: calc(100vh - 3rem);
+
       .login-group {
-        padding: 0 0 0 0;
+        padding: 0;
       }
+
       .error.active {
         font-size: small;
       }
     }
   }
+
   &-submit-button {
     display: grid;
-    padding: 1rem 0 0 0;
+    padding: 1rem 0 0;
   }
+
   &-moreinfo {
     display: grid;
     justify-content: end;
     margin-top: 0.5rem;
+
     svg {
       margin-top: -0.1rem;
     }
@@ -26,8 +32,8 @@
 }
 
 .title h3 span {
-  font-size: xx-large;
   display: block;
+  font-size: xx-large;
 }
 
 #login-submit-button {

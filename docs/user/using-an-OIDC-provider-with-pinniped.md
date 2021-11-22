@@ -71,7 +71,7 @@ Finally, because Kubeapps can be configured with multiple clusters, some of whic
 clusters:
   - name: default
     pinnipedConfig:
-      enable: true
+      enabled: true
 ```
 
 The [Kubeapps auth-proxy configuration](./using-an-OIDC-provider.md#deploying-an-auth-proxy-to-access-kubeapps) remains the same as for the standard OIDC setup so that Kubeapps knows to deploy the auth-proxy service configured to redirect to your OIDC provider.
@@ -115,7 +115,7 @@ clusters:
     apiServiceURL: https://... # impersonation proxy URL
     certificateAuthorityData: ... #  impersonation proxy CA
     pinnipedConfig:
-      enable: true
+      enabled: true
 ```
 
 ## Debugging auth failures when using OIDC

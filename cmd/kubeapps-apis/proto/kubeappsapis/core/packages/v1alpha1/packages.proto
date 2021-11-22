@@ -60,6 +60,12 @@ service PackagesService {
       delete: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
     };
   }
+
+  rpc GetInstalledPackageResourceRefs(GetInstalledPackageResourceRefsRequest) returns (GetInstalledPackageResourceRefsResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"
+    };
+  }
 }
 
 // Standard request and response messages for each required function are defined
@@ -197,6 +203,13 @@ message UpdateInstalledPackageRequest {
 // Request for DeleteInstalledPackage
 message DeleteInstalledPackageRequest {
   // A reference to uniquely identify the installed package to be deleted.
+  InstalledPackageReference installed_package_ref = 1;
+}
+
+// GetInstalledPackageResourceRefsRequest
+//
+// Request for GetInstalledPackageResourceRefs
+message GetInstalledPackageResourceRefsRequest {
   InstalledPackageReference installed_package_ref = 1;
 }
 
@@ -338,6 +351,14 @@ message UpdateInstalledPackageResponse {
 // Response for DeleteInstalledPackage
 message DeleteInstalledPackageResponse {
   // For future extensibility only.
+}
+
+// GetInstalledPackageResourceRefsResponse
+//
+// Response for GetInstalledPackageResourceRefs
+message GetInstalledPackageResourceRefsResponse {
+  Context context = 1;
+  repeated ResourceRef resource_refs = 2;
 }
 
 // -- Start definitions used in the responses  --
@@ -860,6 +881,8 @@ message ReconciliationOptions {
   // Suspend
   //
   // Whether reconciliation should be suspended until otherwise enabled.
+  // This can be utilized to e.g. temporarily ignore chart changes, and
+  // prevent a Helm release from getting upgraded
   bool suspend = 2;
 
   // ServiceAccountName
@@ -883,3 +906,19 @@ message PackageAppVersion {
   // Version of the packaged application
   string app_version = 2;
 };
+
+// Resource reference
+//
+// A reference to a Kubernetes resource related to a specific installed package.
+// The context (cluster, namespace) for each resource is that of the related
+// installed package.
+message ResourceRef {
+  // The APIVersion directly from the resource has the group and version, eg. "apps/v1"
+  // or just the version for core resources.
+  string api_version = 1;
+  // The Kind directly from the templated manifest. Together with the APIVersion this
+  // forms the GroupVersionKind.
+  string kind = 2;
+  // The name of the specific resource in the context of the installed package.
+  string name = 3;
+}

@@ -198,7 +198,7 @@ export default function OperatorList({
         filter={
           <SearchFilter
             key="searchFilter"
-            placeholder="search charts..."
+            placeholder="search operators..."
             onChange={setSearchFilter}
             value={searchFilter}
             submitFilters={submitFilters}
@@ -315,7 +315,7 @@ export default function OperatorList({
                     </div>
                     {installedOperators.length > 0 && (
                       <>
-                        <div className="operatorListContainer">
+                        <div className="operator-list-container">
                           <h3>Installed</h3>
                           <Row>
                             <OperatorItems operators={installedOperators} cluster={cluster} />
@@ -323,7 +323,7 @@ export default function OperatorList({
                         </div>
                       </>
                     )}
-                    <div className="operatorListContainer">
+                    <div className="operator-list-container">
                       <h3>Available Operators</h3>
                       <Row>
                         <OperatorItems operators={availableOperators} cluster={cluster} />

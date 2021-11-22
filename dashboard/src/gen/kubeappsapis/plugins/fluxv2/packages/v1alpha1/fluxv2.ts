@@ -12,6 +12,7 @@ import {
   CreateInstalledPackageRequest,
   UpdateInstalledPackageRequest,
   DeleteInstalledPackageRequest,
+  GetInstalledPackageResourceRefsRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
@@ -20,6 +21,7 @@ import {
   CreateInstalledPackageResponse,
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
+  GetInstalledPackageResourceRefsResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
@@ -185,12 +187,9 @@ export const GetPackageRepositoriesResponse = {
     const message = {
       ...baseGetPackageRepositoriesResponse,
     } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromJSON(e));
-      }
-    }
+    message.repositories = (object.repositories ?? []).map((e: any) =>
+      PackageRepository.fromJSON(e),
+    );
     return message;
   },
 
@@ -210,12 +209,7 @@ export const GetPackageRepositoriesResponse = {
     const message = {
       ...baseGetPackageRepositoriesResponse,
     } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromPartial(e));
-      }
-    }
+    message.repositories = (object.repositories ?? []).map(e => PackageRepository.fromPartial(e));
     return message;
   },
 };
@@ -303,21 +297,9 @@ export const PackageRepository = {
 
   fromPartial(object: DeepPartial<PackageRepository>): PackageRepository {
     const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = object.namespace;
-    } else {
-      message.namespace = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
-    }
+    message.name = object.name ?? "";
+    message.namespace = object.namespace ?? "";
+    message.url = object.url ?? "";
     if (object.plugin !== undefined && object.plugin !== null) {
       message.plugin = Plugin.fromPartial(object.plugin);
     } else {
@@ -373,6 +355,14 @@ export interface FluxV2PackagesService {
     request: DeepPartial<DeleteInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeleteInstalledPackageResponse>;
+  /**
+   * GetInstalledPackageResourceRefs returns the references for the Kubernetes
+   * resources created by an installed package.
+   */
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageResourceRefsResponse>;
 }
 
 export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
@@ -389,6 +379,7 @@ export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
+    this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -486,6 +477,17 @@ export class FluxV2PackagesServiceClientImpl implements FluxV2PackagesService {
     return this.rpc.unary(
       FluxV2PackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageResourceRefsResponse> {
+    return this.rpc.unary(
+      FluxV2PackagesServiceGetInstalledPackageResourceRefsDesc,
+      GetInstalledPackageResourceRefsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -685,6 +687,28 @@ export const FluxV2PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinit
     deserializeBinary(data: Uint8Array) {
       return {
         ...DeleteInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const FluxV2PackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish = {
+  methodName: "GetInstalledPackageResourceRefs",
+  service: FluxV2PackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetInstalledPackageResourceRefsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetInstalledPackageResourceRefsResponse.decode(data),
         toObject() {
           return this;
         },

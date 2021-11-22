@@ -21,14 +21,14 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 )
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
 		name string
 		args []string
-		conf server.ServeOptions
+		conf core.ServeOptions
 	}{
 		{
 			"all arguments are captured",
@@ -38,15 +38,13 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--plugin-dir", "foo01",
 				"--clusters-config-path", "foo02",
 				"--pinniped-proxy-url", "foo03",
-				"--unsafe-use-demo-sa", "true",
 				"--unsafe-local-dev-kubeconfig", "true",
 			},
-			server.ServeOptions{
+			core.ServeOptions{
 				Port:                     901,
 				PluginDirs:               []string{"foo01"},
 				ClustersConfigPath:       "foo02",
 				PinnipedProxyURL:         "foo03",
-				UnsafeUseDemoSA:          true,
 				UnsafeLocalDevKubeconfig: true,
 			},
 		},

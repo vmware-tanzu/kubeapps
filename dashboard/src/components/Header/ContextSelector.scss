@@ -1,20 +1,23 @@
 .angle {
   position: absolute;
-  right: 15px;
   top: 1.2rem;
+  right: 15px;
 }
 
 .kubeapps-dropdown {
-  opacity: 0.75;
   padding-left: 0.5rem;
+  opacity: 0.75;
+
   &:hover {
-    opacity: 1;
     background-color: #25333d;
+    opacity: 1;
   }
+
   &.open {
-    opacity: 1;
     background-color: #25333d;
+    opacity: 1;
   }
+
   button {
     color: var(--cds-global-color-gray-50, #fafafa);
   }
@@ -29,31 +32,34 @@
 }
 
 .kubeapps-dropdown-text {
-  margin-left: 0.2rem;
   margin-right: 0.7rem;
+  margin-left: 0.2rem;
   font-weight: 500;
 }
 
 .header-actions .dropdown-menu {
-  background-color: #25333d;
   width: 15rem;
-  border: 0px;
-  margin-right: 0px !important;
+  border: 0;
+  margin-right: 0 !important;
+  background-color: #25333d;
+
   .dropdown-menu-padding {
-    padding: 0 1rem 0.6rem 1rem;
+    padding: 0 1rem 0.6rem;
   }
+
   .context-selector-header {
+    max-width: 100%;
     color: var(--cds-global-color-gray-50, #fafafa);
     font-size: small;
-    max-width: 100%;
     white-space: normal;
   }
 
   .clr-select-wrapper {
     display: block;
+
     .clr-page-size-select {
-      color: var(--cds-global-color-gray-50, #fafafa);
       width: 100%;
+      color: var(--cds-global-color-gray-50, #fafafa);
     }
   }
 }
@@ -61,9 +67,11 @@
 .kubeapps-create-new-ns {
   display: flex;
   justify-content: flex-end;
+
   cds-button {
     --color: var(--cds-global-color-gray-50, #fafafa);
-    outline: 0px;
+
     margin-top: 1em;
+    outline: 0;
   }
 }

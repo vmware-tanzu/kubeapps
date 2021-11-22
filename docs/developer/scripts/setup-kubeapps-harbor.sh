@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Copyright 2020-2021 VMware. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# Constants
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
+
+# Load Libraries
+# shellcheck disable=SC1090
+. "${ROOT_DIR}/script/libtest.sh"
+# shellcheck disable=SC1090
+. "${ROOT_DIR}/script/liblog.sh"
+
+info "Updating chart repositories..."
+silence helm repo update
+echo
+
+# Install Harbor
+info "-------------------------"
+info "-- Harbor installation --"
+info "-------------------------"
+echo
+"$ROOT_DIR"/script/setup-harbor.sh --namespace "harbor" --disable-clair --disable-notary
+# Install Kubeapps
+info "---------------------------"
+info "-- Kubeapps installation --"
+info "---------------------------"
+echo
+"$ROOT_DIR"/script/setup-kubeapps.sh --namespace "kubeapps" --initial-repos "harbor-library" "http://harbor.harbor.svc.cluster.local/chartrepo/library"

@@ -3,10 +3,11 @@ import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IClusterServiceVersion } from "shared/types";
+import { PluginNames } from "shared/utils";
 import CatalogItem from "./CatalogItem";
-import CatalogItems from "./CatalogItems";
+import CatalogItems, { ICatalogItemsProps } from "./CatalogItems";
 
-const chartItem: AvailablePackageSummary = {
+const availablePackageSummary1: AvailablePackageSummary = {
   name: "foo",
   categories: [],
   displayName: "foo",
@@ -15,11 +16,11 @@ const chartItem: AvailablePackageSummary = {
   shortDescription: "",
   availablePackageRef: {
     identifier: "foo/foo",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
-const chartItem2: AvailablePackageSummary = {
+const availablePackageSummary2: AvailablePackageSummary = {
   name: "bar",
   categories: ["Database"],
   displayName: "bar",
@@ -28,7 +29,7 @@ const chartItem2: AvailablePackageSummary = {
   shortDescription: "",
   availablePackageRef: {
     identifier: "bar/bar",
-    context: { cluster: "", namespace: "chart-namespace" } as Context,
+    context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
 };
@@ -54,19 +55,19 @@ const csv = {
   },
 } as IClusterServiceVersion;
 const defaultProps = {
-  charts: [],
+  availablePackageSummaries: [],
   csvs: [],
   cluster: "default",
   namespace: "default",
   hasLoadedFirstPage: true,
   page: 1,
   hasFinishedFetching: true,
-};
+} as ICatalogItemsProps;
 const populatedProps = {
   ...defaultProps,
-  charts: [chartItem, chartItem2],
+  availablePackageSummaries: [availablePackageSummary1, availablePackageSummary2],
   csvs: [csv],
-};
+} as ICatalogItemsProps;
 
 it("shows nothing if no items are passed but it's still fetching", () => {
   const wrapper = mountWrapper(
@@ -112,16 +113,16 @@ it("changes the bgIcon based on the plugin name - default", () => {
   const pluginName = "my.plugin";
   const populatedProps = {
     ...defaultProps,
-    charts: [
+    availablePackageSummaries: [
       {
-        ...chartItem,
+        ...availablePackageSummary1,
         availablePackageRef: {
-          ...chartItem.availablePackageRef,
-          plugin: { ...chartItem.availablePackageRef?.plugin, name: pluginName },
+          ...availablePackageSummary1.availablePackageRef,
+          plugin: { ...availablePackageSummary1.availablePackageRef?.plugin, name: pluginName },
         },
       } as AvailablePackageSummary,
     ],
-  };
+  } as ICatalogItemsProps;
 
   const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
   expect(
@@ -133,19 +134,19 @@ it("changes the bgIcon based on the plugin name - default", () => {
 });
 
 it("changes the bgIcon based on the plugin name - helm", () => {
-  const pluginName = "helm.packages";
+  const pluginName = PluginNames.PACKAGES_HELM;
   const populatedProps = {
     ...defaultProps,
-    charts: [
+    availablePackageSummaries: [
       {
-        ...chartItem,
+        ...availablePackageSummary1,
         availablePackageRef: {
-          ...chartItem.availablePackageRef,
-          plugin: { ...chartItem.availablePackageRef?.plugin, name: pluginName },
+          ...availablePackageSummary1.availablePackageRef,
+          plugin: { ...availablePackageSummary1.availablePackageRef?.plugin, name: pluginName },
         },
       } as AvailablePackageSummary,
     ],
-  };
+  } as ICatalogItemsProps;
 
   const wrapper = mountWrapper(defaultStore, <CatalogItems {...populatedProps} />);
   expect(

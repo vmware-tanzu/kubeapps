@@ -1,52 +1,62 @@
 import {
-  AvailablePackageDetail,
+  AvailablePackageReference,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { IServiceBroker } from "./ServiceCatalog";
-import { IRepo } from "./types";
 
 export const app = {
   apps: {
     new: (
       cluster: string,
       namespace: string,
-      availablePackageDetail: AvailablePackageDetail,
+      availablePackageReference: AvailablePackageReference,
       version: string,
-      globalNamespace: string,
-      plugin: Plugin,
     ) => {
-      const repoNamespace = availablePackageDetail.availablePackageRef?.context?.namespace;
-      const newSegment = globalNamespace !== repoNamespace ? "new" : "new-from-global";
-      // TODO(agamez): get the repo name once available
-      // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
-      const repoName =
-        availablePackageDetail.availablePackageRef?.identifier.split("/")?.[0] ?? globalNamespace;
-      return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${repoName}/${plugin.name}/${
-        plugin.version
-      }/${encodeURIComponent(availablePackageDetail.name)}/versions/${version}`;
+      const pkgPluginName = availablePackageReference?.plugin?.name;
+      const pkgPluginVersion = availablePackageReference?.plugin?.version;
+      const pkgId = availablePackageReference?.identifier || "";
+      // Some plugins may not be cluster-aware nor support multi-cluster, so
+      // if the returned available package ref doesn't set cluster, use the current
+      // one.
+      const pkgCluster = availablePackageReference?.context?.cluster || cluster;
+      const pkgNamespace = availablePackageReference?.context?.namespace;
+      return `/c/${cluster}/ns/${namespace}/apps/new/${pkgPluginName}/${pkgPluginVersion}/${pkgCluster}/${pkgNamespace}/${encodeURIComponent(
+        pkgId,
+      )}/versions/${version}`;
     },
     list: (cluster?: string, namespace?: string) => `/c/${cluster}/ns/${namespace}/apps`,
-    get: (ref?: InstalledPackageReference) =>
-      `${app.apps.list(ref?.context?.cluster, ref?.context?.namespace)}/${ref?.plugin?.name}/${
-        ref?.plugin?.version
-      }/${ref?.identifier}`,
-    upgrade: (ref?: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
+    get: (installedPackageReference: InstalledPackageReference) => {
+      const pkgCluster = installedPackageReference?.context?.cluster;
+      const pkgNamespace = installedPackageReference?.context?.namespace;
+      const pkgPluginName = installedPackageReference?.plugin?.name;
+      const pkgPluginVersion = installedPackageReference?.plugin?.version;
+      const pkgId = installedPackageReference?.identifier || "";
+      return `${app.apps.list(
+        pkgCluster,
+        pkgNamespace,
+      )}/${pkgPluginName}/${pkgPluginVersion}/${pkgId}`;
+    },
+    upgrade: (ref: InstalledPackageReference) => `${app.apps.get(ref)}/upgrade`,
+    upgradeTo: (ref: InstalledPackageReference, version?: string) =>
+      `${app.apps.get(ref)}/upgrade/${version}`,
   },
   catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
-  charts: {
+  packages: {
     get: (
       cluster: string,
       namespace: string,
-      chartName: string,
-      repo: IRepo,
-      globalNamespace: string,
-      plugin: Plugin,
+      availablePackageReference: AvailablePackageReference,
     ) => {
-      const chartsSegment = globalNamespace === repo.namespace ? "global-charts" : "charts";
-      return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${plugin.name}/${
-        plugin.version
-      }/${encodeURIComponent(chartName)}`;
+      const pkgPluginName = availablePackageReference?.plugin?.name;
+      const pkgPluginVersion = availablePackageReference?.plugin?.version;
+      const pkgId = availablePackageReference?.identifier || "";
+      // Some plugins may not be cluster-aware nor support multi-cluster, so
+      // if the returned available package ref doesn't set cluster, use the current
+      // one.
+      const pkgCluster = availablePackageReference?.context?.cluster || cluster;
+      const pkgNamespace = availablePackageReference?.context?.namespace;
+      return `/c/${cluster}/ns/${namespace}/packages/${pkgPluginName}/${pkgPluginVersion}/${pkgCluster}/${pkgNamespace}/${encodeURIComponent(
+        pkgId,
+      )}`;
     },
   },
   operators: {
@@ -112,7 +122,6 @@ export const kubeops = {
   releases: {
     list: (cluster: string, namespace: string) =>
       `api/kubeops/v1/clusters/${cluster}/namespaces/${namespace}/releases`,
-    listAll: (cluster: string) => `api/kubeops/v1/clusters/${cluster}/releases`,
     get: (cluster: string, namespace: string, name: string) =>
       `${kubeops.releases.list(cluster, namespace)}/${name}`,
   },
@@ -128,13 +137,6 @@ export const api = {
     namespaces: (cluster: string) => `${api.k8s.base(cluster)}/api/v1/namespaces`,
     namespace: (cluster: string, namespace: string) =>
       namespace ? `${api.k8s.namespaces(cluster)}/${namespace}` : `${api.k8s.base(cluster)}/api/v1`,
-    // clusterservicebrokers and operators operate on the default cluster only, currently.
-    clusterservicebrokers: {
-      sync: (cluster: string, broker: IServiceBroker) =>
-        `${api.k8s.base(cluster)}/apis/servicecatalog.k8s.io/v1beta1/clusterservicebrokers/${
-          broker.metadata.name
-        }`,
-    },
     operators: {
       operators: (cluster: string, namespace: string) =>
         `${api.k8s.base(cluster)}/apis/packages.operators.coreos.com/v1/${withNS(

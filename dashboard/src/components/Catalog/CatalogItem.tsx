@@ -1,33 +1,31 @@
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { IRepo } from "shared/types";
-import ChartCatalogItem from "./ChartCatalogItem";
+import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import OperatorCatalogItem from "./OperatorCatalogItem";
+import PackageCatalogItem from "./PackageCatalogItem";
+
+// TODO: this file should be refactored after the operators have been integrated in a plugin
 
 export interface ICatalogItem {
-  id: string;
   name: string;
-  version: string;
-  description: string;
   cluster: string;
   namespace: string;
-  icon?: string;
 }
 
-export interface IChartCatalogItem extends ICatalogItem {
-  id: string;
-  repo: IRepo;
-  plugin: Plugin;
+export interface IPackageCatalogItem extends ICatalogItem {
+  availablePackageSummary: AvailablePackageSummary;
 }
 
 export interface IOperatorCatalogItem extends ICatalogItem {
   id: string;
   csv: string;
+  version: string;
+  description: string;
+  icon?: string;
 }
 
 export interface ICatalogItemProps {
   type: string;
   id: string;
-  item: IChartCatalogItem | IOperatorCatalogItem;
+  item: IPackageCatalogItem | IOperatorCatalogItem;
 }
 
 function CatalogItem(props: ICatalogItemProps) {
@@ -35,8 +33,8 @@ function CatalogItem(props: ICatalogItemProps) {
     const item = props.item as IOperatorCatalogItem;
     return <OperatorCatalogItem {...item} />;
   } else {
-    const item = props.item as IChartCatalogItem;
-    return <ChartCatalogItem {...item} />;
+    const item = props.item as IPackageCatalogItem;
+    return <PackageCatalogItem {...item} />;
   }
 }
 

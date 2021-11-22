@@ -5,13 +5,13 @@ deps:
     owner: googleapis
     repository: googleapis
     branch: main
-    commit: b7ef5e9e56c2413d9092e5ef86e5bbe3
-    digest: b1-QAOI4EBE1Rd27jgIjaGqN664KtSWG6Hz40x8yh8HxdU=
-    create_time: 2021-09-21T15:08:11.933747Z
+    commit: a53a098b1b97483f909bdeae7139efe0
+    digest: b1-jscswo15-9kAMV8GguLOSSPZ2bU-U5x4X2IKpB73wNI=
+    create_time: 2021-11-13T15:08:47.460243Z
   - remote: buf.build
     owner: grpc-ecosystem
     repository: grpc-gateway
     branch: main
-    commit: de24a84aed3d4d84806740946b55d947
-    digest: b1-Q-mEW3P3NR5UL8gm0pr3YWFSo5DAtrBqqgvkwH2WFWw=
-    create_time: 2021-09-08T00:32:28.231758Z
+    commit: ff83506eb9cc4cf8972f49ce87e6ed3e
+    digest: b1-iLPHgLaoeWWinMiXXqPnxqE4BThtY3eSbswVGh9GOGI=
+    create_time: 2021-10-23T16:26:52.283938Z

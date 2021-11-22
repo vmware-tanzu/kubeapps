@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2018-2020 Bitnami
+# Copyright 2018-2021 VMware. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ fi
 
 # Load Generic Libraries
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libtest.sh"
+. "${ROOT_DIR}/script/lib/libtest.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/liblog.sh"
+. "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libutil.sh"
+. "${ROOT_DIR}/script/lib/libutil.sh"
 
 # Auxiliar functions
 
@@ -145,13 +145,28 @@ pushChart() {
   local version=$2
   local user=$3
   local password=$4
+  prefix="kubeapps-"
+  description="foo ${chart} chart for CI"
+
   info "Adding ${chart}-${version} to ChartMuseum ..."
   curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+
+  # Mutate the chart name and description, then re-package the tarball
+  # For instance, the apache's Chart.yaml file becomes modified to:
+  #   name: kubeapps-apache
+  #   description: foo apache chart for CI
+  # consequently, the new packaged chart is "${prefix}${chart}-${version}.tgz"
+  # This workaround should mitigate https://github.com/kubeapps/kubeapps/issues/3339
+  mkdir ./${chart}-${version}
+  tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
+  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
+  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
+  helm package ./${chart}-${version}/${chart} -d .
 
   local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
   /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
   sleep 2
-  curl -u "${user}:${password}" --data-binary "@${chart}-${version}.tgz" http://localhost:8080/api/charts
+  curl -u "${user}:${password}" --data-binary "@${prefix}${chart}-${version}.tgz" http://localhost:8080/api/charts
   pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
 }
 
@@ -173,11 +188,14 @@ installOrUpgradeKubeapps() {
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
     --set frontend.replicaCount=1
     --set kubeops.replicaCount=1
-    --set assetsvc.replicaCount=1
     --set dashboard.replicaCount=1
     --set postgresql.replication.enabled=false
     --set postgresql.postgresqlPassword=password
     --set redis.auth.password=password
+    --set apprepository.initialRepos[0].name=bitnami
+    --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
+    --set apprepository.initialRepos[0].basicAuth.user=admin
+    --set apprepository.initialRepos[0].basicAuth.password=password
     --wait)
 
   echo "${cmd[@]}"
@@ -257,11 +275,11 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
 
-if [[ -n "${TEST_UPGRADE}" ]]; then
+if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps bitnami/kubeapps \
-    "--set" "apprepository.initialRepos=null"
+    "--set" "apprepository.initialRepos={}"
 
   info "Waiting for Kubeapps components to be ready (bitnami chart)..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
@@ -286,10 +304,9 @@ info "Waiting for Kubeapps components to be ready..."
 deployments=(
   "kubeapps-ci"
   "kubeapps-ci-internal-apprepository-controller"
-  "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
-  "kubeapps-ci-internal-kubeops"
   "kubeapps-ci-internal-kubeappsapis"
+  "kubeapps-ci-internal-kubeops"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
@@ -311,8 +328,9 @@ kubectl get pods -n kubeapps -o wide
 kubectl get ep --namespace=kubeapps
 svcs=(
   "kubeapps-ci"
-  "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
+  "kubeapps-ci-internal-kubeappsapis"
+  "kubeapps-ci-internal-kubeops"
 )
 for svc in "${svcs[@]}"; do
   k8s_wait_for_endpoints kubeapps "$svc" 1
@@ -328,7 +346,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   if ! retry_while testHelm "2" "1"; then
     warn "PODS status on failure"
     kubectl get pods -n kubeapps
-    for pod in $(kubectl get po -l release=kubeapps-ci -oname -n kubeapps); do
+    for pod in $(kubectl get po -l='app.kubernetes.io/managed-by=Helm,app.kubernetes.io/instance=kubeapps-ci' -oname -n kubeapps); do
       warn "LOGS for pod $pod ------------"
       if [[ "$pod" =~ .*internal.* ]]; then
         kubectl logs -n kubeapps "$pod"
@@ -338,8 +356,6 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
       fi
     done
     echo
-    warn "LOGS for assetsvc tests --------"
-    kubectl logs kubeapps-ci-assetsvc-test --namespace kubeapps
     warn "LOGS for dashboard tests --------"
     kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
     exit 1
@@ -390,6 +406,7 @@ kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceacco
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
 kubectl create rolebinding kubeapps-edit -n default --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
+kubectl create rolebinding kubeapps-repositories-read -n kubeapps --clusterrole kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-edit
 
 ## Give the cluster some time to avoid issues like
 ## https://circleci.com/gh/kubeapps/kubeapps/16102

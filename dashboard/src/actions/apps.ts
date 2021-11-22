@@ -1,12 +1,14 @@
 import { JSONSchemaType } from "ajv";
 import {
   AvailablePackageDetail,
+  Context,
   InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageSummary,
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
-import Chart from "shared/Chart";
+import PackagesService from "shared/PackagesService";
 import {
   CreateError,
   DeleteError,
@@ -17,6 +19,7 @@ import {
   UnprocessableEntity,
   UpgradeError,
 } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 import { App } from "../shared/App";
 import { validate } from "../shared/schema";
@@ -31,21 +34,27 @@ export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
   return (apps: InstalledPackageSummary[]) => resolve(apps);
 });
 
-export const requestDeleteApp = createAction("REQUEST_DELETE_APP");
+export const requestDeleteInstalledPackage = createAction("REQUEST_DELETE_INSTALLED_PACKAGE");
 
-export const receiveDeleteApp = createAction("RECEIVE_DELETE_APP_CONFIRMATION");
+export const receiveDeleteInstalledPackage = createAction(
+  "RECEIVE_DELETE_INSTALLED_PACKAGE_CONFIRMATION",
+);
 
-export const requestDeployApp = createAction("REQUEST_DEPLOY_APP");
+export const requestInstallPackage = createAction("REQUEST_INSTALL_PACKAGE");
 
-export const receiveDeployApp = createAction("RECEIVE_DEPLOY_APP_CONFIRMATION");
+export const receiveInstallPackage = createAction("RECEIVE_INSTALL_PACKAGE_CONFIRMATION");
 
-export const requestUpgradeApp = createAction("REQUEST_UPGRADE_APP");
+export const requestUpdateInstalledPackage = createAction("REQUEST_UPDATE_INSTALLED_PACKAGE");
 
-export const receiveUpgradeApp = createAction("RECEIVE_UPGRADE_APP_CONFIRMATION");
+export const receiveUpdateInstalledPackage = createAction(
+  "RECEIVE_UPDATE_INSTALLED_PACKAGE_CONFIRMATION",
+);
 
-export const requestRollbackApp = createAction("REQUEST_ROLLBACK_APP");
+export const requestRollbackInstalledPackage = createAction("REQUEST_ROLLBACK_INSTALLED_PACKAGE");
 
-export const receiveRollbackApp = createAction("RECEIVE_ROLLBACK_APP_CONFIRMATION");
+export const receiveRollbackInstalledPackage = createAction(
+  "RECEIVE_ROLLBACK_INSTALLED_PACKAGE_CONFIRMATION",
+);
 
 export const errorApp = createAction("ERROR_APP", resolve => {
   return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError) =>
@@ -62,14 +71,14 @@ const allActions = [
   listApps,
   requestApps,
   receiveAppList,
-  requestDeleteApp,
-  receiveDeleteApp,
-  requestDeployApp,
-  receiveDeployApp,
-  requestUpgradeApp,
-  receiveUpgradeApp,
-  requestRollbackApp,
-  receiveRollbackApp,
+  requestDeleteInstalledPackage,
+  receiveDeleteInstalledPackage,
+  requestInstallPackage,
+  receiveInstallPackage,
+  requestUpdateInstalledPackage,
+  receiveUpdateInstalledPackage,
+  requestRollbackInstalledPackage,
+  receiveRollbackInstalledPackage,
   errorApp,
   selectApp,
 ];
@@ -82,16 +91,23 @@ export function getApp(
   return async dispatch => {
     dispatch(requestApps());
     try {
-      // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
-      const legacyResponse = await App.getRelease(installedPackageRef);
+      // TODO(agamez/minelson): remove it once we enable the getting resources for
+      // an installed package in the API.
+      // TODO(minelson): Also remove conditional behaviour once resources can be
+      // fetched in both flux and helm plugins.
+      const legacyResponse =
+        installedPackageRef?.plugin?.name === PluginNames.PACKAGES_HELM
+          ? await App.getRelease(installedPackageRef)
+          : undefined;
       // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
-      // For local packages with no references to any available packages (eg.a local chart for development)
+
+      // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
       let availablePackageDetail;
       try {
         // Get the details of the available package that corresponds to the installed package
-        const resp = await Chart.getAvailablePackageDetail(
+        const resp = await PackagesService.getAvailablePackageDetail(
           installedPackageDetail?.availablePackageRef,
           installedPackageDetail?.currentVersion?.pkgVersion,
         );
@@ -114,15 +130,14 @@ export function getApp(
   };
 }
 
-export function deleteApp(
+export function deleteInstalledPackage(
   installedPackageRef: InstalledPackageReference,
-  purge: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestDeleteApp());
+    dispatch(requestDeleteInstalledPackage());
     try {
-      await App.delete(installedPackageRef, purge);
-      dispatch(receiveDeleteApp());
+      await App.DeleteInstalledPackage(installedPackageRef);
+      dispatch(receiveDeleteInstalledPackage());
       return true;
     } catch (e: any) {
       dispatch(errorApp(new DeleteError(e.message)));
@@ -138,10 +153,11 @@ export function fetchApps(
 ): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(listApps());
-    let installedPackageSummaries;
+    let installedPackageSummaries: InstalledPackageSummary[];
     try {
       const res = await App.GetInstalledPackageSummaries(cluster, namespace);
       installedPackageSummaries = res?.installedPackageSummaries;
+
       dispatch(receiveAppList(installedPackageSummaries));
       return installedPackageSummaries;
     } catch (e: any) {
@@ -151,7 +167,7 @@ export function fetchApps(
   };
 }
 
-export function deployChart(
+export function installPackage(
   targetCluster: string,
   targetNamespace: string,
   availablePackageDetail: AvailablePackageDetail,
@@ -160,7 +176,7 @@ export function deployChart(
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestDeployApp());
+    dispatch(requestInstallPackage());
     try {
       if (values && schema) {
         const validation = validate(values, schema);
@@ -173,11 +189,27 @@ export function deployChart(
           );
         }
       }
-
-      await App.create(targetCluster, targetNamespace, releaseName, availablePackageDetail, values);
-      dispatch(receiveDeployApp());
-
-      return true;
+      if (
+        availablePackageDetail?.availablePackageRef &&
+        availablePackageDetail?.version?.pkgVersion
+      ) {
+        await App.CreateInstalledPackage(
+          { cluster: targetCluster, namespace: targetNamespace } as Context,
+          releaseName,
+          availablePackageDetail.availablePackageRef,
+          { version: availablePackageDetail.version.pkgVersion } as VersionReference,
+          values,
+        );
+        dispatch(receiveInstallPackage());
+        return true;
+      } else {
+        dispatch(
+          errorApp(
+            new CreateError("This package does not contain enough information to be installed"),
+          ),
+        );
+        return false;
+      }
     } catch (e: any) {
       dispatch(errorApp(new CreateError(e.message)));
       return false;
@@ -185,15 +217,14 @@ export function deployChart(
   };
 }
 
-export function upgradeApp(
+export function updateInstalledPackage(
   installedPackageRef: InstalledPackageReference,
   availablePackageDetail: AvailablePackageDetail,
-  chartNamespace: string,
   values?: string,
   schema?: JSONSchemaType<any>,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestUpgradeApp());
+    dispatch(requestUpdateInstalledPackage());
     try {
       if (values && schema) {
         const validation = validate(values, schema);
@@ -206,9 +237,22 @@ export function upgradeApp(
           );
         }
       }
-      await App.upgrade(installedPackageRef, chartNamespace, availablePackageDetail, values);
-      dispatch(receiveUpgradeApp());
-      return true;
+      if (availablePackageDetail?.version?.pkgVersion) {
+        await App.UpdateInstalledPackage(
+          installedPackageRef,
+          { version: availablePackageDetail.version.pkgVersion } as VersionReference,
+          values,
+        );
+        dispatch(receiveUpdateInstalledPackage());
+        return true;
+      } else {
+        dispatch(
+          errorApp(
+            new UpgradeError("This package does not contain enough information to be installed"),
+          ),
+        );
+        return false;
+      }
     } catch (e: any) {
       dispatch(errorApp(new UpgradeError(e.message)));
       return false;
@@ -216,19 +260,31 @@ export function upgradeApp(
   };
 }
 
-export function rollbackApp(
+export function rollbackInstalledPackage(
   installedPackageRef: InstalledPackageReference,
   revision: number,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestRollbackApp());
-    try {
-      await App.rollback(installedPackageRef, revision);
-      dispatch(receiveRollbackApp());
-      dispatch(getApp(installedPackageRef));
-      return true;
-    } catch (e: any) {
-      dispatch(errorApp(new RollbackError(e.message)));
+    // rollbackInstalledPackage is currently only available for Helm packages
+    if (installedPackageRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
+      dispatch(requestRollbackInstalledPackage());
+      try {
+        await App.RollbackInstalledPackage(installedPackageRef, revision);
+        dispatch(receiveRollbackInstalledPackage());
+        dispatch(getApp(installedPackageRef));
+        return true;
+      } catch (e: any) {
+        dispatch(errorApp(new RollbackError(e.message)));
+        return false;
+      }
+    } else {
+      dispatch(
+        errorApp(
+          new RollbackError(
+            "This package cannot be rolled back; this operation is only available for Helm packages",
+          ),
+        ),
+      );
       return false;
     }
   };

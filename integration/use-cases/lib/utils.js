@@ -21,7 +21,7 @@ module.exports = {
           // Unable to get it done
           throw e;
         }
-        // Refresh since the chart will get a bit of time to populate
+        // Refresh since the package will get a bit of time to populate
         try {
           await page.reload({
             waitUntil: ["domcontentloaded"],

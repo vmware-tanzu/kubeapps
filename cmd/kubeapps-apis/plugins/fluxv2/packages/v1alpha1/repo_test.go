@@ -33,6 +33,7 @@ import (
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,10 +53,11 @@ type testSpecGetAvailablePackageSummaries struct {
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name             string
-		request          *corev1.GetAvailablePackageSummariesRequest
-		repos            []testSpecGetAvailablePackageSummaries
-		expectedResponse *corev1.GetAvailablePackageSummariesResponse
+		name              string
+		request           *corev1.GetAvailablePackageSummariesRequest
+		repos             []testSpecGetAvailablePackageSummaries
+		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode codes.Code
 	}{
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
@@ -83,6 +85,24 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: valid_index_package_summaries,
+			},
+		},
+		{
+			name: "it returns a couple of fluxv2 packages from the cluster (when request cluster is specified and matches the kubeapps cluster)",
+			repos: []testSpecGetAvailablePackageSummaries{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     "testdata/valid-index.yaml",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "default",
+			}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: valid_index_package_summaries,
 			},
@@ -442,6 +462,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				NextPageToken:             "",
 			},
 		},
+		{
+			name: "it returns an error if a cluster other than the kubeapps cluster is specified",
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
+				Cluster: "not-kubeapps-cluster",
+			}},
+			expectedErrorCode: codes.Unimplemented,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -457,18 +484,23 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, repo)
 			}
 
-			s, mock, _, err := newServerWithRepos(repos...)
+			s, mock, _, _, err := newServerWithRepos(repos...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = beforeCallGetAvailablePackageSummaries(mock, tc.request.FilterOptions, repos...); err != nil {
+			if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, tc.request.FilterOptions, repos...); err != nil {
 				t.Fatalf("%v", err)
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
-			if err != nil {
-				t.Fatalf("%v", err)
+			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+				t.Fatalf("got: %v, want: %v", got, want)
+			}
+			// If an error code was expected, then no need to continue checking
+			// the response.
+			if tc.expectedErrorCode != codes.OK {
+				return
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
@@ -513,6 +545,11 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 
 		repoStatus := map[string]interface{}{
+			"artifact": map[string]interface{}{
+				"checksum":       "651f952130ea96823711d08345b85e82be011dc6",
+				"lastUpdateTime": "2021-07-01T05:09:45Z",
+				"revision":       "651f952130ea96823711d08345b85e82be011dc6",
+			},
 			"conditions": []interface{}{
 				map[string]interface{}{
 					"type":   "Ready",
@@ -524,12 +561,12 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, watcher, err := newServerWithRepos(repo)
+		s, mock, dyncli, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -550,28 +587,36 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
+		// see below
+		key, oldValue, _ := redisKeyValueForRuntimeObject(repo)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
 		s.cache.eventProcessedWaitGroup.Add(1)
-
-		key, bytes, err := redisKeyValueForRuntimeObject(repo)
+		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
+		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
+		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
+		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
+		mock.ExpectGet(key).SetVal(string(oldValue))
+		key, newValue, err := redisSetValueForRepo(repo, mock)
 		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		if repo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(context.Background(), repo, metav1.UpdateOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
-		mock.ExpectSet(key, bytes, 0).SetVal("")
-
-		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
 		watcher.Modify(repo)
-
 		s.cache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 
-		mock.ExpectScan(0, "", 0).SetVal([]string{key}, 0)
-		mock.ExpectGet(key).SetVal(string(bytes))
+		mock.ExpectGet(key).SetVal(string(newValue))
 
 		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
 			context.Background(),
@@ -597,12 +642,12 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 		defer ts2.Close()
-		s, mock, watcher, err := newServerWithRepos(repo)
+		s, mock, dyncli, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -623,21 +668,18 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
-		// now we are going to simulate the user deleting a HelmRepository CRD which, in turn,
+		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
 		s.cache.eventProcessedWaitGroup.Add(1)
-		key := redisKeyForRuntimeObject(repo)
-		mock.ExpectDel(key).SetVal(0)
-
+		mock.ExpectDel(redisKeyForRuntimeObject(repo)).SetVal(0)
+		if err = dyncli.Resource(repositoriesGvr).Namespace("default").Delete(context.Background(), "bitnami-1", metav1.DeleteOptions{}); err != nil {
+			t.Fatalf("%v", err)
+		}
 		watcher.Delete(repo)
-
 		s.cache.eventProcessedWaitGroup.Wait()
-
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
-
-		mock.ExpectScan(0, "", 0).SetVal([]string{}, 0)
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
@@ -665,12 +707,12 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, watcher, err := newServerWithRepos(repo)
+		s, mock, _, watcher, err := newServerWithRepos(repo)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -694,17 +736,17 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
 		// a cache resync
 		s.cache.eventProcessedWaitGroup.Add(1)
-		key, bytes, _ := redisKeyValueForRuntimeObject(repo)
-		mock.ExpectSet(key, bytes, 0).SetVal("")
-
 		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
-
+		mock.ExpectFlushDB().SetVal("OK")
+		if _, _, err := redisSetValueForRepo(repo, mock); err != nil {
+			t.Fatalf("%+v", err)
+		}
 		s.cache.eventProcessedWaitGroup.Wait()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
-		if err = beforeCallGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -821,7 +863,7 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
+			s, mock, _, _, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -852,11 +894,11 @@ func TestGetPackageRepositories(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
-			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
+			repositoriesGvr: fluxHelmRepositoryList,
 		},
 		repos...)
 
@@ -890,7 +932,7 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 	}
 
 	s, mock, err := newServer(clientGetter, nil, repos...)
-	return s, mock, watcher, err
+	return s, mock, dynamicClient, watcher, err
 }
 
 func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
@@ -932,7 +974,7 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 	return repos
 }
 
-func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
+func redisMockBeforeCallToGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
 	mapVals := make(map[string][]byte)
 	keys := []string{}
 	for _, r := range repos {
@@ -944,7 +986,6 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOpt
 		mapVals[key] = bytes
 	}
 	if filterOptions == nil || len(filterOptions.GetRepositories()) == 0 {
-		mock.ExpectScan(0, "", 0).SetVal(keys, 0)
 		for _, k := range keys {
 			mock.ExpectGet(k).SetVal(string(mapVals[k]))
 		}
@@ -956,7 +997,6 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOpt
 					keys = append(keys, k)
 				}
 			}
-			mock.ExpectScan(0, fluxHelmRepositories+":*:"+r, 0).SetVal(keys, 0)
 			for _, k := range keys {
 				mock.ExpectGet(k).SetVal(string(mapVals[k]))
 			}
@@ -965,9 +1005,21 @@ func beforeCallGetAvailablePackageSummaries(mock redismock.ClientMock, filterOpt
 	return nil
 }
 
+func redisSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key string, bytes []byte, err error) {
+	if key, bytes, err := redisKeyValueForRuntimeObject(repo); err != nil {
+		return "", nil, err
+	} else {
+		mock.ExpectSet(key, bytes, 0).SetVal("OK")
+		mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
+		return key, bytes, nil
+	}
+}
+
 func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
 	key := redisKeyForRuntimeObject(r)
-	bytes, _, err := onAddOrModifyRepo(key, r.(*unstructured.Unstructured).Object)
+	// we are not really adding anything to the cache here, rather just calling a
+	// onAddRepo to compute the value that *WOULD* be stored in the cache
+	bytes, _, err := onAddRepo(key, r.(*unstructured.Unstructured).Object)
 	if err != nil {
 		return "", nil, err
 	}
@@ -1009,6 +1061,11 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Serv
 	}
 
 	repoStatus := map[string]interface{}{
+		"artifact": map[string]interface{}{
+			"checksum":       "651f952130ea96823711d08345b85e82be011dc6",
+			"lastUpdateTime": "2021-07-01T05:09:45Z",
+			"revision":       "651f952130ea96823711d08345b85e82be011dc6",
+		},
 		"conditions": []interface{}{
 			map[string]interface{}{
 				"type":   "Ready",
@@ -1022,6 +1079,12 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Serv
 }
 
 // misc global vars that get re-used in multiple tests scenarios
+var repositoriesGvr = schema.GroupVersionResource{
+	Group:    fluxGroup,
+	Version:  fluxVersion,
+	Resource: fluxHelmRepositories,
+}
+
 var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 	{
 		DisplayName: "acs-engine-autoscaler",
@@ -1033,7 +1096,7 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Scales worker nodes within agent pools",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "bitnami-1/acs-engine-autoscaler",
-			Context:    &corev1.Context{Namespace: "default"},
+			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1047,7 +1110,7 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "new description!",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "bitnami-1/wordpress",
-			Context:    &corev1.Context{Namespace: "default"},
+			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1063,7 +1126,7 @@ var cert_manager_summary = &corev1.AvailablePackageSummary{
 	ShortDescription: "A Helm chart for cert-manager",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "jetstack-1/cert-manager",
-		Context:    &corev1.Context{Namespace: "ns1"},
+		Context:    &corev1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 }
@@ -1078,7 +1141,7 @@ var elasticsearch_summary = &corev1.AvailablePackageSummary{
 	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "index-with-categories-1/elasticsearch",
-		Context:    &corev1.Context{Namespace: "default"},
+		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 }
@@ -1093,7 +1156,7 @@ var ghost_summary = &corev1.AvailablePackageSummary{
 	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
 	AvailablePackageRef: &corev1.AvailablePackageReference{
 		Identifier: "index-with-categories-1/ghost",
-		Context:    &corev1.Context{Namespace: "default"},
+		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 }
@@ -1113,7 +1176,7 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Deploy a basic Alpine Linux pod",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2"},
+			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1126,7 +1189,7 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Create a basic nginx HTTP server",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2"},
+			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1142,7 +1205,7 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Deploy a basic Alpine Linux pod",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2"},
+			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	},
@@ -1155,7 +1218,7 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 		ShortDescription: "Create a basic nginx HTTP server",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2"},
+			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 	}}

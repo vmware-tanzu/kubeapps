@@ -114,10 +114,12 @@ function DeploymentFormBody({
               <Differential
                 oldValues={deployedValues || defaultValues}
                 newValues={values}
-                emptyDiffText={
-                  deployedValues
-                    ? "No changes detected from deployed values"
-                    : "No changes detected from example defaults"
+                emptyDiffElement={
+                  deployedValues ? (
+                    <span>No changes detected from deployed values</span>
+                  ) : (
+                    <span>No changes detected from example defaults</span>
+                  )
                 }
                 key="differential-selector"
               />,

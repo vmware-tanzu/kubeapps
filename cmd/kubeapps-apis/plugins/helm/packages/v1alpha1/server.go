@@ -17,6 +17,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"strconv"
@@ -26,10 +28,10 @@ import (
 	"github.com/kubeapps/common/datastore"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -47,6 +49,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
@@ -65,6 +68,13 @@ const (
 	UserAgentPrefix        = "kubeapps-apis/plugins"
 )
 
+// Wapper struct to include three version constants
+type VersionsInSummary struct {
+	Major int `json:"major"`
+	Minor int `json:"minor"`
+	Patch int `json:"patch"`
+}
+
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedHelmPackagesServiceServer
@@ -77,11 +87,44 @@ type Server struct {
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
 	chartClientFactory       chartutils.ChartClientFactoryInterface
+	versionsInSummary        VersionsInSummary
+}
+
+// parsePluginConfig parses the input plugin configuration json file and return the configuration options.
+func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, error) {
+
+	// Note at present VersionsInSummary is the only configurable option for this plugin,
+	// and if required this func can be enhaned to return helmConfig struct
+
+	// In the helm plugin, for example, we are interested in config for the
+	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
+	type helmConfig struct {
+		Core struct {
+			Packages struct {
+				V1alpha1 struct {
+					VersionsInSummary VersionsInSummary
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"core"`
+	}
+	var config helmConfig
+
+	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	if err != nil {
+		return VersionsInSummary{}, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+	}
+	err = json.Unmarshal([]byte(pluginConfig), &config)
+	if err != nil {
+		return VersionsInSummary{}, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+	}
+
+	// return configured value of VersionsInSummary
+	return config.Core.Packages.V1alpha1.VersionsInSummary, nil
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluster string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, pluginConfigPath string) *Server {
 	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
@@ -97,6 +140,23 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 	err = manager.Init()
 	if err != nil {
 		log.Fatalf("%s", err)
+	}
+
+	// If no config is provided, we default to the existing values for backwards
+	// compatibility.
+	versionsInSummary := VersionsInSummary{
+		Major: MajorVersionsInSummary,
+		Minor: MinorVersionsInSummary,
+		Patch: PatchVersionsInSummary,
+	}
+	if pluginConfigPath != "" {
+		versionsInSummary, err = parsePluginConfig(pluginConfigPath)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		log.Infof("+helm using custom packages config with %v\n", versionsInSummary)
+	} else {
+		log.Infof("+helm using default config since pluginConfigPath is empty")
 	}
 
 	return &Server{
@@ -151,6 +211,7 @@ func NewServer(configGetter server.KubernetesConfigGetter, globalPackagingCluste
 		globalPackagingNamespace: kubeappsNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
+		versionsInSummary:        versionsInSummary,
 	}
 }
 
@@ -430,13 +491,14 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
 	}
+
 	return &corev1.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions, s.versionsInSummary),
 	}, nil
 }
 
 // packageAppVersionsSummary converts the model chart versions into the required version summary.
-func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.PackageAppVersion {
+func packageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
 	pav := []*corev1.PackageAppVersion{}
 
 	// Use a version map to be able to count how many major, minor and patch versions
@@ -450,18 +512,18 @@ func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.Package
 
 		if _, ok := version_map[version.Major()]; !ok {
 			// Don't add a new major version if we already have enough
-			if len(version_map) >= MajorVersionsInSummary {
+			if len(version_map) >= versionInSummary.Major {
 				continue
 			}
 		} else {
 			// If we don't yet have this minor version
 			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
 				// Don't add a new minor version if we already have enough for this major version
-				if len(version_map[version.Major()]) >= MinorVersionsInSummary {
+				if len(version_map[version.Major()]) >= versionInSummary.Minor {
 					continue
 				}
 			} else {
-				if len(version_map[version.Major()][version.Minor()]) >= PatchVersionsInSummary {
+				if len(version_map[version.Major()][version.Minor()]) >= versionInSummary.Patch {
 					continue
 				}
 			}
@@ -844,6 +906,9 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		Version:                        request.GetPkgVersionReference().GetVersion(),
 	}
 	ch, registrySecrets, err := s.fetchChartWithRegistrySecrets(ctx, chartDetails, typedClient)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "Missing permissions %v", err)
+	}
 
 	// Create an action config for the target namespace.
 	actionConfig, err := s.actionConfigGetter(ctx, request.GetTargetContext())
@@ -913,6 +978,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		Version:                        request.GetPkgVersionReference().GetVersion(),
 	}
 	ch, registrySecrets, err := s.fetchChartWithRegistrySecrets(ctx, chartDetails, typedClient)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "Missing permissions %v", err)
+	}
 
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(ctx, installedRef.GetContext())
@@ -1008,6 +1076,19 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	chartID := fmt.Sprintf("%s/%s", appRepo.Name, chartDetails.ChartName)
 	log.Infof("fetching chart %q with user-agent %q", chartID, userAgentString)
 
+	// Look up the cachedChart cached in our DB to populate the tarball URL
+	cachedChart, err := s.manager.GetChartVersion(chartDetails.AppRepositoryResourceNamespace, chartID, chartDetails.Version)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s (version %s) from the namespace %q: %v", chartID, chartDetails.Version, chartDetails.AppRepositoryResourceNamespace, err)
+	}
+	var tarballURL string
+	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) == 1 && cachedChart.ChartVersions[0].URLs != nil {
+		// The tarball URL will always be the first URL in the repo.chartVersions:
+		// https://helm.sh/docs/topics/chart_repository/#the-index-file
+		// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
+		tarballURL = cachedChart.ChartVersions[0].URLs[0]
+	}
+
 	// Grab the chart itself
 	ch, err := handlerutil.GetChart(
 		&chartutils.Details{
@@ -1015,11 +1096,15 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 			AppRepositoryResourceNamespace: appRepo.Namespace,
 			ChartName:                      chartDetails.ChartName,
 			Version:                        chartDetails.Version,
+			TarballURL:                     tarballURL,
 		},
 		appRepo,
 		caCertSecret, authSecret,
 		s.chartClientFactory.New(appRepo.Spec.Type, userAgentString),
 	)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s from the namespace %q: %v", chartDetails.ChartName, appRepo.Namespace, err)
+	}
 
 	registrySecrets, err := chartutils.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, client)
 	if err != nil {
@@ -1092,4 +1177,76 @@ func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.R
 			Plugin:     GetPluginDetail(),
 		},
 	}, nil
+}
+
+// GetInstalledPackageResourceRefs returns the references for the Kubernetes
+// resources created by an installed package.
+func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
+	pkgRef := request.GetInstalledPackageRef()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
+	identifier := pkgRef.GetIdentifier()
+	log.Infof("+helm GetResources %s %s", contextMsg, identifier)
+
+	namespace := pkgRef.GetContext().GetNamespace()
+
+	actionConfig, err := s.actionConfigGetter(ctx, request.GetInstalledPackageRef().GetContext())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+
+	// Grab the released manifest from the release.
+	getcmd := action.NewGet(actionConfig)
+	release, err := getcmd.Run(identifier)
+	if err != nil {
+		if err == driver.ErrReleaseNotFound {
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+		}
+		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
+	}
+
+	refs, err := resourceRefsFromManifest(release.Manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetInstalledPackageResourceRefsResponse{
+		Context:      pkgRef.GetContext(),
+		ResourceRefs: refs,
+	}, nil
+}
+
+type YAMLMetadata struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type YAMLResource struct {
+	APIVersion string       `json:"apiVersion"`
+	Kind       string       `json:"kind"`
+	Metadata   YAMLMetadata `json:"metadata"`
+}
+
+// resourceRefsFromManifest returns the resource refs for a given yaml manifest.
+func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
+	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
+	refs := []*corev1.ResourceRef{}
+	doc := YAMLResource{}
+	for {
+		err := decoder.Decode(&doc)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
+		}
+		if doc.Kind != "" {
+			refs = append(refs, &corev1.ResourceRef{
+				ApiVersion: doc.APIVersion,
+				Kind:       doc.Kind,
+				Name:       doc.Metadata.Name,
+			})
+		}
+	}
+
+	return refs, nil
 }

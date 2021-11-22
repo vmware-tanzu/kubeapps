@@ -129,12 +129,7 @@ export const GetConfiguredPluginsResponse = {
     const message = {
       ...baseGetConfiguredPluginsResponse,
     } as GetConfiguredPluginsResponse;
-    message.plugins = [];
-    if (object.plugins !== undefined && object.plugins !== null) {
-      for (const e of object.plugins) {
-        message.plugins.push(Plugin.fromJSON(e));
-      }
-    }
+    message.plugins = (object.plugins ?? []).map((e: any) => Plugin.fromJSON(e));
     return message;
   },
 
@@ -152,12 +147,7 @@ export const GetConfiguredPluginsResponse = {
     const message = {
       ...baseGetConfiguredPluginsResponse,
     } as GetConfiguredPluginsResponse;
-    message.plugins = [];
-    if (object.plugins !== undefined && object.plugins !== null) {
-      for (const e of object.plugins) {
-        message.plugins.push(Plugin.fromPartial(e));
-      }
-    }
+    message.plugins = (object.plugins ?? []).map(e => Plugin.fromPartial(e));
     return message;
   },
 };
@@ -220,16 +210,8 @@ export const Plugin = {
 
   fromPartial(object: DeepPartial<Plugin>): Plugin {
     const message = { ...basePlugin } as Plugin;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.version !== undefined && object.version !== null) {
-      message.version = object.version;
-    } else {
-      message.version = "";
-    }
+    message.name = object.name ?? "";
+    message.version = object.version ?? "";
     return message;
   },
 };

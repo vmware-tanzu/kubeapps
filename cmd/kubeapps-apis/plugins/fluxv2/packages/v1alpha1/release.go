@@ -16,7 +16,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -77,14 +76,6 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*
 	}
 }
 
-func (s *Server) getReleaseInCluster(ctx context.Context, name types.NamespacedName) (*unstructured.Unstructured, error) {
-	releasesIfc, err := s.getReleasesResourceInterface(ctx, name.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	return releasesIfc.Get(ctx, name.Name, metav1.GetOptions{})
-}
-
 func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
 	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
 	if err != nil {
@@ -108,7 +99,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 		for i, releaseUnstructured := range releasesFromCluster.Items {
 			if startAt <= i {
-				summary, err := s.installedPkgSummaryFromRelease(releaseUnstructured.Object, chartsFromCluster)
+				summary, err := s.installedPkgSummaryFromRelease(ctx, releaseUnstructured.Object, chartsFromCluster)
 				if err != nil {
 					return nil, err
 				} else if summary == nil {
@@ -125,7 +116,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 	return installedPkgSummaries, nil
 }
 
-func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
 	if !checkGeneration(unstructuredRelease) {
 		return nil, nil
@@ -169,12 +160,12 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 			return nil, err
 		}
 
-		// according to docs repoNamespace is optional
+		// according to flux docs repoNamespace is optional
 		if repoNamespace == "" {
 			repoNamespace = name.Namespace
 		}
 		repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
-		chartFromCache, err := s.fetchChartFromCache(repo, chartName)
+		chartFromCache, err := s.getChart(ctx, repo, chartName)
 		if err != nil {
 			return nil, err
 		} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
@@ -190,6 +181,7 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
 				Namespace: name.Namespace,
+				Cluster:   s.kubeappsCluster,
 			},
 			Identifier: name.Name,
 			Plugin:     GetPluginDetail(),
@@ -212,9 +204,19 @@ func (s *Server) installedPkgSummaryFromRelease(unstructuredRelease map[string]i
 }
 
 func (s *Server) installedPackageDetail(ctx context.Context, name types.NamespacedName) (*corev1.InstalledPackageDetail, error) {
-	unstructuredRelease, err := s.getReleaseInCluster(ctx, name)
+	releasesIfc, err := s.getReleasesResourceInterface(ctx, name.Namespace)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q due to: %v", name, err)
+		return nil, err
+	}
+	unstructuredRelease, err := releasesIfc.Get(ctx, name.Name, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, status.Errorf(codes.NotFound, "%q", err)
+		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "unable to get release due to %v", err)
+		} else {
+			return nil, status.Errorf(codes.Internal, "unable to get release due to %v", err)
+		}
 	}
 
 	log.V(4).Infof("installedPackageDetail:\n[%s]", prettyPrintMap(unstructuredRelease.Object))
@@ -251,6 +253,8 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	if err != nil {
 		return nil, err
 	}
+	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	availablePackageRef.Context.Cluster = s.kubeappsCluster
 
 	appVersion, postInstallNotes := "", ""
 	release, err := s.helmReleaseFromUnstructured(ctx, name, obj)
@@ -272,6 +276,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
 				Namespace: name.Namespace,
+				Cluster:   s.kubeappsCluster,
 			},
 			Identifier: name.Name,
 			Plugin:     GetPluginDetail(),
@@ -325,19 +330,11 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 }
 
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
-	// HACK: just for now assume HelmRelease CRD will live in the kubeapps namespace
-	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
-	if kubeappsNamespace == "" {
-		return nil, status.Errorf(codes.FailedPrecondition, "POD_NAMESPACE not specified")
-	}
-	resourceIfc, err := s.getReleasesResourceInterface(ctx, kubeappsNamespace)
+	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
+	// the helm release CR to also be created in the target namespace (where the helm release itself is currently created)
+	resourceIfc, err := s.getReleasesResourceInterface(ctx, targetName.Namespace)
 	if err != nil {
 		return nil, err
-	}
-
-	availablePackageNamespace := packageRef.GetContext().GetNamespace()
-	if availablePackageNamespace == "" || packageRef.GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
 	}
 
 	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
@@ -346,8 +343,8 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}
 
 	packageIdParts := strings.Split(unescapedChartID, "/")
-	repo := types.NamespacedName{Namespace: availablePackageNamespace, Name: packageIdParts[0]}
-	chart, err := s.fetchChartFromCache(repo, packageIdParts[1])
+	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
+	chart, err := s.getChart(ctx, repo, packageIdParts[1])
 	if err != nil {
 		return nil, err
 	}
@@ -361,13 +358,19 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		}
 	}
 
-	fluxHelmRelease, err := newFluxHelmRelease(chart, kubeappsNamespace, targetName, versionRef, reconcile, values)
+	fluxHelmRelease, err := newFluxHelmRelease(chart, targetName, versionRef, reconcile, values)
 	if err != nil {
 		return nil, err
 	}
 	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, metav1.CreateOptions{})
 	if err != nil {
-		return nil, err
+		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			// TODO (gfichtenholt) I think in some cases we should be returning codes.PermissionDenied instead,
+			// but that has to be done consistently accross all plug-in operations, not just here
+			return nil, status.Errorf(codes.Unauthenticated, "Unable to create release due to %v", err)
+		} else {
+			return nil, status.Errorf(codes.Internal, "Unable to create release due to %v", err)
+		}
 	}
 
 	name, err := namespacedName(newRelease.Object)
@@ -375,7 +378,10 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 	return &corev1.InstalledPackageReference{
-		Context:    &corev1.Context{Namespace: name.Namespace},
+		Context: &corev1.Context{
+			Namespace: name.Namespace,
+			Cluster:   s.kubeappsCluster,
+		},
 		Identifier: name.Name,
 		Plugin:     GetPluginDetail(),
 	}, nil
@@ -391,8 +397,10 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, status.Errorf(codes.NotFound, "%q", err)
+		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "Unable to get release due to %v", err)
 		} else {
-			return nil, status.Errorf(codes.Internal, "%q", err)
+			return nil, status.Errorf(codes.Internal, "Unable to get release due to %v", err)
 		}
 	}
 
@@ -452,16 +460,43 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	// replace the object in k8s with a new desired state
 	unstructuredRel, err = ifc.Update(ctx, unstructuredRel, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, err
+		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "Unable to update release due to %v", err)
+		} else {
+			return nil, status.Errorf(codes.Internal, "Unable to update release due to %v", err)
+		}
 	}
 
 	log.V(4).Infof("Updated release: %s", prettyPrintMap(unstructuredRel.Object))
 
 	return &corev1.InstalledPackageReference{
-		Context:    &corev1.Context{Namespace: packageRef.Context.Namespace},
+		Context: &corev1.Context{
+			Namespace: packageRef.Context.Namespace,
+			Cluster:   s.kubeappsCluster,
+		},
 		Identifier: packageRef.Identifier,
 		Plugin:     GetPluginDetail(),
 	}, nil
+}
+
+func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference) error {
+	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
+	if err != nil {
+		return err
+	}
+
+	log.V(4).Infof("Deleted release: [%s]", packageRef.Identifier)
+
+	if err = ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{}); err != nil {
+		if errors.IsNotFound(err) {
+			return status.Errorf(codes.NotFound, "%q", err)
+		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return status.Errorf(codes.Unauthenticated, "Unable to delete release due to %v", err)
+		} else {
+			return status.Errorf(codes.Internal, "Unable to delete release due to %v", err)
+		}
+	}
+	return nil
 }
 
 // returns 3 things:
@@ -580,16 +615,17 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 
 // Potentially, there are 3 different namespaces that can be specified here
 // 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
-// 2. metadata.namespace, where this HelmRelease CRD will exist
+// 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
+//    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
-func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
+func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
 	unstructuredRel := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
 			"kind":       fluxHelmRelease,
 			"metadata": map[string]interface{}{
 				"name":      targetName.Name,
-				"namespace": releaseNamespace,
+				"namespace": targetName.Namespace,
 			},
 			"spec": map[string]interface{}{
 				"chart": map[string]interface{}{
@@ -601,9 +637,6 @@ func newFluxHelmRelease(chart *models.Chart, releaseNamespace string, targetName
 							"namespace": chart.Repo.Namespace,
 						},
 					},
-				},
-				"install": map[string]interface{}{
-					"createNamespace": true,
 				},
 				"targetNamespace": targetName.Namespace,
 			},
