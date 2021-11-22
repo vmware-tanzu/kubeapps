@@ -15,6 +15,7 @@ import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageState, IStoreState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
+import PackageReadme from "./PackageReadme";
 import PackageView from "./PackageView";
 
 const defaultProps = {
@@ -22,7 +23,7 @@ const defaultProps = {
   packageNamespace: "kubeapps-namespace",
   isFetching: false,
   namespace: "test",
-  cluster: "default", 
+  cluster: "default",
   selected: { versions: [] } as IPackageState["selected"],
   version: undefined,
   kubeappsNamespace: "kubeapps",
@@ -229,6 +230,39 @@ it("renders the home link when set", () => {
       </a>,
     ),
   ).toBe(true);
+});
+
+describe("when package details are not available", () => {
+  it("redirects when skipAvailablePackageDetails is set to true", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultState,
+        charts: { selected: { readme: "" } },
+        config: { skipAvailablePackageDetails: true },
+      }),
+      <Router history={history}>
+        <Route path={routePath}>
+          <PackageView />
+        </Route>
+      </Router>,
+    );
+    expect(wrapper.text()).not.toContain("Fetching application README...");
+  });
+
+  it("does not redirect when skipAvailablePackageDetails is set to false", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultState,
+        config: { skipAvailablePackageDetails: false },
+      }),
+      <Router history={history}>
+        <Route path={routePath}>
+          <PackageView />
+        </Route>
+      </Router>,
+    );
+    expect(wrapper.containsMatchingElement(<PackageReadme />)).toBe(true);
+  });
 });
 
 describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {

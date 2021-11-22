@@ -46,6 +46,7 @@ export default function PackageView() {
   } = ReactRouter.useParams() as IRouteParams;
   const {
     packages: { isFetching, selected: selectedPackage },
+    config: {skipAvailablePackageDetails}
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
@@ -91,13 +92,26 @@ export default function PackageView() {
         : location.pathname;
       dispatch(push(trimmedPath.concat(`/versions/${event.target.value}`)));
     }
-  }; 
+  };
 
   if (selectedPackage.error) {
     return <Alert theme="danger">Unable to fetch package: {selectedPackage.error.message}</Alert>;
   }
   if (isFetching || !selectedPackage.availablePackageDetail || !selectedPackage.pkgVersion) {
     return <LoadingWrapper loaded={false} />;
+  }
+  // If package does not have a README, redirect to deployment form
+  if (!selectedPackage.readme && skipAvailablePackageDetails) {
+    return (
+      <ReactRouter.Redirect
+        to={app.apps.new(
+          targetCluster,
+          targetNamespace,
+          packageReference,
+          selectedPackage.pkgVersion,
+        )}
+      />
+    );
   }
   return (
     <section>

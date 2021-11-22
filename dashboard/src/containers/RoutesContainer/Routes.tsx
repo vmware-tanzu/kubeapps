@@ -31,6 +31,9 @@ const privateRoutes = {
     AppUpgrade,
   "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions/:packageVersion":
     DeploymentForm,
+    AppUpgrade,
+  "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions":
+    DeploymentForm,
   "/c/:cluster/ns/:namespace/catalog": Catalog,
   "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId":
     PackageView,
