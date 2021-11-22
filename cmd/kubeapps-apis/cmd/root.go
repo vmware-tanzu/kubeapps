@@ -25,12 +25,13 @@ import (
 	"github.com/spf13/viper"
 	log "k8s.io/klog/v2"
 
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 )
 
 var (
 	cfgFile   string
-	serveOpts server.ServeOptions
+	serveOpts core.ServeOptions
 	// This version var is updated during the build
 	// see the -ldflags option in the Dockerfile
 	version = "devel"

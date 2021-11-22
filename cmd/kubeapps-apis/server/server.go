@@ -21,31 +21,26 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"reflect"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	packagesv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/packages/v1alpha1"
+	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
+	packagesGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
 	log "k8s.io/klog/v2"
 )
 
-type ServeOptions struct {
-	Port                     int
-	PluginDirs               []string
-	ClustersConfigPath       string
-	PluginConfigPath         string
-	PinnipedProxyURL         string
-	UnsafeLocalDevKubeconfig bool
-}
-
 // Serve is the root command that is run when no other sub-commands are present.
 // It runs the gRPC service, registering the configured plugins.
-func Serve(serveOpts ServeOptions) error {
+func Serve(serveOpts core.ServeOptions) error {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
 	grpcSrv := grpc.NewServer()
@@ -59,28 +54,39 @@ func Serve(serveOpts ServeOptions) error {
 	if err != nil {
 		return fmt.Errorf("Failed to create gateway: %v", err)
 	}
-	gwArgs := gwHandlerArgs{
-		ctx:         ctx,
-		mux:         gw,
-		addr:        listenAddr,
-		dialOptions: []grpc.DialOption{grpc.WithInsecure()},
+	gwArgs := core.GatewayHandlerArgs{
+		Ctx:         ctx,
+		Mux:         gw,
+		Addr:        listenAddr,
+		DialOptions: []grpc.DialOption{grpc.WithInsecure()},
 	}
 
-	// Create the core.plugins server which handles registration of plugins,
-	// and register it for both grpc and http.
-	pluginsServer, err := NewPluginsServer(serveOpts, grpcSrv, gwArgs)
+	// Create the core.plugins.v1alpha1 server which handles registration of
+	// plugins, and register it for both grpc and http.
+	pluginsServer, err := pluginsv1alpha1.NewPluginsServer(serveOpts, grpcSrv, gwArgs)
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
-	plugins.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
-	err = plugins.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
+	pluginsGRPCv1alpha1.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
+	err = pluginsGRPCv1alpha1.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
 	if err != nil {
 		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
 	}
 
+	// Ask the plugins server for plugins with GRPC servers that fulfil the core
+	// packaging v1alpha1 API, then pass to the constructor below.
+	// The argument for the reflect.TypeOf is based on what grpc-go
+	// does itself at:
+	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
+	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.PackagesServiceServer)(nil)).Elem())
+
 	// Create the core.packages server and register it for both grpc and http.
-	packages.RegisterPackagesServiceServer(grpcSrv, NewPackagesServer(pluginsServer.packagesPlugins))
-	err = packages.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.ctx, gwArgs.mux, gwArgs.addr, gwArgs.dialOptions)
+	packagesServer, err := packagesv1alpha1.NewPackagesServer(packagingPlugins)
+	if err != nil {
+		return fmt.Errorf("failed to create core.packages.v1alpha1 server: %w", err)
+	}
+	packagesGRPCv1alpha1.RegisterPackagesServiceServer(grpcSrv, packagesServer)
+	err = packagesGRPCv1alpha1.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
 	if err != nil {
 		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)
 	}
@@ -110,7 +116,7 @@ func Serve(serveOpts ServeOptions) error {
 			if webrpcProxy.IsGrpcWebRequest(r) || webrpcProxy.IsAcceptableGrpcCorsRequest(r) || webrpcProxy.IsGrpcWebSocketRequest(r) {
 				webrpcProxy.ServeHTTP(w, r)
 			} else {
-				gwArgs.mux.ServeHTTP(w, r)
+				gwArgs.Mux.ServeHTTP(w, r)
 			}
 		}),
 	}
@@ -144,15 +150,6 @@ func Serve(serveOpts ServeOptions) error {
 	}
 
 	return nil
-}
-
-// gwHandlerArgs is a helper struct just encapsulating all the args
-// required when registering an HTTP handler for the gateway.
-type gwHandlerArgs struct {
-	ctx         context.Context
-	mux         *runtime.ServeMux
-	addr        string
-	dialOptions []grpc.DialOption
 }
 
 // Create a gateway mux that does not emit unpopulated fields.

@@ -532,7 +532,7 @@ export interface Schema {
  *    // Id represents the message identifier.
  *    string id = 1; [
  *        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
- *          {description: "The unique identifier of the simple message."
+ *          description: "The unique identifier of the simple message."
  *        }];
  *  }
  */
@@ -1087,12 +1087,6 @@ export const Swagger = {
 
   fromJSON(object: any): Swagger {
     const message = { ...baseSwagger } as Swagger;
-    message.schemes = [];
-    message.consumes = [];
-    message.produces = [];
-    message.responses = {};
-    message.security = [];
-    message.extensions = {};
     if (object.swagger !== undefined && object.swagger !== null) {
       message.swagger = String(object.swagger);
     } else {
@@ -1113,21 +1107,10 @@ export const Swagger = {
     } else {
       message.basePath = "";
     }
-    if (object.schemes !== undefined && object.schemes !== null) {
-      for (const e of object.schemes) {
-        message.schemes.push(schemeFromJSON(e));
-      }
-    }
-    if (object.consumes !== undefined && object.consumes !== null) {
-      for (const e of object.consumes) {
-        message.consumes.push(String(e));
-      }
-    }
-    if (object.produces !== undefined && object.produces !== null) {
-      for (const e of object.produces) {
-        message.produces.push(String(e));
-      }
-    }
+    message.schemes = (object.schemes ?? []).map((e: any) => schemeFromJSON(e));
+    message.consumes = (object.consumes ?? []).map((e: any) => String(e));
+    message.produces = (object.produces ?? []).map((e: any) => String(e));
+    message.responses = {};
     if (object.responses !== undefined && object.responses !== null) {
       Object.entries(object.responses).forEach(([key, value]) => {
         message.responses[key] = Response.fromJSON(value);
@@ -1138,16 +1121,13 @@ export const Swagger = {
     } else {
       message.securityDefinitions = undefined;
     }
-    if (object.security !== undefined && object.security !== null) {
-      for (const e of object.security) {
-        message.security.push(SecurityRequirement.fromJSON(e));
-      }
-    }
+    message.security = (object.security ?? []).map((e: any) => SecurityRequirement.fromJSON(e));
     if (object.externalDocs !== undefined && object.externalDocs !== null) {
       message.externalDocs = ExternalDocumentation.fromJSON(object.externalDocs);
     } else {
       message.externalDocs = undefined;
     }
+    message.extensions = {};
     if (object.extensions !== undefined && object.extensions !== null) {
       Object.entries(object.extensions).forEach(([key, value]) => {
         message.extensions[key] = Value.fromJSON(value);
@@ -1215,24 +1195,9 @@ export const Swagger = {
     }
     message.host = object.host ?? "";
     message.basePath = object.basePath ?? "";
-    message.schemes = [];
-    if (object.schemes !== undefined && object.schemes !== null) {
-      for (const e of object.schemes) {
-        message.schemes.push(e);
-      }
-    }
-    message.consumes = [];
-    if (object.consumes !== undefined && object.consumes !== null) {
-      for (const e of object.consumes) {
-        message.consumes.push(e);
-      }
-    }
-    message.produces = [];
-    if (object.produces !== undefined && object.produces !== null) {
-      for (const e of object.produces) {
-        message.produces.push(e);
-      }
-    }
+    message.schemes = (object.schemes ?? []).map(e => e);
+    message.consumes = (object.consumes ?? []).map(e => e);
+    message.produces = (object.produces ?? []).map(e => e);
     message.responses = {};
     if (object.responses !== undefined && object.responses !== null) {
       Object.entries(object.responses).forEach(([key, value]) => {
@@ -1246,12 +1211,7 @@ export const Swagger = {
     } else {
       message.securityDefinitions = undefined;
     }
-    message.security = [];
-    if (object.security !== undefined && object.security !== null) {
-      for (const e of object.security) {
-        message.security.push(SecurityRequirement.fromPartial(e));
-      }
-    }
+    message.security = (object.security ?? []).map(e => SecurityRequirement.fromPartial(e));
     if (object.externalDocs !== undefined && object.externalDocs !== null) {
       message.externalDocs = ExternalDocumentation.fromPartial(object.externalDocs);
     } else {
@@ -1546,18 +1506,7 @@ export const Operation = {
 
   fromJSON(object: any): Operation {
     const message = { ...baseOperation } as Operation;
-    message.tags = [];
-    message.consumes = [];
-    message.produces = [];
-    message.responses = {};
-    message.schemes = [];
-    message.security = [];
-    message.extensions = {};
-    if (object.tags !== undefined && object.tags !== null) {
-      for (const e of object.tags) {
-        message.tags.push(String(e));
-      }
-    }
+    message.tags = (object.tags ?? []).map((e: any) => String(e));
     if (object.summary !== undefined && object.summary !== null) {
       message.summary = String(object.summary);
     } else {
@@ -1578,36 +1527,22 @@ export const Operation = {
     } else {
       message.operationId = "";
     }
-    if (object.consumes !== undefined && object.consumes !== null) {
-      for (const e of object.consumes) {
-        message.consumes.push(String(e));
-      }
-    }
-    if (object.produces !== undefined && object.produces !== null) {
-      for (const e of object.produces) {
-        message.produces.push(String(e));
-      }
-    }
+    message.consumes = (object.consumes ?? []).map((e: any) => String(e));
+    message.produces = (object.produces ?? []).map((e: any) => String(e));
+    message.responses = {};
     if (object.responses !== undefined && object.responses !== null) {
       Object.entries(object.responses).forEach(([key, value]) => {
         message.responses[key] = Response.fromJSON(value);
       });
     }
-    if (object.schemes !== undefined && object.schemes !== null) {
-      for (const e of object.schemes) {
-        message.schemes.push(schemeFromJSON(e));
-      }
-    }
+    message.schemes = (object.schemes ?? []).map((e: any) => schemeFromJSON(e));
     if (object.deprecated !== undefined && object.deprecated !== null) {
       message.deprecated = Boolean(object.deprecated);
     } else {
       message.deprecated = false;
     }
-    if (object.security !== undefined && object.security !== null) {
-      for (const e of object.security) {
-        message.security.push(SecurityRequirement.fromJSON(e));
-      }
-    }
+    message.security = (object.security ?? []).map((e: any) => SecurityRequirement.fromJSON(e));
+    message.extensions = {};
     if (object.extensions !== undefined && object.extensions !== null) {
       Object.entries(object.extensions).forEach(([key, value]) => {
         message.extensions[key] = Value.fromJSON(value);
@@ -1668,12 +1603,7 @@ export const Operation = {
 
   fromPartial(object: DeepPartial<Operation>): Operation {
     const message = { ...baseOperation } as Operation;
-    message.tags = [];
-    if (object.tags !== undefined && object.tags !== null) {
-      for (const e of object.tags) {
-        message.tags.push(e);
-      }
-    }
+    message.tags = (object.tags ?? []).map(e => e);
     message.summary = object.summary ?? "";
     message.description = object.description ?? "";
     if (object.externalDocs !== undefined && object.externalDocs !== null) {
@@ -1682,18 +1612,8 @@ export const Operation = {
       message.externalDocs = undefined;
     }
     message.operationId = object.operationId ?? "";
-    message.consumes = [];
-    if (object.consumes !== undefined && object.consumes !== null) {
-      for (const e of object.consumes) {
-        message.consumes.push(e);
-      }
-    }
-    message.produces = [];
-    if (object.produces !== undefined && object.produces !== null) {
-      for (const e of object.produces) {
-        message.produces.push(e);
-      }
-    }
+    message.consumes = (object.consumes ?? []).map(e => e);
+    message.produces = (object.produces ?? []).map(e => e);
     message.responses = {};
     if (object.responses !== undefined && object.responses !== null) {
       Object.entries(object.responses).forEach(([key, value]) => {
@@ -1702,19 +1622,9 @@ export const Operation = {
         }
       });
     }
-    message.schemes = [];
-    if (object.schemes !== undefined && object.schemes !== null) {
-      for (const e of object.schemes) {
-        message.schemes.push(e);
-      }
-    }
+    message.schemes = (object.schemes ?? []).map(e => e);
     message.deprecated = object.deprecated ?? false;
-    message.security = [];
-    if (object.security !== undefined && object.security !== null) {
-      for (const e of object.security) {
-        message.security.push(SecurityRequirement.fromPartial(e));
-      }
-    }
+    message.security = (object.security ?? []).map(e => SecurityRequirement.fromPartial(e));
     message.extensions = {};
     if (object.extensions !== undefined && object.extensions !== null) {
       Object.entries(object.extensions).forEach(([key, value]) => {
@@ -2055,9 +1965,6 @@ export const Response = {
 
   fromJSON(object: any): Response {
     const message = { ...baseResponse } as Response;
-    message.headers = {};
-    message.examples = {};
-    message.extensions = {};
     if (object.description !== undefined && object.description !== null) {
       message.description = String(object.description);
     } else {
@@ -2068,16 +1975,19 @@ export const Response = {
     } else {
       message.schema = undefined;
     }
+    message.headers = {};
     if (object.headers !== undefined && object.headers !== null) {
       Object.entries(object.headers).forEach(([key, value]) => {
         message.headers[key] = Header.fromJSON(value);
       });
     }
+    message.examples = {};
     if (object.examples !== undefined && object.examples !== null) {
       Object.entries(object.examples).forEach(([key, value]) => {
         message.examples[key] = String(value);
       });
     }
+    message.extensions = {};
     if (object.extensions !== undefined && object.extensions !== null) {
       Object.entries(object.extensions).forEach(([key, value]) => {
         message.extensions[key] = Value.fromJSON(value);
@@ -2431,7 +2341,6 @@ export const Info = {
 
   fromJSON(object: any): Info {
     const message = { ...baseInfo } as Info;
-    message.extensions = {};
     if (object.title !== undefined && object.title !== null) {
       message.title = String(object.title);
     } else {
@@ -2462,6 +2371,7 @@ export const Info = {
     } else {
       message.version = "";
     }
+    message.extensions = {};
     if (object.extensions !== undefined && object.extensions !== null) {
       Object.entries(object.extensions).forEach(([key, value]) => {
         message.extensions[key] = Value.fromJSON(value);
@@ -3112,10 +3022,6 @@ export const JSONSchema = {
 
   fromJSON(object: any): JSONSchema {
     const message = { ...baseJSONSchema } as JSONSchema;
-    message.required = [];
-    message.array = [];
-    message.type = [];
-    message.enum = [];
     if (object.ref !== undefined && object.ref !== null) {
       message.ref = String(object.ref);
     } else {
@@ -3211,31 +3117,15 @@ export const JSONSchema = {
     } else {
       message.minProperties = 0;
     }
-    if (object.required !== undefined && object.required !== null) {
-      for (const e of object.required) {
-        message.required.push(String(e));
-      }
-    }
-    if (object.array !== undefined && object.array !== null) {
-      for (const e of object.array) {
-        message.array.push(String(e));
-      }
-    }
-    if (object.type !== undefined && object.type !== null) {
-      for (const e of object.type) {
-        message.type.push(jSONSchema_JSONSchemaSimpleTypesFromJSON(e));
-      }
-    }
+    message.required = (object.required ?? []).map((e: any) => String(e));
+    message.array = (object.array ?? []).map((e: any) => String(e));
+    message.type = (object.type ?? []).map((e: any) => jSONSchema_JSONSchemaSimpleTypesFromJSON(e));
     if (object.format !== undefined && object.format !== null) {
       message.format = String(object.format);
     } else {
       message.format = "";
     }
-    if (object.enum !== undefined && object.enum !== null) {
-      for (const e of object.enum) {
-        message.enum.push(String(e));
-      }
-    }
+    message.enum = (object.enum ?? []).map((e: any) => String(e));
     return message;
   },
 
@@ -3305,31 +3195,11 @@ export const JSONSchema = {
     message.uniqueItems = object.uniqueItems ?? false;
     message.maxProperties = object.maxProperties ?? 0;
     message.minProperties = object.minProperties ?? 0;
-    message.required = [];
-    if (object.required !== undefined && object.required !== null) {
-      for (const e of object.required) {
-        message.required.push(e);
-      }
-    }
-    message.array = [];
-    if (object.array !== undefined && object.array !== null) {
-      for (const e of object.array) {
-        message.array.push(e);
-      }
-    }
-    message.type = [];
-    if (object.type !== undefined && object.type !== null) {
-      for (const e of object.type) {
-        message.type.push(e);
-      }
-    }
+    message.required = (object.required ?? []).map(e => e);
+    message.array = (object.array ?? []).map(e => e);
+    message.type = (object.type ?? []).map(e => e);
     message.format = object.format ?? "";
-    message.enum = [];
-    if (object.enum !== undefined && object.enum !== null) {
-      for (const e of object.enum) {
-        message.enum.push(e);
-      }
-    }
+    message.enum = (object.enum ?? []).map(e => e);
     return message;
   },
 };
@@ -3649,7 +3519,6 @@ export const SecurityScheme = {
 
   fromJSON(object: any): SecurityScheme {
     const message = { ...baseSecurityScheme } as SecurityScheme;
-    message.extensions = {};
     if (object.type !== undefined && object.type !== null) {
       message.type = securityScheme_TypeFromJSON(object.type);
     } else {
@@ -3690,6 +3559,7 @@ export const SecurityScheme = {
     } else {
       message.scopes = undefined;
     }
+    message.extensions = {};
     if (object.extensions !== undefined && object.extensions !== null) {
       Object.entries(object.extensions).forEach(([key, value]) => {
         message.extensions[key] = Value.fromJSON(value);
@@ -3939,12 +3809,7 @@ export const SecurityRequirement_SecurityRequirementValue = {
     const message = {
       ...baseSecurityRequirement_SecurityRequirementValue,
     } as SecurityRequirement_SecurityRequirementValue;
-    message.scope = [];
-    if (object.scope !== undefined && object.scope !== null) {
-      for (const e of object.scope) {
-        message.scope.push(String(e));
-      }
-    }
+    message.scope = (object.scope ?? []).map((e: any) => String(e));
     return message;
   },
 
@@ -3964,12 +3829,7 @@ export const SecurityRequirement_SecurityRequirementValue = {
     const message = {
       ...baseSecurityRequirement_SecurityRequirementValue,
     } as SecurityRequirement_SecurityRequirementValue;
-    message.scope = [];
-    if (object.scope !== undefined && object.scope !== null) {
-      for (const e of object.scope) {
-        message.scope.push(e);
-      }
-    }
+    message.scope = (object.scope ?? []).map(e => e);
     return message;
   },
 };

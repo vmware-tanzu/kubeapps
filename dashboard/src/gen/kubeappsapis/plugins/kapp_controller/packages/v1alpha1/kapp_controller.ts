@@ -187,12 +187,9 @@ export const GetPackageRepositoriesResponse = {
     const message = {
       ...baseGetPackageRepositoriesResponse,
     } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromJSON(e));
-      }
-    }
+    message.repositories = (object.repositories ?? []).map((e: any) =>
+      PackageRepository.fromJSON(e),
+    );
     return message;
   },
 
@@ -212,12 +209,7 @@ export const GetPackageRepositoriesResponse = {
     const message = {
       ...baseGetPackageRepositoriesResponse,
     } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromPartial(e));
-      }
-    }
+    message.repositories = (object.repositories ?? []).map(e => PackageRepository.fromPartial(e));
     return message;
   },
 };
