@@ -21,19 +21,23 @@ const defaultState = {
   config: { remoteComponentsUrl: "" },
 };
 
-// Mocking the window so that the injected components are imported correctly
-const location = window.location;
+// Ensure remote-component doesn't trigger external requests during this test.
+const mockOpen = jest.fn();
+const xhrMock: Partial<XMLHttpRequest> = {
+  open: mockOpen,
+  send: jest.fn(),
+  setRequestHeader: jest.fn(),
+  readyState: 4,
+  status: 200,
+  response: 'Hello World!'
+};
+
 beforeAll((): void => {
-  Object.defineProperty(window, "location", {
-    configurable: true,
-    writable: true,
-    value: { origin: "../../../../../docs/developer/examples/CustomComponent.min.js" },
-  });
+  jest.spyOn(window, 'XMLHttpRequest').mockImplementation(() => xhrMock as XMLHttpRequest);
 });
-afterAll((): void => {
-  // eslint-disable-next-line no-restricted-globals
-  window.location = location;
-});
+afterEach((): void => {
+  mockOpen.mockReset();
+})
 
 it("should render a custom form component", () => {
   const wrapper = mountWrapper(
@@ -68,4 +72,5 @@ it("should render the remote component with the URL if set in the config", () =>
     <CustomFormComponentLoader {...defaultProps} />,
   );
   expect(wrapper.find(CustomComponent).prop("url")).toBe("www.thiswebsite.com");
+  expect(xhrMock.open).toHaveBeenCalledWith("GET", "www.thiswebsite.com", true);
 });
