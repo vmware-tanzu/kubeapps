@@ -114,11 +114,11 @@
     "stylelint": "^14.1.0",
     "stylelint-config-idiomatic-order": "^8.1.0",
     "stylelint-config-prettier": "^9.0.3",
-    "stylelint-config-standard-scss": "^2.0.1",
+    "stylelint-config-standard-scss": "^3.0.0",
     "stylelint-scss": "^4.0.0",
     "ts-jest": "^27.0.7",
     "ts-proto": "^1.87.0",
-    "typescript": "^4.4.4"
+    "typescript": "^4.5.2"
   },
   "resolutions": {
     "@babel/parser": "^7.15.3"
