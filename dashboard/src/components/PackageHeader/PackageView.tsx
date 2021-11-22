@@ -46,7 +46,7 @@ export default function PackageView() {
   } = ReactRouter.useParams() as IRouteParams;
   const {
     packages: { isFetching, selected: selectedPackage },
-    config: {skipAvailablePackageDetails}
+    config: { skipAvailablePackageDetails },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
