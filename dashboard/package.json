@@ -79,7 +79,7 @@
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/google-protobuf": "^3.15.5",
     "@types/jest": "^27.0.2",
-    "@types/js-yaml": "^4.0.3",
+    "@types/js-yaml": "^4.0.5",
     "@types/jsonwebtoken": "^8.5.6",
     "@types/lodash": "^4.14.177",
     "@types/moxios": "^0.4.13",
