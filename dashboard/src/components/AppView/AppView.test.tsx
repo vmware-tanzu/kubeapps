@@ -400,14 +400,6 @@ describe("AppView", () => {
     });
   });
 
-  // TODO(minelson): the following features need to be implemented and tested
-  // in the helm plugin before this PR can land:
-  // * Implement support for lists (see deleted test)
-  // * Ensure deplicate labels don't cause error parsing (see deleted test)
-  it("fails until prequal branch lands with supporting functionality from the dashboard moved to the api server", () => {
-    expect(false).toBe(true);
-  });
-
   it("forwards statefulsets and daemonsets to the application status", () => {
     const apiResourceRefs = [resourceRefs.statefulset, resourceRefs.daemonset] as APIResourceRef[];
     const wrapper = mountWrapper(
