@@ -42,7 +42,7 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 			Plugin:     &pluginDetail,
 			Identifier: pkgMetadata.Name,
 		},
-		Name: pkgMetadata.Spec.DisplayName,
+		Name: pkgMetadata.Name,
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 		},
