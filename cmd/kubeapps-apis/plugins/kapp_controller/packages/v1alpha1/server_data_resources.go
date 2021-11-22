@@ -26,11 +26,15 @@ import (
 )
 
 const (
-	pkgResource             = "packages"
+	pkgResource             = "Package"
+	pkgsResource            = "packages"
+	pkgMetadataResource     = "PackageMetadata"
 	pkgMetadatasResource    = "packagemetadatas"
+	pkgRepositoryResource   = "PackageRepository"
 	pkgRepositoriesResource = "packagerepositories"
-	pkgInstallsResource     = "packageinstalls"
 	pkgInstallResource      = "PackageInstall"
+	pkgInstallsResource     = "packageinstalls"
+	appResource             = "App"
 	appsResource            = "apps"
 )
 
@@ -45,7 +49,7 @@ func (s *Server) getPkgResource(ctx context.Context, cluster, namespace string) 
 	gvr := schema.GroupVersionResource{
 		Group:    datapackagingv1alpha1.SchemeGroupVersion.Group,
 		Version:  datapackagingv1alpha1.SchemeGroupVersion.Version,
-		Resource: pkgResource}
+		Resource: pkgsResource}
 	ri := dynClient.Resource(gvr).Namespace(namespace)
 	return ri, nil
 }

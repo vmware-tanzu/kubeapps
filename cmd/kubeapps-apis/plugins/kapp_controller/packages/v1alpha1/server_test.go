@@ -21,16 +21,20 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes"
+	typfake "k8s.io/client-go/kubernetes/fake"
 )
 
 var ignoreUnexported = cmpopts.IgnoreUnexported(
@@ -45,30 +49,55 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 
 var defaultContext = &corev1.Context{Cluster: "default", Namespace: "default"}
 
+var datapackagingAPIVersion = fmt.Sprintf("%s/%s", datapackagingv1alpha1.SchemeGroupVersion.Group, datapackagingv1alpha1.SchemeGroupVersion.Version)
+var packagingAPIVersion = fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version)
+var kappctrlAPIVersion = fmt.Sprintf("%s/%s", kappctrlv1alpha1.SchemeGroupVersion.Group, kappctrlv1alpha1.SchemeGroupVersion.Version)
+
 func TestGetClient(t *testing.T) {
+	testClientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
+			runtime.NewScheme(),
+			map[schema.GroupVersionResource]string{
+				{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
+			},
+		), nil
+	}
 
 	testCases := []struct {
-		name         string
-		clientGetter clientGetter
-		statusCode   codes.Code
+		name              string
+		clientGetter      clientGetter
+		statusCodeClient  codes.Code
+		statusCodeManager codes.Code
 	}{
 		{
-			name:         "returns internal error status when no getter configured",
-			clientGetter: nil,
-			statusCode:   codes.Internal,
+			name:              "it returns internal error status when no clientGetter configured",
+			clientGetter:      nil,
+			statusCodeClient:  codes.Internal,
+			statusCodeManager: codes.OK,
 		},
 		{
-			name: "returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-				return nil, fmt.Errorf("Bang!")
-			},
-			statusCode: codes.FailedPrecondition,
+			name:              "it returns internal error status when no manager configured",
+			clientGetter:      testClientGetter,
+			statusCodeClient:  codes.OK,
+			statusCodeManager: codes.Internal,
 		},
 		{
-			name: "returns client without error when configured correctly",
-			clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-				return dynfake.NewSimpleDynamicClient(runtime.NewScheme()), nil
+			name:              "it returns internal error status when no clientGetter/manager configured",
+			clientGetter:      nil,
+			statusCodeClient:  codes.Internal,
+			statusCodeManager: codes.Internal,
+		},
+		{
+			name: "it returns failed-precondition when configGetter itself errors",
+			clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				return nil, nil, fmt.Errorf("Bang!")
 			},
+			statusCodeClient:  codes.FailedPrecondition,
+			statusCodeManager: codes.OK,
+		},
+		{
+			name:         "it returns client without error when configured correctly",
+			clientGetter: testClientGetter,
 		},
 	}
 
@@ -76,58 +105,23 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			dynamicClient, err := s.getDynamicClient(context.Background(), "default")
+			typedClient, dynamicClient, errClient := s.GetClients(context.Background(), "")
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
-			// If there is no error, the clients should not be nil.
-			if tc.statusCode == codes.OK {
+			// If there is no error, the client should be a dynamic.Interface implementation.
+			if tc.statusCodeClient == codes.OK {
 				if dynamicClient == nil {
 					t.Errorf("got: nil, want: dynamic.Interface")
+				}
+				if typedClient == nil {
+					t.Errorf("got: nil, want: kubernetes.Interface")
 				}
 			}
 		})
 	}
-
-}
-
-func packagesFromSpecs(t *testing.T, namespace string, specs map[string]interface{}) []runtime.Object {
-	pkgs := []runtime.Object{}
-	for name, s := range specs {
-		pkgs = append(pkgs, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
-				"kind":       packageResource,
-				"metadata": map[string]interface{}{
-					"name":      name,
-					"namespace": namespace,
-				},
-				"spec": s,
-			},
-		})
-	}
-	return pkgs
-}
-
-func metadatasFromSpecs(t *testing.T, namespace string, specs map[string]interface{}) []runtime.Object {
-	metadatas := []runtime.Object{}
-	for name, s := range specs {
-		metadatas = append(metadatas, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": fmt.Sprintf("%s/%s", packageGroup, packageVersion),
-				"kind":       packageMetadataResource,
-				"metadata": map[string]interface{}{
-					"name":      name,
-					"namespace": namespace,
-				},
-				"spec": s,
-			},
-		})
-	}
-	return metadatas
-
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
@@ -138,53 +132,102 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		expectedStatusCode codes.Code
 	}{
 		{
-			name: "it returns an internal error status if a package meta does not contain spec.displayName",
-			existingObjects: metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com": map[string]interface{}{
-					"longDescription": "Some long text",
+			name: "it returns a not found error status if a package meta does not contain spec.displayName",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						LongDescription: "Classic Tetris",
+					},
 				},
-			}),
-			expectedStatusCode: codes.Internal,
+			},
+			expectedStatusCode: codes.NotFound,
 		},
 		{
-			name: "it returns an internal error status if a package does not contain version",
-			existingObjects: metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com": map[string]interface{}{
-					"displayName": "Classic Tetris",
+			name: "it returns an not found error status if a package does not contain version",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "Classic Tetris",
+					},
 				},
-			}),
-			expectedStatusCode: codes.Internal,
+			},
+			expectedStatusCode: codes.NotFound,
 		},
 		{
 			name: "it returns carvel package summaries with basic info from the cluster",
-			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com": map[string]interface{}{
-					"displayName": "Classic Tetris",
-				},
-				"another.foo.example.com": map[string]interface{}{
-					"displayName": "Some Other Game",
-				},
-			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com.1.2.3": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.3",
-				},
-				"another.foo.example.com.1.2.5": map[string]interface{}{
-					"refName": "another.foo.example.com",
-					"version": "1.2.5",
-				},
-			})...),
-			expectedPackages: []*corev1.AvailablePackageSummary{
-				{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context:    defaultContext,
-						Plugin:     &pluginDetail,
-						Identifier: "another.foo.example.com",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
 					},
-					Name:          "another.foo.example.com",
-					DisplayName:   "Some Other Game",
-					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "Classic Tetris",
+					},
 				},
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "Tombi!",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com.1.2.5",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tombi.foo.example.com",
+						Version: "1.2.5",
+					},
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
@@ -195,23 +238,56 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					DisplayName:   "Classic Tetris",
 					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
 				},
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tombi.foo.example.com",
+					},
+					Name:          "tombi.foo.example.com",
+					DisplayName:   "Tombi!",
+					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
+				},
 			},
 		},
 		{
 			name: "it returns carvel package summaries with complete metadata",
-			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com": map[string]interface{}{
-					"displayName":      "Classic Tetris",
-					"iconSVGBase64":    "Tm90IHJlYWxseSBTVkcK",
-					"shortDescription": "A great game for arcade gamers",
-					"categories":       []interface{}{"logging", "daemon-set"},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						Categories:         []string{"logging", "daemon-set"},
+						LongDescription:    "A great game for arcade gamers",
+						ProviderName:       "Tetris inc.",
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "foo"}},
+						SupportDescription: "Block support team",
+					},
 				},
-			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com.1.2.3": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.3",
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
 				},
-			})...),
+			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
 					AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -230,24 +306,63 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it returns the latest semver version in the latest version field",
-			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com": map[string]interface{}{
-					"displayName": "Classic Tetris",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "Classic Tetris",
+					},
 				},
-			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com.1.2.3": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.3",
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
 				},
-				"tetris.foo.example.com.1.2.7": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.7",
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.7",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.7",
+					},
 				},
-				"tetris.foo.example.com.1.2.4": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.4",
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.4",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.4",
+					},
 				},
-			})...),
+			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
 					AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -265,15 +380,21 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
 			s := Server{
-				clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
-							{Group: packageGroup, Version: packageVersion, Resource: packageResources}:         "PackageList",
-							{Group: packageGroup, Version: packageVersion, Resource: packageMetadataResources}: "PackageMetadataList",
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         "PackageList",
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: "PackageMetadataList",
 						},
-						tc.existingObjects...,
+						unstructuredObjects...,
 					), nil
 				},
 			}
@@ -290,486 +411,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			if got, want := response.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
-			}
-		})
-	}
-
-}
-
-func repositoryFromSpec(name string, spec map[string]interface{}) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", repositoryGroup, repositoryVersion),
-			"kind":       repositoryResource,
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": globalPackagingNamespace,
-			},
-			"spec": spec,
-		},
-	}
-}
-
-// spec is just a testing object spec, defined only to avoid writing
-// a map of named specs as map[string]map[string]interface{}.
-type spec map[string]interface{}
-
-// repositoryFromSpecs takes a map of specs keyed by object name converting them to runtime objects.
-func repositoriesFromSpecs(specs map[string]spec) []runtime.Object {
-	repos := []runtime.Object{}
-	for name, s := range specs {
-		repos = append(repos, repositoryFromSpec(name, s))
-	}
-	return repos
-}
-
-func TestGetPackageRepositories(t *testing.T) {
-	testCases := []struct {
-		name                        string
-		request                     *v1alpha1.GetPackageRepositoriesRequest
-		repoSpecs                   map[string]spec
-		expectedPackageRepositories []*v1alpha1.PackageRepository
-		statusCode                  codes.Code
-	}{
-		{
-			name:    "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
-			request: &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
-			repoSpecs: map[string]spec{
-				"repo-1": {
-					"fetch": "unexpected",
-				},
-			},
-			statusCode: codes.Internal,
-		},
-		{
-			name:    "returns expected repositories",
-			request: &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
-			repoSpecs: map[string]spec{
-				"repo-1": {
-					"fetch": map[string]interface{}{
-						"imgpkgBundle": map[string]interface{}{
-							"image": "projects.registry.example.com/repo-1/main@sha256:abcd",
-						},
-					},
-				},
-				"repo-2": {
-					"fetch": map[string]interface{}{
-						"imgpkgBundle": map[string]interface{}{
-							"image": "projects.registry.example.com/repo-2/main@sha256:abcd",
-						},
-					},
-				},
-			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{
-				{
-					Name:      "repo-1",
-					Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
-					Namespace: globalPackagingNamespace,
-				},
-				{
-					Name:      "repo-2",
-					Url:       "projects.registry.example.com/repo-2/main@sha256:abcd",
-					Namespace: globalPackagingNamespace,
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			s := Server{
-				clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: repositoryGroup, Version: repositoryVersion, Resource: repositoriesResource}: "PackageRepositoryList",
-						},
-						repositoriesFromSpecs(tc.repoSpecs)...,
-					), nil
-				},
-			}
-
-			response, err := s.GetPackageRepositories(context.Background(), &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}})
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Fatalf("got: %+v, want: %+v, err: %+v, response: %+v", got, want, err, response)
-			}
-
-			// Only check the response for OK status.
-			if tc.statusCode == codes.OK {
-				if response == nil {
-					t.Fatalf("got: nil, want: response")
-				} else {
-					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
-					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-					}
-				}
-			}
-		})
-	}
-}
-
-func TestPackageRepositoryFromUnstructured(t *testing.T) {
-	validSpec := map[string]interface{}{
-		"fetch": map[string]interface{}{
-			"imgpkgBundle": map[string]interface{}{
-				"image": "projects.registry.example.com/repo-1/main@sha256:abcd",
-			},
-		},
-	}
-	invalidSpec := map[string]interface{}{
-		"fetch": "unexpected",
-	}
-	testCases := []struct {
-		name       string
-		in         *unstructured.Unstructured
-		expected   *v1alpha1.PackageRepository
-		statusCode codes.Code
-	}{
-		{
-			name:       "returns internal error if empty name",
-			in:         repositoryFromSpec("", validSpec),
-			statusCode: codes.Internal,
-		},
-		{
-			name:       "returns internal error if spec is invalid",
-			in:         repositoryFromSpec("valid-name", invalidSpec),
-			statusCode: codes.Internal,
-		},
-		{
-			name: "returns a repo for an imgpkgBundle type",
-			in:   repositoryFromSpec("valid-name", validSpec),
-			expected: &v1alpha1.PackageRepository{
-				Name:      "valid-name",
-				Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
-				Namespace: globalPackagingNamespace,
-			},
-		},
-		{
-			name: "returns a repo for an image type",
-			in: repositoryFromSpec("valid-name", map[string]interface{}{
-				"fetch": map[string]interface{}{
-					"image": map[string]interface{}{
-						"url": "host.com/username/image:v0.1.0",
-					},
-				},
-			}),
-			expected: &v1alpha1.PackageRepository{
-				Name:      "valid-name",
-				Url:       "host.com/username/image:v0.1.0",
-				Namespace: globalPackagingNamespace,
-			},
-		},
-		{
-			name: "returns a repo for an http type",
-			in: repositoryFromSpec("valid-name", map[string]interface{}{
-				"fetch": map[string]interface{}{
-					"http": map[string]interface{}{
-						"url": "https://host.com/archive.tgz",
-					},
-				},
-			}),
-			expected: &v1alpha1.PackageRepository{
-				Name:      "valid-name",
-				Url:       "https://host.com/archive.tgz",
-				Namespace: globalPackagingNamespace,
-			},
-		},
-		{
-			name: "returns a repo for a git type",
-			in: repositoryFromSpec("valid-name", map[string]interface{}{
-				"fetch": map[string]interface{}{
-					"git": map[string]interface{}{
-						"url": "https://github.com/k14s/k8s-simple-app-example",
-					},
-				},
-			}),
-			expected: &v1alpha1.PackageRepository{
-				Name:      "valid-name",
-				Url:       "https://github.com/k14s/k8s-simple-app-example",
-				Namespace: globalPackagingNamespace,
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			repo, err := packageRepositoryFromUnstructured(tc.in)
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
-			}
-
-			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
-				if got, want := repo, tc.expected; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-				}
-			}
-		})
-	}
-}
-
-func TestGetAvailablePackageVersions(t *testing.T) {
-	testCases := []struct {
-		name               string
-		existingObjects    []runtime.Object
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
-	}{
-		{
-			name:               "it returns invalid argument if called without a package reference",
-			request:            nil,
-			expectedStatusCode: codes.InvalidArgument,
-		},
-		{
-			name: "it returns invalid argument if called without namespace",
-			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{},
-					Identifier: "package-one",
-				},
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
-		{
-			name: "it returns invalid argument if called without an identifier",
-			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-				},
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
-		{
-			name: "it returns the package version summary",
-			existingObjects: packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com.1.2.3": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.3",
-				},
-				"tetris.foo.example.com.1.2.7": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.7",
-				},
-				"tetris.foo.example.com.1.2.4": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.4",
-				},
-			}),
-			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-					Identifier: "tetris.foo.example.com",
-				},
-			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.PackageAppVersion{
-					{
-						PkgVersion: "1.2.7",
-					},
-					{
-						PkgVersion: "1.2.4",
-					},
-					{
-						PkgVersion: "1.2.3",
-					},
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			server := Server{
-				clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: packageGroup, Version: packageVersion, Resource: packageResources}: "PackageList",
-						},
-						tc.existingObjects...,
-					), nil
-				},
-			}
-
-			response, err := server.GetAvailablePackageVersions(context.Background(), tc.request)
-
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
-				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
-			}
-
-			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
-				return
-			}
-
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
-		})
-	}
-}
-
-func TestGetAvailablePackageDetail(t *testing.T) {
-	testCases := []struct {
-		name            string
-		existingObjects []runtime.Object
-		expectedPackage *corev1.AvailablePackageDetail
-		statusCode      codes.Code
-		request         *corev1.GetAvailablePackageDetailRequest
-	}{
-		{
-			name: "it returns an availablePackageDetail of the latest version",
-			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
-				},
-			},
-			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com": map[string]interface{}{
-					"displayName":      "Classic Tetris",
-					"iconSVGBase64":    "Tm90IHJlYWxseSBTVkcK",
-					"shortDescription": "A great game for arcade gamers",
-					"longDescription":  "A few sentences but not really a readme",
-					"categories":       []interface{}{"logging", "daemon-set"},
-					"maintainers": []interface{}{
-						map[string]interface{}{"name": "person1", "email": "person1@example.com"},
-						map[string]interface{}{"name": "person2", "email": "person2@example.com"},
-					},
-				},
-			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com.1.2.3": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.3",
-				},
-			})...),
-			expectedPackage: &corev1.AvailablePackageDetail{
-				Name:             "tetris.foo.example.com",
-				DisplayName:      "Classic Tetris",
-				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
-				Categories:       []string{"logging", "daemon-set"},
-				ShortDescription: "A great game for arcade gamers",
-				LongDescription:  "A few sentences but not really a readme",
-				Version: &corev1.PackageAppVersion{
-					PkgVersion: "1.2.3",
-				},
-				Readme: "A few sentences but not really a readme",
-				Maintainers: []*corev1.Maintainer{
-					{Name: "person1", Email: "person1@example.com"},
-					{Name: "person2", Email: "person2@example.com"},
-				},
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
-					Plugin:     &plugins.Plugin{Name: "kapp_controller.packages", Version: "v1alpha1"},
-				},
-			},
-			statusCode: codes.OK,
-		},
-		{
-			name: "it combines long description and support description for readme field",
-			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
-				},
-			},
-			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com": map[string]interface{}{
-					"displayName":        "Classic Tetris",
-					"longDescription":    "A few sentences but not really a readme",
-					"supportDescription": "Some support info",
-				},
-			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com.1.2.3": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.3",
-				},
-			})...),
-			expectedPackage: &corev1.AvailablePackageDetail{
-				Name:            "tetris.foo.example.com",
-				DisplayName:     "Classic Tetris",
-				LongDescription: "A few sentences but not really a readme",
-				Version: &corev1.PackageAppVersion{
-					PkgVersion: "1.2.3",
-				},
-				Readme: "A few sentences but not really a readme\n\nSome support info",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
-					Plugin:     &plugins.Plugin{Name: "kapp_controller.packages", Version: "v1alpha1"},
-				},
-			},
-			statusCode: codes.OK,
-		},
-		{
-			name: "it returns an invalid arg error status if no context is provided",
-			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "foo/bar",
-				},
-			},
-			statusCode: codes.InvalidArgument,
-		},
-		{
-			name: "it returns not found error status if the requested package version doesn't exist",
-			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
-				},
-				PkgVersion: "1.2.4",
-			},
-			existingObjects: append(metadatasFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com": map[string]interface{}{
-					"displayName":        "Classic Tetris",
-					"longDescription":    "A few sentences but not really a readme",
-					"supportDescription": "Some support info",
-				},
-			}), packagesFromSpecs(t, defaultContext.Namespace, map[string]interface{}{
-				"tetris.foo.example.com.1.2.3": map[string]interface{}{
-					"refName": "tetris.foo.example.com",
-					"version": "1.2.3",
-				},
-			})...),
-			statusCode: codes.NotFound,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			server := Server{
-				clientGetter: func(context.Context, string) (dynamic.Interface, error) {
-					return dynfake.NewSimpleDynamicClientWithCustomListKinds(
-						runtime.NewScheme(),
-						map[schema.GroupVersionResource]string{
-							{Group: packageGroup, Version: packageVersion, Resource: packageResources}: "PackageList",
-						},
-						tc.existingObjects...,
-					), nil
-				},
-			}
-
-			availablePackageDetail, err := server.GetAvailablePackageDetail(context.Background(), tc.request)
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
-			}
-
-			if tc.statusCode == codes.OK {
-				if got, want := availablePackageDetail.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
-				}
 			}
 		})
 	}
