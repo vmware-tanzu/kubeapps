@@ -36,7 +36,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/tools/cache"
 	watchutil "k8s.io/client-go/tools/watch"
 	log "k8s.io/klog/v2"
 )
@@ -381,14 +380,7 @@ func (c *NamespacedResourceWatcherCache) processWatchEvents(ch <-chan watch.Even
 			if unstructuredObj, ok := event.Object.(*unstructured.Unstructured); !ok {
 				runtime.HandleError(fmt.Errorf("could not cast %s to unstructured.Unstructured", reflect.TypeOf(event.Object)))
 			} else {
-				var key string
-				var err error
-				if event.Type == watch.Added || event.Type == watch.Modified {
-					key, err = cache.MetaNamespaceKeyFunc(unstructuredObj)
-				} else {
-					key, err = cache.DeletionHandlingMetaNamespaceKeyFunc(unstructuredObj)
-				}
-				if err != nil {
+				if key, err := c.keyFor(unstructuredObj.Object); err != nil {
 					runtime.HandleError(err)
 				} else {
 					c.queue.AddRateLimited(key)
@@ -410,9 +402,9 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) (interface{}, e
 	log.Infof("+syncHandler(%s)", key)
 
 	// Convert the namespace/name string into a distinct namespace and name
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil || namespace == "" || name == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid resource key: %s", key)
+	name, err := c.fromKey(key)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get the resource with this namespace/name
@@ -425,11 +417,12 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) (interface{}, e
 	// If an error occurs during Get/Create/Update/Delete, we'll requeue the item so we can
 	// attempt processing again later. This could have been caused by a temporary network
 	// failure, or any other transient reason.
-	unstructuredObj, err := dynamicClient.Resource(c.config.Gvr).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	unstructuredObj, err := dynamicClient.Resource(c.config.Gvr).Namespace(name.Namespace).
+		Get(ctx, name.Name, metav1.GetOptions{})
 	if err != nil {
 		// The resource may no longer exist, in which case we stop processing.
 		if errors.IsNotFound(err) {
-			return nil, c.onDelete(namespace, name)
+			return nil, c.onDelete(key)
 		} else {
 			return nil, status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
 		}
@@ -492,11 +485,10 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 }
 
 // this is effectively a cache DEL operation
-func (c *NamespacedResourceWatcherCache) onDelete(namespace, name string) error {
-	log.V(4).Infof("+onDelete(%s, %s)", namespace, name)
+func (c *NamespacedResourceWatcherCache) onDelete(key string) error {
+	log.V(4).Infof("+onDelete(%s, %s)")
 	defer log.V(4).Infof("-onDelete")
 
-	key := c.KeyForNamespacedName(types.NamespacedName{Namespace: namespace, Name: name})
 	delete, err := c.config.OnDeleteFunc(key)
 	if err != nil {
 		log.Errorf("Invocation of 'onDelete' for object with key [%s] failed due to: %v", err)
@@ -685,14 +677,10 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 			// closed (and there are no more items)
 			for job := range requestChan {
 				value, err := func() (interface{}, error) {
-					if name, err := c.fromKey(job.key); err != nil {
-						return nil, err
-					} else {
-						// see GetForOne() for explanation of what is happening below
-						c.queue.Add(name.String())
-						c.queue.WaitUntilDoneWith(name.String())
-						return c.fetchForOne(job.key)
-					}
+					// see GetForOne() for explanation of what is happening below
+					c.queue.Add(job.key)
+					c.queue.WaitUntilDoneWith(job.key)
+					return c.fetchForOne(job.key)
 				}()
 				responseChan <- computeValueJobResult{job, value, err}
 			}
@@ -749,7 +737,7 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, ":")
-	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[1]) == 0 {
+	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
@@ -762,6 +750,10 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
 func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) {
+
+	// TODO: (gfichtenholt) I'd like to make sure this is called within the context
+	// of resync, i.e. resync.Cond.L is locked by this goroutine. How?
+
 	// max number of concurrent workers computing cache values at the same time
 	const maxWorkers = 10
 
@@ -814,27 +806,20 @@ func (c *NamespacedResourceWatcherCache) GetForOne(key string) (interface{}, err
 		return nil, err
 	} else if value == nil {
 		// cache miss
-		if name, err := c.fromKey(key); err != nil {
-			return nil, err
-		} else {
-			// shortcut: typespacedName.String() happens to return the same format
-			// strings as cache.MetaNamespaceKeyFunc(unstructuredObj)
-			// place the item in the work queue
-			c.queue.Add(name.String())
-			// now need to wait until this item has been processed by runWorker().
-			// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
-			// which encode the data as []byte before storing it in the cache. That part is fine.
-			// But to get back the original data we have to decode it via config.onGet().
-			// It'd nice if there was a shortcut and skip the cycles spent decoding data from
-			// []byte to repoCacheEntry
-			c.queue.WaitUntilDoneWith(name.String())
-			// yes, there is a small time window here between after we are done with WaitUntilDoneWith
-			// and the following fetch, where another concurrent goroutine may force the newly added
-			// cache entry out, but that is an edge case and I am willing to overlook it for now
-			// To fix it, would somehow require WaitUntilDoneWith returning a value from a cache, so
-			// the whole thing would be atomic. Don't know how to do this yet
-			return c.fetchForOne(key)
-		}
+		c.queue.Add(key)
+		// now need to wait until this item has been processed by runWorker().
+		// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
+		// which encode the data as []byte before storing it in the cache. That part is fine.
+		// But to get back the original data we have to decode it via config.onGet().
+		// It'd nice if there was a shortcut and skip the cycles spent decoding data from
+		// []byte to repoCacheEntry
+		c.queue.WaitUntilDoneWith(key)
+		// yes, there is a small time window here between after we are done with WaitUntilDoneWith
+		// and the following fetch, where another concurrent goroutine may force the newly added
+		// cache entry out, but that is an edge case and I am willing to overlook it for now
+		// To fix it, would somehow require WaitUntilDoneWith returning a value from a cache, so
+		// the whole thing would be atomic. Don't know how to do this yet
+		return c.fetchForOne(key)
 	}
 	return value, nil
 }
@@ -860,23 +845,13 @@ func (c *NamespacedResourceWatcherCache) memoryStats() (used, total string) {
 }
 
 // this func is used by unit tests only
-func (c *NamespacedResourceWatcherCache) ExpectAdd(key string) error {
-	if name, err := c.fromKey(key); err != nil {
-		return err
-	} else {
-		c.queue.ExpectAdd(name.String())
-		return nil
-	}
+func (c *NamespacedResourceWatcherCache) ExpectAdd(key string) {
+	c.queue.ExpectAdd(key)
 }
 
 // this func is used by unit tests only
-func (c *NamespacedResourceWatcherCache) WaitUntilDoneWith(key string) error {
-	if name, err := c.fromKey(key); err != nil {
-		return err
-	} else {
-		c.queue.WaitUntilDoneWith(name.String())
-		return nil
-	}
+func (c *NamespacedResourceWatcherCache) WaitUntilDoneWith(key string) {
+	c.queue.WaitUntilDoneWith(key)
 }
 
 // this func is used by unit tests only
