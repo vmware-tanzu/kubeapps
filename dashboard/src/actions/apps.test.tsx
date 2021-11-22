@@ -300,7 +300,7 @@ describe("rollbackInstalledPackage", () => {
     const availablePackageDetail = { name: "test" } as AvailablePackageDetail;
 
     App.RollbackInstalledPackage = jest.fn().mockImplementationOnce(() => true);
-    App.getRelease = jest.fn().mockReturnValue({ manifest: {} });
+    App.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue({ resourceRefs: [] });
     App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
       installedPackageDetail: installedPackageDetail,
     });
@@ -309,7 +309,7 @@ describe("rollbackInstalledPackage", () => {
 
     const selectCMD = actions.apps.selectApp(
       installedPackageDetail as any,
-      {},
+      [],
       availablePackageDetail,
     );
     const res2 = await store.dispatch(selectCMD);
@@ -321,7 +321,7 @@ describe("rollbackInstalledPackage", () => {
       { type: getType(actions.apps.requestApps) },
       {
         type: getType(actions.apps.selectApp),
-        payload: { app: installedPackageDetail, manifest: {}, details: availablePackageDetail },
+        payload: { app: installedPackageDetail, resourceRefs: [], details: availablePackageDetail },
       },
     ];
 
@@ -334,7 +334,7 @@ describe("rollbackInstalledPackage", () => {
       },
       1,
     );
-    expect(App.getRelease).toHaveBeenCalledWith({
+    expect(App.GetInstalledPackageResourceRefs).toHaveBeenCalledWith({
       context: { cluster: "default-c", namespace: "default-ns" },
       identifier: "my-release",
       plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" },

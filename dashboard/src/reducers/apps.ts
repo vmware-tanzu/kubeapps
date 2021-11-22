@@ -43,8 +43,7 @@ const appsReducer = (
           ...action.payload.app,
           // TODO(agamez): remove it once we have a core mechanism for rolling back
           revision: revision,
-          // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
-          manifest: action.payload.manifest,
+          apiResourceRefs: action.payload.resourceRefs,
         },
         selectedDetails: action.payload.details,
       };

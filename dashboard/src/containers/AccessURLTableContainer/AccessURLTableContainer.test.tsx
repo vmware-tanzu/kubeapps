@@ -3,6 +3,7 @@ import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import ResourceRef from "shared/ResourceRef";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import AccessURLTableContainer from ".";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
@@ -40,27 +41,25 @@ describe("AccessURLTableContainer", () => {
       {
         apiVersion: "v1",
         kind: "Service",
-        metadata: {
-          namespace: ns,
-          name: `${name}-service`,
-        },
-      } as IResource,
+        namespace: ns,
+        name: `${name}-service`,
+      } as APIResourceRef,
       clusterName,
       "services",
       true,
+      "default",
     );
     const ingressRef = new ResourceRef(
       {
         apiVersion: "v1",
         kind: "Ingress",
-        metadata: {
-          namespace: ns,
-          name: `${name}-ingress`,
-        },
-      } as IResource,
+        namespace: ns,
+        name: `${name}-ingress`,
+      } as APIResourceRef,
       clusterName,
       "ingresses",
       true,
+      "default",
     );
     const wrapper = shallow(
       <AccessURLTableContainer

@@ -1,29 +1,28 @@
 import { Kube } from "./Kube";
 import ResourceRef, { fromCRD } from "./ResourceRef";
-import { IClusterServiceVersionCRDResource, IResource } from "./types";
+import { IClusterServiceVersionCRDResource } from "./types";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const clusterName = "cluster-name";
 
 describe("ResourceRef", () => {
   describe("constructor", () => {
     it("returns a ResourceRef with the correct details", () => {
-      const r = {
+      const apiRef = {
         apiVersion: "apps/v1",
         kind: "Deployment",
-        metadata: {
-          name: "foo",
-          namespace: "bar",
-        },
-      } as IResource;
+        name: "foo",
+        namespace: "bar",
+      } as APIResourceRef;
 
-      const ref = new ResourceRef(r, clusterName, "deployments", true);
+      const ref = new ResourceRef(apiRef, clusterName, "deployments", true, "releaseNamespace");
       expect(ref).toBeInstanceOf(ResourceRef);
       expect(ref).toEqual({
         cluster: clusterName,
-        apiVersion: r.apiVersion,
-        kind: r.kind,
-        name: r.metadata.name,
-        namespace: r.metadata.namespace,
+        apiVersion: apiRef.apiVersion,
+        kind: apiRef.kind,
+        name: apiRef.name,
+        namespace: "bar",
         namespaced: true,
         plural: "deployments",
       });
@@ -33,26 +32,11 @@ describe("ResourceRef", () => {
       const r = {
         apiVersion: "apps/v1",
         kind: "Deployment",
-        metadata: {
-          name: "foo",
-        },
-      } as IResource;
+        name: "foo",
+      } as APIResourceRef;
 
       const ref = new ResourceRef(r, clusterName, "deployments", true, "default");
       expect(ref.namespace).toBe("default");
-    });
-
-    it("allows the default namespace to be provided", () => {
-      const r = {
-        apiVersion: "apps/v1",
-        kind: "Deployment",
-        metadata: {
-          name: "foo",
-        },
-      } as IResource;
-
-      const ref = new ResourceRef(r, clusterName, "deployments", true, "bar");
-      expect(ref.namespace).toBe("bar");
     });
 
     describe("fromCRD", () => {
@@ -123,13 +107,11 @@ describe("ResourceRef", () => {
       const r = {
         apiVersion: "v1",
         kind: "Service",
-        metadata: {
-          name: "foo",
-          namespace: "bar",
-        },
-      } as IResource;
+        name: "foo",
+        namespace: "bar",
+      } as APIResourceRef;
 
-      const ref = new ResourceRef(r, clusterName, "services", true);
+      const ref = new ResourceRef(r, clusterName, "services", true, "default");
 
       ref.getResourceURL();
       expect(kubeGetResourceURLMock).toBeCalledWith(
@@ -156,13 +138,11 @@ describe("ResourceRef", () => {
       const r = {
         apiVersion: "v1",
         kind: "Service",
-        metadata: {
-          name: "foo",
-          namespace: "bar",
-        },
-      } as IResource;
+        name: "foo",
+        namespace: "bar",
+      } as APIResourceRef;
 
-      const ref = new ResourceRef(r, clusterName, "services", true);
+      const ref = new ResourceRef(r, clusterName, "services", true, "default");
 
       ref.watchResourceURL();
       expect(kubeWatchResourceURLMock).toBeCalledWith(
@@ -191,13 +171,11 @@ describe("ResourceRef", () => {
       const r = {
         apiVersion: "v1",
         kind: "Service",
-        metadata: {
-          name: "foo",
-          namespace: "bar",
-        },
-      } as IResource;
+        name: "foo",
+        namespace: "bar",
+      } as APIResourceRef;
 
-      const ref = new ResourceRef(r, clusterName, "services", true);
+      const ref = new ResourceRef(r, clusterName, "services", true, "default");
 
       ref.getResource();
       expect(kubeGetResourceMock).toBeCalledWith(clusterName, "v1", "services", true, "bar", "foo");
@@ -207,13 +185,11 @@ describe("ResourceRef", () => {
       const r = {
         apiVersion: "v1",
         kind: "Service",
-        metadata: {
-          name: "foo",
-          namespace: "bar",
-        },
-      } as IResource;
+        name: "foo",
+        namespace: "bar",
+      } as APIResourceRef;
 
-      const ref = new ResourceRef(r, clusterName, "services", true);
+      const ref = new ResourceRef(r, clusterName, "services", true, "default");
       ref.filter = { metadata: { name: "bar" } };
       Kube.getResource = jest.fn().mockReturnValue({
         items: [r],
@@ -236,13 +212,11 @@ describe("ResourceRef", () => {
       const r = {
         apiVersion: "v1",
         kind: "Service",
-        metadata: {
-          name: "foo",
-          namespace: "bar",
-        },
-      } as IResource;
+        name: "foo",
+        namespace: "bar",
+      } as APIResourceRef;
 
-      const ref = new ResourceRef(r, clusterName, "services", true);
+      const ref = new ResourceRef(r, clusterName, "services", true, "default");
 
       ref.watchResource();
       expect(kubeWatchResourceMock).toBeCalledWith(

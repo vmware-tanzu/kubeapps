@@ -11,15 +11,15 @@ import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
   PackageAppVersion,
+  ResourceRef as APIResourceRef,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import * as yaml from "js-yaml";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route } from "react-router";
 import ResourceRef from "shared/ResourceRef";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { DeleteError, FetchError, IResource } from "shared/types";
+import { DeleteError, FetchError } from "shared/types";
 import { PluginNames } from "shared/utils";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
@@ -64,15 +64,6 @@ afterEach(() => {
 });
 
 describe("AppView", () => {
-  // Generates a Yaml file separated by --- containing every object passed.
-  const generateYamlManifest = (items: any[]): string => {
-    let yamlManifest = "";
-    items.forEach(i => {
-      yamlManifest += "---\n" + yaml.dump(i);
-    });
-    return yamlManifest;
-  };
-
   const installedPackage = {
     name: "test",
     postInstallationNotes: "test",
@@ -100,37 +91,43 @@ describe("AppView", () => {
     } as InstalledPackageStatus,
   } as InstalledPackageDetail;
 
-  const validState = { apps: { selected: installedPackage } };
-
-  const resources = {
-    configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
+  const resourceRefs = {
+    configMap: { apiVersion: "v1", kind: "ConfigMap", name: "cm-one" } as APIResourceRef,
     deployment: {
       apiVersion: "apps/v1beta1",
       kind: "Deployment",
-      metadata: { name: "deployment-one" },
-    } as IResource,
-    service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } } as IResource,
+      name: "deployment-one",
+    } as APIResourceRef,
+    service: { apiVersion: "v1", kind: "Service", name: "svc-one" } as APIResourceRef,
     ingress: {
       apiVersion: "extensions/v1beta1",
       kind: "Ingress",
-      metadata: { name: "ingress-one" },
-    } as IResource,
+      name: "ingress-one",
+    } as APIResourceRef,
     secret: {
       apiVersion: "v1",
       kind: "Secret",
-      metadata: { name: "secret-one" },
-      type: "Opaque",
-    } as IResource,
+      name: "secret-one",
+    } as APIResourceRef,
     daemonset: {
       apiVersion: "apps/v1beta1",
       kind: "DaemonSet",
-      metadata: { name: "daemonset-one" },
-    } as IResource,
+      name: "daemonset-one",
+    } as APIResourceRef,
     statefulset: {
       apiVersion: "apps/v1beta1",
       kind: "StatefulSet",
-      metadata: { name: "statefulset-one" },
-    } as IResource,
+      name: "statefulset-one",
+    } as APIResourceRef,
+  };
+
+  const validState = {
+    apps: {
+      selected: {
+        ...installedPackage,
+        resourceRefs: [resourceRefs.configMap] as APIResourceRef[],
+      },
+    },
   };
 
   it("renders a loading wrapper", () => {
@@ -242,19 +239,19 @@ describe("AppView", () => {
 
   describe("State initialization", () => {
     /*
-      The imported manifest contains one deployment, one service, one config map and some bogus manifests.
+      The imported resource refs contain one deployment, one service, one config map and some bogus manifests.
     */
     it("sets ResourceRefs for its deployments, services, ingresses and secrets", () => {
-      const manifest = generateYamlManifest([
-        resources.deployment,
-        resources.service,
-        resources.configMap,
-        resources.ingress,
-        resources.secret,
-      ]);
+      const apiResourceRefs = [
+        resourceRefs.deployment,
+        resourceRefs.service,
+        resourceRefs.configMap,
+        resourceRefs.ingress,
+        resourceRefs.secret,
+      ] as APIResourceRef[];
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+        getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -265,29 +262,29 @@ describe("AppView", () => {
       const tabs = wrapper.find(ResourceTabs);
       expect(tabs.prop("deployments")).toEqual([
         new ResourceRef(
-          resources.deployment,
+          resourceRefs.deployment,
           routeParams.cluster,
           "deployments",
           true,
-          installedPackage.installedPackageRef?.context?.namespace,
+          installedPackage.installedPackageRef!.context!.namespace,
         ),
       ]);
       expect(tabs.prop("services")).toEqual([
         new ResourceRef(
-          resources.service,
+          resourceRefs.service,
           routeParams.cluster,
           "services",
           true,
-          installedPackage.installedPackageRef?.context?.namespace,
+          installedPackage.installedPackageRef!.context!.namespace,
         ),
       ]);
       expect(tabs.prop("secrets")).toEqual([
         new ResourceRef(
-          resources.secret,
+          resourceRefs.secret,
           routeParams.cluster,
           "secrets",
           true,
-          installedPackage.installedPackageRef?.context?.namespace,
+          installedPackage.installedPackageRef!.context!.namespace,
         ),
       ]);
     });
@@ -300,28 +297,28 @@ describe("AppView", () => {
         getAndWatchResource: watchResource,
         closeWatchResource: closeWatch,
       };
-      const manifest = generateYamlManifest([resources.deployment, resources.service]);
+      const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as APIResourceRef[];
       const depResource = {
         cluster: routeParams.cluster,
-        apiVersion: resources.deployment.apiVersion,
-        kind: resources.deployment.kind,
-        name: resources.deployment.metadata.name,
+        apiVersion: resourceRefs.deployment.apiVersion,
+        kind: resourceRefs.deployment.kind,
+        name: resourceRefs.deployment.name,
         namespace: installedPackage.installedPackageRef?.context?.namespace,
         namespaced: true,
         plural: "deployments",
       };
       const svcResource = {
         cluster: routeParams.cluster,
-        apiVersion: resources.service.apiVersion,
-        kind: resources.service.kind,
-        name: resources.service.metadata.name,
+        apiVersion: resourceRefs.service.apiVersion,
+        kind: resourceRefs.service.kind,
+        name: resourceRefs.service.name,
         namespace: installedPackage.installedPackageRef?.context?.namespace,
         namespaced: true,
         plural: "services",
       };
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+        getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -336,15 +333,15 @@ describe("AppView", () => {
     });
 
     it("stores other k8s resources", () => {
-      const manifest = generateYamlManifest([
-        resources.deployment,
-        resources.service,
-        resources.configMap,
-        resources.secret,
-      ]);
+      const apiResourceRefs = [
+        resourceRefs.deployment,
+        resourceRefs.service,
+        resourceRefs.configMap,
+        resourceRefs.secret,
+      ] as APIResourceRef[];
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+        getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -360,75 +357,6 @@ describe("AppView", () => {
 
       expect(configMap).toBeDefined();
       expect(configMap.name).toEqual("cm-one");
-    });
-
-    it("does not store empty resources, bogus or without kind attribute", () => {
-      const manifest = generateYamlManifest([
-        { apiVersion: "v1", metadata: { name: "cm-one" } },
-        {},
-        "# This is a comment",
-        " ",
-      ]);
-
-      const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...installedPackage, manifest } } }),
-        <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
-        </MemoryRouter>,
-      );
-
-      const tabs = wrapper.find(ResourceTabs);
-      expect(tabs.prop("otherResources")).toEqual([]);
-      expect(tabs.prop("deployments")).toEqual([]);
-      expect(tabs.prop("services")).toEqual([]);
-      expect(tabs.prop("secrets")).toEqual([]);
-    });
-
-    // See https://github.com/kubeapps/kubeapps/issues/632
-    it("supports manifests with duplicated keys", () => {
-      const manifest = `
-      apiVersion: v1
-      metadata:
-        name: cm-one
-        labels:
-          package: cm-1.2.3
-          package: cm-1.2.3
-`;
-
-      expect(() => {
-        mountWrapper(
-          getStore({ apps: { selected: { ...installedPackage, manifest } } }),
-          <MemoryRouter initialEntries={[routePathParam]}>
-            <Route path={routePath}>
-              <AppView />
-            </Route>
-          </MemoryRouter>,
-        );
-      }).not.toThrow();
-    });
-
-    it("supports manifests with YAML type casting", () => {
-      const manifest = `
-      apiVersion: v1
-      kind: Deployment
-      metadata:
-        name: !!string foo
-`;
-
-      expect(() => {
-        const wrapper = mountWrapper(
-          getStore({ apps: { selected: { ...installedPackage, manifest } } }),
-          <MemoryRouter initialEntries={[routePathParam]}>
-            <Route path={routePath}>
-              <AppView />
-            </Route>
-          </MemoryRouter>,
-        );
-        const tabs = wrapper.find(ResourceTabs);
-        expect(tabs.prop("deployments")[0].name).toEqual("foo");
-      }).not.toThrow();
     });
   });
 
@@ -472,108 +400,18 @@ describe("AppView", () => {
     });
   });
 
-  it("renders a list of resources", () => {
-    const obj = { kind: "ClusterRole", metadata: { name: "foo" } } as IResource;
-    const list = {
-      kind: "List",
-      items: [obj, resources.deployment],
-    };
-    const manifest = generateYamlManifest([resources.service, list]);
-    const wrapper = mountWrapper(
-      getStore({ apps: { selected: { ...installedPackage, manifest } } }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
-    );
-
-    const tabs = wrapper.find(ResourceTabs);
-    expect(tabs.props()).toMatchObject({
-      deployments: [
-        new ResourceRef(
-          resources.deployment,
-          routeParams.cluster,
-          "deployments",
-          true,
-          installedPackage.installedPackageRef?.context?.namespace,
-        ),
-      ],
-      services: [
-        new ResourceRef(
-          resources.service,
-          routeParams.cluster,
-          "services",
-          true,
-          installedPackage.installedPackageRef?.context?.namespace,
-        ),
-      ],
-      otherResources: [
-        new ResourceRef(
-          obj,
-          routeParams.cluster,
-          "clusterroles",
-          false,
-          installedPackage.installedPackageRef?.context?.namespace,
-        ),
-      ],
-    });
-  });
-
-  it("renders a list of roles", () => {
-    const obj = { kind: "ClusterRole", metadata: { name: "foo" } } as IResource;
-    const list = {
-      kind: "RoleList",
-      items: [obj, resources.deployment],
-    };
-    const manifest = generateYamlManifest([resources.service, list]);
-
-    const wrapper = mountWrapper(
-      getStore({ apps: { selected: { ...installedPackage, manifest } } }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
-    );
-
-    const tabs = wrapper.find(ResourceTabs);
-    expect(tabs.props()).toMatchObject({
-      deployments: [
-        new ResourceRef(
-          resources.deployment,
-          routeParams.cluster,
-          "deployments",
-          true,
-          installedPackage.installedPackageRef?.context?.namespace,
-        ),
-      ],
-      services: [
-        new ResourceRef(
-          resources.service,
-          routeParams.cluster,
-          "services",
-          true,
-          installedPackage.installedPackageRef?.context?.namespace,
-        ),
-      ],
-      otherResources: [
-        new ResourceRef(
-          obj,
-          routeParams.cluster,
-          "clusterroles",
-          false,
-          installedPackage.installedPackageRef?.context?.namespace,
-        ),
-      ],
-    });
+  // TODO(minelson): the following features need to be implemented and tested
+  // in the helm plugin before this PR can land:
+  // * Implement support for lists (see deleted test)
+  // * Ensure deplicate labels don't cause error parsing (see deleted test)
+  it("fails until prequal branch lands with supporting functionality from the dashboard moved to the api server", () => {
+    expect(false).toBe(true);
   });
 
   it("forwards statefulsets and daemonsets to the application status", () => {
-    const r = [resources.statefulset, resources.daemonset];
-    const manifest = generateYamlManifest(r);
+    const apiResourceRefs = [resourceRefs.statefulset, resourceRefs.daemonset] as APIResourceRef[];
     const wrapper = mountWrapper(
-      getStore({ apps: { selected: { ...installedPackage, manifest } } }),
+      getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <AppView />
@@ -586,20 +424,20 @@ describe("AppView", () => {
 
     expect(applicationStatus.prop("statefulsetRefs")).toEqual([
       new ResourceRef(
-        resources.statefulset,
+        resourceRefs.statefulset,
         routeParams.cluster,
         "statefulsets",
         true,
-        installedPackage.installedPackageRef?.context?.namespace,
+        installedPackage.installedPackageRef!.context!.namespace,
       ),
     ]);
     expect(applicationStatus.prop("daemonsetRefs")).toEqual([
       new ResourceRef(
-        resources.daemonset,
+        resourceRefs.daemonset,
         routeParams.cluster,
         "daemonsets",
         true,
-        installedPackage.installedPackageRef?.context?.namespace,
+        installedPackage.installedPackageRef!.context!.namespace,
       ),
     ]);
   });

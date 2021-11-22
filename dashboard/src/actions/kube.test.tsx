@@ -5,6 +5,7 @@ import ResourceRef, { fromCRD } from "shared/ResourceRef";
 import { IClusterServiceVersionCRD, IKubeState, IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const mockStore = configureMockStore([thunk]);
 const clusterName = "cluster-name";
@@ -48,13 +49,11 @@ describe("getResource", () => {
     const r = {
       apiVersion: "v1",
       kind: "Service",
-      metadata: {
-        name: "foo",
-        namespace: "default",
-      },
-    } as IResource;
+      name: "foo",
+      namespace: "default",
+    } as APIResourceRef;
 
-    const ref = new ResourceRef(r, clusterName, "services", true);
+    const ref = new ResourceRef(r, clusterName, "services", true, "default");
 
     await store.dispatch(actions.kube.getResource(ref));
     expect(store.getActions()).toEqual(expectedActions);
@@ -82,13 +81,11 @@ describe("getResource", () => {
     const r = {
       apiVersion: "v1",
       kind: "Service",
-      metadata: {
-        name: "foo",
-        namespace: "default",
-      },
-    } as IResource;
+      name: "foo",
+      namespace: "default",
+    } as APIResourceRef;
 
-    const ref = new ResourceRef(r, clusterName, "services", true);
+    const ref = new ResourceRef(r, clusterName, "services", true, "default");
 
     await store.dispatch(actions.kube.getResource(ref));
     expect(store.getActions()).toEqual([]);
@@ -101,13 +98,11 @@ describe("getAndWatchResource", () => {
     const r = {
       apiVersion: "v1",
       kind: "Service",
-      metadata: {
-        name: "foo",
-        namespace: "default",
-      },
-    } as IResource;
+      name: "foo",
+      namespace: "default",
+    } as APIResourceRef;
 
-    const ref = new ResourceRef(r, clusterName, "services", true);
+    const ref = new ResourceRef(r, clusterName, "services", true, "default");
 
     const expectedActions = [
       {

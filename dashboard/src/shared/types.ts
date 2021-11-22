@@ -7,6 +7,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageSummary,
   PackageAppVersion,
+  ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
@@ -479,6 +480,6 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
 }
 
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
-  manifest: any;
+  apiResourceRefs: ResourceRef[];
   revision: number;
 }

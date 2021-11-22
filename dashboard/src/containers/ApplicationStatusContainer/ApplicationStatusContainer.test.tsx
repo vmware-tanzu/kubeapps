@@ -6,6 +6,7 @@ import ResourceRef from "shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import ApplicationStatusContainer from ".";
 import ApplicationStatus from "../../components/ApplicationStatus";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const mockStore = configureMockStore([thunk]);
 const clusterName = "cluster-Name";
@@ -32,14 +33,13 @@ describe("ApplicationStatusContainer", () => {
       {
         apiVersion: "apps/v1",
         kind: "Deployment",
-        metadata: {
-          namespace: ns,
-          name,
-        },
-      } as IResource,
+        namespace: ns,
+        name,
+      } as APIResourceRef,
       clusterName,
       "deployments",
       true,
+      "default",
     );
     const wrapper = shallow(
       <ApplicationStatusContainer

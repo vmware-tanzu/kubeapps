@@ -6,7 +6,6 @@ import PageHeader from "components/PageHeader/PageHeader";
 import { InstalledPackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
-import { assignWith } from "lodash";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
@@ -17,14 +16,10 @@ import {
   DeleteError,
   FetchError,
   FetchWarning,
-  IK8sList,
   IKubeState,
-  IResource,
   IStoreState,
 } from "shared/types";
 import { PluginNames } from "shared/utils";
-// TODO(agamez): check if we can replace this package by js-yaml or vice-versa
-import YAML from "yaml";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import ResourceRef from "../../shared/ResourceRef";
@@ -39,6 +34,7 @@ import AppValues from "./AppValues/AppValues";
 import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
@@ -51,7 +47,7 @@ export interface IAppViewResourceRefs {
 }
 
 function parseResources(
-  resources: Array<IResource | IK8sList<IResource, {}>>,
+  apiResourceRefs: Array<APIResourceRef>,
   kinds: IKubeState["kinds"],
   cluster: string,
   releaseNamespace: string,
@@ -65,60 +61,47 @@ function parseResources(
     services: [],
     secrets: [],
   };
-  resources.forEach(i => {
-    // The item may be a list
-    const itemList = i as IK8sList<IResource, {}>;
-    if (itemList.items) {
-      // If the resource  has a list of items, treat them as a list
-      // A List can contain an arbitrary set of resources so we treat them as an
-      // additional manifest. We merge the current result with the resources of
-      // the List, concatenating items from both.
-      assignWith(
-        result,
-        parseResources((i as IK8sList<IResource, {}>).items, kinds, cluster, releaseNamespace),
-        // Merge the list with the current result
-        (prev, newArray) => prev.concat(newArray),
-      );
-    } else {
-      const item = i as IResource;
-      const resource = { isFetching: true, item };
-      const kind = kinds[item.kind] || {};
-      switch (i.kind) {
-        case "Deployment":
-          result.deployments.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "StatefulSet":
-          result.statefulsets.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "DaemonSet":
-          result.daemonsets.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "Service":
-          result.services.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "Ingress":
-          result.ingresses.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "Secret":
-          result.secrets.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        default:
-          result.otherResources.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-      }
+  // DEBUG remove:
+  if (!apiResourceRefs) {
+    return result;
+  }
+  apiResourceRefs.forEach(apiRef => {
+    const kind = kinds[apiRef.kind] || {};
+    switch (apiRef.kind) {
+      case "Deployment":
+        result.deployments.push(
+          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
+        );
+        break;
+      case "StatefulSet":
+        result.statefulsets.push(
+          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
+        );
+        break;
+      case "DaemonSet":
+        result.daemonsets.push(
+          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
+        );
+        break;
+      case "Service":
+        result.services.push(
+          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
+        );
+        break;
+      case "Ingress":
+        result.ingresses.push(
+          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
+        );
+        break;
+      case "Secret":
+        result.secrets.push(
+          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
+        );
+        break;
+      default:
+        result.otherResources.push(
+          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
+        );
     }
   });
   return result;
@@ -206,31 +189,23 @@ export default function AppView() {
   }, [cluster, dispatch, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
-    if (!app || !app.manifest) {
+    if (!app || !app.apiResourceRefs) {
       return () => {};
     }
 
+    // If there are at least some resource types (ingresses, deployments) that are populated
+    // then avoid re-requesting the refs.
     if (Object.values(resourceRefs).some(ref => ref.length)) {
-      // Already populated, skip
       return () => {};
     }
 
-    let parsedManifest: IResource[] = YAML.parseAllDocuments(app.manifest).map(
-      (doc: YAML.Document) => doc.toJSON(),
-    );
-    // Filter out elements in the manifest that does not comply
-    // with { kind: foo }
-    parsedManifest = parsedManifest.filter(r => r && r.kind);
     const parsedRefs = parseResources(
-      parsedManifest,
+      app.apiResourceRefs,
       kinds,
       cluster,
       app.installedPackageRef?.context?.namespace || "",
     );
-    if (Object.values(parsedRefs).some(ref => ref.length)) {
-      // Avoid setting refs if the manifest is empty
-      setResourceRefs(parsedRefs);
-    }
+    setResourceRefs(parsedRefs);
     return () => {};
   }, [app, cluster, kinds, resourceRefs]);
 

@@ -40,6 +40,14 @@ export class App {
     });
   }
 
+  public static async GetInstalledPackageResourceRefs(
+    installedPackageRef?: InstalledPackageReference,
+  ) {
+    return await this.coreClient().GetInstalledPackageResourceRefs({
+      installedPackageRef: installedPackageRef,
+    });
+  }
+
   public static async CreateInstalledPackage(
     targetContext: Context,
     name: string,
