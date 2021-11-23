@@ -50,7 +50,7 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 			Plugin:     &pluginDetail,
 			Identifier: pkgMetadata.Name,
 		},
-		Name: pkgMetadata.Spec.DisplayName,
+		Name: pkgMetadata.Name,
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 		},
@@ -113,7 +113,7 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 			Plugin:     &pluginDetail,
 			Identifier: pkgMetadata.Name,
 		},
-		Name:             pkgMetadata.Spec.DisplayName,
+		Name:             pkgMetadata.Name,
 		IconUrl:          iconUrl,
 		DisplayName:      pkgMetadata.Spec.DisplayName,
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
@@ -183,11 +183,19 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 		},
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
 		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			UserReason: "no status information yet",
+		},
+	}
+	if len(pkgInstall.Status.Conditions) > 0 {
+		installedPackageSummary.Status = &corev1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
 			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
 			UserReason: userReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
-		},
+		}
 	}
+
 	return installedPackageSummary, nil
 }
 
@@ -366,7 +374,7 @@ func (s *Server) newSecret(installedPackageName, values, targetNamespace string)
 	}, nil
 }
 
-func (s *Server) newPkgInstall(installedPackageName, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+func (s *Server) newPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
 	pkgInstall := &packagingv1alpha1.PackageInstall{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       pkgInstallResource,
