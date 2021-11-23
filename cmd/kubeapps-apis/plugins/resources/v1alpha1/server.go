@@ -198,7 +198,12 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		}
 
 		if !r.GetWatch() {
-			resource, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+			var resource interface{}
+			if ref.Namespace != "" {
+				resource, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+			} else {
+				resource, err = dynamicClient.Resource(gvr).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+			}
 			if err != nil {
 				return status.Errorf(codes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
 			}
