@@ -457,9 +457,9 @@ dashboard:
   ## @param dashboard.remoteComponentsUrl Remote URL that can be used to load custom components vs loading from the local filesystem
   ##
   remoteComponentsUrl: ""
-  ## @param dashboard.skipAvailablePackageDetails Skip package details when they are not available
+  ## @param dashboard.skipPackageDetailsWhenNoReadme Skip the package details view if the package does not have a readme
   ##
-  skipAvailablePackageDetails: false
+  skipPackageDetailsWhenNoReadme: false
   ## @param dashboard.customLocale Custom translations injected to the Dashboard to customize the strings used in Kubeapps
   ## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/developer/translate-kubeapps.md
   ## e.g:

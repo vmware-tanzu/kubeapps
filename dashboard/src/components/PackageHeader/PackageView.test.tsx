@@ -233,12 +233,12 @@ it("renders the home link when set", () => {
 });
 
 describe("when package details are not available", () => {
-  it("redirects when skipAvailablePackageDetails is set to true", () => {
+  it("redirects when skipPackageDetailsWhenNoReadme is set to true", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultState,
         charts: { selected: { readme: "" } },
-        config: { skipAvailablePackageDetails: true },
+        config: { skipPackageDetailsWhenNoReadme: true },
       }),
       <Router history={history}>
         <Route path={routePath}>
@@ -249,11 +249,11 @@ describe("when package details are not available", () => {
     expect(wrapper.text()).not.toContain("Fetching application README...");
   });
 
-  it("does not redirect when skipAvailablePackageDetails is set to false", () => {
+  it("does not redirect when skipPackageDetailsWhenNoReadme is set to false", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultState,
-        config: { skipAvailablePackageDetails: false },
+        config: { skipPackageDetailsWhenNoReadme: false },
       }),
       <Router history={history}>
         <Route path={routePath}>

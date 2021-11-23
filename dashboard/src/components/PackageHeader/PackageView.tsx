@@ -46,7 +46,7 @@ export default function PackageView() {
   } = ReactRouter.useParams() as IRouteParams;
   const {
     packages: { isFetching, selected: selectedPackage },
-    config: { skipAvailablePackageDetails },
+    config: { skipPackageDetailsWhenNoReadme },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
@@ -101,7 +101,7 @@ export default function PackageView() {
     return <LoadingWrapper loaded={false} />;
   }
   // If package does not have a README, redirect to deployment form
-  if (!selectedPackage.readme && skipAvailablePackageDetails) {
+  if (!selectedPackage.readme && skipPackageDetailsWhenNoReadme) {
     return (
       <ReactRouter.Redirect
         to={app.apps.new(
