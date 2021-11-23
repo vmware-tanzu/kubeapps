@@ -535,36 +535,36 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
 
-	packageRef := request.GetInstalledPackageRef()
-	cluster := packageRef.GetContext().GetCluster()
+	// Retrieve the proper parameters from the request
+	packageCluster := request.GetInstalledPackageRef().GetContext().GetCluster()
+	packageNamespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	reconciliationOptions := request.GetReconciliationOptions()
 	pkgVersion := request.GetPkgVersionReference().GetVersion()
 	installedPackageName := request.GetInstalledPackageRef().GetIdentifier()
 	values := request.GetValues()
-	targetNamespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 
-	if cluster == "" {
-		cluster = s.globalPackagingCluster
+	if packageCluster == "" {
+		packageCluster = s.globalPackagingCluster
 	}
 
-	typedClient, _, err := s.GetClients(ctx, cluster)
+	typedClient, _, err := s.GetClients(ctx, packageCluster)
 	if err != nil {
 		return nil, err
 	}
 
 	// fetch the package install
-	pkgInstall, err := s.getPkgInstall(ctx, cluster, targetNamespace, installedPackageName)
+	pkgInstall, err := s.getPkgInstall(ctx, packageCluster, packageNamespace, installedPackageName)
 	if err != nil {
 		return nil, errorByStatus("get", "PackageInstall", installedPackageName, err)
 	}
 
 	// Update the values.yaml values file if any is passed, otherwise, delete the values
 	if values != "" {
-		secret, err := s.newSecret(installedPackageName, values, targetNamespace)
+		secret, err := s.newSecret(installedPackageName, values, packageNamespace)
 		if err != nil {
 			return nil, errorByStatus("upsate", "Secret", secret.Name, err)
 		}
-		updatedSecret, err := typedClient.CoreV1().Secrets(targetNamespace).Update(ctx, secret, metav1.UpdateOptions{})
+		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
 		if updatedSecret == nil || err != nil {
 			return nil, errorByStatus("update", "Secret", secret.Name, err)
 		}
@@ -572,7 +572,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		// Delete all the associated secrets
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
-			err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
+			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
 			if err != nil {
 				return nil, errorByStatus("delete", "Secret", secretId, err)
 			}
@@ -594,7 +594,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	pkgInstall.Status = packagingv1alpha1.PackageInstallStatus{}
 
 	// update the pkgInstall in the server
-	updatedPkgInstall, err := s.updatePkgInstall(ctx, cluster, targetNamespace, pkgInstall)
+	updatedPkgInstall, err := s.updatePkgInstall(ctx, packageCluster, packageNamespace, pkgInstall)
 	if err != nil {
 		return nil, errorByStatus("get", "PackageInstall", installedPackageName, err)
 	}
@@ -603,7 +603,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	updatedRef := &corev1.InstalledPackageReference{
 		Context: &corev1.Context{
 			Namespace: updatedPkgInstall.GetNamespace(),
-			Cluster:   updatedPkgInstall.GetClusterName(),
+			Cluster:   packageCluster,
 		},
 		Identifier: updatedPkgInstall.Name,
 		Plugin:     GetPluginDetail(),

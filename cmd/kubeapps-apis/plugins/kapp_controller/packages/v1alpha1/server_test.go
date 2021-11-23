@@ -51,6 +51,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.InstalledPackageDetail{},
 	corev1.ReconciliationOptions{},
 	corev1.CreateInstalledPackageResponse{},
+	corev1.UpdateInstalledPackageResponse{},
 	corev1.VersionReference{},
 	corev1.Context{},
 	corev1.Maintainer{},
@@ -2095,7 +2096,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "my-installation",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.2.3",
@@ -2148,12 +2149,56 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						ValuesSchema:                    datapackagingv1alpha1.ValuesSchema{},
 					},
 				},
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "foo",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
 			},
 			existingTypedObjects: []runtime.Object{
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-secret",
+						Name:      "my-installation-values",
 					},
 					Type: "Opaque",
 					Data: map[string][]byte{
@@ -2166,7 +2211,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
 					Plugin:     &pluginDetail,
-					Identifier: "my-install",
+					Identifier: "my-installation",
 				},
 			},
 			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
@@ -2176,7 +2221,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
-					Name:      "tetris.foo.example.com",
+					Name:      "my-installation",
 				},
 				Spec: packagingv1alpha1.PackageInstallSpec{
 					ServiceAccountName: "default",
@@ -2188,7 +2233,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
