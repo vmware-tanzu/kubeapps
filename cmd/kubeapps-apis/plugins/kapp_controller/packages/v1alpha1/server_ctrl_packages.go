@@ -410,8 +410,10 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 					return nil, errorByStatus("delete", "Secret", secretRefName, err)
 				}
 			}
-			for fileName, valuesContent := range values.Data {
-				valuesApplied = fmt.Sprintf("%s\n# %s\n%s\n---", valuesApplied, fileName, valuesContent)
+			if values != nil {
+				for fileName, valuesContent := range values.Data {
+					valuesApplied = fmt.Sprintf("%s\n# %s\n%s\n---", valuesApplied, fileName, valuesContent)
+				}
 			}
 		}
 	}
