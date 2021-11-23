@@ -598,8 +598,9 @@ jobs:
   test_dashboard:
     environment:
       # Note that the max old space setting is per worker, so running the tests
-      # with 4 workers on a 4Gb (free plan) needs 1Gb of max old space.
-      NODE_OPTIONS: "--max-old-space-size=1024"
+      # with 4 workers on a 4Gb (free plan) needs 1Gb of max old space. Forcing
+      # garbage collection to start earlier with 512M per worker.
+      NODE_OPTIONS: "--max-old-space-size=512"
     docker:
       - image: circleci/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
