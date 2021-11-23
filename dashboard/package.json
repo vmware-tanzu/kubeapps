@@ -10,7 +10,7 @@
     "compile-lang": "formatjs compile-folder lang src/locales/ --ast --format simple",
     "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && shx cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css && shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css.map public/clr-ui-dark.min.css.map && shx cp ./node_modules/@clr/ui/clr-ui.min.css.map public/clr-ui.min.css.map",
     "eject": "react-scripts eject",
-    "eslint-check": "eslint --config ./.eslintrc.json 'src/**/*.{js,ts,tsx}' --quiet --max-warnings=0",
+    "eslint-check": "eslint --config ./.eslintrc.json 'src/**/*.{js,ts,tsx}' --max-warnings=0",
     "eslint": "eslint --config ./.eslintrc.json 'src/**/*.{js,ts,tsx}' --fix --max-warnings=0",
     "extract-lang": "formatjs extract 'src/**/*.ts*' --out-file lang/en.json --id-interpolation-pattern '[sha512:contenthash:base64:6]' --format simple",
     "lint": "npm-run-all lint-css-check eslint-check",
