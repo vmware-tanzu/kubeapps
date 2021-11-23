@@ -140,7 +140,7 @@ metadata:
 			},
 		},
 		{
-			name: "skips resources that do not have a kind (such as resource-lists)",
+			name: "skips resources that do not have a kind",
 			existingReleases: []releaseStub{
 				{
 					name:      "my-apache",
@@ -226,6 +226,248 @@ should not be :! parsed as yaml$
 				},
 			},
 			expectedStatusCode: codes.Internal,
+		},
+		{
+			name: "handles duplicate labels as helm does",
+			// See https://github.com/kubeapps/kubeapps/issues/632
+			existingReleases: []releaseStub{
+				{
+					name:      "my-apache",
+					namespace: "default",
+					manifest: `
+---
+# Source: apache/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apache-test
+  label:
+    chart: "gitea-0.2.0"
+    chart: "gitea-0.2.0"
+`,
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "apps/v1",
+						Name:       "apache-test",
+						Kind:       "Deployment",
+					},
+				},
+			},
+		},
+		{
+			name: "supports manifests with YAML type casting",
+			existingReleases: []releaseStub{
+				{
+					name:      "my-apache",
+					namespace: "default",
+					manifest: `
+---
+# Source: apache/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: !!string apache-test
+`,
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "apps/v1",
+						Name:       "apache-test",
+						Kind:       "Deployment",
+					},
+				},
+			},
+		},
+		{
+			name: "renders a list of items",
+			existingReleases: []releaseStub{
+				{
+					name:      "my-apache",
+					namespace: "default",
+					manifest: `
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: apache-test
+    namespace: default
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: apache-test
+    namespace: default
+`,
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "apps/v1",
+						Name:       "apache-test",
+						Namespace:  "default",
+						Kind:       "Deployment",
+					},
+					{
+						ApiVersion: "v1",
+						Name:       "apache-test",
+						Namespace:  "default",
+						Kind:       "Service",
+					},
+				},
+			},
+		},
+		{
+			name: "renders a rolelist of items",
+			// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
+			existingReleases: []releaseStub{
+				{
+					name:      "my-apache",
+					namespace: "default",
+					manifest: `
+---
+apiVersion: v1
+kind: RoleList
+items:
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: role-1
+    namespace: default
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: role-2
+    namespace: default
+`,
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "rbac.authorization.k8s.io/v1",
+						Name:       "role-1",
+						Namespace:  "default",
+						Kind:       "Role",
+					},
+					{
+						ApiVersion: "rbac.authorization.k8s.io/v1",
+						Name:       "role-2",
+						Namespace:  "default",
+						Kind:       "Role",
+					},
+				},
+			},
+		},
+		{
+			name: "renders a ClusterRoleList of items",
+			// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-v1/#ClusterRoleList
+			existingReleases: []releaseStub{
+				{
+					name:      "my-apache",
+					namespace: "default",
+					manifest: `
+---
+apiVersion: v1
+kind: ClusterRoleList
+items:
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: clusterrole-1
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: clusterrole-2
+`,
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "rbac.authorization.k8s.io/v1",
+						Name:       "clusterrole-1",
+						Kind:       "ClusterRole",
+					},
+					{
+						ApiVersion: "rbac.authorization.k8s.io/v1",
+						Name:       "clusterrole-2",
+						Kind:       "ClusterRole",
+					},
+				},
+			},
 		},
 	}
 

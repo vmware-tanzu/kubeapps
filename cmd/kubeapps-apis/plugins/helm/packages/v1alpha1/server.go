@@ -1221,9 +1221,10 @@ type YAMLMetadata struct {
 }
 
 type YAMLResource struct {
-	APIVersion string       `json:"apiVersion"`
-	Kind       string       `json:"kind"`
-	Metadata   YAMLMetadata `json:"metadata"`
+	APIVersion string         `json:"apiVersion"`
+	Kind       string         `json:"kind"`
+	Metadata   YAMLMetadata   `json:"metadata"`
+	Items      []YAMLResource `json:"items"`
 }
 
 // resourceRefsFromManifest returns the resource refs for a given yaml manifest.
@@ -1239,14 +1240,26 @@ func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
 			}
 			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
 		}
-		if doc.Kind != "" {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: doc.APIVersion,
-				Kind:       doc.Kind,
-				Name:       doc.Metadata.Name,
-				Namespace:  doc.Metadata.Namespace,
-			})
+		if doc.Kind == "" {
+			continue
 		}
+		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
+			for _, i := range doc.Items {
+				refs = append(refs, &corev1.ResourceRef{
+					ApiVersion: i.APIVersion,
+					Kind:       i.Kind,
+					Name:       i.Metadata.Name,
+					Namespace:  i.Metadata.Namespace,
+				})
+			}
+			continue
+		}
+		refs = append(refs, &corev1.ResourceRef{
+			ApiVersion: doc.APIVersion,
+			Kind:       doc.Kind,
+			Name:       doc.Metadata.Name,
+			Namespace:  doc.Metadata.Namespace,
+		})
 	}
 
 	return refs, nil
