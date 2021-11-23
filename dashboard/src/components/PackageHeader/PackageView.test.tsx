@@ -253,6 +253,7 @@ describe("when package details are not available", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultState,
+        charts: { selected: { readme: "" } },
         config: { skipPackageDetailsWhenNoReadme: false },
       }),
       <Router history={history}>
@@ -262,6 +263,22 @@ describe("when package details are not available", () => {
       </Router>,
     );
     expect(wrapper.containsMatchingElement(<PackageReadme />)).toBe(true);
+  });
+
+  it("does not redirect when skipPackageDetailsWhenNoReadme is true but the package has a readme", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultState,
+        charts: { selected: { readme: "foo" } },
+        config: { skipPackageDetailsWhenNoReadme: true },
+      }),
+      <Router history={history}>
+        <Route path={routePath}>
+          <PackageView />
+        </Route>
+      </Router>,
+    );
+    expect(wrapper.text()).not.toContain("Fetching application README...");
   });
 });
 
