@@ -927,7 +927,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "tetris.foo.example.com.1.2.3",
+						Name:      "my-installation",
 					},
 					Spec: packagingv1alpha1.PackageInstallSpec{
 						ServiceAccountName: "default",
@@ -939,7 +939,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-secret",
+								Name: "my-installation-values",
 							},
 						},
 						},
@@ -970,9 +970,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					InstalledPackageRef: &corev1.InstalledPackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com.1.2.3",
+						Identifier: "my-installation",
 					},
-					Name:                  "tetris.foo.example.com.1.2.3",
+					Name:                  "my-installation",
 					PkgDisplayName:        "Classic Tetris",
 					LatestVersion:         &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
 					IconUrl:               "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
@@ -1038,7 +1038,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "tetris.foo.example.com.1.2.3",
+						Name:      "my-installation",
 					},
 					Spec: packagingv1alpha1.PackageInstallSpec{
 						ServiceAccountName: "default",
@@ -1050,7 +1050,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-secret",
+								Name: "my-installation-values",
 							},
 						},
 						},
@@ -1066,9 +1066,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					InstalledPackageRef: &corev1.InstalledPackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com.1.2.3",
+						Identifier: "my-installation",
 					},
-					Name:                  "tetris.foo.example.com.1.2.3",
+					Name:                  "my-installation",
 					PkgDisplayName:        "Classic Tetris",
 					LatestVersion:         &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
 					IconUrl:               "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
@@ -1156,7 +1156,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "tetris.foo.example.com.1.2.3",
+						Name:      "my-installation",
 					},
 					Spec: packagingv1alpha1.PackageInstallSpec{
 						ServiceAccountName: "default",
@@ -1168,7 +1168,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-secret",
+								Name: "my-installation-values",
 							},
 						},
 						},
@@ -1199,9 +1199,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					InstalledPackageRef: &corev1.InstalledPackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com.1.2.3",
+						Identifier: "my-installation",
 					},
-					Name:                  "tetris.foo.example.com.1.2.3",
+					Name:                  "my-installation",
 					PkgDisplayName:        "Classic Tetris",
 					LatestVersion:         &corev1.PackageAppVersion{PkgVersion: "1.2.7"},
 					IconUrl:               "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
@@ -1335,7 +1335,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-secret",
+								Name: "my-installation-values",
 							},
 						},
 						},
@@ -1392,7 +1392,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-secret",
+						Name:      "my-installation-values",
 					},
 					Type: "Opaque",
 					Data: map[string][]byte{
@@ -1504,6 +1504,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				if got, want := installedPackageDetail.InstalledPackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
+				// TODO(agamez): check the actual object being updated in the k8s fake
 			}
 		})
 	}
@@ -1514,7 +1515,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 		name                   string
 		request                *corev1.CreateInstalledPackageRequest
 		existingObjects        []runtime.Object
-		existingTypedObjects   []runtime.Object
 		expectedStatusCode     codes.Code
 		expectedResponse       *corev1.CreateInstalledPackageResponse
 		expectedPackageInstall *packagingv1alpha1.PackageInstall
@@ -1533,7 +1533,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.2.3",
 				},
-				Name: "my-install",
+				Name: "my-installation",
 				TargetContext: &corev1.Context{
 					Namespace: "default",
 					Cluster:   "default",
@@ -1581,24 +1581,12 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
-				&k8scorev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "my-secret",
-					},
-					Type: "Opaque",
-					Data: map[string][]byte{
-						"values.yaml": []byte("foo: bar"),
-					},
-				},
-			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
 					Plugin:     &pluginDetail,
-					Identifier: "my-install",
+					Identifier: "my-installation",
 				},
 			},
 			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
@@ -1608,7 +1596,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
-					Name:      "tetris.foo.example.com",
+					Name:      "my-installation",
 				},
 				Spec: packagingv1alpha1.PackageInstallSpec{
 					ServiceAccountName: "default",
@@ -1620,7 +1608,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
@@ -1660,7 +1648,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.2.3",
 				},
-				Name:   "my-install",
+				Name:   "my-installation",
 				Values: "foo: bar",
 				TargetContext: &corev1.Context{
 					Namespace: "default",
@@ -1709,24 +1697,12 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
-				&k8scorev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "my-secret",
-					},
-					Type: "Opaque",
-					Data: map[string][]byte{
-						"values.yaml": []byte("foo: bar"),
-					},
-				},
-			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
 					Plugin:     &pluginDetail,
-					Identifier: "my-install",
+					Identifier: "my-installation",
 				},
 			},
 			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
@@ -1736,7 +1712,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
-					Name:      "tetris.foo.example.com",
+					Name:      "my-installation",
 				},
 				Spec: packagingv1alpha1.PackageInstallSpec{
 					ServiceAccountName: "default",
@@ -1748,7 +1724,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
@@ -1793,7 +1769,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Suspend:            true,
 					ServiceAccountName: "my-sa",
 				},
-				Name: "my-install",
+				Name: "my-installation",
 				TargetContext: &corev1.Context{
 					Namespace: "default",
 					Cluster:   "default",
@@ -1841,24 +1817,12 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
-				&k8scorev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "my-secret",
-					},
-					Type: "Opaque",
-					Data: map[string][]byte{
-						"values.yaml": []byte("foo: bar"),
-					},
-				},
-			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
 					Plugin:     &pluginDetail,
-					Identifier: "my-install",
+					Identifier: "my-installation",
 				},
 			},
 			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
@@ -1868,7 +1832,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
-					Name:      "tetris.foo.example.com",
+					Name:      "my-installation",
 				},
 				Spec: packagingv1alpha1.PackageInstallSpec{
 					ServiceAccountName: "default",
@@ -1880,7 +1844,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
@@ -1920,7 +1884,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				PkgVersionReference: &corev1.VersionReference{
 					Version: ">1",
 				},
-				Name: "my-install",
+				Name: "my-installation",
 				TargetContext: &corev1.Context{
 					Namespace: "default",
 					Cluster:   "default",
@@ -1968,24 +1932,12 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
-				&k8scorev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "my-secret",
-					},
-					Type: "Opaque",
-					Data: map[string][]byte{
-						"values.yaml": []byte("foo: bar"),
-					},
-				},
-			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
 					Plugin:     &pluginDetail,
-					Identifier: "my-install",
+					Identifier: "my-installation",
 				},
 			},
 			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
@@ -1995,7 +1947,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
-					Name:      "tetris.foo.example.com",
+					Name:      "my-installation",
 				},
 				Spec: packagingv1alpha1.PackageInstallSpec{
 					ServiceAccountName: "default",
@@ -2007,7 +1959,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
@@ -2045,7 +1997,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 			s := Server{
 				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return typfake.NewSimpleClientset(tc.existingTypedObjects...), dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
