@@ -61,10 +61,6 @@ function parseResources(
     services: [],
     secrets: [],
   };
-  // DEBUG remove:
-  if (!apiResourceRefs) {
-    return result;
-  }
   apiResourceRefs.forEach(apiRef => {
     const kind = kinds[apiRef.kind] || {};
     switch (apiRef.kind) {
