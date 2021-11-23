@@ -160,16 +160,12 @@ export const Any = {
 
   fromJSON(object: any): Any {
     const message = { ...baseAny } as Any;
-    if (object.typeUrl !== undefined && object.typeUrl !== null) {
-      message.typeUrl = String(object.typeUrl);
-    } else {
-      message.typeUrl = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = bytesFromBase64(object.value);
-    } else {
-      message.value = new Uint8Array();
-    }
+    message.typeUrl =
+      object.typeUrl !== undefined && object.typeUrl !== null ? String(object.typeUrl) : "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? bytesFromBase64(object.value)
+        : new Uint8Array();
     return message;
   },
 

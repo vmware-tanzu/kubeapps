@@ -109,11 +109,10 @@ export const InstalledPackageDetailCustomDataHelm = {
     const message = {
       ...baseInstalledPackageDetailCustomDataHelm,
     } as InstalledPackageDetailCustomDataHelm;
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = Number(object.releaseRevision);
-    } else {
-      message.releaseRevision = 0;
-    }
+    message.releaseRevision =
+      object.releaseRevision !== undefined && object.releaseRevision !== null
+        ? Number(object.releaseRevision)
+        : 0;
     return message;
   },
 
@@ -180,16 +179,14 @@ export const RollbackInstalledPackageRequest = {
     const message = {
       ...baseRollbackInstalledPackageRequest,
     } as RollbackInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = Number(object.releaseRevision);
-    } else {
-      message.releaseRevision = 0;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
+    message.releaseRevision =
+      object.releaseRevision !== undefined && object.releaseRevision !== null
+        ? Number(object.releaseRevision)
+        : 0;
     return message;
   },
 
@@ -209,13 +206,10 @@ export const RollbackInstalledPackageRequest = {
     const message = {
       ...baseRollbackInstalledPackageRequest,
     } as RollbackInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     message.releaseRevision = object.releaseRevision ?? 0;
     return message;
   },
@@ -261,11 +255,10 @@ export const RollbackInstalledPackageResponse = {
     const message = {
       ...baseRollbackInstalledPackageResponse,
     } as RollbackInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
     return message;
   },
 
@@ -284,13 +277,10 @@ export const RollbackInstalledPackageResponse = {
     const message = {
       ...baseRollbackInstalledPackageResponse,
     } as RollbackInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     return message;
   },
 };

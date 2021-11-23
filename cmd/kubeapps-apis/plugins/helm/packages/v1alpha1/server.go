@@ -1244,6 +1244,7 @@ func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
 				ApiVersion: doc.APIVersion,
 				Kind:       doc.Kind,
 				Name:       doc.Metadata.Name,
+				Namespace:  doc.Metadata.Namespace,
 			})
 		}
 	}
