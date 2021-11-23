@@ -177,10 +177,18 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 		},
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
 		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			UserReason: "no status information yet",
+		},
+	}
+	if len(pkgInstall.Status.Conditions) > 0 {
+		installedPackageSummary.Status = &corev1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
 			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
 			UserReason: userReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
-		},
+		}
 	}
+
 	return installedPackageSummary, nil
 }
