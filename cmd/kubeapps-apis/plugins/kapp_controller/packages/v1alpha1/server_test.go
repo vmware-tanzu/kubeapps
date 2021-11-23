@@ -1504,6 +1504,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				if got, want := installedPackageDetail.InstalledPackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
+				// TODO(agamez): check the actual object being updated in the k8s fake
 			}
 		})
 	}
@@ -2070,6 +2071,187 @@ func TestCreateInstalledPackage(t *testing.T) {
 				if got, want := createInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
+			}
+		})
+	}
+}
+
+func TestUpdateInstalledPackage(t *testing.T) {
+	testCases := []struct {
+		name                   string
+		request                *corev1.UpdateInstalledPackageRequest
+		existingObjects        []runtime.Object
+		existingTypedObjects   []runtime.Object
+		expectedStatusCode     codes.Code
+		expectedResponse       *corev1.UpdateInstalledPackageResponse
+		expectedPackageInstall *packagingv1alpha1.PackageInstall
+	}{
+		{
+			name: "update installed package",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1.2.3",
+				},
+				Values: "foo: bar",
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+					Interval:           30,
+					Suspend:            false,
+				},
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						Categories:         []string{"logging", "daemon-set"},
+						LongDescription:    "A great game for arcade gamers",
+						ProviderName:       "Tetris inc.",
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "foo"}},
+						SupportDescription: "Block support team",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"foo license"},
+						ReleasedAt:                      metav1.Time{},
+						CapactiyRequirementsDescription: "foo capactiyRequirementsDescription",
+						ReleaseNotes:                    "foo releaseNotes",
+						Template:                        datapackagingv1alpha1.AppTemplateSpec{},
+						ValuesSchema:                    datapackagingv1alpha1.ValuesSchema{},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-secret",
+					},
+					Type: "Opaque",
+					Data: map[string][]byte{
+						"values.yaml": []byte("foo: bar"),
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-install",
+				},
+			},
+			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgInstallResource,
+					APIVersion: packagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "tetris.foo.example.com",
+				},
+				Spec: packagingv1alpha1.PackageInstallSpec{
+					ServiceAccountName: "default",
+					PackageRef: &packagingv1alpha1.PackageRef{
+						RefName: "tetris.foo.example.com",
+						VersionSelection: &vendirversions.VersionSelectionSemver{
+							Constraints: "1.2.3",
+						},
+					},
+					Values: []packagingv1alpha1.PackageInstallValues{{
+						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+							Name: "my-secret",
+						},
+					},
+					},
+					Paused:     false,
+					Canceled:   false,
+					SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					NoopDelete: false,
+				},
+				Status: packagingv1alpha1.PackageInstallStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						ObservedGeneration: 1,
+						Conditions: []kappctrlv1alpha1.AppCondition{{
+							Type:    kappctrlv1alpha1.ReconcileSucceeded,
+							Status:  k8scorev1.ConditionTrue,
+							Reason:  "baz",
+							Message: "qux",
+						}},
+						FriendlyDescription: "foo",
+						UsefulErrorMessage:  "foo",
+					},
+					Version:              "1.2.3",
+					LastAttemptedVersion: "1.2.3",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return typfake.NewSimpleClientset(tc.existingTypedObjects...), dynfake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
+							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
+						},
+						unstructuredObjects...,
+					), nil
+				},
+			}
+
+			updateInstalledPackageResponse, err := s.UpdateInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+			// If we were expecting an error, continue to the next test.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+			if tc.expectedPackageInstall != nil {
+				if got, want := updateInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+				}
+				// TODO(agamez): check the actual object being updated in the k8s fake
 			}
 		})
 	}
