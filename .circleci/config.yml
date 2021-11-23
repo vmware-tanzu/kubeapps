@@ -596,6 +596,10 @@ jobs:
             docker cp /go tests:/
             docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
   test_dashboard:
+    environment:
+      # Note that the max old space setting is per worker, so running the tests
+      # with 4 workers on a 4Gb (free plan) needs 1Gb of max old space.
+      NODE_OPTIONS: "--max-old-space-size=1024"
     docker:
       - image: circleci/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
@@ -611,7 +615,7 @@ jobs:
       - run:
           name: Run dashboard unit tests
           command: |
-            yarn --cwd=dashboard run test --maxWorkers=4 --coverage
+            yarn --cwd=dashboard run test --maxWorkers=4 --coverage --logHeapUsage
   test_pinniped_proxy:
     docker:
       - image: circleci/rust:<< pipeline.parameters.RUST_VERSION >>
