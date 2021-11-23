@@ -22,6 +22,6 @@ This is an automatic PR managed by the Kubeapps team.
 
 **Checklist**
 
-- [x] Chart version bumped in `Chart.yaml` according to [semver](http://semver.org/).
+- [x] Chart version bumped in `Chart.yaml` according to [semver](https://semver.org/).
 - [ ] Variables are documented in the README.md
 - [x] Title of the PR starts with chart name (e.g. `[bitnami/chart]`)
