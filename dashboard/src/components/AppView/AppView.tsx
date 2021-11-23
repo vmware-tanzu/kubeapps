@@ -3,7 +3,6 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
-import { InstalledPackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
@@ -34,7 +33,10 @@ import AppValues from "./AppValues/AppValues";
 import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  ResourceRef as APIResourceRef,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
