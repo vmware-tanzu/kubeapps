@@ -46,7 +46,7 @@ See how to deploy and configure [Kubeapps on VMware Tanzu™ Kubernetes Grid™]
 
 If you encounter issues, review the [troubleshooting docs](./chart/kubeapps/README.md#troubleshooting), review our [project board](https://github.com/kubeapps/kubeapps/projects/11), file an [issue](https://github.com/kubeapps/kubeapps/issues), or talk to us on the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) on the Kubernetes Slack server.
 
-- Click [here](http://slack.k8s.io) to sign up to the Kubernetes Slack org.
+- Click [here](https://slack.k8s.io) to sign up to the Kubernetes Slack org.
 
 - Review our FAQs section on the [Kubeapps chart README](./chart/kubeapps/README.md#faq).
 
