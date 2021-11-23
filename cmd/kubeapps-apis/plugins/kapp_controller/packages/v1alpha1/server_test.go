@@ -938,8 +938,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "values.yaml",
-								Key:  "my-secret",
+								Name: "my-secret",
 							},
 						},
 						},
@@ -1050,8 +1049,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "values.yaml",
-								Key:  "my-secret",
+								Name: "my-secret",
 							},
 						},
 						},
@@ -1169,8 +1167,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "values.yaml",
-								Key:  "my-secret",
+								Name: "my-secret",
 							},
 						},
 						},
@@ -1337,8 +1334,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "values.yaml",
-								Key:  "my-secret",
+								Name: "my-secret",
 							},
 						},
 						},
@@ -1423,7 +1419,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					PkgVersion: "1.2.3",
 					AppVersion: "1.2.3",
 				},
-				ValuesApplied: "",
+				ValuesApplied: "\n# values.yaml\nfoo: bar\n",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
 					Interval:           30,
@@ -1497,14 +1493,14 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						), nil
 				},
 			}
-			availablePackageDetail, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
+			installedPackageDetail, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := availablePackageDetail.InstalledPackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
+				if got, want := installedPackageDetail.InstalledPackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
 			}
