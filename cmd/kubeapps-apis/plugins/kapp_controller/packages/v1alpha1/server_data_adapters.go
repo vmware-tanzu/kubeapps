@@ -342,7 +342,7 @@ func (s *Server) newSecret(installedPackageName, values, targetNamespace string)
 	}, nil
 }
 
-func (s *Server) newPkgInstall(installedPackageName, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+func (s *Server) newPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
 	pkgInstall := &packagingv1alpha1.PackageInstall{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       pkgInstallResource,
