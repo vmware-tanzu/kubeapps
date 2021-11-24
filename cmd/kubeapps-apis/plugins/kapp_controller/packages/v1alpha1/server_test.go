@@ -48,6 +48,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.Context{},
 	corev1.CreateInstalledPackageResponse{},
 	corev1.DeleteInstalledPackageResponse{},
+	corev1.GetAvailablePackageVersionsResponse{},
 	corev1.InstalledPackageDetail{},
 	corev1.InstalledPackageReference{},
 	corev1.InstalledPackageStatus{},

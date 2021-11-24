@@ -14,20 +14,24 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
+
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	vendirVersions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
 )
 
-func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.AvailablePackageSummary, error) {
+func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.AvailablePackageSummary, error) {
+	var iconStringBuilder strings.Builder
+
 	// get the versions associated with the package
 	versions := pkgVersionsMap[pkgMetadata.Name]
 	if len(versions) == 0 {
@@ -36,9 +40,13 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
-	iconUrl := ""
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
-		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
 	availablePackageSummary := &corev1.AvailablePackageSummary{
@@ -51,10 +59,13 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 			Identifier: pkgMetadata.Name,
 		},
 		Name: pkgMetadata.Name,
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
+			AppVersion: versions[0].version.String(),
 		},
-		IconUrl:          iconUrl,
+		IconUrl:          iconStringBuilder.String(),
 		DisplayName:      pkgMetadata.Spec.DisplayName,
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
 		Categories:       pkgMetadata.Spec.Categories,
@@ -63,13 +74,18 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 	return availablePackageSummary, nil
 }
 
-func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
+func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
-	iconUrl := ""
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
+	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
-		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
 	maintainers := []*corev1.Maintainer{}
@@ -82,11 +98,19 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 	readme := fmt.Sprintf(`## Details
 
 
+### Description:
+%s
+
+
 ### Capactiy requirements:
 %s
 
 
 ### Release Notes:
+%s
+
+
+### Support:
 %s
 
 
@@ -99,8 +123,10 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 
 
 `,
+		pkgMetadata.Spec.LongDescription,
 		foundPkgSemver.pkg.Spec.CapactiyRequirementsDescription,
 		foundPkgSemver.pkg.Spec.ReleaseNotes,
+		pkgMetadata.Spec.SupportDescription,
 		foundPkgSemver.pkg.Spec.Licenses,
 		foundPkgSemver.pkg.Spec.ReleasedAt,
 	)
@@ -114,13 +140,16 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 			Identifier: pkgMetadata.Name,
 		},
 		Name:             pkgMetadata.Name,
-		IconUrl:          iconUrl,
+		IconUrl:          iconStringBuilder.String(),
 		DisplayName:      pkgMetadata.Spec.DisplayName,
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
 		Categories:       pkgMetadata.Spec.Categories,
 		LongDescription:  pkgMetadata.Spec.LongDescription,
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		Version: &corev1.PackageAppVersion{
 			PkgVersion: requestedPkgVersion,
+			AppVersion: requestedPkgVersion,
 		},
 		Maintainers: maintainers,
 		Readme:      readme,
@@ -143,7 +172,7 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 	return availablePackageDetail, nil
 }
 
-func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.InstalledPackageSummary, error) {
 	// get the versions associated with the package
 	versions := pkgVersionsMap[pkgInstall.Spec.PackageRef.RefName]
 	if len(versions) == 0 {
@@ -152,16 +181,24 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
-	iconUrl := ""
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
+	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
-		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
 	installedPackageSummary := &corev1.InstalledPackageSummary{
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
+			AppVersion: pkgInstall.Status.LastAttemptedVersion,
 		},
-		IconUrl: iconUrl,
+		IconUrl: iconStringBuilder.String(),
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
 				Namespace: pkgMetadata.Namespace,
@@ -170,11 +207,17 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 			Plugin:     &pluginDetail,
 			Identifier: pkgInstall.Name,
 		},
+		// TODO(agamez): this field should be populated with the proper version,
+		// that is, considering the versionSelection.constraint
 		LatestMatchingVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
+			AppVersion: versions[0].version.String(),
 		},
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
+			AppVersion: versions[0].version.String(),
 		},
 		Name:           pkgInstall.Name,
 		PkgDisplayName: pkgMetadata.Spec.DisplayName,
@@ -199,7 +242,7 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 	return installedPackageSummary, nil
 }
 
-func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, app *kappctrlv1alpha1.App, valuesApplied, cluster string) (*corev1.InstalledPackageDetail, error) {
+func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, app *kappctrlv1alpha1.App, valuesApplied, cluster string) (*corev1.InstalledPackageDetail, error) {
 	// get the versions associated with the package
 	versions := pkgVersionsMap[pkgMetadata.Name]
 	if len(versions) == 0 {
@@ -277,6 +320,8 @@ func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.Package
 			Version: pkgInstall.Status.LastAttemptedVersion,
 		},
 		Name: pkgInstall.Name,
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
 			AppVersion: pkgInstall.Status.LastAttemptedVersion,
@@ -295,10 +340,14 @@ func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.Package
 			Identifier: pkgInstall.Spec.PackageRef.RefName,
 			Plugin:     &pluginDetail,
 		},
+		// TODO(agamez): this field should be populated with the proper version,
+		// that is, considering the versionSelection.constraint
 		LatestMatchingVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),
 		},
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),
@@ -320,6 +369,81 @@ func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.Package
 	}
 
 	return installedPackageDetail, nil
+}
+
+func (s *Server) buildSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
+	return &k8scorev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       k8scorev1.ResourceSecrets.String(),
+			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			// TODO(agamez): think about name collisions
+			Name:      fmt.Sprintf("%s-values", installedPackageName),
+			Namespace: targetNamespace,
+		},
+		Data: map[string][]byte{
+			// TODO(agamez): check the actual value for the key.
+			// Assuming "values.yaml" perhaps is not always true.
+			// Perhaos this info is in the "package" object?
+			"values.yaml": []byte(values),
+		},
+		Type: "Opaque",
+	}, nil
+}
+
+func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+	pkgInstall := &packagingv1alpha1.PackageInstall{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       pkgInstallResource,
+			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      installedPackageName,
+			Namespace: targetNamespace,
+		},
+		Spec: packagingv1alpha1.PackageInstallSpec{
+			// TODO(agamez): remove this when we have a real service account selector/creator? in the UI
+			ServiceAccountName: "default",
+
+			// This is the Carvel's way of supporting deployments across clusters
+			// without having kapp-controller on those other clusters
+			// We, currently, don't support deploying to another cluster without kapp-controller
+			// See https://github.com/kubeapps/kubeapps/pull/3789#discussion_r754786633
+			// Cluster: &kappctrlv1alpha1.AppCluster{
+			// 	Namespace:           targetNamespace,
+			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
+			// },
+			Values: []packagingv1alpha1.PackageInstallValues{
+				{
+					SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+						Name: fmt.Sprintf("%s-values", installedPackageName),
+						Key:  "values.yaml",
+					},
+				},
+			},
+			PackageRef: &packagingv1alpha1.PackageRef{
+				RefName: packageRefName,
+				VersionSelection: &vendirversions.VersionSelectionSemver{
+					Constraints: pkgVersion,
+					// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
+					// This is to allow prereleases to be also installed
+					Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+				},
+			},
+		},
+	}
+
+	if reconciliationOptions != nil {
+		if reconciliationOptions.Interval > 0 {
+			pkgInstall.Spec.SyncPeriod = &metav1.Duration{
+				Duration: time.Duration(reconciliationOptions.Interval) * time.Second,
+			}
+		}
+		pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
+		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
+	}
+	return pkgInstall, nil
 }
 
 func getPackageRepository(pr *packagingv1alpha1.PackageRepository) (*v1alpha1.PackageRepository, error) {
@@ -351,76 +475,4 @@ func getPackageRepository(pr *packagingv1alpha1.PackageRepository) (*v1alpha1.Pa
 	}
 
 	return repo, nil
-}
-
-func (s *Server) newSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       k8scorev1.ResourceSecrets.String(),
-			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			// TODO(agamez): think about name collisions
-			Name:      fmt.Sprintf("%s-values", installedPackageName),
-			Namespace: targetNamespace,
-		},
-		Data: map[string][]byte{
-			// TODO(agamez): check the actual value for the key.
-			// Assuming "values.yaml" perhaps is not always true.
-			// Perhaos this info is in the "package" object?
-			"values.yaml": []byte(values),
-		},
-		Type: "Opaque",
-	}, nil
-}
-
-func (s *Server) newPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
-	pkgInstall := &packagingv1alpha1.PackageInstall{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       pkgInstallResource,
-			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      installedPackageName,
-			Namespace: targetNamespace,
-		},
-		Spec: packagingv1alpha1.PackageInstallSpec{
-			// TODO(agamez): remove this when we have a real service account in the UI
-			ServiceAccountName: "default",
-			// ServiceAccountName: "default-ns-sa",
-			// TODO(agamez): check what this "Cluster" is for
-			// Cluster: &kappctrlv1alpha1.AppCluster{
-			// 	Namespace:           targetNamespace,
-			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
-			// },
-			Values: []packagingv1alpha1.PackageInstallValues{
-				{
-					SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-						Name: fmt.Sprintf("%s-values", installedPackageName),
-						Key:  "values.yaml",
-					},
-				},
-			},
-			PackageRef: &packagingv1alpha1.PackageRef{
-				RefName: packageRefName,
-				VersionSelection: &vendirVersions.VersionSelectionSemver{
-					Constraints: pkgVersion,
-					// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
-					// This is to allow prereleases to be also installed
-					Prereleases: &vendirVersions.VersionSelectionSemverPrereleases{},
-				},
-			},
-		},
-	}
-
-	if reconciliationOptions != nil {
-		if reconciliationOptions.Interval > 0 {
-			pkgInstall.Spec.SyncPeriod = &metav1.Duration{
-				Duration: time.Duration(reconciliationOptions.Interval) * time.Second,
-			}
-		}
-		pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
-		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
-	}
-	return pkgInstall, nil
 }
