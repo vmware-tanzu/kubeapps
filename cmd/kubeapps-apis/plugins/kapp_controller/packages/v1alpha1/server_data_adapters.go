@@ -11,3 +11,49 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 package main
+
+import (
+	"fmt"
+	"strings"
+
+	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+)
+
+func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.AvailablePackageSummary, error) {
+	var iconStringBuilder strings.Builder
+
+	// get the versions associated with the package
+	versions := pkgVersionsMap[pkgMetadata.Name]
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name)
+	}
+
+	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
+	// a url, so convert to a data-url.
+	if pkgMetadata.Spec.IconSVGBase64 != "" {
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
+	}
+
+	availablePackageSummary := &corev1.AvailablePackageSummary{
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Context: &corev1.Context{
+				Cluster:   cluster,
+				Namespace: pkgMetadata.Namespace,
+			},
+			Plugin:     &pluginDetail,
+			Identifier: pkgMetadata.Name,
+		},
+		Name: pkgMetadata.Name,
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: versions[0].version.String(),
+		},
+		IconUrl:          iconStringBuilder.String(),
+		DisplayName:      pkgMetadata.Spec.DisplayName,
+		ShortDescription: pkgMetadata.Spec.ShortDescription,
+		Categories:       pkgMetadata.Spec.Categories,
+	}
+
+	return availablePackageSummary, nil
+}
