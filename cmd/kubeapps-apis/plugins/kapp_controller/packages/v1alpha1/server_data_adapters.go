@@ -15,11 +15,16 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
+
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	k8scorev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
 )
 
@@ -363,4 +368,79 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 	}
 
 	return installedPackageDetail, nil
+}
+
+func (s *Server) buildSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
+	return &k8scorev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       k8scorev1.ResourceSecrets.String(),
+			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			// TODO(agamez): think about name collisions
+			Name:      fmt.Sprintf("%s-values", installedPackageName),
+			Namespace: targetNamespace,
+		},
+		Data: map[string][]byte{
+			// TODO(agamez): check the actual value for the key.
+			// Assuming "values.yaml" perhaps is not always true.
+			// Perhaos this info is in the "package" object?
+			"values.yaml": []byte(values),
+		},
+		Type: "Opaque",
+	}, nil
+}
+
+func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+	pkgInstall := &packagingv1alpha1.PackageInstall{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       pkgInstallResource,
+			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      installedPackageName,
+			Namespace: targetNamespace,
+		},
+		Spec: packagingv1alpha1.PackageInstallSpec{
+			// TODO(agamez): remove this when we have a real service account selector/creator? in the UI
+			ServiceAccountName: "default",
+
+			// This is the Carvel's way of supporting deployments across clusters
+			// without having kapp-controller on those other clusters
+			// We, currently, don't support deploying to another cluster without kapp-controller
+			// See https://github.com/kubeapps/kubeapps/pull/3789#discussion_r754786633
+			// Cluster: &kappctrlv1alpha1.AppCluster{
+			// 	Namespace:           targetNamespace,
+			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
+			// },
+			Values: []packagingv1alpha1.PackageInstallValues{
+				{
+					SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+						Name: fmt.Sprintf("%s-values", installedPackageName),
+						Key:  "values.yaml",
+					},
+				},
+			},
+			PackageRef: &packagingv1alpha1.PackageRef{
+				RefName: packageRefName,
+				VersionSelection: &vendirversions.VersionSelectionSemver{
+					Constraints: pkgVersion,
+					// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
+					// This is to allow prereleases to be also installed
+					Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+				},
+			},
+		},
+	}
+
+	if reconciliationOptions != nil {
+		if reconciliationOptions.Interval > 0 {
+			pkgInstall.Spec.SyncPeriod = &metav1.Duration{
+				Duration: time.Duration(reconciliationOptions.Interval) * time.Second,
+			}
+		}
+		pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
+		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
+	}
+	return pkgInstall, nil
 }

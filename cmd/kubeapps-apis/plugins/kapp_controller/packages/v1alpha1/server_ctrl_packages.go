@@ -159,7 +159,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+
 	}
 
 	// TODO(minelson): support configurable version summary for kapp-controller pkgs
@@ -212,7 +213,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 	}
 
 	var foundPkgSemver = &pkgSemver{}
@@ -239,7 +240,8 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	availablePackageDetail, err := s.buildAvailablePackageDetail(pkgMetadata, requestedPkgVersion, foundPkgSemver, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageDetail: %v", err))
+		return nil, errorByStatus("create", "AvailablePackageDetail", pkgMetadata.Name, err)
+
 	}
 
 	return &corev1.GetAvailablePackageDetailResponse{
@@ -369,7 +371,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	typedClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package install
@@ -399,7 +401,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 	}
 
 	// get the values applies i) get the secret name where it is stored; 2) get the values from the secret
@@ -429,11 +431,107 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	installedPackageDetail, err := s.buildInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageDetail: %v", err))
+		return nil, errorByStatus("create", "InstalledPackageDetail", pkgInstall.Name, err)
+
 	}
 
 	response := &corev1.GetInstalledPackageDetailResponse{
 		InstalledPackageDetail: installedPackageDetail,
 	}
 	return response, nil
+}
+
+// CreateInstalledPackage creates an installed package managed by the 'kapp_controller' plugin
+func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
+	log.Infof("+kapp-controller CreateInstalledPackage")
+
+	// Validate the request
+	if request.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+	}
+	if request == nil || request.GetAvailablePackageRef() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+	}
+	if request.GetName() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
+	}
+	if request.GetTargetContext() == nil || request.GetTargetContext().GetNamespace() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
+	}
+
+	// Retrieve the proper parameters from the request
+	packageRef := request.GetAvailablePackageRef()
+	packageCluster := request.GetAvailablePackageRef().GetContext().GetCluster()
+	packageNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	reconciliationOptions := request.GetReconciliationOptions()
+	pkgVersion := request.GetPkgVersionReference().GetVersion()
+	installedPackageName := request.GetName()
+	values := request.GetValues()
+	targetNamespace := request.GetTargetContext().GetNamespace()
+	targetCluster := request.GetTargetContext().GetCluster()
+
+	if targetCluster == "" {
+		targetCluster = s.globalPackagingCluster
+	}
+
+	if targetCluster != packageCluster {
+		return nil, status.Errorf(codes.InvalidArgument, "installing packages in other clusters in not supported yet")
+	}
+
+	typedClient, _, err := s.GetClients(ctx, targetCluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+	}
+
+	// fetch the package metadata
+	pkgMetadata, err := s.getPkgMetadata(ctx, packageCluster, packageNamespace, packageRef.Identifier)
+	if err != nil {
+		return nil, errorByStatus("get", "PackageMetadata", packageRef.Identifier, err)
+	}
+
+	// build a new secret object with the values
+	secret, err := s.buildSecret(installedPackageName, values, targetNamespace)
+	if err != nil {
+		return nil, errorByStatus("create", "Secret", installedPackageName, err)
+
+	}
+
+	// build a new pkgInstall object
+	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions)
+	if err != nil {
+		return nil, errorByStatus("create", "PackageInstall", installedPackageName, err)
+	}
+
+	// create the Secret in the cluster
+	// TODO(agamez): check when is the best moment to create this object.
+	// See if we can delay the creation until the PackageInstall is successfully created.
+	createdSecret, err := typedClient.CoreV1().Secrets(targetNamespace).Create(ctx, secret, metav1.CreateOptions{})
+	if createdSecret == nil || err != nil {
+		return nil, errorByStatus("create", "Secret", secret.Name, err)
+	}
+
+	// create the PackageInstall in the cluster
+	createdPkgInstall, err := s.createPkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall)
+	if err != nil {
+		// clean-up the secret if something fails
+		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return nil, errorByStatus("delete", "Secret", secret.Name, err)
+		}
+		return nil, errorByStatus("create", "PackageInstall", newPkgInstall.Name, err)
+	}
+
+	// generate the response
+	installedRef := &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: createdPkgInstall.GetNamespace(),
+			Cluster:   targetCluster,
+		},
+		Identifier: newPkgInstall.Name,
+		Plugin:     GetPluginDetail(),
+	}
+
+	return &corev1.CreateInstalledPackageResponse{
+		InstalledPackageRef: installedRef,
+	}, nil
 }
