@@ -513,6 +513,12 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	}
 
 	// Grab the released manifest from the release.
+	// TODO(minelson): We're currently getting the resource refs for a package
+	// install by checking the helm manifest, as we do for the helm plugin. With
+	// certain assumptions about the RBAC of the Kubeapps user, we may be able
+	// to instead query for labelled resources. See the discussion following for
+	// more details:
+	// https://github.com/kubeapps/kubeapps/pull/3811#issuecomment-977689570
 	getcmd := action.NewGet(actionConfig)
 	release, err := getcmd.Run(identifier)
 	if err != nil {
