@@ -219,6 +219,8 @@ func (s *Server) getPkgsWithFieldSelector(ctx context.Context, cluster, namespac
 	if fieldSelector != "" {
 		listOptions.FieldSelector = fieldSelector
 	}
+	// TODO(agamez): this function takes way too long (1-2 seconds!). Try to reduce it
+	// More context at: https://github.com/kubeapps/kubeapps/pull/3784#discussion_r756259504
 	unstructured, err := resource.List(ctx, listOptions)
 	if err != nil {
 		return nil, err

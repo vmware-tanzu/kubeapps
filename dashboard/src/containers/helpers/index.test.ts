@@ -1,6 +1,7 @@
 import ResourceRef from "shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import { filterByResourceRefs } from ".";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const clusterName = "cluster-name";
 
@@ -10,11 +11,23 @@ describe("filterByResourceRefs", () => {
     kind: "Service",
     metadata: { name: "bar", namespace: "foo" },
   } as IResource;
+  const svc1Ref = {
+    apiVersion: "v1",
+    kind: "Service",
+    name: "bar",
+    namespace: "foo",
+  } as APIResourceRef;
   const svc2 = {
     apiVersion: "v1",
     kind: "Service",
     metadata: { name: "bar", namespace: "foo1" },
   } as IResource;
+  const svc2Ref = {
+    apiVersion: "v1",
+    kind: "Service",
+    name: "bar",
+    namespace: "foo1",
+  } as APIResourceRef;
   const deploy = {
     apiVersion: "apps/v1",
     kind: "Deployment",
@@ -34,25 +47,23 @@ describe("filterByResourceRefs", () => {
   };
   it("returns the IKubeItems in the state referenced by each ResourceRef", () => {
     const resourceRefs: ResourceRef[] = [
-      new ResourceRef(svc1, clusterName, "services", true),
-      new ResourceRef(svc2, clusterName, "services", true),
+      new ResourceRef(svc1Ref, clusterName, "services", true, "foo"),
+      new ResourceRef(svc2Ref, clusterName, "services", true, "foo1"),
     ];
 
     expect(filterByResourceRefs(resourceRefs, items)).toEqual([{ item: svc1 }, { item: svc2 }]);
   });
 
   it("does not return resources that are not in the state", () => {
-    const missingSvc = {
+    const missingSvcRef = {
       apiVersion: "v1",
       kind: "Service",
-      metadata: {
-        name: "missing",
-        namespace: "foo1",
-      },
-    } as IResource;
+      name: "missing",
+      namespace: "foo1",
+    } as APIResourceRef;
     const resourceRefs: ResourceRef[] = [
-      new ResourceRef(svc2, clusterName, "services", true),
-      new ResourceRef(missingSvc, clusterName, "services", true),
+      new ResourceRef(svc2Ref, clusterName, "services", true, "default"),
+      new ResourceRef(missingSvcRef, clusterName, "services", true, "default"),
     ];
 
     expect(filterByResourceRefs(resourceRefs, items)).toEqual([{ item: svc2 }]);
