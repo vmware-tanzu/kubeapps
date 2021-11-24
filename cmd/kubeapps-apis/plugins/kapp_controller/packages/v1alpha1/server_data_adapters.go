@@ -14,6 +14,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -146,16 +147,17 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
-	iconUrl := ""
+	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
-		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
 	installedPackageSummary := &corev1.InstalledPackageSummary{
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
 		},
-		IconUrl: iconUrl,
+		IconUrl: iconStringBuilder.String(),
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
 				Namespace: pkgMetadata.Namespace,
