@@ -414,7 +414,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 				if errors.IsNotFound(err) {
 					log.Warningf("The referenced secret does not exist: %s", errorByStatus("get", "Secret", secretRefName, err).Error())
 				} else {
-					return nil, errorByStatus("delete", "Secret", secretRefName, err)
+					return nil, errorByStatus("get", "Secret", secretRefName, err)
 				}
 			}
 			if values != nil {
