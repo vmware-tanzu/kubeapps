@@ -53,8 +53,11 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 			Identifier: pkgMetadata.Name,
 		},
 		Name: pkgMetadata.Name,
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
+			AppVersion: versions[0].version.String(),
 		},
 		IconUrl:          iconStringBuilder.String(),
 		DisplayName:      pkgMetadata.Spec.DisplayName,
@@ -136,8 +139,11 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
 		Categories:       pkgMetadata.Spec.Categories,
 		LongDescription:  pkgMetadata.Spec.LongDescription,
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		Version: &corev1.PackageAppVersion{
 			PkgVersion: requestedPkgVersion,
+			AppVersion: requestedPkgVersion,
 		},
 		Maintainers: maintainers,
 		Readme:      readme,
@@ -180,8 +186,11 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 	}
 
 	installedPackageSummary := &corev1.InstalledPackageSummary{
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
+			AppVersion: pkgInstall.Status.LastAttemptedVersion,
 		},
 		IconUrl: iconStringBuilder.String(),
 		InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -196,9 +205,13 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 		// that is, considering the versionSelection.constraint
 		LatestMatchingVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
+			AppVersion: versions[0].version.String(),
 		},
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
+			AppVersion: versions[0].version.String(),
 		},
 		Name:           pkgInstall.Name,
 		PkgDisplayName: pkgMetadata.Spec.DisplayName,
@@ -223,7 +236,7 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 	return installedPackageSummary, nil
 }
 
-func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, app *kappctrlv1alpha1.App, valuesApplied, cluster string) (*corev1.InstalledPackageDetail, error) {
+func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, app *kappctrlv1alpha1.App, valuesApplied, cluster string) (*corev1.InstalledPackageDetail, error) {
 	// get the versions associated with the package
 	versions := pkgVersionsMap[pkgMetadata.Name]
 	if len(versions) == 0 {
@@ -301,6 +314,8 @@ func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.Package
 			Version: pkgInstall.Status.LastAttemptedVersion,
 		},
 		Name: pkgInstall.Name,
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
 			AppVersion: pkgInstall.Status.LastAttemptedVersion,
@@ -319,10 +334,14 @@ func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.Package
 			Identifier: pkgInstall.Spec.PackageRef.RefName,
 			Plugin:     &pluginDetail,
 		},
+		// TODO(agamez): this field should be populated with the proper version,
+		// that is, considering the versionSelection.constraint
 		LatestMatchingVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),
 		},
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),

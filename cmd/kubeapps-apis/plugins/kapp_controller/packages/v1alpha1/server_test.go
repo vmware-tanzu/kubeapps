@@ -50,6 +50,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.InstalledPackageStatus{},
 	corev1.InstalledPackageDetail{},
 	corev1.ReconciliationOptions{},
+	corev1.GetAvailablePackageVersionsResponse{},
 	corev1.VersionReference{},
 	corev1.Context{},
 	corev1.Maintainer{},
@@ -266,9 +267,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Plugin:     &pluginDetail,
 						Identifier: "tetris.foo.example.com",
 					},
-					Name:             "tetris.foo.example.com",
-					DisplayName:      "Classic Tetris",
-					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					Name:        "tetris.foo.example.com",
+					DisplayName: "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
 					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 					ShortDescription: "A great game for arcade gamers",
 					Categories:       []string{"logging", "daemon-set"},
@@ -279,9 +283,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Plugin:     &pluginDetail,
 						Identifier: "tombi.foo.example.com",
 					},
-					Name:             "tombi.foo.example.com",
-					DisplayName:      "Tombi!",
-					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
+					Name:        "tombi.foo.example.com",
+					DisplayName: "Tombi!",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.5",
+						AppVersion: "1.2.5",
+					},
 					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 					ShortDescription: "An awesome game from the 90's",
 					Categories:       []string{"platfroms", "rpg"},
@@ -336,9 +343,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Plugin:     &pluginDetail,
 						Identifier: "tetris.foo.example.com",
 					},
-					Name:             "tetris.foo.example.com",
-					DisplayName:      "Classic Tetris",
-					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					Name:        "tetris.foo.example.com",
+					DisplayName: "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
 					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 					ShortDescription: "A great game for arcade gamers",
 					Categories:       []string{"logging", "daemon-set"},
@@ -427,9 +437,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Plugin:     &pluginDetail,
 						Identifier: "tetris.foo.example.com",
 					},
-					Name:             "tetris.foo.example.com",
-					DisplayName:      "Classic Tetris",
-					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.7"},
+					Name:        "tetris.foo.example.com",
+					DisplayName: "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.7",
+						AppVersion: "1.2.7",
+					},
 					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 					ShortDescription: "A great game for arcade gamers",
 					Categories:       []string{"logging", "daemon-set"},
@@ -578,12 +591,15 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				PackageAppVersions: []*corev1.PackageAppVersion{
 					{
 						PkgVersion: "1.2.7",
+						AppVersion: "1.2.7",
 					},
 					{
 						PkgVersion: "1.2.4",
+						AppVersion: "1.2.4",
 					},
 					{
 						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
 					},
 				},
 			},
@@ -621,9 +637,8 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
 	}
@@ -693,6 +708,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				LongDescription:  "A few sentences but not really a readme",
 				Version: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
+					AppVersion: "1.2.3",
 				},
 				Readme: fmt.Sprintf(`## Details
 
@@ -794,6 +810,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				LongDescription: "A few sentences but not really a readme",
 				Version: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
+					AppVersion: "1.2.3",
 				},
 				Maintainers:      []*v1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
 				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
@@ -1036,7 +1053,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "tetris.foo.example.com.1.2.3",
+						Name:      "my-installation",
 					},
 					Spec: packagingv1alpha1.PackageInstallSpec{
 						ServiceAccountName: "default",
@@ -1079,16 +1096,25 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					InstalledPackageRef: &corev1.InstalledPackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com.1.2.3",
+						Identifier: "my-installation",
 					},
-					Name:                  "tetris.foo.example.com.1.2.3",
-					PkgDisplayName:        "Classic Tetris",
-					LatestVersion:         &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
-					IconUrl:               "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
-					ShortDescription:      "A great game for arcade gamers",
-					PkgVersionReference:   &corev1.VersionReference{Version: "1.2.3"},
-					CurrentVersion:        &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
-					LatestMatchingVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					Name:           "my-installation",
+					PkgDisplayName: "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
+					IconUrl:             "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription:    "A great game for arcade gamers",
+					PkgVersionReference: &corev1.VersionReference{Version: "1.2.3"},
+					CurrentVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
+					LatestMatchingVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
 					Status: &corev1.InstalledPackageStatus{
 						Ready:      true,
 						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1144,7 +1170,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "tetris.foo.example.com.1.2.3",
+						Name:      "my-installation",
 					},
 					Spec: packagingv1alpha1.PackageInstallSpec{
 						ServiceAccountName: "default",
@@ -1172,16 +1198,27 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					InstalledPackageRef: &corev1.InstalledPackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com.1.2.3",
+						Identifier: "my-installation",
 					},
-					Name:                  "tetris.foo.example.com.1.2.3",
-					PkgDisplayName:        "Classic Tetris",
-					LatestVersion:         &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
-					IconUrl:               "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
-					ShortDescription:      "A great game for arcade gamers",
-					PkgVersionReference:   &corev1.VersionReference{Version: ""},
-					CurrentVersion:        &corev1.PackageAppVersion{PkgVersion: ""},
-					LatestMatchingVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					Name:           "my-installation",
+					PkgDisplayName: "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "A great game for arcade gamers",
+					PkgVersionReference: &corev1.VersionReference{
+						Version: "",
+					},
+					CurrentVersion: &corev1.PackageAppVersion{
+						PkgVersion: "",
+						AppVersion: "",
+					},
+					LatestMatchingVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
 					Status: &corev1.InstalledPackageStatus{
 						Ready:      false,
 						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
@@ -1271,7 +1308,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "tetris.foo.example.com.1.2.3",
+						Name:      "my-installation",
 					},
 					Spec: packagingv1alpha1.PackageInstallSpec{
 						ServiceAccountName: "default",
@@ -1314,16 +1351,25 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					InstalledPackageRef: &corev1.InstalledPackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com.1.2.3",
+						Identifier: "my-installation",
 					},
-					Name:                  "tetris.foo.example.com.1.2.3",
-					PkgDisplayName:        "Classic Tetris",
-					LatestVersion:         &corev1.PackageAppVersion{PkgVersion: "1.2.7"},
-					IconUrl:               "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
-					ShortDescription:      "A great game for arcade gamers",
-					PkgVersionReference:   &corev1.VersionReference{Version: "1.2.3"},
-					CurrentVersion:        &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
-					LatestMatchingVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.7"},
+					Name:           "my-installation",
+					PkgDisplayName: "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.7",
+						AppVersion: "1.2.7",
+					},
+					IconUrl:             "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription:    "A great game for arcade gamers",
+					PkgVersionReference: &corev1.VersionReference{Version: "1.2.3"},
+					CurrentVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
+					LatestMatchingVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.7",
+						AppVersion: "1.2.7",
+					},
 					Status: &corev1.InstalledPackageStatus{
 						Ready:      true,
 						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1404,11 +1450,11 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						DisplayName:        "Classic Tetris",
 						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
 						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
 						Categories:         []string{"logging", "daemon-set"},
-						LongDescription:    "A great game for arcade gamers",
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
 						ProviderName:       "Tetris inc.",
-						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "foo"}},
-						SupportDescription: "Block support team",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -1423,12 +1469,9 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Spec: datapackagingv1alpha1.PackageSpec{
 						RefName:                         "tetris.foo.example.com",
 						Version:                         "1.2.3",
-						Licenses:                        []string{"foo license"},
-						ReleasedAt:                      metav1.Time{},
-						CapactiyRequirementsDescription: "foo capactiyRequirementsDescription",
-						ReleaseNotes:                    "foo releaseNotes",
-						Template:                        datapackagingv1alpha1.AppTemplateSpec{},
-						ValuesSchema:                    datapackagingv1alpha1.ValuesSchema{},
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 				&packagingv1alpha1.PackageInstall{

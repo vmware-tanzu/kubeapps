@@ -127,9 +127,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 	response := &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: availablePackageSummariesNilSafe,
-		// TODO(agamez): populate this field
-		Categories:    categories,
-		NextPageToken: nextPageToken,
+		Categories:                categories,
+		NextPageToken:             nextPageToken,
 	}
 	return response, nil
 }
@@ -167,8 +166,11 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	// as already done for Helm (see #3588 for more info).
 	versions := make([]*corev1.PackageAppVersion, len(pkgVersionsMap[identifier]))
 	for i, v := range pkgVersionsMap[identifier] {
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		versions[i] = &corev1.PackageAppVersion{
 			PkgVersion: v.version.String(),
+			AppVersion: v.version.String(),
 		}
 	}
 
@@ -425,7 +427,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	// trim the new doc separator in the last element
 	valuesApplied = strings.Trim(valuesApplied, "---")
 
-	installedPackageDetail, err := s.getInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
+	installedPackageDetail, err := s.buildInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageDetail: %v", err))
 	}
