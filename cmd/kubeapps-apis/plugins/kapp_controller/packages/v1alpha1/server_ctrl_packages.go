@@ -302,7 +302,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 					}
 
 					// generate the installedPackageSummary from the fetched information
-					installedPackageSummary, err := s.getInstalledPackageSummary(pkgInstall, pkgMetadata, pkgVersionsMap, cluster)
+					installedPackageSummary, err := s.buildInstalledPackageSummary(pkgInstall, pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
 						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
 					}
