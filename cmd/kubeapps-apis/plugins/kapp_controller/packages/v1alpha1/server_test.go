@@ -21,9 +21,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -45,19 +45,20 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.AvailablePackageDetail{},
 	corev1.AvailablePackageReference{},
 	corev1.AvailablePackageSummary{},
-	corev1.InstalledPackageSummary{},
-	corev1.InstalledPackageReference{},
-	corev1.InstalledPackageStatus{},
-	corev1.InstalledPackageDetail{},
-	corev1.ReconciliationOptions{},
+	corev1.Context{},
 	corev1.CreateInstalledPackageResponse{},
 	corev1.DeleteInstalledPackageResponse{},
-	corev1.UpdateInstalledPackageResponse{},
-	corev1.VersionReference{},
-	corev1.Context{},
+	corev1.InstalledPackageDetail{},
+	corev1.InstalledPackageReference{},
+	corev1.InstalledPackageStatus{},
+	corev1.InstalledPackageSummary{},
 	corev1.Maintainer{},
 	corev1.PackageAppVersion{},
+	corev1.ReconciliationOptions{},
+	corev1.UpdateInstalledPackageResponse{},
+	corev1.VersionReference{},
 	pluginv1.Plugin{},
+	v1alpha1.PackageRepository{},
 )
 
 var defaultContext = &corev1.Context{Cluster: "default", Namespace: "default"}
@@ -653,7 +654,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
 					Identifier: "tetris.foo.example.com",
-					Plugin:     &pluginv1.Plugin{Name: "kapp_controller.packages", Version: "v1alpha1"},
+					Plugin:     &pluginDetail,
 				},
 			},
 			statusCode: codes.OK,
@@ -704,7 +705,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Version: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
 				},
-				Maintainers: []*v1alpha1.Maintainer{},
+				Maintainers: []*corev1.Maintainer{},
 				Readme: fmt.Sprintf(`## Details
 
 
@@ -733,7 +734,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
 					Identifier: "tetris.foo.example.com",
-					Plugin:     &pluginv1.Plugin{Name: "kapp_controller.packages", Version: "v1alpha1"},
+					Plugin:     &pluginDetail,
 				},
 			},
 			statusCode: codes.OK,
@@ -2438,6 +2439,117 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			}
 			if got, want := deleteInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositories(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *v1alpha1.GetPackageRepositoriesRequest
+		existingObjects    []runtime.Object
+		expectedResponse   []*v1alpha1.PackageRepository
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "returns expected repositories",
+			request: &v1alpha1.GetPackageRepositoriesRequest{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgRepositoryResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "repo-1",
+						Namespace: "default",
+					},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgRepositoryResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "repo-2",
+						Namespace: "default",
+					},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-2/main@sha256:abcd",
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+			},
+			expectedResponse: []*v1alpha1.PackageRepository{
+				{
+					Name:      "repo-1",
+					Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
+					Namespace: "default",
+					Plugin:    &pluginDetail,
+				},
+				{
+					Name:      "repo-2",
+					Url:       "projects.registry.example.com/repo-2/main@sha256:abcd",
+					Namespace: "default",
+					Plugin:    &pluginDetail,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
+						},
+						unstructuredObjects...,
+					), nil
+				},
+			}
+
+			getPackageRepositoriesResponse, err := s.GetPackageRepositories(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+
+			// Only check the response for OK status.
+			if tc.expectedStatusCode == codes.OK {
+				if getPackageRepositoriesResponse == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					if got, want := getPackageRepositoriesResponse.Repositories, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+					}
+				}
 			}
 		})
 	}
