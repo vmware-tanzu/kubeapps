@@ -188,16 +188,9 @@ export const Plugin = {
 
   fromJSON(object: any): Plugin {
     const message = { ...basePlugin } as Plugin;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.version !== undefined && object.version !== null) {
-      message.version = String(object.version);
-    } else {
-      message.version = "";
-    }
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.version =
+      object.version !== undefined && object.version !== null ? String(object.version) : "";
     return message;
   },
 

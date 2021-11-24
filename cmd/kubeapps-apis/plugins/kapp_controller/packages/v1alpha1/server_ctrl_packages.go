@@ -58,6 +58,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// create the waiting group for processing each item aynchronously
 	var wg sync.WaitGroup
 
+	// TODO(agamez): DRY up this logic (cf GetInstalledPackageSummaries)
 	if len(pkgMetadatas) > 0 {
 		startAt := -1
 		if pageSize > 0 {
@@ -70,6 +71,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					defer wg.Done()
 					// fetch the associated packages
 					// Use the field selector to return only Package CRs that match on the spec.refName.
+					// TODO(agamez): perhaps we better fetch all the packages and filter ourselves to reduce the k8s calls
 					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
 					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
 					if err != nil {
@@ -81,7 +83,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					}
 
 					// generate the availablePackageSummary from the fetched information
-					availablePackageSummary, err := s.getAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
+					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
 						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageSummary: %v", err))
 					}
@@ -103,7 +105,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
 	// been able so far.
 	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
-
+	// However, should we just return an error if so? See https://github.com/kubeapps/kubeapps/pull/3784#discussion_r754836475
 	// filter out <nil> values
 	availablePackageSummariesNilSafe := []*corev1.AvailablePackageSummary{}
 	categories := []string{}
@@ -127,9 +129,8 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 	response := &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: availablePackageSummariesNilSafe,
-		// TODO(agamez): populate this field
-		Categories:    categories,
-		NextPageToken: nextPageToken,
+		Categories:                categories,
+		NextPageToken:             nextPageToken,
 	}
 	return response, nil
 }
@@ -160,15 +161,19 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+
 	}
 
 	// TODO(minelson): support configurable version summary for kapp-controller pkgs
 	// as already done for Helm (see #3588 for more info).
 	versions := make([]*corev1.PackageAppVersion, len(pkgVersionsMap[identifier]))
 	for i, v := range pkgVersionsMap[identifier] {
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		versions[i] = &corev1.PackageAppVersion{
 			PkgVersion: v.version.String(),
+			AppVersion: v.version.String(),
 		}
 	}
 
@@ -210,7 +215,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 	}
 
 	var foundPkgSemver = &pkgSemver{}
@@ -235,9 +240,10 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		}
 	}
 
-	availablePackageDetail, err := s.getAvailablePackageDetail(pkgMetadata, requestedPkgVersion, foundPkgSemver, cluster)
+	availablePackageDetail, err := s.buildAvailablePackageDetail(pkgMetadata, requestedPkgVersion, foundPkgSemver, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageDetail: %v", err))
+		return nil, errorByStatus("create", "AvailablePackageDetail", pkgMetadata.Name, err)
+
 	}
 
 	return &corev1.GetAvailablePackageDetailResponse{
@@ -245,7 +251,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}, nil
 }
 
-// GetInstalledPackageSummaries returns the installed packagesmanaged by the 'kapp_controller' plugin
+// GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	log.Infof("+kapp-controller GetInstalledPackageSummaries")
 	// Retrieve the proper parameters from the request
@@ -263,6 +269,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	// retrieve the list of installed packages
+	// TODO(agamez): we should be paginating this request rather than requesting everything every time
 	pkgInstalls, err := s.getPkgInstalls(ctx, cluster, namespace)
 	if err != nil {
 		return nil, errorByStatus("get", "PackageInstall", "", err)
@@ -273,6 +280,8 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 
 	// create the waiting group for processing each item aynchronously
 	var wg sync.WaitGroup
+
+	// TODO(agamez): DRY up this logic (cf GetAvailablePackageSummaries)
 	if len(pkgInstalls) > 0 {
 		startAt := -1
 		if pageSize > 0 {
@@ -303,7 +312,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 					}
 
 					// generate the installedPackageSummary from the fetched information
-					installedPackageSummary, err := s.getInstalledPackageSummary(pkgInstall, pkgMetadata, pkgVersionsMap, cluster)
+					installedPackageSummary, err := s.buildInstalledPackageSummary(pkgInstall, pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
 						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
 					}
@@ -327,7 +336,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
 	// been able so far.
 	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
-
+	// However, should we just return an error if so? See https://github.com/kubeapps/kubeapps/pull/3784#discussion_r754836475
 	// filter out <nil> values
 	installedPkgSummariesNilSafe := []*corev1.InstalledPackageSummary{}
 	for _, installedPkgSummary := range installedPkgSummaries {
@@ -364,7 +373,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	typedClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package install
@@ -394,7 +403,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 	}
 
 	// get the values applies i) get the secret name where it is stored; 2) get the values from the secret
@@ -409,7 +418,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 				if errors.IsNotFound(err) {
 					log.Warningf("The referenced secret does not exist: %s", errorByStatus("get", "Secret", secretRefName, err).Error())
 				} else {
-					return nil, errorByStatus("delete", "Secret", secretRefName, err)
+					return nil, errorByStatus("get", "Secret", secretRefName, err)
 				}
 			}
 			if values != nil {
@@ -422,9 +431,10 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	// trim the new doc separator in the last element
 	valuesApplied = strings.Trim(valuesApplied, "---")
 
-	installedPackageDetail, err := s.getInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
+	installedPackageDetail, err := s.buildInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageDetail: %v", err))
+		return nil, errorByStatus("create", "InstalledPackageDetail", pkgInstall.Name, err)
+
 	}
 
 	response := &corev1.GetInstalledPackageDetailResponse{
@@ -472,7 +482,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 
 	typedClient, _, err := s.GetClients(ctx, targetCluster)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package metadata
@@ -482,26 +492,34 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// build a new secret object with the values
-	secret, err := s.newSecret(installedPackageName, values, targetNamespace)
+	secret, err := s.buildSecret(installedPackageName, values, targetNamespace)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the Secret: %v", err))
+		return nil, errorByStatus("create", "Secret", installedPackageName, err)
+
+	}
+
+	// build a new pkgInstall object
+	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions)
+	if err != nil {
+		return nil, errorByStatus("create", "PackageInstall", installedPackageName, err)
 	}
 
 	// create the Secret in the cluster
+	// TODO(agamez): check when is the best moment to create this object.
+	// See if we can delay the creation until the PackageInstall is successfully created.
 	createdSecret, err := typedClient.CoreV1().Secrets(targetNamespace).Create(ctx, secret, metav1.CreateOptions{})
 	if createdSecret == nil || err != nil {
 		return nil, errorByStatus("create", "Secret", secret.Name, err)
 	}
 
-	// build a new pkgInstall object
-	newPkgInstall, err := s.newPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions)
-	if createdSecret == nil || err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the PackageInstall: %v", err))
-	}
-
 	// create the PackageInstall in the cluster
 	createdPkgInstall, err := s.createPkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall)
 	if err != nil {
+		// clean-up the secret if something fails
+		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return nil, errorByStatus("delete", "Secret", secret.Name, err)
+		}
 		return nil, errorByStatus("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 

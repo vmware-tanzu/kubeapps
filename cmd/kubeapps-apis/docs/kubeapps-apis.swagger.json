@@ -3452,9 +3452,13 @@
         "name": {
           "type": "string",
           "description": "The name of the specific resource in the context of the installed package."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace of the specific resource in the context of the installed\npackage. In most cases this will be identical to the namespace of the\ninstalled package. Exceptions will be non-namespaced resources and packages\nthat install resources in other namespaces for special reasons."
         }
       },
-      "description": "A reference to a Kubernetes resource related to a specific installed package.\nThe context (cluster, namespace) for each resource is that of the related\ninstalled package.",
+      "description": "A reference to a Kubernetes resource related to a specific installed package.\nThe context (cluster) for each resource is that of the related\ninstalled package.",
       "title": "Resource reference"
     },
     "v1alpha1RollbackInstalledPackageRequest": {

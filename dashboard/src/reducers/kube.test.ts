@@ -3,6 +3,7 @@ import { IKubeState, IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import kubeReducer, { initialKinds } from "./kube";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const clusterName = "cluster-name";
 
@@ -27,14 +28,13 @@ describe("kubeReducer", () => {
     {
       apiVersion: "v1",
       kind: "Service",
-      metadata: {
-        name: "foo",
-        namespace: "default",
-      },
-    } as IResource,
+      name: "foo",
+      namespace: "default",
+    } as APIResourceRef,
     clusterName,
     "services",
     true,
+    "default",
   );
 
   beforeEach(() => {

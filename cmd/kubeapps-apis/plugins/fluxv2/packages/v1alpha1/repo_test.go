@@ -588,7 +588,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 
 		// see below
-		key, oldValue, _ := redisKeyValueForRuntimeObject(repo)
+		key, oldValue, err := redisKeyValueForRuntimeObject(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -596,21 +596,22 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		s.cache.eventProcessedWaitGroup.Add(1)
 		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
 		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
 		mock.ExpectGet(key).SetVal(string(oldValue))
-		key, newValue, err := redisSetValueForRepo(repo, mock)
+		key, newValue, err := redisMockSetValueForRepo(repo, mock)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 		if repo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(context.Background(), repo, metav1.UpdateOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
+
+		s.repoCache.ExpectAdd(key)
 		watcher.Modify(repo)
-		s.cache.eventProcessedWaitGroup.Wait()
+		s.repoCache.WaitUntilDoneWith(key)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -670,13 +671,19 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
-		s.cache.eventProcessedWaitGroup.Add(1)
-		mock.ExpectDel(redisKeyForRuntimeObject(repo)).SetVal(0)
+		key, err := redisKeyForRuntimeObject(repo)
+		if err != nil {
+			t.Fatalf("%v", err)
+		} else {
+			mock.ExpectDel(key).SetVal(0)
+		}
 		if err = dyncli.Resource(repositoriesGvr).Namespace("default").Delete(context.Background(), "bitnami-1", metav1.DeleteOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
+		s.repoCache.ExpectAdd(key)
 		watcher.Delete(repo)
-		s.cache.eventProcessedWaitGroup.Wait()
+		s.repoCache.WaitUntilDoneWith(key)
+
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -734,18 +741,21 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 
 		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
-		// a cache resync
-		s.cache.eventProcessedWaitGroup.Add(1)
-		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
+		// background: a FLUSHDB followed by a SET
 		mock.ExpectFlushDB().SetVal("OK")
-		if _, _, err := redisSetValueForRepo(repo, mock); err != nil {
+		if _, _, err := redisMockSetValueForRepo(repo, mock); err != nil {
 			t.Fatalf("%+v", err)
 		}
-		s.cache.eventProcessedWaitGroup.Wait()
+
+		s.repoCache.ExpectResync()
+		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+		s.repoCache.WaitUntilResyncComplete()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
+
 		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -974,39 +984,38 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 	return repos
 }
 
+// does a series of mock.ExpectGet(...)
 func redisMockBeforeCallToGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
 	mapVals := make(map[string][]byte)
-	keys := []string{}
 	for _, r := range repos {
 		key, bytes, err := redisKeyValueForRuntimeObject(r)
 		if err != nil {
 			return err
 		}
-		keys = append(keys, key)
 		mapVals[key] = bytes
 	}
 	if filterOptions == nil || len(filterOptions.GetRepositories()) == 0 {
-		for _, k := range keys {
-			mock.ExpectGet(k).SetVal(string(mapVals[k]))
+		for k, v := range mapVals {
+			mock.ExpectGet(k).SetVal(string(v))
 		}
 	} else {
 		for _, r := range filterOptions.GetRepositories() {
-			keys := []string{}
-			for k := range mapVals {
+			for k, v := range mapVals {
 				if strings.HasSuffix(k, ":"+r) {
-					keys = append(keys, k)
+					mock.ExpectGet(k).SetVal(string(v))
 				}
-			}
-			for _, k := range keys {
-				mock.ExpectGet(k).SetVal(string(mapVals[k]))
 			}
 		}
 	}
 	return nil
 }
 
-func redisSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key string, bytes []byte, err error) {
+func redisMockSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key string, bytes []byte, err error) {
+	if _, err = redisKeyForRuntimeObject(repo); err != nil {
+		return "", nil, err
+	}
 	if key, bytes, err := redisKeyValueForRuntimeObject(repo); err != nil {
+		mock.ExpectDel(key).SetVal(0)
 		return "", nil, err
 	} else {
 		mock.ExpectSet(key, bytes, 0).SetVal("OK")
@@ -1016,17 +1025,20 @@ func redisSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key s
 }
 
 func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
-	key := redisKeyForRuntimeObject(r)
-	// we are not really adding anything to the cache here, rather just calling a
-	// onAddRepo to compute the value that *WOULD* be stored in the cache
-	bytes, _, err := onAddRepo(key, r.(*unstructured.Unstructured).Object)
-	if err != nil {
+	if key, err := redisKeyForRuntimeObject(r); err != nil {
 		return "", nil, err
+	} else {
+		// we are not really adding anything to the cache here, rather just calling a
+		// onAddRepo to compute the value that *WOULD* be stored in the cache
+		bytes, _, err := onAddRepo(key, r.(*unstructured.Unstructured).Object)
+		if err != nil {
+			return key, nil, err
+		}
+		return key, bytes.([]byte), nil
 	}
-	return key, bytes.([]byte), nil
 }
 
-func redisKeyForRuntimeObject(r runtime.Object) string {
+func redisKeyForRuntimeObject(r runtime.Object) (string, error) {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
@@ -1036,12 +1048,15 @@ func redisKeyForRuntimeObject(r runtime.Object) string {
 		Name:      r.(*unstructured.Unstructured).GetName()})
 }
 
-func redisKeyForNamespacedName(name types.NamespacedName) string {
+func redisKeyForNamespacedName(name types.NamespacedName) (string, error) {
+	if name.Name == "" || name.Namespace == "" {
+		return "", fmt.Errorf("invalid key: [%s]", name)
+	}
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name)
+	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
 func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Server, *unstructured.Unstructured, error) {
