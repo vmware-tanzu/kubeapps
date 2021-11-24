@@ -22,6 +22,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	tar "github.com/kubeapps/kubeapps/pkg/tarutil"
@@ -88,15 +89,15 @@ func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*un
 // returns the url from which chart .tgz can be downloaded
 // here chartVersion string, if specified at all, should be specific, like "14.4.0",
 // not an expression like ">14 <15"
-func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstructured.Unstructured, chartName, chartVersion string) (tarUrl string, err error, cleanUp func()) {
-	repo, err := namespacedName(repoUnstructured.Object)
+func (s *Server) getChartTarballUrl(ctx context.Context, repoUnstructured *unstructured.Unstructured, chartName, chartVersion string) (tarUrl string, cleanUp func(), err error) {
+	repo, err := common.NamespacedName(repoUnstructured.Object)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	}
 
 	// repo should be in ready state
 	if !isRepoReady(repoUnstructured.Object) {
-		return "", status.Errorf(codes.Internal, "repository [%s] is not in 'Ready' state", repo), nil
+		return "", nil, status.Errorf(codes.Internal, "repository [%s] is not in 'Ready' state", repo)
 	}
 
 	// see if we the chart already exists
@@ -113,7 +114,7 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 
 	tarUrl, err = findUrlForChartInList(chartList, repo.Name, chartName, chartVersion)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	} else if tarUrl != "" {
 		return tarUrl, nil, nil
 	}
@@ -129,26 +130,26 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 	// So we may not necessarily want to follow what flux does today
 	unstructuredChart, err := newFluxHelmChart(chartName, repo.Name, chartVersion)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	}
 
 	resourceIfc, err := s.getChartsResourceInterface(ctx, repo.Namespace)
 	if err != nil {
-		return "", err, nil
+		return "", nil, err
 	}
 
 	newChart, err := resourceIfc.Create(ctx, unstructuredChart, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return "", status.Errorf(codes.NotFound, "%q", err), nil
+			return "", nil, status.Errorf(codes.NotFound, "%q", err)
 		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return "", status.Errorf(codes.Unauthenticated, "unable to creare charts due to %v", err), nil
+			return "", nil, status.Errorf(codes.Unauthenticated, "unable to creare charts due to %v", err)
 		} else {
-			return "", status.Errorf(codes.Internal, "unable to create charts due to %v", err), nil
+			return "", nil, status.Errorf(codes.Internal, "unable to create charts due to %v", err)
 		}
 	}
 
-	log.V(4).Infof("Created chart: [%v]", prettyPrintMap(newChart.Object))
+	log.V(4).Infof("Created chart: [%v]", common.PrettyPrintMap(newChart.Object))
 
 	// Delete the created helm chart regardless of success or failure. At the end of
 	// GetAvailablePackageDetail(), we've already collected the information we need,
@@ -156,7 +157,7 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 	// Over time, they could accumulate to a very large number...
 	cleanUp = func() {
 		if err = resourceIfc.Delete(ctx, newChart.GetName(), metav1.DeleteOptions{}); err != nil {
-			log.Errorf("Failed to delete flux helm chart [%v]", prettyPrintMap(newChart.Object))
+			log.Errorf("Failed to delete flux helm chart [%v]", common.PrettyPrintMap(newChart.Object))
 		}
 	}
 
@@ -165,11 +166,11 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 	})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return "", status.Errorf(codes.NotFound, "%q", err), cleanUp
+			return "", cleanUp, status.Errorf(codes.NotFound, "%q", err)
 		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return "", status.Errorf(codes.Unauthenticated, "unable to creare chart watch due to %v", err), cleanUp
+			return "", cleanUp, status.Errorf(codes.Unauthenticated, "unable to creare chart watch due to %v", err)
 		} else {
-			return "", status.Errorf(codes.Internal, "unable to create chart watch due to %v", err), cleanUp
+			return "", cleanUp, status.Errorf(codes.Internal, "unable to create chart watch due to %v", err)
 		}
 	}
 
@@ -181,20 +182,18 @@ func (s *Server) getChartTarball(ctx context.Context, repoUnstructured *unstruct
 	watcher.Stop()
 	// only the caller should call cleanUp() when it's done with the url,
 	// if we call it here, the caller will end up with a dangling link
-	return tarUrl, err, cleanUp
+	return tarUrl, cleanUp, err
 }
 
 func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {
-	if s.cache == nil {
+	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	entry, err := s.cache.fetchForOne(s.cache.keyForNamespacedName(repo))
-	if err != nil {
+	key := s.repoCache.KeyForNamespacedName(repo)
+	if entry, err := s.repoCache.GetForOne(key); err != nil {
 		return nil, err
-	}
-
-	if entry != nil {
+	} else if entry != nil {
 		if typedEntry, ok := entry.(repoCacheEntry); !ok {
 			return nil, status.Errorf(
 				codes.Internal,
@@ -204,18 +203,6 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 				if chart.Name == chartName {
 					return &chart, nil // found it
 				}
-			}
-		}
-	} else {
-		// see repo.go getChartsForRepos() for an explanation why we may get a nil
-		unstructuredRepo, err := s.getRepoInCluster(ctx, repo)
-		if err != nil {
-			return nil, err
-		}
-		if isRepoReady(unstructuredRepo.Object) {
-			if err = s.cache.onAddOrModify(true, unstructuredRepo.Object); err == nil {
-				// call recursively
-				return s.getChart(ctx, repo, chartName)
 			}
 		}
 	}
@@ -246,7 +233,7 @@ func waitUntilChartPullComplete(ctx context.Context, watcher watch.Interface) (s
 
 	// unit test-related trigger that allows another concurrently running goroutine to
 	// mock sending a watch Modify event to the channel at this point
-	wg, ok := fromContext(ctx)
+	wg, ok := common.FromContext(ctx)
 	if ok && wg != nil {
 		wg.Done()
 	}
@@ -456,22 +443,20 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 		startAt = int(pageSize) * pageOffset
 	}
 	for _, packages := range charts {
-		if packages != nil {
-			for _, chart := range packages {
-				if passesFilter(chart, filters) {
-					i++
-					if startAt < i {
-						pkg, err := availablePackageSummaryFromChart(&chart)
-						if err != nil {
-							return nil, status.Errorf(
-								codes.Internal,
-								"Unable to parse chart to an AvailablePackageSummary: %v",
-								err)
-						}
-						summaries = append(summaries, pkg)
-						if pageSize > 0 && len(summaries) == int(pageSize) {
-							return summaries, nil
-						}
+		for _, chart := range packages {
+			if passesFilter(chart, filters) {
+				i++
+				if startAt < i {
+					pkg, err := availablePackageSummaryFromChart(&chart)
+					if err != nil {
+						return nil, status.Errorf(
+							codes.Internal,
+							"Unable to parse chart to an AvailablePackageSummary: %v",
+							err)
+					}
+					summaries = append(summaries, pkg)
+					if pageSize > 0 && len(summaries) == int(pageSize) {
+						return summaries, nil
 					}
 				}
 			}

@@ -14,6 +14,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -22,7 +23,9 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.AvailablePackageSummary, error) {
+func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.AvailablePackageSummary, error) {
+	var iconStringBuilder strings.Builder
+
 	// get the versions associated with the package
 	versions := pkgVersionsMap[pkgMetadata.Name]
 	if len(versions) == 0 {
@@ -31,9 +34,13 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
-	iconUrl := ""
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
-		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
 	availablePackageSummary := &corev1.AvailablePackageSummary{
@@ -49,7 +56,7 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 		},
-		IconUrl:          iconUrl,
+		IconUrl:          iconStringBuilder.String(),
 		DisplayName:      pkgMetadata.Spec.DisplayName,
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
 		Categories:       pkgMetadata.Spec.Categories,
@@ -58,13 +65,18 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 	return availablePackageSummary, nil
 }
 
-func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
+func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
-	iconUrl := ""
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
+	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
-		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
 	maintainers := []*corev1.Maintainer{}
@@ -77,11 +89,19 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 	readme := fmt.Sprintf(`## Details
 
 
+### Description:
+%s
+
+
 ### Capactiy requirements:
 %s
 
 
 ### Release Notes:
+%s
+
+
+### Support:
 %s
 
 
@@ -94,8 +114,10 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 
 
 `,
+		pkgMetadata.Spec.LongDescription,
 		foundPkgSemver.pkg.Spec.CapactiyRequirementsDescription,
 		foundPkgSemver.pkg.Spec.ReleaseNotes,
+		pkgMetadata.Spec.SupportDescription,
 		foundPkgSemver.pkg.Spec.Licenses,
 		foundPkgSemver.pkg.Spec.ReleasedAt,
 	)
@@ -109,7 +131,7 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 			Identifier: pkgMetadata.Name,
 		},
 		Name:             pkgMetadata.Name,
-		IconUrl:          iconUrl,
+		IconUrl:          iconStringBuilder.String(),
 		DisplayName:      pkgMetadata.Spec.DisplayName,
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
 		Categories:       pkgMetadata.Spec.Categories,
@@ -138,7 +160,7 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 	return availablePackageDetail, nil
 }
 
-func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.InstalledPackageSummary, error) {
 	// get the versions associated with the package
 	versions := pkgVersionsMap[pkgInstall.Spec.PackageRef.RefName]
 	if len(versions) == 0 {
@@ -147,16 +169,21 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
-	iconUrl := ""
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
+	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
-		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
 	installedPackageSummary := &corev1.InstalledPackageSummary{
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
 		},
-		IconUrl: iconUrl,
+		IconUrl: iconStringBuilder.String(),
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
 				Namespace: pkgMetadata.Namespace,
@@ -165,6 +192,8 @@ func (s *Server) getInstalledPackageSummary(pkgInstall *packagingv1alpha1.Packag
 			Plugin:     &pluginDetail,
 			Identifier: pkgInstall.Name,
 		},
+		// TODO(agamez): this field should be populated with the proper version,
+		// that is, considering the versionSelection.constraint
 		LatestMatchingVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 		},
