@@ -260,6 +260,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	// retrieve the list of installed packages
+	// TODO(agamez): we should be paginating this request rather than requesting everything every time
 	pkgInstalls, err := s.getPkgInstalls(ctx, cluster, namespace)
 	if err != nil {
 		return nil, errorByStatus("get", "PackageInstall", "", err)

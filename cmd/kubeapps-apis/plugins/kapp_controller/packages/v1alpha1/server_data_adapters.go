@@ -33,6 +33,10 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
 		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
@@ -61,8 +65,13 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 }
 
 func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
+
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
 	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
 		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
@@ -159,6 +168,10 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
 	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
 		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
@@ -178,6 +191,8 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 			Plugin:     &pluginDetail,
 			Identifier: pkgInstall.Name,
 		},
+		// TODO(agamez): this field should be populated with the proper version,
+		// that is, considering the versionSelection.constraint
 		LatestMatchingVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 		},
