@@ -1599,16 +1599,16 @@ kubeappsapis:
   ##
   enabledPlugins:
     - helm
-  ## @param kubeappsapis.pluginConfig Additional configurations for each plugin
-  ## e.g:
-  ## versionsInSummary{major, minor, patch}
   pluginConfig:
     core:
       packages:
         v1alpha1:
           versionsInSummary:
+            ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.major Number of major versions to display in the summary
             major: 3
+            ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.minor Number of minor versions to display in the summary
             minor: 3
+            ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.patch Number of patch versions to display in the summary
             patch: 3
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
@@ -1818,7 +1818,7 @@ redis:
   ## is a conditional dependency in the Chart.yaml).
   enabled: false
   master:
-    ## @param master.extraFlags Array with additional command line flags for Redis&trade; master
+    ## @param redis.master.extraFlags Array with additional command line flags for Redis&trade; master
     extraFlags:
       ## The maxmemory configuration directive is used in order to configure Redis to use a specified
       ## amount of memory for the data set. Setting maxmemory to zero results into no memory limits
@@ -1831,11 +1831,12 @@ redis:
       - "--maxmemory-policy allkeys-lru"
       ## ref https://stackoverflow.com/questions/22815364/flushall-and-flushdb-commands-on-redis-return-unk-command
       ## Redis official Helm chart by default disables FLUSHDB and FLUSHALL commands
+    ## @param redis.master.disableCommands Array with commands to disable on Redis&trade
     disableCommands: []
   replica:
     ## @param redis.replica.replicaCount Number of Redis&trade; replicas to deploy
     replicaCount: 1
-    ## @param master.extraFlags Array with additional command line flags for Redis&trade; replicas
+    ## @param redis.replica.extraFlags Array with additional command line flags for Redis&trade; replicas
     extraFlags:
       ## The maxmemory configuration directive is used in order to configure Redis to use a specified
       ## amount of memory for the data set. Setting maxmemory to zero results into no memory limits
@@ -1847,4 +1848,5 @@ redis:
       - "--maxmemory-policy allkeys-lru"
     ## ref https://stackoverflow.com/questions/22815364/flushall-and-flushdb-commands-on-redis-return-unk-command
     ## Redis official Helm chart by default disables FLUSHDB and FLUSHALL commands
+    ## @param redis.replica.disableCommands Array with commands to disable on Redis&trade
     disableCommands: []
