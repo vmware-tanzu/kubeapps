@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -126,10 +125,10 @@ func TestGetClient(t *testing.T) {
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name               string
-		existingObjects    []runtime.Object
-		expectedPackages   []*corev1.AvailablePackageSummary
-		expectedStatusCode codes.Code
+		name              string
+		clientGetter      clientGetter
+		statusCodeClient  codes.Code
+		statusCodeManager codes.Code
 	}{
 		{
 			name: "it returns a not found error status if a package meta does not contain spec.displayName",
@@ -303,6 +302,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Categories:       []string{"logging", "daemon-set"},
 				},
 			},
+			statusCodeClient:  codes.FailedPrecondition,
+			statusCodeManager: codes.OK,
 		},
 		{
 			name: "it returns the latest semver version in the latest version field",
@@ -399,14 +400,10 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: defaultContext})
+			typedClient, dynamicClient, errClient := s.GetClients(context.Background(), "")
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
-				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
-			}
-			// If we were expecting an error, continue to the next test.
-			if tc.expectedStatusCode != codes.OK {
-				return
+			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
+				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
 			if got, want := response.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, ignoreUnexported) {

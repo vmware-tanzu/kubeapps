@@ -1,6 +1,7 @@
 import { filter, matches } from "lodash";
 import { Kube } from "./Kube";
 import { IClusterServiceVersionCRDResource, IK8sList, IKind, IResource } from "./types";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 export function fromCRD(
   r: IClusterServiceVersionCRDResource,
@@ -9,12 +10,11 @@ export function fromCRD(
   namespace: string,
   ownerReference: any,
 ) {
-  const resource = {
+  const apiResourceRef = {
     apiVersion: kind.apiVersion,
     kind: r.kind,
-    metadata: {},
-  } as IResource;
-  const ref = new ResourceRef(resource, cluster, kind.plural, kind.namespaced, namespace);
+  } as APIResourceRef;
+  const ref = new ResourceRef(apiResourceRef, cluster, kind.plural, kind.namespaced, namespace);
   ref.filter = {
     metadata: { ownerReferences: [ownerReference] },
   };
@@ -36,18 +36,18 @@ class ResourceRef {
   // Creates a new ResourceRef instance from an existing IResource. Provide
   // defaultNamespace to set if the IResource doesn't specify a namespace.
   constructor(
-    r: IResource,
+    apiRef: APIResourceRef,
     cluster: string,
     plural: string,
     namespaced: boolean,
-    defaultNamespace?: string,
+    releaseNamespace: string,
   ) {
     this.cluster = cluster;
     this.plural = plural;
-    this.apiVersion = r.apiVersion;
-    this.kind = r.kind;
-    this.name = r.metadata.name;
-    this.namespace = namespaced ? r.metadata.namespace || defaultNamespace || "" : "";
+    this.apiVersion = apiRef.apiVersion;
+    this.kind = apiRef.kind;
+    this.name = apiRef.name;
+    this.namespace = namespaced ? apiRef.namespace || releaseNamespace || "" : "";
     this.namespaced = namespaced;
     return this;
   }
