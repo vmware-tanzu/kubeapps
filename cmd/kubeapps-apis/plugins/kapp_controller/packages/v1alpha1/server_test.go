@@ -415,3 +415,147 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAvailablePackageVersions(t *testing.T) {
+	testCases := []struct {
+		name               string
+		existingObjects    []runtime.Object
+		request            *corev1.GetAvailablePackageVersionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+	}{
+		{
+			name:               "it returns invalid argument if called without a package reference",
+			request:            nil,
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called without namespace",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{},
+					Identifier: "package-one",
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns invalid argument if called without an identifier",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "kubeapps",
+					},
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "it returns the package version summary",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.3",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.7",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.7",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.4",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName: "tetris.foo.example.com",
+						Version: "1.2.4",
+					},
+				},
+			},
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: "tetris.foo.example.com",
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
+				PackageAppVersions: []*corev1.PackageAppVersion{
+					{
+						PkgVersion: "1.2.7",
+					},
+					{
+						PkgVersion: "1.2.4",
+					},
+					{
+						PkgVersion: "1.2.3",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}: "PackageList",
+						},
+						unstructuredObjects...,
+					), nil
+				},
+			}
+
+			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
