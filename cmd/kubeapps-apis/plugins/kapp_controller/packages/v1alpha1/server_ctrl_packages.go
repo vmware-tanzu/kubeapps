@@ -52,6 +52,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// create the waiting group for processing each item aynchronously
 	var wg sync.WaitGroup
 
+	// TODO(agamez): DRY up this logic (cf GetInstalledPackageSummaries)
 	if len(pkgMetadatas) > 0 {
 		startAt := -1
 		if pageSize > 0 {
@@ -64,6 +65,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					defer wg.Done()
 					// fetch the associated packages
 					// Use the field selector to return only Package CRs that match on the spec.refName.
+					// TODO(agamez): perhaps we better fetch all the packages and filter ourselves to reduce the k8s calls
 					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
 					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
 					if err != nil {
@@ -75,7 +77,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					}
 
 					// generate the availablePackageSummary from the fetched information
-					availablePackageSummary, err := s.getAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
+					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
 						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageSummary: %v", err))
 					}
@@ -97,7 +99,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
 	// been able so far.
 	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
-
+	// However, should we just return an error if so? See https://github.com/kubeapps/kubeapps/pull/3784#discussion_r754836475
 	// filter out <nil> values
 	availablePackageSummariesNilSafe := []*corev1.AvailablePackageSummary{}
 	categories := []string{}
