@@ -23,14 +23,14 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
-// rateLimitingInterface is an interface that rate limits items being added to the queue.
-type rateLimitingInterface interface {
+// RateLimitingInterface is an interface that rate limits items being added to the queue.
+type RateLimitingInterface interface {
 	workqueue.RateLimitingInterface
 	ExpectAdd(item interface{})
 	WaitUntilDoneWith(item interface{})
 }
 
-func newRateLimitingQueue() rateLimitingInterface {
+func NewRateLimitingQueue() RateLimitingInterface {
 	queue := newQueue()
 	return &rateLimitingType{
 		queue:             queue,

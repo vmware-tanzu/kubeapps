@@ -49,6 +49,7 @@ import (
 const (
 	// EnvvarFluxIntegrationTests enables tests that run against a local kind cluster
 	envVarFluxIntegrationTests = "ENABLE_FLUX_INTEGRATION_TESTS"
+	defaultContextTimeout      = 30 * time.Second
 )
 
 func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
@@ -81,7 +82,9 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-		_, err = typedClient.CoreV1().Services("default").Get(context.TODO(), "fluxv2plugin-testdata-svc", metav1.GetOptions{})
+		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+		defer cancel()
+		_, err = typedClient.CoreV1().Services("default").Get(ctx, "fluxv2plugin-testdata-svc", metav1.GetOptions{})
 		if err != nil {
 			t.Fatalf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
 		}
@@ -111,7 +114,9 @@ func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 		return false, err
 	}
 
-	nodeList, err := typedClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	nodeList, err := typedClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		t.Logf("%s", string(bytes))
 		return false, err
@@ -137,7 +142,9 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 	}
 	t.Cleanup(func() { conn.Close() })
 	pluginsCli := plugins.NewPluginsServiceClient(conn)
-	response, err := pluginsCli.GetConfiguredPlugins(context.TODO(), &plugins.GetConfiguredPluginsRequest{})
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	response, err := pluginsCli.GetConfiguredPlugins(ctx, &plugins.GetConfiguredPluginsRequest{})
 	if err != nil {
 		t.Fatalf("failed to GetConfiguredPlugins due to: %v", err)
 	}
@@ -173,9 +180,11 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
-	} else if _, err := ifc.Create(context.TODO(), &unstructuredRepo, metav1.CreateOptions{}); err != nil {
+	} else if _, err := ifc.Create(ctx, &unstructuredRepo, metav1.CreateOptions{}); err != nil {
 		return err
 	} else {
 		return nil
@@ -187,7 +196,9 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
 	} else {
-		if watcher, err := ifc.Watch(context.TODO(), metav1.ListOptions{}); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+		if watcher, err := ifc.Watch(ctx, metav1.ListOptions{}); err != nil {
 			return err
 		} else {
 			ch := watcher.ResultChan()
@@ -222,9 +233,11 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 // this should eventually be replaced with flux plugin's DeleteRepository()
 func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeDeleteHelmRepository(%s,%s)", name, namespace)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
-	} else if err = ifc.Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
+	} else if err = ifc.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -232,9 +245,11 @@ func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 
 func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeDeleteHelmRelease(%s,%s)", name, namespace)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
 		return err
-	} else if err = ifc.Delete(context.TODO(), name, metav1.DeleteOptions{}); err != nil {
+	} else if err = ifc.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -242,9 +257,11 @@ func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
 
 func kubeExistsHelmRelease(t *testing.T, name, namespace string) (bool, error) {
 	t.Logf("+kubeExistsHelmRelease(%s,%s)", name, namespace)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
 		return false, err
-	} else if _, err = ifc.Get(context.TODO(), name, metav1.GetOptions{}); err == nil {
+	} else if _, err = ifc.Get(ctx, name, metav1.GetOptions{}); err == nil {
 		return true, nil
 	} else {
 		return false, nil
@@ -253,9 +270,11 @@ func kubeExistsHelmRelease(t *testing.T, name, namespace string) (bool, error) {
 
 func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error) {
 	t.Logf("+kubeGetPodNames(%s)", namespace)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	if typedClient, err := kubeGetTypedClient(); err != nil {
 		return nil, err
-	} else if podList, err := typedClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{}); err != nil {
+	} else if podList, err := typedClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{}); err != nil {
 		return nil, err
 	} else {
 		names := []string{}
@@ -274,8 +293,10 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 	if err != nil {
 		return "", err
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
-		context.TODO(),
+		ctx,
 		&kubecorev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
@@ -289,7 +310,9 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 
 	secretName := ""
 	for i := 0; i < 10; i++ {
-		svcAccount, err := typedClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+		defer cancel()
+		svcAccount, err := typedClient.CoreV1().ServiceAccounts(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return "", err
 		}
@@ -304,8 +327,10 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 		return "", fmt.Errorf("Service account [%s] has no secrets", name)
 	}
 
+	ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
-		context.TODO(),
+		ctx,
 		secretName,
 		metav1.GetOptions{})
 	if err != nil {
@@ -316,7 +341,7 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 		return "", err
 	}
 	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
-		context.TODO(),
+		ctx,
 		&kuberbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name + "-binding",
@@ -342,17 +367,26 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 
 func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeDeleteServiceAccount(%s,%s)", name, namespace)
-	if typedClient, err := kubeGetTypedClient(); err != nil {
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
 		return err
-	} else if err = typedClient.RbacV1().ClusterRoleBindings().Delete(
-		context.TODO(),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	err = typedClient.RbacV1().ClusterRoleBindings().Delete(
+		ctx,
 		name+"-binding",
-		metav1.DeleteOptions{}); err != nil {
+		metav1.DeleteOptions{})
+	if err != nil {
 		return err
-	} else if err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
-		context.TODO(),
+	}
+	ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
+		ctx,
 		name,
-		metav1.DeleteOptions{}); err != nil {
+		metav1.DeleteOptions{})
+	if err != nil {
 		return err
 	}
 	return nil
@@ -360,42 +394,51 @@ func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
 
 func kubeCreateNamespace(t *testing.T, namespace string) error {
 	t.Logf("+kubeCreateNamespace(%s)", namespace)
-	if typedClient, err := kubeGetTypedClient(); err != nil {
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
 		return err
-	} else if _, err = typedClient.CoreV1().Namespaces().Create(
-		context.TODO(),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.CoreV1().Namespaces().Create(
+		ctx,
 		&kubecorev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
 			},
 		},
-		metav1.CreateOptions{}); err != nil {
-		return err
-	}
-	return nil
+		metav1.CreateOptions{})
+	return err
 }
 
 func kubeDeleteNamespace(t *testing.T, namespace string) error {
 	t.Logf("+kubeDeleteNamespace(%s)", namespace)
-	if typedClient, err := kubeGetTypedClient(); err != nil {
-		return err
-	} else if err = typedClient.CoreV1().Namespaces().Delete(
-		context.TODO(),
-		namespace,
-		metav1.DeleteOptions{}); err != nil {
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
 		return err
 	}
-	return nil
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	err = typedClient.CoreV1().Namespaces().Delete(
+		ctx,
+		namespace,
+		metav1.DeleteOptions{})
+	return err
 }
 
 func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error) {
 	t.Logf("+kubeGetSecret(%s, %s, %s)", namespace, name, dataKey)
-	if typedClient, err := kubeGetTypedClient(); err != nil {
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
 		return "", err
-	} else if secret, err := typedClient.CoreV1().Secrets(namespace).Get(
-		context.TODO(),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
+		ctx,
 		name,
-		metav1.GetOptions{}); err != nil {
+		metav1.GetOptions{})
+	if err != nil {
 		return "", err
 	} else {
 		token := secret.Data[dataKey]

@@ -44,9 +44,9 @@ func TestBadClientGetter(t *testing.T) {
 		statusCode   codes.Code
 	}{
 		{
-			name:         "returns failed-precondition error status when no getter configured",
+			name:         "returns internal error status when no getter configured",
 			clientGetter: nil,
-			statusCode:   codes.FailedPrecondition,
+			statusCode:   codes.Internal,
 		},
 		{
 			name: "returns failed-precondition when clientGetter itself errors",
@@ -59,7 +59,9 @@ func TestBadClientGetter(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, mock, err := newServer(tc.clientGetter, nil)
+			s := Server{clientGetter: tc.clientGetter}
+
+			_, err := s.getDynamicClient(context.Background())
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
 			}
@@ -68,10 +70,6 @@ func TestBadClientGetter(t *testing.T) {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
-			err = mock.ExpectationsWereMet()
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
 		})
 	}
 }
@@ -222,10 +220,15 @@ func newServer(clientGetter common.ClientGetterFunc, actionConfig *action.Config
 		}
 	}
 
+	chartCache, err := NewChartCache(redisCli)
+	if err != nil {
+		return nil, mock, err
+	}
+
 	config := cache.NamespacedResourceWatcherCacheConfig{
 		Gvr:          repositoriesGvr,
 		ClientGetter: clientGetter,
-		OnAddFunc:    onAddRepo,
+		OnAddFunc:    chartCache.wrapOnAddFunc(onAddRepo, onGetRepo),
 		OnModifyFunc: onModifyRepo,
 		OnGetFunc:    onGetRepo,
 		OnDeleteFunc: onDeleteRepo,
@@ -239,7 +242,7 @@ func newServer(clientGetter common.ClientGetterFunc, actionConfig *action.Config
 		}
 	}
 
-	cache, err := cache.NewNamespacedResourceWatcherCache(config, redisCli)
+	repoCache, err := cache.NewNamespacedResourceWatcherCache(config, redisCli)
 	if err != nil {
 		return nil, mock, err
 	}
@@ -253,7 +256,8 @@ func newServer(clientGetter common.ClientGetterFunc, actionConfig *action.Config
 		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
-		repoCache:       cache,
+		repoCache:       repoCache,
+		chartCache:      chartCache,
 		kubeappsCluster: KubeappsCluster,
 	}
 	return s, mock, nil

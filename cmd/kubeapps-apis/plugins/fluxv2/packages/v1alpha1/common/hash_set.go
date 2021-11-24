@@ -14,6 +14,9 @@ package common
 
 import "reflect"
 
+// similar to k8s.io/apimachinery/pkg/util/sets but is tailored towards workqueue/RateLimitingInterface
+// where every item is an interface{}, as pooposed to, say a string
+
 type Empty struct{}
 type T interface{}
 type HashSet map[T]Empty

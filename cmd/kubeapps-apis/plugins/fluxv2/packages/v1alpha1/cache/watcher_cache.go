@@ -65,7 +65,7 @@ type NamespacedResourceWatcherCache struct {
 	//   by the cache/queue
 	// ref: https://pkg.go.dev/k8s.io/client-go/util/workqueue
 	// ref: https://engineering.bitnami.com/articles/a-deep-dive-into-kubernetes-controllers.html#workqueue
-	queue rateLimitingInterface
+	queue RateLimitingInterface
 
 	// I am using a Read/Write Mutex to gate access to cache's resync() operation, which is
 	// significant in that it flushes the whole redis cache and re-populates the state from k8s.
@@ -118,17 +118,17 @@ func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConf
 	log.Infof("+NewNamespacedResourceWatcherCache(%v, %v)", config.Gvr, redisCli)
 
 	if redisCli == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with redis Client")
+		return nil, fmt.Errorf("server not configured with redis Client")
 	} else if config.ClientGetter == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with clientGetter")
+		return nil, fmt.Errorf("server not configured with clientGetter")
 	} else if config.OnAddFunc == nil || config.OnModifyFunc == nil || config.OnDeleteFunc == nil || config.OnGetFunc == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "server not configured with expected cache hooks")
+		return nil, fmt.Errorf("server not configured with expected cache hooks")
 	}
 
 	c := NamespacedResourceWatcherCache{
 		config:     config,
 		redisCli:   redisCli,
-		queue:      newRateLimitingQueue(),
+		queue:      NewRateLimitingQueue(),
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
@@ -170,15 +170,15 @@ func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConf
 
 func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	if c.config.Gvr.Empty() {
-		return status.Errorf(codes.FailedPrecondition, "server configured with empty GVR")
+		return fmt.Errorf("server configured with empty GVR")
 	}
 	// sanity check that CRD for GVR has been registered
 	ctx := context.Background()
 	_, apiExt, err := c.config.ClientGetter(ctx)
 	if err != nil {
-		return status.Errorf(codes.FailedPrecondition, "clientGetter failed due to: %v", err)
+		return fmt.Errorf("clientGetter failed due to: %v", err)
 	} else if apiExt == nil {
-		return status.Errorf(codes.FailedPrecondition, "clientGetter returned invalid data")
+		return fmt.Errorf("clientGetter returned invalid data")
 	}
 
 	name := fmt.Sprintf("%s.%s", c.config.Gvr.Resource, c.config.Gvr.Group)
@@ -192,7 +192,7 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 			}
 		}
 	}
-	return status.Errorf(codes.FailedPrecondition, "CRD [%s] is not valid", c.config.Gvr)
+	return fmt.Errorf("CRD [%s] is not valid", c.config.Gvr)
 }
 
 // runWorker is a long-running function that will continually call the
@@ -245,7 +245,7 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 		} else {
 			// Run the syncHandler, passing it the namespace/name string of the
 			// resource to be synced.
-			if _, err := c.syncHandler(key); err != nil {
+			if err := c.syncHandler(key); err != nil {
 				return fmt.Errorf("error syncing key [%s] due to: %v", key, err)
 			}
 			// Finally, if no error occurs we Forget this item so it does not
@@ -401,20 +401,20 @@ func (c *NamespacedResourceWatcherCache) processWatchEvents(ch <-chan watch.Even
 }
 
 // syncs the current state of the given resource in k8s with that in the cache
-func (c *NamespacedResourceWatcherCache) syncHandler(key string) (interface{}, error) {
+func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 	log.Infof("+syncHandler(%s)", key)
 
 	// Convert the namespace/name string into a distinct namespace and name
 	name, err := c.fromKey(key)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Get the resource with this namespace/name
 	ctx := context.Background()
 	dynamicClient, _, err := c.config.ClientGetter(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
 	// If an error occurs during Get/Create/Update/Delete, we'll requeue the item so we can
@@ -425,33 +425,34 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) (interface{}, e
 	if err != nil {
 		// The resource may no longer exist, in which case we stop processing.
 		if errors.IsNotFound(err) {
-			return nil, c.onDelete(key)
+			return c.onDelete(key)
 		} else {
-			return nil, status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
+			return status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
 		}
 	}
 	return c.onAddOrModify(true, unstructuredObj.Object)
 }
 
 // this is effectively a cache SET operation
-func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj map[string]interface{}) (newValue interface{}, err error) {
+func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj map[string]interface{}) (err error) {
 	log.V(4).Infof("+onAddOrModify")
 	defer log.V(4).Infof("-onAddOrModify")
 
 	key, err := c.keyFor(unstructuredObj)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get redis key due to: %v", err)
+		return fmt.Errorf("failed to get redis key due to: %v", err)
 	}
 
 	var oldValue []byte
 	if checkOldValue {
 		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
-			return nil, fmt.Errorf("onAddOrModify() failed to get value for key [%s] in cache due to: %v", key, err)
+			return fmt.Errorf("onAddOrModify() failed to get value for key [%s] in cache due to: %v", key, err)
 		}
 	}
 
 	var setVal bool
 	var funcName string
+	var newValue interface{}
 	if oldValue == nil {
 		funcName = "onAdd"
 		newValue, setVal, err = c.config.OnAddFunc(key, unstructuredObj)
@@ -470,21 +471,21 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 			// debugging an intermittent failure
 			log.Infof("Redis [DEL %s]: %d", key, keysremoved)
 		}
-		return nil, err
+		return nil
 	} else if setVal {
 		// Zero expiration means the key has no expiration time.
 		// However, cache entries may be evicted by redis in order to make room for new ones,
 		// if redis is limited by maxmemory constraint
 		result, err := c.redisCli.Set(c.redisCli.Context(), key, newValue, 0).Result()
 		if err != nil {
-			return nil, fmt.Errorf("failed to set value for object with key [%s] in cache due to: %v", key, err)
+			return fmt.Errorf("failed to set value for object with key [%s] in cache due to: %v", key, err)
 		} else {
 			// debugging an intermittent issue
 			usedMemory, totalMemory := c.memoryStats()
 			log.Infof("Redis [SET %s]: %s. Redis [INFO memory]: [%s/%s]", key, result, usedMemory, totalMemory)
 		}
 	}
-	return newValue, nil
+	return nil
 }
 
 // this is effectively a cache DEL operation
@@ -730,7 +731,7 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
-	// We will use "helmrepository:ns:repoName"
+	// We will use "helmrepositories:ns:repoName"
 	return fmt.Sprintf("%s:%s:%s", c.config.Gvr.Resource, name.Namespace, name.Name)
 }
 
@@ -782,7 +783,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 			// closed (and there are no more items)
 			for job := range requestChan {
 				// don't need to check old value since we just flushed the whole cache
-				_, err := c.onAddOrModify(false, job.item)
+				err := c.onAddOrModify(false, job.item)
 				responseChan <- populateJobResult{job, err}
 			}
 			wg.Done()

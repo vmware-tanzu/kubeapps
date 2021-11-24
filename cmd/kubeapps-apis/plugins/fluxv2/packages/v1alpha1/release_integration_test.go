@@ -217,11 +217,13 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		// TODO (gfichtenholt) test automatic upgrade to new version when it becomes available
 	}
 
-	grpcContext := newGrpcContext(t, "test-update-admin")
+	grpcContext := newGrpcContext(t, "test-create-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
+
+			installedRef := createAndWaitForHelmRelease(
+				t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
 			ctx := grpcContext
@@ -320,9 +322,13 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 
 			const maxWait = 25
 			for i := 0; i <= maxWait; i++ {
-				_, err := fluxPluginClient.GetInstalledPackageDetail(grpcContext, &corev1.GetInstalledPackageDetailRequest{
-					InstalledPackageRef: installedRef,
-				})
+				grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+				defer cancel()
+
+				_, err := fluxPluginClient.GetInstalledPackageDetail(
+					grpcContext, &corev1.GetInstalledPackageDetailRequest{
+						InstalledPackageRef: installedRef,
+					})
 				if err != nil {
 					if status.Code(err) == codes.NotFound {
 						break // this is the only way to break out of this loop successfully
@@ -521,6 +527,8 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	evictedCopy := evicted.DeepCopy()
 	evictedCopy.ForEach(func(k common.T) {
 		name := strings.Split(k.(string), ":")[2]
+		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
 		resp, err := fluxPlugin.GetAvailablePackageVersions(
 			grpcContext, &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -575,6 +583,8 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		t.Fatalf("Expected Unauthenticated, got %v", err)
 	}
 
+	grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+	defer cancel()
 	resp2, err := fluxPlugin.GetAvailablePackageSummaries(grpcContext, &corev1.GetAvailablePackageSummariesRequest{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -646,7 +656,7 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	t.Logf("waiting up to 30 seconds...")
+	t.Logf("Waiting up to 30 seconds...")
 	time.Sleep(30 * time.Second)
 
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
@@ -675,6 +685,8 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 	// need to wait until repo is index by flux plugin
 	const maxWait = 25
 	for i := 0; i <= maxWait; i++ {
+		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
 		resp, err := fluxPluginClient.GetAvailablePackageDetail(
 			grpcContext,
 			&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
@@ -733,7 +745,9 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 		})
 	}
 
-	ctx := grpcContext
+	ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+	defer cancel()
+
 	if tc.expectedStatusCode == codes.Unauthenticated {
 		ctx = context.TODO()
 	}
@@ -811,6 +825,8 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context, installedPackageRef *corev1.InstalledPackageReference, expectInstallFailure bool) (actualResp *corev1.GetInstalledPackageDetailResponse) {
 	const maxWait = 30
 	for i := 0; i <= maxWait; i++ {
+		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
 		resp2, err := fluxPluginClient.GetInstalledPackageDetail(
 			grpcContext,
 			&corev1.GetInstalledPackageDetailRequest{InstalledPackageRef: installedPackageRef})

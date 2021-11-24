@@ -328,6 +328,7 @@ type repoCacheEntry struct {
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
 func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
+	log.Info("+onAddRepo()")
 	// first, check the repo is ready
 	if isRepoReady(unstructuredRepo) {
 		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
@@ -424,5 +425,6 @@ func indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([
 	if err = enc.Encode(cacheEntry); err != nil {
 		return nil, false, err
 	}
+
 	return buf.Bytes(), true, nil
 }

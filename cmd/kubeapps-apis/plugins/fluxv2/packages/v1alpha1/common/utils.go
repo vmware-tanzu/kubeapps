@@ -229,15 +229,15 @@ func clientGetterHelper(config *rest.Config) (dynamic.Interface, apiext.Interfac
 func NewRedisClientFromEnv() (*redis.Client, error) {
 	REDIS_ADDR, ok := os.LookupEnv("REDIS_ADDR")
 	if !ok {
-		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_ADDR")
+		return nil, fmt.Errorf("missing environment variable REDIS_ADDR")
 	}
 	REDIS_PASSWORD, ok := os.LookupEnv("REDIS_PASSWORD")
 	if !ok {
-		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_PASSWORD")
+		return nil, fmt.Errorf("missing environment variable REDIS_PASSWORD")
 	}
 	REDIS_DB, ok := os.LookupEnv("REDIS_DB")
 	if !ok {
-		return nil, status.Errorf(codes.FailedPrecondition, "missing environment variable REDIS_DB")
+		return nil, fmt.Errorf("missing environment variable REDIS_DB")
 	}
 
 	REDIS_DB_NUM, err := strconv.Atoi(REDIS_DB)
@@ -268,19 +268,13 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 }
 
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
+// I understand this is not really kosher in general for production usage,
+// but in one specific case (cache populateWith() func) it's okay as a sanity check
+// if it turns out not, I can always remove this check, it's not critical
 const mutexLocked = 1
-
-func MutexLocked(m *sync.Mutex) bool {
-	state := reflect.ValueOf(m).Elem().FieldByName("state")
-	return state.Int()&mutexLocked == mutexLocked
-}
 
 func RWMutexWriteLocked(rw *sync.RWMutex) bool {
 	// RWMutex has a "w" sync.Mutex field for write lock
 	state := reflect.ValueOf(rw).Elem().FieldByName("w").FieldByName("state")
 	return state.Int()&mutexLocked == mutexLocked
-}
-
-func RWMutexReadLocked(rw *sync.RWMutex) bool {
-	return reflect.ValueOf(rw).Elem().FieldByName("readerCount").Int() > 0
 }

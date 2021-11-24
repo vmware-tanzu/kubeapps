@@ -48,7 +48,7 @@ type Server struct {
 	actionConfigGetter common.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
-	chartCache *cache.ChartCache
+	chartCache *ChartCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -60,28 +60,31 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories,
 	}
-	repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
-		Gvr:          repositoriesGvr,
-		ClientGetter: common.NewBackgroundClientGetter(),
-		OnAddFunc:    onAddRepo,
-		OnModifyFunc: onModifyRepo,
-		OnGetFunc:    onGetRepo,
-		OnDeleteFunc: onDeleteRepo,
-	}
+
 	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
 		return nil, err
-	} else if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli); err != nil {
-		return nil, err
-	} else if chartCache, err := cache.NewChartCache(redisCli, repoCache); err != nil {
+	} else if chartCache, err := NewChartCache(redisCli); err != nil {
 		return nil, err
 	} else {
-		return &Server{
-			clientGetter:       common.NewClientGetter(configGetter, kubeappsCluster),
-			actionConfigGetter: common.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
-			repoCache:          repoCache,
-			chartCache:         chartCache,
-			kubeappsCluster:    kubeappsCluster,
-		}, nil
+		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
+			Gvr:          repositoriesGvr,
+			ClientGetter: common.NewBackgroundClientGetter(),
+			OnAddFunc:    chartCache.wrapOnAddFunc(onAddRepo, onGetRepo),
+			OnModifyFunc: onModifyRepo,
+			OnGetFunc:    onGetRepo,
+			OnDeleteFunc: onDeleteRepo,
+		}
+		if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli); err != nil {
+			return nil, err
+		} else {
+			return &Server{
+				clientGetter:       common.NewClientGetter(configGetter, kubeappsCluster),
+				actionConfigGetter: common.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
+				repoCache:          repoCache,
+				chartCache:         chartCache,
+				kubeappsCluster:    kubeappsCluster,
+			}, nil
+		}
 	}
 }
 
@@ -92,7 +95,7 @@ func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error
 	}
 	dynamicClient, _, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 	return dynamicClient, nil
 }
