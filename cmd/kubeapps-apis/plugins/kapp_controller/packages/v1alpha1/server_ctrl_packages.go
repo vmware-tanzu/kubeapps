@@ -77,7 +77,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					}
 
 					// generate the availablePackageSummary from the fetched information
-					availablePackageSummary, err := s.getAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
+					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
 						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageSummary: %v", err))
 					}
