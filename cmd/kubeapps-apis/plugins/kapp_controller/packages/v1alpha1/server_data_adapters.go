@@ -325,20 +325,20 @@ func (s *Server) getInstalledPackageDetail(pkgInstall *packagingv1alpha1.Package
 func getPackageRepository(pr *packagingv1alpha1.PackageRepository) (*v1alpha1.PackageRepository, error) {
 	// See the PackageRepository CR at
 	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
-	urlPaths := []string{
-		pr.Spec.Fetch.ImgpkgBundle.Image,
-		pr.Spec.Fetch.Image.URL,
-		pr.Spec.Fetch.HTTP.URL,
-		pr.Spec.Fetch.Git.URL,
-	}
 
 	repoURL := ""
-	for _, url := range urlPaths {
-		if url != "" {
-			repoURL = url
-			break
-		}
+
+	// TODO(agamez): this is a temporary solution
+	if pr.Spec.Fetch != nil && pr.Spec.Fetch.ImgpkgBundle != nil {
+		repoURL = pr.Spec.Fetch.ImgpkgBundle.Image
+	} else if pr.Spec.Fetch != nil && pr.Spec.Fetch.Image != nil {
+		repoURL = pr.Spec.Fetch.Image.URL
+	} else if pr.Spec.Fetch != nil && pr.Spec.Fetch.HTTP != nil {
+		repoURL = pr.Spec.Fetch.HTTP.URL
+	} else if pr.Spec.Fetch != nil && pr.Spec.Fetch.Git != nil {
+		repoURL = pr.Spec.Fetch.Git.URL
 	}
+
 	if repoURL == "" {
 		return nil, fmt.Errorf("packagerepository without fetch of one of imgpkgBundle, image, http or git: %v", pr)
 	}
