@@ -159,7 +159,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+
 	}
 
 	// TODO(minelson): support configurable version summary for kapp-controller pkgs
@@ -212,7 +213,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 	}
 
 	var foundPkgSemver = &pkgSemver{}
@@ -239,7 +240,8 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	availablePackageDetail, err := s.buildAvailablePackageDetail(pkgMetadata, requestedPkgVersion, foundPkgSemver, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageDetail: %v", err))
+		return nil, errorByStatus("create", "AvailablePackageDetail", pkgMetadata.Name, err)
+
 	}
 
 	return &corev1.GetAvailablePackageDetailResponse{
@@ -369,7 +371,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	typedClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package install
@@ -399,7 +401,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 	}
 
 	// get the values applies i) get the secret name where it is stored; 2) get the values from the secret
@@ -429,7 +431,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	installedPackageDetail, err := s.buildInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageDetail: %v", err))
+		return nil, errorByStatus("create", "InstalledPackageDetail", pkgInstall.Name, err)
+
 	}
 
 	response := &corev1.GetInstalledPackageDetailResponse{
@@ -477,7 +480,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 
 	typedClient, _, err := s.GetClients(ctx, targetCluster)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package metadata
@@ -487,26 +490,34 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// build a new secret object with the values
-	secret, err := s.newSecret(installedPackageName, values, targetNamespace)
+	secret, err := s.buildSecret(installedPackageName, values, targetNamespace)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the Secret: %v", err))
+		return nil, errorByStatus("create", "Secret", installedPackageName, err)
+
+	}
+
+	// build a new pkgInstall object
+	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions)
+	if err != nil {
+		return nil, errorByStatus("create", "PackageInstall", installedPackageName, err)
 	}
 
 	// create the Secret in the cluster
+	// TODO(agamez): check when is the best moment to create this object.
+	// See if we can delay the creation until the PackageInstall is successfully created.
 	createdSecret, err := typedClient.CoreV1().Secrets(targetNamespace).Create(ctx, secret, metav1.CreateOptions{})
 	if createdSecret == nil || err != nil {
 		return nil, errorByStatus("create", "Secret", secret.Name, err)
 	}
 
-	// build a new pkgInstall object
-	newPkgInstall, err := s.newPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions)
-	if createdSecret == nil || err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the PackageInstall: %v", err))
-	}
-
 	// create the PackageInstall in the cluster
 	createdPkgInstall, err := s.createPkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall)
 	if err != nil {
+		// clean-up the secret if something fails
+		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return nil, errorByStatus("delete", "Secret", secret.Name, err)
+		}
 		return nil, errorByStatus("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 

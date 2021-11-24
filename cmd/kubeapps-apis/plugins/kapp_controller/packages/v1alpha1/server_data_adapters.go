@@ -370,7 +370,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 	return installedPackageDetail, nil
 }
 
-func (s *Server) newSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
+func (s *Server) buildSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
 	return &k8scorev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       k8scorev1.ResourceSecrets.String(),
@@ -391,7 +391,7 @@ func (s *Server) newSecret(installedPackageName, values, targetNamespace string)
 	}, nil
 }
 
-func (s *Server) newPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
 	pkgInstall := &packagingv1alpha1.PackageInstall{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       pkgInstallResource,
@@ -402,10 +402,13 @@ func (s *Server) newPkgInstall(installedPackageName, targetCluster, targetNamesp
 			Namespace: targetNamespace,
 		},
 		Spec: packagingv1alpha1.PackageInstallSpec{
-			// TODO(agamez): remove this when we have a real service account in the UI
+			// TODO(agamez): remove this when we have a real service account selector/creator? in the UI
 			ServiceAccountName: "default",
-			// ServiceAccountName: "default-ns-sa",
-			// TODO(agamez): check what this "Cluster" is for
+
+			// This is the Carvel's way of supporting deployments across clusters
+			// without having kapp-controller on those other clusters
+			// We, currently, don't support deploying to another cluster without kapp-controller
+			// See https://github.com/kubeapps/kubeapps/pull/3789#discussion_r754786633
 			// Cluster: &kappctrlv1alpha1.AppCluster{
 			// 	Namespace:           targetNamespace,
 			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
