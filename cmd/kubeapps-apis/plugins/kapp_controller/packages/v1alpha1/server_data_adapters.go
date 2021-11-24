@@ -17,6 +17,8 @@ import (
 	"strings"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 )
 
@@ -31,6 +33,10 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
 		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
@@ -59,8 +65,13 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 }
 
 func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
+
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
 	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
 		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
@@ -146,4 +157,67 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 	}
 
 	return availablePackageDetail, nil
+}
+
+func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.InstalledPackageSummary, error) {
+	// get the versions associated with the package
+	versions := pkgVersionsMap[pkgInstall.Spec.PackageRef.RefName]
+	if len(versions) == 0 {
+		return nil, fmt.Errorf("no package versions for the package %q", pkgInstall.Spec.PackageRef.RefName)
+	}
+
+	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
+	// a url, so convert to a data-url.
+
+	// TODO(agamez): check if want to avoid sending this data over the wire
+	// instead we could send a url (to another API endpoint) to retrieve the icon
+	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
+	var iconStringBuilder strings.Builder
+	if pkgMetadata.Spec.IconSVGBase64 != "" {
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
+	}
+
+	installedPackageSummary := &corev1.InstalledPackageSummary{
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
+		},
+		IconUrl: iconStringBuilder.String(),
+		InstalledPackageRef: &corev1.InstalledPackageReference{
+			Context: &corev1.Context{
+				Namespace: pkgMetadata.Namespace,
+				Cluster:   cluster,
+			},
+			Plugin:     &pluginDetail,
+			Identifier: pkgInstall.Name,
+		},
+		// TODO(agamez): this field should be populated with the proper version,
+		// that is, considering the versionSelection.constraint
+		LatestMatchingVersion: &corev1.PackageAppVersion{
+			PkgVersion: versions[0].version.String(),
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: versions[0].version.String(),
+		},
+		Name:           pkgInstall.Name,
+		PkgDisplayName: pkgMetadata.Spec.DisplayName,
+		PkgVersionReference: &corev1.VersionReference{
+			Version: pkgInstall.Status.LastAttemptedVersion,
+		},
+		ShortDescription: pkgMetadata.Spec.ShortDescription,
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			UserReason: "no status information yet",
+		},
+	}
+	if len(pkgInstall.Status.Conditions) > 0 {
+		installedPackageSummary.Status = &corev1.InstalledPackageStatus{
+			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
+			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
+			UserReason: userReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
+		}
+	}
+
+	return installedPackageSummary, nil
 }
