@@ -576,26 +576,6 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, errorByStatus("get", "PackageInstall", installedPackageName, err)
 	}
 
-	// Update the values.yaml values file if any is passed, otherwise, delete the values
-	if values != "" {
-		secret, err := s.newSecret(installedPackageName, values, packageNamespace)
-		if err != nil {
-			return nil, errorByStatus("upsate", "Secret", secret.Name, err)
-		}
-		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
-		if updatedSecret == nil || err != nil {
-			return nil, errorByStatus("update", "Secret", secret.Name, err)
-		}
-	} else {
-		// Delete all the associated secrets
-		for _, packageInstallValue := range pkgInstall.Spec.Values {
-			secretId := packageInstallValue.SecretRef.Name
-			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
-			if err != nil {
-				return nil, errorByStatus("delete", "Secret", secretId, err)
-			}
-		}
-	}
 	// Update the rest of the fields
 	pkgInstall.Spec.PackageRef.VersionSelection = &vendirVersions.VersionSelectionSemver{Constraints: pkgVersion}
 	if reconciliationOptions != nil {
@@ -608,13 +588,33 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
 	}
 
-	// get rid of the status field, since now there will be a new reconciliation process
-	pkgInstall.Status = packagingv1alpha1.PackageInstallStatus{}
-
 	// update the pkgInstall in the server
 	updatedPkgInstall, err := s.updatePkgInstall(ctx, packageCluster, packageNamespace, pkgInstall)
 	if err != nil {
 		return nil, errorByStatus("get", "PackageInstall", installedPackageName, err)
+	}
+
+	// Update the values.yaml values file if any is passed, otherwise, delete the values
+	if values != "" {
+		secret, err := s.buildSecret(installedPackageName, values, packageNamespace)
+		if err != nil {
+			return nil, errorByStatus("upsate", "Secret", secret.Name, err)
+		}
+		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
+		if updatedSecret == nil || err != nil {
+			return nil, errorByStatus("update", "Secret", secret.Name, err)
+		}
+	} else {
+		// Delete all the associated secrets
+		// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+		// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
+		for _, packageInstallValue := range pkgInstall.Spec.Values {
+			secretId := packageInstallValue.SecretRef.Name
+			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
+			if err != nil {
+				return nil, errorByStatus("delete", "Secret", secretId, err)
+			}
+		}
 	}
 
 	// generate the response

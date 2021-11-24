@@ -1067,7 +1067,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-secret",
+								Name: "my-installation-values",
 							},
 						},
 						},
@@ -1184,7 +1184,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-secret",
+								Name: "my-installation-values",
 							},
 						},
 						},
@@ -1322,7 +1322,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-secret",
+								Name: "my-installation-values",
 							},
 						},
 						},
@@ -1495,7 +1495,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-secret",
+								Name: "my-installation-values",
 							},
 						},
 						},
@@ -1552,7 +1552,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-secret",
+						Name:      "my-installation-values",
 					},
 					Type: "Opaque",
 					Data: map[string][]byte{
@@ -1764,7 +1764,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
@@ -1877,7 +1877,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
@@ -1994,7 +1994,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
@@ -2106,7 +2106,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-secret",
+							Name: "my-installation-values",
 						},
 					},
 					},
@@ -2219,11 +2219,11 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						DisplayName:        "Classic Tetris",
 						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
 						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
 						Categories:         []string{"logging", "daemon-set"},
-						LongDescription:    "A great game for arcade gamers",
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
 						ProviderName:       "Tetris inc.",
-						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "foo"}},
-						SupportDescription: "Block support team",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -2238,12 +2238,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Spec: datapackagingv1alpha1.PackageSpec{
 						RefName:                         "tetris.foo.example.com",
 						Version:                         "1.2.3",
-						Licenses:                        []string{"foo license"},
-						ReleasedAt:                      metav1.Time{},
-						CapactiyRequirementsDescription: "foo capactiyRequirementsDescription",
-						ReleaseNotes:                    "foo releaseNotes",
-						Template:                        datapackagingv1alpha1.AppTemplateSpec{},
-						ValuesSchema:                    datapackagingv1alpha1.ValuesSchema{},
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
