@@ -12,8 +12,6 @@ import {
   RollbackInstalledPackageRequest,
   RollbackInstalledPackageResponse,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import * as url from "shared/url";
-import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { PluginNames } from "./utils";
 
