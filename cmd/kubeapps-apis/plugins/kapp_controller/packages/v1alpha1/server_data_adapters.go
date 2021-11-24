@@ -14,6 +14,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -56,12 +57,12 @@ func (s *Server) getAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.P
 }
 
 func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
-
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
-	iconUrl := ""
+	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
-		iconUrl = fmt.Sprintf("data:image/svg+xml;base64,%s", pkgMetadata.Spec.IconSVGBase64)
+		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
+		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
 	maintainers := []*corev1.Maintainer{}
@@ -106,7 +107,7 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 			Identifier: pkgMetadata.Name,
 		},
 		Name:             pkgMetadata.Name,
-		IconUrl:          iconUrl,
+		IconUrl:          iconStringBuilder.String(),
 		DisplayName:      pkgMetadata.Spec.DisplayName,
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
 		Categories:       pkgMetadata.Spec.Categories,
