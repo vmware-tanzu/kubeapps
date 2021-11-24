@@ -15,7 +15,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	goerrs "errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -33,9 +35,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
-	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -673,4 +675,54 @@ func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, ve
 		return nil, err
 	}
 	return &unstructuredRel, nil
+}
+
+// resourceRefsFromManifest returns the resource refs for a given yaml manifest.
+func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
+	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
+	refs := []*corev1.ResourceRef{}
+	doc := yamlResource{}
+	for {
+		err := decoder.Decode(&doc)
+		if err != nil {
+			if goerrs.Is(err, io.EOF) {
+				break
+			}
+			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
+		}
+		if doc.Kind == "" {
+			continue
+		}
+		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
+			for _, i := range doc.Items {
+				refs = append(refs, &corev1.ResourceRef{
+					ApiVersion: i.APIVersion,
+					Kind:       i.Kind,
+					Name:       i.Metadata.Name,
+					Namespace:  i.Metadata.Namespace,
+				})
+			}
+			continue
+		}
+		refs = append(refs, &corev1.ResourceRef{
+			ApiVersion: doc.APIVersion,
+			Kind:       doc.Kind,
+			Name:       doc.Metadata.Name,
+			Namespace:  doc.Metadata.Namespace,
+		})
+	}
+
+	return refs, nil
+}
+
+type yamlMetadata struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type yamlResource struct {
+	APIVersion string         `json:"apiVersion"`
+	Kind       string         `json:"kind"`
+	Metadata   yamlMetadata   `json:"metadata"`
+	Items      []yamlResource `json:"items"`
 }
