@@ -242,7 +242,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}, nil
 }
 
-// GetInstalledPackageSummaries returns the installed packagesmanaged by the 'kapp_controller' plugin
+// GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	log.Infof("+kapp-controller GetInstalledPackageSummaries")
 	// Retrieve the proper parameters from the request
