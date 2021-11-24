@@ -39,7 +39,7 @@ const makeStore = (
     theme: SupportedThemes.light,
     remoteComponentsUrl: "",
     customAppViews: [],
-    skipPackageDetailsWhenNoReadme: false,
+    skipAvailablePackageDetails: false,
   };
   const clusters: IClustersState = {
     currentCluster: "default",

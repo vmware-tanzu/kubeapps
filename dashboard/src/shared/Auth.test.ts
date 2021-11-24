@@ -181,7 +181,7 @@ describe("Auth", () => {
         theme: SupportedThemes.light,
         remoteComponentsUrl: "",
         customAppViews: [],
-        skipPackageDetailsWhenNoReadme: false,
+        skipAvailablePackageDetails: false,
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -201,7 +201,7 @@ describe("Auth", () => {
         theme: SupportedThemes.light,
         remoteComponentsUrl: "",
         customAppViews: [],
-        skipPackageDetailsWhenNoReadme: false,
+        skipAvailablePackageDetails: false,
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

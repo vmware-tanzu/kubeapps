@@ -8,7 +8,7 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { createMemoryHistory } from "history";
+import { createMemoryHistory, History } from "history";
 import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router";
 import { IConfigState } from "reducers/config";
@@ -81,11 +81,17 @@ const defaultPackageState = {
 
 const defaultState = {
   packages: defaultPackageState,
-  config: { kubeappsCluster: "default", kubeappsNamespace: "kubeapps" } as IConfigState,
+  config: {
+    kubeappsCluster: "default",
+    kubeappsNamespace: "kubeapps",
+    skipAvailablePackageDetails: false,
+  } as IConfigState,
 } as IStoreState;
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
+let history: History<unknown>;
+
 beforeEach(() => {
   actions.packages = {
     ...actions.packages,
@@ -95,6 +101,7 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  history = createMemoryHistory({ initialEntries: [routePathParam] });
 });
 
 afterEach(() => {
@@ -105,8 +112,6 @@ afterEach(() => {
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/packages/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.cluster}/${defaultProps.packageNamespace}/${defaultProps.id}`;
 const routePath =
   "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId";
-const history = createMemoryHistory({ initialEntries: [routePathParam] });
-
 it("triggers the fetchAvailablePackageVersions when mounting", () => {
   const spy = jest.fn();
   actions.packages.fetchAvailablePackageVersions = spy;
@@ -232,30 +237,13 @@ it("renders the home link when set", () => {
   ).toBe(true);
 });
 
-describe("when package details are not available", () => {
-  it("redirects when skipPackageDetailsWhenNoReadme is set to true", () => {
+describe("when setting the skipAvailablePackageDetails option", () => {
+  it("does not redirect when skipAvailablePackageDetails is set to false", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultState,
-        charts: { selected: { readme: "" } },
-        config: { skipPackageDetailsWhenNoReadme: true },
-      }),
-      <Router history={history}>
-        <Route path={routePath}>
-          <PackageView />
-        </Route>
-      </Router>,
-    );
-    expect(wrapper.text()).not.toContain("Fetching application README...");
-  });
-
-  it("does not redirect when skipPackageDetailsWhenNoReadme is set to false", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        ...defaultState,
-        charts: { selected: { readme: "" } },
-        config: { skipPackageDetailsWhenNoReadme: false },
-      }),
+        config: { skipAvailablePackageDetails: false },
+      } as IStoreState),
       <Router history={history}>
         <Route path={routePath}>
           <PackageView />
@@ -265,20 +253,22 @@ describe("when package details are not available", () => {
     expect(wrapper.containsMatchingElement(<PackageReadme />)).toBe(true);
   });
 
-  it("does not redirect when skipPackageDetailsWhenNoReadme is true but the package has a readme", () => {
+  it("redirects when skipAvailablePackageDetails is set to true", () => {
     const wrapper = mountWrapper(
       getStore({
         ...defaultState,
-        charts: { selected: { readme: "foo" } },
-        config: { skipPackageDetailsWhenNoReadme: true },
-      }),
+        config: { skipAvailablePackageDetails: true },
+      } as IStoreState),
       <Router history={history}>
         <Route path={routePath}>
           <PackageView />
         </Route>
       </Router>,
     );
-    expect(wrapper.text()).not.toContain("Fetching application README...");
+    expect(wrapper.containsMatchingElement(<PackageReadme />)).toBe(false);
+    expect(history.location.pathname).toEqual(
+      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.cluster}/${defaultProps.packageNamespace}/${defaultProps.id}/versions/${testVersion.pkgVersion}`,
+    );
   });
 });
 
@@ -315,6 +305,9 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
       myAvailablePkgDetail.maintainers = [{ name: "John Smith", email: "john@example.com" }];
       myAvailablePkgDetail.repoUrl = t.repoURL;
 
+      console.log("history", history.location.pathname);
+      console.log("TEST!!");
+
       const wrapper = mountWrapper(
         getStore({
           ...defaultState,
@@ -328,6 +321,7 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
           </Route>
         </Router>,
       );
+      console.log(wrapper.debug());
 
       const availablePackageMaintainers = wrapper.find(AvailablePackageMaintainers);
       expect(availablePackageMaintainers.props().githubIDAsNames).toBe(t.expected);

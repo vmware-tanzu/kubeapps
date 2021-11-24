@@ -20,7 +20,7 @@ export const initialState: IConfigState = {
   theme: SupportedThemes.light,
   remoteComponentsUrl: "",
   customAppViews: [],
-  skipPackageDetailsWhenNoReadme: false,
+  skipAvailablePackageDetails: false,
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
