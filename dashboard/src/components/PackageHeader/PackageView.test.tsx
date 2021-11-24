@@ -8,7 +8,7 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { createMemoryHistory, History } from "history";
+import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router";
 import { IConfigState } from "reducers/config";
@@ -90,7 +90,6 @@ const defaultState = {
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
-let history: History<unknown>;
 
 beforeEach(() => {
   actions.packages = {
@@ -101,7 +100,6 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  history = createMemoryHistory({ initialEntries: [routePathParam] });
 });
 
 afterEach(() => {
@@ -112,6 +110,8 @@ afterEach(() => {
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/packages/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.cluster}/${defaultProps.packageNamespace}/${defaultProps.id}`;
 const routePath =
   "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId";
+const history = createMemoryHistory({ initialEntries: [routePathParam] });
+
 it("triggers the fetchAvailablePackageVersions when mounting", () => {
   const spy = jest.fn();
   actions.packages.fetchAvailablePackageVersions = spy;
@@ -254,6 +254,7 @@ describe("when setting the skipAvailablePackageDetails option", () => {
   });
 
   it("redirects when skipAvailablePackageDetails is set to true", () => {
+    const history = createMemoryHistory({ initialEntries: [routePathParam] });
     const wrapper = mountWrapper(
       getStore({
         ...defaultState,
@@ -305,9 +306,6 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
       myAvailablePkgDetail.maintainers = [{ name: "John Smith", email: "john@example.com" }];
       myAvailablePkgDetail.repoUrl = t.repoURL;
 
-      console.log("history", history.location.pathname);
-      console.log("TEST!!");
-
       const wrapper = mountWrapper(
         getStore({
           ...defaultState,
@@ -321,8 +319,6 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
           </Route>
         </Router>,
       );
-      console.log(wrapper.debug());
-
       const availablePackageMaintainers = wrapper.find(AvailablePackageMaintainers);
       expect(availablePackageMaintainers.props().githubIDAsNames).toBe(t.expected);
     });

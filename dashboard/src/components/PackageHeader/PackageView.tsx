@@ -102,7 +102,6 @@ export default function PackageView() {
   }
   // If the skipAvailablePackageDetails option is enabled, redirect to deployment form
   if (skipAvailablePackageDetails) {
-    console.log("REDIRECT");
     return (
       <ReactRouter.Redirect
         to={app.apps.new(
