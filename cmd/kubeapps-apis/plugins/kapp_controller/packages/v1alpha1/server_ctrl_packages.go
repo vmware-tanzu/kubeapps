@@ -231,7 +231,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		}
 	}
 
-	availablePackageDetail, err := s.getAvailablePackageDetail(pkgMetadata, requestedPkgVersion, foundPkgSemver, cluster)
+	availablePackageDetail, err := s.buildAvailablePackageDetail(pkgMetadata, requestedPkgVersion, foundPkgSemver, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageDetail: %v", err))
 	}

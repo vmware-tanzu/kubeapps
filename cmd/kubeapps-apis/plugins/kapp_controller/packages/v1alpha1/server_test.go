@@ -145,7 +145,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com",
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
-						LongDescription: "Classic Tetris",
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
 					},
 				},
 			},
@@ -164,7 +171,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com",
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
-						DisplayName: "Classic Tetris",
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
 					},
 				},
 			},
@@ -183,7 +197,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com",
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
-						DisplayName: "Classic Tetris",
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
 					},
 				},
 				&datapackagingv1alpha1.PackageMetadata{
@@ -196,7 +217,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tombi.foo.example.com",
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
-						DisplayName: "Tombi!",
+						DisplayName:        "Tombi!",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "An awesome game from the 90's",
+						LongDescription:    "Tombi! is an open world platform-adventure game with RPG elements.",
+						Categories:         []string{"platfroms", "rpg"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tombi!",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -209,8 +237,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.3",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -223,8 +254,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tombi.foo.example.com.1.2.5",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tombi.foo.example.com",
-						Version: "1.2.5",
+						RefName:                         "tombi.foo.example.com",
+						Version:                         "1.2.5",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 			},
@@ -235,9 +269,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Plugin:     &pluginDetail,
 						Identifier: "tetris.foo.example.com",
 					},
-					Name:          "tetris.foo.example.com",
-					DisplayName:   "Classic Tetris",
-					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					Name:             "tetris.foo.example.com",
+					DisplayName:      "Classic Tetris",
+					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.3"},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "A great game for arcade gamers",
+					Categories:       []string{"logging", "daemon-set"},
 				},
 				{
 					AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -245,9 +282,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Plugin:     &pluginDetail,
 						Identifier: "tombi.foo.example.com",
 					},
-					Name:          "tombi.foo.example.com",
-					DisplayName:   "Tombi!",
-					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
+					Name:             "tombi.foo.example.com",
+					DisplayName:      "Tombi!",
+					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.5"},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "An awesome game from the 90's",
+					Categories:       []string{"platfroms", "rpg"},
 				},
 			},
 		},
@@ -267,11 +307,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						DisplayName:        "Classic Tetris",
 						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
 						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
 						Categories:         []string{"logging", "daemon-set"},
-						LongDescription:    "A great game for arcade gamers",
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
 						ProviderName:       "Tetris inc.",
-						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "foo"}},
-						SupportDescription: "Block support team",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -284,8 +324,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.3",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 			},
@@ -318,7 +361,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com",
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
-						DisplayName: "Classic Tetris",
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -331,8 +381,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.3",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -345,8 +398,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.7",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.7",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.7",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -359,8 +415,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.4",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.4",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.4",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 			},
@@ -371,9 +430,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Plugin:     &pluginDetail,
 						Identifier: "tetris.foo.example.com",
 					},
-					Name:          "tetris.foo.example.com",
-					DisplayName:   "Classic Tetris",
-					LatestVersion: &corev1.PackageAppVersion{PkgVersion: "1.2.7"},
+					Name:             "tetris.foo.example.com",
+					DisplayName:      "Classic Tetris",
+					LatestVersion:    &corev1.PackageAppVersion{PkgVersion: "1.2.7"},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "A great game for arcade gamers",
+					Categories:       []string{"logging", "daemon-set"},
 				},
 			},
 		},
@@ -464,8 +526,11 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.3",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -478,8 +543,11 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.7",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.7",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.7",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -492,8 +560,11 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.4",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.4",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.4",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 			},
@@ -588,12 +659,14 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Name:      "tetris.foo.example.com",
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
-						DisplayName:      "Classic Tetris",
-						IconSVGBase64:    "Tm90IHJlYWxseSBTVkcK",
-						ShortDescription: "A great game for arcade gamers",
-						LongDescription:  "A few sentences but not really a readme",
-						Categories:       []string{"logging", "daemon-set"},
-						Maintainers:      []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -606,8 +679,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.3",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 			},
@@ -624,11 +700,19 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Readme: fmt.Sprintf(`## Details
 
 
+### Description:
+%s
+
+
 ### Capactiy requirements:
 %s
 
 
 ### Release Notes:
+%s
+
+
+### Support:
 %s
 
 
@@ -641,9 +725,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 
 `,
-					"",
-					"",
-					[]string{""},
+					"A few sentences but not really a readme",
+					"capacity description",
+					"release notes",
+					"Some support information",
+					[]string{"my-license"},
 					&metav1.Time{},
 				),
 				Maintainers: []*corev1.Maintainer{
@@ -678,8 +764,13 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
 						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
 						LongDescription:    "A few sentences but not really a readme",
-						SupportDescription: "Some support info",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -692,8 +783,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.3",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 			},
@@ -704,8 +798,16 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Version: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
 				},
-				Maintainers: []*v1alpha1.Maintainer{},
+				Maintainers:      []*v1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+				ShortDescription: "A great game for arcade gamers",
+				Categories:       []string{"logging", "daemon-set"},
+
 				Readme: fmt.Sprintf(`## Details
+
+
+### Description:
+%s
 
 
 ### Capactiy requirements:
@@ -713,6 +815,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 
 ### Release Notes:
+%s
+
+
+### Support:
 %s
 
 
@@ -725,9 +831,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 
 `,
-					"",
-					"",
-					[]string{""},
+					"A few sentences but not really a readme",
+					"capacity description",
+					"release notes",
+					"Some support information",
+					[]string{"my-license"},
 					&metav1.Time{},
 				),
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -768,8 +876,13 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
 						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
 						LongDescription:    "A few sentences but not really a readme",
-						SupportDescription: "Some support info",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -782,8 +895,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
-						RefName: "tetris.foo.example.com",
-						Version: "1.2.3",
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
 					},
 				},
 			},

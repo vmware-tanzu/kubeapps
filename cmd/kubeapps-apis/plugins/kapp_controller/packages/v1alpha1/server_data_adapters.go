@@ -58,7 +58,7 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 	return availablePackageSummary, nil
 }
 
-func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
+func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
 	var iconStringBuilder strings.Builder
@@ -77,11 +77,19 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 	readme := fmt.Sprintf(`## Details
 
 
+### Description:
+%s
+
+
 ### Capactiy requirements:
 %s
 
 
 ### Release Notes:
+%s
+
+
+### Support:
 %s
 
 
@@ -94,8 +102,10 @@ func (s *Server) getAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.Pa
 
 
 `,
+		pkgMetadata.Spec.LongDescription,
 		foundPkgSemver.pkg.Spec.CapactiyRequirementsDescription,
 		foundPkgSemver.pkg.Spec.ReleaseNotes,
+		pkgMetadata.Spec.SupportDescription,
 		foundPkgSemver.pkg.Spec.Licenses,
 		foundPkgSemver.pkg.Spec.ReleasedAt,
 	)
