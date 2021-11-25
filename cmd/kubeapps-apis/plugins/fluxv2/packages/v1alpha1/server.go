@@ -17,6 +17,8 @@ import (
 	"fmt"
 	"strings"
 
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -493,4 +495,46 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	} else {
 		return &corev1.DeleteInstalledPackageResponse{}, nil
 	}
+}
+
+// GetInstalledPackageResourceRefs returns the references for the Kubernetes
+// resources created by an installed package.
+func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
+	pkgRef := request.GetInstalledPackageRef()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
+	identifier := pkgRef.GetIdentifier()
+	log.Infof("+fluxv2 GetResourceRefs %s %s", contextMsg, identifier)
+
+	namespace := pkgRef.GetContext().GetNamespace()
+
+	actionConfig, err := s.actionConfigGetter(ctx, request.GetInstalledPackageRef().GetContext().GetNamespace())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+
+	// Grab the released manifest from the release.
+	// TODO(minelson): We're currently getting the resource refs for a package
+	// install by checking the helm manifest, as we do for the helm plugin. With
+	// certain assumptions about the RBAC of the Kubeapps user, we may be able
+	// to instead query for labelled resources. See the discussion following for
+	// more details:
+	// https://github.com/kubeapps/kubeapps/pull/3811#issuecomment-977689570
+	getcmd := action.NewGet(actionConfig)
+	release, err := getcmd.Run(identifier)
+	if err != nil {
+		if err == driver.ErrReleaseNotFound {
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+		}
+		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
+	}
+
+	refs, err := resourceRefsFromManifest(release.Manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetInstalledPackageResourceRefsResponse{
+		Context:      pkgRef.GetContext(),
+		ResourceRefs: refs,
+	}, nil
 }

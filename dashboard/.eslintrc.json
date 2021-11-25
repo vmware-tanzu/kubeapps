@@ -37,6 +37,7 @@
     "jest": true
   },
   "rules": {
+    "no-console": "warn", // warns if a console.log is left in the code
     "redos/no-vulnerable": "error", // avoid ReDoS vulnerable regex
     "quotes": [
       "error", // enforce double quotes

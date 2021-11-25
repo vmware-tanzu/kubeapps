@@ -46,6 +46,7 @@ export default function PackageView() {
   } = ReactRouter.useParams() as IRouteParams;
   const {
     packages: { isFetching, selected: selectedPackage },
+    config: { skipAvailablePackageDetails },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
@@ -98,6 +99,19 @@ export default function PackageView() {
   }
   if (isFetching || !selectedPackage.availablePackageDetail || !selectedPackage.pkgVersion) {
     return <LoadingWrapper loaded={false} />;
+  }
+  // If the skipAvailablePackageDetails option is enabled, redirect to deployment form
+  if (skipAvailablePackageDetails) {
+    return (
+      <ReactRouter.Redirect
+        to={app.apps.new(
+          targetCluster,
+          targetNamespace,
+          packageReference,
+          selectedPackage.pkgVersion,
+        )}
+      />
+    );
   }
   return (
     <section>

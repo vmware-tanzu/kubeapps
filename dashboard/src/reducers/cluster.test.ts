@@ -449,6 +449,7 @@ describe("clusterReducer", () => {
       theme: "light",
       remoteComponentsUrl: "",
       customAppViews: [],
+      skipAvailablePackageDetails: false,
     } as IConfig;
     it("re-writes the clusters to match the config.clusters state", () => {
       expect(
