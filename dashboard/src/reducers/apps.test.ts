@@ -1,4 +1,4 @@
-import { IAppState } from "shared/types";
+import { FetchError, IAppState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import appsReducer from "./apps";
@@ -38,6 +38,18 @@ describe("appsReducer", () => {
         type: actionTypes.listApps as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: true });
+    });
+
+    it("clears the error after clearErrorApp", () => {
+      let state = appsReducer(undefined, {
+        type: getType(actions.apps.errorApp) as any,
+        payload: new FetchError("boom"),
+      });
+      expect(state).toEqual({ ...initialState, isFetching: false, error: new FetchError("boom") });
+      state = appsReducer(state, {
+        type: getType(actions.apps.clearErrorApp) as any,
+      });
+      expect(state).toEqual({ ...initialState, isFetching: false, error: undefined });
     });
   });
 });

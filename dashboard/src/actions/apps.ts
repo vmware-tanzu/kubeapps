@@ -62,6 +62,8 @@ export const errorApp = createAction("ERROR_APP", resolve => {
     resolve(err);
 });
 
+export const clearErrorApp = createAction("CLEAR_ERROR_APP");
+
 export const selectApp = createAction("SELECT_APP", resolve => {
   return (
     app: InstalledPackageDetail,
@@ -83,6 +85,7 @@ const allActions = [
   requestRollbackInstalledPackage,
   receiveRollbackInstalledPackage,
   errorApp,
+  clearErrorApp,
   selectApp,
 ];
 

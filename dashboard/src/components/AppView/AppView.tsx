@@ -37,6 +37,7 @@ import {
   ResourceRef as APIResourceRef,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { CdsButton } from "@cds/react/button";
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
@@ -218,8 +219,27 @@ export default function AppView() {
     };
   }, [dispatch, resourceRefs]);
 
+  const forceRetry = () => {
+    dispatch(actions.apps.clearErrorApp());
+    dispatch(
+      actions.apps.getApp({
+        context: { cluster: cluster, namespace: namespace },
+        identifier: releaseName,
+        plugin: pluginObj,
+      } as InstalledPackageReference),
+    );
+  };
+
   if (error && error.constructor === FetchError) {
-    return <Alert theme="danger">Application not found. Received: {error.message}</Alert>;
+    return (
+      <Alert theme="danger">
+        Application not found: {error.message}
+        <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
+          {" "}
+          Try again{" "}
+        </CdsButton>
+      </Alert>
+    );
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
     resourceRefs;
