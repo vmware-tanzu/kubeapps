@@ -14,8 +14,10 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/Masterminds/semver/v3"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -112,4 +114,17 @@ func pageOffsetFromPageToken(pageToken string) (int, error) {
 	}
 
 	return int(offset), nil
+}
+
+// extracts the value for a key from a JSON-formatted string
+// body - the JSON-response as a string. Usually retrieved via the request body
+// key - the key for which the value should be extracted
+// returns - the value for the given key
+// https://stackoverflow.com/questions/17452722/how-to-get-the-key-value-from-a-json-string-in-go/37332972
+func extractValue(body string, key string) string {
+	keystr := "\"" + key + "\":[^,;\\]}]*"
+	r, _ := regexp.Compile(keystr)
+	match := r.FindString(body)
+	keyValMatch := strings.Split(match, ":")
+	return strings.ReplaceAll(keyValMatch[1], "\"", "")
 }

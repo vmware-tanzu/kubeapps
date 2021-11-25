@@ -36,6 +36,7 @@ const (
 	pkgInstallsResource     = "packageinstalls"
 	appResource             = "App"
 	appsResource            = "apps"
+	appLabelKey             = "kapp.k14s.io/app"
 )
 
 // Dynamic ResourceInterface getters to encapsulate the logic of getting the proper group version API resources
