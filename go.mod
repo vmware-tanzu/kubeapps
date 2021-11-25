@@ -44,7 +44,6 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/ahmetb/go-linq/v3 v3.2.0
-	github.com/arschles/assert v2.0.0+incompatible
 	github.com/containerd/containerd v1.5.8
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.7.1+incompatible
