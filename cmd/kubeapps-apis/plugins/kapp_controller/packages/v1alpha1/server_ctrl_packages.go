@@ -17,10 +17,12 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	vendirVersions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -533,5 +535,98 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 
 	return &corev1.CreateInstalledPackageResponse{
 		InstalledPackageRef: installedRef,
+	}, nil
+}
+
+// UpdateInstalledPackage Updates an installed package managed by the 'kapp_controller' plugin
+func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
+	log.Infof("+kapp-controller UpdateInstalledPackage")
+
+	// Validate the request
+	if request == nil || request.GetInstalledPackageRef() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+	}
+	if request.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.GetInstalledPackageRef().GetIdentifier() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+	}
+	if request.GetInstalledPackageRef().GetIdentifier() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
+	}
+
+	// Retrieve the proper parameters from the request
+	packageCluster := request.GetInstalledPackageRef().GetContext().GetCluster()
+	packageNamespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
+	reconciliationOptions := request.GetReconciliationOptions()
+	pkgVersion := request.GetPkgVersionReference().GetVersion()
+	installedPackageName := request.GetInstalledPackageRef().GetIdentifier()
+	values := request.GetValues()
+
+	if packageCluster == "" {
+		packageCluster = s.globalPackagingCluster
+	}
+
+	typedClient, _, err := s.GetClients(ctx, packageCluster)
+	if err != nil {
+		return nil, err
+	}
+
+	// fetch the package install
+	pkgInstall, err := s.getPkgInstall(ctx, packageCluster, packageNamespace, installedPackageName)
+	if err != nil {
+		return nil, errorByStatus("get", "PackageInstall", installedPackageName, err)
+	}
+
+	// Update the rest of the fields
+	pkgInstall.Spec.PackageRef.VersionSelection = &vendirVersions.VersionSelectionSemver{Constraints: pkgVersion}
+	if reconciliationOptions != nil {
+		if reconciliationOptions.Interval > 0 {
+			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
+		}
+		if reconciliationOptions.ServiceAccountName != "" {
+			pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
+		}
+		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
+	}
+
+	// update the pkgInstall in the server
+	updatedPkgInstall, err := s.updatePkgInstall(ctx, packageCluster, packageNamespace, pkgInstall)
+	if err != nil {
+		return nil, errorByStatus("get", "PackageInstall", installedPackageName, err)
+	}
+
+	// Update the values.yaml values file if any is passed, otherwise, delete the values
+	if values != "" {
+		secret, err := s.buildSecret(installedPackageName, values, packageNamespace)
+		if err != nil {
+			return nil, errorByStatus("upsate", "Secret", secret.Name, err)
+		}
+		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
+		if updatedSecret == nil || err != nil {
+			return nil, errorByStatus("update", "Secret", secret.Name, err)
+		}
+	} else {
+		// Delete all the associated secrets
+		// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+		// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
+		for _, packageInstallValue := range pkgInstall.Spec.Values {
+			secretId := packageInstallValue.SecretRef.Name
+			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
+			if err != nil {
+				return nil, errorByStatus("delete", "Secret", secretId, err)
+			}
+		}
+	}
+
+	// generate the response
+	updatedRef := &corev1.InstalledPackageReference{
+		Context: &corev1.Context{
+			Namespace: updatedPkgInstall.GetNamespace(),
+			Cluster:   packageCluster,
+		},
+		Identifier: updatedPkgInstall.Name,
+		Plugin:     GetPluginDetail(),
+	}
+	return &corev1.UpdateInstalledPackageResponse{
+		InstalledPackageRef: updatedRef,
 	}, nil
 }
