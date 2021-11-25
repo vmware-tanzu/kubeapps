@@ -611,7 +611,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
 			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
-			if err != nil {
+			if errors.IsNotFound(err) {
+				log.Warningf("The referenced secret does not exist: %s", errorByStatus("get", "Secret", secretId, err).Error())
+			} else {
 				return nil, errorByStatus("delete", "Secret", secretId, err)
 			}
 		}
@@ -663,7 +665,15 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 		return nil, errorByStatus("get", "PackageInstall", identifier, err)
 	}
 
+	// Delete the package install
+	err = s.deletePkgInstall(ctx, cluster, namespace, identifier)
+	if err != nil {
+		return nil, errorByStatus("delete", "PackageInstall", identifier, err)
+	}
+
 	// Delete all the associated secrets
+	// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+	// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 	for _, packageInstallValue := range pkgInstall.Spec.Values {
 		secretId := packageInstallValue.SecretRef.Name
 		err := typedClient.CoreV1().Secrets(namespace).Delete(ctx, secretId, metav1.DeleteOptions{})
@@ -674,12 +684,6 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 				return nil, errorByStatus("delete", "Secret", secretId, err)
 			}
 		}
-	}
-
-	// Delete the package install
-	err = s.deletePkgInstall(ctx, cluster, namespace, identifier)
-	if err != nil {
-		return nil, errorByStatus("delete", "PackageInstall", identifier, err)
 	}
 	return &corev1.DeleteInstalledPackageResponse{}, nil
 }
