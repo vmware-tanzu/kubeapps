@@ -278,6 +278,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 | Name                                            | Description                                                                               | Value              |
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------ |
+| `kubeops.enabled`                               | Specifies whether this component should be installed.                                     | `true`             |
 | `kubeops.image.registry`                        | Kubeops image registry                                                                    | `docker.io`        |
 | `kubeops.image.repository`                      | Kubeops image repository                                                                  | `kubeapps/kubeops` |
 | `kubeops.image.tag`                             | Kubeops image tag (immutable tags are recommended)                                        | `latest`           |
