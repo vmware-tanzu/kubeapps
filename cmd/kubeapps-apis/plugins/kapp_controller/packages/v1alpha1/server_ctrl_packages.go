@@ -611,7 +611,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
 			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
-			if err != nil {
+			if errors.IsNotFound(err) {
+				log.Warningf("The referenced secret does not exist: %s", errorByStatus("get", "Secret", secretId, err).Error())
+			} else {
 				return nil, errorByStatus("delete", "Secret", secretId, err)
 			}
 		}
@@ -629,4 +631,59 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	return &corev1.UpdateInstalledPackageResponse{
 		InstalledPackageRef: updatedRef,
 	}, nil
+}
+
+// DeleteInstalledPackage Deletes an installed package managed by the 'kapp_controller' plugin
+func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
+	log.Infof("+kapp-controller DeleteInstalledPackage")
+
+	// Validate the request
+	if request == nil || request.GetInstalledPackageRef() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+	}
+	if request.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.GetInstalledPackageRef().GetIdentifier() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+	}
+
+	// Retrieve the proper parameters from the request
+	packageRef := request.GetInstalledPackageRef()
+	identifier := request.GetInstalledPackageRef().GetIdentifier()
+	namespace := packageRef.GetContext().GetNamespace()
+	cluster := packageRef.GetContext().GetCluster()
+
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+
+	typedClient, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	pkgInstall, err := s.getPkgInstall(ctx, cluster, namespace, identifier)
+	if err != nil {
+		return nil, errorByStatus("get", "PackageInstall", identifier, err)
+	}
+
+	// Delete the package install
+	err = s.deletePkgInstall(ctx, cluster, namespace, identifier)
+	if err != nil {
+		return nil, errorByStatus("delete", "PackageInstall", identifier, err)
+	}
+
+	// Delete all the associated secrets
+	// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+	// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
+	for _, packageInstallValue := range pkgInstall.Spec.Values {
+		secretId := packageInstallValue.SecretRef.Name
+		err := typedClient.CoreV1().Secrets(namespace).Delete(ctx, secretId, metav1.DeleteOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				log.Warningf("The referenced secret does not exist: %s", errorByStatus("get", "Secret", secretId, err).Error())
+			} else {
+				return nil, errorByStatus("delete", "Secret", secretId, err)
+			}
+		}
+	}
+	return &corev1.DeleteInstalledPackageResponse{}, nil
 }

@@ -21,9 +21,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -45,19 +45,23 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.AvailablePackageDetail{},
 	corev1.AvailablePackageReference{},
 	corev1.AvailablePackageSummary{},
-	corev1.InstalledPackageSummary{},
+	corev1.Context{},
+	corev1.CreateInstalledPackageResponse{},
+	corev1.DeleteInstalledPackageResponse{},
+	corev1.GetAvailablePackageVersionsResponse{},
+	corev1.InstalledPackageDetail{},
 	corev1.InstalledPackageReference{},
 	corev1.InstalledPackageStatus{},
-	corev1.InstalledPackageDetail{},
+	corev1.InstalledPackageSummary{},
+	corev1.Maintainer{},
+	corev1.PackageAppVersion{},
 	corev1.ReconciliationOptions{},
 	corev1.GetAvailablePackageVersionsResponse{},
 	corev1.CreateInstalledPackageResponse{},
 	corev1.UpdateInstalledPackageResponse{},
 	corev1.VersionReference{},
-	corev1.Context{},
-	corev1.Maintainer{},
-	corev1.PackageAppVersion{},
 	pluginv1.Plugin{},
+	v1alpha1.PackageRepository{},
 )
 
 var defaultContext = &corev1.Context{Cluster: "default", Namespace: "default"}
@@ -702,16 +706,17 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				},
 			},
 			expectedPackage: &corev1.AvailablePackageDetail{
-				Name:             "tetris.foo.example.com",
-				DisplayName:      "Classic Tetris",
-				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
-				Categories:       []string{"logging", "daemon-set"},
-				ShortDescription: "A great game for arcade gamers",
-				LongDescription:  "A few sentences but not really a readme",
+				Name:            "tetris.foo.example.com",
+				DisplayName:     "Classic Tetris",
+				LongDescription: "A few sentences but not really a readme",
 				Version: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
 					AppVersion: "1.2.3",
 				},
+				Maintainers:      []*corev1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+				ShortDescription: "A great game for arcade gamers",
+				Categories:       []string{"logging", "daemon-set"},
 				Readme: fmt.Sprintf(`## Details
 
 
@@ -747,14 +752,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					[]string{"my-license"},
 					&metav1.Time{},
 				),
-				Maintainers: []*corev1.Maintainer{
-					{Name: "person1"},
-					{Name: "person2"},
-				},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
 					Identifier: "tetris.foo.example.com",
-					Plugin:     &pluginv1.Plugin{Name: "kapp_controller.packages", Version: "v1alpha1"},
+					Plugin:     &pluginDetail,
 				},
 			},
 			statusCode: codes.OK,
@@ -814,11 +815,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					PkgVersion: "1.2.3",
 					AppVersion: "1.2.3",
 				},
-				Maintainers:      []*v1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+				Maintainers:      []*corev1.Maintainer{{Name: "person1"}, {Name: "person2"}},
 				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 				ShortDescription: "A great game for arcade gamers",
 				Categories:       []string{"logging", "daemon-set"},
-
 				Readme: fmt.Sprintf(`## Details
 
 
@@ -857,7 +857,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
 					Identifier: "tetris.foo.example.com",
-					Plugin:     &pluginv1.Plugin{Name: "kapp_controller.packages", Version: "v1alpha1"},
+					Plugin:     &pluginDetail,
 				},
 			},
 			statusCode: codes.OK,
@@ -2391,6 +2391,306 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
 				// TODO(agamez): check the actual object being updated in the k8s fake
+			}
+		})
+	}
+}
+
+func TestDeleteInstalledPackage(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		request              *corev1.DeleteInstalledPackageRequest
+		existingObjects      []runtime.Object
+		existingTypedObjects []runtime.Object
+		expectedStatusCode   codes.Code
+		expectedResponse     *corev1.DeleteInstalledPackageResponse
+	}{
+		{
+			name: "deletes installed package",
+			request: &corev1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "foo",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-values",
+					},
+					Type: "Opaque",
+					Data: map[string][]byte{
+						"values.yaml": []byte("foo: bar"),
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   &corev1.DeleteInstalledPackageResponse{},
+		},
+		{
+			name: "returns not found if installed package doesn't exist",
+			request: &corev1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "noy-my-installation",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "foo",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-values",
+					},
+					Type: "Opaque",
+					Data: map[string][]byte{
+						"values.yaml": []byte("foo: bar"),
+					},
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+			expectedResponse:   &corev1.DeleteInstalledPackageResponse{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return typfake.NewSimpleClientset(tc.existingTypedObjects...), dynfake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
+							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
+							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
+						},
+						unstructuredObjects...,
+					), nil
+				},
+			}
+
+			deleteInstalledPackageResponse, err := s.DeleteInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+			// If we were expecting an error, continue to the next test.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+			if got, want := deleteInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositories(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *v1alpha1.GetPackageRepositoriesRequest
+		existingObjects    []runtime.Object
+		expectedResponse   []*v1alpha1.PackageRepository
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "returns expected repositories",
+			request: &v1alpha1.GetPackageRepositoriesRequest{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgRepositoryResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "repo-1",
+						Namespace: "default",
+					},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgRepositoryResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "repo-2",
+						Namespace: "default",
+					},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-2/main@sha256:abcd",
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+			},
+			expectedResponse: []*v1alpha1.PackageRepository{
+				{
+					Name:      "repo-1",
+					Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
+					Namespace: "default",
+					Plugin:    &pluginDetail,
+				},
+				{
+					Name:      "repo-2",
+					Url:       "projects.registry.example.com/repo-2/main@sha256:abcd",
+					Namespace: "default",
+					Plugin:    &pluginDetail,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
+						runtime.NewScheme(),
+						map[schema.GroupVersionResource]string{
+							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
+						},
+						unstructuredObjects...,
+					), nil
+				},
+			}
+
+			getPackageRepositoriesResponse, err := s.GetPackageRepositories(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+
+			// Only check the response for OK status.
+			if tc.expectedStatusCode == codes.OK {
+				if getPackageRepositoriesResponse == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					if got, want := getPackageRepositoriesResponse.Repositories, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+					}
+				}
 			}
 		})
 	}
