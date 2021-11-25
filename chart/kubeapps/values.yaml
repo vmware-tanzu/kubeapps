@@ -1610,6 +1610,7 @@ kubeappsapis:
             major: 3
             minor: 3
             patch: 3
+          timeoutSeconds: 300
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry

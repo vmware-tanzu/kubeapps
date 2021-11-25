@@ -15,16 +15,20 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/fake"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -115,7 +119,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), nil)
+			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), nil, nil)
 			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "bitnami",
@@ -150,6 +154,67 @@ func TestCreateInstalledPackage(t *testing.T) {
 				if got, want := releases[0], tc.expectedRelease; !cmp.Equal(got, want, ignoredUnexported, ignoredFields) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported, ignoredFields))
 				}
+			}
+		})
+	}
+}
+
+func TestTimeoutCreateInstalledPackage(t *testing.T) {
+	testCases := []struct {
+		name               string
+		releaseStub        releaseStub
+		request            *corev1.CreateInstalledPackageRequest
+		helmTimeoutSeconds int32
+		k8DelayedSeconds   int32
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "Helm times out if K8s does not respond",
+			releaseStub: releaseStub{
+				chartID:       "bitnami/apache",
+				latestVersion: "1.18.3",
+			},
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: globalPackagingNamespace,
+					},
+					Identifier: "bitnami/apache",
+				},
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+				},
+				Name: "my-apache",
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1.18.3",
+				},
+				Values: "{\"foo\": \"bar\"}",
+			},
+			helmTimeoutSeconds: 1,
+			k8DelayedSeconds:   3,
+			expectedStatusCode: codes.OK, // Set OK to pass while WIP. codes.DeadlineExceeded ?
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			authorized := true
+			kubeClient := &fake.DelayedKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}, Time: time.Duration(tc.k8DelayedSeconds) * time.Second}
+			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), nil, kubeClient)
+			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "bitnami",
+					Namespace: globalPackagingNamespace,
+				},
+			})
+			server.timeoutSeconds = tc.helmTimeoutSeconds
+			defer cleanup()
+			populateAssetDB(t, mockDB, []releaseStub{tc.releaseStub})
+
+			_, err := server.CreateInstalledPackage(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 		})
 	}
