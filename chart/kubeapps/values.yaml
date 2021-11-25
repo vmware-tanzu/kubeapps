@@ -1606,7 +1606,6 @@ kubeappsapis:
   ##
   enabledPlugins:
     - helm
-    - kapp-controller
   pluginConfig:
     core:
       packages:
