@@ -20,6 +20,7 @@ import (
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -118,11 +119,11 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
-	if !checkGeneration(unstructuredRelease) {
+	if !common.CheckGeneration(unstructuredRelease) {
 		return nil, nil
 	}
 
-	name, err := namespacedName(unstructuredRelease)
+	name, err := common.NamespacedName(unstructuredRelease)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +220,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		}
 	}
 
-	log.V(4).Infof("installedPackageDetail:\n[%s]", prettyPrintMap(unstructuredRelease.Object))
+	log.V(4).Infof("installedPackageDetail:\n[%s]", common.PrettyPrintMap(unstructuredRelease.Object))
 
 	obj := unstructuredRelease.Object
 	var pkgVersionRef *corev1.VersionReference
@@ -337,7 +338,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
+	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +374,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		}
 	}
 
-	name, err := namespacedName(newRelease.Object)
+	name, err := common.NamespacedName(newRelease.Object)
 	if err != nil {
 		return nil, err
 	}
@@ -467,7 +468,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		}
 	}
 
-	log.V(4).Infof("Updated release: %s", prettyPrintMap(unstructuredRel.Object))
+	log.V(4).Infof("Updated release: %s", common.PrettyPrintMap(unstructuredRel.Object))
 
 	return &corev1.InstalledPackageReference{
 		Context: &corev1.Context{
@@ -515,7 +516,7 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 //       otherwise pending or unspecified when there are no status conditions to go by
 //
 func isHelmReleaseReady(unstructuredObj map[string]interface{}) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
-	if !checkGeneration(unstructuredObj) {
+	if !common.CheckGeneration(unstructuredObj) {
 		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
 	}
 
@@ -600,7 +601,7 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 	repoNamespace, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	// CrossNamespaceObjectReference namespace is optional, so
 	if !found || err != nil || repoNamespace == "" {
-		name, err := namespacedName(unstructuredRelease)
+		name, err := common.NamespacedName(unstructuredRelease)
 		if err != nil {
 			return nil, err
 		}
