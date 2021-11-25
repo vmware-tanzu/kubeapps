@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,6 +27,8 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -34,9 +36,6 @@ import (
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
-
-type clientGetter func(context.Context) (dynamic.Interface, apiext.Interface, error)
-type helmActionConfigGetter func(ctx context.Context, namespace string) (*action.Configuration, error)
 
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
@@ -47,10 +46,11 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter       clientGetter
-	actionConfigGetter helmActionConfigGetter
+	clientGetter       common.ClientGetterFunc
+	actionConfigGetter common.HelmActionConfigGetterFunc
 
-	cache *NamespacedResourceWatcherCache
+	repoCache  *cache.NamespacedResourceWatcherCache
+	chartCache *ChartCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -62,23 +62,31 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories,
 	}
-	cacheConfig := cacheConfig{
-		gvr:          repositoriesGvr,
-		clientGetter: newBackgroundClientGetter(),
-		onAdd:        onAddRepo,
-		onModify:     onModifyRepo,
-		onGet:        onGetRepo,
-		onDelete:     onDeleteRepo,
-	}
-	if cache, err := newCache(cacheConfig); err != nil {
+
+	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
+		return nil, err
+	} else if chartCache, err := NewChartCache(redisCli); err != nil {
 		return nil, err
 	} else {
-		return &Server{
-			clientGetter:       newClientGetter(configGetter, kubeappsCluster),
-			actionConfigGetter: newHelmActionConfigGetter(configGetter, kubeappsCluster),
-			cache:              cache,
-			kubeappsCluster:    kubeappsCluster,
-		}, nil
+		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
+			Gvr:          repositoriesGvr,
+			ClientGetter: common.NewBackgroundClientGetter(),
+			OnAddFunc:    chartCache.wrapOnAddFunc(onAddRepo, onGetRepo),
+			OnModifyFunc: onModifyRepo,
+			OnGetFunc:    onGetRepo,
+			OnDeleteFunc: onDeleteRepo,
+		}
+		if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli); err != nil {
+			return nil, err
+		} else {
+			return &Server{
+				clientGetter:       common.NewClientGetter(configGetter, kubeappsCluster),
+				actionConfigGetter: common.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
+				repoCache:          repoCache,
+				chartCache:         chartCache,
+				kubeappsCluster:    kubeappsCluster,
+			}, nil
+		}
 	}
 }
 
@@ -89,7 +97,7 @@ func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error
 	}
 	dynamicClient, _, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 	return dynamicClient, nil
 }
@@ -148,6 +156,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 //  accessible to the user are available to be installed in the target namespace.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
+	defer log.Infof("-fluxv2 GetAvailablePackageSummaries")
 
 	// grpc compiles in getters for you which automatically return a default (empty) struct if the pointer was nil
 	cluster := request.GetContext().GetCluster()
@@ -159,7 +168,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := common.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
@@ -221,7 +230,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
+	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +245,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	tarUrl, err, cleanUp := s.getChartTarball(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
+	tarUrl, cleanUp, err := s.getChartTarballUrl(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
 	if cleanUp != nil {
 		defer cleanUp()
 	}
@@ -268,6 +277,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 // GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageVersions [%v]", request)
+	defer log.Infof("-fluxv2 GetAvailablePackageVersions")
 
 	if request.GetPkgVersion() != "" {
 		return nil, status.Errorf(
@@ -290,7 +300,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 			cluster)
 	}
 
-	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
+	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +325,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetInstalledPackageSummaries [%v]", request)
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := common.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
@@ -485,4 +495,46 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	} else {
 		return &corev1.DeleteInstalledPackageResponse{}, nil
 	}
+}
+
+// GetInstalledPackageResourceRefs returns the references for the Kubernetes
+// resources created by an installed package.
+func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
+	pkgRef := request.GetInstalledPackageRef()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
+	identifier := pkgRef.GetIdentifier()
+	log.Infof("+fluxv2 GetResourceRefs %s %s", contextMsg, identifier)
+
+	namespace := pkgRef.GetContext().GetNamespace()
+
+	actionConfig, err := s.actionConfigGetter(ctx, request.GetInstalledPackageRef().GetContext().GetNamespace())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
+
+	// Grab the released manifest from the release.
+	// TODO(minelson): We're currently getting the resource refs for a package
+	// install by checking the helm manifest, as we do for the helm plugin. With
+	// certain assumptions about the RBAC of the Kubeapps user, we may be able
+	// to instead query for labelled resources. See the discussion following for
+	// more details:
+	// https://github.com/kubeapps/kubeapps/pull/3811#issuecomment-977689570
+	getcmd := action.NewGet(actionConfig)
+	release, err := getcmd.Run(identifier)
+	if err != nil {
+		if err == driver.ErrReleaseNotFound {
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+		}
+		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
+	}
+
+	refs, err := resourceRefsFromManifest(release.Manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetInstalledPackageResourceRefsResponse{
+		Context:      pkgRef.GetContext(),
+		ResourceRefs: refs,
+	}, nil
 }

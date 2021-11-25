@@ -15,11 +15,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	goerrs "errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,9 +35,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
-	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -118,11 +121,11 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
-	if !checkGeneration(unstructuredRelease) {
+	if !common.CheckGeneration(unstructuredRelease) {
 		return nil, nil
 	}
 
-	name, err := namespacedName(unstructuredRelease)
+	name, err := common.NamespacedName(unstructuredRelease)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +222,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		}
 	}
 
-	log.V(4).Infof("installedPackageDetail:\n[%s]", prettyPrintMap(unstructuredRelease.Object))
+	log.V(4).Infof("installedPackageDetail:\n[%s]", common.PrettyPrintMap(unstructuredRelease.Object))
 
 	obj := unstructuredRelease.Object
 	var pkgVersionRef *corev1.VersionReference
@@ -337,7 +340,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	unescapedChartID, err := getUnescapedChartID(packageRef.Identifier)
+	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +376,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		}
 	}
 
-	name, err := namespacedName(newRelease.Object)
+	name, err := common.NamespacedName(newRelease.Object)
 	if err != nil {
 		return nil, err
 	}
@@ -467,7 +470,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		}
 	}
 
-	log.V(4).Infof("Updated release: %s", prettyPrintMap(unstructuredRel.Object))
+	log.V(4).Infof("Updated release: %s", common.PrettyPrintMap(unstructuredRel.Object))
 
 	return &corev1.InstalledPackageReference{
 		Context: &corev1.Context{
@@ -515,7 +518,7 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 //       otherwise pending or unspecified when there are no status conditions to go by
 //
 func isHelmReleaseReady(unstructuredObj map[string]interface{}) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
-	if !checkGeneration(unstructuredObj) {
+	if !common.CheckGeneration(unstructuredObj) {
 		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
 	}
 
@@ -600,7 +603,7 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 	repoNamespace, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	// CrossNamespaceObjectReference namespace is optional, so
 	if !found || err != nil || repoNamespace == "" {
-		name, err := namespacedName(unstructuredRelease)
+		name, err := common.NamespacedName(unstructuredRelease)
 		if err != nil {
 			return nil, err
 		}
@@ -672,4 +675,54 @@ func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, ve
 		return nil, err
 	}
 	return &unstructuredRel, nil
+}
+
+// resourceRefsFromManifest returns the resource refs for a given yaml manifest.
+func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
+	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
+	refs := []*corev1.ResourceRef{}
+	doc := yamlResource{}
+	for {
+		err := decoder.Decode(&doc)
+		if err != nil {
+			if goerrs.Is(err, io.EOF) {
+				break
+			}
+			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
+		}
+		if doc.Kind == "" {
+			continue
+		}
+		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
+			for _, i := range doc.Items {
+				refs = append(refs, &corev1.ResourceRef{
+					ApiVersion: i.APIVersion,
+					Kind:       i.Kind,
+					Name:       i.Metadata.Name,
+					Namespace:  i.Metadata.Namespace,
+				})
+			}
+			continue
+		}
+		refs = append(refs, &corev1.ResourceRef{
+			ApiVersion: doc.APIVersion,
+			Kind:       doc.Kind,
+			Name:       doc.Metadata.Name,
+			Namespace:  doc.Metadata.Namespace,
+		})
+	}
+
+	return refs, nil
+}
+
+type yamlMetadata struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type yamlResource struct {
+	APIVersion string         `json:"apiVersion"`
+	Kind       string         `json:"kind"`
+	Metadata   yamlMetadata   `json:"metadata"`
+	Items      []yamlResource `json:"items"`
 }
