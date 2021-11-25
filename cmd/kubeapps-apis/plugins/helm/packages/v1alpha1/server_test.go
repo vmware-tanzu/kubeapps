@@ -2384,6 +2384,44 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	}
 }
 
+func TestChartTarballURLBuild(t *testing.T) {
+	testCases := []struct {
+		name         string
+		repo         *models.Repo
+		chartVersion *models.ChartVersion
+		expectedUrl  string
+	}{
+		{
+			name:         "tarball url with relative URL without leading slash in chart",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+		{
+			name:         "tarball url with relative URL with leading slash in chart",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"/chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+		{
+			name:         "tarball url with absolute URL",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"https://demo.repo/repo1/chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tarballUrl := chartTarballURL(tc.repo, *tc.chartVersion)
+
+			if got, want := tarballUrl, tc.expectedUrl; got != want {
+				t.Fatalf("got: %+v, want: %+v", got, want)
+			}
+		})
+	}
+}
+
 // newActionConfigFixture returns an action.Configuration with fake clients
 // and memory storage.
 func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) *action.Configuration {

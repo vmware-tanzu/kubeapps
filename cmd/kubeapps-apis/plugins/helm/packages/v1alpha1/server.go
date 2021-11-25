@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -1086,7 +1087,8 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 		// The tarball URL will always be the first URL in the repo.chartVersions:
 		// https://helm.sh/docs/topics/chart_repository/#the-index-file
 		// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
-		tarballURL = cachedChart.ChartVersions[0].URLs[0]
+		tarballURL = chartTarballURL(cachedChart.Repo, cachedChart.ChartVersions[0])
+		log.Infof("using chart tarball url %q", tarballURL)
 	}
 
 	// Grab the chart itself
@@ -1112,6 +1114,20 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	}
 
 	return ch, registrySecrets, nil
+}
+
+func chartTarballURL(r *models.Repo, cv models.ChartVersion) string {
+	source := strings.TrimSpace(cv.URLs[0])
+	parsedUrl, err := url.ParseRequestURI(source)
+	if err != nil || parsedUrl.Scheme == "" {
+		// If the chart URL is not absolute, join with repo URL. It's fine if the
+		// URL we build here is invalid as we can catch this error when actually
+		// making the request
+		u, _ := url.Parse(r.URL)
+		u.Path = path.Join(u.Path, source)
+		return u.String()
+	}
+	return source
 }
 
 // DeleteInstalledPackage deletes an installed package.
