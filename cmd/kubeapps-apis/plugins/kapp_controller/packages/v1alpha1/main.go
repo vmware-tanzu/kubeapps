@@ -39,7 +39,7 @@ func init() {
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.KubernetesConfigGetter,
 	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
-	svr := NewServer(configGetter)
+	svr := NewServer(configGetter, clustersConfig.KubeappsClusterName)
 	v1alpha1.RegisterKappControllerPackagesServiceServer(s, svr)
 	return svr, nil
 }

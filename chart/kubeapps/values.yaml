@@ -1598,7 +1598,7 @@ kubeappsapis:
   ## enabledPlugins:
   ## - helm
   ## - fluxv2
-  ## - kapp_controller
+  ## - kapp-controller
   ##
   enabledPlugins:
     - helm
