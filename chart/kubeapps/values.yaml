@@ -1516,7 +1516,6 @@ clusters:
 ## @param featureFlags [object] Feature flags (used to switch on development features)
 ##
 featureFlags:
-  invalidateCache: true
 ## RBAC configuration
 ##
 rbac:
