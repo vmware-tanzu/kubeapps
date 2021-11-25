@@ -31,12 +31,12 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/arschles/assert"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
+	"github.com/stretchr/testify/assert"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
@@ -82,7 +82,7 @@ func Test_resolveChartURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			chartURL, err := resolveChartURL(tt.baseURL, tt.chartURL)
-			assert.NoErr(t, err)
+			assert.NoError(t, err)
 			assert.Equal(t, chartURL, tt.wantedURL, "url")
 		})
 	}
@@ -602,7 +602,7 @@ func TestGetChart(t *testing.T) {
 	t.Run("it should fail if the netClient is not instantiated", func(t *testing.T) {
 		cli := NewChartClient("")
 		_, err := cli.GetChart(nil, "")
-		assert.Err(t, fmt.Errorf("unable to retrieve chart, Init should be called first"), err)
+		assert.Error(t, fmt.Errorf("unable to retrieve chart, Init should be called first"), err)
 	})
 }
 
@@ -914,7 +914,7 @@ func TestOCIClient(t *testing.T) {
 	t.Run("GetChart - Fails if the puller has not been instantiated", func(t *testing.T) {
 		cli := NewOCIClient("foo")
 		_, err := cli.GetChart(nil, "")
-		assert.Err(t, fmt.Errorf("unable to retrieve chart, Init should be called first"), err)
+		assert.Error(t, fmt.Errorf("unable to retrieve chart, Init should be called first"), err)
 	})
 
 	t.Run("GetChart - Fails if the URL is not valid", func(t *testing.T) {
@@ -929,7 +929,7 @@ func TestOCIClient(t *testing.T) {
 	t.Run("GetChart - Returns a chart", func(t *testing.T) {
 		cli := NewOCIClient("foo")
 		data, err := ioutil.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{
 			ExpectedName: "foo/bar/nginx:5.1.1",
 			Content:      map[string]*bytes.Buffer{"5.1.1": bytes.NewBuffer(data)},
