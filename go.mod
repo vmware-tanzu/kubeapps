@@ -3,6 +3,9 @@ module github.com/kubeapps/kubeapps
 go 1.17
 
 replace (
+	// required by https://github.com/kubernetes/code-generator/blob/master/go.mod
+	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.5.5
+
 	// k8s.io/kubernetes is not intended to be used as a module, so versions are not being properly resolved.
 	// This replacement is required, see https://github.com/kubernetes/kubernetes/issues/79384
 	// As we support new k8s versions, this replacements should be also updated accordingly.
