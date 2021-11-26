@@ -36,6 +36,7 @@ import (
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
@@ -513,6 +514,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		chartClientFactory: &fake.ChartClientFactory{},
 		versionsInSummary: VersionsInSummary{MajorVersionsInSummary,
 			MinorVersionsInSummary, PatchVersionsInSummary},
+		createReleaseFunc: agent.CreateRelease,
 	}, mock, cleanup
 }
 
