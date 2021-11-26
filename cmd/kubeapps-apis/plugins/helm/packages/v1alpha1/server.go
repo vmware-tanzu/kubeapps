@@ -76,6 +76,8 @@ type VersionsInSummary struct {
 	Patch int `json:"patch"`
 }
 
+type createRelease func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
+
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedHelmPackagesServiceServer
@@ -90,7 +92,7 @@ type Server struct {
 	chartClientFactory       chartutils.ChartClientFactoryInterface
 	versionsInSummary        VersionsInSummary
 	timeoutSeconds           int32
-	createReleaseFunc        func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
+	createReleaseFunc        createRelease
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
