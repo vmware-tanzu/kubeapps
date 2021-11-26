@@ -24,6 +24,8 @@ const appsReducer = (
       };
     case getType(actions.apps.errorApp):
       return { ...state, isFetching: false, error: action.payload };
+    case getType(actions.apps.clearErrorApp):
+      return { ...state, error: undefined };
     case getType(actions.apps.selectApp):
       /* eslint-disable-next-line no-case-declarations */
       let revision: number;

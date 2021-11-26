@@ -153,7 +153,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.21.3-debian-10-r50
+    tag: 1.21.4-debian-10-r21
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -877,6 +877,10 @@ apprepository:
 ## Kubeops parameters
 ##
 kubeops:
+  ## @param kubeops.enabled Specifies whether this component should be installed.
+  ## In a future release we will be setting this to default to false.
+  ##
+  enabled: true
   ## Bitnami Kubeops image
   ## ref: https://hub.docker.com/r/bitnami/kubeops/tags/
   ## @param kubeops.image.registry Kubeops image registry
@@ -1512,7 +1516,6 @@ clusters:
 ## @param featureFlags [object] Feature flags (used to switch on development features)
 ##
 featureFlags:
-  invalidateCache: true
 ## RBAC configuration
 ##
 rbac:
@@ -1531,7 +1534,7 @@ rbac:
 testImage:
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.21.3-debian-10-r50
+  tag: 1.21.4-debian-10-r21
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1598,7 +1601,7 @@ kubeappsapis:
   ## enabledPlugins:
   ## - helm
   ## - fluxv2
-  ## - kapp_controller
+  ## - kapp-controller
   ##
   enabledPlugins:
     - helm

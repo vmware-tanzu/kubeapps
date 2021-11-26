@@ -19,8 +19,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/arschles/assert"
 	"github.com/kubeapps/kubeapps/pkg/tarutil/test"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_extractFilesFromTarball(t *testing.T) {
@@ -43,7 +43,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 			r := bytes.NewReader(b.Bytes())
 			tarf := tar.NewReader(r)
 			files, err := ExtractFilesFromTarball(map[string]string{tt.filename: tt.filename}, tarf)
-			assert.NoErr(t, err)
+			assert.NoError(t, err)
 			assert.Equal(t, files[tt.filename], tt.want, "file body")
 		})
 	}
@@ -55,7 +55,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 		r := bytes.NewReader(b.Bytes())
 		tarf := tar.NewReader(r)
 		files, err := ExtractFilesFromTarball(map[string]string{tFiles[0].Name: tFiles[0].Name, tFiles[1].Name: tFiles[1].Name}, tarf)
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(files), 2, "matches")
 		for _, f := range tFiles {
 			assert.Equal(t, files[f.Name], f.Body, "file body")
@@ -69,7 +69,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 		tarf := tar.NewReader(r)
 		name := "file2.txt"
 		files, err := ExtractFilesFromTarball(map[string]string{name: name}, tarf)
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, files[name], "", "file body")
 	})
 
@@ -80,7 +80,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 		tarf := tar.NewReader(r)
 		values := "values"
 		files, err := ExtractFilesFromTarball(map[string]string{values: "file2.txt"}, tarf)
-		assert.Err(t, io.ErrUnexpectedEOF, err)
+		assert.Error(t, io.ErrUnexpectedEOF, err)
 		assert.Equal(t, len(files), 0, "file body")
 	})
 }

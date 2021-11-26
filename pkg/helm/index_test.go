@@ -16,8 +16,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/arschles/assert"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/stretchr/testify/assert"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
@@ -33,13 +33,13 @@ func Test_parseRepoIndex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := parseRepoIndex([]byte(tt.repoYAML))
-			assert.ExistsErr(t, err, tt.name)
+			assert.Error(t, err, tt.name)
 		})
 	}
 
 	t.Run("valid", func(t *testing.T) {
 		index, err := parseRepoIndex([]byte(validRepoIndexYAML))
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(index.Entries), 2, "number of charts")
 		assert.Equal(t, index.Entries["acs-engine-autoscaler"][0].Name, "acs-engine-autoscaler", "chart version populated")
 	})
@@ -48,7 +48,7 @@ func Test_parseRepoIndex(t *testing.T) {
 func Test_chartsFromIndex(t *testing.T) {
 	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
 	charts, err := ChartsFromIndex([]byte(validRepoIndexYAML), r, false)
-	assert.NoErr(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(charts), 2, "number of charts")
 
 	indexWithDeprecated := validRepoIndexYAML + `
@@ -56,7 +56,7 @@ func Test_chartsFromIndex(t *testing.T) {
   - name: deprecated-chart
     deprecated: true`
 	charts, err = ChartsFromIndex([]byte(indexWithDeprecated), r, false)
-	assert.NoErr(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(charts), 2, "number of charts")
 	assert.Equal(t, len(charts[1].ChartVersions), 2, "number of versions")
 }
@@ -64,7 +64,7 @@ func Test_chartsFromIndex(t *testing.T) {
 func Test_shallowChartsFromIndex(t *testing.T) {
 	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
 	charts, err := ChartsFromIndex([]byte(validRepoIndexYAML), r, true)
-	assert.NoErr(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(charts), 2, "number of charts")
 	assert.Equal(t, len(charts[1].ChartVersions), 1, "number of versions")
 }
@@ -84,7 +84,7 @@ func Test_loadRepoWithEmptyCharts(t *testing.T) {
 	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
 	indexWithEmptyChart := validRepoIndexYAML + `emptyChart: []`
 	charts, err := ChartsFromIndex([]byte(indexWithEmptyChart), r, true)
-	assert.NoErr(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(charts), 2, "number of charts")
 	assert.Equal(t, len(charts[1].ChartVersions), 1, "number of versions")
 }
