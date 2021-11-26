@@ -85,14 +85,7 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 	if err == nil {
 		return nil, fmt.Errorf("release %s already exists", name)
 	}
-	cmd := action.NewInstall(actionConfig)
-	cmd.ReleaseName = name
-	cmd.Namespace = namespace
-	if timeoutSeconds > 0 {
-		// Given that `cmd.Wait` is not used, this timeout will only affect pre/post hooks
-		cmd.Timeout = time.Duration(timeoutSeconds) * time.Second
-	}
-	cmd.PostRenderer, err = NewDockerSecretsPostRenderer(registrySecrets)
+	cmd, err := newInstallCommand(actionConfig, name, namespace, registrySecrets, timeoutSeconds)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +103,23 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 		return nil, fmt.Errorf("Release %q failed and has been uninstalled: %v", name, err)
 	}
 	return release, nil
+}
+
+func newInstallCommand(actionConfig *action.Configuration, name string, namespace string,
+	registrySecrets map[string]string, timeoutSeconds int32) (*action.Install, error) {
+	cmd := action.NewInstall(actionConfig)
+	cmd.ReleaseName = name
+	cmd.Namespace = namespace
+	if timeoutSeconds > 0 {
+		// Given that `cmd.Wait` is not used, this timeout will only affect pre/post hooks
+		cmd.Timeout = time.Duration(timeoutSeconds) * time.Second
+	}
+	var err error
+	cmd.PostRenderer, err = NewDockerSecretsPostRenderer(registrySecrets)
+	if err != nil {
+		return nil, err
+	}
+	return cmd, nil
 }
 
 // UpgradeRelease upgrades a release.

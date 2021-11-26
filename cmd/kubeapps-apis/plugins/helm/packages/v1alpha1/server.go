@@ -90,6 +90,7 @@ type Server struct {
 	chartClientFactory       chartutils.ChartClientFactoryInterface
 	versionsInSummary        VersionsInSummary
 	timeoutSeconds           int32
+	createReleaseFunc        func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
@@ -217,6 +218,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		chartClientFactory:       &chartutils.ChartClientFactory{},
 		versionsInSummary:        versionsInSummary,
 		timeoutSeconds:           timeoutSeconds,
+		createReleaseFunc:        agent.CreateRelease,
 	}
 }
 
@@ -921,7 +923,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
-	release, err := agent.CreateRelease(actionConfig, request.GetName(), request.GetTargetContext().GetNamespace(), request.GetValues(), ch, registrySecrets, s.timeoutSeconds)
+	release, err := s.createReleaseFunc(actionConfig, request.GetName(), request.GetTargetContext().GetNamespace(), request.GetValues(), ch, registrySecrets, s.timeoutSeconds)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create helm release %q in the namespace %q: %v", request.GetName(), request.GetTargetContext().GetNamespace(), err)
 	}

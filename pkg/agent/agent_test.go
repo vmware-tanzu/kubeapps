@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	kubechart "github.com/kubeapps/kubeapps/pkg/chart"
@@ -729,6 +730,46 @@ func TestNewConfigFlagsFromCluster(t *testing.T) {
 			}
 
 			if got, want := config.BearerToken, tc.config.BearerToken; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
+}
+
+// Make sure that Helm command gets the timeout
+func TestNewInstallCommand(t *testing.T) {
+	testCases := []struct {
+		name     string
+		timeout  int32
+		expected time.Duration
+	}{
+		{
+			name:     "install command with no timeout",
+			timeout:  0,
+			expected: time.Duration(0),
+		},
+		{
+			name:     "install command with invalid timeout",
+			timeout:  -10,
+			expected: time.Duration(0),
+		},
+		{
+			name:     "install command with timeout",
+			timeout:  33,
+			expected: time.Duration(33) * time.Second,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newActionConfigFixture(t)
+			cmd, err := newInstallCommand(cfg, "", "", nil, tc.timeout)
+
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := cmd.Timeout, tc.expected; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})

@@ -15,20 +15,17 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/fake"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -161,20 +158,23 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 func TestTimeoutCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
-		name               string
-		releaseStub        releaseStub
-		request            *corev1.CreateInstalledPackageRequest
-		helmTimeoutSeconds int32
-		k8DelayedSeconds   int32
-		expectedStatusCode codes.Code
+		name           string
+		timeoutSeconds int32
 	}{
 		{
-			name: "Helm times out if K8s does not respond",
-			releaseStub: releaseStub{
-				chartID:       "bitnami/apache",
-				latestVersion: "1.18.3",
-			},
-			request: &corev1.CreateInstalledPackageRequest{
+			name:           "Timeout for Helm is passed to the release creation function",
+			timeoutSeconds: 33,
+		},
+		{
+			name:           "No timeout for Helm is passed to the release creation function",
+			timeoutSeconds: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			authorized := true
+			request := &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
 						Namespace: globalPackagingNamespace,
@@ -189,31 +189,49 @@ func TestTimeoutCreateInstalledPackage(t *testing.T) {
 					Version: "1.18.3",
 				},
 				Values: "{\"foo\": \"bar\"}",
-			},
-			helmTimeoutSeconds: 1,
-			k8DelayedSeconds:   3,
-			expectedStatusCode: codes.OK, // Set OK to pass while WIP. codes.DeadlineExceeded ?
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			authorized := true
-			kubeClient := &fake.DelayedKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}, Time: time.Duration(tc.k8DelayedSeconds) * time.Second}
-			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), nil, kubeClient)
+			}
+			actionConfig := newActionConfigFixture(t, request.GetTargetContext().GetNamespace(), nil, nil)
 			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "bitnami",
 					Namespace: globalPackagingNamespace,
 				},
 			})
-			server.timeoutSeconds = tc.helmTimeoutSeconds
+			server.timeoutSeconds = tc.timeoutSeconds
+
+			var effectiveTimeout int32 = -1
+			var effectiveConfig *action.Configuration
+			var effectiveName string
+			var effectiveNs string
+			// Dummy createRelease function
+			server.createReleaseFunc = func(config *action.Configuration, name string, namespace string, valueString string, ch *chart.Chart,
+				registrySecrets map[string]string, timeout int32) (*release.Release, error) {
+				effectiveConfig = config
+				effectiveTimeout = timeout
+				effectiveName = name
+				effectiveNs = namespace
+				return &release.Release{}, nil
+			}
+
 			defer cleanup()
-			populateAssetDB(t, mockDB, []releaseStub{tc.releaseStub})
+			rStub := releaseStub{
+				chartID:       "bitnami/apache",
+				latestVersion: "1.18.3",
+			}
+			populateAssetDB(t, mockDB, []releaseStub{rStub})
 
-			_, err := server.CreateInstalledPackage(context.Background(), tc.request)
+			_, err := server.CreateInstalledPackage(context.Background(), request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := effectiveTimeout, tc.timeoutSeconds; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+			if got, want := effectiveConfig, actionConfig; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+			if got, want := effectiveName, request.Name; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+			if got, want := effectiveNs, request.TargetContext.Namespace; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 		})
