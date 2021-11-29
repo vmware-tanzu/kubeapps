@@ -1307,7 +1307,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.2.0-debian-10-r5
+    tag: 7.2.0-debian-10-r32
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1616,6 +1616,7 @@ kubeappsapis:
             minor: 3
             ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.patch Number of patch versions to display in the summary
             patch: 3
+          ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.timeoutSeconds Value to wait for Kubernetes commands to complete
           timeoutSeconds: 300
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
