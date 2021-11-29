@@ -1150,7 +1150,7 @@
     "@babel/helper-plugin-utils" "^7.10.4"
     "@babel/plugin-transform-typescript" "^7.12.1"
 
-"@babel/runtime-corejs3@^7.10.2", "@babel/runtime-corejs3@^7.11.2", "@babel/runtime-corejs3@^7.14.7":
+"@babel/runtime-corejs3@^7.10.2", "@babel/runtime-corejs3@^7.11.2", "@babel/runtime-corejs3@^7.16.3":
   version "7.16.3"
   resolved "https://registry.yarnpkg.com/@babel/runtime-corejs3/-/runtime-corejs3-7.16.3.tgz#1e25de4fa994c57c18e5fdda6cc810dac70f5590"
   integrity sha512-IAdDC7T0+wEB4y2gbIL0uOXEYpiZEeuFUTVbdGq+UwCcF35T/tS8KrmMomEwEc5wBbyfH3PJVpTSUqrhPDXFcQ==
@@ -4432,15 +4432,15 @@ connect-history-api-fallback@^1.6.0:
   resolved "https://registry.yarnpkg.com/connect-history-api-fallback/-/connect-history-api-fallback-1.6.0.tgz#8b32089359308d111115d81cad3fceab888f97bc"
   integrity sha512-e54B99q/OUoH64zYYRf3HBP5z24G38h5D3qXu23JGRoigpX5Ss4r9ZnDk3g0Z8uQC2x2lPaJ+UlWBc1ZWBWdLg==
 
-connected-react-router@^6.9.1:
-  version "6.9.1"
-  resolved "https://registry.yarnpkg.com/connected-react-router/-/connected-react-router-6.9.1.tgz#d842eebaa15b9920e2e45fc03d74e41110e94e4c"
-  integrity sha512-BbtB6t0iqAwGwygDenJl9zmlk7vpKWIRSycULmkAOn2RUaF6+bqETprl0qcIqQmY5CTqSwKanaxkLXYWiffAfQ==
+connected-react-router@^6.9.2:
+  version "6.9.2"
+  resolved "https://registry.yarnpkg.com/connected-react-router/-/connected-react-router-6.9.2.tgz#f89fa87f0e977fcabf17475fb4552e170cc7e48e"
+  integrity sha512-bE8kNBiZv9Mivp7pYn9JvLH5ItTjLl45kk1/Vha0rmAK9I/ETb5JPJrAm0h2KCG9qLfv7vqU3Jo4UUDo0oJnQg==
   dependencies:
     lodash.isequalwith "^4.4.0"
     prop-types "^15.7.2"
   optionalDependencies:
-    immutable "^3.8.1 || ^4.0.0-rc.1"
+    immutable "^3.8.1 || ^4.0.0"
     seamless-immutable "^7.1.3"
 
 console-browserify@^1.1.0:
@@ -7196,7 +7196,7 @@ immer@8.0.1:
   resolved "https://registry.yarnpkg.com/immer/-/immer-8.0.1.tgz#9c73db683e2b3975c424fb0572af5889877ae656"
   integrity sha512-aqXhGP7//Gui2+UrEtvxZxSquQVXTpZ7KDxfCcKAF3Vysvw0CViVaW9RZ1j1xlIYqaaaipBoqdqeibkc18PNvA==
 
-"immutable@^3.8.1 || ^4.0.0-rc.1":
+"immutable@^3.8.1 || ^4.0.0":
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.0.0.tgz#b86f78de6adef3608395efb269a91462797e2c23"
   integrity sha512-zIE9hX70qew5qTUjSS7wi1iwj/l7+m54KWU247nhM3v806UdGj1yDndXj+IOYxxtW9zyLI+xqFNZjTuDaLUqFw==
@@ -11894,15 +11894,7 @@ react-compound-slider@^3.3.1:
     d3-array "^2.8.0"
     warning "^4.0.3"
 
-react-copy-to-clipboard@5.0.3:
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/react-copy-to-clipboard/-/react-copy-to-clipboard-5.0.3.tgz#2a0623b1115a1d8c84144e9434d3342b5af41ab4"
-  integrity sha512-9S3j+m+UxDZOM0Qb8mhnT/rMR0NGSrj9A/073yz2DSxPMYhmYFBMYIdI2X4o8AjOjyFsSNxDRnCX6s/gRxpriw==
-  dependencies:
-    copy-to-clipboard "^3"
-    prop-types "^15.5.8"
-
-react-copy-to-clipboard@^5.0.4:
+react-copy-to-clipboard@5.0.4, react-copy-to-clipboard@^5.0.4:
   version "5.0.4"
   resolved "https://registry.yarnpkg.com/react-copy-to-clipboard/-/react-copy-to-clipboard-5.0.4.tgz#42ec519b03eb9413b118af92d1780c403a5f19bf"
   integrity sha512-IeVAiNVKjSPeGax/Gmkqfa/+PuMTBhutEvFUaMQLwE2tS0EXrAdgOpWDX26bWTXF3HrioorR7lr08NqeYUWQCQ==
@@ -12210,7 +12202,7 @@ react-switch@^6.0.0:
   dependencies:
     prop-types "^15.7.2"
 
-react-syntax-highlighter@^15.4.4:
+react-syntax-highlighter@^15.4.5:
   version "15.4.5"
   resolved "https://registry.yarnpkg.com/react-syntax-highlighter/-/react-syntax-highlighter-15.4.5.tgz#db900d411d32a65c8e90c39cd64555bf463e712e"
   integrity sha512-RC90KQTxZ/b7+9iE6s9nmiFLFjWswUcfULi4GwVzdFVKVMQySkJWBuOmJFfjwjMVCo0IUUuJrWebNKyviKpwLQ==
@@ -12399,7 +12391,7 @@ redux-thunk@^2.4.0:
   resolved "https://registry.yarnpkg.com/redux-thunk/-/redux-thunk-2.4.0.tgz#ac89e1d6b9bdb9ee49ce69a69071be41bbd82d67"
   integrity sha512-/y6ZKQNU/0u8Bm7ROLq9Pt/7lU93cT0IucYMrubo89ENjxPa7i8pqLKu6V4X7/TvYovQ6x01unTeyeZ9lgXiTA==
 
-redux@^4.0.0, redux@^4.0.5, redux@^4.1.0, redux@^4.1.2:
+redux@^4.0.0, redux@^4.0.5, redux@^4.1.2:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/redux/-/redux-4.1.2.tgz#140f35426d99bb4729af760afcf79eaaac407104"
   integrity sha512-SH8PglcebESbd/shgf6mii6EIoRM0zrQyjcuQ+ojmfxjTtE0z9Y8pa62iA/OJ58qjP6j27uyW4kUF4jl/jd6sw==
@@ -13889,12 +13881,12 @@ swagger-client@^3.17.0:
     traverse "~0.6.6"
     url "~0.11.0"
 
-swagger-ui-react@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.1.0.tgz#6033d40de813b5ac2f76392be77f8b2c9d734b15"
-  integrity sha512-+25y5Hn39S6MjRbKLfdcwwe1xRdAMCNabHKDHc3LAQ0PE1xPT7aWY6KTQIOGOwsb36ev5ic5ZoUz0Wx6xeDfnQ==
+swagger-ui-react@^4.1.2:
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.1.2.tgz#c31f34193a80c7aef48f8941253dd105769269e2"
+  integrity sha512-HWsvfDviykATBpUh1Q4lvIBsnMFNaHBIw3nr7zAUUxMLzvlX6cbq4jATtM1v7MWiu9zUiE/Z/LmCc3YufTeTnw==
   dependencies:
-    "@babel/runtime-corejs3" "^7.14.7"
+    "@babel/runtime-corejs3" "^7.16.3"
     "@braintree/sanitize-url" "^5.0.2"
     base64-js "^1.5.1"
     classnames "^2.3.1"
@@ -13909,14 +13901,14 @@ swagger-ui-react@^4.1.0:
     memoizee "^0.4.15"
     prop-types "^15.7.2"
     randombytes "^2.1.0"
-    react-copy-to-clipboard "5.0.3"
+    react-copy-to-clipboard "5.0.4"
     react-debounce-input "=3.2.4"
     react-immutable-proptypes "2.2.0"
     react-immutable-pure-component "^2.2.0"
     react-inspector "^5.1.1"
     react-redux "^7.2.4"
-    react-syntax-highlighter "^15.4.4"
-    redux "^4.1.0"
+    react-syntax-highlighter "^15.4.5"
+    redux "^4.1.2"
     redux-immutable "^4.0.0"
     remarkable "^2.0.1"
     reselect "^4.0.0"
