@@ -678,7 +678,8 @@ func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, ve
 }
 
 // resourceRefsFromManifest returns the resource refs for a given yaml manifest.
-func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
+// TODO(minelson): share common functionality between plugins.
+func resourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, error) {
 	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
 	refs := []*corev1.ResourceRef{}
 	doc := yamlResource{}
@@ -695,20 +696,33 @@ func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
 		}
 		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
 			for _, i := range doc.Items {
+				namespace := i.Metadata.Namespace
+				if namespace == "" {
+					namespace = pkgNamespace
+				}
 				refs = append(refs, &corev1.ResourceRef{
 					ApiVersion: i.APIVersion,
 					Kind:       i.Kind,
 					Name:       i.Metadata.Name,
-					Namespace:  i.Metadata.Namespace,
+					Namespace:  namespace,
 				})
 			}
 			continue
+		}
+		// Helm does not require that the rendered manifest specifies the
+		// resource namespace so some charts do not do so (ldap).  We explicitly
+		// set the namespace for the resource ref so that it can be used as part
+		// of the key for the resource ref.  At the moment we do not distinguish
+		// between cluster-scoped and namespace-scoped resources for the refs.
+		namespace := doc.Metadata.Namespace
+		if namespace == "" {
+			namespace = pkgNamespace
 		}
 		refs = append(refs, &corev1.ResourceRef{
 			ApiVersion: doc.APIVersion,
 			Kind:       doc.Kind,
 			Name:       doc.Metadata.Name,
-			Namespace:  doc.Metadata.Namespace,
+			Namespace:  namespace,
 		})
 	}
 
