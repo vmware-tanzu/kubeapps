@@ -1616,6 +1616,7 @@ kubeappsapis:
             minor: 3
             ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.patch Number of patch versions to display in the summary
             patch: 3
+          timeoutSeconds: 300
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
