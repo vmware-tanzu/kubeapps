@@ -44,10 +44,16 @@ import (
 func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
 	start := time.Now()
 	res, err := handler(ctx, req)
-	log.Infof("LogRequest - %s %v %s\n",
-		time.Since(start),
+
+	// Include micro seconds in timestamp
+	// Format string : [timestamp] [status code] [duration] [full path]
+	// 2021-11-29 15:10:21.642313 OK 97.752µs /kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries
+
+	fmt.Printf("%s %v %s %s\n", time.Now().Format("2006-01-02 15:04:05.000000"),
 		status.Code(err),
+		time.Since(start),
 		info.FullMethod)
+
 	return res, err
 }
 
