@@ -15,6 +15,7 @@ import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageState, IStoreState } from "../../shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
+import PackageReadme from "./PackageReadme";
 import PackageView from "./PackageView";
 
 const defaultProps = {
@@ -80,11 +81,16 @@ const defaultPackageState = {
 
 const defaultState = {
   packages: defaultPackageState,
-  config: { kubeappsCluster: "default", kubeappsNamespace: "kubeapps" } as IConfigState,
+  config: {
+    kubeappsCluster: "default",
+    kubeappsNamespace: "kubeapps",
+    skipAvailablePackageDetails: false,
+  } as IConfigState,
 } as IStoreState;
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
+
 beforeEach(() => {
   actions.packages = {
     ...actions.packages,
@@ -231,6 +237,42 @@ it("renders the home link when set", () => {
   ).toBe(true);
 });
 
+describe("when setting the skipAvailablePackageDetails option", () => {
+  it("does not redirect when skipAvailablePackageDetails is set to false", () => {
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultState,
+        config: { skipAvailablePackageDetails: false },
+      } as IStoreState),
+      <Router history={history}>
+        <Route path={routePath}>
+          <PackageView />
+        </Route>
+      </Router>,
+    );
+    expect(wrapper.containsMatchingElement(<PackageReadme />)).toBe(true);
+  });
+
+  it("redirects when skipAvailablePackageDetails is set to true", () => {
+    const history = createMemoryHistory({ initialEntries: [routePathParam] });
+    const wrapper = mountWrapper(
+      getStore({
+        ...defaultState,
+        config: { skipAvailablePackageDetails: true },
+      } as IStoreState),
+      <Router history={history}>
+        <Route path={routePath}>
+          <PackageView />
+        </Route>
+      </Router>,
+    );
+    expect(wrapper.containsMatchingElement(<PackageReadme />)).toBe(false);
+    expect(history.location.pathname).toEqual(
+      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.cluster}/${defaultProps.packageNamespace}/${defaultProps.id}/versions/${testVersion.pkgVersion}`,
+    );
+  });
+});
+
 describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
   const tests: Array<{
     expected: boolean;
@@ -277,7 +319,6 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
           </Route>
         </Router>,
       );
-
       const availablePackageMaintainers = wrapper.find(AvailablePackageMaintainers);
       expect(availablePackageMaintainers.props().githubIDAsNames).toBe(t.expected);
     });

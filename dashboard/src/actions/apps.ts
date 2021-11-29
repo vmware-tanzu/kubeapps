@@ -5,6 +5,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageSummary,
+  ResourceRef,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
@@ -61,10 +62,14 @@ export const errorApp = createAction("ERROR_APP", resolve => {
     resolve(err);
 });
 
+export const clearErrorApp = createAction("CLEAR_ERROR_APP");
+
 export const selectApp = createAction("SELECT_APP", resolve => {
-  // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
-  return (app: InstalledPackageDetail, manifest: any, details?: AvailablePackageDetail) =>
-    resolve({ app, manifest, details });
+  return (
+    app: InstalledPackageDetail,
+    resourceRefs: ResourceRef[],
+    details?: AvailablePackageDetail,
+  ) => resolve({ app, resourceRefs, details });
 });
 
 const allActions = [
@@ -80,6 +85,7 @@ const allActions = [
   requestRollbackInstalledPackage,
   receiveRollbackInstalledPackage,
   errorApp,
+  clearErrorApp,
   selectApp,
 ];
 
@@ -91,16 +97,9 @@ export function getApp(
   return async dispatch => {
     dispatch(requestApps());
     try {
-      // TODO(agamez/minelson): remove it once we enable the getting resources for
-      // an installed package in the API.
-      // TODO(minelson): Also remove conditional behaviour once resources can be
-      // fetched in both flux and helm plugins.
-      const legacyResponse =
-        installedPackageRef?.plugin?.name === PluginNames.PACKAGES_HELM
-          ? await App.getRelease(installedPackageRef)
-          : undefined;
       // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
+      const { resourceRefs } = await App.GetInstalledPackageResourceRefs(installedPackageRef);
 
       // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
@@ -121,9 +120,7 @@ export function getApp(
           ),
         );
       }
-      dispatch(
-        selectApp(installedPackageDetail!, legacyResponse?.manifest, availablePackageDetail),
-      );
+      dispatch(selectApp(installedPackageDetail!, resourceRefs, availablePackageDetail));
     } catch (e: any) {
       dispatch(errorApp(new FetchError(e.message)));
     }

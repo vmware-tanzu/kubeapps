@@ -25,6 +25,7 @@ export interface IConfig {
   theme: string;
   remoteComponentsUrl: string;
   customAppViews: ICustomAppViewIdentifier[];
+  skipAvailablePackageDetails: boolean;
 }
 
 export default class Config {

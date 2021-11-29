@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -62,10 +63,11 @@ type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
 const (
-	MajorVersionsInSummary = 3
-	MinorVersionsInSummary = 3
-	PatchVersionsInSummary = 3
-	UserAgentPrefix        = "kubeapps-apis/plugins"
+	MajorVersionsInSummary       = 3
+	MinorVersionsInSummary       = 3
+	PatchVersionsInSummary       = 3
+	UserAgentPrefix              = "kubeapps-apis/plugins"
+	DefaultTimeoutSeconds  int32 = 300
 )
 
 // Wapper struct to include three version constants
@@ -74,6 +76,8 @@ type VersionsInSummary struct {
 	Minor int `json:"minor"`
 	Patch int `json:"patch"`
 }
+
+type createRelease func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
 
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
@@ -88,10 +92,12 @@ type Server struct {
 	actionConfigGetter       helmActionConfigGetter
 	chartClientFactory       chartutils.ChartClientFactoryInterface
 	versionsInSummary        VersionsInSummary
+	timeoutSeconds           int32
+	createReleaseFunc        createRelease
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, error) {
+func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, int32, error) {
 
 	// Note at present VersionsInSummary is the only configurable option for this plugin,
 	// and if required this func can be enhaned to return helmConfig struct
@@ -103,6 +109,7 @@ func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, error) {
 			Packages struct {
 				V1alpha1 struct {
 					VersionsInSummary VersionsInSummary
+					TimeoutSeconds    int32 `json:"timeoutSeconds"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"core"`
@@ -111,15 +118,15 @@ func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, error) {
 
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		return VersionsInSummary{}, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+		return VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		return VersionsInSummary{}, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+		return VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
 	}
 
-	// return configured value of VersionsInSummary
-	return config.Core.Packages.V1alpha1.VersionsInSummary, nil
+	// return configured value
+	return config.Core.Packages.V1alpha1.VersionsInSummary, config.Core.Packages.V1alpha1.TimeoutSeconds, nil
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -149,12 +156,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		Minor: MinorVersionsInSummary,
 		Patch: PatchVersionsInSummary,
 	}
+	timeoutSeconds := DefaultTimeoutSeconds
 	if pluginConfigPath != "" {
-		versionsInSummary, err = parsePluginConfig(pluginConfigPath)
+		versionsInSummary, timeoutSeconds, err = parsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
-		log.Infof("+helm using custom packages config with %v\n", versionsInSummary)
+		log.Infof("+helm using custom packages config with %v and timeout %d\n", versionsInSummary, timeoutSeconds)
 	} else {
 		log.Infof("+helm using default config since pluginConfigPath is empty")
 	}
@@ -212,6 +220,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
 		versionsInSummary:        versionsInSummary,
+		timeoutSeconds:           timeoutSeconds,
+		createReleaseFunc:        agent.CreateRelease,
 	}
 }
 
@@ -916,7 +926,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
-	release, err := agent.CreateRelease(actionConfig, request.GetName(), request.GetTargetContext().GetNamespace(), request.GetValues(), ch, registrySecrets)
+	release, err := s.createReleaseFunc(actionConfig, request.GetName(), request.GetTargetContext().GetNamespace(), request.GetValues(), ch, registrySecrets, s.timeoutSeconds)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create helm release %q in the namespace %q: %v", request.GetName(), request.GetTargetContext().GetNamespace(), err)
 	}
@@ -988,7 +998,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
-	release, err := agent.UpgradeRelease(actionConfig, releaseName, request.GetValues(), ch, registrySecrets)
+	release, err := agent.UpgradeRelease(actionConfig, releaseName, request.GetValues(), ch, registrySecrets, s.timeoutSeconds)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to upgrade helm release %q in the namespace %q: %v", releaseName, installedRef.GetContext().GetNamespace(), err)
 	}
@@ -1086,7 +1096,8 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 		// The tarball URL will always be the first URL in the repo.chartVersions:
 		// https://helm.sh/docs/topics/chart_repository/#the-index-file
 		// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
-		tarballURL = cachedChart.ChartVersions[0].URLs[0]
+		tarballURL = chartTarballURL(cachedChart.Repo, cachedChart.ChartVersions[0])
+		log.Infof("using chart tarball url %q", tarballURL)
 	}
 
 	// Grab the chart itself
@@ -1114,6 +1125,20 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	return ch, registrySecrets, nil
 }
 
+func chartTarballURL(r *models.Repo, cv models.ChartVersion) string {
+	source := strings.TrimSpace(cv.URLs[0])
+	parsedUrl, err := url.ParseRequestURI(source)
+	if err != nil || parsedUrl.Scheme == "" {
+		// If the chart URL is not absolute, join with repo URL. It's fine if the
+		// URL we build here is invalid as we can catch this error when actually
+		// making the request
+		u, _ := url.Parse(r.URL)
+		u.Path = path.Join(u.Path, source)
+		return u.String()
+	}
+	return source
+}
+
 // DeleteInstalledPackage deletes an installed package.
 func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
 	installedRef := request.GetInstalledPackageRef()
@@ -1129,7 +1154,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	}
 
 	keepHistory := false
-	err = agent.DeleteRelease(actionConfig, releaseName, keepHistory)
+	err = agent.DeleteRelease(actionConfig, releaseName, keepHistory, s.timeoutSeconds)
 	if err != nil {
 		log.Errorf("error: %+v", err)
 		if errors.Is(err, driver.ErrReleaseNotFound) {
@@ -1154,7 +1179,7 @@ func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.R
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
-	release, err := agent.RollbackRelease(actionConfig, releaseName, int(request.GetReleaseRevision()))
+	release, err := agent.RollbackRelease(actionConfig, releaseName, int(request.GetReleaseRevision()), s.timeoutSeconds)
 	if err != nil {
 		if errors.Is(err, driver.ErrReleaseNotFound) {
 			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", releaseName, installedRef.GetContext().GetNamespace(), err)
@@ -1221,9 +1246,10 @@ type YAMLMetadata struct {
 }
 
 type YAMLResource struct {
-	APIVersion string       `json:"apiVersion"`
-	Kind       string       `json:"kind"`
-	Metadata   YAMLMetadata `json:"metadata"`
+	APIVersion string         `json:"apiVersion"`
+	Kind       string         `json:"kind"`
+	Metadata   YAMLMetadata   `json:"metadata"`
+	Items      []YAMLResource `json:"items"`
 }
 
 // resourceRefsFromManifest returns the resource refs for a given yaml manifest.
@@ -1239,13 +1265,26 @@ func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
 			}
 			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
 		}
-		if doc.Kind != "" {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: doc.APIVersion,
-				Kind:       doc.Kind,
-				Name:       doc.Metadata.Name,
-			})
+		if doc.Kind == "" {
+			continue
 		}
+		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
+			for _, i := range doc.Items {
+				refs = append(refs, &corev1.ResourceRef{
+					ApiVersion: i.APIVersion,
+					Kind:       i.Kind,
+					Name:       i.Metadata.Name,
+					Namespace:  i.Metadata.Namespace,
+				})
+			}
+			continue
+		}
+		refs = append(refs, &corev1.ResourceRef{
+			ApiVersion: doc.APIVersion,
+			Kind:       doc.Kind,
+			Name:       doc.Metadata.Name,
+			Namespace:  doc.Metadata.Namespace,
+		})
 	}
 
 	return refs, nil

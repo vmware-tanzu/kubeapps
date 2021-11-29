@@ -118,15 +118,6 @@ export const backend = {
   canI: (cluster: string) => `api/v1/clusters/${cluster}/can-i`,
 };
 
-export const kubeops = {
-  releases: {
-    list: (cluster: string, namespace: string) =>
-      `api/kubeops/v1/clusters/${cluster}/namespaces/${namespace}/releases`,
-    get: (cluster: string, namespace: string, name: string) =>
-      `${kubeops.releases.list(cluster, namespace)}/${name}`,
-  },
-};
-
 export const api = {
   // URLs which are accessing the k8s API server directly are grouped together
   // so we can clearly differentiate and possibly begin to remove.

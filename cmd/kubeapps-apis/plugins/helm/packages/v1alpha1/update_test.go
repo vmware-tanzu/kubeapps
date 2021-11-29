@@ -171,7 +171,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases)
+			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases, nil)
 			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "bitnami",

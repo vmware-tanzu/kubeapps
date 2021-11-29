@@ -36,6 +36,7 @@ import (
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
@@ -45,6 +46,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	kube "helm.sh/helm/v3/pkg/kube"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
@@ -512,6 +514,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		chartClientFactory: &fake.ChartClientFactory{},
 		versionsInSummary: VersionsInSummary{MajorVersionsInSummary,
 			MinorVersionsInSummary, PatchVersionsInSummary},
+		createReleaseFunc: agent.CreateRelease,
 	}, mock, cleanup
 }
 
@@ -1778,11 +1781,68 @@ core:
 				}
 				filename = f.Name()
 			}
-			versions_in_summary, goterr := parsePluginConfig(filename)
+			versions_in_summary, _, goterr := parsePluginConfig(filename)
 			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
 				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
 			}
 			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+func TestParsePluginConfigTimeout(t *testing.T) {
+	testCases := []struct {
+		name           string
+		pluginYAMLConf []byte
+		exp_timeout    int32
+		exp_error_str  string
+	}{
+		{
+			name:           "no timeout specified in plugin config",
+			pluginYAMLConf: nil,
+			exp_timeout:    0,
+			exp_error_str:  "",
+		},
+		{
+			name: "specific timeout in plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      timeoutSeconds: 650
+      `),
+			exp_timeout:   650,
+			exp_error_str: "",
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			_, timeoutSeconds, goterr := parsePluginConfig(filename)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
+			}
+			if got, want := timeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})
@@ -2208,7 +2268,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetContext().GetNamespace(), tc.existingReleases)
+			actionConfig := newActionConfigFixture(t, tc.request.GetContext().GetNamespace(), tc.existingReleases, nil)
 			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
 
@@ -2352,7 +2412,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases)
+			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases, nil)
 			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
 
@@ -2384,12 +2444,54 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	}
 }
 
+func TestChartTarballURLBuild(t *testing.T) {
+	testCases := []struct {
+		name         string
+		repo         *models.Repo
+		chartVersion *models.ChartVersion
+		expectedUrl  string
+	}{
+		{
+			name:         "tarball url with relative URL without leading slash in chart",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+		{
+			name:         "tarball url with relative URL with leading slash in chart",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"/chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+		{
+			name:         "tarball url with absolute URL",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"https://demo.repo/repo1/chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tarballUrl := chartTarballURL(tc.repo, *tc.chartVersion)
+
+			if got, want := tarballUrl, tc.expectedUrl; got != want {
+				t.Fatalf("got: %+v, want: %+v", got, want)
+			}
+		})
+	}
+}
+
 // newActionConfigFixture returns an action.Configuration with fake clients
 // and memory storage.
-func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) *action.Configuration {
+func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub, kubeClient kube.Interface) *action.Configuration {
 	t.Helper()
 
 	memDriver := driver.NewMemory()
+
+	if kubeClient == nil {
+		kubeClient = &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+	}
 
 	actionConfig := &action.Configuration{
 		// Create the Releases storage explicitly so we can set the
@@ -2400,7 +2502,7 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) 
 				t.Logf(format, v...)
 			},
 		},
-		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		KubeClient:   kubeClient,
 		Capabilities: chartutil.DefaultCapabilities,
 		Log: func(format string, v ...interface{}) {
 			t.Helper()

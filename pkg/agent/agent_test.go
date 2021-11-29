@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	kubechart "github.com/kubeapps/kubeapps/pkg/chart"
@@ -191,7 +192,7 @@ func TestCreateReleases(t *testing.T) {
 				ChartName: tc.chartName,
 			}, "")
 			// Perform test
-			rls, err := CreateRelease(actionConfig, tc.chartName, tc.namespace, tc.values, ch, nil)
+			rls, err := CreateRelease(actionConfig, tc.chartName, tc.namespace, tc.values, ch, nil, 0)
 			// Check result
 			if tc.shouldFail && err == nil {
 				t.Errorf("Should fail with %v; instead got %s in %s", tc.desc, tc.releaseName, tc.namespace)
@@ -478,7 +479,7 @@ func TestDeleteRelease(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
-			err := DeleteRelease(cfg, tc.releaseToDelete, true)
+			err := DeleteRelease(cfg, tc.releaseToDelete, true, 0)
 			t.Logf("error: %v", err)
 			if didFail := err != nil; didFail != tc.shouldFail {
 				t.Errorf("wanted fail = %v, got fail = %v", tc.shouldFail, err != nil)
@@ -588,7 +589,7 @@ func TestRollbackRelease(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
 
-			newRelease, err := RollbackRelease(cfg, tc.release, tc.revision)
+			newRelease, err := RollbackRelease(cfg, tc.release, tc.revision, 0)
 			if got, want := err, tc.err; got != want {
 				t.Errorf("got: %v, want: %v", got, want)
 			}
@@ -668,7 +669,7 @@ func TestUpgradeRelease(t *testing.T) {
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
 			}, "")
-			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch, nil)
+			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch, nil, 0)
 			// Check for errors
 			if got, want := err != nil, tc.shouldFail; got != want {
 				t.Errorf("Failure: got: %v, want: %v", got, want)
@@ -729,6 +730,46 @@ func TestNewConfigFlagsFromCluster(t *testing.T) {
 			}
 
 			if got, want := config.BearerToken, tc.config.BearerToken; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
+}
+
+// Make sure that Helm command gets the timeout
+func TestNewInstallCommand(t *testing.T) {
+	testCases := []struct {
+		name     string
+		timeout  int32
+		expected time.Duration
+	}{
+		{
+			name:     "install command with no timeout",
+			timeout:  0,
+			expected: time.Duration(0),
+		},
+		{
+			name:     "install command with invalid timeout",
+			timeout:  -10,
+			expected: time.Duration(0),
+		},
+		{
+			name:     "install command with timeout",
+			timeout:  33,
+			expected: time.Duration(33) * time.Second,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newActionConfigFixture(t)
+			cmd, err := newInstallCommand(cfg, "", "", nil, tc.timeout)
+
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := cmd.Timeout, tc.expected; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})

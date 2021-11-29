@@ -78,7 +78,7 @@ Currently, the [values.yaml](../../chart/kubeapps/values.yaml) uses the followin
 
 #### 0.3.2 - Chart dependencies
 
-The chart [requirements.yaml](../../chart/kubeapps/requirements.yaml) _must_ be checked to ensure the version includes the latest dependent charts.
+The chart [dependencies](../../chart/kubeapps/Chart.yaml) _must_ be checked to ensure the version includes the latest dependent charts.
 
 - Check if the latest versions are already included by running:
 
@@ -244,7 +244,7 @@ Once the PR has been created, have a look at it (eg. remove any development chan
 
 ## 5 - Publish the GitHub release
 
-Once the new version of the [Kubeapps official chart](<(https://github.com/bitnami/charts/tree/master/bitnami/kubeapps)>) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/kubeapps/kubeapps/releases).
+Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/kubeapps/kubeapps/releases).
 
 > Take into account that the chart version will be eventually published as part of the usual Bitnami release cycle. So expect this step to take a certain amount of time.
 

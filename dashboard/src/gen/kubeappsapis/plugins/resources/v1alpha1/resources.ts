@@ -109,17 +109,13 @@ export const GetResourcesRequest = {
 
   fromJSON(object: any): GetResourcesRequest {
     const message = { ...baseGetResourcesRequest } as GetResourcesRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined;
     message.resourceRefs = (object.resourceRefs ?? []).map((e: any) => ResourceRef.fromJSON(e));
-    if (object.watch !== undefined && object.watch !== null) {
-      message.watch = Boolean(object.watch);
-    } else {
-      message.watch = false;
-    }
+    message.watch =
+      object.watch !== undefined && object.watch !== null ? Boolean(object.watch) : false;
     return message;
   },
 
@@ -140,13 +136,10 @@ export const GetResourcesRequest = {
 
   fromPartial(object: DeepPartial<GetResourcesRequest>): GetResourcesRequest {
     const message = { ...baseGetResourcesRequest } as GetResourcesRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     message.resourceRefs = (object.resourceRefs ?? []).map(e => ResourceRef.fromPartial(e));
     message.watch = object.watch ?? false;
     return message;
@@ -189,16 +182,14 @@ export const GetResourcesResponse = {
 
   fromJSON(object: any): GetResourcesResponse {
     const message = { ...baseGetResourcesResponse } as GetResourcesResponse;
-    if (object.resourceRef !== undefined && object.resourceRef !== null) {
-      message.resourceRef = ResourceRef.fromJSON(object.resourceRef);
-    } else {
-      message.resourceRef = undefined;
-    }
-    if (object.manifest !== undefined && object.manifest !== null) {
-      message.manifest = Any.fromJSON(object.manifest);
-    } else {
-      message.manifest = undefined;
-    }
+    message.resourceRef =
+      object.resourceRef !== undefined && object.resourceRef !== null
+        ? ResourceRef.fromJSON(object.resourceRef)
+        : undefined;
+    message.manifest =
+      object.manifest !== undefined && object.manifest !== null
+        ? Any.fromJSON(object.manifest)
+        : undefined;
     return message;
   },
 
@@ -213,16 +204,14 @@ export const GetResourcesResponse = {
 
   fromPartial(object: DeepPartial<GetResourcesResponse>): GetResourcesResponse {
     const message = { ...baseGetResourcesResponse } as GetResourcesResponse;
-    if (object.resourceRef !== undefined && object.resourceRef !== null) {
-      message.resourceRef = ResourceRef.fromPartial(object.resourceRef);
-    } else {
-      message.resourceRef = undefined;
-    }
-    if (object.manifest !== undefined && object.manifest !== null) {
-      message.manifest = Any.fromPartial(object.manifest);
-    } else {
-      message.manifest = undefined;
-    }
+    message.resourceRef =
+      object.resourceRef !== undefined && object.resourceRef !== null
+        ? ResourceRef.fromPartial(object.resourceRef)
+        : undefined;
+    message.manifest =
+      object.manifest !== undefined && object.manifest !== null
+        ? Any.fromPartial(object.manifest)
+        : undefined;
     return message;
   },
 };

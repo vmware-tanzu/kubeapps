@@ -24,6 +24,8 @@ const appsReducer = (
       };
     case getType(actions.apps.errorApp):
       return { ...state, isFetching: false, error: action.payload };
+    case getType(actions.apps.clearErrorApp):
+      return { ...state, error: undefined };
     case getType(actions.apps.selectApp):
       /* eslint-disable-next-line no-case-declarations */
       let revision: number;
@@ -43,8 +45,7 @@ const appsReducer = (
           ...action.payload.app,
           // TODO(agamez): remove it once we have a core mechanism for rolling back
           revision: revision,
-          // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
-          manifest: action.payload.manifest,
+          apiResourceRefs: action.payload.resourceRefs,
         },
         selectedDetails: action.payload.details,
       };

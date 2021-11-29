@@ -10,7 +10,7 @@
     "compile-lang": "formatjs compile-folder lang src/locales/ --ast --format simple",
     "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && shx cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css && shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css.map public/clr-ui-dark.min.css.map && shx cp ./node_modules/@clr/ui/clr-ui.min.css.map public/clr-ui.min.css.map",
     "eject": "react-scripts eject",
-    "eslint-check": "eslint --config ./.eslintrc.json 'src/**/*.{js,ts,tsx}' --quiet --max-warnings=0",
+    "eslint-check": "eslint --config ./.eslintrc.json 'src/**/*.{js,ts,tsx}' --max-warnings=0",
     "eslint": "eslint --config ./.eslintrc.json 'src/**/*.{js,ts,tsx}' --fix --max-warnings=0",
     "extract-lang": "formatjs extract 'src/**/*.ts*' --out-file lang/en.json --id-interpolation-pattern '[sha512:contenthash:base64:6]' --format simple",
     "lint": "npm-run-all lint-css-check eslint-check",
@@ -31,9 +31,9 @@
     "@clr/ui": "^12.0.7",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.12.0",
-    "ajv": "^8.8.1",
+    "ajv": "^8.8.2",
     "axios": "^0.24.0",
-    "connected-react-router": "^6.9.1",
+    "connected-react-router": "^6.9.2",
     "fast-json-patch": "^3.1.0",
     "google-protobuf": "^3.19.1",
     "history": "^4.10.1",
@@ -52,8 +52,8 @@
     "react-diff-viewer": "^3.1.1",
     "react-dom": "^17.0.2",
     "react-helmet": "^6.1.0",
-    "react-intl": "^5.21.2",
-    "react-markdown": "^7.0.0",
+    "react-intl": "^5.22.0",
+    "react-markdown": "^7.1.1",
     "react-minimal-pie-chart": "^8.2.0",
     "react-redux": "^7.2.6",
     "react-router-dom": "^5.3.0",
@@ -68,7 +68,7 @@
     "redux-thunk": "^2.4.0",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.4.0",
-    "swagger-ui-react": "^4.1.0",
+    "swagger-ui-react": "^4.1.2",
     "typesafe-actions": "^5.1.0",
     "yaml": "^1.10.2"
   },
@@ -78,8 +78,8 @@
     "@types/enzyme": "^3.10.10",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/google-protobuf": "^3.15.5",
-    "@types/jest": "^27.0.2",
-    "@types/js-yaml": "^4.0.3",
+    "@types/jest": "^27.0.3",
+    "@types/js-yaml": "^4.0.5",
     "@types/jsonwebtoken": "^8.5.6",
     "@types/lodash": "^4.14.177",
     "@types/moxios": "^0.4.13",
@@ -104,21 +104,21 @@
     "mock-socket": "^9.0.8",
     "moxios": "^0.4.0",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.3.11",
+    "postcss": "^8.4.4",
     "postcss-scss": "^4.0.2",
     "prettier": "^2.4.1",
     "react-scripts": "^4.0.3",
     "redux-mock-store": "^1.5.4",
-    "sass": "^1.43.4",
+    "sass": "^1.43.5",
     "shx": "^0.3.3",
     "stylelint": "^14.1.0",
     "stylelint-config-idiomatic-order": "^8.1.0",
     "stylelint-config-prettier": "^9.0.3",
-    "stylelint-config-standard-scss": "^2.0.1",
+    "stylelint-config-standard-scss": "^3.0.0",
     "stylelint-scss": "^4.0.0",
     "ts-jest": "^27.0.7",
-    "ts-proto": "^1.87.0",
-    "typescript": "^4.4.4"
+    "ts-proto": "^1.92.0",
+    "typescript": "^4.5.2"
   },
   "resolutions": {
     "@babel/parser": "^7.15.3"
@@ -130,7 +130,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@cds|@clr|@lit|bail|ccount|character-entities|comma-separated-tokens|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|micromark|parse-entities|property-information|ramda|react-markdown|react-markdown|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
+      "node_modules/(?!@cds|@clr|@lit|bail|ccount|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|micromark|parse-entities|property-information|ramda|react-markdown|react-markdown|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
     ]
   },
   "browserslist": {

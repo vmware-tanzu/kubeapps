@@ -60,8 +60,8 @@ export interface Struct_FieldsEntry {
 /**
  * `Value` represents a dynamically typed value which can be either
  * null, a number, a string, a boolean, a recursive struct value, or a
- * list of values. A producer of value is expected to set one of these
- * variants. Absence of any variant indicates an error.
+ * list of values. A producer of value is expected to set one of that
+ * variants, absence of any variant indicates an error.
  *
  * The JSON representation for `Value` is JSON value.
  */
@@ -194,16 +194,11 @@ export const Struct_FieldsEntry = {
 
   fromJSON(object: any): Struct_FieldsEntry {
     const message = { ...baseStruct_FieldsEntry } as Struct_FieldsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? Value.fromJSON(object.value)
+        : undefined;
     return message;
   },
 
@@ -218,11 +213,10 @@ export const Struct_FieldsEntry = {
   fromPartial(object: DeepPartial<Struct_FieldsEntry>): Struct_FieldsEntry {
     const message = { ...baseStruct_FieldsEntry } as Struct_FieldsEntry;
     message.key = object.key ?? "";
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? Value.fromPartial(object.value)
+        : undefined;
     return message;
   },
 };
@@ -287,36 +281,30 @@ export const Value = {
 
   fromJSON(object: any): Value {
     const message = { ...baseValue } as Value;
-    if (object.nullValue !== undefined && object.nullValue !== null) {
-      message.nullValue = nullValueFromJSON(object.nullValue);
-    } else {
-      message.nullValue = undefined;
-    }
-    if (object.numberValue !== undefined && object.numberValue !== null) {
-      message.numberValue = Number(object.numberValue);
-    } else {
-      message.numberValue = undefined;
-    }
-    if (object.stringValue !== undefined && object.stringValue !== null) {
-      message.stringValue = String(object.stringValue);
-    } else {
-      message.stringValue = undefined;
-    }
-    if (object.boolValue !== undefined && object.boolValue !== null) {
-      message.boolValue = Boolean(object.boolValue);
-    } else {
-      message.boolValue = undefined;
-    }
-    if (object.structValue !== undefined && object.structValue !== null) {
-      message.structValue = Struct.fromJSON(object.structValue);
-    } else {
-      message.structValue = undefined;
-    }
-    if (object.listValue !== undefined && object.listValue !== null) {
-      message.listValue = ListValue.fromJSON(object.listValue);
-    } else {
-      message.listValue = undefined;
-    }
+    message.nullValue =
+      object.nullValue !== undefined && object.nullValue !== null
+        ? nullValueFromJSON(object.nullValue)
+        : undefined;
+    message.numberValue =
+      object.numberValue !== undefined && object.numberValue !== null
+        ? Number(object.numberValue)
+        : undefined;
+    message.stringValue =
+      object.stringValue !== undefined && object.stringValue !== null
+        ? String(object.stringValue)
+        : undefined;
+    message.boolValue =
+      object.boolValue !== undefined && object.boolValue !== null
+        ? Boolean(object.boolValue)
+        : undefined;
+    message.structValue =
+      object.structValue !== undefined && object.structValue !== null
+        ? Struct.fromJSON(object.structValue)
+        : undefined;
+    message.listValue =
+      object.listValue !== undefined && object.listValue !== null
+        ? ListValue.fromJSON(object.listValue)
+        : undefined;
     return message;
   },
 
@@ -341,16 +329,14 @@ export const Value = {
     message.numberValue = object.numberValue ?? undefined;
     message.stringValue = object.stringValue ?? undefined;
     message.boolValue = object.boolValue ?? undefined;
-    if (object.structValue !== undefined && object.structValue !== null) {
-      message.structValue = Struct.fromPartial(object.structValue);
-    } else {
-      message.structValue = undefined;
-    }
-    if (object.listValue !== undefined && object.listValue !== null) {
-      message.listValue = ListValue.fromPartial(object.listValue);
-    } else {
-      message.listValue = undefined;
-    }
+    message.structValue =
+      object.structValue !== undefined && object.structValue !== null
+        ? Struct.fromPartial(object.structValue)
+        : undefined;
+    message.listValue =
+      object.listValue !== undefined && object.listValue !== null
+        ? ListValue.fromPartial(object.listValue)
+        : undefined;
     return message;
   },
 };
