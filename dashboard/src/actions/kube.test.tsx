@@ -5,7 +5,11 @@ import ResourceRef, { fromCRD } from "shared/ResourceRef";
 import { IClusterServiceVersionCRD, IKubeState, IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  InstalledPackageReference,
+  ResourceRef as APIResourceRef,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 
 const mockStore = configureMockStore([thunk]);
 const clusterName = "cluster-name";
@@ -329,5 +333,82 @@ describe("getResourceKinds", () => {
     expect(testActions).toEqual(expectedActions);
     expect(Kube.getAPIGroups).toHaveBeenCalledWith("cluster-1");
     expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", groups);
+  });
+});
+
+describe("getResources", () => {
+  it("dispatches an requestResources action", () => {
+    const refs = [
+      {
+        apiVersion: "v1",
+        kind: "Service",
+        name: "foo",
+        namespace: "default",
+      },
+    ] as APIResourceRef[];
+
+    const pkg = {
+      identifier: "test-pkg",
+    } as InstalledPackageReference;
+
+    const watch = true;
+
+    const expectedActions = [
+      {
+        type: getType(actions.kube.requestResources),
+        payload: {
+          pkg,
+          refs,
+          watch,
+          handler: expect.any(Function),
+          onError: expect.any(Function),
+        },
+      },
+    ];
+
+    store.dispatch(actions.kube.getResources(pkg, refs, watch));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("processGetResourcesResponse", () => {
+  it("dispatches a receiveResource action with the expected key", () => {
+    const expectedResource = {
+      apiVersion: "v1",
+      kind: "Service",
+      metadata: {
+        name: "foo",
+        namespace: "default",
+      },
+    } as IResource;
+
+    const getResourcesResponse = {
+      resourceRef: {
+        apiVersion: "v1",
+        kind: "Service",
+        name: "foo",
+        namespace: "default",
+      } as APIResourceRef,
+      manifest: {
+        value: new TextEncoder().encode(JSON.stringify(expectedResource)),
+        typeUrl: "",
+      },
+    } as GetResourcesResponse;
+
+    const expectedKey = "v1/Service/default/foo";
+
+    const expectedActions = [
+      {
+        type: getType(actions.kube.receiveResource),
+        payload: {
+          key: expectedKey,
+          resource: expectedResource,
+        },
+      },
+    ];
+
+    actions.kube.processGetResourcesResponse(getResourcesResponse, store.dispatch);
+
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });

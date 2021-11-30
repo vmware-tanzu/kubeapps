@@ -21,6 +21,14 @@ export function fromCRD(
   return ref;
 }
 
+// TODO: (minelson) Update to use API resourceRef type once old model removed.
+export const keyForResourceRef = (
+  apiVersion: string,
+  kind: string,
+  namespace: string,
+  name: string,
+) => `${apiVersion}/${kind}/${namespace}/${name}`;
+
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
 // provides helpers to retrieve the resource URL
 class ResourceRef {
