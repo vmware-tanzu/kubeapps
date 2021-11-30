@@ -50,8 +50,6 @@ describe("kubeReducer", () => {
       kinds: initialKinds,
       timers: {},
     };
-
-    Kube.getResources;
   });
 
   describe("reducer actions", () => {
