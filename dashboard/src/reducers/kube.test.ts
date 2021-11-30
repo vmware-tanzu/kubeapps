@@ -3,7 +3,12 @@ import { IKubeState, IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import kubeReducer, { initialKinds } from "./kube";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  Context,
+  InstalledPackageReference,
+  ResourceRef as APIResourceRef,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Kube } from "shared/Kube";
 
 const clusterName = "cluster-name";
 
@@ -41,9 +46,12 @@ describe("kubeReducer", () => {
     initialState = {
       items: {},
       sockets: {},
+      subscriptions: {},
       kinds: initialKinds,
       timers: {},
     };
+
+    Kube.getResources;
   });
 
   describe("reducer actions", () => {
@@ -317,6 +325,54 @@ describe("kubeReducer", () => {
           ...initialState,
           kindsError: new Error("nope!"),
         });
+      });
+    });
+
+    describe("requestResources", () => {
+      // Ensure our shared/Kube helper is not calling out on the network.
+      jest.mock("shared/Kube");
+
+      const pkg = {
+        context: {
+          cluster: "default",
+          namespace: "test",
+        } as Context,
+        identifier: "test-pkg",
+      } as InstalledPackageReference;
+      const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
+
+      const defaultPayload = {
+        pkg,
+        refs: [],
+        watch: false,
+        handler: jest.fn(),
+        onError: jest.fn(),
+        onComplete: jest.fn(),
+      };
+
+      it("adds a new subscription to the state for the requested package", () => {
+        const newState = kubeReducer(undefined, {
+          type: getType(actions.kube.requestResources),
+          payload: defaultPayload,
+        });
+
+        expect(newState.subscriptions[key]).toBeDefined();
+      });
+
+      it("does not create a new subscription if one exists in the state", () => {
+        const subscription = Kube.getResources(pkg, [], true).subscribe({});
+        const state = {
+          ...initialState,
+          subscriptions: {
+            [key]: subscription,
+          },
+        };
+        const newState = kubeReducer(state, {
+          type: getType(actions.kube.requestResources),
+          payload: defaultPayload,
+        });
+        expect(newState).toBe(state);
+        expect(newState.subscriptions[key]).toBe(subscription);
       });
     });
   });

@@ -362,6 +362,7 @@ describe("getResources", () => {
           watch,
           handler: expect.any(Function),
           onError: expect.any(Function),
+          onComplete: expect.any(Function),
         },
       },
     ];

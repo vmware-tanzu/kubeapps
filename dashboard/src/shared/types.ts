@@ -1,5 +1,7 @@
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
+/* eslint-disable-next-line import/no-unresolved */
+import { Subscription } from "rxjs";
 import {
   AvailablePackageDetail,
   AvailablePackageSummary,
@@ -14,6 +16,7 @@ import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
 import { IAppRepositoryState } from "../reducers/repos";
+
 class CustomError extends Error {
   // The constructor is defined so we can later on compare the returned object
   // via err.contructor  == FOO
@@ -441,6 +444,7 @@ export interface IKind {
 export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
   sockets: { [s: string]: { socket: WebSocket; onError: (e: Event) => void } };
+  subscriptions: { [s: string]: Subscription };
   kinds: { [kind: string]: IKind };
   kindsError?: Error;
   timers: { [id: string]: NodeJS.Timer | undefined };

@@ -58,11 +58,16 @@ export const requestResources = createAction("REQUEST_RESOURCES", resolve => {
     watch: boolean,
     handler: (r: GetResourcesResponse) => void,
     onError: (e: Event) => void,
-  ) => resolve({ pkg, refs, watch, handler, onError });
+    onComplete: (pkg: InstalledPackageReference) => void,
+  ) => resolve({ pkg, refs, watch, handler, onError, onComplete });
 });
 
 export const receiveResourcesError = createAction("RECEIVE_RESOURCES_ERROR", resolve => {
   return (err: Error) => resolve(err);
+});
+
+export const closeRequestResources = createAction("CLOSE_REQUEST_RESOURCES", resolve => {
+  return (pkg: InstalledPackageReference) => resolve(pkg);
 });
 
 export const addTimer = createAction("ADD_TIMER", resolve => {
@@ -81,6 +86,7 @@ const allActions = [
   closeWatchResource,
   requestResources,
   receiveResourcesError,
+  closeRequestResources,
   receiveResourceFromList,
   requestResourceKinds,
   receiveResourceKinds,
@@ -188,6 +194,9 @@ export function getResources(
         },
         (e: any) => {
           dispatch(receiveResourcesError(e));
+        },
+        (pkg: InstalledPackageReference) => {
+          dispatch(closeRequestResources(pkg));
         },
       ),
     );
