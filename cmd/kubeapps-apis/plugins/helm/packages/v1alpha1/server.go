@@ -1287,8 +1287,13 @@ func resourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 		// Helm does not require that the rendered manifest specifies the
 		// resource namespace so some charts do not do so (ldap).  We explicitly
 		// set the namespace for the resource ref so that it can be used as part
-		// of the key for the resource ref.  At the moment we do not distinguish
-		// between cluster-scoped and namespace-scoped resources for the refs.
+		// of the key for the resource ref.
+		// TODO(minelson): At the moment we do not distinguish between
+		// cluster-scoped and namespace-scoped resources for the refs.  This
+		// does not affect the resources plugin fetching them correctly, but
+		// would be better if we only set the namespace in the reference if (a)
+		// it was not set in the manifest, and (b) it is a namespace-scoped
+		// resource.
 		namespace := doc.Metadata.Namespace
 		if namespace == "" {
 			namespace = pkgNamespace
