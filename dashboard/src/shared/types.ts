@@ -1,6 +1,5 @@
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
-/* eslint-disable-next-line import/no-unresolved */
 import { Subscription } from "rxjs";
 import {
   AvailablePackageDetail,
