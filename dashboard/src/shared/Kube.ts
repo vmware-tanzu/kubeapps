@@ -2,6 +2,11 @@ import * as url from "shared/url";
 import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
 import { IK8sList, IKubeState, IResource } from "./types";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import {
+  InstalledPackageReference,
+  ResourceRef,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 export const APIBase = (cluster: string) => `api/clusters/${cluster}`;
 export let WebSocketAPIBase: string;
@@ -15,6 +20,7 @@ if (window.location.protocol === "https:") {
 // ResourceRef to interact with a single API resource rather than using Kube
 // directly.
 export class Kube {
+  private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
   public static getResourceURL(
     cluster: string,
     apiVersion: string,
@@ -92,6 +98,19 @@ export class Kube {
       this.watchResourceURL(cluster, apiVersion, resource, namespaced, namespace, name, query),
       Auth.wsProtocols(),
     );
+  }
+
+  // getResources returns a subscription to an observable for resources from the server.
+  public static getResources(
+    pkgRef: InstalledPackageReference,
+    refs: ResourceRef[],
+    watch: boolean,
+  ) {
+    return this.resourcesClient().GetResources({
+      installedPackageRef: pkgRef,
+      resourceRefs: refs,
+      watch,
+    });
   }
 
   public static async getAPIGroups(cluster: string) {

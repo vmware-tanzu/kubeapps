@@ -1,5 +1,6 @@
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import { IK8sList, IKubeState, IResource } from "shared/types";
+import { Kube } from "shared/Kube";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { KubeAction } from "../actions/kube";
@@ -120,6 +121,7 @@ export const initialKinds = {
 export const initialState: IKubeState = {
   items: {},
   kinds: initialKinds,
+  subscriptions: {},
   sockets: {},
   timers: {},
 };
@@ -204,6 +206,50 @@ const kubeReducer = (
         },
       };
     }
+    case getType(actions.kube.requestResources): {
+      const { pkg, refs, handler, watch, onError, onComplete } = action.payload;
+      const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
+      if (state.subscriptions[key]) {
+        // subscription for this resource already open, do nothing
+        // TODO(minelson): We may instead want to unsubscribe from
+        // the previous one and replace it.
+        return state;
+      }
+      const observable = Kube.getResources(pkg, refs, watch);
+      const subscription = observable.subscribe({
+        next(r) {
+          handler(r);
+        },
+        error(e) {
+          onError(e);
+        },
+        complete() {
+          onComplete(pkg);
+        },
+      });
+      return {
+        ...state,
+        subscriptions: {
+          ...state.subscriptions,
+          [key]: subscription,
+        },
+      };
+    }
+    case getType(actions.kube.closeRequestResources): {
+      const pkg = action.payload;
+      const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
+      const { subscriptions } = state;
+      const { [key]: foundSubscription, ...otherSubscriptions } = subscriptions;
+      // unsubscribe if it exists
+      if (foundSubscription !== undefined) {
+        foundSubscription.unsubscribe();
+      }
+      return {
+        ...state,
+        subscriptions: otherSubscriptions,
+      };
+    }
+
     // TODO(adnan): this won't handle cases where one component closes a socket
     // another one is using. Whilst not a problem today, a reference counter
     // approach could be used here to enable this in the future.

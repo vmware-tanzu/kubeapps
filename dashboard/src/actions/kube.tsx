@@ -1,8 +1,13 @@
-import { ThunkAction } from "redux-thunk";
+import { ThunkAction, ThunkDispatch } from "redux-thunk";
 import { Kube } from "shared/Kube";
-import ResourceRef from "shared/ResourceRef";
+import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
 import { IK8sList, IResource, IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
+import {
+  ResourceRef as APIResourceRef,
+  InstalledPackageReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 
 const { createAction } = deprecated;
 
@@ -44,6 +49,27 @@ export const closeWatchResource = createAction("CLOSE_WATCH_RESOURCE", resolve =
   return (ref: ResourceRef) => resolve(ref);
 });
 
+// requestResources takes a ResourceRef[] and subscribes to an observable to
+// process the responses as they arrive.
+export const requestResources = createAction("REQUEST_RESOURCES", resolve => {
+  return (
+    pkg: InstalledPackageReference,
+    refs: APIResourceRef[],
+    watch: boolean,
+    handler: (r: GetResourcesResponse) => void,
+    onError: (e: Event) => void,
+    onComplete: (pkg: InstalledPackageReference) => void,
+  ) => resolve({ pkg, refs, watch, handler, onError, onComplete });
+});
+
+export const receiveResourcesError = createAction("RECEIVE_RESOURCES_ERROR", resolve => {
+  return (err: Error) => resolve(err);
+});
+
+export const closeRequestResources = createAction("CLOSE_REQUEST_RESOURCES", resolve => {
+  return (pkg: InstalledPackageReference) => resolve(pkg);
+});
+
 export const addTimer = createAction("ADD_TIMER", resolve => {
   return (id: string, timer: () => void) => resolve({ id, timer });
 });
@@ -58,6 +84,9 @@ const allActions = [
   receiveResourceError,
   openWatchResource,
   closeWatchResource,
+  requestResources,
+  receiveResourcesError,
+  closeRequestResources,
   receiveResourceFromList,
   requestResourceKinds,
   receiveResourceKinds,
@@ -145,4 +174,50 @@ export function getAndWatchResource(
       ),
     );
   };
+}
+
+// getResources requests and processes the responses for the resources
+// associated with an installed package.
+export function getResources(
+  pkg: InstalledPackageReference,
+  refs: APIResourceRef[],
+  watch: boolean,
+): ThunkAction<void, IStoreState, null, KubeAction> {
+  return dispatch => {
+    dispatch(
+      requestResources(
+        pkg,
+        refs,
+        watch,
+        (r: GetResourcesResponse) => {
+          processGetResourcesResponse(r, dispatch);
+        },
+        (e: any) => {
+          dispatch(receiveResourcesError(e));
+        },
+        (pkg: InstalledPackageReference) => {
+          dispatch(closeRequestResources(pkg));
+        },
+      ),
+    );
+  };
+}
+
+export function processGetResourcesResponse(
+  r: GetResourcesResponse,
+  dispatch: ThunkDispatch<IStoreState, null, KubeAction>,
+) {
+  if (!r.resourceRef) {
+    dispatch(receiveResourcesError(new Error("received resource without a resource reference")));
+    return;
+  }
+  const key = keyForResourceRef(
+    r.resourceRef!.apiVersion,
+    r.resourceRef!.kind,
+    r.resourceRef!.namespace,
+    r.resourceRef!.name,
+  );
+  const manifest = new TextDecoder().decode(r.manifest!.value);
+  const resource: IResource = JSON.parse(manifest);
+  dispatch(receiveResource({ key, resource }));
 }
