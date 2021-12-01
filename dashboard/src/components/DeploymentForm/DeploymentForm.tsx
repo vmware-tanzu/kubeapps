@@ -1,5 +1,6 @@
-import { CdsFormGroup } from "@cds/react/forms";
+import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
+import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import Alert from "components/js/Alert";
@@ -17,6 +18,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
+import { PluginNames } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 
@@ -52,10 +54,17 @@ export default function DeploymentForm() {
   const [releaseName, setReleaseName] = useState("");
   const [appValues, setAppValues] = useState(selectedPackage.values || "");
   const [valuesModified, setValuesModified] = useState(false);
+  const [serviceAccount, setServiceAccount] = useState("");
 
   const error = apps.error || selectedPackage.error;
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
+
+  const serviceAccountList = ["placeholder1", "placeholder2"];
+
+  const onChangeSA = (e: React.FormEvent<HTMLSelectElement>) => {
+    setServiceAccount(e.currentTarget.value);
+  };
 
   const [packageReference] = useState({
     context: {
@@ -192,6 +201,29 @@ export default function DeploymentForm() {
                     required={true}
                   />
                 </CdsInput>
+                {
+                  // TODO(agamez): let plugins define their own components instead of hardcoding the logic here
+                  pluginObj.name === PluginNames.PACKAGES_KAPP ? (
+                    <>
+                      <CdsSelect layout="horizontal" id="serviceaccount-selector">
+                        <label>Service Account</label>
+                        <select value={serviceAccount} onChange={onChangeSA}>
+                          <option key=""></option>
+                          {serviceAccountList.map(o => (
+                            <option key={o} value={o}>
+                              {o}
+                            </option>
+                          ))}
+                        </select>
+                        <CdsControlMessage error="valueMissing">
+                          Select the Service Account this application will be installed with.
+                        </CdsControlMessage>
+                      </CdsSelect>
+                    </>
+                  ) : (
+                    <></>
+                  )
+                }
               </CdsFormGroup>
               <DeploymentFormBody
                 deploymentEvent="install"
