@@ -219,7 +219,7 @@ export default function AppView() {
     return function cleanup() {
       actions.kube.closeRequestResources(app!.installedPackageRef!);
     };
-  }, [dispatch, app?.apiResourceRefs]);
+  }, [dispatch, app]);
 
   const forceRetry = () => {
     dispatch(actions.apps.clearErrorApp());
