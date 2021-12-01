@@ -337,7 +337,7 @@ describe("getResourceKinds", () => {
 });
 
 describe("getResources", () => {
-  it("dispatches an requestResources action", () => {
+  it("dispatches a requestResources action", () => {
     const refs = [
       {
         apiVersion: "v1",
@@ -405,6 +405,35 @@ describe("processGetResourcesResponse", () => {
           key: expectedKey,
           resource: expectedResource,
         },
+      },
+    ];
+
+    actions.kube.processGetResourcesResponse(getResourcesResponse, store.dispatch);
+
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error action if the resourceRef is missing", () => {
+    const expectedResource = {
+      apiVersion: "v1",
+      kind: "Service",
+      metadata: {
+        name: "foo",
+        namespace: "default",
+      },
+    } as IResource;
+
+    const getResourcesResponse = {
+      manifest: {
+        value: new TextEncoder().encode(JSON.stringify(expectedResource)),
+        typeUrl: "",
+      },
+    } as GetResourcesResponse;
+
+    const expectedActions = [
+      {
+        type: getType(actions.kube.receiveResourcesError),
+        payload: new Error("received resource without a resource reference"),
       },
     ];
 

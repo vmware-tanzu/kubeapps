@@ -21,7 +21,7 @@ export function fromCRD(
   return ref;
 }
 
-// TODO: (minelson) Update to use API resourceRef type once old model removed.
+// TODO(minelson): Update to use API resourceRef type once old model removed.
 export const keyForResourceRef = (
   apiVersion: string,
   kind: string,

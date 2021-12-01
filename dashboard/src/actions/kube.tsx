@@ -207,6 +207,10 @@ export function processGetResourcesResponse(
   r: GetResourcesResponse,
   dispatch: ThunkDispatch<IStoreState, null, KubeAction>,
 ) {
+  if (!r.resourceRef) {
+    dispatch(receiveResourcesError(new Error("received resource without a resource reference")))
+    return
+  }
   const key = keyForResourceRef(
     r.resourceRef!.apiVersion,
     r.resourceRef!.kind,
