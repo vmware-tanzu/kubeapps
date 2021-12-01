@@ -460,6 +460,9 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	if request.GetTargetContext() == nil || request.GetTargetContext().GetNamespace() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
 	}
+	if request.GetReconciliationOptions() == nil || request.GetReconciliationOptions().GetServiceAccountName() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request ReconciliationOptions serviceAccountName provided")
+	}
 
 	// Retrieve the proper parameters from the request
 	packageRef := request.GetAvailablePackageRef()
