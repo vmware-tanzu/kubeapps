@@ -5,6 +5,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageSummary,
+  ReconciliationOptions,
   ResourceRef,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -171,6 +172,7 @@ export function installPackage(
   releaseName: string,
   values?: string,
   schema?: JSONSchemaType<any>,
+  reconciliationOptions?: ReconciliationOptions,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestInstallPackage());
@@ -196,6 +198,7 @@ export function installPackage(
           availablePackageDetail.availablePackageRef,
           { version: availablePackageDetail.version.pkgVersion } as VersionReference,
           values,
+          reconciliationOptions as ReconciliationOptions,
         );
         dispatch(receiveInstallPackage());
         return true;
