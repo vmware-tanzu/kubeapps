@@ -12,14 +12,14 @@
   "dependencies": {
     "@jest/test-sequencer": "^27.4.2",
     "axios": "^0.24.0",
-    "expect-puppeteer": "^6.0.0",
+    "expect-puppeteer": "^6.0.2",
     "jest": "^27.4.2",
     "jest-circus": "^27.4.2",
-    "jest-puppeteer": "^6.0.1",
+    "jest-puppeteer": "^6.0.2",
     "puppeteer": "^12.0.1",
     "wait-on": "^6.0.0"
   },
   "devDependencies": {
-    "prettier": "^2.4.1"
+    "prettier": "^2.5.0"
   }
 }
