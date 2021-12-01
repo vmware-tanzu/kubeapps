@@ -2294,12 +2294,12 @@
   resolved "https://registry.yarnpkg.com/@types/minimist/-/minimist-1.2.2.tgz#ee771e2ba4b3dc5b372935d549fd9617bf345b8c"
   integrity sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==
 
-"@types/moxios@^0.4.13":
-  version "0.4.13"
-  resolved "https://registry.yarnpkg.com/@types/moxios/-/moxios-0.4.13.tgz#e3b3b0c0466d3a5032a4cb191191ef70d4562a30"
-  integrity sha512-9bwC3Jyu9CxTuLGVZKwiTHtlrIWOpDLO6Zf0JsReaOFrSwS8AD1bmhui9HF3ZdBOoTq1baC03vSjmchDTAKtEQ==
+"@types/moxios@^0.4.14":
+  version "0.4.14"
+  resolved "https://registry.yarnpkg.com/@types/moxios/-/moxios-0.4.14.tgz#38ed0cdedeb6abcb5a4e087e3e2be2d2a036a052"
+  integrity sha512-YUfHi11hgmu7+nRoPf7wzNOuqNgMjCT8Sui3KB+HjKWYwixCgyTcSeLLPXfR4f1BTlPC5xrrEIRCWffh/3aJ6A==
   dependencies:
-    axios "^0.21.4"
+    axios "^0.24.0"
 
 "@types/ms@*":
   version "0.7.31"
@@ -3345,13 +3345,6 @@ axe-core@^4.3.5:
   version "4.3.5"
   resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.3.5.tgz#78d6911ba317a8262bfee292aeafcc1e04b49cc5"
   integrity sha512-WKTW1+xAzhMS5dJsxWkliixlO/PqC4VhmO9T4juNYcaTg9jzWiJsou6m5pxWYGfigWbwzJWeFY6z47a+4neRXA==
-
-axios@^0.21.4:
-  version "0.21.4"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.4.tgz#c67b90dc0568e5c1cf2b0b858c43ba28e2eda575"
-  integrity sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==
-  dependencies:
-    follow-redirects "^1.14.0"
 
 axios@^0.24.0:
   version "0.24.0"
@@ -6388,7 +6381,7 @@ flush-write-stream@^1.0.0:
     inherits "^2.0.3"
     readable-stream "^2.3.6"
 
-follow-redirects@^1.0.0, follow-redirects@^1.14.0, follow-redirects@^1.14.4:
+follow-redirects@^1.0.0, follow-redirects@^1.14.4:
   version "1.14.5"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.5.tgz#f09a5848981d3c772b5392309778523f8d85c381"
   integrity sha512-wtphSXy7d4/OR+MvIFbCVBDzZ5520qV8XfPklSN5QtxuMUJZ+b0Wnst1e1lCDocfzuCkHqj8k0FpZqO+UIaKNA==
