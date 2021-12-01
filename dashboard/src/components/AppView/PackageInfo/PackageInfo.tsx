@@ -12,22 +12,47 @@ function PackageInfo({ installedPackageDetail, availablePackageDetail }: IPackag
   return (
     <section className="left-menu">
       {installedPackageDetail && (
-        <section className="left-menu-subsection" aria-labelledby="packageinfo-versions">
-          <h5 className="left-menu-subsection-title" id="packageinfo-versions">
-            Versions
-          </h5>
-          <div>
-            {installedPackageDetail.currentVersion?.appVersion && (
+        <>
+          <section className="left-menu-subsection" aria-labelledby="packageinfo-versions">
+            <h5 className="left-menu-subsection-title" id="packageinfo-versions">
+              Versions
+            </h5>
+            <div>
+              {installedPackageDetail.currentVersion?.appVersion && (
+                <div>
+                  App Version: <strong>{installedPackageDetail.currentVersion?.appVersion}</strong>
+                </div>
+              )}
+              <span>
+                Package Version:{" "}
+                <strong>{installedPackageDetail.currentVersion?.pkgVersion}</strong>
+              </span>
+            </div>
+            <PackageUpdateInfo installedPackageDetail={installedPackageDetail} />
+          </section>
+          {installedPackageDetail.reconciliationOptions && (
+            <section className="left-menu-subsection" aria-labelledby="packageinfo-versions">
+              <h5 className="left-menu-subsection-title" id="packageinfo-versions">
+                Reconciliation Options
+              </h5>
               <div>
-                App Version: <strong>{installedPackageDetail.currentVersion?.appVersion}</strong>
+                <>
+                  {" "}
+                  <div>
+                    Service Account:{" "}
+                    <strong>
+                      {installedPackageDetail.reconciliationOptions.serviceAccountName}
+                    </strong>
+                  </div>
+                  <div>
+                    Interval:{" "}
+                    <strong>{installedPackageDetail.reconciliationOptions.interval} seconds</strong>
+                  </div>
+                </>
               </div>
-            )}
-            <span>
-              Package Version: <strong>{installedPackageDetail.currentVersion?.pkgVersion}</strong>
-            </span>
-          </div>
-          <PackageUpdateInfo installedPackageDetail={installedPackageDetail} />
-        </section>
+            </section>
+          )}
+        </>
       )}
       {availablePackageDetail && (
         <>
