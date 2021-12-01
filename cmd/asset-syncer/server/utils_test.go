@@ -1296,6 +1296,101 @@ func Test_filterCharts(t *testing.T) {
 	}
 }
 
+func TestUnescapeChartsData(t *testing.T) {
+	tests := []struct {
+		description string
+		input       []models.Chart
+		expected    []models.Chart
+	}{
+		{
+			"chart with encoded spaces in id",
+			[]models.Chart{
+				{ID: "foo%20bar"},
+			},
+			[]models.Chart{
+				{ID: "foo bar"},
+			},
+		},
+		{
+			"chart with encoded spaces in name",
+			[]models.Chart{
+				{Name: "foo%20bar"},
+			},
+			[]models.Chart{
+				{Name: "foo bar"},
+			},
+		},
+		{
+			"chart with mixed encoding in name",
+			[]models.Chart{
+				{Name: "test/foo%20bar"},
+			},
+			[]models.Chart{
+				{Name: "test/foo bar"},
+			},
+		},
+		{
+			"chart with no encoding nor spaces",
+			[]models.Chart{
+				{Name: "test/foobar"},
+			},
+			[]models.Chart{
+				{Name: "test/foobar"},
+			},
+		},
+		{
+			"chart with unencoded spaces",
+			[]models.Chart{
+				{Name: "test/foo bar"},
+			},
+			[]models.Chart{
+				{Name: "test/foo bar"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			res := unescapeChartsData(tt.input)
+			if !cmp.Equal(res, tt.expected) {
+				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
+			}
+		})
+	}
+}
+
+func TestHelmRepoAppliesUnescape(t *testing.T) {
+	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
+	expectedRepo := &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}
+	repoIndexYAMLBytes, _ := ioutil.ReadFile("testdata/helm-index-spaces.yaml")
+	repoIndexYAML := string(repoIndexYAMLBytes)
+	expectedCharts := []models.Chart{
+		{
+			ID:            "test/chart with spaces",
+			Name:          "chart with spaces",
+			Repo:          expectedRepo,
+			Maintainers:   []chart.Maintainer{},
+			ChartVersions: []models.ChartVersion{{AppVersion: "v1"}},
+		},
+		{
+			ID:            "test/chart-without-spaces",
+			Name:          "chart-without-spaces",
+			Repo:          expectedRepo,
+			Maintainers:   []chart.Maintainer{},
+			ChartVersions: []models.ChartVersion{{AppVersion: "v2"}},
+		},
+	}
+	helmRepo := &HelmRepo{
+		content:      []byte(repoIndexYAML),
+		RepoInternal: repo,
+	}
+	t.Run("Helm repo applies unescaping to chart data", func(t *testing.T) {
+		charts, _ := helmRepo.Charts(false)
+		if !cmp.Equal(charts, expectedCharts) {
+			t.Errorf("Unexpected result: %v", cmp.Diff(charts, expectedCharts))
+		}
+	})
+}
+
 func Test_isURLDomainEqual(t *testing.T) {
 	tests := []struct {
 		name     string
