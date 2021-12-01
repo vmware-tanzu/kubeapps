@@ -1,5 +1,6 @@
 {
   "name": "dashboard",
+  "proxy": "https://localhost",
   "version": "0.1.0",
   "private": true,
   "homepage": "./",
