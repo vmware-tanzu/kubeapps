@@ -160,7 +160,7 @@ export default function AppView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const { cluster, namespace, releaseName, pluginName, pluginVersion } =
     ReactRouter.useParams() as IRouteParams;
-  const [resourceRefs, setResourceRefs] = useState({
+  const [appViewResourceRefs, setAppViewResourceRefs] = useState({
     ingresses: [],
     deployments: [],
     statefulsets: [],
@@ -194,7 +194,7 @@ export default function AppView() {
 
     // If there are at least some resource types (ingresses, deployments) that are populated
     // then avoid re-requesting the refs.
-    if (Object.values(resourceRefs).some(ref => ref.length)) {
+    if (Object.values(appViewResourceRefs).some(ref => ref.length)) {
       return () => {};
     }
 
@@ -204,20 +204,22 @@ export default function AppView() {
       cluster,
       app.installedPackageRef?.context?.namespace || "",
     );
-    setResourceRefs(parsedRefs);
+    setAppViewResourceRefs(parsedRefs);
     return () => {};
-  }, [app, cluster, kinds, resourceRefs]);
+  }, [app, cluster, kinds, appViewResourceRefs]);
 
   useEffect(() => {
-    Object.values(resourceRefs).forEach((refs: ResourceRef[]) => {
-      refs.forEach(ref => dispatch(actions.kube.getAndWatchResource(ref)));
-    });
+    if (!app || !app.installedPackageRef || !app.apiResourceRefs) {
+      return () => {};
+    }
+    // TODO(minelson): Update to watch only those resources that
+    // we're interested in watching change (deployments, statefulsets etc.)
+    // and get the rest.
+    dispatch(actions.kube.getResources(app!.installedPackageRef!, app!.apiResourceRefs, true));
     return function cleanup() {
-      Object.values(resourceRefs).forEach((refs: ResourceRef[]) => {
-        refs.forEach(ref => dispatch(actions.kube.closeWatchResource(ref)));
-      });
+      actions.kube.closeRequestResources(app!.installedPackageRef!);
     };
-  }, [dispatch, resourceRefs]);
+  }, [dispatch, app?.apiResourceRefs]);
 
   const forceRetry = () => {
     dispatch(actions.apps.clearErrorApp());
@@ -242,7 +244,7 @@ export default function AppView() {
     );
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
-    resourceRefs;
+    appViewResourceRefs;
   const revision = app?.revision ?? 0;
   const icon = appDetails?.iconUrl ?? placeholder;
 
@@ -256,7 +258,7 @@ export default function AppView() {
       entry => entry.name === appName && entry.plugin === appPlugin && entry.repository === appRepo,
     )
   ) {
-    return <CustomAppView resourceRefs={resourceRefs} app={app!} appDetails={appDetails!} />;
+    return <CustomAppView resourceRefs={appViewResourceRefs} app={app!} appDetails={appDetails!} />;
   }
 
   return (

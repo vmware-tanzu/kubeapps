@@ -2,6 +2,7 @@ import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import context from "jest-plugin-context";
 import * as ReactRedux from "react-redux";
+import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "shared/types";
 import AccessURLTable from "./AccessURLTable";
@@ -52,10 +53,16 @@ describe("when receiving ingresses", () => {
 context("when some resource is fetching", () => {
   it("shows a loadingWrapper when fetching services", () => {
     const serviceItem = { isFetching: true };
-    const svcUrl = "svc";
-    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => svcUrl) } as any];
+    const svcRef = {
+      apiVersion: "v1",
+      kind: "Service",
+      namespace: "test",
+      name: "svc",
+    } as ResourceRef;
+    const serviceRefs = [svcRef];
+    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
     const state = {
-      kube: { items: { [svcUrl]: serviceItem } },
+      kube: { items: { [svcKey]: serviceItem } },
     };
     const store = getStore(state);
     const wrapper = mountWrapper(
@@ -68,10 +75,21 @@ context("when some resource is fetching", () => {
 
   it("displays the error (while fetching)", () => {
     const ingressItem = { isFetching: true };
-    const ingressUrl = "ingress";
-    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
+    const ingressRef = {
+      apiVersion: "v1",
+      kind: "Ingress",
+      namespace: "test",
+      name: "ingress",
+    } as ResourceRef;
+    const ingressRefs = [ingressRef];
+    const ingressKey = keyForResourceRef(
+      ingressRef.apiVersion,
+      ingressRef.kind,
+      ingressRef.namespace,
+      ingressRef.name,
+    );
     const state = {
-      kube: { items: { [ingressUrl]: ingressItem } },
+      kube: { items: { [ingressKey]: ingressItem } },
     };
     const store = getStore(state);
     const wrapper = mountWrapper(
@@ -105,9 +123,15 @@ context("when the app contains services", () => {
       } as IServiceStatus,
     } as IResource;
     const serviceItem = { isFetching: false, item: service };
-    const url = service.metadata.selfLink;
-    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
-    const state = { kube: { items: { [url]: serviceItem } } };
+    const svcRef = {
+      apiVersion: "v1",
+      kind: "Service",
+      namespace: "test",
+      name: "svc",
+    } as ResourceRef;
+    const serviceRefs = [svcRef];
+    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
+    const state = { kube: { items: { [svcKey]: serviceItem } } };
     const store = getStore(state);
     const wrapper = mountWrapper(
       store,
@@ -132,9 +156,15 @@ context("when the app contains services", () => {
       } as IServiceStatus,
     } as IResource;
     const serviceItem = { isFetching: false, item: service };
-    const url = service.metadata.selfLink;
-    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
-    const state = { kube: { items: { [url]: serviceItem } } };
+    const svcRef = {
+      apiVersion: "v1",
+      kind: "Service",
+      namespace: "test",
+      name: "svc",
+    } as ResourceRef;
+    const serviceRefs = [svcRef];
+    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
+    const state = { kube: { items: { [svcKey]: serviceItem } } };
     const store = getStore(state);
     const wrapper = mountWrapper(
       store,
@@ -164,9 +194,20 @@ context("when the app contains ingresses", () => {
       } as IIngressSpec,
     } as IResource;
     const ingressItem = { isFetching: false, item: ingress };
-    const url = ingress.metadata.selfLink;
-    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
-    const state = { kube: { items: { [url]: ingressItem } } };
+    const ingressRef = {
+      apiVersion: "v1",
+      kind: "Ingress",
+      namespace: "test",
+      name: "ingress",
+    } as ResourceRef;
+    const ingressRefs = [ingressRef];
+    const ingressKey = keyForResourceRef(
+      ingressRef.apiVersion,
+      ingressRef.kind,
+      ingressRef.namespace,
+      ingressRef.name,
+    );
+    const state = { kube: { items: { [ingressKey]: ingressItem } } };
     const store = getStore(state);
     const wrapper = mountWrapper(
       store,
@@ -195,9 +236,20 @@ context("when the app contains ingresses", () => {
       } as IIngressSpec,
     } as IResource;
     const ingressItem = { isFetching: false, item: ingress };
-    const url = ingress.metadata.selfLink;
-    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
-    const state = { kube: { items: { [url]: ingressItem } } };
+    const ingressRef = {
+      apiVersion: "v1",
+      kind: "Ingress",
+      namespace: "test",
+      name: "ingress",
+    } as ResourceRef;
+    const ingressRefs = [ingressRef];
+    const ingressKey = keyForResourceRef(
+      ingressRef.apiVersion,
+      ingressRef.kind,
+      ingressRef.namespace,
+      ingressRef.name,
+    );
+    const state = { kube: { items: { [ingressKey]: ingressItem } } };
     const store = getStore(state);
     const wrapper = mountWrapper(
       store,
@@ -236,8 +288,13 @@ context("when the app contains services and ingresses", () => {
       } as IServiceStatus,
     } as IResource;
     const serviceItem = { isFetching: false, item: service };
-    const svcUrl = service.metadata.selfLink;
-    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => svcUrl) } as any];
+    const svcRef = {
+      apiVersion: "v1",
+      kind: "Service",
+      namespace: "test",
+      name: "svc",
+    } as ResourceRef;
+    const serviceRefs = [svcRef];
     const ingress = {
       kind: "Ingress",
       metadata: {
@@ -256,10 +313,22 @@ context("when the app contains services and ingresses", () => {
       } as IIngressSpec,
     } as IResource;
     const ingressItem = { isFetching: false, item: ingress };
-    const ingressUrl = ingress.metadata.selfLink;
-    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
+    const ingressRef = {
+      apiVersion: "v1",
+      kind: "Ingress",
+      namespace: "test",
+      name: "ingress",
+    } as ResourceRef;
+    const ingressRefs = [ingressRef];
+    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
+    const ingressKey = keyForResourceRef(
+      ingressRef.apiVersion,
+      ingressRef.kind,
+      ingressRef.namespace,
+      ingressRef.name,
+    );
     const state = {
-      kube: { items: { [svcUrl]: serviceItem, [ingressUrl]: ingressItem } },
+      kube: { items: { [svcKey]: serviceItem, [ingressKey]: ingressItem } },
     };
     const store = getStore(state);
     const wrapper = mountWrapper(
@@ -274,13 +343,30 @@ context("when the app contains services and ingresses", () => {
 context("when the app contains resources with errors", () => {
   it("displays the error (when resources with errors)", () => {
     const serviceItem = { isFetching: false, error: new Error("could not find Service") };
-    const svcUrl = "svc";
-    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => svcUrl) } as any];
+    const svcRef = {
+      apiVersion: "v1",
+      kind: "Service",
+      namespace: "test",
+      name: "svc",
+    } as ResourceRef;
+    const serviceRefs = [svcRef];
     const ingressItem = { isFetching: false, error: new Error("could not find Ingress") };
-    const ingressUrl = "ingress";
-    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
+    const ingressRef = {
+      apiVersion: "v1",
+      kind: "Ingress",
+      namespace: "test",
+      name: "ingress",
+    } as ResourceRef;
+    const ingressRefs = [ingressRef];
+    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
+    const ingressKey = keyForResourceRef(
+      ingressRef.apiVersion,
+      ingressRef.kind,
+      ingressRef.namespace,
+      ingressRef.name,
+    );
     const state = {
-      kube: { items: { [svcUrl]: serviceItem, [ingressUrl]: ingressItem } },
+      kube: { items: { [svcKey]: serviceItem, [ingressKey]: ingressItem } },
     };
     const store = getStore(state);
     const wrapper = mountWrapper(

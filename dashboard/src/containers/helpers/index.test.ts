@@ -1,4 +1,4 @@
-import ResourceRef from "shared/ResourceRef";
+import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import { filterByResourceRefs } from ".";
 import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -17,6 +17,12 @@ describe("filterByResourceRefs", () => {
     name: "bar",
     namespace: "foo",
   } as APIResourceRef;
+  const svc1Key = keyForResourceRef(
+    svc1Ref.apiVersion,
+    svc1Ref.kind,
+    svc1Ref.namespace,
+    svc1Ref.name,
+  );
   const svc2 = {
     apiVersion: "v1",
     kind: "Service",
@@ -28,6 +34,12 @@ describe("filterByResourceRefs", () => {
     name: "bar",
     namespace: "foo1",
   } as APIResourceRef;
+  const svc2Key = keyForResourceRef(
+    svc2Ref.apiVersion,
+    svc2Ref.kind,
+    svc2Ref.namespace,
+    svc2Ref.name,
+  );
   const deploy = {
     apiVersion: "apps/v1",
     kind: "Deployment",
@@ -35,13 +47,13 @@ describe("filterByResourceRefs", () => {
   } as IResource;
 
   const items: IKubeState["items"] = {
-    [`api/clusters/${clusterName}/api/v1/namespaces/foo/services/bar`]: {
+    [svc1Key]: {
       item: svc1,
     } as IKubeItem<IResource>,
-    [`api/clusters/${clusterName}/api/v1/namespaces/foo1/services/bar`]: {
+    [svc2Key]: {
       item: svc2,
     } as IKubeItem<IResource>,
-    [`api/clusters/${clusterName}/apis/apps/v1/namespaces/foo1/deployments/bar`]: {
+    "unused-key": {
       item: deploy,
     } as IKubeItem<IResource>,
   };

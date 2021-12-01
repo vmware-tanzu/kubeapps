@@ -1,4 +1,4 @@
-import ResourceRef from "shared/ResourceRef";
+import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { ISecret } from "shared/types";
 import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
@@ -40,10 +40,16 @@ it("shows a message if there are no secrets", () => {
 });
 
 it("renders a secretItemDatum per secret", () => {
+  const key = keyForResourceRef(
+    sampleResourceRef.apiVersion,
+    sampleResourceRef.kind,
+    sampleResourceRef.namespace,
+    sampleResourceRef.name,
+  );
   const state = getStore({
     kube: {
       items: {
-        "secret-foo": {
+        [key]: {
           isFetching: false,
           item: secret,
         },

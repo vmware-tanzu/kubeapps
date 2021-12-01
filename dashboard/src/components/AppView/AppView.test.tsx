@@ -290,32 +290,14 @@ describe("AppView", () => {
     });
 
     it("watches the given resources and close watchers", async () => {
-      const watchResource = jest.fn();
-      const closeWatch = jest.fn();
+      const getResources = jest.fn();
+      const closeRequestResources = jest.fn();
       actions.kube = {
         ...actions.kube,
-        getAndWatchResource: watchResource,
-        closeWatchResource: closeWatch,
+        getResources,
+        closeRequestResources,
       };
       const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as APIResourceRef[];
-      const depResource = {
-        cluster: routeParams.cluster,
-        apiVersion: resourceRefs.deployment.apiVersion,
-        kind: resourceRefs.deployment.kind,
-        name: resourceRefs.deployment.name,
-        namespace: installedPackage.installedPackageRef?.context?.namespace,
-        namespaced: true,
-        plural: "deployments",
-      };
-      const svcResource = {
-        cluster: routeParams.cluster,
-        apiVersion: resourceRefs.service.apiVersion,
-        kind: resourceRefs.service.kind,
-        name: resourceRefs.service.name,
-        namespace: installedPackage.installedPackageRef?.context?.namespace,
-        namespaced: true,
-        plural: "services",
-      };
 
       const wrapper = mountWrapper(
         getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
@@ -325,11 +307,13 @@ describe("AppView", () => {
           </Route>
         </MemoryRouter>,
       );
-      expect(watchResource).toHaveBeenCalledWith(depResource);
-      expect(watchResource).toHaveBeenCalledWith(svcResource);
+      expect(getResources).toHaveBeenCalledWith(
+        installedPackage.installedPackageRef,
+        apiResourceRefs,
+        true,
+      );
       wrapper.unmount();
-      expect(closeWatch).toHaveBeenCalledWith(depResource);
-      expect(closeWatch).toHaveBeenCalledWith(svcResource);
+      expect(closeRequestResources).toHaveBeenCalledWith(installedPackage.installedPackageRef);
     });
 
     it("stores other k8s resources", () => {
