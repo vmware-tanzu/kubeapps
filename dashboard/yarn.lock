@@ -2467,10 +2467,10 @@
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.1.tgz#20f18294f797f2209b5f65c8e3b5c8e8261d127c"
   integrity sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==
 
-"@types/swagger-ui-react@^3.35.3":
-  version "3.35.3"
-  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-3.35.3.tgz#e61f6e18c5323da1ca27d7a7fd6c5b64b43013fd"
-  integrity sha512-h1SajExD4bcvobbYijqEGXRg80KJvABmkT9WyMXveZUScg/brK+wd5ADa+I56Krv+eVmEs1I+YqDhmikzSvsXQ==
+"@types/swagger-ui-react@^4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-4.1.0.tgz#80f8ca30955848920a4a4105fb4104873a7e319e"
+  integrity sha512-KFbNpwNQHPVu/OEiADU4ZaWdb8SPCIX1J/fy1me3RnSKTxDxxncPzCM8jP/KE3i8Qt9Q8feaiT5tJ749aecdzA==
   dependencies:
     "@types/react" "*"
 
@@ -12386,10 +12386,10 @@ redux-mock-store@^1.5.4:
   dependencies:
     lodash.isplainobject "^4.0.6"
 
-redux-thunk@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/redux-thunk/-/redux-thunk-2.4.0.tgz#ac89e1d6b9bdb9ee49ce69a69071be41bbd82d67"
-  integrity sha512-/y6ZKQNU/0u8Bm7ROLq9Pt/7lU93cT0IucYMrubo89ENjxPa7i8pqLKu6V4X7/TvYovQ6x01unTeyeZ9lgXiTA==
+redux-thunk@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/redux-thunk/-/redux-thunk-2.4.1.tgz#0dd8042cf47868f4b29699941de03c9301a75714"
+  integrity sha512-OOYGNY5Jy2TWvTL1KgAlVy6dcx3siPJ1wTq741EPyUKfn6W6nChdICjZwCd0p8AZBs5kWpZlbkXW2nE/zjUa+Q==
 
 redux@^4.0.0, redux@^4.0.5, redux@^4.1.2:
   version "4.1.2"
