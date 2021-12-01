@@ -1,8 +1,5 @@
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
-// TODO(minelson): Why is lint complaining:
-// error  Unable to resolve path to module 'rxjs'  import/no-unresolved
-/* eslint-disable-next-line import/no-unresolved */
 import { Subscription } from "rxjs";
 import {
   AvailablePackageDetail,
