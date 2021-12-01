@@ -148,4 +148,14 @@ export class Kube {
       return false;
     }
   }
+  public static async listServiceAccounts(cluster: string, namespace: string): Promise<string[]> {
+    try {
+      const { data } = await axiosWithAuth.get(
+        url.backend.serviceaccounts.list(cluster, namespace),
+      );
+      return data;
+    } catch (e: any) {
+      return [];
+    }
+  }
 }
