@@ -72,10 +72,15 @@
     padding-bottom: 0.6rem;
     border-bottom: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
     margin: 0.6rem;
+    overflow-wrap: anywhere;
 
     &-title {
       margin: 0 0 0.2rem;
       font-weight: 600;
+    }
+
+    ul {
+      list-style-type: none;
     }
   }
 }
