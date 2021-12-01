@@ -42,30 +42,32 @@ export default function PackageHeader({
       plugin={availablePackageDetail.availablePackageRef.plugin}
       version={
         <>
-          <label className="header-version-label" htmlFor="package-versions">
-            Package Version{" "}
-            <Tooltip
-              label="package-versions-tooltip"
-              id="package-versions-tooltip"
-              position="bottom-left"
-              iconProps={{ solid: true, size: "sm" }}
-            >
-              Package and application versions can be increased independently.{" "}
-              <a
-                href="https://helm.sh/docs/topics/charts/#charts-and-versioning"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                More info here
-              </a>
-              .{" "}
-            </Tooltip>
-          </label>
           <PackageVersionSelector
             versions={versions}
             onSelect={onSelect}
             selectedVersion={selectedVersion}
             currentVersion={currentVersion}
+            label={
+              <>
+                Package Version{" "}
+                <Tooltip
+                  label="package-versions-tooltip"
+                  id="package-versions-tooltip"
+                  position="bottom-left"
+                  iconProps={{ solid: true, size: "sm" }}
+                >
+                  Package and application versions can be increased independently.{" "}
+                  <a
+                    href="https://helm.sh/docs/topics/charts/#charts-and-versioning"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    More info here
+                  </a>
+                  .{" "}
+                </Tooltip>
+              </>
+            }
           />
         </>
       }
