@@ -27,15 +27,16 @@ import (
 
 // FakeHandler represents a fake Handler for testing purposes
 type FakeHandler struct {
-	AppRepos    []*v1alpha1.AppRepository
-	CreatedRepo *v1alpha1.AppRepository
-	UpdatedRepo *v1alpha1.AppRepository
-	Namespaces  []corev1.Namespace
-	Secrets     []*corev1.Secret
-	ValRes      *ValidationResponse
-	Options     KubeOptions
-	Err         error
-	Can         bool
+	AppRepos           []*v1alpha1.AppRepository
+	CreatedRepo        *v1alpha1.AppRepository
+	UpdatedRepo        *v1alpha1.AppRepository
+	Namespaces         []corev1.Namespace
+	Secrets            []*corev1.Secret
+	ValRes             *ValidationResponse
+	Options            KubeOptions
+	Err                error
+	Can                bool
+	ServiceAccountList *corev1.ServiceAccountList
 }
 
 // AsUser fakes user auth
@@ -124,4 +125,9 @@ func (c *FakeHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
 // CanI fake
 func (c *FakeHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
 	return c.Can, c.Err
+}
+
+// ListServiceAccounts fake
+func (c *FakeHandler) ListServiceAccounts(namespace string) (*corev1.ServiceAccountList, error) {
+	return c.ServiceAccountList, c.Err
 }

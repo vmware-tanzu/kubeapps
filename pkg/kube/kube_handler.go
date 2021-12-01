@@ -317,6 +317,7 @@ type handler interface {
 	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error)
 	GetOperatorLogo(namespace, name string) ([]byte, error)
 	CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error)
+	ListServiceAccounts(namespace string) (*corev1.ServiceAccountList, error)
 }
 
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
@@ -1226,4 +1227,13 @@ func (a *userHandler) CanI(resourceAttributes *authorizationapi.ResourceAttribut
 	}
 
 	return res.Status.Allowed, nil
+}
+
+// CanI returns if the user is allowed to do the given action
+func (a *userHandler) ListServiceAccounts(namespace string) (*corev1.ServiceAccountList, error) {
+	list, err := a.clientset.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
 }

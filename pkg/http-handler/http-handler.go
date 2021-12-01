@@ -371,13 +371,49 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 	}
 }
 
+// ListServiceAccounts returns the list of service accounts in a namespace the user can view
+func ListServiceAccounts(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		requestNamespace, requestCluster := getNamespaceAndCluster(req)
+
+		clientset, err := kubeHandler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		defer req.Body.Close()
+
+		saList, err := clientset.ListServiceAccounts(requestNamespace)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+		// We only need to send the list of SA names (ie, not sending secret names)
+		saStringList := []string{}
+		for _, sa := range saList.Items {
+			saStringList = append(saStringList, sa.Name)
+		}
+
+		responseBody, err := json.Marshal(saStringList)
+		if err != nil {
+			JSONError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(responseBody)
+	}
+}
+
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
 func SetupDefaultRoutes(r *mux.Router, namespaceHeaderName, namespaceHeaderPattern string, burst int, qps float32, clustersConfig kube.ClustersConfig) error {
 	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), namespaceHeaderName, namespaceHeaderPattern, burst, qps, clustersConfig)
 	if err != nil {
 		return err
 	}
+	//TODO(agamez): move these endpoints to a separate plugin when possible
 	r.Methods("POST").Path("/clusters/{cluster}/can-i").Handler(http.HandlerFunc(CanI(backendHandler)))
+	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/serviceaccounts").Handler(http.HandlerFunc(ListServiceAccounts(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
