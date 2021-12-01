@@ -35,7 +35,7 @@ export default function PackageHeader({
           ? `${releaseName} (${decodeURIComponent(
               availablePackageDetail.availablePackageRef.identifier,
             )})`
-          : `${decodeURIComponent(availablePackageDetail.availablePackageRef.identifier)}`
+          : `${decodeURIComponent(availablePackageDetail.displayName)}`
       }
       titleSize="md"
       icon={availablePackageDetail?.iconUrl ? availablePackageDetail.iconUrl : placeholder}
