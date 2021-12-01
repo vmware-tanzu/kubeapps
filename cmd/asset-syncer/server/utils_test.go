@@ -1296,7 +1296,7 @@ func Test_filterCharts(t *testing.T) {
 	}
 }
 
-func TestUnescapeCharsData(t *testing.T) {
+func TestUnescapeChartsData(t *testing.T) {
 	tests := []struct {
 		description string
 		input       []models.Chart
