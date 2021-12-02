@@ -6,6 +6,7 @@ import {
   AvailablePackageDetail,
   AvailablePackageReference,
   PackageAppVersion,
+  ReconciliationOptions,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
@@ -243,6 +244,7 @@ describe("renders an error", () => {
       defaultProps.releaseName,
       appValues,
       schema,
+      {} as ReconciliationOptions,
     );
 
     expect(history.location.pathname).toBe(

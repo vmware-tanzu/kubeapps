@@ -58,14 +58,17 @@ export default function DeploymentForm() {
   const [appValues, setAppValues] = useState(selectedPackage.values || "");
   const [valuesModified, setValuesModified] = useState(false);
   const [serviceAccountList, setServiceAccountList] = useState([] as string[]);
-  const [serviceAccount, setServiceAccount] = useState("");
+  const [reconciliationOptions, setReconciliationOptions] = useState({} as ReconciliationOptions);
 
   const error = apps.error || selectedPackage.error;
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
   const onChangeSA = (e: React.FormEvent<HTMLSelectElement>) => {
-    setServiceAccount(e.currentTarget.value);
+    setReconciliationOptions({
+      ...reconciliationOptions,
+      serviceAccountName: e.currentTarget.value,
+    });
   };
 
   const [packageReference] = useState({
@@ -130,7 +133,7 @@ export default function DeploymentForm() {
           releaseName,
           appValues,
           selectedPackage.schema,
-          { serviceAccountName: serviceAccount } as ReconciliationOptions,
+          reconciliationOptions,
         ),
       );
       setDeploying(false);
@@ -224,7 +227,11 @@ export default function DeploymentForm() {
                     <>
                       <CdsSelect layout="horizontal" id="serviceaccount-selector">
                         <label>Service Account</label>
-                        <select value={serviceAccount} onChange={onChangeSA} required={true}>
+                        <select
+                          value={reconciliationOptions.serviceAccountName}
+                          onChange={onChangeSA}
+                          required={true}
+                        >
                           <option key=""></option>
                           {serviceAccountList?.map(o => (
                             <option key={o} value={o}>
