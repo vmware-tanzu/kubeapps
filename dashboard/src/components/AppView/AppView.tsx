@@ -215,7 +215,7 @@ export default function AppView() {
     // TODO(minelson): Update to watch only those resources that
     // we're interested in watching change (deployments, statefulsets etc.)
     // and get the rest.
-    dispatch(actions.kube.getResources(app!.installedPackageRef!, app!.apiResourceRefs, true));
+    dispatch(actions.kube.getResources(app.installedPackageRef, app.apiResourceRefs, true));
     return function cleanup() {
       dispatch(actions.kube.closeRequestResources(app!.installedPackageRef!));
     };
