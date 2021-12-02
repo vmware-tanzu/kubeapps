@@ -126,8 +126,3 @@ func (c *FakeHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
 func (c *FakeHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
 	return c.Can, c.Err
 }
-
-// ListServiceAccounts fake
-func (c *FakeHandler) ListServiceAccounts(namespace string) (*corev1.ServiceAccountList, error) {
-	return c.ServiceAccountList, c.Err
-}
