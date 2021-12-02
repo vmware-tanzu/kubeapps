@@ -417,9 +417,9 @@ export const Http = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Http>): Http {
+  fromPartial<I extends Exact<DeepPartial<Http>, I>>(object: I): Http {
     const message = { ...baseHttp } as Http;
-    message.rules = (object.rules ?? []).map(e => HttpRule.fromPartial(e));
+    message.rules = object.rules?.map(e => HttpRule.fromPartial(e)) || [];
     message.fullyDecodeReservedExpansion = object.fullyDecodeReservedExpansion ?? false;
     return message;
   },
@@ -557,7 +557,7 @@ export const HttpRule = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<HttpRule>): HttpRule {
+  fromPartial<I extends Exact<DeepPartial<HttpRule>, I>>(object: I): HttpRule {
     const message = { ...baseHttpRule } as HttpRule;
     message.selector = object.selector ?? "";
     message.get = object.get ?? undefined;
@@ -571,9 +571,7 @@ export const HttpRule = {
         : undefined;
     message.body = object.body ?? "";
     message.responseBody = object.responseBody ?? "";
-    message.additionalBindings = (object.additionalBindings ?? []).map(e =>
-      HttpRule.fromPartial(e),
-    );
+    message.additionalBindings = object.additionalBindings?.map(e => HttpRule.fromPartial(e)) || [];
     return message;
   },
 };
@@ -626,7 +624,7 @@ export const CustomHttpPattern = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<CustomHttpPattern>): CustomHttpPattern {
+  fromPartial<I extends Exact<DeepPartial<CustomHttpPattern>, I>>(object: I): CustomHttpPattern {
     const message = { ...baseCustomHttpPattern } as CustomHttpPattern;
     message.kind = object.kind ?? "";
     message.path = object.path ?? "";
@@ -635,6 +633,7 @@ export const CustomHttpPattern = {
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -644,6 +643,11 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

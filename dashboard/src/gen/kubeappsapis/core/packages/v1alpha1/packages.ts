@@ -1076,8 +1076,8 @@ export const GetAvailablePackageSummariesRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageSummariesRequest>,
+  fromPartial<I extends Exact<DeepPartial<GetAvailablePackageSummariesRequest>, I>>(
+    object: I,
   ): GetAvailablePackageSummariesRequest {
     const message = {
       ...baseGetAvailablePackageSummariesRequest,
@@ -1165,8 +1165,8 @@ export const GetAvailablePackageDetailRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageDetailRequest>,
+  fromPartial<I extends Exact<DeepPartial<GetAvailablePackageDetailRequest>, I>>(
+    object: I,
   ): GetAvailablePackageDetailRequest {
     const message = {
       ...baseGetAvailablePackageDetailRequest,
@@ -1247,8 +1247,8 @@ export const GetAvailablePackageVersionsRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageVersionsRequest>,
+  fromPartial<I extends Exact<DeepPartial<GetAvailablePackageVersionsRequest>, I>>(
+    object: I,
   ): GetAvailablePackageVersionsRequest {
     const message = {
       ...baseGetAvailablePackageVersionsRequest,
@@ -1327,8 +1327,8 @@ export const GetInstalledPackageSummariesRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageSummariesRequest>,
+  fromPartial<I extends Exact<DeepPartial<GetInstalledPackageSummariesRequest>, I>>(
+    object: I,
   ): GetInstalledPackageSummariesRequest {
     const message = {
       ...baseGetInstalledPackageSummariesRequest,
@@ -1401,8 +1401,8 @@ export const GetInstalledPackageDetailRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageDetailRequest>,
+  fromPartial<I extends Exact<DeepPartial<GetInstalledPackageDetailRequest>, I>>(
+    object: I,
   ): GetInstalledPackageDetailRequest {
     const message = {
       ...baseGetInstalledPackageDetailRequest,
@@ -1533,7 +1533,9 @@ export const CreateInstalledPackageRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<CreateInstalledPackageRequest>): CreateInstalledPackageRequest {
+  fromPartial<I extends Exact<DeepPartial<CreateInstalledPackageRequest>, I>>(
+    object: I,
+  ): CreateInstalledPackageRequest {
     const message = {
       ...baseCreateInstalledPackageRequest,
     } as CreateInstalledPackageRequest;
@@ -1655,7 +1657,9 @@ export const UpdateInstalledPackageRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<UpdateInstalledPackageRequest>): UpdateInstalledPackageRequest {
+  fromPartial<I extends Exact<DeepPartial<UpdateInstalledPackageRequest>, I>>(
+    object: I,
+  ): UpdateInstalledPackageRequest {
     const message = {
       ...baseUpdateInstalledPackageRequest,
     } as UpdateInstalledPackageRequest;
@@ -1732,7 +1736,9 @@ export const DeleteInstalledPackageRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<DeleteInstalledPackageRequest>): DeleteInstalledPackageRequest {
+  fromPartial<I extends Exact<DeepPartial<DeleteInstalledPackageRequest>, I>>(
+    object: I,
+  ): DeleteInstalledPackageRequest {
     const message = {
       ...baseDeleteInstalledPackageRequest,
     } as DeleteInstalledPackageRequest;
@@ -1800,8 +1806,8 @@ export const GetInstalledPackageResourceRefsRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+  fromPartial<I extends Exact<DeepPartial<GetInstalledPackageResourceRefsRequest>, I>>(
+    object: I,
   ): GetInstalledPackageResourceRefsRequest {
     const message = {
       ...baseGetInstalledPackageResourceRefsRequest,
@@ -1899,17 +1905,16 @@ export const GetAvailablePackageSummariesResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageSummariesResponse>,
+  fromPartial<I extends Exact<DeepPartial<GetAvailablePackageSummariesResponse>, I>>(
+    object: I,
   ): GetAvailablePackageSummariesResponse {
     const message = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
-    message.availablePackageSummaries = (object.availablePackageSummaries ?? []).map(e =>
-      AvailablePackageSummary.fromPartial(e),
-    );
+    message.availablePackageSummaries =
+      object.availablePackageSummaries?.map(e => AvailablePackageSummary.fromPartial(e)) || [];
     message.nextPageToken = object.nextPageToken ?? "";
-    message.categories = (object.categories ?? []).map(e => e);
+    message.categories = object.categories?.map(e => e) || [];
     return message;
   },
 };
@@ -1970,8 +1975,8 @@ export const GetAvailablePackageDetailResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageDetailResponse>,
+  fromPartial<I extends Exact<DeepPartial<GetAvailablePackageDetailResponse>, I>>(
+    object: I,
   ): GetAvailablePackageDetailResponse {
     const message = {
       ...baseGetAvailablePackageDetailResponse,
@@ -2040,15 +2045,14 @@ export const GetAvailablePackageVersionsResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageVersionsResponse>,
+  fromPartial<I extends Exact<DeepPartial<GetAvailablePackageVersionsResponse>, I>>(
+    object: I,
   ): GetAvailablePackageVersionsResponse {
     const message = {
       ...baseGetAvailablePackageVersionsResponse,
     } as GetAvailablePackageVersionsResponse;
-    message.packageAppVersions = (object.packageAppVersions ?? []).map(e =>
-      PackageAppVersion.fromPartial(e),
-    );
+    message.packageAppVersions =
+      object.packageAppVersions?.map(e => PackageAppVersion.fromPartial(e)) || [];
     return message;
   },
 };
@@ -2122,15 +2126,14 @@ export const GetInstalledPackageSummariesResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageSummariesResponse>,
+  fromPartial<I extends Exact<DeepPartial<GetInstalledPackageSummariesResponse>, I>>(
+    object: I,
   ): GetInstalledPackageSummariesResponse {
     const message = {
       ...baseGetInstalledPackageSummariesResponse,
     } as GetInstalledPackageSummariesResponse;
-    message.installedPackageSummaries = (object.installedPackageSummaries ?? []).map(e =>
-      InstalledPackageSummary.fromPartial(e),
-    );
+    message.installedPackageSummaries =
+      object.installedPackageSummaries?.map(e => InstalledPackageSummary.fromPartial(e)) || [];
     message.nextPageToken = object.nextPageToken ?? "";
     return message;
   },
@@ -2192,8 +2195,8 @@ export const GetInstalledPackageDetailResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageDetailResponse>,
+  fromPartial<I extends Exact<DeepPartial<GetInstalledPackageDetailResponse>, I>>(
+    object: I,
   ): GetInstalledPackageDetailResponse {
     const message = {
       ...baseGetInstalledPackageDetailResponse,
@@ -2262,7 +2265,9 @@ export const CreateInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<CreateInstalledPackageResponse>): CreateInstalledPackageResponse {
+  fromPartial<I extends Exact<DeepPartial<CreateInstalledPackageResponse>, I>>(
+    object: I,
+  ): CreateInstalledPackageResponse {
     const message = {
       ...baseCreateInstalledPackageResponse,
     } as CreateInstalledPackageResponse;
@@ -2330,7 +2335,9 @@ export const UpdateInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<UpdateInstalledPackageResponse>): UpdateInstalledPackageResponse {
+  fromPartial<I extends Exact<DeepPartial<UpdateInstalledPackageResponse>, I>>(
+    object: I,
+  ): UpdateInstalledPackageResponse {
     const message = {
       ...baseUpdateInstalledPackageResponse,
     } as UpdateInstalledPackageResponse;
@@ -2378,7 +2385,9 @@ export const DeleteInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial(_: DeepPartial<DeleteInstalledPackageResponse>): DeleteInstalledPackageResponse {
+  fromPartial<I extends Exact<DeepPartial<DeleteInstalledPackageResponse>, I>>(
+    _: I,
+  ): DeleteInstalledPackageResponse {
     const message = {
       ...baseDeleteInstalledPackageResponse,
     } as DeleteInstalledPackageResponse;
@@ -2450,8 +2459,8 @@ export const GetInstalledPackageResourceRefsResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageResourceRefsResponse>,
+  fromPartial<I extends Exact<DeepPartial<GetInstalledPackageResourceRefsResponse>, I>>(
+    object: I,
   ): GetInstalledPackageResourceRefsResponse {
     const message = {
       ...baseGetInstalledPackageResourceRefsResponse,
@@ -2460,7 +2469,7 @@ export const GetInstalledPackageResourceRefsResponse = {
       object.context !== undefined && object.context !== null
         ? Context.fromPartial(object.context)
         : undefined;
-    message.resourceRefs = (object.resourceRefs ?? []).map(e => ResourceRef.fromPartial(e));
+    message.resourceRefs = object.resourceRefs?.map(e => ResourceRef.fromPartial(e)) || [];
     return message;
   },
 };
@@ -2590,7 +2599,9 @@ export const AvailablePackageSummary = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<AvailablePackageSummary>): AvailablePackageSummary {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageSummary>, I>>(
+    object: I,
+  ): AvailablePackageSummary {
     const message = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
@@ -2606,7 +2617,7 @@ export const AvailablePackageSummary = {
     message.iconUrl = object.iconUrl ?? "";
     message.displayName = object.displayName ?? "";
     message.shortDescription = object.shortDescription ?? "";
-    message.categories = (object.categories ?? []).map(e => e);
+    message.categories = object.categories?.map(e => e) || [];
     return message;
   },
 };
@@ -2835,7 +2846,9 @@ export const AvailablePackageDetail = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<AvailablePackageDetail>): AvailablePackageDetail {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageDetail>, I>>(
+    object: I,
+  ): AvailablePackageDetail {
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
     message.availablePackageRef =
       object.availablePackageRef !== undefined && object.availablePackageRef !== null
@@ -2855,9 +2868,9 @@ export const AvailablePackageDetail = {
     message.readme = object.readme ?? "";
     message.defaultValues = object.defaultValues ?? "";
     message.valuesSchema = object.valuesSchema ?? "";
-    message.sourceUrls = (object.sourceUrls ?? []).map(e => e);
-    message.maintainers = (object.maintainers ?? []).map(e => Maintainer.fromPartial(e));
-    message.categories = (object.categories ?? []).map(e => e);
+    message.sourceUrls = object.sourceUrls?.map(e => e) || [];
+    message.maintainers = object.maintainers?.map(e => Maintainer.fromPartial(e)) || [];
+    message.categories = object.categories?.map(e => e) || [];
     message.customDetail =
       object.customDetail !== undefined && object.customDetail !== null
         ? Any.fromPartial(object.customDetail)
@@ -3031,7 +3044,9 @@ export const InstalledPackageSummary = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<InstalledPackageSummary>): InstalledPackageSummary {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageSummary>, I>>(
+    object: I,
+  ): InstalledPackageSummary {
     const message = {
       ...baseInstalledPackageSummary,
     } as InstalledPackageSummary;
@@ -3265,7 +3280,9 @@ export const InstalledPackageDetail = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<InstalledPackageDetail>): InstalledPackageDetail {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageDetail>, I>>(
+    object: I,
+  ): InstalledPackageDetail {
     const message = { ...baseInstalledPackageDetail } as InstalledPackageDetail;
     message.installedPackageRef =
       object.installedPackageRef !== undefined && object.installedPackageRef !== null
@@ -3360,7 +3377,7 @@ export const Context = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Context>): Context {
+  fromPartial<I extends Exact<DeepPartial<Context>, I>>(object: I): Context {
     const message = { ...baseContext } as Context;
     message.cluster = object.cluster ?? "";
     message.namespace = object.namespace ?? "";
@@ -3439,7 +3456,9 @@ export const AvailablePackageReference = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<AvailablePackageReference>): AvailablePackageReference {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageReference>, I>>(
+    object: I,
+  ): AvailablePackageReference {
     const message = {
       ...baseAvailablePackageReference,
     } as AvailablePackageReference;
@@ -3504,7 +3523,7 @@ export const Maintainer = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Maintainer>): Maintainer {
+  fromPartial<I extends Exact<DeepPartial<Maintainer>, I>>(object: I): Maintainer {
     const message = { ...baseMaintainer } as Maintainer;
     message.name = object.name ?? "";
     message.email = object.email ?? "";
@@ -3606,11 +3625,11 @@ export const FilterOptions = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<FilterOptions>): FilterOptions {
+  fromPartial<I extends Exact<DeepPartial<FilterOptions>, I>>(object: I): FilterOptions {
     const message = { ...baseFilterOptions } as FilterOptions;
     message.query = object.query ?? "";
-    message.categories = (object.categories ?? []).map(e => e);
-    message.repositories = (object.repositories ?? []).map(e => e);
+    message.categories = object.categories?.map(e => e) || [];
+    message.repositories = object.repositories?.map(e => e) || [];
     message.pkgVersion = object.pkgVersion ?? "";
     message.appVersion = object.appVersion ?? "";
     return message;
@@ -3667,7 +3686,7 @@ export const PaginationOptions = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<PaginationOptions>): PaginationOptions {
+  fromPartial<I extends Exact<DeepPartial<PaginationOptions>, I>>(object: I): PaginationOptions {
     const message = { ...basePaginationOptions } as PaginationOptions;
     message.pageToken = object.pageToken ?? "";
     message.pageSize = object.pageSize ?? 0;
@@ -3746,7 +3765,9 @@ export const InstalledPackageReference = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<InstalledPackageReference>): InstalledPackageReference {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageReference>, I>>(
+    object: I,
+  ): InstalledPackageReference {
     const message = {
       ...baseInstalledPackageReference,
     } as InstalledPackageReference;
@@ -3804,7 +3825,7 @@ export const VersionReference = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<VersionReference>): VersionReference {
+  fromPartial<I extends Exact<DeepPartial<VersionReference>, I>>(object: I): VersionReference {
     const message = { ...baseVersionReference } as VersionReference;
     message.version = object.version ?? "";
     return message;
@@ -3879,7 +3900,9 @@ export const InstalledPackageStatus = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<InstalledPackageStatus>): InstalledPackageStatus {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageStatus>, I>>(
+    object: I,
+  ): InstalledPackageStatus {
     const message = { ...baseInstalledPackageStatus } as InstalledPackageStatus;
     message.ready = object.ready ?? false;
     message.reason = object.reason ?? 0;
@@ -3954,7 +3977,9 @@ export const ReconciliationOptions = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<ReconciliationOptions>): ReconciliationOptions {
+  fromPartial<I extends Exact<DeepPartial<ReconciliationOptions>, I>>(
+    object: I,
+  ): ReconciliationOptions {
     const message = { ...baseReconciliationOptions } as ReconciliationOptions;
     message.interval = object.interval ?? 0;
     message.suspend = object.suspend ?? false;
@@ -4017,7 +4042,7 @@ export const PackageAppVersion = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<PackageAppVersion>): PackageAppVersion {
+  fromPartial<I extends Exact<DeepPartial<PackageAppVersion>, I>>(object: I): PackageAppVersion {
     const message = { ...basePackageAppVersion } as PackageAppVersion;
     message.pkgVersion = object.pkgVersion ?? "";
     message.appVersion = object.appVersion ?? "";
@@ -4098,7 +4123,7 @@ export const ResourceRef = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<ResourceRef>): ResourceRef {
+  fromPartial<I extends Exact<DeepPartial<ResourceRef>, I>>(object: I): ResourceRef {
     const message = { ...baseResourceRef } as ResourceRef;
     message.apiVersion = object.apiVersion ?? "";
     message.kind = object.kind ?? "";
@@ -4539,6 +4564,7 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -4548,6 +4574,11 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
