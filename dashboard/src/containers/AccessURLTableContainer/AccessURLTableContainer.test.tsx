@@ -2,8 +2,8 @@ import { shallow } from "enzyme";
 import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { keyForResourceRef } from "shared/ResourceRef";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import AccessURLTableContainer from ".";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
@@ -34,36 +34,24 @@ describe("AccessURLTableContainer", () => {
       isFetching: false,
       item: { metadata: { name: `${name}-ingress` } } as IResource,
     };
-    const serviceRef = new ResourceRef(
-      {
+    const serviceRef = {
         apiVersion: "v1",
         kind: "Service",
         namespace: ns,
         name: `${name}-service`,
-      } as APIResourceRef,
-      clusterName,
-      "services",
-      true,
-      "default",
-    );
+      } as ResourceRef;
     const serviceKey = keyForResourceRef(
       serviceRef.apiVersion,
       serviceRef.kind,
       serviceRef.namespace,
       serviceRef.name,
     );
-    const ingressRef = new ResourceRef(
-      {
+    const ingressRef = {
         apiVersion: "v1",
         kind: "Ingress",
         namespace: ns,
         name: `${name}-ingress`,
-      } as APIResourceRef,
-      clusterName,
-      "ingresses",
-      true,
-      "default",
-    );
+      } as ResourceRef;
     const ingressKey = keyForResourceRef(
       ingressRef.apiVersion,
       ingressRef.kind,
