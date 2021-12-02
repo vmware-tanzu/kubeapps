@@ -2552,18 +2552,9 @@
         "operationId": "ResourcesService_GetServiceAccountNames",
         "responses": {
           "200": {
-            "description": "A successful response.(streaming responses)",
+            "description": "A successful response.",
             "schema": {
-              "type": "object",
-              "properties": {
-                "result": {
-                  "$ref": "#/definitions/v1alpha1GetServiceAccountNamesResponse"
-                },
-                "error": {
-                  "$ref": "#/definitions/rpcStatus"
-                }
-              },
-              "title": "Stream result of v1alpha1GetServiceAccountNamesResponse"
+              "$ref": "#/definitions/v1alpha1GetServiceAccountNamesResponse"
             }
           },
           "401": {

@@ -426,7 +426,7 @@ export interface ResourcesService {
   GetServiceAccountNames(
     request: DeepPartial<GetServiceAccountNamesRequest>,
     metadata?: grpc.Metadata
-  ): Observable<GetServiceAccountNamesResponse>;
+  ): Promise<GetServiceAccountNamesResponse>;
 }
 
 export class ResourcesServiceClientImpl implements ResourcesService {
@@ -452,8 +452,8 @@ export class ResourcesServiceClientImpl implements ResourcesService {
   GetServiceAccountNames(
     request: DeepPartial<GetServiceAccountNamesRequest>,
     metadata?: grpc.Metadata
-  ): Observable<GetServiceAccountNamesResponse> {
-    return this.rpc.invoke(
+  ): Promise<GetServiceAccountNamesResponse> {
+    return this.rpc.unary(
       ResourcesServiceGetServiceAccountNamesDesc,
       GetServiceAccountNamesRequest.fromPartial(request),
       metadata
@@ -492,7 +492,7 @@ export const ResourcesServiceGetServiceAccountNamesDesc: UnaryMethodDefinitionis
     methodName: "GetServiceAccountNames",
     service: ResourcesServiceDesc,
     requestStream: false,
-    responseStream: true,
+    responseStream: false,
     requestType: {
       serializeBinary() {
         return GetServiceAccountNamesRequest.encode(this).finish();

@@ -120,7 +120,7 @@ var (
 	filter_ResourcesService_GetServiceAccountNames_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 1, 1, 2, 0, 0}, Check: []int{0, 1, 2, 2, 3, 4}}
 )
 
-func request_ResourcesService_GetServiceAccountNames_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (ResourcesService_GetServiceAccountNamesClient, runtime.ServerMetadata, error) {
+func request_ResourcesService_GetServiceAccountNames_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetServiceAccountNamesRequest
 	var metadata runtime.ServerMetadata
 
@@ -158,16 +158,51 @@ func request_ResourcesService_GetServiceAccountNames_0(ctx context.Context, mars
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	stream, err := client.GetServiceAccountNames(ctx, &protoReq)
-	if err != nil {
-		return nil, metadata, err
+	msg, err := client.GetServiceAccountNames(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_ResourcesService_GetServiceAccountNames_0(ctx context.Context, marshaler runtime.Marshaler, server ResourcesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetServiceAccountNamesRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["context.cluster"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.cluster")
 	}
-	header, err := stream.Header()
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.cluster", val)
 	if err != nil {
-		return nil, metadata, err
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.cluster", err)
 	}
-	metadata.HeaderMD = header
-	return stream, metadata, nil
+
+	val, ok = pathParams["context.namespace"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "context.namespace")
+	}
+
+	err = runtime.PopulateFieldFromPath(&protoReq, "context.namespace", val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "context.namespace", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ResourcesService_GetServiceAccountNames_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.GetServiceAccountNames(ctx, &protoReq)
+	return msg, metadata, err
 
 }
 
@@ -185,10 +220,26 @@ func RegisterResourcesServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 	})
 
 	mux.Handle("GET", pattern_ResourcesService_GetServiceAccountNames_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
-		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-		return
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/GetServiceAccountNames", runtime.WithHTTPPathPattern("/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/serviceaccountnames"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_ResourcesService_GetServiceAccountNames_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ResourcesService_GetServiceAccountNames_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
 	})
 
 	return nil
@@ -268,7 +319,7 @@ func RegisterResourcesServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 			return
 		}
 
-		forward_ResourcesService_GetServiceAccountNames_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		forward_ResourcesService_GetServiceAccountNames_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -284,5 +335,5 @@ var (
 var (
 	forward_ResourcesService_GetResources_0 = runtime.ForwardResponseStream
 
-	forward_ResourcesService_GetServiceAccountNames_0 = runtime.ForwardResponseStream
+	forward_ResourcesService_GetServiceAccountNames_0 = runtime.ForwardResponseMessage
 )
