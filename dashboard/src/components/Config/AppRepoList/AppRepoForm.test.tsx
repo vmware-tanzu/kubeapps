@@ -53,14 +53,17 @@ it("disables the submit button while fetching", () => {
 it("submit button can not be fired more than once", async () => {
   const onSubmit = jest.fn().mockReturnValue(true);
   const onAfterInstall = jest.fn().mockReturnValue(true);
-  const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={onSubmit} onAfterInstall={onAfterInstall} />);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoForm {...defaultProps} onSubmit={onSubmit} onAfterInstall={onAfterInstall} />,
+  );
   const installButton = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Install Repo"));
   await act(async () => {
     Promise.all([
-      installButton.simulate('submit'),
-      installButton.simulate('submit'),
-      installButton.simulate('submit')
-    ])
+      installButton.simulate("submit"),
+      installButton.simulate("submit"),
+      installButton.simulate("submit"),
+    ]);
   });
   wrapper.update();
   expect(onSubmit.mock.calls.length).toBe(1);
