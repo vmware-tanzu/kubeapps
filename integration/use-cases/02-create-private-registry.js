@@ -120,7 +120,7 @@ test("Creates a private registry", async () => {
     await new Promise(r => setTimeout(r, 500));
 
     packagehartVersionElement = await expect(page).toMatchElement(
-      '.upgrade-form-version-selector select[name="package-versions"]',
+      'select[name="package-versions"]',
     );
     packagehartVersionElementContent = await packageVersionElement.getProperty("value");
     packagehartVersionValue = await packageVersionElementContent.jsonValue();
@@ -137,7 +137,7 @@ test("Creates a private registry", async () => {
   await new Promise(r => setTimeout(r, 1000));
 
   await expect(page).toSelect(
-    '.upgrade-form-version-selector select[name="package-versions"]',
+    'select[name="package-versions"]',
     "8.6.3",
   );
 
@@ -145,7 +145,7 @@ test("Creates a private registry", async () => {
 
   // Ensure that the new value is selected
   packageVersionElement = await expect(page).toMatchElement(
-    '.upgrade-form-version-selector select[name="package-versions"]',
+    'select[name="package-versions"]',
   );
   packageVersionElementContent = await packageVersionElement.getProperty("value");
   packageVersionValue = await packageVersionElementContent.jsonValue();

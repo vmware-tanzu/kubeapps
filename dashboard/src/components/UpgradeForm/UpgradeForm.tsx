@@ -18,7 +18,6 @@ import { IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
-import "./UpgradeForm.css";
 
 export interface IUpgradeFormProps {
   version?: string;
