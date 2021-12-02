@@ -217,7 +217,7 @@ export default function AppView() {
     // and get the rest.
     dispatch(actions.kube.getResources(app!.installedPackageRef!, app!.apiResourceRefs, true));
     return function cleanup() {
-      actions.kube.closeRequestResources(app!.installedPackageRef!);
+      dispatch(actions.kube.closeRequestResources(app!.installedPackageRef!));
     };
   }, [dispatch, app]);
 
