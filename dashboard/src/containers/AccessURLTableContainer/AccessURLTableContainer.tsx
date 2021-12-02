@@ -1,9 +1,6 @@
 import { connect } from "react-redux";
-import { Action } from "redux";
-import { ThunkDispatch } from "redux-thunk";
-import ResourceRef from "shared/ResourceRef";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IStoreState } from "shared/types";
-import actions from "../../actions";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
 import { filterByResourceRefs } from "../helpers";
 
@@ -22,10 +19,4 @@ function mapStateToProps({ kube }: IStoreState, props: IAccessURLTableContainerP
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
-  return {
-    getResource: (r: ResourceRef) => dispatch(actions.kube.getResource(r)),
-  };
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(AccessURLTable);
+export default connect(mapStateToProps)(AccessURLTable);

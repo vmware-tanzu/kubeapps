@@ -28,28 +28,6 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-describe("when receiving ingresses", () => {
-  it("fetches ingresses at mount time", () => {
-    const ingress = { name: "ing", getResourceURL: jest.fn() } as any;
-    const mock = jest.fn();
-    actions.kube.getResource = mock;
-    mountWrapper(defaultStore, <AccessURLTable {...defaultProps} ingressRefs={[ingress]} />);
-    expect(mock).toHaveBeenCalledWith(ingress);
-  });
-
-  it("fetches when new ingress refs received", () => {
-    const ingress = { name: "ing", getResourceURL: jest.fn() } as any;
-    const mock = jest.fn();
-    actions.kube.getResource = mock;
-    const wrapper = mountWrapper(
-      defaultStore,
-      <AccessURLTable {...defaultProps} ingressRefs={[ingress]} />,
-    );
-    wrapper.setProps({ ingressRefs: [ingress] });
-    expect(mock).toHaveBeenCalledWith(ingress);
-  });
-});
-
 context("when some resource is fetching", () => {
   it("shows a loadingWrapper when fetching services", () => {
     const serviceItem = { isFetching: true };

@@ -45,6 +45,7 @@ export function trimDescription(desc: string): string {
   return desc;
 }
 
+// TODO(minelson): Delete when unused.
 export function flattenResources(
   refs: ResourceRef[],
   resources: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> },
