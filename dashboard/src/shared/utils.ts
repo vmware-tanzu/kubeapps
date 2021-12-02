@@ -4,8 +4,6 @@ import fluxIcon from "../icons/flux.svg";
 import helmIcon from "../icons/helm.svg";
 import olmIcon from "../icons/olm-icon.svg";
 import placeholder from "../placeholder.png";
-import ResourceRef, { keyForResourceRef } from "./ResourceRef";
-import { IK8sList, IKubeItem, IResource, ISecret } from "./types";
 
 export enum PluginNames {
   PACKAGES_HELM = "helm.packages",
