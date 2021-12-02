@@ -13,6 +13,11 @@ service ResourcesService {
             get: "/plugins/resources/v1alpha1/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
         };
     }
+    rpc GetServiceAccountNames(GetServiceAccountNamesRequest) returns (GetServiceAccountNamesResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/serviceaccountnames"
+        };
+    }
 }
 
 // GetResourcesRequest
@@ -54,4 +59,24 @@ message GetResourcesResponse {
     // watching of resources, but we may in the future pull out further
     // structured metadata into this message as needed.
     google.protobuf.Any manifest = 2;
+}
+
+// GetServiceAccountNamesRequest
+//
+// Request for GetServiceAccountNames
+message GetServiceAccountNamesRequest { 
+    // Context
+    //
+    // The context for which the service account names are being fetched.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// GetServiceAccountNamesResponse
+//
+// Response for GetServiceAccountNames
+message GetServiceAccountNamesResponse {
+    // ServiceAccountNames
+    //
+    // The list of Service Account names.
+    repeated string serviceaccount_names = 1;
 }
