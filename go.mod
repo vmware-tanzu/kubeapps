@@ -52,7 +52,7 @@ require (
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.6
 	github.com/gorilla/mux v1.8.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.1
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.6
@@ -74,7 +74,7 @@ require (
 	github.com/vmware-tanzu/carvel-vendir v0.23.0
 	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1
+	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12
 	google.golang.org/grpc v1.42.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
