@@ -1,7 +1,6 @@
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { InstalledPackageDetail, ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { connect } from "react-redux";
 import ApplicationStatus from "../../components/ApplicationStatus";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IStoreState } from "../../shared/types";
 import { filterByResourceRefs } from "../helpers";
 
