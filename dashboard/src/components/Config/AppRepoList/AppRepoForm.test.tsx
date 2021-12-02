@@ -123,15 +123,13 @@ it("should not call the install method when the validation fails unless forced",
       .text(),
   ).toContain("Install Repo (force)");
 
-  // So disabling this test for the moment.
   await act(async () => {
-    await (
-      wrapper
-        .find(CdsButton)
-        .filterWhere(b => b.html().includes("Install Repo (force)"))
-        .prop("onClick") as () => Promise<any>
-    )();
+    wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.html().includes("Install Repo (force)"))
+      .simulate("submit");
   });
+  wrapper.update();
   expect(install).toHaveBeenCalled();
 });
 
