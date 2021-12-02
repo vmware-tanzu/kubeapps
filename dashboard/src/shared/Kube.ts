@@ -1,12 +1,16 @@
-import * as url from "shared/url";
-import { Auth } from "./Auth";
-import { axiosWithAuth } from "./AxiosInstance";
-import { IK8sList, IKubeState, IResource } from "./types";
-import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import {
   InstalledPackageReference,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  GetServiceAccountNamesRequest,
+  GetServiceAccountNamesResponse,
+} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+import * as url from "shared/url";
+import { Auth } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { IK8sList, IKubeState, IResource } from "./types";
 
 export const APIBase = (cluster: string) => `api/clusters/${cluster}`;
 export let WebSocketAPIBase: string;
@@ -167,14 +171,13 @@ export class Kube {
       return false;
     }
   }
-  public static async listServiceAccounts(cluster: string, namespace: string): Promise<string[]> {
-    try {
-      const { data } = await axiosWithAuth.get(
-        url.backend.serviceaccounts.list(cluster, namespace),
-      );
-      return data;
-    } catch (e: any) {
-      return [];
-    }
+
+  public static async getServiceAccountNames(
+    cluster: string,
+    namespace: string,
+  ): Promise<GetServiceAccountNamesResponse> {
+    return await this.resourcesClient().GetServiceAccountNames({
+      context: { cluster, namespace },
+    } as GetServiceAccountNamesRequest);
   }
 }

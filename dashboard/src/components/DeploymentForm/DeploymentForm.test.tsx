@@ -10,6 +10,7 @@ import {
   ReconciliationOptions,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { GetServiceAccountNamesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import { createMemoryHistory } from "history";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -172,8 +173,10 @@ describe("renders an error", () => {
         `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${PluginNames.PACKAGES_KAPP}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`,
       ],
     });
-    Kube.listServiceAccounts = jest.fn().mockReturnValue({
-      then: jest.fn((f: any) => f(["my-sa-1", "my-sa-2"])),
+    Kube.getServiceAccountNames = jest.fn().mockReturnValue({
+      then: jest.fn((f: any) =>
+        f({ serviceaccountNames: ["my-sa-1", "my-sa-2"] } as GetServiceAccountNamesResponse),
+      ),
     });
 
     const wrapper = mountWrapper(
