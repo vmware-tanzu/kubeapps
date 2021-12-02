@@ -45,33 +45,6 @@ export function trimDescription(desc: string): string {
   return desc;
 }
 
-// TODO(minelson): Delete when unused.
-export function flattenResources(
-  refs: ResourceRef[],
-  resources: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> },
-) {
-  const result: Array<IKubeItem<IResource | ISecret>> = [];
-  refs.forEach(ref => {
-    const kubeItem =
-      resources[keyForResourceRef(ref.apiVersion, ref.kind, ref.namespace, ref.name)];
-    if (kubeItem) {
-      const itemList = kubeItem.item as IK8sList<IResource | ISecret, {}>;
-      if (itemList && itemList.items) {
-        itemList.items.forEach(i => {
-          result.push({
-            isFetching: kubeItem.isFetching,
-            error: kubeItem.error,
-            item: i,
-          });
-        });
-      } else {
-        result.push(kubeItem as IKubeItem<IResource | ISecret>);
-      }
-    }
-  });
-  return result;
-}
-
 // Perhaps the logic of these functions should be provided by each plugin itself, namely:
 // i) return its icon; ii) return its user-faced name; iii) return its user-faced package name
 export function getPluginIcon(plugin?: Plugin | string) {

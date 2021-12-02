@@ -1,5 +1,5 @@
 import Tabs from "components/Tabs";
-import ResourceTable from "containers/ResourceTableContainer";
+import ResourceTable from "components/AppView/ResourceTable";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 interface IAppViewResourceRefs {
