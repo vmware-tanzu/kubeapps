@@ -116,10 +116,6 @@ export const backend = {
       `${backend.apprepositories.base(cluster, namespace)}/${name}`,
   },
   canI: (cluster: string) => `api/v1/clusters/${cluster}/can-i`,
-  serviceaccounts: {
-    list: (cluster: string, namespace: string) =>
-      `api/v1/clusters/${cluster}/${withNS(namespace)}serviceaccounts`,
-  },
 };
 
 export const api = {

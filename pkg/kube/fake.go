@@ -27,16 +27,15 @@ import (
 
 // FakeHandler represents a fake Handler for testing purposes
 type FakeHandler struct {
-	AppRepos           []*v1alpha1.AppRepository
-	CreatedRepo        *v1alpha1.AppRepository
-	UpdatedRepo        *v1alpha1.AppRepository
-	Namespaces         []corev1.Namespace
-	Secrets            []*corev1.Secret
-	ValRes             *ValidationResponse
-	Options            KubeOptions
-	Err                error
-	Can                bool
-	ServiceAccountList *corev1.ServiceAccountList
+	AppRepos    []*v1alpha1.AppRepository
+	CreatedRepo *v1alpha1.AppRepository
+	UpdatedRepo *v1alpha1.AppRepository
+	Namespaces  []corev1.Namespace
+	Secrets     []*corev1.Secret
+	ValRes      *ValidationResponse
+	Options     KubeOptions
+	Err         error
+	Can         bool
 }
 
 // AsUser fakes user auth
