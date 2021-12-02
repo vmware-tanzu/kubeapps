@@ -30,31 +30,28 @@ function PackageInfo({ installedPackageDetail, availablePackageDetail }: IPackag
             </div>
             <PackageUpdateInfo installedPackageDetail={installedPackageDetail} />
           </section>
-          {installedPackageDetail.reconciliationOptions?.serviceAccountName ||
-            (installedPackageDetail.reconciliationOptions?.interval && (
-              <section className="left-menu-subsection" aria-labelledby="packageinfo-versions">
-                <h5 className="left-menu-subsection-title" id="packageinfo-versions">
-                  Reconciliation Options
-                </h5>
-                <div>
-                  <>
-                    {" "}
-                    <div>
-                      Service Account:{" "}
-                      <strong>
-                        {installedPackageDetail.reconciliationOptions.serviceAccountName}
-                      </strong>
-                    </div>
-                    <div>
-                      Interval:{" "}
-                      <strong>
-                        {installedPackageDetail.reconciliationOptions.interval} seconds
-                      </strong>
-                    </div>
-                  </>
-                </div>
-              </section>
-            ))}
+          {installedPackageDetail.reconciliationOptions && (
+            <section className="left-menu-subsection" aria-labelledby="packageinfo-reconciliation">
+              <h5 className="left-menu-subsection-title" id="packageinfo-reconciliation">
+                Reconciliation Options
+              </h5>
+              <div>
+                <>
+                  {" "}
+                  <div>
+                    Service Account:{" "}
+                    <strong>
+                      {installedPackageDetail.reconciliationOptions.serviceAccountName}
+                    </strong>
+                  </div>
+                  <div>
+                    Interval:{" "}
+                    <strong>{installedPackageDetail.reconciliationOptions.interval} seconds</strong>
+                  </div>
+                </>
+              </div>
+            </section>
+          )}
         </>
       )}
       {availablePackageDetail && (

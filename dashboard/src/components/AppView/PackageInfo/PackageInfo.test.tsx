@@ -8,6 +8,7 @@ import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
   PackageAppVersion,
+  ReconciliationOptions,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
@@ -35,7 +36,6 @@ const defaultProps = {
     latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
     latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
     pkgVersionReference: { version: "1" } as VersionReference,
-    reconciliationOptions: {},
     status: {
       ready: true,
       reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
@@ -121,5 +121,21 @@ context("PackageUpdateInfo: when information about updates is available", () => 
       <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
     expect(wrapper.find(Alert).text()).toContain("A new package version is available: latest");
+  });
+  it("renders the reconcilliation options if any", () => {
+    const appWithUpdates = {
+      ...defaultProps.installedPackageDetail,
+      reconciliationOptions: {
+        serviceAccountName: "my-sa",
+        interval: 99,
+        suspend: false,
+      } as ReconciliationOptions,
+    } as InstalledPackageDetail;
+    const wrapper = mountWrapper(
+      defaultStore,
+      <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
+    );
+    expect(wrapper.text()).toContain("Service Account: my-sa");
+    expect(wrapper.text()).toContain("Interval: 99 seconds");
   });
 });
