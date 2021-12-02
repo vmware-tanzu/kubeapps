@@ -372,7 +372,7 @@ export const Value = {
       return message.listValue;
     } else if (message.nullValue !== undefined) {
       return null;
-    }else{
+    } else {
       return undefined;
     }
   },
