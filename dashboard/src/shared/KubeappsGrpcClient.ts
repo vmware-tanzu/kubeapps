@@ -1,12 +1,13 @@
 import { grpc } from "@improbable-eng/grpc-web";
 import { PackagesServiceClientImpl } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import {
-  GrpcWebImpl,
-  PluginsServiceClientImpl,
-} from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { PluginsServiceClientImpl } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { FluxV2PackagesServiceClientImpl } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 import { HelmPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { KappControllerPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+import {
+  GrpcWebImpl,
+  ResourcesServiceClientImpl,
+} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import { Auth } from "./Auth";
 import * as URL from "./url";
 
@@ -45,6 +46,11 @@ export class KubeappsGrpcClient {
 
   public getPluginsServiceClientImpl() {
     return new PluginsServiceClientImpl(this.getGrpcClient());
+  }
+
+  // Resources API
+  public getResourcesServiceClientImpl() {
+    return new ResourcesServiceClientImpl(this.getGrpcClient());
   }
 
   // Plugins (packages) APIs

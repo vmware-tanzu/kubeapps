@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestGetResources(t *testing.T) {
+func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	testCases := []struct {
 		name               string
 		existingReleases   []releaseStub
@@ -89,6 +89,46 @@ metadata:
 			},
 		},
 		{
+			name: "returns resource references with explicit namespace when not present in helm manifest",
+			existingReleases: []releaseStub{
+				{
+					name:      "my-apache",
+					namespace: "default",
+					manifest: `
+---
+# Source: apache/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: apache-test
+`,
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: "my-apache",
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "v1",
+						Name:       "apache-test",
+						Namespace:  "default",
+						Kind:       "Service",
+					},
+				},
+			},
+		},
+		{
 			name: "returns resource references for resources in other namespaces",
 			existingReleases: []releaseStub{
 				{
@@ -129,6 +169,7 @@ metadata:
 						ApiVersion: "v1",
 						Name:       "test-cluster-role",
 						Kind:       "ClusterRole",
+						Namespace:  "default",
 					},
 					{
 						ApiVersion: "apps/v1",
@@ -158,6 +199,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: apache-test
+  namespace: default
 `,
 				},
 			},
@@ -179,6 +221,7 @@ metadata:
 					{
 						ApiVersion: "apps/v1",
 						Name:       "apache-test",
+						Namespace:  "default",
 						Kind:       "Deployment",
 					},
 				},
@@ -241,6 +284,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: apache-test
+  namespace: default
   label:
     chart: "gitea-0.2.0"
     chart: "gitea-0.2.0"
@@ -265,6 +309,7 @@ metadata:
 					{
 						ApiVersion: "apps/v1",
 						Name:       "apache-test",
+						Namespace:  "default",
 						Kind:       "Deployment",
 					},
 				},
@@ -283,6 +328,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: !!string apache-test
+  namespace: default
 `,
 				},
 			},
@@ -304,6 +350,7 @@ metadata:
 					{
 						ApiVersion: "apps/v1",
 						Name:       "apache-test",
+						Namespace:  "default",
 						Kind:       "Deployment",
 					},
 				},
@@ -459,11 +506,13 @@ items:
 					{
 						ApiVersion: "rbac.authorization.k8s.io/v1",
 						Name:       "clusterrole-1",
+						Namespace:  "default",
 						Kind:       "ClusterRole",
 					},
 					{
 						ApiVersion: "rbac.authorization.k8s.io/v1",
 						Name:       "clusterrole-2",
+						Namespace:  "default",
 						Kind:       "ClusterRole",
 					},
 				},

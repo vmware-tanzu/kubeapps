@@ -112,9 +112,9 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 		},
 		// For testing, define a kindToResource converter that doesn't require
 		// a rest mapper.
-		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error) {
 			gvr, _ := meta.UnsafeGuessKindToResource(gvk)
-			return gvr, nil
+			return gvr, meta.RESTScopeNameNamespace, nil
 		},
 	})
 

@@ -2,6 +2,7 @@ import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
 import Enzyme from "enzyme";
 import "jest-enzyme";
 import { WebSocket } from "mock-socket";
+import { TextDecoder, TextEncoder } from "util";
 
 Enzyme.configure({ adapter: new Adapter() });
 
@@ -12,3 +13,6 @@ jest.spyOn(window.localStorage.__proto__, "setItem");
 jest.spyOn(window.localStorage.__proto__, "removeItem");
 
 (global as any).WebSocket = WebSocket;
+
+(global as any).TextDecoder = TextDecoder;
+(global as any).TextEncoder = TextEncoder;

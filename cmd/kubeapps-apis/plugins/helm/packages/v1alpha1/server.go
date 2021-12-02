@@ -1210,7 +1210,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	pkgRef := request.GetInstalledPackageRef()
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
-	log.Infof("+helm GetResources %s %s", contextMsg, identifier)
+	log.Infof("+helm GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
 
 	namespace := pkgRef.GetContext().GetNamespace()
 
@@ -1229,7 +1229,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
 	}
 
-	refs, err := resourceRefsFromManifest(release.Manifest)
+	refs, err := resourceRefsFromManifest(release.Manifest, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -1253,7 +1253,8 @@ type YAMLResource struct {
 }
 
 // resourceRefsFromManifest returns the resource refs for a given yaml manifest.
-func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
+// TODO(minelson): share common functionality between plugins.
+func resourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, error) {
 	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
 	refs := []*corev1.ResourceRef{}
 	doc := YAMLResource{}
@@ -1270,20 +1271,38 @@ func resourceRefsFromManifest(m string) ([]*corev1.ResourceRef, error) {
 		}
 		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
 			for _, i := range doc.Items {
+				namespace := i.Metadata.Namespace
+				if namespace == "" {
+					namespace = pkgNamespace
+				}
 				refs = append(refs, &corev1.ResourceRef{
 					ApiVersion: i.APIVersion,
 					Kind:       i.Kind,
 					Name:       i.Metadata.Name,
-					Namespace:  i.Metadata.Namespace,
+					Namespace:  namespace,
 				})
 			}
 			continue
+		}
+		// Helm does not require that the rendered manifest specifies the
+		// resource namespace so some charts do not do so (ldap).  We explicitly
+		// set the namespace for the resource ref so that it can be used as part
+		// of the key for the resource ref.
+		// TODO(minelson): At the moment we do not distinguish between
+		// cluster-scoped and namespace-scoped resources for the refs.  This
+		// does not affect the resources plugin fetching them correctly, but
+		// would be better if we only set the namespace in the reference if (a)
+		// it was not set in the manifest, and (b) it is a namespace-scoped
+		// resource.
+		namespace := doc.Metadata.Namespace
+		if namespace == "" {
+			namespace = pkgNamespace
 		}
 		refs = append(refs, &corev1.ResourceRef{
 			ApiVersion: doc.APIVersion,
 			Kind:       doc.Kind,
 			Name:       doc.Metadata.Name,
-			Namespace:  doc.Metadata.Namespace,
+			Namespace:  namespace,
 		})
 	}
 
