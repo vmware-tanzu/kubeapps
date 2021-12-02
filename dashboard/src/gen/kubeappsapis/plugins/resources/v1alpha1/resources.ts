@@ -5,6 +5,7 @@ import _m0 from "protobufjs/minimal";
 import {
   InstalledPackageReference,
   ResourceRef,
+  Context,
 } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Any } from "../../../../google/protobuf/any";
 import { Observable } from "rxjs";
@@ -63,14 +64,45 @@ export interface GetResourcesResponse {
   manifest?: Any;
 }
 
+/**
+ * GetServiceAccountNamesRequest
+ *
+ * Request for GetServiceAccountNames
+ */
+export interface GetServiceAccountNamesRequest {
+  /**
+   * Context
+   *
+   * The context for which the service account names are being fetched.
+   */
+  context?: Context;
+}
+
+/**
+ * GetServiceAccountNamesResponse
+ *
+ * Response for GetServiceAccountNames
+ */
+export interface GetServiceAccountNamesResponse {
+  /**
+   * ServiceAccountNames
+   *
+   * The list of Service Account names.
+   */
+  serviceaccountNames: string[];
+}
+
 const baseGetResourcesRequest: object = { watch: false };
 
 export const GetResourcesRequest = {
-  encode(message: GetResourcesRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: GetResourcesRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     for (const v of message.resourceRefs) {
@@ -91,10 +123,15 @@ export const GetResourcesRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
-          message.resourceRefs.push(ResourceRef.decode(reader, reader.uint32()));
+          message.resourceRefs.push(
+            ResourceRef.decode(reader, reader.uint32())
+          );
           break;
         case 3:
           message.watch = reader.bool();
@@ -110,12 +147,17 @@ export const GetResourcesRequest = {
   fromJSON(object: any): GetResourcesRequest {
     const message = { ...baseGetResourcesRequest } as GetResourcesRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
-    message.resourceRefs = (object.resourceRefs ?? []).map((e: any) => ResourceRef.fromJSON(e));
+    message.resourceRefs = (object.resourceRefs ?? []).map((e: any) =>
+      ResourceRef.fromJSON(e)
+    );
     message.watch =
-      object.watch !== undefined && object.watch !== null ? Boolean(object.watch) : false;
+      object.watch !== undefined && object.watch !== null
+        ? Boolean(object.watch)
+        : false;
     return message;
   },
 
@@ -126,7 +168,9 @@ export const GetResourcesRequest = {
         ? InstalledPackageReference.toJSON(message.installedPackageRef)
         : undefined);
     if (message.resourceRefs) {
-      obj.resourceRefs = message.resourceRefs.map(e => (e ? ResourceRef.toJSON(e) : undefined));
+      obj.resourceRefs = message.resourceRefs.map((e) =>
+        e ? ResourceRef.toJSON(e) : undefined
+      );
     } else {
       obj.resourceRefs = [];
     }
@@ -134,13 +178,17 @@ export const GetResourcesRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetResourcesRequest>): GetResourcesRequest {
+  fromPartial<I extends Exact<DeepPartial<GetResourcesRequest>, I>>(
+    object: I
+  ): GetResourcesRequest {
     const message = { ...baseGetResourcesRequest } as GetResourcesRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
-    message.resourceRefs = (object.resourceRefs ?? []).map(e => ResourceRef.fromPartial(e));
+    message.resourceRefs =
+      object.resourceRefs?.map((e) => ResourceRef.fromPartial(e)) || [];
     message.watch = object.watch ?? false;
     return message;
   },
@@ -149,9 +197,15 @@ export const GetResourcesRequest = {
 const baseGetResourcesResponse: object = {};
 
 export const GetResourcesResponse = {
-  encode(message: GetResourcesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: GetResourcesResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.resourceRef !== undefined) {
-      ResourceRef.encode(message.resourceRef, writer.uint32(10).fork()).ldelim();
+      ResourceRef.encode(
+        message.resourceRef,
+        writer.uint32(10).fork()
+      ).ldelim();
     }
     if (message.manifest !== undefined) {
       Any.encode(message.manifest, writer.uint32(18).fork()).ldelim();
@@ -159,7 +213,10 @@ export const GetResourcesResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetResourcesResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetResourcesResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseGetResourcesResponse } as GetResourcesResponse;
@@ -196,13 +253,19 @@ export const GetResourcesResponse = {
   toJSON(message: GetResourcesResponse): unknown {
     const obj: any = {};
     message.resourceRef !== undefined &&
-      (obj.resourceRef = message.resourceRef ? ResourceRef.toJSON(message.resourceRef) : undefined);
+      (obj.resourceRef = message.resourceRef
+        ? ResourceRef.toJSON(message.resourceRef)
+        : undefined);
     message.manifest !== undefined &&
-      (obj.manifest = message.manifest ? Any.toJSON(message.manifest) : undefined);
+      (obj.manifest = message.manifest
+        ? Any.toJSON(message.manifest)
+        : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetResourcesResponse>): GetResourcesResponse {
+  fromPartial<I extends Exact<DeepPartial<GetResourcesResponse>, I>>(
+    object: I
+  ): GetResourcesResponse {
     const message = { ...baseGetResourcesResponse } as GetResourcesResponse;
     message.resourceRef =
       object.resourceRef !== undefined && object.resourceRef !== null
@@ -216,11 +279,154 @@ export const GetResourcesResponse = {
   },
 };
 
+const baseGetServiceAccountNamesRequest: object = {};
+
+export const GetServiceAccountNamesRequest = {
+  encode(
+    message: GetServiceAccountNamesRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetServiceAccountNamesRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseGetServiceAccountNamesRequest,
+    } as GetServiceAccountNamesRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetServiceAccountNamesRequest {
+    const message = {
+      ...baseGetServiceAccountNamesRequest,
+    } as GetServiceAccountNamesRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    return message;
+  },
+
+  toJSON(message: GetServiceAccountNamesRequest): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context
+        ? Context.toJSON(message.context)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetServiceAccountNamesRequest>, I>>(
+    object: I
+  ): GetServiceAccountNamesRequest {
+    const message = {
+      ...baseGetServiceAccountNamesRequest,
+    } as GetServiceAccountNamesRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    return message;
+  },
+};
+
+const baseGetServiceAccountNamesResponse: object = { serviceaccountNames: "" };
+
+export const GetServiceAccountNamesResponse = {
+  encode(
+    message: GetServiceAccountNamesResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    for (const v of message.serviceaccountNames) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetServiceAccountNamesResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseGetServiceAccountNamesResponse,
+    } as GetServiceAccountNamesResponse;
+    message.serviceaccountNames = [];
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.serviceaccountNames.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetServiceAccountNamesResponse {
+    const message = {
+      ...baseGetServiceAccountNamesResponse,
+    } as GetServiceAccountNamesResponse;
+    message.serviceaccountNames = (object.serviceaccountNames ?? []).map(
+      (e: any) => String(e)
+    );
+    return message;
+  },
+
+  toJSON(message: GetServiceAccountNamesResponse): unknown {
+    const obj: any = {};
+    if (message.serviceaccountNames) {
+      obj.serviceaccountNames = message.serviceaccountNames.map((e) => e);
+    } else {
+      obj.serviceaccountNames = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetServiceAccountNamesResponse>, I>>(
+    object: I
+  ): GetServiceAccountNamesResponse {
+    const message = {
+      ...baseGetServiceAccountNamesResponse,
+    } as GetServiceAccountNamesResponse;
+    message.serviceaccountNames =
+      object.serviceaccountNames?.map((e) => e) || [];
+    return message;
+  },
+};
+
 export interface ResourcesService {
   GetResources(
     request: DeepPartial<GetResourcesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Observable<GetResourcesResponse>;
+  GetServiceAccountNames(
+    request: DeepPartial<GetServiceAccountNamesRequest>,
+    metadata?: grpc.Metadata
+  ): Observable<GetServiceAccountNamesResponse>;
 }
 
 export class ResourcesServiceClientImpl implements ResourcesService {
@@ -229,16 +435,28 @@ export class ResourcesServiceClientImpl implements ResourcesService {
   constructor(rpc: Rpc) {
     this.rpc = rpc;
     this.GetResources = this.GetResources.bind(this);
+    this.GetServiceAccountNames = this.GetServiceAccountNames.bind(this);
   }
 
   GetResources(
     request: DeepPartial<GetResourcesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Observable<GetResourcesResponse> {
     return this.rpc.invoke(
       ResourcesServiceGetResourcesDesc,
       GetResourcesRequest.fromPartial(request),
-      metadata,
+      metadata
+    );
+  }
+
+  GetServiceAccountNames(
+    request: DeepPartial<GetServiceAccountNamesRequest>,
+    metadata?: grpc.Metadata
+  ): Observable<GetServiceAccountNamesResponse> {
+    return this.rpc.invoke(
+      ResourcesServiceGetServiceAccountNamesDesc,
+      GetServiceAccountNamesRequest.fromPartial(request),
+      metadata
     );
   }
 }
@@ -269,7 +487,31 @@ export const ResourcesServiceGetResourcesDesc: UnaryMethodDefinitionish = {
   } as any,
 };
 
-interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+export const ResourcesServiceGetServiceAccountNamesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetServiceAccountNames",
+    service: ResourcesServiceDesc,
+    requestStream: false,
+    responseStream: true,
+    requestType: {
+      serializeBinary() {
+        return GetServiceAccountNamesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetServiceAccountNamesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
+
+interface UnaryMethodDefinitionishR
+  extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
@@ -280,12 +522,12 @@ interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any>;
   invoke<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Observable<any>;
 }
 
@@ -305,7 +547,7 @@ export class GrpcWebImpl {
       streamingTransport?: grpc.TransportFactory;
       debug?: boolean;
       metadata?: grpc.Metadata;
-    },
+    }
   ) {
     this.host = host;
     this.options = options;
@@ -314,7 +556,7 @@ export class GrpcWebImpl {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -348,7 +590,7 @@ export class GrpcWebImpl {
   invoke<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Observable<any> {
     // Status Response Codes (https://developers.google.com/maps-booking/reference/grpc-api/status_codes)
     const upStreamCodes = [2, 4, 8, 9, 10, 13, 14, 15];
@@ -361,7 +603,7 @@ export class GrpcWebImpl {
             ...metadata?.headersMap,
           })
         : metadata || this.options.metadata;
-    return new Observable(observer => {
+    return new Observable((observer) => {
       const upStream = () => {
         const client = grpc.invoke(methodDesc, {
           host: this.host,
@@ -369,7 +611,7 @@ export class GrpcWebImpl {
           transport: this.options.streamingTransport || this.options.transport,
           metadata: maybeCombinedMetadata,
           debug: this.options.debug,
-          onMessage: next => observer.next(next),
+          onMessage: (next) => observer.next(next),
           onEnd: (code: grpc.Code, message: string) => {
             if (code === 0) {
               observer.complete();
@@ -387,7 +629,15 @@ export class GrpcWebImpl {
   }
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -397,6 +647,14 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<
+        Exclude<keyof I, KeysOfUnion<P>>,
+        never
+      >;
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

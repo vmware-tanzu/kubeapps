@@ -50,11 +50,17 @@ export interface Plugin {
 const baseGetConfiguredPluginsRequest: object = {};
 
 export const GetConfiguredPluginsRequest = {
-  encode(_: GetConfiguredPluginsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    _: GetConfiguredPluginsRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetConfiguredPluginsRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetConfiguredPluginsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -83,7 +89,9 @@ export const GetConfiguredPluginsRequest = {
     return obj;
   },
 
-  fromPartial(_: DeepPartial<GetConfiguredPluginsRequest>): GetConfiguredPluginsRequest {
+  fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsRequest>, I>>(
+    _: I
+  ): GetConfiguredPluginsRequest {
     const message = {
       ...baseGetConfiguredPluginsRequest,
     } as GetConfiguredPluginsRequest;
@@ -96,7 +104,7 @@ const baseGetConfiguredPluginsResponse: object = {};
 export const GetConfiguredPluginsResponse = {
   encode(
     message: GetConfiguredPluginsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.plugins) {
       Plugin.encode(v!, writer.uint32(10).fork()).ldelim();
@@ -104,7 +112,10 @@ export const GetConfiguredPluginsResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetConfiguredPluginsResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetConfiguredPluginsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -129,25 +140,31 @@ export const GetConfiguredPluginsResponse = {
     const message = {
       ...baseGetConfiguredPluginsResponse,
     } as GetConfiguredPluginsResponse;
-    message.plugins = (object.plugins ?? []).map((e: any) => Plugin.fromJSON(e));
+    message.plugins = (object.plugins ?? []).map((e: any) =>
+      Plugin.fromJSON(e)
+    );
     return message;
   },
 
   toJSON(message: GetConfiguredPluginsResponse): unknown {
     const obj: any = {};
     if (message.plugins) {
-      obj.plugins = message.plugins.map(e => (e ? Plugin.toJSON(e) : undefined));
+      obj.plugins = message.plugins.map((e) =>
+        e ? Plugin.toJSON(e) : undefined
+      );
     } else {
       obj.plugins = [];
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetConfiguredPluginsResponse>): GetConfiguredPluginsResponse {
+  fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsResponse>, I>>(
+    object: I
+  ): GetConfiguredPluginsResponse {
     const message = {
       ...baseGetConfiguredPluginsResponse,
     } as GetConfiguredPluginsResponse;
-    message.plugins = (object.plugins ?? []).map(e => Plugin.fromPartial(e));
+    message.plugins = object.plugins?.map((e) => Plugin.fromPartial(e)) || [];
     return message;
   },
 };
@@ -155,7 +172,10 @@ export const GetConfiguredPluginsResponse = {
 const basePlugin: object = { name: "", version: "" };
 
 export const Plugin = {
-  encode(message: Plugin, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: Plugin,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
@@ -188,9 +208,14 @@ export const Plugin = {
 
   fromJSON(object: any): Plugin {
     const message = { ...basePlugin } as Plugin;
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.name =
+      object.name !== undefined && object.name !== null
+        ? String(object.name)
+        : "";
     message.version =
-      object.version !== undefined && object.version !== null ? String(object.version) : "";
+      object.version !== undefined && object.version !== null
+        ? String(object.version)
+        : "";
     return message;
   },
 
@@ -201,7 +226,7 @@ export const Plugin = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Plugin>): Plugin {
+  fromPartial<I extends Exact<DeepPartial<Plugin>, I>>(object: I): Plugin {
     const message = { ...basePlugin } as Plugin;
     message.name = object.name ?? "";
     message.version = object.version ?? "";
@@ -213,7 +238,7 @@ export interface PluginsService {
   /** GetConfiguredPlugins returns a map of short and longnames for the configured plugins. */
   GetConfiguredPlugins(
     request: DeepPartial<GetConfiguredPluginsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetConfiguredPluginsResponse>;
 }
 
@@ -227,12 +252,12 @@ export class PluginsServiceClientImpl implements PluginsService {
 
   GetConfiguredPlugins(
     request: DeepPartial<GetConfiguredPluginsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetConfiguredPluginsResponse> {
     return this.rpc.unary(
       PluginsServiceGetConfiguredPluginsDesc,
       GetConfiguredPluginsRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 }
@@ -241,29 +266,31 @@ export const PluginsServiceDesc = {
   serviceName: "kubeappsapis.core.plugins.v1alpha1.PluginsService",
 };
 
-export const PluginsServiceGetConfiguredPluginsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetConfiguredPlugins",
-  service: PluginsServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetConfiguredPluginsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetConfiguredPluginsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PluginsServiceGetConfiguredPluginsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetConfiguredPlugins",
+    service: PluginsServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetConfiguredPluginsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetConfiguredPluginsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+interface UnaryMethodDefinitionishR
+  extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
@@ -274,7 +301,7 @@ interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any>;
 }
 
@@ -294,7 +321,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-    },
+    }
   ) {
     this.host = host;
     this.options = options;
@@ -303,7 +330,7 @@ export class GrpcWebImpl {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -335,7 +362,15 @@ export class GrpcWebImpl {
   }
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -345,6 +380,14 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<
+        Exclude<keyof I, KeysOfUnion<P>>,
+        never
+      >;
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

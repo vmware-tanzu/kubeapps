@@ -77,7 +77,7 @@ const baseInstalledPackageDetailCustomDataHelm: object = { releaseRevision: 0 };
 export const InstalledPackageDetailCustomDataHelm = {
   encode(
     message: InstalledPackageDetailCustomDataHelm,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.releaseRevision !== 0) {
       writer.uint32(16).int32(message.releaseRevision);
@@ -85,7 +85,10 @@ export const InstalledPackageDetailCustomDataHelm = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageDetailCustomDataHelm {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): InstalledPackageDetailCustomDataHelm {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -118,13 +121,14 @@ export const InstalledPackageDetailCustomDataHelm = {
 
   toJSON(message: InstalledPackageDetailCustomDataHelm): unknown {
     const obj: any = {};
-    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
+    message.releaseRevision !== undefined &&
+      (obj.releaseRevision = message.releaseRevision);
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<InstalledPackageDetailCustomDataHelm>,
-  ): InstalledPackageDetailCustomDataHelm {
+  fromPartial<
+    I extends Exact<DeepPartial<InstalledPackageDetailCustomDataHelm>, I>
+  >(object: I): InstalledPackageDetailCustomDataHelm {
     const message = {
       ...baseInstalledPackageDetailCustomDataHelm,
     } as InstalledPackageDetailCustomDataHelm;
@@ -138,12 +142,12 @@ const baseRollbackInstalledPackageRequest: object = { releaseRevision: 0 };
 export const RollbackInstalledPackageRequest = {
   encode(
     message: RollbackInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.releaseRevision !== 0) {
@@ -152,7 +156,10 @@ export const RollbackInstalledPackageRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): RollbackInstalledPackageRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): RollbackInstalledPackageRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -162,7 +169,10 @@ export const RollbackInstalledPackageRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
           message.releaseRevision = reader.int32();
@@ -180,7 +190,8 @@ export const RollbackInstalledPackageRequest = {
       ...baseRollbackInstalledPackageRequest,
     } as RollbackInstalledPackageRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     message.releaseRevision =
@@ -196,18 +207,20 @@ export const RollbackInstalledPackageRequest = {
       (obj.installedPackageRef = message.installedPackageRef
         ? InstalledPackageReference.toJSON(message.installedPackageRef)
         : undefined);
-    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
+    message.releaseRevision !== undefined &&
+      (obj.releaseRevision = message.releaseRevision);
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<RollbackInstalledPackageRequest>,
+  fromPartial<I extends Exact<DeepPartial<RollbackInstalledPackageRequest>, I>>(
+    object: I
   ): RollbackInstalledPackageRequest {
     const message = {
       ...baseRollbackInstalledPackageRequest,
     } as RollbackInstalledPackageRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     message.releaseRevision = object.releaseRevision ?? 0;
@@ -220,18 +233,21 @@ const baseRollbackInstalledPackageResponse: object = {};
 export const RollbackInstalledPackageResponse = {
   encode(
     message: RollbackInstalledPackageResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): RollbackInstalledPackageResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): RollbackInstalledPackageResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -241,7 +257,10 @@ export const RollbackInstalledPackageResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -256,7 +275,8 @@ export const RollbackInstalledPackageResponse = {
       ...baseRollbackInstalledPackageResponse,
     } as RollbackInstalledPackageResponse;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     return message;
@@ -271,14 +291,15 @@ export const RollbackInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<RollbackInstalledPackageResponse>,
-  ): RollbackInstalledPackageResponse {
+  fromPartial<
+    I extends Exact<DeepPartial<RollbackInstalledPackageResponse>, I>
+  >(object: I): RollbackInstalledPackageResponse {
     const message = {
       ...baseRollbackInstalledPackageResponse,
     } as RollbackInstalledPackageResponse;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     return message;
@@ -289,47 +310,47 @@ export interface HelmPackagesService {
   /** GetAvailablePackageSummaries returns the available packages managed by the 'helm' plugin */
   GetAvailablePackageSummaries(
     request: DeepPartial<GetAvailablePackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageSummariesResponse>;
   /** GetAvailablePackageDetail returns the package details managed by the 'helm' plugin */
   GetAvailablePackageDetail(
     request: DeepPartial<GetAvailablePackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageDetailResponse>;
   /** GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin */
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageVersionsResponse>;
   /** GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin */
   GetInstalledPackageSummaries(
     request: DeepPartial<GetInstalledPackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageSummariesResponse>;
   /** GetInstalledPackageDetail returns the requested installed package managed by the 'helm' plugin */
   GetInstalledPackageDetail(
     request: DeepPartial<GetInstalledPackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageDetailResponse>;
   /** CreateInstalledPackage creates an installed package based on the request. */
   CreateInstalledPackage(
     request: DeepPartial<CreateInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<CreateInstalledPackageResponse>;
   /** UpdateInstalledPackage updates an installed package based on the request. */
   UpdateInstalledPackage(
     request: DeepPartial<UpdateInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<UpdateInstalledPackageResponse>;
   /** DeleteInstalledPackage deletes an installed package based on the request. */
   DeleteInstalledPackage(
     request: DeepPartial<DeleteInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<DeleteInstalledPackageResponse>;
   /** RollbackInstalledPackage updates an installed package based on the request. */
   RollbackInstalledPackage(
     request: DeepPartial<RollbackInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<RollbackInstalledPackageResponse>;
   /**
    * GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
@@ -337,7 +358,7 @@ export interface HelmPackagesService {
    */
   GetInstalledPackageResourceRefs(
     request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageResourceRefsResponse>;
 }
 
@@ -346,354 +367,370 @@ export class HelmPackagesServiceClientImpl implements HelmPackagesService {
 
   constructor(rpc: Rpc) {
     this.rpc = rpc;
-    this.GetAvailablePackageSummaries = this.GetAvailablePackageSummaries.bind(this);
+    this.GetAvailablePackageSummaries =
+      this.GetAvailablePackageSummaries.bind(this);
     this.GetAvailablePackageDetail = this.GetAvailablePackageDetail.bind(this);
-    this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
-    this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
+    this.GetAvailablePackageVersions =
+      this.GetAvailablePackageVersions.bind(this);
+    this.GetInstalledPackageSummaries =
+      this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
     this.RollbackInstalledPackage = this.RollbackInstalledPackage.bind(this);
-    this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
+    this.GetInstalledPackageResourceRefs =
+      this.GetInstalledPackageResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
     request: DeepPartial<GetAvailablePackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageSummariesResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetAvailablePackageSummariesDesc,
       GetAvailablePackageSummariesRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetAvailablePackageDetail(
     request: DeepPartial<GetAvailablePackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageDetailResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetAvailablePackageDetailDesc,
       GetAvailablePackageDetailRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageVersionsResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetAvailablePackageVersionsDesc,
       GetAvailablePackageVersionsRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetInstalledPackageSummaries(
     request: DeepPartial<GetInstalledPackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageSummariesResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetInstalledPackageSummariesDesc,
       GetInstalledPackageSummariesRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetInstalledPackageDetail(
     request: DeepPartial<GetInstalledPackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageDetailResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetInstalledPackageDetailDesc,
       GetInstalledPackageDetailRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   CreateInstalledPackage(
     request: DeepPartial<CreateInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<CreateInstalledPackageResponse> {
     return this.rpc.unary(
       HelmPackagesServiceCreateInstalledPackageDesc,
       CreateInstalledPackageRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   UpdateInstalledPackage(
     request: DeepPartial<UpdateInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<UpdateInstalledPackageResponse> {
     return this.rpc.unary(
       HelmPackagesServiceUpdateInstalledPackageDesc,
       UpdateInstalledPackageRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   DeleteInstalledPackage(
     request: DeepPartial<DeleteInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<DeleteInstalledPackageResponse> {
     return this.rpc.unary(
       HelmPackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   RollbackInstalledPackage(
     request: DeepPartial<RollbackInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<RollbackInstalledPackageResponse> {
     return this.rpc.unary(
       HelmPackagesServiceRollbackInstalledPackageDesc,
       RollbackInstalledPackageRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetInstalledPackageResourceRefs(
     request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageResourceRefsResponse> {
     return this.rpc.unary(
       HelmPackagesServiceGetInstalledPackageResourceRefsDesc,
       GetInstalledPackageResourceRefsRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 }
 
 export const HelmPackagesServiceDesc = {
-  serviceName: "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService",
+  serviceName:
+    "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService",
 };
 
-export const HelmPackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageSummaries",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageSummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageSummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageSummaries",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageSummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageDetail",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageDetail",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageVersions",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageVersionsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageVersionsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageVersions",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageVersionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageVersionsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageSummaries",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageSummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageSummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageSummaries",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageSummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageDetail",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageDetail",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "CreateInstalledPackage",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return CreateInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...CreateInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "CreateInstalledPackage",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return CreateInstalledPackageRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...CreateInstalledPackageResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "UpdateInstalledPackage",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return UpdateInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...UpdateInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "UpdateInstalledPackage",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return UpdateInstalledPackageRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...UpdateInstalledPackageResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "DeleteInstalledPackage",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return DeleteInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...DeleteInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "DeleteInstalledPackage",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return DeleteInstalledPackageRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...DeleteInstalledPackageResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceRollbackInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "RollbackInstalledPackage",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return RollbackInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...RollbackInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceRollbackInstalledPackageDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "RollbackInstalledPackage",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return RollbackInstalledPackageRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...RollbackInstalledPackageResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const HelmPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageResourceRefs",
-  service: HelmPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageResourceRefsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageResourceRefsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageResourceRefs",
+    service: HelmPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageResourceRefsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageResourceRefsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+interface UnaryMethodDefinitionishR
+  extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
@@ -704,7 +741,7 @@ interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any>;
 }
 
@@ -724,7 +761,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-    },
+    }
   ) {
     this.host = host;
     this.options = options;
@@ -733,7 +770,7 @@ export class GrpcWebImpl {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -765,7 +802,15 @@ export class GrpcWebImpl {
   }
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -775,6 +820,14 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<
+        Exclude<keyof I, KeysOfUnion<P>>,
+        never
+      >;
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

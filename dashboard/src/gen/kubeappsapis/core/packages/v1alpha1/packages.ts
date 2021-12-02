@@ -872,7 +872,7 @@ export enum InstalledPackageStatus_StatusReason {
 }
 
 export function installedPackageStatus_StatusReasonFromJSON(
-  object: any,
+  object: any
 ): InstalledPackageStatus_StatusReason {
   switch (object) {
     case 0:
@@ -898,7 +898,7 @@ export function installedPackageStatus_StatusReasonFromJSON(
 }
 
 export function installedPackageStatus_StatusReasonToJSON(
-  object: InstalledPackageStatus_StatusReason,
+  object: InstalledPackageStatus_StatusReason
 ): string {
   switch (object) {
     case InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED:
@@ -1002,21 +1002,30 @@ const baseGetAvailablePackageSummariesRequest: object = {};
 export const GetAvailablePackageSummariesRequest = {
   encode(
     message: GetAvailablePackageSummariesRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
     if (message.filterOptions !== undefined) {
-      FilterOptions.encode(message.filterOptions, writer.uint32(18).fork()).ldelim();
+      FilterOptions.encode(
+        message.filterOptions,
+        writer.uint32(18).fork()
+      ).ldelim();
     }
     if (message.paginationOptions !== undefined) {
-      PaginationOptions.encode(message.paginationOptions, writer.uint32(26).fork()).ldelim();
+      PaginationOptions.encode(
+        message.paginationOptions,
+        writer.uint32(26).fork()
+      ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetAvailablePackageSummariesRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetAvailablePackageSummariesRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1032,7 +1041,10 @@ export const GetAvailablePackageSummariesRequest = {
           message.filterOptions = FilterOptions.decode(reader, reader.uint32());
           break;
         case 3:
-          message.paginationOptions = PaginationOptions.decode(reader, reader.uint32());
+          message.paginationOptions = PaginationOptions.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -1055,7 +1067,8 @@ export const GetAvailablePackageSummariesRequest = {
         ? FilterOptions.fromJSON(object.filterOptions)
         : undefined;
     message.paginationOptions =
-      object.paginationOptions !== undefined && object.paginationOptions !== null
+      object.paginationOptions !== undefined &&
+      object.paginationOptions !== null
         ? PaginationOptions.fromJSON(object.paginationOptions)
         : undefined;
     return message;
@@ -1064,7 +1077,9 @@ export const GetAvailablePackageSummariesRequest = {
   toJSON(message: GetAvailablePackageSummariesRequest): unknown {
     const obj: any = {};
     message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+      (obj.context = message.context
+        ? Context.toJSON(message.context)
+        : undefined);
     message.filterOptions !== undefined &&
       (obj.filterOptions = message.filterOptions
         ? FilterOptions.toJSON(message.filterOptions)
@@ -1076,9 +1091,9 @@ export const GetAvailablePackageSummariesRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageSummariesRequest>,
-  ): GetAvailablePackageSummariesRequest {
+  fromPartial<
+    I extends Exact<DeepPartial<GetAvailablePackageSummariesRequest>, I>
+  >(object: I): GetAvailablePackageSummariesRequest {
     const message = {
       ...baseGetAvailablePackageSummariesRequest,
     } as GetAvailablePackageSummariesRequest;
@@ -1091,7 +1106,8 @@ export const GetAvailablePackageSummariesRequest = {
         ? FilterOptions.fromPartial(object.filterOptions)
         : undefined;
     message.paginationOptions =
-      object.paginationOptions !== undefined && object.paginationOptions !== null
+      object.paginationOptions !== undefined &&
+      object.paginationOptions !== null
         ? PaginationOptions.fromPartial(object.paginationOptions)
         : undefined;
     return message;
@@ -1103,12 +1119,12 @@ const baseGetAvailablePackageDetailRequest: object = { pkgVersion: "" };
 export const GetAvailablePackageDetailRequest = {
   encode(
     message: GetAvailablePackageDetailRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
       AvailablePackageReference.encode(
         message.availablePackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.pkgVersion !== "") {
@@ -1117,7 +1133,10 @@ export const GetAvailablePackageDetailRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetAvailablePackageDetailRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetAvailablePackageDetailRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1127,7 +1146,10 @@ export const GetAvailablePackageDetailRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.availablePackageRef = AvailablePackageReference.decode(reader, reader.uint32());
+          message.availablePackageRef = AvailablePackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
           message.pkgVersion = reader.string();
@@ -1145,7 +1167,8 @@ export const GetAvailablePackageDetailRequest = {
       ...baseGetAvailablePackageDetailRequest,
     } as GetAvailablePackageDetailRequest;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined;
     message.pkgVersion =
@@ -1165,14 +1188,15 @@ export const GetAvailablePackageDetailRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageDetailRequest>,
-  ): GetAvailablePackageDetailRequest {
+  fromPartial<
+    I extends Exact<DeepPartial<GetAvailablePackageDetailRequest>, I>
+  >(object: I): GetAvailablePackageDetailRequest {
     const message = {
       ...baseGetAvailablePackageDetailRequest,
     } as GetAvailablePackageDetailRequest;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromPartial(object.availablePackageRef)
         : undefined;
     message.pkgVersion = object.pkgVersion ?? "";
@@ -1185,12 +1209,12 @@ const baseGetAvailablePackageVersionsRequest: object = { pkgVersion: "" };
 export const GetAvailablePackageVersionsRequest = {
   encode(
     message: GetAvailablePackageVersionsRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
       AvailablePackageReference.encode(
         message.availablePackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.pkgVersion !== "") {
@@ -1199,7 +1223,10 @@ export const GetAvailablePackageVersionsRequest = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetAvailablePackageVersionsRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetAvailablePackageVersionsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1209,7 +1236,10 @@ export const GetAvailablePackageVersionsRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.availablePackageRef = AvailablePackageReference.decode(reader, reader.uint32());
+          message.availablePackageRef = AvailablePackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
           message.pkgVersion = reader.string();
@@ -1227,7 +1257,8 @@ export const GetAvailablePackageVersionsRequest = {
       ...baseGetAvailablePackageVersionsRequest,
     } as GetAvailablePackageVersionsRequest;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined;
     message.pkgVersion =
@@ -1247,14 +1278,15 @@ export const GetAvailablePackageVersionsRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageVersionsRequest>,
-  ): GetAvailablePackageVersionsRequest {
+  fromPartial<
+    I extends Exact<DeepPartial<GetAvailablePackageVersionsRequest>, I>
+  >(object: I): GetAvailablePackageVersionsRequest {
     const message = {
       ...baseGetAvailablePackageVersionsRequest,
     } as GetAvailablePackageVersionsRequest;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromPartial(object.availablePackageRef)
         : undefined;
     message.pkgVersion = object.pkgVersion ?? "";
@@ -1267,18 +1299,24 @@ const baseGetInstalledPackageSummariesRequest: object = {};
 export const GetInstalledPackageSummariesRequest = {
   encode(
     message: GetInstalledPackageSummariesRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
     if (message.paginationOptions !== undefined) {
-      PaginationOptions.encode(message.paginationOptions, writer.uint32(18).fork()).ldelim();
+      PaginationOptions.encode(
+        message.paginationOptions,
+        writer.uint32(18).fork()
+      ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetInstalledPackageSummariesRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetInstalledPackageSummariesRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1291,7 +1329,10 @@ export const GetInstalledPackageSummariesRequest = {
           message.context = Context.decode(reader, reader.uint32());
           break;
         case 2:
-          message.paginationOptions = PaginationOptions.decode(reader, reader.uint32());
+          message.paginationOptions = PaginationOptions.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -1310,7 +1351,8 @@ export const GetInstalledPackageSummariesRequest = {
         ? Context.fromJSON(object.context)
         : undefined;
     message.paginationOptions =
-      object.paginationOptions !== undefined && object.paginationOptions !== null
+      object.paginationOptions !== undefined &&
+      object.paginationOptions !== null
         ? PaginationOptions.fromJSON(object.paginationOptions)
         : undefined;
     return message;
@@ -1319,7 +1361,9 @@ export const GetInstalledPackageSummariesRequest = {
   toJSON(message: GetInstalledPackageSummariesRequest): unknown {
     const obj: any = {};
     message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+      (obj.context = message.context
+        ? Context.toJSON(message.context)
+        : undefined);
     message.paginationOptions !== undefined &&
       (obj.paginationOptions = message.paginationOptions
         ? PaginationOptions.toJSON(message.paginationOptions)
@@ -1327,9 +1371,9 @@ export const GetInstalledPackageSummariesRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageSummariesRequest>,
-  ): GetInstalledPackageSummariesRequest {
+  fromPartial<
+    I extends Exact<DeepPartial<GetInstalledPackageSummariesRequest>, I>
+  >(object: I): GetInstalledPackageSummariesRequest {
     const message = {
       ...baseGetInstalledPackageSummariesRequest,
     } as GetInstalledPackageSummariesRequest;
@@ -1338,7 +1382,8 @@ export const GetInstalledPackageSummariesRequest = {
         ? Context.fromPartial(object.context)
         : undefined;
     message.paginationOptions =
-      object.paginationOptions !== undefined && object.paginationOptions !== null
+      object.paginationOptions !== undefined &&
+      object.paginationOptions !== null
         ? PaginationOptions.fromPartial(object.paginationOptions)
         : undefined;
     return message;
@@ -1350,18 +1395,21 @@ const baseGetInstalledPackageDetailRequest: object = {};
 export const GetInstalledPackageDetailRequest = {
   encode(
     message: GetInstalledPackageDetailRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetInstalledPackageDetailRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetInstalledPackageDetailRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1371,7 +1419,10 @@ export const GetInstalledPackageDetailRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -1386,7 +1437,8 @@ export const GetInstalledPackageDetailRequest = {
       ...baseGetInstalledPackageDetailRequest,
     } as GetInstalledPackageDetailRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     return message;
@@ -1401,14 +1453,15 @@ export const GetInstalledPackageDetailRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageDetailRequest>,
-  ): GetInstalledPackageDetailRequest {
+  fromPartial<
+    I extends Exact<DeepPartial<GetInstalledPackageDetailRequest>, I>
+  >(object: I): GetInstalledPackageDetailRequest {
     const message = {
       ...baseGetInstalledPackageDetailRequest,
     } as GetInstalledPackageDetailRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     return message;
@@ -1420,12 +1473,12 @@ const baseCreateInstalledPackageRequest: object = { name: "", values: "" };
 export const CreateInstalledPackageRequest = {
   encode(
     message: CreateInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
       AvailablePackageReference.encode(
         message.availablePackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.targetContext !== undefined) {
@@ -1435,7 +1488,10 @@ export const CreateInstalledPackageRequest = {
       writer.uint32(26).string(message.name);
     }
     if (message.pkgVersionReference !== undefined) {
-      VersionReference.encode(message.pkgVersionReference, writer.uint32(34).fork()).ldelim();
+      VersionReference.encode(
+        message.pkgVersionReference,
+        writer.uint32(34).fork()
+      ).ldelim();
     }
     if (message.values !== "") {
       writer.uint32(42).string(message.values);
@@ -1443,13 +1499,16 @@ export const CreateInstalledPackageRequest = {
     if (message.reconciliationOptions !== undefined) {
       ReconciliationOptions.encode(
         message.reconciliationOptions,
-        writer.uint32(50).fork(),
+        writer.uint32(50).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): CreateInstalledPackageRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): CreateInstalledPackageRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1459,7 +1518,10 @@ export const CreateInstalledPackageRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.availablePackageRef = AvailablePackageReference.decode(reader, reader.uint32());
+          message.availablePackageRef = AvailablePackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
           message.targetContext = Context.decode(reader, reader.uint32());
@@ -1468,13 +1530,19 @@ export const CreateInstalledPackageRequest = {
           message.name = reader.string();
           break;
         case 4:
-          message.pkgVersionReference = VersionReference.decode(reader, reader.uint32());
+          message.pkgVersionReference = VersionReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 5:
           message.values = reader.string();
           break;
         case 6:
-          message.reconciliationOptions = ReconciliationOptions.decode(reader, reader.uint32());
+          message.reconciliationOptions = ReconciliationOptions.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -1489,22 +1557,30 @@ export const CreateInstalledPackageRequest = {
       ...baseCreateInstalledPackageRequest,
     } as CreateInstalledPackageRequest;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined;
     message.targetContext =
       object.targetContext !== undefined && object.targetContext !== null
         ? Context.fromJSON(object.targetContext)
         : undefined;
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.name =
+      object.name !== undefined && object.name !== null
+        ? String(object.name)
+        : "";
     message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+      object.pkgVersionReference !== undefined &&
+      object.pkgVersionReference !== null
         ? VersionReference.fromJSON(object.pkgVersionReference)
         : undefined;
     message.values =
-      object.values !== undefined && object.values !== null ? String(object.values) : "";
+      object.values !== undefined && object.values !== null
+        ? String(object.values)
+        : "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      object.reconciliationOptions !== undefined &&
+      object.reconciliationOptions !== null
         ? ReconciliationOptions.fromJSON(object.reconciliationOptions)
         : undefined;
     return message;
@@ -1533,12 +1609,15 @@ export const CreateInstalledPackageRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<CreateInstalledPackageRequest>): CreateInstalledPackageRequest {
+  fromPartial<I extends Exact<DeepPartial<CreateInstalledPackageRequest>, I>>(
+    object: I
+  ): CreateInstalledPackageRequest {
     const message = {
       ...baseCreateInstalledPackageRequest,
     } as CreateInstalledPackageRequest;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromPartial(object.availablePackageRef)
         : undefined;
     message.targetContext =
@@ -1547,12 +1626,14 @@ export const CreateInstalledPackageRequest = {
         : undefined;
     message.name = object.name ?? "";
     message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+      object.pkgVersionReference !== undefined &&
+      object.pkgVersionReference !== null
         ? VersionReference.fromPartial(object.pkgVersionReference)
         : undefined;
     message.values = object.values ?? "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      object.reconciliationOptions !== undefined &&
+      object.reconciliationOptions !== null
         ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
         : undefined;
     return message;
@@ -1564,16 +1645,19 @@ const baseUpdateInstalledPackageRequest: object = { values: "" };
 export const UpdateInstalledPackageRequest = {
   encode(
     message: UpdateInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.pkgVersionReference !== undefined) {
-      VersionReference.encode(message.pkgVersionReference, writer.uint32(18).fork()).ldelim();
+      VersionReference.encode(
+        message.pkgVersionReference,
+        writer.uint32(18).fork()
+      ).ldelim();
     }
     if (message.values !== "") {
       writer.uint32(26).string(message.values);
@@ -1581,13 +1665,16 @@ export const UpdateInstalledPackageRequest = {
     if (message.reconciliationOptions !== undefined) {
       ReconciliationOptions.encode(
         message.reconciliationOptions,
-        writer.uint32(34).fork(),
+        writer.uint32(34).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): UpdateInstalledPackageRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): UpdateInstalledPackageRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1597,16 +1684,25 @@ export const UpdateInstalledPackageRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
-          message.pkgVersionReference = VersionReference.decode(reader, reader.uint32());
+          message.pkgVersionReference = VersionReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 3:
           message.values = reader.string();
           break;
         case 4:
-          message.reconciliationOptions = ReconciliationOptions.decode(reader, reader.uint32());
+          message.reconciliationOptions = ReconciliationOptions.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -1621,17 +1717,22 @@ export const UpdateInstalledPackageRequest = {
       ...baseUpdateInstalledPackageRequest,
     } as UpdateInstalledPackageRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+      object.pkgVersionReference !== undefined &&
+      object.pkgVersionReference !== null
         ? VersionReference.fromJSON(object.pkgVersionReference)
         : undefined;
     message.values =
-      object.values !== undefined && object.values !== null ? String(object.values) : "";
+      object.values !== undefined && object.values !== null
+        ? String(object.values)
+        : "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      object.reconciliationOptions !== undefined &&
+      object.reconciliationOptions !== null
         ? ReconciliationOptions.fromJSON(object.reconciliationOptions)
         : undefined;
     return message;
@@ -1655,21 +1756,26 @@ export const UpdateInstalledPackageRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<UpdateInstalledPackageRequest>): UpdateInstalledPackageRequest {
+  fromPartial<I extends Exact<DeepPartial<UpdateInstalledPackageRequest>, I>>(
+    object: I
+  ): UpdateInstalledPackageRequest {
     const message = {
       ...baseUpdateInstalledPackageRequest,
     } as UpdateInstalledPackageRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+      object.pkgVersionReference !== undefined &&
+      object.pkgVersionReference !== null
         ? VersionReference.fromPartial(object.pkgVersionReference)
         : undefined;
     message.values = object.values ?? "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      object.reconciliationOptions !== undefined &&
+      object.reconciliationOptions !== null
         ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
         : undefined;
     return message;
@@ -1681,18 +1787,21 @@ const baseDeleteInstalledPackageRequest: object = {};
 export const DeleteInstalledPackageRequest = {
   encode(
     message: DeleteInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): DeleteInstalledPackageRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): DeleteInstalledPackageRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1702,7 +1811,10 @@ export const DeleteInstalledPackageRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -1717,7 +1829,8 @@ export const DeleteInstalledPackageRequest = {
       ...baseDeleteInstalledPackageRequest,
     } as DeleteInstalledPackageRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     return message;
@@ -1732,12 +1845,15 @@ export const DeleteInstalledPackageRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<DeleteInstalledPackageRequest>): DeleteInstalledPackageRequest {
+  fromPartial<I extends Exact<DeepPartial<DeleteInstalledPackageRequest>, I>>(
+    object: I
+  ): DeleteInstalledPackageRequest {
     const message = {
       ...baseDeleteInstalledPackageRequest,
     } as DeleteInstalledPackageRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     return message;
@@ -1749,18 +1865,21 @@ const baseGetInstalledPackageResourceRefsRequest: object = {};
 export const GetInstalledPackageResourceRefsRequest = {
   encode(
     message: GetInstalledPackageResourceRefsRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetInstalledPackageResourceRefsRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetInstalledPackageResourceRefsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1770,7 +1889,10 @@ export const GetInstalledPackageResourceRefsRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -1785,7 +1907,8 @@ export const GetInstalledPackageResourceRefsRequest = {
       ...baseGetInstalledPackageResourceRefsRequest,
     } as GetInstalledPackageResourceRefsRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     return message;
@@ -1800,14 +1923,15 @@ export const GetInstalledPackageResourceRefsRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageResourceRefsRequest>,
-  ): GetInstalledPackageResourceRefsRequest {
+  fromPartial<
+    I extends Exact<DeepPartial<GetInstalledPackageResourceRefsRequest>, I>
+  >(object: I): GetInstalledPackageResourceRefsRequest {
     const message = {
       ...baseGetInstalledPackageResourceRefsRequest,
     } as GetInstalledPackageResourceRefsRequest;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     return message;
@@ -1822,7 +1946,7 @@ const baseGetAvailablePackageSummariesResponse: object = {
 export const GetAvailablePackageSummariesResponse = {
   encode(
     message: GetAvailablePackageSummariesResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.availablePackageSummaries) {
       AvailablePackageSummary.encode(v!, writer.uint32(10).fork()).ldelim();
@@ -1836,7 +1960,10 @@ export const GetAvailablePackageSummariesResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetAvailablePackageSummariesResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetAvailablePackageSummariesResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1849,7 +1976,7 @@ export const GetAvailablePackageSummariesResponse = {
       switch (tag >>> 3) {
         case 1:
           message.availablePackageSummaries.push(
-            AvailablePackageSummary.decode(reader, reader.uint32()),
+            AvailablePackageSummary.decode(reader, reader.uint32())
           );
           break;
         case 2:
@@ -1870,9 +1997,9 @@ export const GetAvailablePackageSummariesResponse = {
     const message = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
-    message.availablePackageSummaries = (object.availablePackageSummaries ?? []).map((e: any) =>
-      AvailablePackageSummary.fromJSON(e),
-    );
+    message.availablePackageSummaries = (
+      object.availablePackageSummaries ?? []
+    ).map((e: any) => AvailablePackageSummary.fromJSON(e));
     message.nextPageToken =
       object.nextPageToken !== undefined && object.nextPageToken !== null
         ? String(object.nextPageToken)
@@ -1884,32 +2011,34 @@ export const GetAvailablePackageSummariesResponse = {
   toJSON(message: GetAvailablePackageSummariesResponse): unknown {
     const obj: any = {};
     if (message.availablePackageSummaries) {
-      obj.availablePackageSummaries = message.availablePackageSummaries.map(e =>
-        e ? AvailablePackageSummary.toJSON(e) : undefined,
+      obj.availablePackageSummaries = message.availablePackageSummaries.map(
+        (e) => (e ? AvailablePackageSummary.toJSON(e) : undefined)
       );
     } else {
       obj.availablePackageSummaries = [];
     }
-    message.nextPageToken !== undefined && (obj.nextPageToken = message.nextPageToken);
+    message.nextPageToken !== undefined &&
+      (obj.nextPageToken = message.nextPageToken);
     if (message.categories) {
-      obj.categories = message.categories.map(e => e);
+      obj.categories = message.categories.map((e) => e);
     } else {
       obj.categories = [];
     }
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageSummariesResponse>,
-  ): GetAvailablePackageSummariesResponse {
+  fromPartial<
+    I extends Exact<DeepPartial<GetAvailablePackageSummariesResponse>, I>
+  >(object: I): GetAvailablePackageSummariesResponse {
     const message = {
       ...baseGetAvailablePackageSummariesResponse,
     } as GetAvailablePackageSummariesResponse;
-    message.availablePackageSummaries = (object.availablePackageSummaries ?? []).map(e =>
-      AvailablePackageSummary.fromPartial(e),
-    );
+    message.availablePackageSummaries =
+      object.availablePackageSummaries?.map((e) =>
+        AvailablePackageSummary.fromPartial(e)
+      ) || [];
     message.nextPageToken = object.nextPageToken ?? "";
-    message.categories = (object.categories ?? []).map(e => e);
+    message.categories = object.categories?.map((e) => e) || [];
     return message;
   },
 };
@@ -1919,18 +2048,21 @@ const baseGetAvailablePackageDetailResponse: object = {};
 export const GetAvailablePackageDetailResponse = {
   encode(
     message: GetAvailablePackageDetailResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.availablePackageDetail !== undefined) {
       AvailablePackageDetail.encode(
         message.availablePackageDetail,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetAvailablePackageDetailResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetAvailablePackageDetailResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -1940,7 +2072,10 @@ export const GetAvailablePackageDetailResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.availablePackageDetail = AvailablePackageDetail.decode(reader, reader.uint32());
+          message.availablePackageDetail = AvailablePackageDetail.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -1955,7 +2090,8 @@ export const GetAvailablePackageDetailResponse = {
       ...baseGetAvailablePackageDetailResponse,
     } as GetAvailablePackageDetailResponse;
     message.availablePackageDetail =
-      object.availablePackageDetail !== undefined && object.availablePackageDetail !== null
+      object.availablePackageDetail !== undefined &&
+      object.availablePackageDetail !== null
         ? AvailablePackageDetail.fromJSON(object.availablePackageDetail)
         : undefined;
     return message;
@@ -1970,14 +2106,15 @@ export const GetAvailablePackageDetailResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageDetailResponse>,
-  ): GetAvailablePackageDetailResponse {
+  fromPartial<
+    I extends Exact<DeepPartial<GetAvailablePackageDetailResponse>, I>
+  >(object: I): GetAvailablePackageDetailResponse {
     const message = {
       ...baseGetAvailablePackageDetailResponse,
     } as GetAvailablePackageDetailResponse;
     message.availablePackageDetail =
-      object.availablePackageDetail !== undefined && object.availablePackageDetail !== null
+      object.availablePackageDetail !== undefined &&
+      object.availablePackageDetail !== null
         ? AvailablePackageDetail.fromPartial(object.availablePackageDetail)
         : undefined;
     return message;
@@ -1989,7 +2126,7 @@ const baseGetAvailablePackageVersionsResponse: object = {};
 export const GetAvailablePackageVersionsResponse = {
   encode(
     message: GetAvailablePackageVersionsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.packageAppVersions) {
       PackageAppVersion.encode(v!, writer.uint32(10).fork()).ldelim();
@@ -1997,7 +2134,10 @@ export const GetAvailablePackageVersionsResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetAvailablePackageVersionsResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetAvailablePackageVersionsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2008,7 +2148,9 @@ export const GetAvailablePackageVersionsResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.packageAppVersions.push(PackageAppVersion.decode(reader, reader.uint32()));
+          message.packageAppVersions.push(
+            PackageAppVersion.decode(reader, reader.uint32())
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -2022,8 +2164,8 @@ export const GetAvailablePackageVersionsResponse = {
     const message = {
       ...baseGetAvailablePackageVersionsResponse,
     } as GetAvailablePackageVersionsResponse;
-    message.packageAppVersions = (object.packageAppVersions ?? []).map((e: any) =>
-      PackageAppVersion.fromJSON(e),
+    message.packageAppVersions = (object.packageAppVersions ?? []).map(
+      (e: any) => PackageAppVersion.fromJSON(e)
     );
     return message;
   },
@@ -2031,8 +2173,8 @@ export const GetAvailablePackageVersionsResponse = {
   toJSON(message: GetAvailablePackageVersionsResponse): unknown {
     const obj: any = {};
     if (message.packageAppVersions) {
-      obj.packageAppVersions = message.packageAppVersions.map(e =>
-        e ? PackageAppVersion.toJSON(e) : undefined,
+      obj.packageAppVersions = message.packageAppVersions.map((e) =>
+        e ? PackageAppVersion.toJSON(e) : undefined
       );
     } else {
       obj.packageAppVersions = [];
@@ -2040,15 +2182,15 @@ export const GetAvailablePackageVersionsResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetAvailablePackageVersionsResponse>,
-  ): GetAvailablePackageVersionsResponse {
+  fromPartial<
+    I extends Exact<DeepPartial<GetAvailablePackageVersionsResponse>, I>
+  >(object: I): GetAvailablePackageVersionsResponse {
     const message = {
       ...baseGetAvailablePackageVersionsResponse,
     } as GetAvailablePackageVersionsResponse;
-    message.packageAppVersions = (object.packageAppVersions ?? []).map(e =>
-      PackageAppVersion.fromPartial(e),
-    );
+    message.packageAppVersions =
+      object.packageAppVersions?.map((e) => PackageAppVersion.fromPartial(e)) ||
+      [];
     return message;
   },
 };
@@ -2058,7 +2200,7 @@ const baseGetInstalledPackageSummariesResponse: object = { nextPageToken: "" };
 export const GetInstalledPackageSummariesResponse = {
   encode(
     message: GetInstalledPackageSummariesResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     for (const v of message.installedPackageSummaries) {
       InstalledPackageSummary.encode(v!, writer.uint32(10).fork()).ldelim();
@@ -2069,7 +2211,10 @@ export const GetInstalledPackageSummariesResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetInstalledPackageSummariesResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetInstalledPackageSummariesResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2081,7 +2226,7 @@ export const GetInstalledPackageSummariesResponse = {
       switch (tag >>> 3) {
         case 1:
           message.installedPackageSummaries.push(
-            InstalledPackageSummary.decode(reader, reader.uint32()),
+            InstalledPackageSummary.decode(reader, reader.uint32())
           );
           break;
         case 2:
@@ -2099,9 +2244,9 @@ export const GetInstalledPackageSummariesResponse = {
     const message = {
       ...baseGetInstalledPackageSummariesResponse,
     } as GetInstalledPackageSummariesResponse;
-    message.installedPackageSummaries = (object.installedPackageSummaries ?? []).map((e: any) =>
-      InstalledPackageSummary.fromJSON(e),
-    );
+    message.installedPackageSummaries = (
+      object.installedPackageSummaries ?? []
+    ).map((e: any) => InstalledPackageSummary.fromJSON(e));
     message.nextPageToken =
       object.nextPageToken !== undefined && object.nextPageToken !== null
         ? String(object.nextPageToken)
@@ -2112,25 +2257,27 @@ export const GetInstalledPackageSummariesResponse = {
   toJSON(message: GetInstalledPackageSummariesResponse): unknown {
     const obj: any = {};
     if (message.installedPackageSummaries) {
-      obj.installedPackageSummaries = message.installedPackageSummaries.map(e =>
-        e ? InstalledPackageSummary.toJSON(e) : undefined,
+      obj.installedPackageSummaries = message.installedPackageSummaries.map(
+        (e) => (e ? InstalledPackageSummary.toJSON(e) : undefined)
       );
     } else {
       obj.installedPackageSummaries = [];
     }
-    message.nextPageToken !== undefined && (obj.nextPageToken = message.nextPageToken);
+    message.nextPageToken !== undefined &&
+      (obj.nextPageToken = message.nextPageToken);
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageSummariesResponse>,
-  ): GetInstalledPackageSummariesResponse {
+  fromPartial<
+    I extends Exact<DeepPartial<GetInstalledPackageSummariesResponse>, I>
+  >(object: I): GetInstalledPackageSummariesResponse {
     const message = {
       ...baseGetInstalledPackageSummariesResponse,
     } as GetInstalledPackageSummariesResponse;
-    message.installedPackageSummaries = (object.installedPackageSummaries ?? []).map(e =>
-      InstalledPackageSummary.fromPartial(e),
-    );
+    message.installedPackageSummaries =
+      object.installedPackageSummaries?.map((e) =>
+        InstalledPackageSummary.fromPartial(e)
+      ) || [];
     message.nextPageToken = object.nextPageToken ?? "";
     return message;
   },
@@ -2141,18 +2288,21 @@ const baseGetInstalledPackageDetailResponse: object = {};
 export const GetInstalledPackageDetailResponse = {
   encode(
     message: GetInstalledPackageDetailResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageDetail !== undefined) {
       InstalledPackageDetail.encode(
         message.installedPackageDetail,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetInstalledPackageDetailResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetInstalledPackageDetailResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2162,7 +2312,10 @@ export const GetInstalledPackageDetailResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageDetail = InstalledPackageDetail.decode(reader, reader.uint32());
+          message.installedPackageDetail = InstalledPackageDetail.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -2177,7 +2330,8 @@ export const GetInstalledPackageDetailResponse = {
       ...baseGetInstalledPackageDetailResponse,
     } as GetInstalledPackageDetailResponse;
     message.installedPackageDetail =
-      object.installedPackageDetail !== undefined && object.installedPackageDetail !== null
+      object.installedPackageDetail !== undefined &&
+      object.installedPackageDetail !== null
         ? InstalledPackageDetail.fromJSON(object.installedPackageDetail)
         : undefined;
     return message;
@@ -2192,14 +2346,15 @@ export const GetInstalledPackageDetailResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageDetailResponse>,
-  ): GetInstalledPackageDetailResponse {
+  fromPartial<
+    I extends Exact<DeepPartial<GetInstalledPackageDetailResponse>, I>
+  >(object: I): GetInstalledPackageDetailResponse {
     const message = {
       ...baseGetInstalledPackageDetailResponse,
     } as GetInstalledPackageDetailResponse;
     message.installedPackageDetail =
-      object.installedPackageDetail !== undefined && object.installedPackageDetail !== null
+      object.installedPackageDetail !== undefined &&
+      object.installedPackageDetail !== null
         ? InstalledPackageDetail.fromPartial(object.installedPackageDetail)
         : undefined;
     return message;
@@ -2211,18 +2366,21 @@ const baseCreateInstalledPackageResponse: object = {};
 export const CreateInstalledPackageResponse = {
   encode(
     message: CreateInstalledPackageResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): CreateInstalledPackageResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): CreateInstalledPackageResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2232,7 +2390,10 @@ export const CreateInstalledPackageResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -2247,7 +2408,8 @@ export const CreateInstalledPackageResponse = {
       ...baseCreateInstalledPackageResponse,
     } as CreateInstalledPackageResponse;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     return message;
@@ -2262,12 +2424,15 @@ export const CreateInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<CreateInstalledPackageResponse>): CreateInstalledPackageResponse {
+  fromPartial<I extends Exact<DeepPartial<CreateInstalledPackageResponse>, I>>(
+    object: I
+  ): CreateInstalledPackageResponse {
     const message = {
       ...baseCreateInstalledPackageResponse,
     } as CreateInstalledPackageResponse;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     return message;
@@ -2279,18 +2444,21 @@ const baseUpdateInstalledPackageResponse: object = {};
 export const UpdateInstalledPackageResponse = {
   encode(
     message: UpdateInstalledPackageResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): UpdateInstalledPackageResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): UpdateInstalledPackageResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2300,7 +2468,10 @@ export const UpdateInstalledPackageResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -2315,7 +2486,8 @@ export const UpdateInstalledPackageResponse = {
       ...baseUpdateInstalledPackageResponse,
     } as UpdateInstalledPackageResponse;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     return message;
@@ -2330,12 +2502,15 @@ export const UpdateInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<UpdateInstalledPackageResponse>): UpdateInstalledPackageResponse {
+  fromPartial<I extends Exact<DeepPartial<UpdateInstalledPackageResponse>, I>>(
+    object: I
+  ): UpdateInstalledPackageResponse {
     const message = {
       ...baseUpdateInstalledPackageResponse,
     } as UpdateInstalledPackageResponse;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     return message;
@@ -2345,11 +2520,17 @@ export const UpdateInstalledPackageResponse = {
 const baseDeleteInstalledPackageResponse: object = {};
 
 export const DeleteInstalledPackageResponse = {
-  encode(_: DeleteInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    _: DeleteInstalledPackageResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): DeleteInstalledPackageResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): DeleteInstalledPackageResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2378,7 +2559,9 @@ export const DeleteInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial(_: DeepPartial<DeleteInstalledPackageResponse>): DeleteInstalledPackageResponse {
+  fromPartial<I extends Exact<DeepPartial<DeleteInstalledPackageResponse>, I>>(
+    _: I
+  ): DeleteInstalledPackageResponse {
     const message = {
       ...baseDeleteInstalledPackageResponse,
     } as DeleteInstalledPackageResponse;
@@ -2391,7 +2574,7 @@ const baseGetInstalledPackageResourceRefsResponse: object = {};
 export const GetInstalledPackageResourceRefsResponse = {
   encode(
     message: GetInstalledPackageResourceRefsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
+    writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
@@ -2402,7 +2585,10 @@ export const GetInstalledPackageResourceRefsResponse = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetInstalledPackageResourceRefsResponse {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): GetInstalledPackageResourceRefsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2416,7 +2602,9 @@ export const GetInstalledPackageResourceRefsResponse = {
           message.context = Context.decode(reader, reader.uint32());
           break;
         case 2:
-          message.resourceRefs.push(ResourceRef.decode(reader, reader.uint32()));
+          message.resourceRefs.push(
+            ResourceRef.decode(reader, reader.uint32())
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -2434,25 +2622,31 @@ export const GetInstalledPackageResourceRefsResponse = {
       object.context !== undefined && object.context !== null
         ? Context.fromJSON(object.context)
         : undefined;
-    message.resourceRefs = (object.resourceRefs ?? []).map((e: any) => ResourceRef.fromJSON(e));
+    message.resourceRefs = (object.resourceRefs ?? []).map((e: any) =>
+      ResourceRef.fromJSON(e)
+    );
     return message;
   },
 
   toJSON(message: GetInstalledPackageResourceRefsResponse): unknown {
     const obj: any = {};
     message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+      (obj.context = message.context
+        ? Context.toJSON(message.context)
+        : undefined);
     if (message.resourceRefs) {
-      obj.resourceRefs = message.resourceRefs.map(e => (e ? ResourceRef.toJSON(e) : undefined));
+      obj.resourceRefs = message.resourceRefs.map((e) =>
+        e ? ResourceRef.toJSON(e) : undefined
+      );
     } else {
       obj.resourceRefs = [];
     }
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<GetInstalledPackageResourceRefsResponse>,
-  ): GetInstalledPackageResourceRefsResponse {
+  fromPartial<
+    I extends Exact<DeepPartial<GetInstalledPackageResourceRefsResponse>, I>
+  >(object: I): GetInstalledPackageResourceRefsResponse {
     const message = {
       ...baseGetInstalledPackageResourceRefsResponse,
     } as GetInstalledPackageResourceRefsResponse;
@@ -2460,7 +2654,8 @@ export const GetInstalledPackageResourceRefsResponse = {
       object.context !== undefined && object.context !== null
         ? Context.fromPartial(object.context)
         : undefined;
-    message.resourceRefs = (object.resourceRefs ?? []).map(e => ResourceRef.fromPartial(e));
+    message.resourceRefs =
+      object.resourceRefs?.map((e) => ResourceRef.fromPartial(e)) || [];
     return message;
   },
 };
@@ -2474,18 +2669,24 @@ const baseAvailablePackageSummary: object = {
 };
 
 export const AvailablePackageSummary = {
-  encode(message: AvailablePackageSummary, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: AvailablePackageSummary,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
       AvailablePackageReference.encode(
         message.availablePackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
     }
     if (message.latestVersion !== undefined) {
-      PackageAppVersion.encode(message.latestVersion, writer.uint32(26).fork()).ldelim();
+      PackageAppVersion.encode(
+        message.latestVersion,
+        writer.uint32(26).fork()
+      ).ldelim();
     }
     if (message.iconUrl !== "") {
       writer.uint32(34).string(message.iconUrl);
@@ -2502,7 +2703,10 @@ export const AvailablePackageSummary = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): AvailablePackageSummary {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): AvailablePackageSummary {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2513,13 +2717,19 @@ export const AvailablePackageSummary = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.availablePackageRef = AvailablePackageReference.decode(reader, reader.uint32());
+          message.availablePackageRef = AvailablePackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
           message.name = reader.string();
           break;
         case 3:
-          message.latestVersion = PackageAppVersion.decode(reader, reader.uint32());
+          message.latestVersion = PackageAppVersion.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 4:
           message.iconUrl = reader.string();
@@ -2546,16 +2756,22 @@ export const AvailablePackageSummary = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined;
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.name =
+      object.name !== undefined && object.name !== null
+        ? String(object.name)
+        : "";
     message.latestVersion =
       object.latestVersion !== undefined && object.latestVersion !== null
         ? PackageAppVersion.fromJSON(object.latestVersion)
         : undefined;
     message.iconUrl =
-      object.iconUrl !== undefined && object.iconUrl !== null ? String(object.iconUrl) : "";
+      object.iconUrl !== undefined && object.iconUrl !== null
+        ? String(object.iconUrl)
+        : "";
     message.displayName =
       object.displayName !== undefined && object.displayName !== null
         ? String(object.displayName)
@@ -2580,22 +2796,27 @@ export const AvailablePackageSummary = {
         ? PackageAppVersion.toJSON(message.latestVersion)
         : undefined);
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
-    message.displayName !== undefined && (obj.displayName = message.displayName);
-    message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
+    message.displayName !== undefined &&
+      (obj.displayName = message.displayName);
+    message.shortDescription !== undefined &&
+      (obj.shortDescription = message.shortDescription);
     if (message.categories) {
-      obj.categories = message.categories.map(e => e);
+      obj.categories = message.categories.map((e) => e);
     } else {
       obj.categories = [];
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<AvailablePackageSummary>): AvailablePackageSummary {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageSummary>, I>>(
+    object: I
+  ): AvailablePackageSummary {
     const message = {
       ...baseAvailablePackageSummary,
     } as AvailablePackageSummary;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromPartial(object.availablePackageRef)
         : undefined;
     message.name = object.name ?? "";
@@ -2606,7 +2827,7 @@ export const AvailablePackageSummary = {
     message.iconUrl = object.iconUrl ?? "";
     message.displayName = object.displayName ?? "";
     message.shortDescription = object.shortDescription ?? "";
-    message.categories = (object.categories ?? []).map(e => e);
+    message.categories = object.categories?.map((e) => e) || [];
     return message;
   },
 };
@@ -2627,18 +2848,24 @@ const baseAvailablePackageDetail: object = {
 };
 
 export const AvailablePackageDetail = {
-  encode(message: AvailablePackageDetail, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: AvailablePackageDetail,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
       AvailablePackageReference.encode(
         message.availablePackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
     }
     if (message.version !== undefined) {
-      PackageAppVersion.encode(message.version, writer.uint32(26).fork()).ldelim();
+      PackageAppVersion.encode(
+        message.version,
+        writer.uint32(26).fork()
+      ).ldelim();
     }
     if (message.repoUrl !== "") {
       writer.uint32(34).string(message.repoUrl);
@@ -2682,7 +2909,10 @@ export const AvailablePackageDetail = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): AvailablePackageDetail {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): AvailablePackageDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
@@ -2693,7 +2923,10 @@ export const AvailablePackageDetail = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.availablePackageRef = AvailablePackageReference.decode(reader, reader.uint32());
+          message.availablePackageRef = AvailablePackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
           message.name = reader.string();
@@ -2751,20 +2984,30 @@ export const AvailablePackageDetail = {
   fromJSON(object: any): AvailablePackageDetail {
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined;
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.name =
+      object.name !== undefined && object.name !== null
+        ? String(object.name)
+        : "";
     message.version =
       object.version !== undefined && object.version !== null
         ? PackageAppVersion.fromJSON(object.version)
         : undefined;
     message.repoUrl =
-      object.repoUrl !== undefined && object.repoUrl !== null ? String(object.repoUrl) : "";
+      object.repoUrl !== undefined && object.repoUrl !== null
+        ? String(object.repoUrl)
+        : "";
     message.homeUrl =
-      object.homeUrl !== undefined && object.homeUrl !== null ? String(object.homeUrl) : "";
+      object.homeUrl !== undefined && object.homeUrl !== null
+        ? String(object.homeUrl)
+        : "";
     message.iconUrl =
-      object.iconUrl !== undefined && object.iconUrl !== null ? String(object.iconUrl) : "";
+      object.iconUrl !== undefined && object.iconUrl !== null
+        ? String(object.iconUrl)
+        : "";
     message.displayName =
       object.displayName !== undefined && object.displayName !== null
         ? String(object.displayName)
@@ -2778,7 +3021,9 @@ export const AvailablePackageDetail = {
         ? String(object.longDescription)
         : "";
     message.readme =
-      object.readme !== undefined && object.readme !== null ? String(object.readme) : "";
+      object.readme !== undefined && object.readme !== null
+        ? String(object.readme)
+        : "";
     message.defaultValues =
       object.defaultValues !== undefined && object.defaultValues !== null
         ? String(object.defaultValues)
@@ -2788,7 +3033,9 @@ export const AvailablePackageDetail = {
         ? String(object.valuesSchema)
         : "";
     message.sourceUrls = (object.sourceUrls ?? []).map((e: any) => String(e));
-    message.maintainers = (object.maintainers ?? []).map((e: any) => Maintainer.fromJSON(e));
+    message.maintainers = (object.maintainers ?? []).map((e: any) =>
+      Maintainer.fromJSON(e)
+    );
     message.categories = (object.categories ?? []).map((e: any) => String(e));
     message.customDetail =
       object.customDetail !== undefined && object.customDetail !== null
@@ -2805,40 +3052,54 @@ export const AvailablePackageDetail = {
         : undefined);
     message.name !== undefined && (obj.name = message.name);
     message.version !== undefined &&
-      (obj.version = message.version ? PackageAppVersion.toJSON(message.version) : undefined);
+      (obj.version = message.version
+        ? PackageAppVersion.toJSON(message.version)
+        : undefined);
     message.repoUrl !== undefined && (obj.repoUrl = message.repoUrl);
     message.homeUrl !== undefined && (obj.homeUrl = message.homeUrl);
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
-    message.displayName !== undefined && (obj.displayName = message.displayName);
-    message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
-    message.longDescription !== undefined && (obj.longDescription = message.longDescription);
+    message.displayName !== undefined &&
+      (obj.displayName = message.displayName);
+    message.shortDescription !== undefined &&
+      (obj.shortDescription = message.shortDescription);
+    message.longDescription !== undefined &&
+      (obj.longDescription = message.longDescription);
     message.readme !== undefined && (obj.readme = message.readme);
-    message.defaultValues !== undefined && (obj.defaultValues = message.defaultValues);
-    message.valuesSchema !== undefined && (obj.valuesSchema = message.valuesSchema);
+    message.defaultValues !== undefined &&
+      (obj.defaultValues = message.defaultValues);
+    message.valuesSchema !== undefined &&
+      (obj.valuesSchema = message.valuesSchema);
     if (message.sourceUrls) {
-      obj.sourceUrls = message.sourceUrls.map(e => e);
+      obj.sourceUrls = message.sourceUrls.map((e) => e);
     } else {
       obj.sourceUrls = [];
     }
     if (message.maintainers) {
-      obj.maintainers = message.maintainers.map(e => (e ? Maintainer.toJSON(e) : undefined));
+      obj.maintainers = message.maintainers.map((e) =>
+        e ? Maintainer.toJSON(e) : undefined
+      );
     } else {
       obj.maintainers = [];
     }
     if (message.categories) {
-      obj.categories = message.categories.map(e => e);
+      obj.categories = message.categories.map((e) => e);
     } else {
       obj.categories = [];
     }
     message.customDetail !== undefined &&
-      (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
+      (obj.customDetail = message.customDetail
+        ? Any.toJSON(message.customDetail)
+        : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<AvailablePackageDetail>): AvailablePackageDetail {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageDetail>, I>>(
+    object: I
+  ): AvailablePackageDetail {
     const message = { ...baseAvailablePackageDetail } as AvailablePackageDetail;
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromPartial(object.availablePackageRef)
         : undefined;
     message.name = object.name ?? "";
@@ -2855,9 +3116,10 @@ export const AvailablePackageDetail = {
     message.readme = object.readme ?? "";
     message.defaultValues = object.defaultValues ?? "";
     message.valuesSchema = object.valuesSchema ?? "";
-    message.sourceUrls = (object.sourceUrls ?? []).map(e => e);
-    message.maintainers = (object.maintainers ?? []).map(e => Maintainer.fromPartial(e));
-    message.categories = (object.categories ?? []).map(e => e);
+    message.sourceUrls = object.sourceUrls?.map((e) => e) || [];
+    message.maintainers =
+      object.maintainers?.map((e) => Maintainer.fromPartial(e)) || [];
+    message.categories = object.categories?.map((e) => e) || [];
     message.customDetail =
       object.customDetail !== undefined && object.customDetail !== null
         ? Any.fromPartial(object.customDetail)
@@ -2874,21 +3136,30 @@ const baseInstalledPackageSummary: object = {
 };
 
 export const InstalledPackageSummary = {
-  encode(message: InstalledPackageSummary, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: InstalledPackageSummary,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
     }
     if (message.pkgVersionReference !== undefined) {
-      VersionReference.encode(message.pkgVersionReference, writer.uint32(26).fork()).ldelim();
+      VersionReference.encode(
+        message.pkgVersionReference,
+        writer.uint32(26).fork()
+      ).ldelim();
     }
     if (message.currentVersion !== undefined) {
-      PackageAppVersion.encode(message.currentVersion, writer.uint32(34).fork()).ldelim();
+      PackageAppVersion.encode(
+        message.currentVersion,
+        writer.uint32(34).fork()
+      ).ldelim();
     }
     if (message.iconUrl !== "") {
       writer.uint32(42).string(message.iconUrl);
@@ -2900,18 +3171,30 @@ export const InstalledPackageSummary = {
       writer.uint32(58).string(message.shortDescription);
     }
     if (message.latestMatchingVersion !== undefined) {
-      PackageAppVersion.encode(message.latestMatchingVersion, writer.uint32(66).fork()).ldelim();
+      PackageAppVersion.encode(
+        message.latestMatchingVersion,
+        writer.uint32(66).fork()
+      ).ldelim();
     }
     if (message.latestVersion !== undefined) {
-      PackageAppVersion.encode(message.latestVersion, writer.uint32(74).fork()).ldelim();
+      PackageAppVersion.encode(
+        message.latestVersion,
+        writer.uint32(74).fork()
+      ).ldelim();
     }
     if (message.status !== undefined) {
-      InstalledPackageStatus.encode(message.status, writer.uint32(82).fork()).ldelim();
+      InstalledPackageStatus.encode(
+        message.status,
+        writer.uint32(82).fork()
+      ).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageSummary {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): InstalledPackageSummary {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -2921,16 +3204,25 @@ export const InstalledPackageSummary = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
           message.name = reader.string();
           break;
         case 3:
-          message.pkgVersionReference = VersionReference.decode(reader, reader.uint32());
+          message.pkgVersionReference = VersionReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 4:
-          message.currentVersion = PackageAppVersion.decode(reader, reader.uint32());
+          message.currentVersion = PackageAppVersion.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 5:
           message.iconUrl = reader.string();
@@ -2942,13 +3234,22 @@ export const InstalledPackageSummary = {
           message.shortDescription = reader.string();
           break;
         case 8:
-          message.latestMatchingVersion = PackageAppVersion.decode(reader, reader.uint32());
+          message.latestMatchingVersion = PackageAppVersion.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 9:
-          message.latestVersion = PackageAppVersion.decode(reader, reader.uint32());
+          message.latestVersion = PackageAppVersion.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 10:
-          message.status = InstalledPackageStatus.decode(reader, reader.uint32());
+          message.status = InstalledPackageStatus.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -2963,12 +3264,17 @@ export const InstalledPackageSummary = {
       ...baseInstalledPackageSummary,
     } as InstalledPackageSummary;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.name =
+      object.name !== undefined && object.name !== null
+        ? String(object.name)
+        : "";
     message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+      object.pkgVersionReference !== undefined &&
+      object.pkgVersionReference !== null
         ? VersionReference.fromJSON(object.pkgVersionReference)
         : undefined;
     message.currentVersion =
@@ -2976,7 +3282,9 @@ export const InstalledPackageSummary = {
         ? PackageAppVersion.fromJSON(object.currentVersion)
         : undefined;
     message.iconUrl =
-      object.iconUrl !== undefined && object.iconUrl !== null ? String(object.iconUrl) : "";
+      object.iconUrl !== undefined && object.iconUrl !== null
+        ? String(object.iconUrl)
+        : "";
     message.pkgDisplayName =
       object.pkgDisplayName !== undefined && object.pkgDisplayName !== null
         ? String(object.pkgDisplayName)
@@ -2986,7 +3294,8 @@ export const InstalledPackageSummary = {
         ? String(object.shortDescription)
         : "";
     message.latestMatchingVersion =
-      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+      object.latestMatchingVersion !== undefined &&
+      object.latestMatchingVersion !== null
         ? PackageAppVersion.fromJSON(object.latestMatchingVersion)
         : undefined;
     message.latestVersion =
@@ -3016,8 +3325,10 @@ export const InstalledPackageSummary = {
         ? PackageAppVersion.toJSON(message.currentVersion)
         : undefined);
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
-    message.pkgDisplayName !== undefined && (obj.pkgDisplayName = message.pkgDisplayName);
-    message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
+    message.pkgDisplayName !== undefined &&
+      (obj.pkgDisplayName = message.pkgDisplayName);
+    message.shortDescription !== undefined &&
+      (obj.shortDescription = message.shortDescription);
     message.latestMatchingVersion !== undefined &&
       (obj.latestMatchingVersion = message.latestMatchingVersion
         ? PackageAppVersion.toJSON(message.latestMatchingVersion)
@@ -3027,21 +3338,27 @@ export const InstalledPackageSummary = {
         ? PackageAppVersion.toJSON(message.latestVersion)
         : undefined);
     message.status !== undefined &&
-      (obj.status = message.status ? InstalledPackageStatus.toJSON(message.status) : undefined);
+      (obj.status = message.status
+        ? InstalledPackageStatus.toJSON(message.status)
+        : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<InstalledPackageSummary>): InstalledPackageSummary {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageSummary>, I>>(
+    object: I
+  ): InstalledPackageSummary {
     const message = {
       ...baseInstalledPackageSummary,
     } as InstalledPackageSummary;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     message.name = object.name ?? "";
     message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+      object.pkgVersionReference !== undefined &&
+      object.pkgVersionReference !== null
         ? VersionReference.fromPartial(object.pkgVersionReference)
         : undefined;
     message.currentVersion =
@@ -3052,7 +3369,8 @@ export const InstalledPackageSummary = {
     message.pkgDisplayName = object.pkgDisplayName ?? "";
     message.shortDescription = object.shortDescription ?? "";
     message.latestMatchingVersion =
-      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+      object.latestMatchingVersion !== undefined &&
+      object.latestMatchingVersion !== null
         ? PackageAppVersion.fromPartial(object.latestMatchingVersion)
         : undefined;
     message.latestVersion =
@@ -3074,21 +3392,30 @@ const baseInstalledPackageDetail: object = {
 };
 
 export const InstalledPackageDetail = {
-  encode(message: InstalledPackageDetail, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: InstalledPackageDetail,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
       InstalledPackageReference.encode(
         message.installedPackageRef,
-        writer.uint32(10).fork(),
+        writer.uint32(10).fork()
       ).ldelim();
     }
     if (message.pkgVersionReference !== undefined) {
-      VersionReference.encode(message.pkgVersionReference, writer.uint32(18).fork()).ldelim();
+      VersionReference.encode(
+        message.pkgVersionReference,
+        writer.uint32(18).fork()
+      ).ldelim();
     }
     if (message.name !== "") {
       writer.uint32(26).string(message.name);
     }
     if (message.currentVersion !== undefined) {
-      PackageAppVersion.encode(message.currentVersion, writer.uint32(34).fork()).ldelim();
+      PackageAppVersion.encode(
+        message.currentVersion,
+        writer.uint32(34).fork()
+      ).ldelim();
     }
     if (message.valuesApplied !== "") {
       writer.uint32(42).string(message.valuesApplied);
@@ -3096,11 +3423,14 @@ export const InstalledPackageDetail = {
     if (message.reconciliationOptions !== undefined) {
       ReconciliationOptions.encode(
         message.reconciliationOptions,
-        writer.uint32(50).fork(),
+        writer.uint32(50).fork()
       ).ldelim();
     }
     if (message.status !== undefined) {
-      InstalledPackageStatus.encode(message.status, writer.uint32(58).fork()).ldelim();
+      InstalledPackageStatus.encode(
+        message.status,
+        writer.uint32(58).fork()
+      ).ldelim();
     }
     if (message.postInstallationNotes !== "") {
       writer.uint32(66).string(message.postInstallationNotes);
@@ -3108,14 +3438,20 @@ export const InstalledPackageDetail = {
     if (message.availablePackageRef !== undefined) {
       AvailablePackageReference.encode(
         message.availablePackageRef,
-        writer.uint32(74).fork(),
+        writer.uint32(74).fork()
       ).ldelim();
     }
     if (message.latestMatchingVersion !== undefined) {
-      PackageAppVersion.encode(message.latestMatchingVersion, writer.uint32(82).fork()).ldelim();
+      PackageAppVersion.encode(
+        message.latestMatchingVersion,
+        writer.uint32(82).fork()
+      ).ldelim();
     }
     if (message.latestVersion !== undefined) {
-      PackageAppVersion.encode(message.latestVersion, writer.uint32(90).fork()).ldelim();
+      PackageAppVersion.encode(
+        message.latestVersion,
+        writer.uint32(90).fork()
+      ).ldelim();
     }
     if (message.customDetail !== undefined) {
       Any.encode(message.customDetail, writer.uint32(114).fork()).ldelim();
@@ -3123,7 +3459,10 @@ export const InstalledPackageDetail = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageDetail {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): InstalledPackageDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseInstalledPackageDetail } as InstalledPackageDetail;
@@ -3131,37 +3470,61 @@ export const InstalledPackageDetail = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          message.installedPackageRef = InstalledPackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
-          message.pkgVersionReference = VersionReference.decode(reader, reader.uint32());
+          message.pkgVersionReference = VersionReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 3:
           message.name = reader.string();
           break;
         case 4:
-          message.currentVersion = PackageAppVersion.decode(reader, reader.uint32());
+          message.currentVersion = PackageAppVersion.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 5:
           message.valuesApplied = reader.string();
           break;
         case 6:
-          message.reconciliationOptions = ReconciliationOptions.decode(reader, reader.uint32());
+          message.reconciliationOptions = ReconciliationOptions.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 7:
-          message.status = InstalledPackageStatus.decode(reader, reader.uint32());
+          message.status = InstalledPackageStatus.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 8:
           message.postInstallationNotes = reader.string();
           break;
         case 9:
-          message.availablePackageRef = AvailablePackageReference.decode(reader, reader.uint32());
+          message.availablePackageRef = AvailablePackageReference.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 10:
-          message.latestMatchingVersion = PackageAppVersion.decode(reader, reader.uint32());
+          message.latestMatchingVersion = PackageAppVersion.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 11:
-          message.latestVersion = PackageAppVersion.decode(reader, reader.uint32());
+          message.latestVersion = PackageAppVersion.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 14:
           message.customDetail = Any.decode(reader, reader.uint32());
@@ -3177,14 +3540,19 @@ export const InstalledPackageDetail = {
   fromJSON(object: any): InstalledPackageDetail {
     const message = { ...baseInstalledPackageDetail } as InstalledPackageDetail;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromJSON(object.installedPackageRef)
         : undefined;
     message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+      object.pkgVersionReference !== undefined &&
+      object.pkgVersionReference !== null
         ? VersionReference.fromJSON(object.pkgVersionReference)
         : undefined;
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.name =
+      object.name !== undefined && object.name !== null
+        ? String(object.name)
+        : "";
     message.currentVersion =
       object.currentVersion !== undefined && object.currentVersion !== null
         ? PackageAppVersion.fromJSON(object.currentVersion)
@@ -3194,7 +3562,8 @@ export const InstalledPackageDetail = {
         ? String(object.valuesApplied)
         : "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      object.reconciliationOptions !== undefined &&
+      object.reconciliationOptions !== null
         ? ReconciliationOptions.fromJSON(object.reconciliationOptions)
         : undefined;
     message.status =
@@ -3202,15 +3571,18 @@ export const InstalledPackageDetail = {
         ? InstalledPackageStatus.fromJSON(object.status)
         : undefined;
     message.postInstallationNotes =
-      object.postInstallationNotes !== undefined && object.postInstallationNotes !== null
+      object.postInstallationNotes !== undefined &&
+      object.postInstallationNotes !== null
         ? String(object.postInstallationNotes)
         : "";
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined;
     message.latestMatchingVersion =
-      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+      object.latestMatchingVersion !== undefined &&
+      object.latestMatchingVersion !== null
         ? PackageAppVersion.fromJSON(object.latestMatchingVersion)
         : undefined;
     message.latestVersion =
@@ -3239,13 +3611,16 @@ export const InstalledPackageDetail = {
       (obj.currentVersion = message.currentVersion
         ? PackageAppVersion.toJSON(message.currentVersion)
         : undefined);
-    message.valuesApplied !== undefined && (obj.valuesApplied = message.valuesApplied);
+    message.valuesApplied !== undefined &&
+      (obj.valuesApplied = message.valuesApplied);
     message.reconciliationOptions !== undefined &&
       (obj.reconciliationOptions = message.reconciliationOptions
         ? ReconciliationOptions.toJSON(message.reconciliationOptions)
         : undefined);
     message.status !== undefined &&
-      (obj.status = message.status ? InstalledPackageStatus.toJSON(message.status) : undefined);
+      (obj.status = message.status
+        ? InstalledPackageStatus.toJSON(message.status)
+        : undefined);
     message.postInstallationNotes !== undefined &&
       (obj.postInstallationNotes = message.postInstallationNotes);
     message.availablePackageRef !== undefined &&
@@ -3261,18 +3636,24 @@ export const InstalledPackageDetail = {
         ? PackageAppVersion.toJSON(message.latestVersion)
         : undefined);
     message.customDetail !== undefined &&
-      (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
+      (obj.customDetail = message.customDetail
+        ? Any.toJSON(message.customDetail)
+        : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<InstalledPackageDetail>): InstalledPackageDetail {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageDetail>, I>>(
+    object: I
+  ): InstalledPackageDetail {
     const message = { ...baseInstalledPackageDetail } as InstalledPackageDetail;
     message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+      object.installedPackageRef !== undefined &&
+      object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
     message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
+      object.pkgVersionReference !== undefined &&
+      object.pkgVersionReference !== null
         ? VersionReference.fromPartial(object.pkgVersionReference)
         : undefined;
     message.name = object.name ?? "";
@@ -3282,7 +3663,8 @@ export const InstalledPackageDetail = {
         : undefined;
     message.valuesApplied = object.valuesApplied ?? "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      object.reconciliationOptions !== undefined &&
+      object.reconciliationOptions !== null
         ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
         : undefined;
     message.status =
@@ -3291,11 +3673,13 @@ export const InstalledPackageDetail = {
         : undefined;
     message.postInstallationNotes = object.postInstallationNotes ?? "";
     message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
+      object.availablePackageRef !== undefined &&
+      object.availablePackageRef !== null
         ? AvailablePackageReference.fromPartial(object.availablePackageRef)
         : undefined;
     message.latestMatchingVersion =
-      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+      object.latestMatchingVersion !== undefined &&
+      object.latestMatchingVersion !== null
         ? PackageAppVersion.fromPartial(object.latestMatchingVersion)
         : undefined;
     message.latestVersion =
@@ -3313,7 +3697,10 @@ export const InstalledPackageDetail = {
 const baseContext: object = { cluster: "", namespace: "" };
 
 export const Context = {
-  encode(message: Context, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: Context,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.cluster !== "") {
       writer.uint32(10).string(message.cluster);
     }
@@ -3347,9 +3734,13 @@ export const Context = {
   fromJSON(object: any): Context {
     const message = { ...baseContext } as Context;
     message.cluster =
-      object.cluster !== undefined && object.cluster !== null ? String(object.cluster) : "";
+      object.cluster !== undefined && object.cluster !== null
+        ? String(object.cluster)
+        : "";
     message.namespace =
-      object.namespace !== undefined && object.namespace !== null ? String(object.namespace) : "";
+      object.namespace !== undefined && object.namespace !== null
+        ? String(object.namespace)
+        : "";
     return message;
   },
 
@@ -3360,7 +3751,7 @@ export const Context = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Context>): Context {
+  fromPartial<I extends Exact<DeepPartial<Context>, I>>(object: I): Context {
     const message = { ...baseContext } as Context;
     message.cluster = object.cluster ?? "";
     message.namespace = object.namespace ?? "";
@@ -3371,7 +3762,10 @@ export const Context = {
 const baseAvailablePackageReference: object = { identifier: "" };
 
 export const AvailablePackageReference = {
-  encode(message: AvailablePackageReference, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: AvailablePackageReference,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
@@ -3384,7 +3778,10 @@ export const AvailablePackageReference = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): AvailablePackageReference {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): AvailablePackageReference {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -3432,14 +3829,18 @@ export const AvailablePackageReference = {
   toJSON(message: AvailablePackageReference): unknown {
     const obj: any = {};
     message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+      (obj.context = message.context
+        ? Context.toJSON(message.context)
+        : undefined);
     message.identifier !== undefined && (obj.identifier = message.identifier);
     message.plugin !== undefined &&
       (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<AvailablePackageReference>): AvailablePackageReference {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageReference>, I>>(
+    object: I
+  ): AvailablePackageReference {
     const message = {
       ...baseAvailablePackageReference,
     } as AvailablePackageReference;
@@ -3459,7 +3860,10 @@ export const AvailablePackageReference = {
 const baseMaintainer: object = { name: "", email: "" };
 
 export const Maintainer = {
-  encode(message: Maintainer, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: Maintainer,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
@@ -3492,8 +3896,14 @@ export const Maintainer = {
 
   fromJSON(object: any): Maintainer {
     const message = { ...baseMaintainer } as Maintainer;
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
-    message.email = object.email !== undefined && object.email !== null ? String(object.email) : "";
+    message.name =
+      object.name !== undefined && object.name !== null
+        ? String(object.name)
+        : "";
+    message.email =
+      object.email !== undefined && object.email !== null
+        ? String(object.email)
+        : "";
     return message;
   },
 
@@ -3504,7 +3914,9 @@ export const Maintainer = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Maintainer>): Maintainer {
+  fromPartial<I extends Exact<DeepPartial<Maintainer>, I>>(
+    object: I
+  ): Maintainer {
     const message = { ...baseMaintainer } as Maintainer;
     message.name = object.name ?? "";
     message.email = object.email ?? "";
@@ -3521,7 +3933,10 @@ const baseFilterOptions: object = {
 };
 
 export const FilterOptions = {
-  encode(message: FilterOptions, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: FilterOptions,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.query !== "") {
       writer.uint32(10).string(message.query);
     }
@@ -3574,9 +3989,14 @@ export const FilterOptions = {
 
   fromJSON(object: any): FilterOptions {
     const message = { ...baseFilterOptions } as FilterOptions;
-    message.query = object.query !== undefined && object.query !== null ? String(object.query) : "";
+    message.query =
+      object.query !== undefined && object.query !== null
+        ? String(object.query)
+        : "";
     message.categories = (object.categories ?? []).map((e: any) => String(e));
-    message.repositories = (object.repositories ?? []).map((e: any) => String(e));
+    message.repositories = (object.repositories ?? []).map((e: any) =>
+      String(e)
+    );
     message.pkgVersion =
       object.pkgVersion !== undefined && object.pkgVersion !== null
         ? String(object.pkgVersion)
@@ -3592,12 +4012,12 @@ export const FilterOptions = {
     const obj: any = {};
     message.query !== undefined && (obj.query = message.query);
     if (message.categories) {
-      obj.categories = message.categories.map(e => e);
+      obj.categories = message.categories.map((e) => e);
     } else {
       obj.categories = [];
     }
     if (message.repositories) {
-      obj.repositories = message.repositories.map(e => e);
+      obj.repositories = message.repositories.map((e) => e);
     } else {
       obj.repositories = [];
     }
@@ -3606,11 +4026,13 @@ export const FilterOptions = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<FilterOptions>): FilterOptions {
+  fromPartial<I extends Exact<DeepPartial<FilterOptions>, I>>(
+    object: I
+  ): FilterOptions {
     const message = { ...baseFilterOptions } as FilterOptions;
     message.query = object.query ?? "";
-    message.categories = (object.categories ?? []).map(e => e);
-    message.repositories = (object.repositories ?? []).map(e => e);
+    message.categories = object.categories?.map((e) => e) || [];
+    message.repositories = object.repositories?.map((e) => e) || [];
     message.pkgVersion = object.pkgVersion ?? "";
     message.appVersion = object.appVersion ?? "";
     return message;
@@ -3620,7 +4042,10 @@ export const FilterOptions = {
 const basePaginationOptions: object = { pageToken: "", pageSize: 0 };
 
 export const PaginationOptions = {
-  encode(message: PaginationOptions, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: PaginationOptions,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.pageToken !== "") {
       writer.uint32(10).string(message.pageToken);
     }
@@ -3654,9 +4079,13 @@ export const PaginationOptions = {
   fromJSON(object: any): PaginationOptions {
     const message = { ...basePaginationOptions } as PaginationOptions;
     message.pageToken =
-      object.pageToken !== undefined && object.pageToken !== null ? String(object.pageToken) : "";
+      object.pageToken !== undefined && object.pageToken !== null
+        ? String(object.pageToken)
+        : "";
     message.pageSize =
-      object.pageSize !== undefined && object.pageSize !== null ? Number(object.pageSize) : 0;
+      object.pageSize !== undefined && object.pageSize !== null
+        ? Number(object.pageSize)
+        : 0;
     return message;
   },
 
@@ -3667,7 +4096,9 @@ export const PaginationOptions = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<PaginationOptions>): PaginationOptions {
+  fromPartial<I extends Exact<DeepPartial<PaginationOptions>, I>>(
+    object: I
+  ): PaginationOptions {
     const message = { ...basePaginationOptions } as PaginationOptions;
     message.pageToken = object.pageToken ?? "";
     message.pageSize = object.pageSize ?? 0;
@@ -3678,7 +4109,10 @@ export const PaginationOptions = {
 const baseInstalledPackageReference: object = { identifier: "" };
 
 export const InstalledPackageReference = {
-  encode(message: InstalledPackageReference, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: InstalledPackageReference,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
@@ -3691,7 +4125,10 @@ export const InstalledPackageReference = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageReference {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): InstalledPackageReference {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -3739,14 +4176,18 @@ export const InstalledPackageReference = {
   toJSON(message: InstalledPackageReference): unknown {
     const obj: any = {};
     message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+      (obj.context = message.context
+        ? Context.toJSON(message.context)
+        : undefined);
     message.identifier !== undefined && (obj.identifier = message.identifier);
     message.plugin !== undefined &&
       (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<InstalledPackageReference>): InstalledPackageReference {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageReference>, I>>(
+    object: I
+  ): InstalledPackageReference {
     const message = {
       ...baseInstalledPackageReference,
     } as InstalledPackageReference;
@@ -3766,7 +4207,10 @@ export const InstalledPackageReference = {
 const baseVersionReference: object = { version: "" };
 
 export const VersionReference = {
-  encode(message: VersionReference, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: VersionReference,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.version !== "") {
       writer.uint32(10).string(message.version);
     }
@@ -3794,7 +4238,9 @@ export const VersionReference = {
   fromJSON(object: any): VersionReference {
     const message = { ...baseVersionReference } as VersionReference;
     message.version =
-      object.version !== undefined && object.version !== null ? String(object.version) : "";
+      object.version !== undefined && object.version !== null
+        ? String(object.version)
+        : "";
     return message;
   },
 
@@ -3804,7 +4250,9 @@ export const VersionReference = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<VersionReference>): VersionReference {
+  fromPartial<I extends Exact<DeepPartial<VersionReference>, I>>(
+    object: I
+  ): VersionReference {
     const message = { ...baseVersionReference } as VersionReference;
     message.version = object.version ?? "";
     return message;
@@ -3818,7 +4266,10 @@ const baseInstalledPackageStatus: object = {
 };
 
 export const InstalledPackageStatus = {
-  encode(message: InstalledPackageStatus, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: InstalledPackageStatus,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.ready === true) {
       writer.uint32(8).bool(message.ready);
     }
@@ -3831,7 +4282,10 @@ export const InstalledPackageStatus = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageStatus {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): InstalledPackageStatus {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseInstalledPackageStatus } as InstalledPackageStatus;
@@ -3858,7 +4312,9 @@ export const InstalledPackageStatus = {
   fromJSON(object: any): InstalledPackageStatus {
     const message = { ...baseInstalledPackageStatus } as InstalledPackageStatus;
     message.ready =
-      object.ready !== undefined && object.ready !== null ? Boolean(object.ready) : false;
+      object.ready !== undefined && object.ready !== null
+        ? Boolean(object.ready)
+        : false;
     message.reason =
       object.reason !== undefined && object.reason !== null
         ? installedPackageStatus_StatusReasonFromJSON(object.reason)
@@ -3879,7 +4335,9 @@ export const InstalledPackageStatus = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<InstalledPackageStatus>): InstalledPackageStatus {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageStatus>, I>>(
+    object: I
+  ): InstalledPackageStatus {
     const message = { ...baseInstalledPackageStatus } as InstalledPackageStatus;
     message.ready = object.ready ?? false;
     message.reason = object.reason ?? 0;
@@ -3895,7 +4353,10 @@ const baseReconciliationOptions: object = {
 };
 
 export const ReconciliationOptions = {
-  encode(message: ReconciliationOptions, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: ReconciliationOptions,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.interval !== 0) {
       writer.uint32(8).int32(message.interval);
     }
@@ -3908,7 +4369,10 @@ export const ReconciliationOptions = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): ReconciliationOptions {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): ReconciliationOptions {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseReconciliationOptions } as ReconciliationOptions;
@@ -3935,11 +4399,16 @@ export const ReconciliationOptions = {
   fromJSON(object: any): ReconciliationOptions {
     const message = { ...baseReconciliationOptions } as ReconciliationOptions;
     message.interval =
-      object.interval !== undefined && object.interval !== null ? Number(object.interval) : 0;
+      object.interval !== undefined && object.interval !== null
+        ? Number(object.interval)
+        : 0;
     message.suspend =
-      object.suspend !== undefined && object.suspend !== null ? Boolean(object.suspend) : false;
+      object.suspend !== undefined && object.suspend !== null
+        ? Boolean(object.suspend)
+        : false;
     message.serviceAccountName =
-      object.serviceAccountName !== undefined && object.serviceAccountName !== null
+      object.serviceAccountName !== undefined &&
+      object.serviceAccountName !== null
         ? String(object.serviceAccountName)
         : "";
     return message;
@@ -3954,7 +4423,9 @@ export const ReconciliationOptions = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<ReconciliationOptions>): ReconciliationOptions {
+  fromPartial<I extends Exact<DeepPartial<ReconciliationOptions>, I>>(
+    object: I
+  ): ReconciliationOptions {
     const message = { ...baseReconciliationOptions } as ReconciliationOptions;
     message.interval = object.interval ?? 0;
     message.suspend = object.suspend ?? false;
@@ -3966,7 +4437,10 @@ export const ReconciliationOptions = {
 const basePackageAppVersion: object = { pkgVersion: "", appVersion: "" };
 
 export const PackageAppVersion = {
-  encode(message: PackageAppVersion, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: PackageAppVersion,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.pkgVersion !== "") {
       writer.uint32(10).string(message.pkgVersion);
     }
@@ -4017,7 +4491,9 @@ export const PackageAppVersion = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<PackageAppVersion>): PackageAppVersion {
+  fromPartial<I extends Exact<DeepPartial<PackageAppVersion>, I>>(
+    object: I
+  ): PackageAppVersion {
     const message = { ...basePackageAppVersion } as PackageAppVersion;
     message.pkgVersion = object.pkgVersion ?? "";
     message.appVersion = object.appVersion ?? "";
@@ -4033,7 +4509,10 @@ const baseResourceRef: object = {
 };
 
 export const ResourceRef = {
-  encode(message: ResourceRef, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: ResourceRef,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.apiVersion !== "") {
       writer.uint32(10).string(message.apiVersion);
     }
@@ -4082,10 +4561,18 @@ export const ResourceRef = {
       object.apiVersion !== undefined && object.apiVersion !== null
         ? String(object.apiVersion)
         : "";
-    message.kind = object.kind !== undefined && object.kind !== null ? String(object.kind) : "";
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.kind =
+      object.kind !== undefined && object.kind !== null
+        ? String(object.kind)
+        : "";
+    message.name =
+      object.name !== undefined && object.name !== null
+        ? String(object.name)
+        : "";
     message.namespace =
-      object.namespace !== undefined && object.namespace !== null ? String(object.namespace) : "";
+      object.namespace !== undefined && object.namespace !== null
+        ? String(object.namespace)
+        : "";
     return message;
   },
 
@@ -4098,7 +4585,9 @@ export const ResourceRef = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<ResourceRef>): ResourceRef {
+  fromPartial<I extends Exact<DeepPartial<ResourceRef>, I>>(
+    object: I
+  ): ResourceRef {
     const message = { ...baseResourceRef } as ResourceRef;
     message.apiVersion = object.apiVersion ?? "";
     message.kind = object.kind ?? "";
@@ -4112,39 +4601,39 @@ export const ResourceRef = {
 export interface PackagesService {
   GetAvailablePackageSummaries(
     request: DeepPartial<GetAvailablePackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageSummariesResponse>;
   GetAvailablePackageDetail(
     request: DeepPartial<GetAvailablePackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageDetailResponse>;
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageVersionsResponse>;
   GetInstalledPackageSummaries(
     request: DeepPartial<GetInstalledPackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageSummariesResponse>;
   GetInstalledPackageDetail(
     request: DeepPartial<GetInstalledPackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageDetailResponse>;
   CreateInstalledPackage(
     request: DeepPartial<CreateInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<CreateInstalledPackageResponse>;
   UpdateInstalledPackage(
     request: DeepPartial<UpdateInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<UpdateInstalledPackageResponse>;
   DeleteInstalledPackage(
     request: DeepPartial<DeleteInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<DeleteInstalledPackageResponse>;
   GetInstalledPackageResourceRefs(
     request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageResourceRefsResponse>;
 }
 
@@ -4153,113 +4642,117 @@ export class PackagesServiceClientImpl implements PackagesService {
 
   constructor(rpc: Rpc) {
     this.rpc = rpc;
-    this.GetAvailablePackageSummaries = this.GetAvailablePackageSummaries.bind(this);
+    this.GetAvailablePackageSummaries =
+      this.GetAvailablePackageSummaries.bind(this);
     this.GetAvailablePackageDetail = this.GetAvailablePackageDetail.bind(this);
-    this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
-    this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
+    this.GetAvailablePackageVersions =
+      this.GetAvailablePackageVersions.bind(this);
+    this.GetInstalledPackageSummaries =
+      this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
-    this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
+    this.GetInstalledPackageResourceRefs =
+      this.GetInstalledPackageResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
     request: DeepPartial<GetAvailablePackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageSummariesResponse> {
     return this.rpc.unary(
       PackagesServiceGetAvailablePackageSummariesDesc,
       GetAvailablePackageSummariesRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetAvailablePackageDetail(
     request: DeepPartial<GetAvailablePackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageDetailResponse> {
     return this.rpc.unary(
       PackagesServiceGetAvailablePackageDetailDesc,
       GetAvailablePackageDetailRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetAvailablePackageVersionsResponse> {
     return this.rpc.unary(
       PackagesServiceGetAvailablePackageVersionsDesc,
       GetAvailablePackageVersionsRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetInstalledPackageSummaries(
     request: DeepPartial<GetInstalledPackageSummariesRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageSummariesResponse> {
     return this.rpc.unary(
       PackagesServiceGetInstalledPackageSummariesDesc,
       GetInstalledPackageSummariesRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetInstalledPackageDetail(
     request: DeepPartial<GetInstalledPackageDetailRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageDetailResponse> {
     return this.rpc.unary(
       PackagesServiceGetInstalledPackageDetailDesc,
       GetInstalledPackageDetailRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   CreateInstalledPackage(
     request: DeepPartial<CreateInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<CreateInstalledPackageResponse> {
     return this.rpc.unary(
       PackagesServiceCreateInstalledPackageDesc,
       CreateInstalledPackageRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   UpdateInstalledPackage(
     request: DeepPartial<UpdateInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<UpdateInstalledPackageResponse> {
     return this.rpc.unary(
       PackagesServiceUpdateInstalledPackageDesc,
       UpdateInstalledPackageRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   DeleteInstalledPackage(
     request: DeepPartial<DeleteInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<DeleteInstalledPackageResponse> {
     return this.rpc.unary(
       PackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 
   GetInstalledPackageResourceRefs(
     request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
-    metadata?: grpc.Metadata,
+    metadata?: grpc.Metadata
   ): Promise<GetInstalledPackageResourceRefsResponse> {
     return this.rpc.unary(
       PackagesServiceGetInstalledPackageResourceRefsDesc,
       GetInstalledPackageResourceRefsRequest.fromPartial(request),
-      metadata,
+      metadata
     );
   }
 }
@@ -4268,205 +4761,215 @@ export const PackagesServiceDesc = {
   serviceName: "kubeappsapis.core.packages.v1alpha1.PackagesService",
 };
 
-export const PackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageSummaries",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageSummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageSummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageSummaries",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageSummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const PackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageDetail",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageDetail",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const PackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageVersions",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageVersionsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageVersionsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageVersions",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageVersionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageVersionsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const PackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageSummaries",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageSummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageSummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageSummaries",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageSummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const PackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageDetail",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageDetail",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const PackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "CreateInstalledPackage",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return CreateInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...CreateInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "CreateInstalledPackage",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return CreateInstalledPackageRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...CreateInstalledPackageResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const PackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "UpdateInstalledPackage",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return UpdateInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...UpdateInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "UpdateInstalledPackage",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return UpdateInstalledPackageRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...UpdateInstalledPackageResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "DeleteInstalledPackage",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return DeleteInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...DeleteInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "DeleteInstalledPackage",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return DeleteInstalledPackageRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...DeleteInstalledPackageResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const PackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageResourceRefs",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageResourceRefsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageResourceRefsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const PackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageResourceRefs",
+    service: PackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageResourceRefsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageResourceRefsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
+interface UnaryMethodDefinitionishR
+  extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
@@ -4477,7 +4980,7 @@ interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any>;
 }
 
@@ -4497,7 +5000,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-    },
+    }
   ) {
     this.host = host;
     this.options = options;
@@ -4506,7 +5009,7 @@ export class GrpcWebImpl {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined,
+    metadata: grpc.Metadata | undefined
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -4538,7 +5041,15 @@ export class GrpcWebImpl {
   }
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -4548,6 +5059,14 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<
+        Exclude<keyof I, KeysOfUnion<P>>,
+        never
+      >;
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
