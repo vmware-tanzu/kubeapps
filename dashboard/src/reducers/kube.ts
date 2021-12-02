@@ -130,7 +130,6 @@ const kubeReducer = (
   state: IKubeState = initialState,
   action: KubeAction | LocationChangeAction,
 ): IKubeState => {
-  let key: string;
   switch (action.type) {
     case getType(actions.kube.receiveResource): {
       const receivedItem = {

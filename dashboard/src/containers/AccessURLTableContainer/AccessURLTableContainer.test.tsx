@@ -9,7 +9,6 @@ import AccessURLTableContainer from ".";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
 
 const mockStore = configureMockStore([thunk]);
-const clusterName = "cluster-name";
 
 const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
@@ -35,11 +34,11 @@ describe("AccessURLTableContainer", () => {
       item: { metadata: { name: `${name}-ingress` } } as IResource,
     };
     const serviceRef = {
-        apiVersion: "v1",
-        kind: "Service",
-        namespace: ns,
-        name: `${name}-service`,
-      } as ResourceRef;
+      apiVersion: "v1",
+      kind: "Service",
+      namespace: ns,
+      name: `${name}-service`,
+    } as ResourceRef;
     const serviceKey = keyForResourceRef(
       serviceRef.apiVersion,
       serviceRef.kind,
@@ -47,11 +46,11 @@ describe("AccessURLTableContainer", () => {
       serviceRef.name,
     );
     const ingressRef = {
-        apiVersion: "v1",
-        kind: "Ingress",
-        namespace: ns,
-        name: `${name}-ingress`,
-      } as ResourceRef;
+      apiVersion: "v1",
+      kind: "Ingress",
+      namespace: ns,
+      name: `${name}-ingress`,
+    } as ResourceRef;
     const ingressKey = keyForResourceRef(
       ingressRef.apiVersion,
       ingressRef.kind,
