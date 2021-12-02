@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -254,6 +255,34 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	return nil
 }
 
+// GetResources returns the resources for an installed package.
+func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServiceAccountNamesRequest) (*v1alpha1.GetServiceAccountNamesResponse, error) {
+	namespace := r.GetContext().GetNamespace()
+	cluster := r.GetContext().GetCluster()
+	log.Infof("+resources GetServiceAccountNames (cluster: %q, namespace=%q)", cluster, namespace)
+
+	typedClient, _, err := s.clientGetter(ctx, cluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+	}
+
+	saList, err := typedClient.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, errorByStatus("list", "ServiceAccounts", "", err)
+	}
+
+	// We only need to send the list of SA names (ie, not sending secret names)
+	saStringList := []string{}
+	for _, sa := range saList.Items {
+		saStringList = append(saStringList, sa.Name)
+	}
+
+	return &v1alpha1.GetServiceAccountNamesResponse{
+		ServiceaccountNames: saStringList,
+	}, nil
+
+}
+
 // sendResourceData just DRYs up this functionality shared between requests to
 // watch or get resources.
 func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1alpha1.ResourcesService_GetResourcesServer) error {
@@ -383,4 +412,17 @@ func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {
 		r1.Kind == r2.Kind &&
 		r1.Namespace == r2.Namespace &&
 		r1.Name == r2.Name
+}
+
+// errorByStatus generates a meaningful error message
+func errorByStatus(verb, resource, identifier string, err error) error {
+	if identifier == "" {
+		identifier = "all"
+	}
+	if errors.IsNotFound(err) {
+		return status.Errorf(codes.NotFound, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+	} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+		return status.Errorf(codes.Unauthenticated, "Unauthorized to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+	}
+	return status.Errorf(codes.Internal, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
 }
