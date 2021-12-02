@@ -1,8 +1,13 @@
+import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import {
+  InstalledPackageReference,
+  ResourceRef as APIResourceRef,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
@@ -18,7 +23,7 @@ import {
   IKubeState,
   IStoreState,
 } from "shared/types";
-import { PluginNames } from "shared/utils";
+import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import ResourceRef from "../../shared/ResourceRef";
@@ -30,14 +35,9 @@ import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
-import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
+import PackageInfo from "./PackageInfo/PackageInfo";
 import ResourceTabs from "./ResourceTabs";
-import {
-  ResourceRef as APIResourceRef,
-  InstalledPackageReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { CdsButton } from "@cds/react/button";
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
@@ -124,7 +124,7 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
   );
 
   // Rollback is a helm-only operation, it will only be available for helm-plugin packages
-  if (app.installedPackageRef.plugin.name === PluginNames.PACKAGES_HELM) {
+  if (getPluginsSupportingRollback().includes(app.installedPackageRef.plugin.name)) {
     buttons.push(
       <RollbackButton
         key="rollback-button"

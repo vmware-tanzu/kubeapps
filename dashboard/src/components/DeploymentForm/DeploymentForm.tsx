@@ -22,7 +22,7 @@ import { ThunkDispatch } from "redux-thunk";
 import { Kube } from "shared/Kube";
 import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
-import { PluginNames } from "shared/utils";
+import { getPluginsRequiringSA } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 interface IRouteParams {
@@ -89,7 +89,7 @@ export default function DeploymentForm() {
 
   useEffect(() => {
     // Populate the service account list if the plugin requires it
-    if (pluginObj.name === PluginNames.PACKAGES_KAPP) {
+    if (getPluginsRequiringSA().includes(pluginObj.name)) {
       // We assume the user has enough permissions to do that. Fallback to a simple input maybe?
       Kube.listServiceAccounts(targetCluster, targetNamespace).then(saList =>
         setServiceAccountList(saList),
@@ -220,7 +220,7 @@ export default function DeploymentForm() {
                 </CdsInput>
                 {
                   // TODO(agamez): let plugins define their own components instead of hardcoding the logic here
-                  pluginObj.name === PluginNames.PACKAGES_KAPP ? (
+                  getPluginsRequiringSA().includes(pluginObj.name) ? (
                     <>
                       <CdsSelect layout="horizontal" id="serviceaccount-selector">
                         <label>Service Account</label>

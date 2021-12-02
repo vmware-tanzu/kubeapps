@@ -13,7 +13,7 @@ import {
   RollbackInstalledPackageResponse,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
-import { PluginNames } from "./utils";
+import { getPluginsSupportingRollback } from "./utils";
 
 export class App {
   private static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
@@ -83,7 +83,10 @@ export class App {
     releaseRevision: number,
   ) {
     // rollbackInstalledPackage is currently only available for Helm packages
-    if (installedPackageRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
+    if (
+      installedPackageRef?.plugin?.name &&
+      getPluginsSupportingRollback().includes(installedPackageRef.plugin.name)
+    ) {
       return await this.helmPluginClient().RollbackInstalledPackage({
         installedPackageRef,
         releaseRevision,
