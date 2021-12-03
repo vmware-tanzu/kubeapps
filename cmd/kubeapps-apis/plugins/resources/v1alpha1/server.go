@@ -255,7 +255,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	return nil
 }
 
-// GetResources returns the resources for an installed package.
+// GetServiceAccountNames returns the list of service account names in a given cluster and namespace.
 func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServiceAccountNamesRequest) (*v1alpha1.GetServiceAccountNamesResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
@@ -266,7 +266,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServ
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
-	saList, err := typedClient.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
+	saList, err := typedClient.CoreV1().ServiceAccounts(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, errorByStatus("list", "ServiceAccounts", "", err)
 	}

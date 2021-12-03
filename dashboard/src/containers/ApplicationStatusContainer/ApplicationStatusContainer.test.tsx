@@ -2,14 +2,13 @@ import { shallow } from "enzyme";
 import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import ResourceRef from "shared/ResourceRef";
+import { keyForResourceRef } from "shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import ApplicationStatusContainer from ".";
 import ApplicationStatus from "../../components/ApplicationStatus";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const mockStore = configureMockStore([thunk]);
-const clusterName = "cluster-Name";
 
 const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
@@ -27,21 +26,16 @@ describe("ApplicationStatusContainer", () => {
     const ns = "wee";
     const name = "foo";
     const item = { isFetching: false, item: { metadata: { name } } as IResource };
+    const ref = {
+      apiVersion: "apps/v1",
+      kind: "Deployment",
+      namespace: ns,
+      name,
+    } as ResourceRef;
+    const key = keyForResourceRef(ref.apiVersion, ref.kind, ref.namespace, ref.name);
     const store = makeStore({
-      [`api/clusters/${clusterName}/apis/apps/v1/namespaces/wee/deployments/foo`]: item,
+      [key]: item,
     });
-    const ref = new ResourceRef(
-      {
-        apiVersion: "apps/v1",
-        kind: "Deployment",
-        namespace: ns,
-        name,
-      } as APIResourceRef,
-      clusterName,
-      "deployments",
-      true,
-      "default",
-    );
     const wrapper = shallow(
       <ApplicationStatusContainer
         store={store}

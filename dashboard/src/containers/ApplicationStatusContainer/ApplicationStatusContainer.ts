@@ -1,10 +1,9 @@
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  InstalledPackageDetail,
+  ResourceRef,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { connect } from "react-redux";
-import { Action } from "redux";
-import { ThunkDispatch } from "redux-thunk";
-import actions from "../../actions";
 import ApplicationStatus from "../../components/ApplicationStatus";
-import ResourceRef from "../../shared/ResourceRef";
 import { IStoreState } from "../../shared/types";
 import { filterByResourceRefs } from "../helpers";
 
@@ -25,22 +24,4 @@ function mapStateToProps({ kube }: IStoreState, props: IApplicationStatusContain
   };
 }
 
-function mapDispatchToProps(
-  dispatch: ThunkDispatch<IStoreState, null, Action>,
-  props: IApplicationStatusContainerProps,
-) {
-  return {
-    watchWorkloads: () => {
-      [...props.deployRefs, ...props.statefulsetRefs, ...props.daemonsetRefs].forEach(r => {
-        dispatch(actions.kube.getAndWatchResource(r));
-      });
-    },
-    closeWatches: () => {
-      [...props.deployRefs, ...props.statefulsetRefs, ...props.daemonsetRefs].forEach(r => {
-        dispatch(actions.kube.closeWatchResource(r));
-      });
-    },
-  };
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(ApplicationStatus);
+export default connect(mapStateToProps)(ApplicationStatus);
