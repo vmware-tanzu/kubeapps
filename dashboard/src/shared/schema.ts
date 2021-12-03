@@ -5,6 +5,7 @@ import { isEmpty, set } from "lodash";
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
 import { nullOptions } from "yaml/types";
+import { Type } from "yaml/util";
 import { IBasicFormParam } from "./types";
 
 const ajv = new Ajv({ strict: false });
@@ -121,6 +122,7 @@ function parsePathAndValue(doc: YAML.Document, path: string, value?: any) {
 
 // setValue modifies the current values (text) based on a path
 export function setValue(values: string, path: string, newValue: any) {
+  YAML.scalarOptions.str.defaultType = Type.QUOTE_DOUBLE;  
   const doc = YAML.parseDocument(values);
   const { splittedPath, value } = parsePathAndValue(doc, path, newValue);
   (doc as any).setIn(splittedPath, value);

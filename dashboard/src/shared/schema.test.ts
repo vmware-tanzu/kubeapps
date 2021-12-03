@@ -267,7 +267,7 @@ describe("getValue", () => {
       values: "foo: bar",
       path: "foobar",
       default: "BAR",
-      result: "BAR",
+      result: "\"BAR\"",
     },
     {
       description: "should return a value with slashes in the key",
@@ -279,7 +279,7 @@ describe("getValue", () => {
       description: "should return a value with slashes and dots in the key",
       values: "kubernetes.io/ingress.class: nginx",
       path: "kubernetes.io~1ingress.class",
-      result: "nginx",
+      result: "\"nginx\"",
     },
   ].forEach(t => {
     it(t.description, () => {
@@ -295,35 +295,35 @@ describe("setValue", () => {
       values: "foo: bar",
       path: "foo",
       newValue: "BAR",
-      result: "foo: BAR\n",
+      result: "foo: \"BAR\"\n",
     },
     {
       description: "should set a nested value",
       values: "foo:\n  bar: foobar",
       path: "foo/bar",
       newValue: "FOOBAR",
-      result: "foo:\n  bar: FOOBAR\n",
+      result: "foo:\n  bar: \"FOOBAR\"\n",
     },
     {
       description: "should set a deeply nested value",
       values: "foo:\n  bar:\n    foobar: barfoo",
       path: "foo/bar/foobar",
       newValue: "BARFOO",
-      result: "foo:\n  bar:\n    foobar: BARFOO\n",
+      result: "foo:\n  bar:\n    foobar: \"BARFOO\"\n",
     },
     {
       description: "should add a new value",
       values: "foo: bar",
       path: "new",
       newValue: "value",
-      result: "foo: bar\nnew: value\n",
+      result: "foo: bar\n\"new\": \"value\"\n",
     },
     {
       description: "should add a new nested value",
       values: "foo: bar",
       path: "this/new",
       newValue: 1,
-      result: "foo: bar\nthis:\n  new: 1\n",
+      result: "foo: bar\n\"this\":\n  \"new\": 1\n",
       error: false,
     },
     {
@@ -331,7 +331,7 @@ describe("setValue", () => {
       values: "foo: bar",
       path: "this/new/value",
       newValue: 1,
-      result: "foo: bar\nthis:\n  new:\n    value: 1\n",
+      result: "foo: bar\n\"this\":\n  \"new\":\n    \"value\": 1\n",
       error: false,
     },
     {
@@ -339,7 +339,7 @@ describe("setValue", () => {
       values: "foo: bar\nthis:\n",
       path: "this/new/value",
       newValue: 1,
-      result: "foo: bar\nthis:\n  new:\n    value: 1\n",
+      result: "foo: bar\nthis:\n  \"new\":\n    \"value\": 1\n",
       error: false,
     },
     {
@@ -347,7 +347,7 @@ describe("setValue", () => {
       values: "foo: bar\nthis: {}\n",
       path: "this/new/value",
       newValue: 1,
-      result: "foo: bar\nthis: { new: { value: 1 } }\n",
+      result: "foo: bar\nthis: { \"new\": { \"value\": 1 } }\n",
       error: false,
     },
     {
@@ -355,7 +355,7 @@ describe("setValue", () => {
       values: "",
       path: "foo",
       newValue: "bar",
-      result: "foo: bar\n",
+      result: "\"foo\": \"bar\"\n",
       error: false,
     },
     {
@@ -363,14 +363,14 @@ describe("setValue", () => {
       values: "foo/bar: test",
       path: "foo~1bar",
       newValue: "value",
-      result: "foo/bar: value\n",
+      result: "foo/bar: \"value\"\n",
     },
     {
       description: "should add a value with slashes and dots in the key",
       values: "kubernetes.io/ingress.class: default",
       path: "kubernetes.io~1ingress.class",
       newValue: "nginx",
-      result: "kubernetes.io/ingress.class: nginx\n",
+      result: "kubernetes.io/ingress.class: \"nginx\"\n",
     },
   ].forEach(t => {
     it(t.description, () => {
