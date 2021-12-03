@@ -2,14 +2,13 @@ import { shallow } from "enzyme";
 import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { keyForResourceRef } from "shared/ResourceRef";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import AccessURLTableContainer from ".";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
 
 const mockStore = configureMockStore([thunk]);
-const clusterName = "cluster-name";
 
 const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
@@ -34,36 +33,24 @@ describe("AccessURLTableContainer", () => {
       isFetching: false,
       item: { metadata: { name: `${name}-ingress` } } as IResource,
     };
-    const serviceRef = new ResourceRef(
-      {
-        apiVersion: "v1",
-        kind: "Service",
-        namespace: ns,
-        name: `${name}-service`,
-      } as APIResourceRef,
-      clusterName,
-      "services",
-      true,
-      "default",
-    );
+    const serviceRef = {
+      apiVersion: "v1",
+      kind: "Service",
+      namespace: ns,
+      name: `${name}-service`,
+    } as ResourceRef;
     const serviceKey = keyForResourceRef(
       serviceRef.apiVersion,
       serviceRef.kind,
       serviceRef.namespace,
       serviceRef.name,
     );
-    const ingressRef = new ResourceRef(
-      {
-        apiVersion: "v1",
-        kind: "Ingress",
-        namespace: ns,
-        name: `${name}-ingress`,
-      } as APIResourceRef,
-      clusterName,
-      "ingresses",
-      true,
-      "default",
-    );
+    const ingressRef = {
+      apiVersion: "v1",
+      kind: "Ingress",
+      namespace: ns,
+      name: `${name}-ingress`,
+    } as ResourceRef;
     const ingressKey = keyForResourceRef(
       ingressRef.apiVersion,
       ingressRef.kind,

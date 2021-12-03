@@ -1,6 +1,7 @@
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
-import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
+import { keyForResourceRef } from "shared/ResourceRef";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IResource } from "shared/types";
 import ResourceTable from "./ResourceTable";
@@ -13,14 +14,10 @@ const defaultProps = {
 };
 
 const sampleResourceRef = {
-  cluster: "cluster-name",
   apiVersion: "v1",
   kind: "Deployment",
   name: "foo",
   namespace: "default",
-  filter: "",
-  plural: "deployments",
-  namespaced: true,
 } as ResourceRef;
 
 const sampleKey = keyForResourceRef(

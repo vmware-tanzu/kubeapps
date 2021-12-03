@@ -15,13 +15,11 @@ import {
   DeleteError,
   FetchError,
   FetchWarning,
-  IKubeState,
   IStoreState,
 } from "shared/types";
 import { PluginNames } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
-import ResourceRef from "../../shared/ResourceRef";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
@@ -34,7 +32,7 @@ import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 import {
-  ResourceRef as APIResourceRef,
+  ResourceRef,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { CdsButton } from "@cds/react/button";
@@ -49,12 +47,7 @@ export interface IAppViewResourceRefs {
   otherResources: ResourceRef[];
 }
 
-function parseResources(
-  apiResourceRefs: Array<APIResourceRef>,
-  kinds: IKubeState["kinds"],
-  cluster: string,
-  releaseNamespace: string,
-) {
+function parseResources(resourceRefs: Array<ResourceRef>) {
   const result: IAppViewResourceRefs = {
     ingresses: [],
     deployments: [],
@@ -64,43 +57,28 @@ function parseResources(
     services: [],
     secrets: [],
   };
-  apiResourceRefs.forEach(apiRef => {
-    const kind = kinds[apiRef.kind] || {};
-    switch (apiRef.kind) {
+  resourceRefs.forEach(ref => {
+    switch (ref.kind) {
       case "Deployment":
-        result.deployments.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.deployments.push(ref);
         break;
       case "StatefulSet":
-        result.statefulsets.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.statefulsets.push(ref);
         break;
       case "DaemonSet":
-        result.daemonsets.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.daemonsets.push(ref);
         break;
       case "Service":
-        result.services.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.services.push(ref);
         break;
       case "Ingress":
-        result.ingresses.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.ingresses.push(ref);
         break;
       case "Secret":
-        result.secrets.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.secrets.push(ref);
         break;
       default:
-        result.otherResources.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.otherResources.push(ref);
     }
   });
   return result;
@@ -198,12 +176,7 @@ export default function AppView() {
       return () => {};
     }
 
-    const parsedRefs = parseResources(
-      app.apiResourceRefs,
-      kinds,
-      cluster,
-      app.installedPackageRef?.context?.namespace || "",
-    );
+    const parsedRefs = parseResources(app.apiResourceRefs);
     setAppViewResourceRefs(parsedRefs);
     return () => {};
   }, [app, cluster, kinds, appViewResourceRefs]);

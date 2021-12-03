@@ -1,8 +1,7 @@
-import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import context from "jest-plugin-context";
-import * as ReactRedux from "react-redux";
-import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
+import { keyForResourceRef } from "shared/ResourceRef";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "shared/types";
 import AccessURLTable from "./AccessURLTable";
@@ -11,44 +10,6 @@ const defaultProps = {
   serviceRefs: [],
   ingressRefs: [],
 };
-
-let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.kube };
-beforeEach(() => {
-  actions.kube = {
-    ...actions.kube,
-    getResource: jest.fn(),
-  };
-  const mockDispatch = jest.fn();
-  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-});
-
-afterEach(() => {
-  actions.kube = { ...kubeaActions };
-  spyOnUseDispatch.mockRestore();
-});
-
-describe("when receiving ingresses", () => {
-  it("fetches ingresses at mount time", () => {
-    const ingress = { name: "ing", getResourceURL: jest.fn() } as any;
-    const mock = jest.fn();
-    actions.kube.getResource = mock;
-    mountWrapper(defaultStore, <AccessURLTable {...defaultProps} ingressRefs={[ingress]} />);
-    expect(mock).toHaveBeenCalledWith(ingress);
-  });
-
-  it("fetches when new ingress refs received", () => {
-    const ingress = { name: "ing", getResourceURL: jest.fn() } as any;
-    const mock = jest.fn();
-    actions.kube.getResource = mock;
-    const wrapper = mountWrapper(
-      defaultStore,
-      <AccessURLTable {...defaultProps} ingressRefs={[ingress]} />,
-    );
-    wrapper.setProps({ ingressRefs: [ingress] });
-    expect(mock).toHaveBeenCalledWith(ingress);
-  });
-});
 
 context("when some resource is fetching", () => {
   it("shows a loadingWrapper when fetching services", () => {

@@ -12,13 +12,12 @@ import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
   PackageAppVersion,
-  ResourceRef as APIResourceRef,
+  ResourceRef,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route } from "react-router";
-import ResourceRef from "shared/ResourceRef";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError } from "shared/types";
 import { PluginNames } from "shared/utils";
@@ -72,40 +71,40 @@ const installedPackage = {
 } as InstalledPackageDetail;
 
 const resourceRefs = {
-  configMap: { apiVersion: "v1", kind: "ConfigMap", name: "cm-one" } as APIResourceRef,
+  configMap: { apiVersion: "v1", kind: "ConfigMap", name: "cm-one" } as ResourceRef,
   deployment: {
     apiVersion: "apps/v1beta1",
     kind: "Deployment",
     name: "deployment-one",
-  } as APIResourceRef,
-  service: { apiVersion: "v1", kind: "Service", name: "svc-one" } as APIResourceRef,
+  } as ResourceRef,
+  service: { apiVersion: "v1", kind: "Service", name: "svc-one" } as ResourceRef,
   ingress: {
     apiVersion: "extensions/v1beta1",
     kind: "Ingress",
     name: "ingress-one",
-  } as APIResourceRef,
+  } as ResourceRef,
   secret: {
     apiVersion: "v1",
     kind: "Secret",
     name: "secret-one",
-  } as APIResourceRef,
+  } as ResourceRef,
   daemonset: {
     apiVersion: "apps/v1beta1",
     kind: "DaemonSet",
     name: "daemonset-one",
-  } as APIResourceRef,
+  } as ResourceRef,
   statefulset: {
     apiVersion: "apps/v1beta1",
     kind: "StatefulSet",
     name: "statefulset-one",
-  } as APIResourceRef,
+  } as ResourceRef,
 };
 
 const validState = {
   apps: {
     selected: {
       ...installedPackage,
-      resourceRefs: [resourceRefs.configMap] as APIResourceRef[],
+      resourceRefs: [resourceRefs.configMap] as ResourceRef[],
     },
   },
 };
@@ -115,11 +114,6 @@ describe("AppView", () => {
     actions.apps = {
       ...actions.apps,
       getApp: jest.fn(),
-    };
-    actions.kube = {
-      ...actions.kube,
-      getAndWatchResource: jest.fn(),
-      closeWatchResource: jest.fn(),
     };
     const mockDispatch = jest.fn();
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -249,7 +243,7 @@ describe("AppView", () => {
         resourceRefs.configMap,
         resourceRefs.ingress,
         resourceRefs.secret,
-      ] as APIResourceRef[];
+      ] as ResourceRef[];
 
       const wrapper = mountWrapper(
         getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
@@ -261,33 +255,9 @@ describe("AppView", () => {
       );
 
       const tabs = wrapper.find(ResourceTabs);
-      expect(tabs.prop("deployments")).toEqual([
-        new ResourceRef(
-          resourceRefs.deployment,
-          routeParams.cluster,
-          "deployments",
-          true,
-          installedPackage.installedPackageRef!.context!.namespace,
-        ),
-      ]);
-      expect(tabs.prop("services")).toEqual([
-        new ResourceRef(
-          resourceRefs.service,
-          routeParams.cluster,
-          "services",
-          true,
-          installedPackage.installedPackageRef!.context!.namespace,
-        ),
-      ]);
-      expect(tabs.prop("secrets")).toEqual([
-        new ResourceRef(
-          resourceRefs.secret,
-          routeParams.cluster,
-          "secrets",
-          true,
-          installedPackage.installedPackageRef!.context!.namespace,
-        ),
-      ]);
+      expect(tabs.prop("deployments")).toEqual([resourceRefs.deployment]);
+      expect(tabs.prop("services")).toEqual([resourceRefs.service]);
+      expect(tabs.prop("secrets")).toEqual([resourceRefs.secret]);
     });
 
     it("stores other k8s resources", () => {
@@ -296,7 +266,7 @@ describe("AppView", () => {
         resourceRefs.service,
         resourceRefs.configMap,
         resourceRefs.secret,
-      ] as APIResourceRef[];
+      ] as ResourceRef[];
 
       const wrapper = mountWrapper(
         getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
@@ -359,7 +329,7 @@ describe("AppView", () => {
   });
 
   it("forwards statefulsets and daemonsets to the application status", () => {
-    const apiResourceRefs = [resourceRefs.statefulset, resourceRefs.daemonset] as APIResourceRef[];
+    const apiResourceRefs = [resourceRefs.statefulset, resourceRefs.daemonset] as ResourceRef[];
     const wrapper = mountWrapper(
       getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
       <MemoryRouter initialEntries={[routePathParam]}>
@@ -372,30 +342,14 @@ describe("AppView", () => {
     const applicationStatus = wrapper.find(ApplicationStatusContainer);
     expect(applicationStatus).toExist();
 
-    expect(applicationStatus.prop("statefulsetRefs")).toEqual([
-      new ResourceRef(
-        resourceRefs.statefulset,
-        routeParams.cluster,
-        "statefulsets",
-        true,
-        installedPackage.installedPackageRef!.context!.namespace,
-      ),
-    ]);
-    expect(applicationStatus.prop("daemonsetRefs")).toEqual([
-      new ResourceRef(
-        resourceRefs.daemonset,
-        routeParams.cluster,
-        "daemonsets",
-        true,
-        installedPackage.installedPackageRef!.context!.namespace,
-      ),
-    ]);
+    expect(applicationStatus.prop("statefulsetRefs")).toEqual([resourceRefs.statefulset]);
+    expect(applicationStatus.prop("daemonsetRefs")).toEqual([resourceRefs.daemonset]);
   });
 });
 
 describe("AppView actions", () => {
   it("watches the given resources when mounted", async () => {
-    const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as APIResourceRef[];
+    const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as ResourceRef[];
     const store = getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } });
 
     mountWrapper(
@@ -426,7 +380,7 @@ describe("AppView actions", () => {
     ]);
   });
   it("closes the watches when unmounted", async () => {
-    const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as APIResourceRef[];
+    const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as ResourceRef[];
 
     const store = getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } });
     const wrapper = mountWrapper(

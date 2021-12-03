@@ -441,6 +441,8 @@ export interface IKind {
 }
 
 export interface IKubeState {
+  // TODO(minelson): Remove IKubeItem, sockets, kinds, kindsError and possibly
+  // timers once all call-sites updated.
   items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
   sockets: { [s: string]: { socket: WebSocket; onError: (e: Event) => void } };
   subscriptions: { [s: string]: Subscription };
