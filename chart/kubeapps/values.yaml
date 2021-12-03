@@ -1605,6 +1605,7 @@ kubeappsapis:
   ##
   enabledPlugins:
     - helm
+    - resources
   pluginConfig:
     core:
       packages:

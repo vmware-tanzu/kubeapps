@@ -30,6 +30,7 @@ function mapDispatchToProps(
   props: IApplicationStatusContainerProps,
 ) {
   return {
+    // TODO: Why are we also dispatching a watch here for these?
     watchWorkloads: () => {
       [...props.deployRefs, ...props.statefulsetRefs, ...props.daemonsetRefs].forEach(r => {
         dispatch(actions.kube.getAndWatchResource(r));

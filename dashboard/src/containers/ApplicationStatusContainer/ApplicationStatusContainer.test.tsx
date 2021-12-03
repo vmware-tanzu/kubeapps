@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import ResourceRef from "shared/ResourceRef";
+import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import ApplicationStatusContainer from ".";
 import ApplicationStatus from "../../components/ApplicationStatus";
@@ -27,9 +27,6 @@ describe("ApplicationStatusContainer", () => {
     const ns = "wee";
     const name = "foo";
     const item = { isFetching: false, item: { metadata: { name } } as IResource };
-    const store = makeStore({
-      [`api/clusters/${clusterName}/apis/apps/v1/namespaces/wee/deployments/foo`]: item,
-    });
     const ref = new ResourceRef(
       {
         apiVersion: "apps/v1",
@@ -42,6 +39,10 @@ describe("ApplicationStatusContainer", () => {
       true,
       "default",
     );
+    const key = keyForResourceRef(ref.apiVersion, ref.kind, ref.namespace, ref.name);
+    const store = makeStore({
+      [key]: item,
+    });
     const wrapper = shallow(
       <ApplicationStatusContainer
         store={store}

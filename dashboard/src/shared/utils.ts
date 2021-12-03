@@ -4,7 +4,7 @@ import fluxIcon from "../icons/flux.svg";
 import helmIcon from "../icons/helm.svg";
 import olmIcon from "../icons/olm-icon.svg";
 import placeholder from "../placeholder.png";
-import ResourceRef from "./ResourceRef";
+import ResourceRef, { keyForResourceRef } from "./ResourceRef";
 import { IK8sList, IKubeItem, IResource, ISecret } from "./types";
 
 export enum PluginNames {
@@ -51,7 +51,8 @@ export function flattenResources(
 ) {
   const result: Array<IKubeItem<IResource | ISecret>> = [];
   refs.forEach(ref => {
-    const kubeItem = resources[ref.getResourceURL()];
+    const kubeItem =
+      resources[keyForResourceRef(ref.apiVersion, ref.kind, ref.namespace, ref.name)];
     if (kubeItem) {
       const itemList = kubeItem.item as IK8sList<IResource | ISecret, {}>;
       if (itemList && itemList.items) {

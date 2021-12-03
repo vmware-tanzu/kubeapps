@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import ResourceRef from "shared/ResourceRef";
+import ResourceRef, { keyForResourceRef } from "shared/ResourceRef";
 import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import AccessURLTableContainer from ".";
@@ -34,10 +34,6 @@ describe("AccessURLTableContainer", () => {
       isFetching: false,
       item: { metadata: { name: `${name}-ingress` } } as IResource,
     };
-    const store = makeStore({
-      [`api/clusters/${clusterName}/api/v1/namespaces/wee/services/foo-service`]: service,
-      [`api/clusters/${clusterName}/api/v1/namespaces/wee/ingresses/foo-ingress`]: ingress,
-    });
     const serviceRef = new ResourceRef(
       {
         apiVersion: "v1",
@@ -49,6 +45,12 @@ describe("AccessURLTableContainer", () => {
       "services",
       true,
       "default",
+    );
+    const serviceKey = keyForResourceRef(
+      serviceRef.apiVersion,
+      serviceRef.kind,
+      serviceRef.namespace,
+      serviceRef.name,
     );
     const ingressRef = new ResourceRef(
       {
@@ -62,6 +64,16 @@ describe("AccessURLTableContainer", () => {
       true,
       "default",
     );
+    const ingressKey = keyForResourceRef(
+      ingressRef.apiVersion,
+      ingressRef.kind,
+      ingressRef.namespace,
+      ingressRef.name,
+    );
+    const store = makeStore({
+      [serviceKey]: service,
+      [ingressKey]: ingress,
+    });
     const wrapper = shallow(
       <AccessURLTableContainer
         store={store}
