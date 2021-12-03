@@ -1,7 +1,5 @@
-import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import context from "jest-plugin-context";
-import * as ReactRedux from "react-redux";
 import { keyForResourceRef } from "shared/ResourceRef";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
@@ -12,22 +10,6 @@ const defaultProps = {
   serviceRefs: [],
   ingressRefs: [],
 };
-
-let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.kube };
-beforeEach(() => {
-  actions.kube = {
-    ...actions.kube,
-    getResource: jest.fn(),
-  };
-  const mockDispatch = jest.fn();
-  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-});
-
-afterEach(() => {
-  actions.kube = { ...kubeaActions };
-  spyOnUseDispatch.mockRestore();
-});
 
 context("when some resource is fetching", () => {
   it("shows a loadingWrapper when fetching services", () => {
