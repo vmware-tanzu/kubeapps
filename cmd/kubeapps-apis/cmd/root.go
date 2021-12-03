@@ -71,6 +71,7 @@ func init() {
 	rootCmd = newRootCmd()
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
+        //set initial value of verbosity
 	goflag.Set("v", "3")
 	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 }
