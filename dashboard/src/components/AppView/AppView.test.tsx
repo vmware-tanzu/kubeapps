@@ -115,11 +115,6 @@ describe("AppView", () => {
       ...actions.apps,
       getApp: jest.fn(),
     };
-    actions.kube = {
-      ...actions.kube,
-      getAndWatchResource: jest.fn(),
-      closeWatchResource: jest.fn(),
-    };
     const mockDispatch = jest.fn();
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   });
