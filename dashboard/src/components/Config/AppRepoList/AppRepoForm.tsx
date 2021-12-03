@@ -49,7 +49,7 @@ const TYPE_OCI = "oci";
 
 export function AppRepoForm(props: IAppRepoFormProps) {
   const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo, secret } = props;
-  const workingRef = useRef(false);
+  const isInstallingRef = useRef(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const [authMethod, setAuthMethod] = useState(AUTH_METHOD_NONE);
@@ -157,11 +157,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
 
   const install = async () => {
-    if (workingRef.current) {
+    if (isInstallingRef.current) {
       // Another installation is ongoing
       return;
     }
-    workingRef.current = true;
+    isInstallingRef.current = true;
     let finalHeader = "";
     let dockerRegCreds = "";
     switch (authMethod) {
@@ -223,7 +223,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         onAfterInstall();
       }
     }
-    workingRef.current = false;
+    isInstallingRef.current = false;
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
