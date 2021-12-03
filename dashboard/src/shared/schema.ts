@@ -122,7 +122,7 @@ function parsePathAndValue(doc: YAML.Document, path: string, value?: any) {
 
 // setValue modifies the current values (text) based on a path
 export function setValue(values: string, path: string, newValue: any) {
-  YAML.scalarOptions.str.defaultType = Type.QUOTE_DOUBLE;  
+  YAML.scalarOptions.str.defaultType = Type.QUOTE_DOUBLE;
   const doc = YAML.parseDocument(values);
   const { splittedPath, value } = parsePathAndValue(doc, path, newValue);
   (doc as any).setIn(splittedPath, value);
