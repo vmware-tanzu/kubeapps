@@ -17,17 +17,13 @@ describe("kubeReducer", () => {
     receiveResourceKinds: getType(actions.kube.receiveResourceKinds),
     requestResourceKinds: getType(actions.kube.requestResourceKinds),
     receiveKindsError: getType(actions.kube.receiveKindsError),
-    addTimer: getType(actions.kube.addTimer),
-    removeTimer: getType(actions.kube.removeTimer),
   };
 
   beforeEach(() => {
     initialState = {
       items: {},
-      sockets: {},
       subscriptions: {},
       kinds: initialKinds,
-      timers: {},
     };
   });
 
@@ -47,67 +43,6 @@ describe("kubeReducer", () => {
       expect(kubeReducer(undefined, { type, payload })).toEqual({
         ...initialState,
         items: { foo: { isFetching: false, error } },
-      });
-    });
-
-    describe("addTimer", () => {
-      it("should add a timer", () => {
-        const newState = kubeReducer(initialState, {
-          type: actionTypes.addTimer,
-          payload: { id: "foo", timer: jest.fn() },
-        });
-        expect(newState).toEqual({
-          ...initialState,
-          timers: { foo: expect.any(Number) },
-        });
-      });
-
-      it("should not add a timer if there is already one", () => {
-        jest.useFakeTimers();
-        const f1 = jest.fn();
-        const f2 = jest.fn();
-        const timer = setTimeout(f1, 1);
-        const newState = kubeReducer(
-          {
-            ...initialState,
-            timers: { foo: timer },
-          },
-          {
-            type: actionTypes.addTimer,
-            payload: { id: "foo", timer: f2 },
-          },
-        );
-        expect(newState).toEqual({
-          ...initialState,
-          timers: { foo: timer },
-        });
-        jest.runAllTimers();
-        expect(f1).toHaveBeenCalled();
-        expect(f2).not.toHaveBeenCalled();
-      });
-    });
-
-    describe("removeTimer", () => {
-      it("remove a timer", () => {
-        jest.useFakeTimers();
-        const f1 = jest.fn();
-        const timer = setTimeout(f1, 1);
-        const newState = kubeReducer(
-          {
-            ...initialState,
-            timers: { foo: timer },
-          },
-          {
-            type: actionTypes.removeTimer,
-            payload: "foo",
-          },
-        );
-        expect(newState).toEqual({
-          ...initialState,
-          timers: { foo: undefined },
-        });
-        jest.runAllTimers();
-        expect(f1).not.toHaveBeenCalled();
       });
     });
 
