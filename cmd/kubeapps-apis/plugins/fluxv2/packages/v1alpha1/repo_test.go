@@ -476,7 +476,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			repos := []runtime.Object{}
 
 			for _, rs := range tc.repos {
-				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace)
+				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -484,12 +484,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				repos = append(repos, repo)
 			}
 
-			s, mock, _, _, err := newServerWithRepos(repos...)
+			// the index.yaml will contain links to charts but for the purposes
+			// of this test they do not matter
+			s, mock, _, _, err := newServerWithRepos(t, repos, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, tc.request.FilterOptions, repos...); err != nil {
+			if err = redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
 				t.Fatalf("%v", err)
 			}
 
@@ -561,12 +563,12 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(repo)
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -588,7 +590,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 
 		// see below
-		key, oldValue, err := redisKeyValueForRuntimeObject(repo)
+		key, oldValue, err := redisKeyValueForRepo(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -601,7 +603,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
 		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
 		mock.ExpectGet(key).SetVal(string(oldValue))
-		key, newValue, err := redisMockSetValueForRepo(repo, mock)
+		key, newValue, err := redisMockSetValueForRepo(mock, repo)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -638,17 +640,17 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
-		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default")
+		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default", nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 		defer ts2.Close()
-		s, mock, dyncli, watcher, err := newServerWithRepos(repo)
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -671,7 +673,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
-		key, err := redisKeyForRuntimeObject(repo)
+		key, err := redisKeyForRepo(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		} else {
@@ -708,18 +710,18 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 // test that causes RetryWatcher to stop and the cache needs to resync
 func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
-		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default")
+		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default", nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 		defer ts2.Close()
 
-		s, mock, _, watcher, err := newServerWithRepos(repo)
+		s, mock, _, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -744,7 +746,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
 		// background: a FLUSHDB followed by a SET
 		mock.ExpectFlushDB().SetVal("OK")
-		if _, _, err := redisMockSetValueForRepo(repo, mock); err != nil {
+		if _, _, err := redisMockSetValueForRepo(mock, repo); err != nil {
 			t.Fatalf("%+v", err)
 		}
 
@@ -756,7 +758,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if err = redisMockBeforeCallToGetAvailablePackageSummaries(mock, nil, repo); err != nil {
+		if err = redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -873,7 +875,7 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(newRepos(tc.repoSpecs, tc.repoNamespace)...)
+			s, mock, _, _, err := newServerWithRepos(t, newRepos(tc.repoSpecs, tc.repoNamespace), nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -904,7 +906,7 @@ func TestGetPackageRepositories(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
+func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -941,7 +943,7 @@ func newServerWithRepos(repos ...runtime.Object) (*Server, redismock.ClientMock,
 		return dynamicClient, apiextIfc, nil
 	}
 
-	s, mock, err := newServer(clientGetter, nil, repos...)
+	s, mock, err := newServer(t, clientGetter, nil, repos, charts)
 	return s, mock, dynamicClient, watcher, err
 }
 
@@ -985,10 +987,10 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 }
 
 // does a series of mock.ExpectGet(...)
-func redisMockBeforeCallToGetAvailablePackageSummaries(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
+func redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
 	mapVals := make(map[string][]byte)
 	for _, r := range repos {
-		key, bytes, err := redisKeyValueForRuntimeObject(r)
+		key, bytes, err := redisKeyValueForRepo(r)
 		if err != nil {
 			return err
 		}
@@ -1010,11 +1012,11 @@ func redisMockBeforeCallToGetAvailablePackageSummaries(mock redismock.ClientMock
 	return nil
 }
 
-func redisMockSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (key string, bytes []byte, err error) {
-	if _, err = redisKeyForRuntimeObject(repo); err != nil {
+func redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
+	if _, err = redisKeyForRepo(repo); err != nil {
 		return "", nil, err
 	}
-	if key, bytes, err := redisKeyValueForRuntimeObject(repo); err != nil {
+	if key, bytes, err := redisKeyValueForRepo(repo); err != nil {
 		mock.ExpectDel(key).SetVal(0)
 		return "", nil, err
 	} else {
@@ -1024,8 +1026,8 @@ func redisMockSetValueForRepo(repo runtime.Object, mock redismock.ClientMock) (k
 	}
 }
 
-func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
-	if key, err := redisKeyForRuntimeObject(r); err != nil {
+func redisKeyValueForRepo(r runtime.Object) (string, []byte, error) {
+	if key, err := redisKeyForRepo(r); err != nil {
 		return "", nil, err
 	} else {
 		// we are not really adding anything to the cache here, rather just calling a
@@ -1038,17 +1040,17 @@ func redisKeyValueForRuntimeObject(r runtime.Object) (string, []byte, error) {
 	}
 }
 
-func redisKeyForRuntimeObject(r runtime.Object) (string, error) {
+func redisKeyForRepo(r runtime.Object) (string, error) {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return redisKeyForNamespacedName(types.NamespacedName{
+	return redisKeyForRepoNamespacedName(types.NamespacedName{
 		Namespace: r.(*unstructured.Unstructured).GetNamespace(),
 		Name:      r.(*unstructured.Unstructured).GetName()})
 }
 
-func redisKeyForNamespacedName(name types.NamespacedName) (string, error) {
+func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
 	if name.Name == "" || name.Namespace == "" {
 		return "", fmt.Errorf("invalid key: [%s]", name)
 	}
@@ -1059,10 +1061,14 @@ func redisKeyForNamespacedName(name types.NamespacedName) (string, error) {
 	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
-func newRepoWithIndex(repoIndex, repoName, repoNamespace string) (*httptest.Server, *unstructured.Unstructured, error) {
+func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string) (*httptest.Server, *unstructured.Unstructured, error) {
 	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	for k, v := range replaceUrls {
+		indexYAMLBytes = []byte(strings.ReplaceAll(string(indexYAMLBytes), k, v))
 	}
 
 	// stand up an http server just for the duration of this test

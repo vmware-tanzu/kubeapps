@@ -72,9 +72,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 			Gvr:          repositoriesGvr,
 			ClientGetter: common.NewBackgroundClientGetter(),
 			OnAddFunc:    chartCache.wrapOnAddFunc(onAddRepo, onGetRepo),
-			OnModifyFunc: onModifyRepo,
+			OnModifyFunc: chartCache.wrapOnModifyFunc(onModifyRepo, onGetRepo),
 			OnGetFunc:    onGetRepo,
-			OnDeleteFunc: onDeleteRepo,
+			OnDeleteFunc: chartCache.wrapOnDeleteFunc(onDeleteRepo),
 		}
 		if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli); err != nil {
 			return nil, err
@@ -97,7 +97,11 @@ func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error
 	}
 	dynamicClient, _, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		if status.Code(err) == codes.Unknown {
+			return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		} else {
+			return nil, err
+		}
 	}
 	return dynamicClient, nil
 }
@@ -211,6 +215,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageDetail(request: [%v])", request)
+	defer log.Infof("-fluxv2 GetAvailablePackageDetail")
 
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
@@ -245,16 +250,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	tarUrl, cleanUp, err := s.getChartTarballUrl(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
-	if cleanUp != nil {
-		defer cleanUp()
-	}
-	if err != nil {
-		return nil, err
-	}
-	log.V(4).Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
-
-	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, tarUrl)
+	pkgDetail, err := s.availableChartDetail(ctx, repo, packageIdParts[1], request.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}

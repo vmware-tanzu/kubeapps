@@ -162,7 +162,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(tc.repo)
+			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{tc.repo}, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -170,7 +170,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
 			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
 			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
-				if key, err := redisKeyForRuntimeObject(tc.repo); err == nil {
+				if key, err := redisKeyForRepo(tc.repo); err == nil {
 					// TODO explain why 3 calls to ExpectGet. It has to do with the way
 					// the caching internals work: a call such as GetAvailablePackageSummaries
 					// will cause multiple fetches
@@ -203,12 +203,18 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 //
 // utilities
 //
+type testSpecChartWithUrl struct {
+	chartID       string
+	chartRevision string
+	chartUrl      string
+	repoNamespace string
+}
 
 // This func does not create a kubernetes dynamic client. It is meant to work in conjunction with
 // a call to fake.NewSimpleDynamicClientWithCustomListKinds. The reason for argument repos
 // (unlike charts or releases) is that repos are treated special because
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
-func newServer(clientGetter common.ClientGetterFunc, actionConfig *action.Configuration, repos ...runtime.Object) (*Server, redismock.ClientMock, error) {
+func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig *action.Configuration, repos []runtime.Object, charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
 	redisCli, mock := redismock.NewClientMock()
 	mock.MatchExpectationsInOrder(false)
 
@@ -229,22 +235,45 @@ func newServer(clientGetter common.ClientGetterFunc, actionConfig *action.Config
 		Gvr:          repositoriesGvr,
 		ClientGetter: clientGetter,
 		OnAddFunc:    chartCache.wrapOnAddFunc(onAddRepo, onGetRepo),
-		OnModifyFunc: onModifyRepo,
+		OnModifyFunc: chartCache.wrapOnModifyFunc(onModifyRepo, onGetRepo),
 		OnGetFunc:    onGetRepo,
-		OnDeleteFunc: onDeleteRepo,
+		OnDeleteFunc: chartCache.wrapOnDeleteFunc(onDeleteRepo),
 	}
 
 	for _, r := range repos {
 		if isRepoReady(r.(*unstructured.Unstructured).Object) {
 			// we are willfully ignoring any errors coming from redisMockSetValueForRepo()
 			// here and just skipping over to next repo
-			redisMockSetValueForRepo(r, mock)
+			redisMockSetValueForRepo(mock, r)
 		}
+	}
+
+	// for now we only cache latest chart
+	if len(charts) > 0 {
+		c := charts[0]
+		key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
+		if err != nil {
+			return nil, mock, err
+		}
+		err = redisMockSetValueForChart(mock, key, c.chartUrl)
+		if err != nil {
+			return nil, mock, err
+		}
+		chartCache.ExpectAdd(key)
 	}
 
 	repoCache, err := cache.NewNamespacedResourceWatcherCache(config, redisCli)
 	if err != nil {
 		return nil, mock, err
+	}
+
+	// need to wait until ChartCache has finished syncing
+	for _, c := range charts {
+		key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
+		if err != nil {
+			return nil, mock, err
+		}
+		chartCache.WaitUntilDoneWith(key)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

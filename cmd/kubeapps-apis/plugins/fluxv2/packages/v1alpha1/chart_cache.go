@@ -13,25 +13,36 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	"io/ioutil"
+	"math"
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
+	k8scache "k8s.io/client-go/tools/cache"
 	log "k8s.io/klog/v2"
 )
 
 // For now:
 // unlike NamespacedResourceWatcherCache this is not a general purpose cache meant to
-// be re-used. It is written specifically for one purpose and has ties into the internals of
-// repo and chart.go. So it exists outside the cache package
+// be re-used. It is written specifically for one purpose of caching helm chart details
+// and has ties into the internals of repo and chart.go. So, it exists outside the cache
+// package
+// TODO (gfichtenholt): clean this up if possible, and move into cache package
 
 type ChartCache struct {
 	redisCli *redis.Client
@@ -42,6 +53,24 @@ type ChartCache struct {
 	// time and makes it easy to ensure we are never processing the same item
 	// simultaneously in different workers.
 	queue cache.RateLimitingInterface
+
+	// this is a temporary store only used to keep track of chart details
+	// in a time window between AddRateLimited() is called and runWorker picks up
+	// the corresponding item from the queue
+	processing k8scache.Store
+}
+
+// chartCacheStoreEntry is what we'll be storing in the processing store
+// note that url and delete fields are mutually exclusive, you must either:
+//  - set url to non-empty string or
+//  - delete flag to true
+// setting both does not make sense
+type chartCacheStoreEntry struct {
+	namespace string
+	id        string
+	version   string
+	url       string
+	delete    bool
 }
 
 func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
@@ -52,8 +81,9 @@ func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
 	}
 
 	c := ChartCache{
-		redisCli: redisCli,
-		queue:    cache.NewRateLimitingQueue(),
+		redisCli:   redisCli,
+		queue:      cache.NewRateLimitingQueue(),
+		processing: k8scache.NewStore(chartCacheKeyFunc),
 	}
 
 	// dummy channel for now. Ideally, this would be passed in as an input argument
@@ -74,7 +104,7 @@ func (c *ChartCache) wrapOnAddFunc(fnAdd cache.ValueAdderFunc, fnGet cache.Value
 		if err == nil && setValue {
 			if untypedValue, err2 := fnGet(key, value); err2 != nil {
 				log.Errorf("%+v", err2)
-			} else if typedValue, ok := untypedValue.(repoCacheEntry); !ok {
+			} else if typedValue, ok := untypedValue.(repoCacheEntryValue); !ok {
 				log.Errorf("unexpected value fetched from cache: type: [%s], value: [%v]",
 					reflect.TypeOf(untypedValue), value)
 			} else {
@@ -85,16 +115,72 @@ func (c *ChartCache) wrapOnAddFunc(fnAdd cache.ValueAdderFunc, fnGet cache.Value
 	}
 }
 
-// this will enqueue work items into chart work queue and return
+func (c *ChartCache) wrapOnModifyFunc(fnModify cache.ValueModifierFunc, fnGet cache.ValueGetterFunc) cache.ValueModifierFunc {
+	return func(key string, obj map[string]interface{}, oldVal interface{}) (interface{}, bool, error) {
+		value, setValue, err := fnModify(key, obj, oldVal)
+		if err == nil && setValue {
+			if untypedValue, err2 := fnGet(key, value); err2 != nil {
+				log.Errorf("%+v", err2)
+			} else if typedValue, ok := untypedValue.(repoCacheEntryValue); !ok {
+				log.Errorf("unexpected value fetched from cache: type: [%s], value: [%v]",
+					reflect.TypeOf(untypedValue), value)
+			} else {
+				// in theory, we need to delete the entries corresponding to the old
+				// value, e.g. redis v.14, and then sync chart redis v.15. Having said
+				// that, I don't see much harm in leaving the entry for the old value
+				// in the cache, so...
+				c.syncCharts(typedValue.Charts)
+			}
+		}
+		return value, setValue, err
+	}
+}
+
+func (c *ChartCache) wrapOnDeleteFunc(fnDelete cache.KeyDeleterFunc) cache.KeyDeleterFunc {
+	return func(key string) (bool, error) {
+		del, err := fnDelete(key)
+		if err == nil && del {
+			c.deleteChartsForRepo(key)
+		}
+		return del, err
+	}
+}
+
+// this will enqueue work items into chart work queue and return.
 // the charts will be synced by a worker thread running in the background
 func (c *ChartCache) syncCharts(charts []models.Chart) {
 	log.Infof("+syncCharts()")
-	defer log.Infof("-syncCharts()")
+	totalToSync := 0
+	defer func() {
+		log.Infof("-syncCharts(): [%d] total charts to sync", totalToSync)
+	}()
 
 	// let's just cache the latest one for now. The chart versions array would
 	// have already been sorted and the latest chart version will be at array index 0
 	for _, chart := range charts {
-		c.queue.AddRateLimited(c.keyFor(chart))
+		// add chart to temp store. It will be removed when processed by background
+		// runWorker/syncHandler
+		if len(chart.ChartVersions) == 0 {
+			log.Warningf("Skipping chart [%s] due to empty version array", chart.ID)
+			continue
+		} else if len(chart.ChartVersions[0].URLs) == 0 {
+			log.Warningf("Chart: [%s], version: [%s] has no URLs", chart.ID, chart.ChartVersions[0].Version)
+			continue
+		}
+		entry := chartCacheStoreEntry{
+			namespace: chart.Repo.Namespace,
+			id:        chart.ID,
+			version:   chart.ChartVersions[0].Version,
+			url:       chart.ChartVersions[0].URLs[0],
+			delete:    false,
+		}
+		c.processing.Add(entry)
+		if key, err := chartCacheKeyFunc(entry); err != nil {
+			log.Errorf("Failed to get key for chart due to %+v", err)
+		} else {
+			c.queue.AddRateLimited(key)
+			totalToSync++
+		}
 	}
 }
 
@@ -150,7 +236,7 @@ func (c *ChartCache) processNextWorkItem() bool {
 			// Finally, if no error occurs we Forget this item so it does not
 			// get queued again until another change happens.
 			c.queue.Forget(obj)
-			log.Infof("Done syncing key [%s]", key)
+			log.V(4).Infof("Done syncing key [%s]", key)
 			return nil
 		}
 	}(obj)
@@ -161,33 +247,211 @@ func (c *ChartCache) processNextWorkItem() bool {
 	return true
 }
 
-// syncs the current state of the given resource in k8s with that in the cache
-func (c *ChartCache) syncHandler(key string) error {
-	log.Infof("+syncHandler(%s)", key)
-	defer log.Infof("-syncHandler(%s)", key)
+func (c *ChartCache) deleteChartsForRepo(key string) error {
+	log.Infof("+deleteChartsFor(%s)", key)
+	defer log.Infof("-deleteChartsFor(%s)", key)
 
-	/* pulling this work on hold for the time being to get this PR in
-	_, chartID, _, err := c.fromKey(key)
-	if err != nil {
-		return err
+	// need to get a list of all charts/versions for this repo that are either:
+	//   a. already in the cache OR
+	//   b. being processed
+
+	// TODO HACK this is a copied from NamespacedResourceCache.fromKey
+	parts := strings.Split(key, ":")
+	if len(parts) != 3 || parts[0] != fluxHelmRepositories || len(parts[1]) == 0 || len(parts[2]) == 0 {
+		return status.Errorf(codes.Internal, "invalid key [%s]", key)
+	}
+	repo := &types.NamespacedName{Namespace: parts[1], Name: parts[2]}
+	redisKeysToDelete := sets.String{}
+
+	// this loop should take care of (a)
+	// glob-style pattern, you can use https://www.digitalocean.com/community/tools/glob to test
+	// also ref. https://stackoverflow.com/questions/4006324/how-to-atomically-delete-keys-matching-a-pattern-using-redis
+	match := fmt.Sprintf("helmcharts:%s:%s/*:*", repo.Namespace, repo.Name)
+	// https://redis.io/commands/scan An iteration starts when the cursor is set to 0,
+	// and terminates when the cursor returned by the server is 0
+	cursor := uint64(0)
+	for {
+		var keys []string
+		var err error
+		keys, cursor, err = c.redisCli.Scan(c.redisCli.Context(), cursor, match, 0).Result()
+		if err != nil {
+			return err
+		}
+		for _, k := range keys {
+			redisKeysToDelete.Insert(k)
+		}
+		if cursor == 0 {
+			break
+		}
 	}
 
-	chartDetail, err := tar.FetchChartDetailFromTarball(chartID, tarUrl, "", "", httpclient.New())
-	if err != nil {
-		return err
+	// we still need to take care of (b)
+	for _, k := range c.processing.ListKeys() {
+		if namespace, chartID, _, err := c.fromKey(k); err != nil {
+			log.Errorf("%+v", err)
+		} else {
+			parts := strings.Split(chartID, "/")
+			if repo.Namespace == namespace && repo.Name == parts[0] {
+				redisKeysToDelete.Insert(k)
+			}
+		}
 	}
-	*/
 
+	for k := range redisKeysToDelete {
+		if namespace, chartID, chartVersion, err := c.fromKey(k); err != nil {
+			log.Errorf("%+v", err)
+		} else {
+			entry := chartCacheStoreEntry{
+				namespace: namespace,
+				id:        chartID,
+				version:   chartVersion,
+				delete:    true,
+			}
+			c.processing.Add(entry)
+			log.Infof("Marked key [%s] to be deleted", k)
+			c.queue.Add(k)
+		}
+	}
 	return nil
 }
 
-func (c *ChartCache) keyFor(chart models.Chart) string {
-	// redis convention on key format
-	// https://redis.io/topics/data-types-intro
-	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
-	// We will use "helmcharts:ns:chartID:chartVersion"
-	// notice that chartID is of the form "repoName/id", so it includes the repo name
-	return fmt.Sprintf("helmcharts:%s:%s:%s", chart.Repo.Namespace, chart.ID, chart.ChartVersions[0].Version)
+// this is what we store in the cache for each cached repo
+// all struct fields are capitalized so they're exported by gob encoding
+type chartCacheEntryValue struct {
+	ChartTarball []byte
+}
+
+// syncs the current state of the given resource in k8s with that in the cache
+func (c *ChartCache) syncHandler(key string) (err error) {
+	log.Infof("+syncHandler(%s)", key)
+	defer log.Infof("-syncHandler(%s)", key)
+
+	var entry interface{}
+	var exists bool
+	entry, exists, err = c.processing.GetByKey(key)
+	if err != nil {
+		return err
+	} else if !exists {
+		return fmt.Errorf("no object exists in cache store for key: [%s]", key)
+	}
+
+	// we need to keep track whether or not this func returns an error,
+	// because if it does, we still need the entry in store for when retry kicks in
+	defer func() {
+		if err != nil {
+			c.processing.Delete(entry)
+		}
+	}()
+
+	chart, ok := entry.(chartCacheStoreEntry)
+	if !ok {
+		err = fmt.Errorf("unexpected object in cache store: [%s]", reflect.TypeOf(entry))
+		return err
+	}
+
+	if chart.delete {
+		// TODO: (gfichtenholt) DEL has the capability to delete multiple keys in one
+		// atomic operation. It would be nice to come up with a way to utilize that here
+		var keysremoved int64
+		keysremoved, err = c.redisCli.Del(c.redisCli.Context(), key).Result()
+		log.Infof("Redis [DEL %s]: %d", key, keysremoved)
+	} else {
+		var byteArray []byte
+		byteArray, err = chartCacheComputeValue(chart.id, chart.url, chart.version)
+		if err == nil {
+			var result string
+			startTime := time.Now()
+			result, err = c.redisCli.Set(c.redisCli.Context(), key, byteArray, 0).Result()
+			if err != nil {
+				err = fmt.Errorf("failed to set value for object with key [%s] in cache due to: %v", key, err)
+			} else {
+				duration := time.Since(startTime)
+				usedMemory, totalMemory := common.RedisMemoryStats(c.redisCli)
+				log.Infof("Redis [SET %s]: %s in [%d] ms. Redis [INFO memory]: [%s/%s]",
+					key, result, duration.Milliseconds(), usedMemory, totalMemory)
+			}
+		}
+	}
+	return err
+}
+
+// this is effectively a cache GET operation
+func (c *ChartCache) fetchForOne(key string) ([]byte, error) {
+	log.Infof("+fetchForOne(%s)", key)
+	// read back from cache: should be either:
+	//  - what we previously wrote OR
+	//  - redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry
+	//
+	byteArray, err := c.redisCli.Get(c.redisCli.Context(), key).Bytes()
+	// debugging an intermittent issue
+	if err == redis.Nil {
+		log.V(4).Infof("Redis [GET %s]: Nil", key)
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("fetchForOne() failed to get value for key [%s] from cache due to: %v", key, err)
+	}
+	log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(byteArray))
+
+	dec := gob.NewDecoder(bytes.NewReader(byteArray))
+	var entryValue chartCacheEntryValue
+	if err := dec.Decode(&entryValue); err != nil {
+		return nil, err
+	}
+	return entryValue.ChartTarball, nil
+}
+
+// GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the
+// k8s for the corresponding object, process it and then add it to the cache and return the
+// result.
+// TODO (gfichtenholt) get rid of chartModel models.Chart argument. This is breaking an abstraction
+func (c *ChartCache) GetForOne(key string, chart *models.Chart) ([]byte, error) {
+	log.Infof("+GetForOne(%s)", key)
+	var value []byte
+	var err error
+	if value, err = c.fetchForOne(key); err != nil {
+		return nil, err
+	} else if value == nil {
+		// cache miss
+		namespace, chartID, version, err := c.fromKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if namespace != chart.Repo.Namespace || chartID != chart.ID {
+			return nil, fmt.Errorf("unexpected state for chart with key [%s]", key)
+		}
+		var entry *chartCacheStoreEntry
+		for _, v := range chart.ChartVersions {
+			if v.Version == version {
+				if len(v.URLs) == 0 {
+					log.Warningf("chart: [%s], version: [%s] has no URLs", chart.ID, v.Version)
+				} else {
+					entry = &chartCacheStoreEntry{
+						namespace: namespace,
+						id:        chartID,
+						version:   v.Version,
+						url:       v.URLs[0],
+					}
+				}
+				break
+			}
+		}
+		if entry != nil {
+			c.processing.Add(*entry)
+			c.queue.Add(key)
+			// now need to wait until this item has been processed by runWorker().
+			c.queue.WaitUntilDoneWith(key)
+			return c.fetchForOne(key)
+		}
+	}
+	return value, nil
+}
+
+func (c *ChartCache) keyFor(namespace, chartID, chartVersion string) (string, error) {
+	return chartCacheKeyFor(namespace, chartID, chartVersion)
+}
+
+func (c *ChartCache) String() string {
+	return fmt.Sprintf("ChartCache[queue size: [%d]", c.queue.Len())
 }
 
 // the opposite of keyFor
@@ -198,4 +462,86 @@ func (c *ChartCache) fromKey(key string) (namespace, chartID, chartVersion strin
 		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
 	return parts[1], parts[2], parts[3], nil
+}
+
+// this func is used by unit tests only
+func (c *ChartCache) ExpectAdd(key string) {
+	c.queue.ExpectAdd(key)
+}
+
+// this func is used by unit tests only
+func (c *ChartCache) WaitUntilDoneWith(key string) {
+	c.queue.WaitUntilDoneWith(key)
+}
+
+func chartCacheKeyFunc(obj interface{}) (string, error) {
+	if entry, ok := obj.(chartCacheStoreEntry); !ok {
+		return "", fmt.Errorf("unexpected object in chartCacheKeyFunc: [%s]", reflect.TypeOf(obj))
+	} else {
+		return chartCacheKeyFor(entry.namespace, entry.id, entry.version)
+	}
+}
+
+func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
+	if namespace == "" || chartID == "" || chartVersion == "" {
+		return "", fmt.Errorf("invalid chart in chartCacheKeyFor: [%s,%s,%s]", namespace, chartID, chartVersion)
+	}
+	// redis convention on key format
+	// https://redis.io/topics/data-types-intro
+	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// We will use "helmcharts:ns:chartID:chartVersion"
+	// notice that chartID is of the form "repoName/id", so it includes the repo name
+	return fmt.Sprintf("helmcharts:%s:%s:%s", namespace, chartID, chartVersion), nil
+}
+
+func chartCacheComputeValue(chartID, url, version string) ([]byte, error) {
+	// TODO (gfichtenholt) if there is a secret associated with owner HelmRepository
+	// we need to use it below
+
+	// In theory, the work queue should be able to retry transient errors
+	// so I shouldn't have to do retries here. However there are cases I am using this func
+	// outside the context of syncHandler() in unit tests, so I don't really want
+	// it to fail if I can help it
+	const maxRetries = 5
+	var chartTgz []byte
+	ok := false
+	for i := 0; i < maxRetries && !ok; i++ {
+		reader, _, err := httpclient.GetStream(url, httpclient.New(), make(map[string]string))
+		if reader != nil {
+			defer reader.Close()
+		}
+		if err == nil {
+			if chartTgz, err = ioutil.ReadAll(reader); err != nil {
+				log.Warningf("%+v", err)
+			} else {
+				ok = true
+				break
+			}
+		} else {
+			log.Warningf("%+v", err)
+		}
+		waitTime := math.Pow(2, float64(i))
+		log.Infof("Waiting [%d] seconds before retry...", waitTime)
+		time.Sleep(time.Duration(waitTime) * time.Second)
+	}
+
+	if !ok {
+		return nil, fmt.Errorf("failed to retrieve chart [%s] from [%s]", chartID, url)
+	}
+
+	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: %d bytes",
+		chartID, version, url, len(chartTgz))
+
+	cacheEntryValue := chartCacheEntryValue{
+		ChartTarball: chartTgz,
+	}
+
+	// use gob encoding instead of json, it peforms much better
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(cacheEntryValue); err != nil {
+		return nil, err
+	} else {
+		return buf.Bytes(), nil
+	}
 }

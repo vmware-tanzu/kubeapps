@@ -40,28 +40,6 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-// see https://blog.golang.org/context
-// this is used exclusively for unit tests to signal conditions between production
-// and unit test code. The key type is unexported to prevent collisions with context
-// keys defined in other packages.
-type contextKey int
-
-// waitGroupKey is the context key for the waitGroup.  Its value of zero is
-// arbitrary.  If this package defined other context keys, they would have
-// different integer values.
-const waitGroupKey contextKey = 0
-
-func FromContext(ctx context.Context) (*sync.WaitGroup, bool) {
-	// ctx.Value returns nil if ctx has no value for the key;
-	// the sync.WaitGroup type assertion returns ok=false for nil.
-	wg, ok := ctx.Value(waitGroupKey).(*sync.WaitGroup)
-	return wg, ok
-}
-
-func NewContext(ctx context.Context, wg *sync.WaitGroup) context.Context {
-	return context.WithValue(ctx, waitGroupKey, wg)
-}
-
 //
 // miscellaneous utility funcs
 //
@@ -222,6 +200,18 @@ func clientGetterHelper(config *rest.Config) (dynamic.Interface, apiext.Interfac
 	return dynamicClient, apiExtensions, nil
 }
 
+// ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
+// I understand this is not really kosher in general for production usage,
+// but in one specific case (cache populateWith() func) it's okay as a sanity check
+// if it turns out not, I can always remove this check, it's not critical
+const mutexLocked = 1
+
+func RWMutexWriteLocked(rw *sync.RWMutex) bool {
+	// RWMutex has a "w" sync.Mutex field for write lock
+	state := reflect.ValueOf(rw).Elem().FieldByName("w").FieldByName("state")
+	return state.Int()&mutexLocked == mutexLocked
+}
+
 // https://github.com/kubeapps/kubeapps/pull/3044#discussion_r662733334
 // small preference for reading all config in the main.go
 // (whether from env vars or cmd-line options) only in the one spot and passing
@@ -267,14 +257,22 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 	return redisCli, nil
 }
 
-// ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
-// I understand this is not really kosher in general for production usage,
-// but in one specific case (cache populateWith() func) it's okay as a sanity check
-// if it turns out not, I can always remove this check, it's not critical
-const mutexLocked = 1
-
-func RWMutexWriteLocked(rw *sync.RWMutex) bool {
-	// RWMutex has a "w" sync.Mutex field for write lock
-	state := reflect.ValueOf(rw).Elem().FieldByName("w").FieldByName("state")
-	return state.Int()&mutexLocked == mutexLocked
+func RedisMemoryStats(redisCli *redis.Client) (used, total string) {
+	used, total = "?", "?"
+	// ref: https://redis.io/commands/info
+	if meminfo, err := redisCli.Info(redisCli.Context(), "memory").Result(); err == nil {
+		for _, l := range strings.Split(meminfo, "\r\n") {
+			if used == "?" && strings.HasPrefix(l, "used_memory_rss_human:") {
+				used = strings.Split(l, ":")[1]
+			} else if total == "?" && strings.HasPrefix(l, "maxmemory_human:") {
+				total = strings.Split(l, ":")[1]
+			}
+			if used != "?" && total != "?" {
+				break
+			}
+		}
+	} else {
+		log.Warningf("Failed to get redis memory stats due to: %v", err)
+	}
+	return used, total
 }

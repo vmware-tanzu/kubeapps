@@ -164,7 +164,7 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		if value == nil {
 			chartsTyped[key] = nil
 		} else {
-			typedValue, ok := value.(repoCacheEntry)
+			typedValue, ok := value.(repoCacheEntryValue)
 			if !ok {
 				return nil, status.Errorf(
 					codes.Internal,
@@ -321,14 +321,16 @@ func isHelmRepositoryReady(unstructuredObj map[string]interface{}) (complete boo
 
 // this is what we store in the cache for each cached repo
 // all struct fields are capitalized so they're exported by gob encoding
-type repoCacheEntry struct {
+type repoCacheEntryValue struct {
 	Checksum string
 	Charts   []models.Chart
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
 func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	log.Info("+onAddRepo()")
+	log.V(4).Info("+onAddRepo()")
+	defer log.V(4).Info("-onAddRepo()")
+
 	// first, check the repo is ready
 	if isRepoReady(unstructuredRepo) {
 		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
@@ -368,7 +370,7 @@ func onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue 
 			return nil, false, err
 		}
 
-		cacheEntry, ok := cacheEntryUntyped.(repoCacheEntry)
+		cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
 		if !ok {
 			return nil, false, status.Errorf(
 				codes.Internal,
@@ -397,11 +399,11 @@ func onGetRepo(key string, value interface{}) (interface{}, error) {
 	}
 
 	dec := gob.NewDecoder(bytes.NewReader(b))
-	var entry repoCacheEntry
-	if err := dec.Decode(&entry); err != nil {
+	var entryValue repoCacheEntryValue
+	if err := dec.Decode(&entryValue); err != nil {
 		return nil, err
 	}
-	return entry, nil
+	return entryValue, nil
 }
 
 func onDeleteRepo(key string) (bool, error) {
@@ -414,7 +416,7 @@ func indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([
 		return nil, false, err
 	}
 
-	cacheEntry := repoCacheEntry{
+	cacheEntryValue := repoCacheEntryValue{
 		Checksum: checksum,
 		Charts:   charts,
 	}
@@ -422,7 +424,7 @@ func indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([
 	// use gob encoding instead of json, it peforms much better
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
-	if err = enc.Encode(cacheEntry); err != nil {
+	if err = enc.Encode(cacheEntryValue); err != nil {
 		return nil, false, err
 	}
 

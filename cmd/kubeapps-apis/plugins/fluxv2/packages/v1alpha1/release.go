@@ -24,6 +24,8 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -130,7 +132,9 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructure
 		return nil, err
 	}
 
+	var latestPkgVersion *corev1.PackageAppVersion
 	var pkgVersion *corev1.VersionReference
+
 	version, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "version")
 	if found && err == nil && version != "" {
 		pkgVersion = &corev1.VersionReference{
@@ -138,45 +142,61 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructure
 		}
 	}
 
+	var pkgDetail *corev1.AvailablePackageDetail
+
 	// see https://fluxcd.io/docs/components/helm/helmreleases/
+	helmChartRef, found, err := unstructured.NestedString(unstructuredRelease, "status", "helmChart")
+	if err != nil || !found || helmChartRef == "" {
+		log.Warningf("Missing element status.helmChart on HelmRelease [%s]", name)
+	}
+
 	repoName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
 	repoNamespace, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	chartName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
-	chartVersion, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "version")
 
-	var latestPkgVersion *corev1.PackageAppVersion
-	var pkgDetail *corev1.AvailablePackageDetail
-	// according to docs chartVersion is optional (defaults to '*' i.e. latest when omitted)
-	if repoName != "" && chartName != "" && chartVersion != "" {
-		// chartName here refers to a chart template, e.g. "nginx", rather than a specific chart instance
-		// e.g. "default-my-nginx". The spec somewhat vaguely states "The name of the chart as made available
-		// by the HelmRepository (without any aliases), for example: podinfo". So, we can't exactly do a "get"
-		// on the name, but have to iterate the complete list of available charts for a match
-		tarUrl, err := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
-		if err != nil {
-			return nil, err
-		} else if tarUrl == "" {
-			return nil, status.Errorf(codes.Internal, "Failed to find find tar file url for chart [%s], version: [%s]", chartName, chartVersion)
-		}
-		chartID := fmt.Sprintf("%s/%s", repoName, chartName)
-		if pkgDetail, err = availablePackageDetailFromTarball(chartID, tarUrl); err != nil {
-			return nil, err
-		}
-
-		// according to flux docs repoNamespace is optional
-		if repoNamespace == "" {
-			repoNamespace = name.Namespace
-		}
-		repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
-		chartFromCache, err := s.getChart(ctx, repo, chartName)
-		if err != nil {
-			return nil, err
-		} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
-			// charts in cache are already sorted with the latest being at position 0
-			latestPkgVersion = &corev1.PackageAppVersion{
-				PkgVersion: chartFromCache.ChartVersions[0].Version,
-				AppVersion: chartFromCache.ChartVersions[0].AppVersion,
+	if repoName != "" && helmChartRef != "" && chartName != "" {
+		parts := strings.Split(helmChartRef, "/")
+		if ifc, err := s.getChartsResourceInterface(ctx, parts[0]); err != nil {
+			log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
+		} else if unstructuredChart, err := ifc.Get(ctx, parts[1], metav1.GetOptions{}); err != nil {
+			log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
+		} else {
+			tarUrl, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
+			if err != nil || !found || tarUrl == "" {
+				log.Warningf("Missing element status.url on HelmRelease [%s]", name)
+			} else {
+				chartID := fmt.Sprintf("%s/%s", repoName, chartName)
+				// fetch, unzip and untar .tgz file
+				// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
+				// local cluster, not remote repo.
+				// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
+				// Flux does the hard work of pulling the bits from remote repo
+				// based on secretRef associated with HelmRepository, if applicable
+				chartDetail, err := tarutil.FetchChartDetailFromTarballUrl(chartID, tarUrl, "", "", httpclient.New())
+				if err != nil {
+					return nil, err
+				}
+				pkgDetail, err = availablePackageDetailFromChartDetail(chartID, chartDetail)
+				if err != nil {
+					return nil, err
+				}
 			}
+		}
+	}
+
+	// according to flux docs repoNamespace is optional
+	if repoNamespace == "" {
+		repoNamespace = name.Namespace
+	}
+	repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
+	chartFromCache, err := s.getChart(ctx, repo, chartName)
+	if err != nil {
+		return nil, err
+	} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
+		// charts in cache are already sorted with the latest being at position 0
+		latestPkgVersion = &corev1.PackageAppVersion{
+			PkgVersion: chartFromCache.ChartVersions[0].Version,
+			AppVersion: chartFromCache.ChartVersions[0].AppVersion,
 		}
 	}
 
@@ -333,13 +353,6 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 }
 
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
-	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
-	// the helm release CR to also be created in the target namespace (where the helm release itself is currently created)
-	resourceIfc, err := s.getReleasesResourceInterface(ctx, targetName.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
 	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
@@ -362,6 +375,13 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}
 
 	fluxHelmRelease, err := newFluxHelmRelease(chart, targetName, versionRef, reconcile, values)
+	if err != nil {
+		return nil, err
+	}
+
+	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
+	// the helm release CR to also be created in the target namespace (where the helm release itself is currently created)
+	resourceIfc, err := s.getReleasesResourceInterface(ctx, targetName.Namespace)
 	if err != nil {
 		return nil, err
 	}

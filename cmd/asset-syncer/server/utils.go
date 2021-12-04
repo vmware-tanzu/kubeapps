@@ -260,7 +260,7 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion, userAgent str
 		authorizationHeader = r.AuthorizationHeader
 	}
 
-	return tarutil.FetchChartDetailFromTarball(
+	return tarutil.FetchChartDetailFromTarballUrl(
 		name,
 		chartTarballURL,
 		userAgent,

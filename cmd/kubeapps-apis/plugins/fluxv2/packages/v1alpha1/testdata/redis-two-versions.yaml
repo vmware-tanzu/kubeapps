@@ -1,0 +1,73 @@
+apiVersion: v1
+entries:
+  redis:
+    - annotations:
+        category: Database
+      apiVersion: v2
+      appVersion: 6.2.4
+      created: "2021-06-08T06:02:03.591660359Z"
+      dependencies:
+        - name: common
+          repository: https://charts.bitnami.com/bitnami
+          tags:
+            - bitnami-common
+          version: 1.x.x
+      description:
+        Open source, advanced key-value store. It is often referred to as
+        a data structure server since keys can contain strings, hashes, lists, sets
+        and sorted sets.
+      digest: 43374837646a67539eb2999cd8973dc54e8fcdc14896761e594b9d616734edf2
+      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
+      keywords:
+        - redis
+        - keyvalue
+        - database
+      maintainers:
+        - email: containers@bitnami.com
+          name: Bitnami
+        - email: cedric@desaintmartin.fr
+          name: desaintmartin
+      name: redis
+      sources:
+        - https://github.com/bitnami/bitnami-docker-redis
+        - http://redis.io/
+      urls:
+        #- https://charts.bitnami.com/bitnami/redis-14.4.0.tgz
+        - "{{testdata/redis-14.4.0.tgz}}"
+      version: 14.4.0
+    - annotations:
+        category: Database
+      apiVersion: v2
+      appVersion: 6.2.4
+      created: "2021-06-07T10:24:03.087330128Z"
+      dependencies:
+        - name: common
+          repository: https://charts.bitnami.com/bitnami
+          tags:
+            - bitnami-common
+          version: 1.x.x
+      description:
+        Open source, advanced key-value store. It is often referred to as
+        a data structure server since keys can contain strings, hashes, lists, sets
+        and sorted sets.
+      digest: 4fa6f92f3fb7c9b1a4207d5f7293712708bed95ca3a44b84dff74decb6ce3c90
+      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
+      keywords:
+        - redis
+        - keyvalue
+        - database
+      maintainers:
+        - email: containers@bitnami.com
+          name: Bitnami
+        - email: cedric@desaintmartin.fr
+          name: desaintmartin
+      name: redis
+      sources:
+        - https://github.com/bitnami/bitnami-docker-redis
+        - http://redis.io/
+      urls:
+        #- https://charts.bitnami.com/bitnami/redis-14.3.4.tgz
+        - "{{testdata/redis-14.3.4.tgz}}"
+      version: 14.3.4

@@ -30,6 +30,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	kubecorev1 "k8s.io/api/core/v1"
@@ -64,7 +66,7 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 	}
 
 	if !runTests {
-		t.Skipf("skipping flux plugin integration tests as %q not set to be true", envVarFluxIntegrationTests)
+		t.Skipf("skipping flux plugin integration tests because environment variable %q not set to be true", envVarFluxIntegrationTests)
 	} else {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
 			t.Fatalf("Failed to find local kind cluster due to: [%v]", err)
@@ -596,11 +598,110 @@ func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMe
 	} else {
 		currentMaxMemoryPolicy := fmt.Sprintf("%v", maxmemoryPolicy[1])
 		t.Logf("Current maxmemory policy = [%s]", currentMaxMemoryPolicy)
-		if currentMaxMemoryPolicy != "allkeys-lru" {
-			t.Fatalf("This test requires redis config maxmemory-policy to be set to allkeys-lru")
+		if currentMaxMemoryPolicy != "allkeys-lfu" {
+			t.Fatalf("This test requires redis config maxmemory-policy to be set to allkeys-lfu")
 		}
 	}
 	return nil
+}
+
+func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
+	if err := kubePortForwardToRedis(t); err != nil {
+		return nil, fmt.Errorf("kubePortForwardToRedis failed due to %+v", err)
+	}
+	redisPwd, err := kubeGetSecret(t, "kubeapps", "kubeapps-redis", "redis-password")
+	if err != nil {
+		return nil, fmt.Errorf("%v", err)
+	}
+	redisCli := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: redisPwd,
+		DB:       0,
+	})
+	t.Cleanup(func() {
+		// we want to make sure at the end of the test the cache is empty just as it was when
+		// we started
+		const maxWait = 60
+		for i := 0; ; i++ {
+			if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+				t.Errorf("redisCli.Keys() failed due to: %+v", err)
+			} else {
+				if len(keys) == 0 {
+					break
+				}
+				if i < maxWait {
+					t.Logf("Waiting 2s until cache is empty. Current number of keys: [%d]", len(keys))
+					time.Sleep(2 * time.Second)
+				} else {
+					t.Errorf("Failed because there are still [%d] keys left in the cache", len(keys))
+					break
+				}
+			}
+		}
+		redisCli.Close()
+	})
+	t.Logf("redisCli: %s", redisCli)
+
+	// sanity check, we expect the cache to be empty at this point
+	// if it's not, it's likely that some cleanup didn't happen due to earlier an aborted test
+	// and you should be able to clean up manually
+	// $ kubectl delete helmrepositories --all
+	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+		return nil, fmt.Errorf("%v", err)
+	} else {
+		if len(keys) != 0 {
+			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
+		}
+	}
+	return redisCli, nil
+}
+
+func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *common.HashSet) {
+	// this for loop running in the background will signal to the main goroutine
+	// when it is okay to proceed to load the next repo
+	t.Logf("Listening for events from redis in the background...")
+	reposAdded := common.HashSet{}
+	var chartsLeftToSync = 0
+	for {
+		event, ok := <-ch
+		if !ok {
+			t.Logf("Redis publish channel was closed")
+			break
+		}
+		t.Logf("Redis event: [%v]: [%v]", event.Channel, event.Payload)
+		if event.Channel == "__keyevent@0__:set" {
+			if strings.HasPrefix(event.Payload, "helmrepositories:default:bitnami-") {
+				reposAdded.Insert(event.Payload)
+				// TODO (gifchtenholt) HACK: so here I am cheating, I happen to know there
+				// are exactly this many packages currently in bitnami repo today.
+				// I am keeping track of charts being synced in the cache so that I only
+				// start to load repository N+1 after completely done with N, meaning waiting until
+				// the model for the repo and all its (latest) charts are in the cache. Thinking
+				// about it now, I am not sure it's actually critical for this test to enforce
+				// that a repo AND its charts are completely synced before proceeding. To be
+				// continued...
+				chartsLeftToSync += 97
+			} else if strings.HasPrefix(event.Payload, "helmcharts:default:bitnami-") {
+				chartID := strings.Split(event.Payload, ":")[2]
+				repoKey := "helmrepositories:default:" + strings.Split(chartID, "/")[0]
+				if reposAdded.Has(repoKey) {
+					chartsLeftToSync--
+				}
+				t.Logf("Charts left to sync: [%d]", chartsLeftToSync)
+			}
+			if !reposAdded.IsEmpty() && chartsLeftToSync == 0 && sem != nil {
+				// signal to the main goroutine it's okay to proceed to load the next copy
+				sem.Release(1)
+			}
+		} else if event.Channel == "__keyevent@0__:evicted" &&
+			strings.HasPrefix(event.Payload, "helmrepositories:default:bitnami-") {
+			evictedRepos.Insert(event.Payload)
+			if !reposAdded.IsEmpty() && sem != nil {
+				// signal to the main goroutine it's okay to proceed to load the next copy
+				sem.Release(1)
+			}
+		}
+	}
 }
 
 // global vars

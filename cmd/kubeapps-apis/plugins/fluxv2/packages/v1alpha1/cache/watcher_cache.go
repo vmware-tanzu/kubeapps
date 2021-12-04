@@ -80,10 +80,10 @@ type NamespacedResourceWatcherCache struct {
 	expectResync bool
 }
 
-type ValueGetterFunc func(string, interface{}) (interface{}, error)
-type ValueAdderFunc func(string, map[string]interface{}) (interface{}, bool, error)
-type ValueModifierFunc func(string, map[string]interface{}, interface{}) (interface{}, bool, error)
-type KeyDeleterFunc func(string) (bool, error)
+type ValueGetterFunc func(key string, val interface{}) (interface{}, error)
+type ValueAdderFunc func(key string, obj map[string]interface{}) (interface{}, bool, error)
+type ValueModifierFunc func(key string, obj map[string]interface{}, oldVal interface{}) (interface{}, bool, error)
+type KeyDeleterFunc func(key string) (bool, error)
 
 type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
@@ -155,6 +155,9 @@ func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConf
 	// and the workqueue will make sure that only a single worker works on an item with a given key.
 	// Test that actually is the case
 	go wait.Until(c.runWorker, time.Second, stopCh)
+
+	// TODO (gfichtenholt) possibly put the following in a wait.Until(...) construct,
+	// so it keeps on retrying until stopCh is closed...
 
 	// RetryWatcher will take care of re-starting the watcher if the underlying channel
 	// happens to close for some reason, as well as recover from other failures
@@ -251,7 +254,7 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 			// Finally, if no error occurs we Forget this item so it does not
 			// get queued again until another change happens.
 			c.queue.Forget(obj)
-			log.Infof("Done syncing key [%s]", key)
+			log.V(4).Infof("Done syncing key [%s]", key)
 			return nil
 		}
 	}(obj)
@@ -273,17 +276,26 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 		<-watcher.Done()
 		// per https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes
 		log.Infof("Current watcher stopped. Will resync/create a new RetryWatcher...")
-		resourceVersion, err := c.resync()
-		if err != nil {
-			runtime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
-			// TODO (gfichtenholt) retry some fixed number of times with exponential backoff?
-			return
+		ok := false
+		// max_backoff is 2^8 = 256 seconds
+		for i := 0; i < 8 && !ok; i++ {
+			if resourceVersion, err := c.resync(); err != nil {
+				runtime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
+			} else if watcher, err = watchutil.NewRetryWatcher(resourceVersion, c); err != nil {
+				runtime.HandleError(fmt.Errorf("failed to create a new RetryWatcher due to: %v", err))
+			} else {
+				ok = true
+				break
+			}
+			waitTime := math.Pow(2, float64(i))
+			log.Infof("Waiting [%d] seconds before retry...", waitTime)
+			time.Sleep(time.Duration(waitTime) * time.Second)
 		}
-		watcher, err = watchutil.NewRetryWatcher(resourceVersion, c)
-		if err != nil {
-			runtime.HandleError(fmt.Errorf("failed to create a new RetryWatcher due to: %v", err))
-			// TODO (gfichtenholt) retry some fixed number of times with exponential backoff?
-			return
+		if !ok {
+			// this is a catastrophic error for the watcher. We've tried to create a new watcher a number
+			// of times and failed.
+			runtime.HandleError(fmt.Errorf("watch loop has been stopped after all retries were exhausted"))
+			// possibly restarting plugin/kubeapps-apis server is needed...
 		}
 	}
 }
@@ -476,13 +488,16 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 		// Zero expiration means the key has no expiration time.
 		// However, cache entries may be evicted by redis in order to make room for new ones,
 		// if redis is limited by maxmemory constraint
+		startTime := time.Now()
 		result, err := c.redisCli.Set(c.redisCli.Context(), key, newValue, 0).Result()
 		if err != nil {
 			return fmt.Errorf("failed to set value for object with key [%s] in cache due to: %v", key, err)
 		} else {
+			duration := time.Since(startTime)
 			// debugging an intermittent issue
-			usedMemory, totalMemory := c.memoryStats()
-			log.Infof("Redis [SET %s]: %s. Redis [INFO memory]: [%s/%s]", key, result, usedMemory, totalMemory)
+			usedMemory, totalMemory := common.RedisMemoryStats(c.redisCli)
+			log.Infof("Redis [SET %s]: %s in [%d] ms. Redis [INFO memory]: [%s/%s]",
+				key, result, duration.Milliseconds(), usedMemory, totalMemory)
 		}
 	}
 	return nil
@@ -518,7 +533,7 @@ func (c *NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, e
 	//  - what we previously wrote OR
 	//  - redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry
 	//
-	bytes, err := c.redisCli.Get(c.redisCli.Context(), key).Bytes()
+	byteArray, err := c.redisCli.Get(c.redisCli.Context(), key).Bytes()
 	// debugging an intermittent issue
 	if err == redis.Nil {
 		log.V(4).Infof("Redis [GET %s]: Nil", key)
@@ -526,7 +541,7 @@ func (c *NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, e
 	} else if err != nil {
 		return nil, fmt.Errorf("fetchForOne() failed to get value for key [%s] from cache due to: %v", key, err)
 	}
-	log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(bytes))
+	log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(byteArray))
 
 	// TODO (gfichtenholt) See if there might be a cleaner way than to have onGet() take []byte as
 	// a 2nd argument. In theory, I would have liked to pass in an interface{}, just like onAdd/onModify.
@@ -534,7 +549,7 @@ func (c *NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, e
 	// generic Get() method that would work with interface{}. Instead, all results are returned as
 	// strings which can be converted to desired types as needed, e.g.
 	// redisCli.Get(ctx, key).Bytes() first gets the string and then converts it to bytes.
-	val, err := c.config.OnGetFunc(key, bytes)
+	val, err := c.config.OnGetFunc(key, byteArray)
 	if err != nil {
 		log.Errorf("Invocation of 'onGet' for object with key [%s]\nfailed due to: %v", key, err)
 		return nil, err
@@ -844,26 +859,6 @@ func (c *NamespacedResourceWatcherCache) GetForOne(key string) (interface{}, err
 		return c.fetchForOne(key)
 	}
 	return value, nil
-}
-
-func (c *NamespacedResourceWatcherCache) memoryStats() (used, total string) {
-	used, total = "?", "?"
-	// ref: https://redis.io/commands/info
-	if meminfo, err := c.redisCli.Info(c.redisCli.Context(), "memory").Result(); err == nil {
-		for _, l := range strings.Split(meminfo, "\r\n") {
-			if used == "?" && strings.HasPrefix(l, "used_memory_rss_human:") {
-				used = strings.Split(l, ":")[1]
-			} else if total == "?" && strings.HasPrefix(l, "maxmemory_human:") {
-				total = strings.Split(l, ":")[1]
-			}
-			if used != "?" && total != "?" {
-				break
-			}
-		}
-	} else {
-		log.Warningf("Failed to get redis memory stats due to: %v", err)
-	}
-	return used, total
 }
 
 // this func is used by unit tests only

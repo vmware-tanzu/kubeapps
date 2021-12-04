@@ -248,7 +248,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingObjs)
-			s, mock, _, err := newServerWithChartsAndReleases(nil, runtimeObjs...)
+			s, mock, _, err := newServerWithChartsAndReleases(t, nil, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -268,13 +268,13 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					}
 				}
 
-				ts2, repo, err := newRepoWithIndex(existing.repoIndex, existing.repoName, existing.repoNamespace)
+				ts2, repo, err := newRepoWithIndex(existing.repoIndex, existing.repoName, existing.repoNamespace, nil)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
 				defer ts2.Close()
 
-				redisKey, bytes, err := redisKeyValueForRuntimeObject(repo)
+				redisKey, bytes, err := redisKeyValueForRepo(repo)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -406,7 +406,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
 			defer cleanup()
 			actionConfig := newHelmActionConfig(t, tc.targetNamespace, tc.existingHelmStubs)
-			s, mock, _, err := newServerWithChartsAndReleases(actionConfig, runtimeObjs...)
+			s, mock, _, err := newServerWithChartsAndReleases(t, actionConfig, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -538,19 +538,20 @@ func TestCreateInstalledPackage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			runtimeObjs := []runtime.Object{}
 
-			ts, repo, err := newRepoWithIndex(tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace)
+			ts, repo, err := newRepoWithIndex(
+				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 			defer ts.Close()
 
 			runtimeObjs = append(runtimeObjs, repo)
-			s, mock, _, _, err := newServerWithRepos(runtimeObjs...)
+			s, mock, _, _, err := newServerWithRepos(t, runtimeObjs, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			redisKey, bytes, err := redisKeyValueForRuntimeObject(repo)
+			redisKey, bytes, err := redisKeyValueForRepo(repo)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -643,7 +644,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
 			defer cleanup()
-			s, mock, _, err := newServerWithChartsAndReleases(nil, runtimeObjs...)
+			s, mock, _, err := newServerWithChartsAndReleases(t, nil, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -733,7 +734,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
 			defer cleanup()
-			s, mock, _, err := newServerWithChartsAndReleases(nil, runtimeObjs...)
+			s, mock, _, err := newServerWithChartsAndReleases(t, nil, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1231,7 +1232,7 @@ items:
 			runtimeObjs, cleanup := newRuntimeObjects(t, []testSpecGetInstalledPackages{redis_existing_spec_completed})
 			defer cleanup()
 			actionConfig := newHelmActionConfig(t, tc.request.InstalledPackageRef.GetContext().GetNamespace(), tc.existingHelmStubs)
-			server, mock, _, err := newServerWithChartsAndReleases(actionConfig, runtimeObjs...)
+			server, mock, _, err := newServerWithChartsAndReleases(t, actionConfig, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1389,7 +1390,7 @@ func newRelease(name string, namespace string, spec map[string]interface{}, stat
 	}
 }
 
-func newServerWithChartsAndReleases(actionConfig *action.Configuration, chartOrRelease ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, chartOrRelease ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -1423,7 +1424,7 @@ func newServerWithChartsAndReleases(actionConfig *action.Configuration, chartOrR
 		fluxHelmCharts,
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	s, mock, err := newServer(clientGetter, actionConfig)
+	s, mock, err := newServer(t, clientGetter, actionConfig, nil, nil)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -1683,6 +1684,7 @@ var (
 					"message":            "Helm install succeeded",
 				},
 			},
+			"helmChart":             "default/redis",
 			"lastAppliedRevision":   "14.4.0",
 			"lastAttemptedRevision": "14.4.0",
 		},
@@ -1767,6 +1769,7 @@ var (
 					"reason":             "InstallFailed",
 				},
 			},
+			"helmChart":             "default/redis",
 			"failures":              "14",
 			"installFailures":       "1",
 			"lastAttemptedRevision": "14.4.0",
@@ -1809,6 +1812,7 @@ var (
 					"message":            "Helm install succeeded",
 				},
 			},
+			"helmChart":             "default/airflow",
 			"lastAppliedRevision":   "6.7.1",
 			"lastAttemptedRevision": "6.7.1",
 		},
@@ -1841,6 +1845,7 @@ var (
 					"message":            "Helm install succeeded",
 				},
 			},
+			"helmChart":             "default/airflow",
 			"lastAppliedRevision":   "6.7.1",
 			"lastAttemptedRevision": "6.7.1",
 		},
@@ -1866,6 +1871,7 @@ var (
 					"message":            "reconciliation in progress",
 				},
 			},
+			"helmChart":             "default/redis",
 			"lastAttemptedRevision": "14.4.0",
 		},
 		targetNamespace: "test",
@@ -1892,6 +1898,7 @@ var (
 				},
 			},
 			"failures":              "2",
+			"helmChart":             "default/redis",
 			"lastAttemptedRevision": "14.4.0",
 		},
 	}
@@ -1931,6 +1938,7 @@ var (
 					"message":            "Helm install succeeded",
 				},
 			},
+			"helmChart":             "default/redis",
 			"lastAppliedRevision":   "14.4.0",
 			"lastAttemptedRevision": "14.4.0",
 		},

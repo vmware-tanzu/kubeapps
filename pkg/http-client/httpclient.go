@@ -161,7 +161,7 @@ func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
 
 // performs an HTTP GET request using provided client, URL and request headers.
 // returns response body, as bytes on successful status, or error body,
-// if applicable on error status
+// if applicable on error status	
 // returns response as a stream, as well as response content type
 // NOTE: it is the caller's responsibility to close the reader stream when no longer needed
 func GetStream(url string, cli Client, reqHeaders map[string]string) (io.ReadCloser, string, error) {
