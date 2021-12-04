@@ -198,6 +198,27 @@ func satisfy(chartInput map[string]interface{}, code *gojq.Code, vars []interfac
 	return satisfied, nil
 }
 
+// Make sure charts are treated without escaped data
+func unescapeChartsData(charts []models.Chart) []models.Chart {
+	result := []models.Chart{}
+	for _, chart := range charts {
+		chart.Name = unescapeOrDefaultValue(chart.Name)
+		chart.ID = unescapeOrDefaultValue(chart.ID)
+		result = append(result, chart)
+	}
+	return result
+}
+
+// Unescape string or return value itself if error
+func unescapeOrDefaultValue(value string) string {
+	unescapedValue, err := url.PathUnescape(value)
+	if err != nil {
+		return value
+	} else {
+		return unescapedValue
+	}
+}
+
 func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleSpec) ([]models.Chart, error) {
 	if filterRule == nil || filterRule.JQ == "" {
 		// No filter
@@ -248,7 +269,7 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 		return []models.Chart{}, fmt.Errorf("no charts in repository index")
 	}
 
-	return filterCharts(charts, r.filter)
+	return filterCharts(unescapeChartsData(charts), r.filter)
 }
 
 // FetchFiles retrieves the important files of a chart and version from the repo

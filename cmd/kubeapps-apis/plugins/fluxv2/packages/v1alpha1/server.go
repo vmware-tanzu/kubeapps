@@ -524,7 +524,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
 	}
 
-	refs, err := resourceRefsFromManifest(release.Manifest)
+	refs, err := resourceRefsFromManifest(release.Manifest, namespace)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,6 @@
 import Tabs from "components/Tabs";
 import { shallow } from "enzyme";
-import ResourceRef from "shared/ResourceRef";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import ResourceTabs from "./ResourceTabs";
 
 const sampleResourceRef = {

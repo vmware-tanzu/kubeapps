@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ResourcesServiceClient interface {
 	GetResources(ctx context.Context, in *GetResourcesRequest, opts ...grpc.CallOption) (ResourcesService_GetResourcesClient, error)
+	GetServiceAccountNames(ctx context.Context, in *GetServiceAccountNamesRequest, opts ...grpc.CallOption) (*GetServiceAccountNamesResponse, error)
 }
 
 type resourcesServiceClient struct {
@@ -61,11 +62,21 @@ func (x *resourcesServiceGetResourcesClient) Recv() (*GetResourcesResponse, erro
 	return m, nil
 }
 
+func (c *resourcesServiceClient) GetServiceAccountNames(ctx context.Context, in *GetServiceAccountNamesRequest, opts ...grpc.CallOption) (*GetServiceAccountNamesResponse, error) {
+	out := new(GetServiceAccountNamesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/GetServiceAccountNames", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourcesServiceServer is the server API for ResourcesService service.
 // All implementations should embed UnimplementedResourcesServiceServer
 // for forward compatibility
 type ResourcesServiceServer interface {
 	GetResources(*GetResourcesRequest, ResourcesService_GetResourcesServer) error
+	GetServiceAccountNames(context.Context, *GetServiceAccountNamesRequest) (*GetServiceAccountNamesResponse, error)
 }
 
 // UnimplementedResourcesServiceServer should be embedded to have forward compatible implementations.
@@ -74,6 +85,9 @@ type UnimplementedResourcesServiceServer struct {
 
 func (UnimplementedResourcesServiceServer) GetResources(*GetResourcesRequest, ResourcesService_GetResourcesServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetResources not implemented")
+}
+func (UnimplementedResourcesServiceServer) GetServiceAccountNames(context.Context, *GetServiceAccountNamesRequest) (*GetServiceAccountNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServiceAccountNames not implemented")
 }
 
 // UnsafeResourcesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -108,13 +122,36 @@ func (x *resourcesServiceGetResourcesServer) Send(m *GetResourcesResponse) error
 	return x.ServerStream.SendMsg(m)
 }
 
+func _ResourcesService_GetServiceAccountNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetServiceAccountNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcesServiceServer).GetServiceAccountNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/GetServiceAccountNames",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcesServiceServer).GetServiceAccountNames(ctx, req.(*GetServiceAccountNamesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourcesService_ServiceDesc is the grpc.ServiceDesc for ResourcesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ResourcesService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "kubeappsapis.plugins.resources.v1alpha1.ResourcesService",
 	HandlerType: (*ResourcesServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetServiceAccountNames",
+			Handler:    _ResourcesService_GetServiceAccountNames_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetResources",

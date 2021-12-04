@@ -1,4 +1,5 @@
-import ResourceRef from "shared/ResourceRef";
+import { keyForResourceRef } from "shared/ResourceRef";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { ISecret } from "shared/types";
 import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
@@ -9,18 +10,10 @@ const defaultProps = {
 };
 
 const sampleResourceRef = {
-  cluster: "cluster-name",
   apiVersion: "v1",
   kind: "Secret",
   name: "foo",
   namespace: "default",
-  filter: "",
-  plural: "secrets",
-  namespaced: true,
-  getResourceURL: jest.fn(() => "secret-foo"),
-  watchResourceURL: jest.fn(),
-  getResource: jest.fn(),
-  watchResource: jest.fn(),
 } as ResourceRef;
 
 const secret = {
@@ -40,10 +33,16 @@ it("shows a message if there are no secrets", () => {
 });
 
 it("renders a secretItemDatum per secret", () => {
+  const key = keyForResourceRef(
+    sampleResourceRef.apiVersion,
+    sampleResourceRef.kind,
+    sampleResourceRef.namespace,
+    sampleResourceRef.name,
+  );
   const state = getStore({
     kube: {
       items: {
-        "secret-foo": {
+        [key]: {
           isFetching: false,
           item: secret,
         },

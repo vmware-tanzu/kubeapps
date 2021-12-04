@@ -205,7 +205,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		returnErrMessage(err, w)
 		return
 	}
-	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, registrySecrets)
+	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, registrySecrets, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -252,7 +252,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		return
 	}
 
-	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets)
+	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -272,7 +272,7 @@ func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, param
 		returnErrMessage(err, w)
 		return
 	}
-	rel, err := agent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt))
+	rel, err := agent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt), 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -299,7 +299,7 @@ func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	// Helm 3 has --purge by default; --keep-history in Helm 3 corresponds to omitting --purge in Helm 2.
 	// https://stackoverflow.com/a/59210923/2135002
 	keepHistory := !purge
-	err := agent.DeleteRelease(cfg.ActionConfig, releaseName, keepHistory)
+	err := agent.DeleteRelease(cfg.ActionConfig, releaseName, keepHistory, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return

@@ -40,9 +40,10 @@ const testProps: IPackageHeaderProps = {
   onSelect: jest.fn(),
 };
 
-it("renders a header for the package", () => {
+it("renders a header for the package with display name", () => {
   const wrapper = mount(<PackageHeader {...testProps} />);
-  expect(wrapper.text()).toContain("testrepo/foo");
+  expect(wrapper.text()).toContain("foo");
+  expect(wrapper.text()).not.toContain("testrepo/foo");
 });
 
 it("displays the appVersion", () => {

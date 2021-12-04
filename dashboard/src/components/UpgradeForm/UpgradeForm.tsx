@@ -1,3 +1,4 @@
+import { CdsFormGroup } from "@cds/react/forms";
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import Alert from "components/js/Alert";
@@ -17,7 +18,6 @@ import { IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
-import "./UpgradeForm.css";
 
 export interface IUpgradeFormProps {
   version?: string;
@@ -219,10 +219,11 @@ function UpgradeForm(props: IUpgradeFormProps) {
                     </Column>
                     <Column span={9}>
                       <form onSubmit={handleDeploy}>
-                        <div className="upgrade-form-version-selector">
-                          <label className="centered deployment-form-label deployment-form-label-text-param">
-                            Upgrade to Version
-                          </label>
+                        <CdsFormGroup
+                          className="deployment-form"
+                          layout="vertical"
+                          controlWidth="shrink"
+                        >
                           <PackageVersionSelector
                             versions={versions}
                             selectedVersion={pkgVersion}
@@ -230,8 +231,10 @@ function UpgradeForm(props: IUpgradeFormProps) {
                             currentVersion={
                               installedAppInstalledPackageDetail?.currentVersion?.pkgVersion
                             }
+                            label={"Package Version"}
+                            message={"Select the version this package will be upgraded to."}
                           />
-                        </div>
+                        </CdsFormGroup>
                         <DeploymentFormBody
                           deploymentEvent="upgrade"
                           packageId={

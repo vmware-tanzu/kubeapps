@@ -1,3 +1,5 @@
+import { CdsFormGroup } from "@cds/react/forms";
+import { CdsInput } from "@cds/react/input";
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import Alert from "components/js/Alert";
@@ -151,6 +153,7 @@ export default function DeploymentForm() {
       />
     );
   }
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <section>
       <PackageHeader
@@ -172,23 +175,24 @@ export default function DeploymentForm() {
           <Column span={9}>
             {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
             <form onSubmit={handleDeploy}>
-              <div>
-                <label
-                  htmlFor="releaseName"
-                  className="deployment-form-label deployment-form-label-text-param"
-                >
-                  Name
-                </label>
-                <input
-                  id="releaseName"
-                  pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-                  title="Use lower case alphanumeric characters, '-' or '.'"
-                  className="clr-input deployment-form-text-input"
-                  onChange={handleReleaseNameChange}
-                  value={releaseName}
-                  required={true}
-                />
-              </div>
+              <CdsFormGroup
+                validate={true}
+                className="deployment-form"
+                layout="vertical"
+                controlWidth="shrink"
+              >
+                <CdsInput>
+                  <label>Name</label>
+                  <input
+                    id="releaseName"
+                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                    title="Use lowercase alphanumeric characters, '-' or '.'"
+                    onChange={handleReleaseNameChange}
+                    value={releaseName}
+                    required={true}
+                  />
+                </CdsInput>
+              </CdsFormGroup>
               <DeploymentFormBody
                 deploymentEvent="install"
                 packageId={packageId}

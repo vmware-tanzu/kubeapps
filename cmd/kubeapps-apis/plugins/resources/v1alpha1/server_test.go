@@ -39,6 +39,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
+	typfake "k8s.io/client-go/kubernetes/fake"
 
 	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -112,9 +113,9 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 		},
 		// For testing, define a kindToResource converter that doesn't require
 		// a rest mapper.
-		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error) {
 			gvr, _ := meta.UnsafeGuessKindToResource(gvk)
-			return gvr, nil
+			return gvr, meta.RESTScopeNameNamespace, nil
 		},
 	})
 
@@ -449,6 +450,87 @@ func TestGetResources(t *testing.T) {
 
 			if got, want := resources, tc.expectedResources; !cmp.Equal(got, want, ignoredUnexported, ignoreManifest) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported, ignoreManifest))
+			}
+		})
+	}
+}
+
+func TestGetServiceAccountNames(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *v1alpha1.GetServiceAccountNamesRequest
+		existingObjects    []runtime.Object
+		expectedResponse   []string
+		expectedStatusCode codes.Code
+	}{
+		{
+			name: "returns expected SAs",
+			request: &v1alpha1.GetServiceAccountNamesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&core.ServiceAccount{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ServiceAccount",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "some-service-account",
+						Namespace: "default",
+					},
+				},
+				&core.ServiceAccount{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ServiceAccount",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "another-service-account",
+						Namespace: "default",
+					},
+				},
+				&core.ServiceAccount{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ServiceAccount",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "unwanted-service-account",
+						Namespace: "other-ns",
+					},
+				},
+			},
+			expectedResponse: []string{"another-service-account", "some-service-account"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return typfake.NewSimpleClientset(tc.existingObjects...), nil, nil
+				},
+			}
+
+			GetServiceAccountNamesResponse, err := s.GetServiceAccountNames(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+
+			// Only check the response for OK status.
+			if tc.expectedStatusCode == codes.OK {
+				if GetServiceAccountNamesResponse == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					if got, want := GetServiceAccountNamesResponse.ServiceaccountNames, tc.expectedResponse; !cmp.Equal(got, want, nil) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, nil))
+					}
+				}
 			}
 		})
 	}

@@ -53,7 +53,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
         ),
       ),
     push: (location: string) => dispatch(push(location)),
-  } as IOperatorNewProps;
+  } as unknown as IOperatorNewProps;
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(OperatorNew);

@@ -1,9 +1,7 @@
-import ResourceRef from "shared/ResourceRef";
+import { keyForResourceRef } from "shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "shared/types";
 import { filterByResourceRefs } from ".";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-
-const clusterName = "cluster-name";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 describe("filterByResourceRefs", () => {
   const svc1 = {
@@ -16,7 +14,13 @@ describe("filterByResourceRefs", () => {
     kind: "Service",
     name: "bar",
     namespace: "foo",
-  } as APIResourceRef;
+  } as ResourceRef;
+  const svc1Key = keyForResourceRef(
+    svc1Ref.apiVersion,
+    svc1Ref.kind,
+    svc1Ref.namespace,
+    svc1Ref.name,
+  );
   const svc2 = {
     apiVersion: "v1",
     kind: "Service",
@@ -27,7 +31,13 @@ describe("filterByResourceRefs", () => {
     kind: "Service",
     name: "bar",
     namespace: "foo1",
-  } as APIResourceRef;
+  } as ResourceRef;
+  const svc2Key = keyForResourceRef(
+    svc2Ref.apiVersion,
+    svc2Ref.kind,
+    svc2Ref.namespace,
+    svc2Ref.name,
+  );
   const deploy = {
     apiVersion: "apps/v1",
     kind: "Deployment",
@@ -35,21 +45,18 @@ describe("filterByResourceRefs", () => {
   } as IResource;
 
   const items: IKubeState["items"] = {
-    [`api/clusters/${clusterName}/api/v1/namespaces/foo/services/bar`]: {
+    [svc1Key]: {
       item: svc1,
     } as IKubeItem<IResource>,
-    [`api/clusters/${clusterName}/api/v1/namespaces/foo1/services/bar`]: {
+    [svc2Key]: {
       item: svc2,
     } as IKubeItem<IResource>,
-    [`api/clusters/${clusterName}/apis/apps/v1/namespaces/foo1/deployments/bar`]: {
+    "unused-key": {
       item: deploy,
     } as IKubeItem<IResource>,
   };
   it("returns the IKubeItems in the state referenced by each ResourceRef", () => {
-    const resourceRefs: ResourceRef[] = [
-      new ResourceRef(svc1Ref, clusterName, "services", true, "foo"),
-      new ResourceRef(svc2Ref, clusterName, "services", true, "foo1"),
-    ];
+    const resourceRefs: ResourceRef[] = [svc1Ref, svc2Ref];
 
     expect(filterByResourceRefs(resourceRefs, items)).toEqual([{ item: svc1 }, { item: svc2 }]);
   });
@@ -60,11 +67,8 @@ describe("filterByResourceRefs", () => {
       kind: "Service",
       name: "missing",
       namespace: "foo1",
-    } as APIResourceRef;
-    const resourceRefs: ResourceRef[] = [
-      new ResourceRef(svc2Ref, clusterName, "services", true, "default"),
-      new ResourceRef(missingSvcRef, clusterName, "services", true, "default"),
-    ];
+    } as ResourceRef;
+    const resourceRefs: ResourceRef[] = [svc2Ref, missingSvcRef];
 
     expect(filterByResourceRefs(resourceRefs, items)).toEqual([{ item: svc2 }]);
   });

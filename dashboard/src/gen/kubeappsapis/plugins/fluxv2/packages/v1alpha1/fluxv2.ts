@@ -135,7 +135,9 @@ export const GetPackageRepositoriesRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesRequest>): GetPackageRepositoriesRequest {
+  fromPartial<I extends Exact<DeepPartial<GetPackageRepositoriesRequest>, I>>(
+    object: I,
+  ): GetPackageRepositoriesRequest {
     const message = {
       ...baseGetPackageRepositoriesRequest,
     } as GetPackageRepositoriesRequest;
@@ -203,11 +205,13 @@ export const GetPackageRepositoriesResponse = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesResponse>): GetPackageRepositoriesResponse {
+  fromPartial<I extends Exact<DeepPartial<GetPackageRepositoriesResponse>, I>>(
+    object: I,
+  ): GetPackageRepositoriesResponse {
     const message = {
       ...baseGetPackageRepositoriesResponse,
     } as GetPackageRepositoriesResponse;
-    message.repositories = (object.repositories ?? []).map(e => PackageRepository.fromPartial(e));
+    message.repositories = object.repositories?.map(e => PackageRepository.fromPartial(e)) || [];
     return message;
   },
 };
@@ -281,7 +285,7 @@ export const PackageRepository = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<PackageRepository>): PackageRepository {
+  fromPartial<I extends Exact<DeepPartial<PackageRepository>, I>>(object: I): PackageRepository {
     const message = { ...basePackageRepository } as PackageRepository;
     message.name = object.name ?? "";
     message.namespace = object.namespace ?? "";
@@ -775,6 +779,7 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -784,6 +789,11 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

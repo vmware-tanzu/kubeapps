@@ -848,6 +848,46 @@ metadata:
 			},
 		},
 		{
+			name: "returns resource references with explicit namespace when not present in helm manifest",
+			existingHelmStubs: []helmReleaseStub{
+				{
+					name:      releaseName,
+					namespace: releaseNamespace,
+					manifest: `
+---
+# Source: redis/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-test
+`,
+				},
+			},
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: releaseNamespace,
+					},
+					Identifier: releaseName,
+				},
+			},
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: releaseNamespace,
+				},
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "v1",
+						Name:       "redis-test",
+						Namespace:  "test",
+						Kind:       "Service",
+					},
+				},
+			},
+		},
+		{
 			name: "returns resource references for resources in other namespaces",
 			existingHelmStubs: []helmReleaseStub{
 				{
@@ -886,6 +926,7 @@ metadata:
 					{
 						ApiVersion: "v1",
 						Name:       "test-cluster-role",
+						Namespace:  "test",
 						Kind:       "ClusterRole",
 					},
 					{
@@ -935,6 +976,7 @@ metadata:
 					{
 						ApiVersion: "apps/v1",
 						Name:       "redis-test",
+						Namespace:  "test",
 						Kind:       "Deployment",
 					},
 				},
@@ -1015,6 +1057,7 @@ metadata:
 					{
 						ApiVersion: "apps/v1",
 						Name:       "redis-test",
+						Namespace:  "test",
 						Kind:       "Deployment",
 					},
 				},
@@ -1054,6 +1097,7 @@ metadata:
 					{
 						ApiVersion: "apps/v1",
 						Name:       "redis-test",
+						Namespace:  "test",
 						Kind:       "Deployment",
 					},
 				},
@@ -1209,11 +1253,13 @@ items:
 					{
 						ApiVersion: "rbac.authorization.k8s.io/v1",
 						Name:       "clusterrole-1",
+						Namespace:  "test",
 						Kind:       "ClusterRole",
 					},
 					{
 						ApiVersion: "rbac.authorization.k8s.io/v1",
 						Name:       "clusterrole-2",
+						Namespace:  "test",
 						Kind:       "ClusterRole",
 					},
 				},

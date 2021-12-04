@@ -282,7 +282,7 @@ func (s *packagesServer) GetInstalledPackageResourceRefs(ctx context.Context, re
 	pkgRef := request.GetInstalledPackageRef()
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
-	log.Infof("+core GetResources %s %s", contextMsg, identifier)
+	log.Infof("+core GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
 
 	if request.GetInstalledPackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")

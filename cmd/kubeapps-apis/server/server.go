@@ -22,9 +22,13 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
+
+	"log"
+	"os"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
@@ -34,16 +38,40 @@ import (
 	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
-	log "k8s.io/klog/v2"
+	klogv2 "k8s.io/klog/v2"
 )
+
+// LogRequest is a gRPC UnaryServerInterceptor that will log the API call
+func CreateRequestLogger() func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
+
+	// Include micro seconds in timestamp
+	logger := log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
+
+		start := time.Now()
+		res, err := handler(ctx, req)
+
+		// Format string : [timestamp] [status code] [duration] [full path]
+		// 2021-11-29 15:10:21.642313 OK 97.752µs /kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries
+		logger.Printf("%v %s %s\n",
+			status.Code(err),
+			time.Since(start),
+			info.FullMethod)
+
+		return res, err
+	}
+}
 
 // Serve is the root command that is run when no other sub-commands are present.
 // It runs the gRPC service, registering the configured plugins.
 func Serve(serveOpts core.ServeOptions) error {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
-	grpcSrv := grpc.NewServer()
+	logRequest := CreateRequestLogger()
+	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(logRequest))
 	reflection.Register(grpcSrv)
 
 	// Create the http server, register our core service followed by any plugins.
@@ -124,27 +152,27 @@ func Serve(serveOpts core.ServeOptions) error {
 	go func() {
 		err := grpcSrv.Serve(grpcLis)
 		if err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			klogv2.Fatalf("failed to serve: %v", err)
 		}
 	}()
 	go func() {
 		err := grpcSrv.Serve(grpcwebLis)
 		if err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			klogv2.Fatalf("failed to serve: %v", err)
 		}
 	}()
 	go func() {
 		err := httpSrv.Serve(httpLis)
 		if err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			klogv2.Fatalf("failed to serve: %v", err)
 		}
 	}()
 
 	if serveOpts.UnsafeLocalDevKubeconfig {
-		log.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
+		klogv2.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
 	}
 
-	log.Infof("Starting server on :%d", serveOpts.Port)
+	klogv2.Infof("Starting server on :%d", serveOpts.Port)
 	if err := mux.Serve(); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
 	}

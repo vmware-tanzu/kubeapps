@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -32,7 +33,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/arschles/assert"
 	"github.com/disintegration/imaging"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/common/datastore"
@@ -44,6 +44,7 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	tartest "github.com/kubeapps/kubeapps/pkg/tarutil/test"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"helm.sh/helm/v3/pkg/chart"
 )
 
@@ -210,7 +211,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, &goodHTTPClient{}, "my-user-agent")
-			assert.ExistsErr(t, err, tt.name)
+			assert.Error(t, err, tt.name)
 		})
 	}
 }
@@ -218,7 +219,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 func Test_getOCIRepo(t *testing.T) {
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
 		repo, err := getOCIRepo("namespace", "test", "https://test", "Basic auth", nil, []string{}, &http.Client{})
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
 	})
 }
@@ -226,7 +227,7 @@ func Test_getOCIRepo(t *testing.T) {
 func Test_parseFilters(t *testing.T) {
 	t.Run("return rules spec", func(t *testing.T) {
 		filters, err := parseFilters(`{"jq":".name == $var1","variables":{"$var1":"wordpress"}}`)
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, filters, &apprepov1alpha1.FilterRuleSpec{
 			JQ: ".name == $var1", Variables: map[string]string{"$var1": "wordpress"},
 		}, "filters")
@@ -250,20 +251,20 @@ func Test_fetchRepoIndex(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			netClient := &goodHTTPClient{}
 			_, err := fetchRepoIndex(tt.url, "", netClient, tt.userAgent)
-			assert.NoErr(t, err)
+			assert.NoError(t, err)
 		})
 	}
 
 	t.Run("authenticated request", func(t *testing.T) {
 		netClient := &authenticatedHTTPClient{}
 		_, err := fetchRepoIndex("https://my.examplerepo.com", "Bearer ThisSecretAccessTokenAuthenticatesTheClient", netClient, "my-user-agent")
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("failed request", func(t *testing.T) {
 		netClient := &badHTTPClient{}
 		_, err := fetchRepoIndex("https://my.examplerepo.com", "", netClient, "my-user-agent")
-		assert.ExistsErr(t, err, "failed request")
+		assert.Error(t, err, errors.New("failed request"))
 	})
 }
 
@@ -295,7 +296,7 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 			netClient := server.Client()
 
 			_, err := fetchRepoIndex(server.URL, "", netClient, userAgent)
-			assert.NoErr(t, err)
+			assert.NoError(t, err)
 		})
 	}
 }
@@ -378,7 +379,7 @@ func Test_newManager(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := datastore.Config{URL: tt.dbURL, Database: tt.dbName, Username: tt.dbUser, Password: tt.dbPass}
 			_, err := newManager(config, "kubeapps")
-			assert.NoErr(t, err)
+			assert.NoError(t, err)
 		})
 	}
 
@@ -393,7 +394,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		defer cleanup()
 		c := models.Chart{ID: "test/acs-engine-autoscaler"}
 		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
+		assert.NoError(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
 	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
@@ -403,7 +404,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		defer cleanup()
 		netClient := &badHTTPClient{}
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [500]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [500]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
@@ -412,7 +413,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		netClient := &badIconClient{}
 		c := charts[0]
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
+		assert.Error(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
@@ -425,7 +426,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
 	})
 
 	t.Run("valid SVG icon", func(t *testing.T) {
@@ -443,7 +444,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
+		assert.NoError(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (not passing through the auth header by default)", func(t *testing.T) {
@@ -452,7 +453,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		netClient := &goodAuthenticatedHTTPClient{}
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (not passing through the auth header)", func(t *testing.T) {
@@ -461,7 +462,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		netClient := &goodAuthenticatedHTTPClient{}
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.Err(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (passing through the auth header if same domain)", func(t *testing.T) {
@@ -474,7 +475,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", false))
+		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (passing through the auth header)", func(t *testing.T) {
@@ -487,7 +488,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
 		fImporter := fileImporter{pgManager, netClient}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", true))
+		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", true))
 	})
 }
 
@@ -555,7 +556,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			RepoInternal: repo,
 			netClient:    netClient,
 		}
-		assert.Err(t, fmt.Errorf("GET request to [https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz] failed due to status [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false))
+		assert.Error(t, fmt.Errorf("GET request to [https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz] failed due to status [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
@@ -588,7 +589,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			netClient:    netClient,
 		}
 		err := fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false)
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("authenticated request", func(t *testing.T) {
@@ -614,7 +615,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			netClient:    netClient,
 		}
 		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion, "my-user-agent", true)
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("valid tarball", func(t *testing.T) {
@@ -632,7 +633,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		fImporter := fileImporter{pgManager, netClient}
 
 		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion, "my-user-agent", false)
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("file exists", func(t *testing.T) {
@@ -645,7 +646,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 
 		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
 		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion, "my-user-agent", false)
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 	})
 }
 
@@ -695,7 +696,7 @@ func Test_ociAPICli(t *testing.T) {
 			},
 		}
 		_, err := apiCli.TagList("apache", "my-user-agent")
-		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]: forbidden"), err)
+		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]: forbidden"), err)
 	})
 
 	t.Run("TagList - successful request", func(t *testing.T) {
@@ -706,7 +707,7 @@ func Test_ociAPICli(t *testing.T) {
 			},
 		}
 		result, err := apiCli.TagList("apache", "my-user-agent")
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
 		if !cmp.Equal(result, expectedTagList) {
 			t.Errorf("Unexpected result %v", cmp.Diff(result, expectedTagList))
@@ -720,7 +721,7 @@ func Test_ociAPICli(t *testing.T) {
 			netClient:  &authenticatedOCIAPIHTTPClient{},
 		}
 		_, err := apiCli.TagList("apache", "my-user-agent")
-		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]"), err)
+		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]"), err)
 	})
 
 	t.Run("TagList with auth - success", func(t *testing.T) {
@@ -732,7 +733,7 @@ func Test_ociAPICli(t *testing.T) {
 			},
 		}
 		result, err := apiCli.TagList("apache", "my-user-agent")
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
 		if !cmp.Equal(result, expectedTagList) {
 			t.Errorf("Unexpected result %v", cmp.Diff(result, expectedTagList))
@@ -745,7 +746,7 @@ func Test_ociAPICli(t *testing.T) {
 			netClient: &badHTTPClient{},
 		}
 		_, err := apiCli.IsHelmChart("apache", "7.5.1", "my-user-agent")
-		assert.Err(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/manifests/7.5.1] failed due to status [500]"), err)
+		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/manifests/7.5.1] failed due to status [500]"), err)
 	})
 
 	t.Run("IsHelmChart - successful request", func(t *testing.T) {
@@ -760,12 +761,12 @@ func Test_ociAPICli(t *testing.T) {
 			},
 		}
 		is751, err := apiCli.IsHelmChart("test/apache", "7.5.1", "my-user-agent")
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		if is751 {
 			t.Errorf("Tag 7.5.1 should not be a helm chart")
 		}
 		is811, err := apiCli.IsHelmChart("test/apache", "8.1.1", "my-user-agent")
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		if !is811 {
 			t.Errorf("Tag 8.1.1 should be a helm chart")
 		}
@@ -796,7 +797,7 @@ func Test_OCIRegistry(t *testing.T) {
 	t.Run("Checksum - failed request", func(t *testing.T) {
 		repo.ociCli = &fakeOCIAPICli{err: fmt.Errorf("request failed")}
 		_, err := repo.Checksum()
-		assert.Err(t, fmt.Errorf("request failed"), err)
+		assert.Error(t, fmt.Errorf("request failed"), err)
 	})
 
 	t.Run("Checksum - success", func(t *testing.T) {
@@ -804,7 +805,7 @@ func Test_OCIRegistry(t *testing.T) {
 			tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
 		}
 		checksum, err := repo.Checksum()
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, checksum, "b1b1ae17ddc8f83606acb8a175025a264e8634bb174b6e6a5799bdb5d20eaa58", "checksum")
 	})
 
@@ -819,7 +820,7 @@ func Test_OCIRegistry(t *testing.T) {
 			},
 		}
 		_, err := emptyRepo.Checksum()
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, emptyRepo.tags, map[string]TagList{
 			"apache": {Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
 		}, "expected tags")
@@ -1051,7 +1052,7 @@ version: 1.0.0
 				},
 			}
 			charts, err := chartsRepo.Charts(tt.shallow)
-			assert.NoErr(t, err)
+			assert.NoError(t, err)
 			if !cmp.Equal(charts, tt.expected) {
 				t.Errorf("Unexpected result %v", cmp.Diff(charts, tt.expected))
 			}
@@ -1070,7 +1071,7 @@ version: 1.0.0
 			Readme: files["readme"],
 			Schema: files["schema"],
 		}, "my-user-agent", false)
-		assert.NoErr(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, result, files, "expected files")
 	})
 }
@@ -1144,7 +1145,7 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 			gzw.Flush()
 
 			r, err := extractFilesFromBuffer(w.Body)
-			assert.NoErr(t, err)
+			assert.NoError(t, err)
 			if !cmp.Equal(r, tt.expected) {
 				t.Errorf("Unexpected result %v", cmp.Diff(r, tt.expected))
 			}
@@ -1293,6 +1294,101 @@ func Test_filterCharts(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUnescapeChartsData(t *testing.T) {
+	tests := []struct {
+		description string
+		input       []models.Chart
+		expected    []models.Chart
+	}{
+		{
+			"chart with encoded spaces in id",
+			[]models.Chart{
+				{ID: "foo%20bar"},
+			},
+			[]models.Chart{
+				{ID: "foo bar"},
+			},
+		},
+		{
+			"chart with encoded spaces in name",
+			[]models.Chart{
+				{Name: "foo%20bar"},
+			},
+			[]models.Chart{
+				{Name: "foo bar"},
+			},
+		},
+		{
+			"chart with mixed encoding in name",
+			[]models.Chart{
+				{Name: "test/foo%20bar"},
+			},
+			[]models.Chart{
+				{Name: "test/foo bar"},
+			},
+		},
+		{
+			"chart with no encoding nor spaces",
+			[]models.Chart{
+				{Name: "test/foobar"},
+			},
+			[]models.Chart{
+				{Name: "test/foobar"},
+			},
+		},
+		{
+			"chart with unencoded spaces",
+			[]models.Chart{
+				{Name: "test/foo bar"},
+			},
+			[]models.Chart{
+				{Name: "test/foo bar"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			res := unescapeChartsData(tt.input)
+			if !cmp.Equal(res, tt.expected) {
+				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
+			}
+		})
+	}
+}
+
+func TestHelmRepoAppliesUnescape(t *testing.T) {
+	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
+	expectedRepo := &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}
+	repoIndexYAMLBytes, _ := ioutil.ReadFile("testdata/helm-index-spaces.yaml")
+	repoIndexYAML := string(repoIndexYAMLBytes)
+	expectedCharts := []models.Chart{
+		{
+			ID:            "test/chart with spaces",
+			Name:          "chart with spaces",
+			Repo:          expectedRepo,
+			Maintainers:   []chart.Maintainer{},
+			ChartVersions: []models.ChartVersion{{AppVersion: "v1"}},
+		},
+		{
+			ID:            "test/chart-without-spaces",
+			Name:          "chart-without-spaces",
+			Repo:          expectedRepo,
+			Maintainers:   []chart.Maintainer{},
+			ChartVersions: []models.ChartVersion{{AppVersion: "v2"}},
+		},
+	}
+	helmRepo := &HelmRepo{
+		content:      []byte(repoIndexYAML),
+		RepoInternal: repo,
+	}
+	t.Run("Helm repo applies unescaping to chart data", func(t *testing.T) {
+		charts, _ := helmRepo.Charts(false)
+		if !cmp.Equal(charts, expectedCharts) {
+			t.Errorf("Unexpected result: %v", cmp.Diff(charts, expectedCharts))
+		}
+	})
 }
 
 func Test_isURLDomainEqual(t *testing.T) {

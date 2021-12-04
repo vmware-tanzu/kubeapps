@@ -12,8 +12,6 @@ import {
   RollbackInstalledPackageRequest,
   RollbackInstalledPackageResponse,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import * as url from "shared/url";
-import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { PluginNames } from "./utils";
 
@@ -99,17 +97,5 @@ export class App {
     return await this.coreClient().DeleteInstalledPackage({
       installedPackageRef,
     } as DeleteInstalledPackageRequest);
-  }
-
-  // TODO(agamez): remove it once we return the generated resources as part of the InstalledPackageDetail.
-  public static async getRelease(installedPackageRef?: InstalledPackageReference) {
-    const { data } = await axiosWithAuth.get<{ data: { manifest: any } }>(
-      url.kubeops.releases.get(
-        installedPackageRef?.context?.cluster ?? "",
-        installedPackageRef?.context?.namespace ?? "",
-        installedPackageRef?.identifier ?? "",
-      ),
-    );
-    return data.data;
   }
 }
