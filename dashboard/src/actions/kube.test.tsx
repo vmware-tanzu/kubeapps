@@ -18,7 +18,8 @@ beforeEach(() => {
   store = mockStore({
     kube: {
       items: {},
-      sockets: {},
+      subscriptions: {},
+      kinds: {},
     } as IKubeState,
   });
 });

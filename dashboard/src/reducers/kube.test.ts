@@ -116,22 +116,6 @@ describe("kubeReducer", () => {
 
         expect(newState.subscriptions[key]).toBeDefined();
       });
-
-      it("does not create a new subscription if one exists in the state", () => {
-        const subscription = Kube.getResources(pkg, [], true).subscribe({});
-        const state = {
-          ...initialState,
-          subscriptions: {
-            [key]: subscription,
-          },
-        };
-        const newState = kubeReducer(state, {
-          type: getType(actions.kube.requestResources),
-          payload: defaultPayload,
-        });
-        expect(newState).toBe(state);
-        expect(newState.subscriptions[key]).toBe(subscription);
-      });
     });
   });
 });

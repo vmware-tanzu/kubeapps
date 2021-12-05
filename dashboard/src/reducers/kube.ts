@@ -122,7 +122,9 @@ export const initialState: IKubeState = {
   items: {},
   kinds: initialKinds,
   // We book keep on subscriptions, keyed by the installed package ref,
-  // so that we can
+  // so that we can unsubscribe when the closeRequestResources action is
+  // dispatched (usually because the component is unmounted when the user
+  // navigates away).
   subscriptions: {},
 };
 
