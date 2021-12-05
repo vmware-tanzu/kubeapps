@@ -6,7 +6,6 @@ import {
   Context,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Kube } from "shared/Kube";
 
 describe("kubeReducer", () => {
   let initialState: IKubeState;
