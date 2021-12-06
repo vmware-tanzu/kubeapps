@@ -99,6 +99,10 @@ export function getResources(
           dispatch(receiveResourcesError(e));
         },
         () => {
+          // The onComplete handler should only dispatch a closeRequestResources
+          // action if this call to `getResources` is for watching. If it is not
+          // watching resources, the server will close the request automatically
+          // (and we have no book-keeping in the redux state).
           if (watch) {
             dispatch(closeRequestResources(pkg));
           }
