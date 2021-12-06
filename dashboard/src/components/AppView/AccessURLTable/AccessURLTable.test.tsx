@@ -21,7 +21,7 @@ context("when some resource is fetching", () => {
       name: "svc",
     } as ResourceRef;
     const serviceRefs = [svcRef];
-    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
+    const svcKey = keyForResourceRef(svcRef);
     const state = {
       kube: { items: { [svcKey]: serviceItem } },
     };
@@ -43,12 +43,7 @@ context("when some resource is fetching", () => {
       name: "ingress",
     } as ResourceRef;
     const ingressRefs = [ingressRef];
-    const ingressKey = keyForResourceRef(
-      ingressRef.apiVersion,
-      ingressRef.kind,
-      ingressRef.namespace,
-      ingressRef.name,
-    );
+    const ingressKey = keyForResourceRef(ingressRef);
     const state = {
       kube: { items: { [ingressKey]: ingressItem } },
     };
@@ -91,7 +86,7 @@ context("when the app contains services", () => {
       name: "svc",
     } as ResourceRef;
     const serviceRefs = [svcRef];
-    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
+    const svcKey = keyForResourceRef(svcRef);
     const state = { kube: { items: { [svcKey]: serviceItem } } };
     const store = getStore(state);
     const wrapper = mountWrapper(
@@ -124,7 +119,7 @@ context("when the app contains services", () => {
       name: "svc",
     } as ResourceRef;
     const serviceRefs = [svcRef];
-    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
+    const svcKey = keyForResourceRef(svcRef);
     const state = { kube: { items: { [svcKey]: serviceItem } } };
     const store = getStore(state);
     const wrapper = mountWrapper(
@@ -162,12 +157,7 @@ context("when the app contains ingresses", () => {
       name: "ingress",
     } as ResourceRef;
     const ingressRefs = [ingressRef];
-    const ingressKey = keyForResourceRef(
-      ingressRef.apiVersion,
-      ingressRef.kind,
-      ingressRef.namespace,
-      ingressRef.name,
-    );
+    const ingressKey = keyForResourceRef(ingressRef);
     const state = { kube: { items: { [ingressKey]: ingressItem } } };
     const store = getStore(state);
     const wrapper = mountWrapper(
@@ -204,12 +194,7 @@ context("when the app contains ingresses", () => {
       name: "ingress",
     } as ResourceRef;
     const ingressRefs = [ingressRef];
-    const ingressKey = keyForResourceRef(
-      ingressRef.apiVersion,
-      ingressRef.kind,
-      ingressRef.namespace,
-      ingressRef.name,
-    );
+    const ingressKey = keyForResourceRef(ingressRef);
     const state = { kube: { items: { [ingressKey]: ingressItem } } };
     const store = getStore(state);
     const wrapper = mountWrapper(
@@ -281,13 +266,8 @@ context("when the app contains services and ingresses", () => {
       name: "ingress",
     } as ResourceRef;
     const ingressRefs = [ingressRef];
-    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
-    const ingressKey = keyForResourceRef(
-      ingressRef.apiVersion,
-      ingressRef.kind,
-      ingressRef.namespace,
-      ingressRef.name,
-    );
+    const svcKey = keyForResourceRef(svcRef);
+    const ingressKey = keyForResourceRef(ingressRef);
     const state = {
       kube: { items: { [svcKey]: serviceItem, [ingressKey]: ingressItem } },
     };
@@ -319,13 +299,8 @@ context("when the app contains resources with errors", () => {
       name: "ingress",
     } as ResourceRef;
     const ingressRefs = [ingressRef];
-    const svcKey = keyForResourceRef(svcRef.apiVersion, svcRef.kind, svcRef.namespace, svcRef.name);
-    const ingressKey = keyForResourceRef(
-      ingressRef.apiVersion,
-      ingressRef.kind,
-      ingressRef.namespace,
-      ingressRef.name,
-    );
+    const svcKey = keyForResourceRef(svcRef);
+    const ingressKey = keyForResourceRef(ingressRef);
     const state = {
       kube: { items: { [svcKey]: serviceItem, [ingressKey]: ingressItem } },
     };

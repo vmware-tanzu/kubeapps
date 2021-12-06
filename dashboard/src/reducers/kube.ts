@@ -121,9 +121,11 @@ export const initialKinds = {
 export const initialState: IKubeState = {
   items: {},
   kinds: initialKinds,
+  // We book keep on subscriptions, keyed by the installed package ref,
+  // so that we can unsubscribe when the closeRequestResources action is
+  // dispatched (usually because the component is unmounted when the user
+  // navigates away).
   subscriptions: {},
-  sockets: {},
-  timers: {},
 };
 
 const kubeReducer = (
@@ -150,12 +152,6 @@ const kubeReducer = (
     case getType(actions.kube.requestResources): {
       const { pkg, refs, handler, watch, onError, onComplete } = action.payload;
       const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
-      if (state.subscriptions[key]) {
-        // subscription for this resource already open, do nothing
-        // TODO(minelson): We may instead want to unsubscribe from
-        // the previous one and replace it.
-        return state;
-      }
       const observable = Kube.getResources(pkg, refs, watch);
       const subscription = observable.subscribe({
         next(r) {
@@ -189,31 +185,6 @@ const kubeReducer = (
         ...state,
         subscriptions: otherSubscriptions,
       };
-    }
-    case getType(actions.kube.addTimer): {
-      if (!state.timers[action.payload.id]) {
-        return {
-          ...state,
-          timers: {
-            ...state.timers,
-            [action.payload.id]: setInterval(action.payload.timer, 5000),
-          },
-        };
-      }
-      return state;
-    }
-    case getType(actions.kube.removeTimer): {
-      if (state.timers[action.payload]) {
-        clearInterval(state.timers[action.payload] as NodeJS.Timer);
-        return {
-          ...state,
-          timers: {
-            ...state.timers,
-            [action.payload]: undefined,
-          },
-        };
-      }
-      return state;
     }
     case LOCATION_CHANGE:
       return { ...state, items: {} };
