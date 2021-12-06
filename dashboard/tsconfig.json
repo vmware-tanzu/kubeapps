@@ -51,7 +51,8 @@
     "scripts",
     "acceptance-tests",
     "webpack",
-    "jest"
+    "jest",
+    "src/gen"
   ],
   "include": ["src"]
 }
