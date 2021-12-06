@@ -154,18 +154,18 @@ func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster
 }
 
 func NewClientGetter(configGetter core.KubernetesConfigGetter, cluster string) ClientGetterFunc {
-	return func(ctx context.Context) (dynamic.Interface, apiext.Interface, error) {
+	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
 		if configGetter == nil {
-			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+			return nil, nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
 		// The Flux plugin currently supports interactions with the default (kubeapps)
 		// cluster only:
 		if config, err := configGetter(ctx, cluster); err != nil {
 			if status.Code(err) == codes.Unauthenticated {
 				// want to make sure we return same status in this case
-				return nil, nil, status.Errorf(codes.Unauthenticated, "unable to get config due to: %v", err)
+				return nil, nil, nil, status.Errorf(codes.Unauthenticated, "unable to get config due to: %v", err)
 			} else {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+				return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
 			}
 		} else {
 			return clientGetterHelper(config)
@@ -179,25 +179,29 @@ func NewClientGetter(configGetter core.KubernetesConfigGetter, cluster string) C
 // will be granted additional read privileges, we also need to ensure that the plugin can get a
 // config based on the service account rather than the request context
 func NewBackgroundClientGetter() ClientGetterFunc {
-	return func(ctx context.Context) (dynamic.Interface, apiext.Interface, error) {
+	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
 		if config, err := rest.InClusterConfig(); err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get in cluster config due to: %v", err)
+			return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get in cluster config due to: %v", err)
 		} else {
 			return clientGetterHelper(config)
 		}
 	}
 }
 
-func clientGetterHelper(config *rest.Config) (dynamic.Interface, apiext.Interface, error) {
+func clientGetterHelper(config *rest.Config) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
+	typedClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get typed client : %v", err))
+	}
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
+		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
 	}
 	apiExtensions, err := apiext.NewForConfig(config)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
+		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
 	}
-	return dynamicClient, apiExtensions, nil
+	return typedClient, dynamicClient, apiExtensions, nil
 }
 
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/

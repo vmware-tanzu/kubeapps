@@ -54,7 +54,7 @@ const (
 )
 
 func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := s.getDynamicClient(ctx)
+	_, client, _, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
 	}

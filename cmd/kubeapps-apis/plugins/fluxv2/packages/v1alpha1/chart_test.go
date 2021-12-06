@@ -44,6 +44,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		testName              string
 		request               *corev1.GetAvailablePackageDetailRequest
 		chartCacheHit         bool
+		secureRepo            bool // also known as "private"
 		expectedPackageDetail *corev1.AvailablePackageDetail
 	}{
 		{
@@ -63,6 +64,17 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			chartCacheHit:         false,
 			expectedPackageDetail: expected_detail_redis_2,
 		},
+		/*
+			{
+				testName: "it returns details about the latest redis package from a secured repo",
+				request: &corev1.GetAvailablePackageDetailRequest{
+					AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				},
+				chartCacheHit:         true,
+				secureRepo:            true,
+				expectedPackageDetail: expected_detail_redis_1,
+			},
+		*/
 	}
 
 	for _, tc := range testCases {
@@ -78,10 +90,14 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					t.Fatalf("%+v", err)
 				}
 				// stand up an http server just for the duration of this test
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
 					w.Write(tarGzBytes)
-				}))
+				})
+				if tc.secureRepo {
+					handler = basicAuth(handler, "foo", "bar", "myrealm")
+				}
+				ts := httptest.NewServer(handler)
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
 				c := testSpecChartWithUrl{
@@ -96,14 +112,26 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				charts = append(charts, c)
 			}
 
+			secretRef := ""
+			var secret *unstructured.Unstructured
+			if tc.secureRepo {
+				secretRef = "http-credentials"
+				secret = newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar")
+			}
+
 			ts2, repo, err := newRepoWithIndex(
-				"testdata/redis-two-versions.yaml", repoName, repoNamespace, replaceUrls)
+				"testdata/redis-two-versions.yaml", repoName, repoNamespace, replaceUrls, secretRef)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts)
+			runtimeObjects := []runtime.Object{repo}
+			if secret != nil {
+				runtimeObjects = append(runtimeObjects, secret)
+			}
+
+			s, mock, _, _, err := newServerWithRepos(t, runtimeObjects, charts)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -123,11 +151,17 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			if !tc.chartCacheHit {
 				// first a miss
-				redisMockExpectGetFromChartCache(mock, chartCacheKey, "")
+				if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, ""); err != nil {
+					t.Fatalf("%+v", err)
+				}
 				// followed by a set and a hit
-				redisMockSetValueForChart(mock, chartCacheKey, requestChartUrl)
+				if err = redisMockSetValueForChart(mock, chartCacheKey, requestChartUrl); err != nil {
+					t.Fatalf("%+v", err)
+				}
 			}
-			redisMockExpectGetFromChartCache(mock, chartCacheKey, requestChartUrl)
+			if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, requestChartUrl); err != nil {
+				t.Fatalf("%+v", err)
+			}
 
 			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
 			if err != nil {
@@ -283,7 +317,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 
 			ts2, repo, err := newRepoWithIndex(
-				"testdata/redis-two-versions.yaml", tc.repoName, tc.repoNamespace, replaceUrls)
+				"testdata/redis-two-versions.yaml", tc.repoName, tc.repoNamespace, replaceUrls, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -433,7 +467,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ts, repo, err := newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil)
+			ts, repo, err := newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -530,7 +564,7 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key, url string) error
 	}
 	byteArray, err := chartCacheComputeValue(chartID, url, version)
 	if err != nil {
-		return err
+		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
 	}
 	mock.ExpectSet(key, byteArray, 0).SetVal("OK")
 	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")

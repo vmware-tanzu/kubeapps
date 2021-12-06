@@ -15,7 +15,10 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
+	"net/http"
+	"strings"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
@@ -32,7 +35,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 )
 
 const KubeappsCluster = "default"
@@ -50,8 +56,8 @@ func TestBadClientGetter(t *testing.T) {
 		},
 		{
 			name: "returns failed-precondition when clientGetter itself errors",
-			clientGetter: func(context.Context) (dynamic.Interface, apiext.Interface, error) {
-				return nil, nil, fmt.Errorf("Bang!")
+			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
+				return nil, nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCode: codes.FailedPrecondition,
 		},
@@ -61,7 +67,7 @@ func TestBadClientGetter(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			_, err := s.getDynamicClient(context.Background())
+			_, _, _, err := s.GetClients(context.Background())
 			if err == nil && tc.statusCode != codes.OK {
 				t.Fatalf("got: nil, want: error")
 			}
@@ -221,7 +227,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 	if clientGetter != nil {
 		// if client getter returns an error, FLUSHDB call does not take place, because
 		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
-		if _, _, err := clientGetter(context.TODO()); err == nil {
+		if _, _, _, err := clientGetter(context.TODO()); err == nil {
 			mock.ExpectFlushDB().SetVal("OK")
 		}
 	}
@@ -240,26 +246,43 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		OnDeleteFunc: chartCache.wrapOnDeleteFunc(onDeleteRepo),
 	}
 
+	okRepos := sets.String{}
 	for _, r := range repos {
 		if isRepoReady(r.(*unstructured.Unstructured).Object) {
 			// we are willfully ignoring any errors coming from redisMockSetValueForRepo()
-			// here and just skipping over to next repo
-			redisMockSetValueForRepo(mock, r)
+			// here and just skipping over to next repo. This is done for test
+			// TestGetAvailablePackagesStatus where we make sure that even if the flux CRD happens
+			// to be invalid flux plug in can still operate
+			key, _, err := redisMockSetValueForRepo(mock, r)
+			if err != nil {
+				t.Logf("Skipping repo [%s] due to %+v", key, err)
+			} else {
+				okRepos.Insert(key)
+			}
 		}
 	}
 
 	// for now we only cache latest chart
+	cachedCharts := sets.String{}
 	if len(charts) > 0 {
 		c := charts[0]
 		key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
 		if err != nil {
 			return nil, mock, err
 		}
-		err = redisMockSetValueForChart(mock, key, c.chartUrl)
-		if err != nil {
-			return nil, mock, err
+		repoName := types.NamespacedName{
+			Name:      strings.Split(c.chartID, "/")[0],
+			Namespace: c.repoNamespace}
+
+		repoKey, err := redisKeyForRepoNamespacedName(repoName)
+		if err == nil && okRepos.Has(repoKey) {
+			err = redisMockSetValueForChart(mock, key, c.chartUrl)
+			if err != nil {
+				return nil, mock, err
+			}
+			cachedCharts.Insert(key)
+			chartCache.ExpectAdd(key)
 		}
-		chartCache.ExpectAdd(key)
 	}
 
 	repoCache, err := cache.NewNamespacedResourceWatcherCache(config, redisCli)
@@ -268,11 +291,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 	}
 
 	// need to wait until ChartCache has finished syncing
-	for _, c := range charts {
-		key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
-		if err != nil {
-			return nil, mock, err
-		}
+	for key := range cachedCharts {
 		chartCache.WaitUntilDoneWith(key)
 	}
 
@@ -299,6 +318,20 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 
 func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
 	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
+}
+
+// ref: https://stackoverflow.com/questions/21936332/idiomatic-way-of-requiring-http-basic-auth-in-go
+func basicAuth(handler http.HandlerFunc, username, password, realm string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+			w.WriteHeader(401)
+			w.Write([]byte("Unauthorised.\n"))
+			return
+		}
+		handler(w, r)
+	}
 }
 
 // misc global vars that get re-used in multiple tests

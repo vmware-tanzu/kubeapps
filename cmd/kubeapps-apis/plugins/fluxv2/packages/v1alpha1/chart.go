@@ -50,7 +50,7 @@ const (
 )
 
 func (s *Server) getChartsResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := s.getDynamicClient(ctx)
+	_, client, _, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*un
 }
 
 func (s *Server) availableChartDetail(ctx context.Context, repoName types.NamespacedName, chartName, chartVersion string) (*corev1.AvailablePackageDetail, error) {
-	log.Infof("+availableChartDetail(%s, %s, %s)", repoName, chartName, chartVersion)
+	log.V(4).Infof("+availableChartDetail(%s, %s, %s)", repoName, chartName, chartVersion)
 	chartModel, err := s.getChart(ctx, repoName, chartName)
 	if err != nil {
 		return nil, err

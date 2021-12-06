@@ -80,10 +80,10 @@ type NamespacedResourceWatcherCache struct {
 	expectResync bool
 }
 
-type ValueGetterFunc func(key string, val interface{}) (interface{}, error)
-type ValueAdderFunc func(key string, obj map[string]interface{}) (interface{}, bool, error)
-type ValueModifierFunc func(key string, obj map[string]interface{}, oldVal interface{}) (interface{}, bool, error)
-type KeyDeleterFunc func(key string) (bool, error)
+type ValueGetterFunc func(key string, cachedValue interface{}) (rawValue interface{}, err error)
+type ValueAdderFunc func(key string, obj map[string]interface{}) (cachedValue interface{}, setValue bool, err error)
+type ValueModifierFunc func(key string, obj map[string]interface{}, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
+type KeyDeleterFunc func(key string) (deleteValue bool, err error)
 
 type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
@@ -99,7 +99,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	// The list of all types actually supported by redis you can find in
 	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
 	OnAddFunc ValueAdderFunc
-	// 'OnModifyFunc' hooks is called when an object for which there is a corresponding cache entry
+	// 'OnModifyFunc' hook is called when an object for which there is a corresponding cache entry
 	// is modified. This allows the call site to return information about WHETHER OR NOT and WHAT
 	// is to be stored in the cache for a given k8s object (passed in as a untyped/unstructured map).
 	// The call site may return []byte, but it doesn't have to be that.
@@ -177,7 +177,7 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 	// sanity check that CRD for GVR has been registered
 	ctx := context.Background()
-	_, apiExt, err := c.config.ClientGetter(ctx)
+	_, _, apiExt, err := c.config.ClientGetter(ctx)
 	if err != nil {
 		return fmt.Errorf("clientGetter failed due to: %v", err)
 	} else if apiExt == nil {
@@ -288,7 +288,7 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 				break
 			}
 			waitTime := math.Pow(2, float64(i))
-			log.Infof("Waiting [%d] seconds before retry...", waitTime)
+			log.Infof("Waiting [%d] seconds before retry...", int(waitTime))
 			time.Sleep(time.Duration(waitTime) * time.Second)
 		}
 		if !ok {
@@ -305,7 +305,7 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	ctx := context.Background()
 
-	dynamicClient, _, err := c.config.ClientGetter(ctx)
+	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -333,7 +333,7 @@ func (c *NamespacedResourceWatcherCache) resync() (string, error) {
 	}
 
 	ctx := context.Background()
-	dynamicClient, _, err := c.config.ClientGetter(ctx)
+	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
 	if err != nil {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -424,7 +424,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 
 	// Get the resource with this namespace/name
 	ctx := context.Background()
-	dynamicClient, _, err := c.config.ClientGetter(ctx)
+	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
 	if err != nil {
 		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}

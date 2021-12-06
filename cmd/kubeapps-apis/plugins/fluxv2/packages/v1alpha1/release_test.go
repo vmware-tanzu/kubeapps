@@ -47,6 +47,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes"
+	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
 
@@ -268,7 +270,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					}
 				}
 
-				ts2, repo, err := newRepoWithIndex(existing.repoIndex, existing.repoName, existing.repoNamespace, nil)
+				ts2, repo, err := newRepoWithIndex(existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -539,7 +541,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			runtimeObjs := []runtime.Object{}
 
 			ts, repo, err := newRepoWithIndex(
-				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil)
+				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -585,7 +587,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been created
-			dynamicClient, _, err = s.clientGetter(context.Background())
+			_, dynamicClient, _, err = s.clientGetter(context.Background())
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -676,7 +678,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been updated
-			dynamicClient, _, err = s.clientGetter(context.Background())
+			_, dynamicClient, _, err = s.clientGetter(context.Background())
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -762,7 +764,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been updated
-			dynamicClient, _, err = s.clientGetter(context.Background())
+			_, dynamicClient, _, err = s.clientGetter(context.Background())
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1437,6 +1439,7 @@ func newRelease(name string, namespace string, spec map[string]interface{}, stat
 }
 
 func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, chartOrRelease ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
+	typedClient := typfake.NewSimpleClientset()
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
@@ -1448,8 +1451,8 @@ func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configura
 
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 
-	clientGetter := func(context.Context) (dynamic.Interface, apiext.Interface, error) {
-		return dynamicClient, apiextIfc, nil
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
+		return typedClient, dynamicClient, apiextIfc, nil
 	}
 
 	watcher := watch.NewFake()

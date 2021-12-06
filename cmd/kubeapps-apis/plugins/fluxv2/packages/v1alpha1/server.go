@@ -19,10 +19,12 @@ import (
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -90,20 +92,21 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 	}
 }
 
-// getDynamicClient returns a dynamic k8s client.
-func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
+// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
+func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
 	if s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	dynamicClient, _, err := s.clientGetter(ctx)
+	typedClient, dynamicClient, apiExtClient, err := s.clientGetter(ctx)
 	if err != nil {
 		if status.Code(err) == codes.Unknown {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+			return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 		} else {
-			return nil, err
+			// this could be codes.Unauthorized which we want to pass through
+			return nil, nil, nil, err
 		}
 	}
-	return dynamicClient, nil
+	return typedClient, dynamicClient, apiExtClient, nil
 }
 
 // ===== general note on error handling ========

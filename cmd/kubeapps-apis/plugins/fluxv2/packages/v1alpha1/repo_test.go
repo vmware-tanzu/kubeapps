@@ -41,6 +41,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes"
+	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
 
@@ -476,7 +478,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			repos := []runtime.Object{}
 
 			for _, rs := range tc.repos {
-				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil)
+				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -640,7 +642,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
-		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default", nil)
+		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default", nil, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -710,7 +712,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 // test that causes RetryWatcher to stop and the cache needs to resync
 func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
-		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default", nil)
+		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default", nil, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -906,13 +908,15 @@ func TestGetPackageRepositories(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
+// objects may contain flux HelmRepository CRDs and corresponding Secrets, if applicable
+func newServerWithRepos(t *testing.T, objects []runtime.Object, charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
+	typedClient := typfake.NewSimpleClientset()
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
 			repositoriesGvr: fluxHelmRepositoryList,
 		},
-		repos...)
+		objects...)
 
 	// here we are essentially adding on to how List() works for HelmRepository objects
 	// this is done so that the the item list returned by List() command with fake client contains
@@ -939,11 +943,11 @@ func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecC
 
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 
-	clientGetter := func(context.Context) (dynamic.Interface, apiext.Interface, error) {
-		return dynamicClient, apiextIfc, nil
+	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
+		return typedClient, dynamicClient, apiextIfc, nil
 	}
 
-	s, mock, err := newServer(t, clientGetter, nil, repos, charts)
+	s, mock, err := newServer(t, clientGetter, nil, objects, charts)
 	return s, mock, dynamicClient, watcher, err
 }
 
@@ -986,6 +990,30 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 	return repos
 }
 
+// ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+func newBasicAuthSecret(name, namespace, user, password string) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"name":      name,
+		"namespace": namespace,
+	}
+	stringData := map[string]interface{}{
+		"username": user,
+		"password": password,
+	}
+
+	obj := map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Secret",
+		"metadata":   metadata,
+		"type":       "kubernetes.io/basic-auth",
+		"stringData": stringData,
+	}
+
+	return &unstructured.Unstructured{
+		Object: obj,
+	}
+}
+
 // does a series of mock.ExpectGet(...)
 func redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
 	mapVals := make(map[string][]byte)
@@ -1013,12 +1041,12 @@ func redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *c
 }
 
 func redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
-	if _, err = redisKeyForRepo(repo); err != nil {
-		return "", nil, err
+	if key, err = redisKeyForRepo(repo); err != nil {
+		return key, nil, err
 	}
-	if key, bytes, err := redisKeyValueForRepo(repo); err != nil {
+	if key, bytes, err = redisKeyValueForRepo(repo); err != nil {
 		mock.ExpectDel(key).SetVal(0)
-		return "", nil, err
+		return key, nil, err
 	} else {
 		mock.ExpectSet(key, bytes, 0).SetVal("OK")
 		mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
@@ -1026,17 +1054,21 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (k
 	}
 }
 
-func redisKeyValueForRepo(r runtime.Object) (string, []byte, error) {
-	if key, err := redisKeyForRepo(r); err != nil {
-		return "", nil, err
+func redisKeyValueForRepo(r runtime.Object) (key string, bytes []byte, err error) {
+	if key, err = redisKeyForRepo(r); err != nil {
+		return key, nil, err
 	} else {
 		// we are not really adding anything to the cache here, rather just calling a
 		// onAddRepo to compute the value that *WOULD* be stored in the cache
-		bytes, _, err := onAddRepo(key, r.(*unstructured.Unstructured).Object)
+		var byteArray interface{}
+		var add bool
+		byteArray, add, err = onAddRepo(key, r.(*unstructured.Unstructured).Object)
 		if err != nil {
 			return key, nil, err
+		} else if !add {
+			return key, nil, fmt.Errorf("onAddRepo returned false for setVal")
 		}
-		return key, bytes.([]byte), nil
+		return key, byteArray.([]byte), nil
 	}
 }
 
@@ -1061,7 +1093,7 @@ func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
 	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
-func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string) (*httptest.Server, *unstructured.Unstructured, error) {
+func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *unstructured.Unstructured, error) {
 	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
 	if err != nil {
 		return nil, nil, err
@@ -1071,7 +1103,11 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 		indexYAMLBytes = []byte(strings.ReplaceAll(string(indexYAMLBytes), k, v))
 	}
 
-	// stand up an http server just for the duration of this test
+	// stand up a plain text http server to server the contents of index.yaml just for the
+	// duration of this test. We are never standing up a TLS server (or any kind of secured
+	// server for that matter) for repo index.yaml file because this scenario should never
+	// happen in production. See comments in repo.go for explanation
+	// This is only true for repo index.yaml, not for the chart URLs within it.
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, string(indexYAMLBytes))
 	}))
@@ -1079,6 +1115,12 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 	repoSpec := map[string]interface{}{
 		"url":      "https://example.repo.com/charts",
 		"interval": "1m0s",
+	}
+
+	if secretRef != "" {
+		repoSpec["secretRef"] = map[string]interface{}{
+			"name": secretRef,
+		}
 	}
 
 	repoStatus := map[string]interface{}{

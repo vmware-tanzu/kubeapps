@@ -17,7 +17,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -54,23 +53,25 @@ type ChartCache struct {
 	// simultaneously in different workers.
 	queue cache.RateLimitingInterface
 
-	// this is a temporary store only used to keep track of chart details
-	// in a time window between AddRateLimited() is called and runWorker picks up
-	// the corresponding item from the queue
+	// this is a transient (temporary) store only used to keep track of
+	// state (chart url, etc) during the time window between AddRateLimited()
+	// is called by the producer and runWorker consumer picks up
+	// the corresponding item from the queue. Upon successful processing
+	// of the item, the corresponding store entry is deleted
 	processing k8scache.Store
 }
 
 // chartCacheStoreEntry is what we'll be storing in the processing store
 // note that url and delete fields are mutually exclusive, you must either:
 //  - set url to non-empty string or
-//  - delete flag to true
+//  - deleted flag to true
 // setting both does not make sense
 type chartCacheStoreEntry struct {
 	namespace string
 	id        string
 	version   string
 	url       string
-	delete    bool
+	deleted   bool
 }
 
 func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
@@ -93,6 +94,7 @@ func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
 	// this will launch a single worker that processes items on the work queue as they come in
 	// runWorker will loop until "something bad" happens.  The .Until will
 	// then rekick the worker after one second
+	// TODO (gfichtenholt) we should have multiple workers
 	go wait.Until(c.runWorker, time.Second, stopCh)
 
 	return &c, nil
@@ -167,12 +169,14 @@ func (c *ChartCache) syncCharts(charts []models.Chart) {
 			log.Warningf("Chart: [%s], version: [%s] has no URLs", chart.ID, chart.ChartVersions[0].Version)
 			continue
 		}
+		// The tarball URL will always be the first URL in the repo.chartVersions.
+		// So says the helm plugin :-)
 		entry := chartCacheStoreEntry{
 			namespace: chart.Repo.Namespace,
 			id:        chart.ID,
 			version:   chart.ChartVersions[0].Version,
 			url:       chart.ChartVersions[0].URLs[0],
-			delete:    false,
+			deleted:   false,
 		}
 		c.processing.Add(entry)
 		if key, err := chartCacheKeyFunc(entry); err != nil {
@@ -305,7 +309,7 @@ func (c *ChartCache) deleteChartsForRepo(key string) error {
 				namespace: namespace,
 				id:        chartID,
 				version:   chartVersion,
-				delete:    true,
+				deleted:   true,
 			}
 			c.processing.Add(entry)
 			log.Infof("Marked key [%s] to be deleted", k)
@@ -349,7 +353,7 @@ func (c *ChartCache) syncHandler(key string) (err error) {
 		return err
 	}
 
-	if chart.delete {
+	if chart.deleted {
 		// TODO: (gfichtenholt) DEL has the capability to delete multiple keys in one
 		// atomic operation. It would be nice to come up with a way to utilize that here
 		var keysremoved int64
@@ -498,35 +502,20 @@ func chartCacheComputeValue(chartID, url, version string) ([]byte, error) {
 	// TODO (gfichtenholt) if there is a secret associated with owner HelmRepository
 	// we need to use it below
 
-	// In theory, the work queue should be able to retry transient errors
-	// so I shouldn't have to do retries here. However there are cases I am using this func
-	// outside the context of syncHandler() in unit tests, so I don't really want
-	// it to fail if I can help it
-	const maxRetries = 5
-	var chartTgz []byte
-	ok := false
-	for i := 0; i < maxRetries && !ok; i++ {
-		reader, _, err := httpclient.GetStream(url, httpclient.New(), make(map[string]string))
-		if reader != nil {
-			defer reader.Close()
-		}
-		if err == nil {
-			if chartTgz, err = ioutil.ReadAll(reader); err != nil {
-				log.Warningf("%+v", err)
-			} else {
-				ok = true
-				break
-			}
-		} else {
-			log.Warningf("%+v", err)
-		}
-		waitTime := math.Pow(2, float64(i))
-		log.Infof("Waiting [%d] seconds before retry...", waitTime)
-		time.Sleep(time.Duration(waitTime) * time.Second)
+	// The work queue should be able to retry transient HTTP errors
+	// so I shouldn't have to do retries here.
+	// TODO (gfichtenholt) verify this is actually the case
+	reader, _, err := httpclient.GetStream(url, httpclient.New(), make(map[string]string))
+	if reader != nil {
+		defer reader.Close()
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	if !ok {
-		return nil, fmt.Errorf("failed to retrieve chart [%s] from [%s]", chartID, url)
+	chartTgz, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: %d bytes",

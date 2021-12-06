@@ -49,7 +49,7 @@ const (
 )
 
 func (s *Server) getRepoResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := s.getDynamicClient(ctx)
+	_, client, _, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -194,12 +194,23 @@ func isRepoReady(unstructuredRepo map[string]interface{}) bool {
 
 // it is assumed the caller has already checked that this repo is ready
 // At present, there is only one caller of indexOneRepo() and this check is already done by it
-func indexOneRepo(unstructuredRepo map[string]interface{}) (charts []models.Chart, err error) {
+func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
 	startTime := time.Now()
 
 	repo, err := packageRepositoryFromUnstructured(unstructuredRepo)
 	if err != nil {
 		return nil, err
+	}
+
+	// this is only until https://github.com/kubeapps/kubeapps/issues/3496
+	// "Investigate and propose package repositories API with similar core interface to packages API"
+	// gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
+	_, found, err := unstructured.NestedString(unstructuredRepo, "spec", "secretRef", "name")
+	if found && err != nil {
+		// TODO: the problem is we need to be able to do something like
+		//caCertSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
+		// to be able to do that I need a typedClient instance
+
 	}
 
 	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
@@ -212,12 +223,16 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) (charts []models.Char
 
 	log.Infof("+indexOneRepo: [%s], index URL: [%s]", repo.Name, indexUrl)
 
-	// no need to provide authz, userAgent or any of the TLS details, as we are reading index.yaml file from
-	// local cluster, not some remote repo.
+	// In production, there should be no need to provide authz, userAgent or any of the TLS details,
+	// as we are reading index.yaml file from local cluster, not some remote repo.
 	// e.g. http://source-controller.flux-system.svc.cluster.local./helmrepository/default/bitnami/index.yaml
 	// Flux does the hard work of pulling the index file from remote repo
 	// into local cluster based on secretRef associated with HelmRepository, if applicable
-	bytes, err := httpclient.Get(indexUrl, httpclient.New(), map[string]string{})
+	// This is only true of index.yaml, not the individual chart URLs within it
+
+	// if a transient error occurs the item should be re-queued and retried after a back-off period
+	// TODO (gfichtenholt) verify this is actually the case
+	byteArray, err := httpclient.Get(indexUrl, httpclient.New(), map[string]string{})
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +248,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) (charts []models.Char
 	// shallow = true  => 8-9 sec
 	// shallow = false => 12-13 sec, so deep copy adds 50% to cost, but we need it to
 	// for GetAvailablePackageVersions()
-	charts, err = helm.ChartsFromIndex(bytes, modelRepo, false)
+	charts, err := helm.ChartsFromIndex(byteArray, modelRepo, false)
 	if err != nil {
 		return nil, err
 	}
@@ -327,9 +342,20 @@ type repoCacheEntryValue struct {
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
+func (s *Server) onAddRepoX(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
+	log.V(4).Info("+onAddRepoX()")
+	defer log.V(4).Info("-onAddRepoX()")
+	return nil, false, nil
+}
+
+// onAddRepo essentially tells the cache whether to and what to store for a given key
 func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
 	log.V(4).Info("+onAddRepo()")
 	defer log.V(4).Info("-onAddRepo()")
+
+	// TODO (gfichtenholt) use
+	// runtime.DefaultUnstructuredConverter.FromUnstructured to convert to flux typed API
+	// https://fluxcd.io/docs/components/source/api/#source.toolkit.fluxcd.io/v1beta1.HelmRepository
 
 	// first, check the repo is ready
 	if isRepoReady(unstructuredRepo) {
