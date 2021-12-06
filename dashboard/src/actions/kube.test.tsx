@@ -85,7 +85,9 @@ describe("getResourceKinds", () => {
     expect(Kube.getAPIGroups).toHaveBeenCalledWith("cluster-1");
     expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", groups);
   });
+});
 
+describe("getResources", () => {
   it("dispatches a requestResources action with an onComplete that closes request when watching", () => {
     const refs = [
       {
@@ -167,53 +169,6 @@ describe("getResourceKinds", () => {
     const onComplete = store.getActions()[0].payload.onComplete;
     onComplete();
     expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("getResources", () => {
-  it("dispatches a requestResources action with an onComplete that closes request", () => {
-    const refs = [
-      {
-        apiVersion: "v1",
-        kind: "Service",
-        name: "foo",
-        namespace: "default",
-      },
-    ] as APIResourceRef[];
-
-    const pkg = {
-      identifier: "test-pkg",
-    } as InstalledPackageReference;
-
-    const watch = true;
-
-    const expectedActions = [
-      {
-        type: getType(actions.kube.requestResources),
-        payload: {
-          pkg,
-          refs,
-          watch,
-          handler: expect.any(Function),
-          onError: expect.any(Function),
-          onComplete: expect.any(Function),
-        },
-      },
-    ];
-
-    store.dispatch(actions.kube.getResources(pkg, refs, watch));
-    expect(store.getActions()).toEqual(expectedActions);
-
-    const expectedCompletionActions = [
-      expectedActions[0],
-      {
-        type: getType(actions.kube.closeRequestResources),
-        payload: pkg,
-      },
-    ];
-    const onComplete = store.getActions()[0].payload.onComplete;
-    onComplete();
-    expect(store.getActions()).toEqual(expectedCompletionActions);
   });
 });
 
