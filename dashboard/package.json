@@ -98,7 +98,7 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-import-resolver-typescript": "^2.5.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "eslint-plugin-redos": "^1.2.0",
+    "eslint-plugin-redos": "^4.1.1",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
     "mock-socket": "^9.0.8",
