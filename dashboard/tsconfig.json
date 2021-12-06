@@ -52,6 +52,9 @@
     "acceptance-tests",
     "webpack",
     "jest",
+    /* Exclude the ts-proto generated content until
+    https://github.com/stephenh/ts-proto/issues/432 is addressed.
+    */
     "src/gen"
   ],
   "include": ["src"]
