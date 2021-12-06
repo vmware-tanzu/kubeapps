@@ -92,6 +92,78 @@ export interface GetServiceAccountNamesResponse {
   serviceaccountNames: string[];
 }
 
+/**
+ * GetNamespaceNamesRequest
+ *
+ * Request for GetNamespaceNames
+ */
+export interface GetNamespaceNamesRequest {
+  /**
+   * Cluster
+   *
+   * The context for which the namespace names are being fetched.  The service
+   * will attempt to list namespaces across the cluster, first with the users
+   * credential, then with a configured service account if available.
+   */
+  cluster: string;
+}
+
+/**
+ * CreateNamespaceRequest
+ *
+ * Request for CreateNamespace
+ */
+export interface CreateNamespaceRequest {
+  /**
+   * Context
+   *
+   * The context of the namespace being created.
+   */
+  context?: Context;
+}
+
+/**
+ * CreateNamespaceResponse
+ *
+ * Response for CreateNamespace
+ */
+export interface CreateNamespaceResponse {}
+
+/**
+ * GetNamespaceNamesResponse
+ *
+ * Response for GetNamespaceNames
+ */
+export interface GetNamespaceNamesResponse {
+  /**
+   * NamespaceNames
+   *
+   * The list of Namespace names.
+   */
+  namespaceNames: string[];
+}
+
+/**
+ * CheckNamespaceExistsRequest
+ *
+ * Request for CheckNamespaceExists
+ */
+export interface CheckNamespaceExistsRequest {
+  /**
+   * Context
+   *
+   * The context of the namespace being checked for existence.
+   */
+  context?: Context;
+}
+
+/**
+ * CheckNamespaceExistsResponse
+ *
+ * Response for CheckNamespaceExists
+ */
+export interface CheckNamespaceExistsResponse {}
+
 const baseGetResourcesRequest: object = { watch: false };
 
 export const GetResourcesRequest = {
@@ -377,6 +449,335 @@ export const GetServiceAccountNamesResponse = {
   },
 };
 
+const baseGetNamespaceNamesRequest: object = { cluster: "" };
+
+export const GetNamespaceNamesRequest = {
+  encode(message: GetNamespaceNamesRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.cluster !== "") {
+      writer.uint32(10).string(message.cluster);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetNamespaceNamesRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseGetNamespaceNamesRequest,
+    } as GetNamespaceNamesRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.cluster = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetNamespaceNamesRequest {
+    const message = {
+      ...baseGetNamespaceNamesRequest,
+    } as GetNamespaceNamesRequest;
+    message.cluster =
+      object.cluster !== undefined && object.cluster !== null ? String(object.cluster) : "";
+    return message;
+  },
+
+  toJSON(message: GetNamespaceNamesRequest): unknown {
+    const obj: any = {};
+    message.cluster !== undefined && (obj.cluster = message.cluster);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesRequest>, I>>(
+    object: I,
+  ): GetNamespaceNamesRequest {
+    const message = {
+      ...baseGetNamespaceNamesRequest,
+    } as GetNamespaceNamesRequest;
+    message.cluster = object.cluster ?? "";
+    return message;
+  },
+};
+
+const baseCreateNamespaceRequest: object = {};
+
+export const CreateNamespaceRequest = {
+  encode(message: CreateNamespaceRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateNamespaceRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseCreateNamespaceRequest } as CreateNamespaceRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateNamespaceRequest {
+    const message = { ...baseCreateNamespaceRequest } as CreateNamespaceRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    return message;
+  },
+
+  toJSON(message: CreateNamespaceRequest): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CreateNamespaceRequest>, I>>(
+    object: I,
+  ): CreateNamespaceRequest {
+    const message = { ...baseCreateNamespaceRequest } as CreateNamespaceRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    return message;
+  },
+};
+
+const baseCreateNamespaceResponse: object = {};
+
+export const CreateNamespaceResponse = {
+  encode(_: CreateNamespaceResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateNamespaceResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseCreateNamespaceResponse,
+    } as CreateNamespaceResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): CreateNamespaceResponse {
+    const message = {
+      ...baseCreateNamespaceResponse,
+    } as CreateNamespaceResponse;
+    return message;
+  },
+
+  toJSON(_: CreateNamespaceResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CreateNamespaceResponse>, I>>(
+    _: I,
+  ): CreateNamespaceResponse {
+    const message = {
+      ...baseCreateNamespaceResponse,
+    } as CreateNamespaceResponse;
+    return message;
+  },
+};
+
+const baseGetNamespaceNamesResponse: object = { namespaceNames: "" };
+
+export const GetNamespaceNamesResponse = {
+  encode(message: GetNamespaceNamesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.namespaceNames) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetNamespaceNamesResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseGetNamespaceNamesResponse,
+    } as GetNamespaceNamesResponse;
+    message.namespaceNames = [];
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.namespaceNames.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetNamespaceNamesResponse {
+    const message = {
+      ...baseGetNamespaceNamesResponse,
+    } as GetNamespaceNamesResponse;
+    message.namespaceNames = (object.namespaceNames ?? []).map((e: any) => String(e));
+    return message;
+  },
+
+  toJSON(message: GetNamespaceNamesResponse): unknown {
+    const obj: any = {};
+    if (message.namespaceNames) {
+      obj.namespaceNames = message.namespaceNames.map(e => e);
+    } else {
+      obj.namespaceNames = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesResponse>, I>>(
+    object: I,
+  ): GetNamespaceNamesResponse {
+    const message = {
+      ...baseGetNamespaceNamesResponse,
+    } as GetNamespaceNamesResponse;
+    message.namespaceNames = object.namespaceNames?.map(e => e) || [];
+    return message;
+  },
+};
+
+const baseCheckNamespaceExistsRequest: object = {};
+
+export const CheckNamespaceExistsRequest = {
+  encode(
+    message: CheckNamespaceExistsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CheckNamespaceExistsRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseCheckNamespaceExistsRequest,
+    } as CheckNamespaceExistsRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CheckNamespaceExistsRequest {
+    const message = {
+      ...baseCheckNamespaceExistsRequest,
+    } as CheckNamespaceExistsRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    return message;
+  },
+
+  toJSON(message: CheckNamespaceExistsRequest): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsRequest>, I>>(
+    object: I,
+  ): CheckNamespaceExistsRequest {
+    const message = {
+      ...baseCheckNamespaceExistsRequest,
+    } as CheckNamespaceExistsRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    return message;
+  },
+};
+
+const baseCheckNamespaceExistsResponse: object = {};
+
+export const CheckNamespaceExistsResponse = {
+  encode(_: CheckNamespaceExistsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CheckNamespaceExistsResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseCheckNamespaceExistsResponse,
+    } as CheckNamespaceExistsResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): CheckNamespaceExistsResponse {
+    const message = {
+      ...baseCheckNamespaceExistsResponse,
+    } as CheckNamespaceExistsResponse;
+    return message;
+  },
+
+  toJSON(_: CheckNamespaceExistsResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsResponse>, I>>(
+    _: I,
+  ): CheckNamespaceExistsResponse {
+    const message = {
+      ...baseCheckNamespaceExistsResponse,
+    } as CheckNamespaceExistsResponse;
+    return message;
+  },
+};
+
 export interface ResourcesService {
   GetResources(
     request: DeepPartial<GetResourcesRequest>,
@@ -386,6 +787,18 @@ export interface ResourcesService {
     request: DeepPartial<GetServiceAccountNamesRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetServiceAccountNamesResponse>;
+  GetNamespaceNames(
+    request: DeepPartial<GetNamespaceNamesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetNamespaceNamesResponse>;
+  CreateNamespace(
+    request: DeepPartial<CreateNamespaceRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateNamespaceResponse>;
+  CheckNamespaceExists(
+    request: DeepPartial<CheckNamespaceExistsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CheckNamespaceExistsResponse>;
 }
 
 export class ResourcesServiceClientImpl implements ResourcesService {
@@ -395,6 +808,9 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     this.rpc = rpc;
     this.GetResources = this.GetResources.bind(this);
     this.GetServiceAccountNames = this.GetServiceAccountNames.bind(this);
+    this.GetNamespaceNames = this.GetNamespaceNames.bind(this);
+    this.CreateNamespace = this.CreateNamespace.bind(this);
+    this.CheckNamespaceExists = this.CheckNamespaceExists.bind(this);
   }
 
   GetResources(
@@ -415,6 +831,39 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     return this.rpc.unary(
       ResourcesServiceGetServiceAccountNamesDesc,
       GetServiceAccountNamesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetNamespaceNames(
+    request: DeepPartial<GetNamespaceNamesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetNamespaceNamesResponse> {
+    return this.rpc.unary(
+      ResourcesServiceGetNamespaceNamesDesc,
+      GetNamespaceNamesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  CreateNamespace(
+    request: DeepPartial<CreateNamespaceRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateNamespaceResponse> {
+    return this.rpc.unary(
+      ResourcesServiceCreateNamespaceDesc,
+      CreateNamespaceRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  CheckNamespaceExists(
+    request: DeepPartial<CheckNamespaceExistsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CheckNamespaceExistsResponse> {
+    return this.rpc.unary(
+      ResourcesServiceCheckNamespaceExistsDesc,
+      CheckNamespaceExistsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -460,6 +909,72 @@ export const ResourcesServiceGetServiceAccountNamesDesc: UnaryMethodDefinitionis
     deserializeBinary(data: Uint8Array) {
       return {
         ...GetServiceAccountNamesResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const ResourcesServiceGetNamespaceNamesDesc: UnaryMethodDefinitionish = {
+  methodName: "GetNamespaceNames",
+  service: ResourcesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetNamespaceNamesRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetNamespaceNamesResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const ResourcesServiceCreateNamespaceDesc: UnaryMethodDefinitionish = {
+  methodName: "CreateNamespace",
+  service: ResourcesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CreateNamespaceRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CreateNamespaceResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const ResourcesServiceCheckNamespaceExistsDesc: UnaryMethodDefinitionish = {
+  methodName: "CheckNamespaceExists",
+  service: ResourcesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CheckNamespaceExistsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CheckNamespaceExistsResponse.decode(data),
         toObject() {
           return this;
         },

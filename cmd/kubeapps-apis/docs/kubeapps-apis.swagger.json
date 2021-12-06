@@ -2547,6 +2547,118 @@
         ]
       }
     },
+    "/plugins/resources/v1alpha1/c/{cluster}/namespacenames": {
+      "get": {
+        "operationId": "ResourcesService_GetNamespaceNames",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetNamespaceNamesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster",
+            "description": "Cluster\n\nThe context for which the namespace names are being fetched.  The service\nwill attempt to list namespaces across the cluster, first with the users\ncredential, then with a configured service account if available.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ResourcesService"
+        ]
+      }
+    },
+    "/plugins/resources/v1alpha1/c/{context.cluster}/ns": {
+      "post": {
+        "operationId": "ResourcesService_CreateNamespace",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateNamespaceResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ResourcesService"
+        ]
+      }
+    },
+    "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}": {
+      "get": {
+        "operationId": "ResourcesService_CheckNamespaceExists",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CheckNamespaceExistsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ResourcesService"
+        ]
+      }
+    },
     "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/serviceaccountnames": {
       "get": {
         "operationId": "ResourcesService_GetServiceAccountNames",
@@ -2976,6 +3088,11 @@
       "description": "An AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages.",
       "title": "AvailablePackageSummary"
     },
+    "v1alpha1CheckNamespaceExistsResponse": {
+      "type": "object",
+      "description": "Response for CheckNamespaceExists",
+      "title": "CheckNamespaceExistsResponse"
+    },
     "v1alpha1Context": {
       "type": "object",
       "properties": {
@@ -3033,6 +3150,11 @@
       },
       "description": "Response for CreateInstalledPackage",
       "title": "CreateInstalledPackageResponse"
+    },
+    "v1alpha1CreateNamespaceResponse": {
+      "type": "object",
+      "description": "Response for CreateNamespace",
+      "title": "CreateNamespaceResponse"
     },
     "v1alpha1DeleteInstalledPackageResponse": {
       "type": "object",
@@ -3202,6 +3324,21 @@
       },
       "description": "Response for GetInstalledPackageSummaries",
       "title": "GetInstalledPackageSummariesResponse"
+    },
+    "v1alpha1GetNamespaceNamesResponse": {
+      "type": "object",
+      "properties": {
+        "namespaceNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The list of Namespace names.",
+          "title": "NamespaceNames"
+        }
+      },
+      "description": "Response for GetNamespaceNames",
+      "title": "GetNamespaceNamesResponse"
     },
     "v1alpha1GetResourcesResponse": {
       "type": "object",
