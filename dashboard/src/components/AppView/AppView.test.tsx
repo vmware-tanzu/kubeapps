@@ -16,7 +16,6 @@ import {
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route } from "react-router";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError } from "shared/types";
@@ -39,9 +38,6 @@ const routeParams = {
 };
 const routePathParam = `/c/${routeParams.cluster}/ns/${routeParams.namespace}/apps/${routeParams.plugin.name}/${routeParams.plugin.version}/${routeParams.releaseName}`;
 const routePath = "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName";
-let spyOnUseDispatch: jest.SpyInstance;
-const appActions = { ...actions.apps };
-const kubeaActions = { ...actions.kube };
 
 const installedPackage = {
   name: "test",
@@ -110,21 +106,6 @@ const validState = {
 };
 
 describe("AppView", () => {
-  beforeEach(() => {
-    actions.apps = {
-      ...actions.apps,
-      getApp: jest.fn(),
-    };
-    const mockDispatch = jest.fn();
-    spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  });
-
-  afterEach(() => {
-    actions.apps = { ...appActions };
-    actions.kube = { ...kubeaActions };
-    spyOnUseDispatch.mockRestore();
-  });
-
   it("renders a loading wrapper", () => {
     const wrapper = mountWrapper(defaultStore, <AppView />);
     expect(wrapper.find(LoadingWrapper)).toExist();
@@ -348,8 +329,12 @@ describe("AppView", () => {
 });
 
 describe("AppView actions", () => {
-  it("watches the given resources when mounted", async () => {
-    const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as ResourceRef[];
+  it("watches certain resources and gets others when mounted", async () => {
+    const apiResourceRefs = [
+      resourceRefs.deployment,
+      resourceRefs.service,
+      resourceRefs.secret,
+    ] as ResourceRef[];
     const store = getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } });
 
     mountWrapper(
@@ -361,7 +346,6 @@ describe("AppView actions", () => {
       </MemoryRouter>,
     );
 
-    const watch = true;
     expect(store.getActions()).toEqual([
       {
         type: getType(actions.apps.requestApps),
@@ -370,8 +354,19 @@ describe("AppView actions", () => {
         type: getType(actions.kube.requestResources),
         payload: {
           pkg: installedPackage.installedPackageRef,
-          refs: apiResourceRefs,
-          watch,
+          refs: [resourceRefs.secret],
+          watch: false,
+          handler: expect.any(Function),
+          onError: expect.any(Function),
+          onComplete: expect.any(Function),
+        },
+      },
+      {
+        type: getType(actions.kube.requestResources),
+        payload: {
+          pkg: installedPackage.installedPackageRef,
+          refs: [resourceRefs.deployment, resourceRefs.service],
+          watch: true,
           handler: expect.any(Function),
           onError: expect.any(Function),
           onComplete: expect.any(Function),

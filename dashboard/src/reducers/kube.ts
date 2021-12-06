@@ -151,7 +151,6 @@ const kubeReducer = (
     }
     case getType(actions.kube.requestResources): {
       const { pkg, refs, handler, watch, onError, onComplete } = action.payload;
-      const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
       const observable = Kube.getResources(pkg, refs, watch);
       const subscription = observable.subscribe({
         next(r) {
@@ -161,16 +160,23 @@ const kubeReducer = (
           onError(e);
         },
         complete() {
-          onComplete(pkg);
+          onComplete();
         },
       });
-      return {
-        ...state,
-        subscriptions: {
-          ...state.subscriptions,
-          [key]: subscription,
-        },
-      };
+      // We only record the subscription if watching the result, since otherwise
+      // the call is terminated by the server automatically once results are
+      // returned and we don't need any book-keeping.
+      if (watch) {
+        const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
+        return {
+          ...state,
+          subscriptions: {
+            ...state.subscriptions,
+            [key]: subscription,
+          },
+        };
+      }
+      return state;
     }
     case getType(actions.kube.closeRequestResources): {
       const pkg = action.payload;

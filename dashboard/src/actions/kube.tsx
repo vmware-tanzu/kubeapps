@@ -39,7 +39,7 @@ export const requestResources = createAction("REQUEST_RESOURCES", resolve => {
     watch: boolean,
     handler: (r: GetResourcesResponse) => void,
     onError: (e: Event) => void,
-    onComplete: (pkg: InstalledPackageReference) => void,
+    onComplete: () => void,
   ) => resolve({ pkg, refs, watch, handler, onError, onComplete });
 });
 
@@ -98,8 +98,10 @@ export function getResources(
         (e: any) => {
           dispatch(receiveResourcesError(e));
         },
-        (pkg: InstalledPackageReference) => {
-          dispatch(closeRequestResources(pkg));
+        () => {
+          if (watch) {
+            dispatch(closeRequestResources(pkg));
+          }
         },
       ),
     );
