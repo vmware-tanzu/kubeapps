@@ -6,6 +6,7 @@ import {
   Context,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Kube } from "shared/Kube";
 
 describe("kubeReducer", () => {
   let initialState: IKubeState;
@@ -89,6 +90,19 @@ describe("kubeReducer", () => {
       // Ensure our shared/Kube helper is not calling out on the network.
       jest.mock("shared/Kube");
 
+      const subscribe = jest.fn(() => true);
+
+      beforeEach(() => {
+        const observable = {
+          subscribe,
+        };
+        Kube.getResources = jest.fn(() => observable as any);
+      });
+
+      afterEach(() => {
+        jest.resetAllMocks();
+      });
+
       const pkg = {
         context: {
           cluster: "default",
@@ -107,13 +121,32 @@ describe("kubeReducer", () => {
         onComplete: jest.fn(),
       };
 
-      it("adds a new subscription to the state for the requested package", () => {
+      it("adds a new subscription to the state when watching the requested package", () => {
         const newState = kubeReducer(undefined, {
           type: getType(actions.kube.requestResources),
-          payload: defaultPayload,
+          payload: {
+            ...defaultPayload,
+            watch: true,
+          },
         });
 
+        expect(Kube.getResources).toBeCalledWith(pkg, [], true);
+        expect(subscribe).toHaveBeenCalled();
         expect(newState.subscriptions[key]).toBeDefined();
+      });
+
+      it("does not add a new subscription to the state when getting the requested package", () => {
+        const newState = kubeReducer(undefined, {
+          type: getType(actions.kube.requestResources),
+          payload: {
+            ...defaultPayload,
+            watch: false,
+          },
+        });
+
+        expect(Kube.getResources).toBeCalledWith(pkg, [], false);
+        expect(subscribe).toHaveBeenCalled();
+        expect(newState.subscriptions[key]).toBeUndefined();
       });
     });
   });
