@@ -14,9 +14,7 @@ const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
     items: resources,
     kinds: initialKinds,
-    sockets: {},
     subscriptions: {},
-    timers: {},
   };
   return mockStore({ kube: state, config: { featureFlags: {} } });
 };
@@ -32,7 +30,7 @@ describe("ApplicationStatusContainer", () => {
       namespace: ns,
       name,
     } as ResourceRef;
-    const key = keyForResourceRef(ref.apiVersion, ref.kind, ref.namespace, ref.name);
+    const key = keyForResourceRef(ref);
     const store = makeStore({
       [key]: item,
     });
