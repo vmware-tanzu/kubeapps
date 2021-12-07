@@ -3,8 +3,11 @@ import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
 import { ForbiddenError, IResource, NotFoundError } from "./types";
 import * as url from "./url";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class Namespace {
+  private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
+
   public static async list(cluster: string) {
     // This call is hitting an actual backend endpoint (see pkg/http-handler.go)
     // while the other calls (create, get) are hitting the k8s API via the
@@ -26,12 +29,16 @@ export default class Namespace {
     return data;
   }
 
-  public static async get(cluster: string, namespace: string) {
+  public static async exists(cluster: string, namespace: string) {
     try {
-      const { data } = await axiosWithAuth.get<IResource>(
-        url.api.k8s.namespace(cluster, namespace),
-      );
-      return data;
+      const { exists } = await this.resourcesClient().CheckNamespaceExists({
+        context: {
+          cluster,
+          namespace,
+        },
+      });
+
+      return exists;
     } catch (e: any) {
       switch (e.constructor) {
         case ForbiddenError:
