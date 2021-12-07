@@ -30,7 +30,9 @@
     /* Type Checking */
     "noFallthroughCasesInSwitch": true /* Enable error reporting for fallthrough cases in switch statements. */,
     "noImplicitAny": true /* Enable error reporting for expressions and declarations with an implied `any` type.. */,
-    "noImplicitReturns": true /* Enable error reporting for codepaths that do not explicitly return in a function. */,
+    /* TODO(minelson): noImplicitReturns disabled until addressed in ts-proto:
+     * https://github.com/stephenh/ts-proto/issues/432
+    "noImplicitReturns": true /* Enable error reporting for codepaths that do not explicitly return in a function. * /,*/
     "noImplicitThis": true /* Enable error reporting when `this` is given the type `any`. */,
     // "noPropertyAccessFromIndexSignature": true, /* Enforces using indexed accessors for keys declared using an indexed type */
     "noUnusedLocals": true /* Enable error reporting when a local variables aren't read. */,
