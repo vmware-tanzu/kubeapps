@@ -7,7 +7,7 @@ import { CdsTextarea } from "@cds/react/textarea";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import * as yaml from "js-yaml";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -49,6 +49,7 @@ const TYPE_OCI = "oci";
 
 export function AppRepoForm(props: IAppRepoFormProps) {
   const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo, secret } = props;
+  const isInstallingRef = useRef(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const [authMethod, setAuthMethod] = useState(AUTH_METHOD_NONE);
@@ -156,6 +157,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
 
   const install = async () => {
+    if (isInstallingRef.current) {
+      // Another installation is ongoing
+      return;
+    }
+    isInstallingRef.current = true;
     let finalHeader = "";
     let dockerRegCreds = "";
     switch (authMethod) {
@@ -217,6 +223,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         onAfterInstall();
       }
     }
+    isInstallingRef.current = false;
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
@@ -620,7 +627,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         </Alert>
       )}
       <div className="margin-t-xl">
-        <CdsButton disabled={validating} onClick={install}>
+        <CdsButton type="submit" disabled={validating}>
           {validating
             ? "Validating..."
             : `${repo ? "Update" : "Install"} Repo ${validated === false ? "(force)" : ""}`}
