@@ -416,13 +416,16 @@ func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {
 
 // errorByStatus generates a meaningful error message
 func errorByStatus(verb, resource, identifier string, err error) error {
+	// If the error is already a k8s StatusError, return the StatusErr
 	if identifier == "" {
 		identifier = "all"
 	}
 	if errors.IsNotFound(err) {
 		return status.Errorf(codes.NotFound, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
 	} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-		return status.Errorf(codes.Unauthenticated, "Unauthorized to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+		return status.Errorf(codes.PermissionDenied, "Unauthorized to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+	} else if errors.IsAlreadyExists(err) {
+		return status.Errorf(codes.AlreadyExists, "Cannot %s the %s '%s' due to '%v' as it already exists", verb, resource, identifier, err)
 	}
 	return status.Errorf(codes.Internal, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
 }
