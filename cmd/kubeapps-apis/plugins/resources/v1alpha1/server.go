@@ -416,6 +416,7 @@ func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {
 
 // errorByStatus generates a meaningful error message
 func errorByStatus(verb, resource, identifier string, err error) error {
+	// If the error is already a k8s StatusError, return the StatusErr
 	if identifier == "" {
 		identifier = "all"
 	}
