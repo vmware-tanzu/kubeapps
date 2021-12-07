@@ -162,7 +162,9 @@ export interface CheckNamespaceExistsRequest {
  *
  * Response for CheckNamespaceExists
  */
-export interface CheckNamespaceExistsResponse {}
+export interface CheckNamespaceExistsResponse {
+  exists: boolean;
+}
 
 const baseGetResourcesRequest: object = { watch: false };
 
@@ -732,10 +734,16 @@ export const CheckNamespaceExistsRequest = {
   },
 };
 
-const baseCheckNamespaceExistsResponse: object = {};
+const baseCheckNamespaceExistsResponse: object = { exists: false };
 
 export const CheckNamespaceExistsResponse = {
-  encode(_: CheckNamespaceExistsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: CheckNamespaceExistsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.exists === true) {
+      writer.uint32(8).bool(message.exists);
+    }
     return writer;
   },
 
@@ -748,6 +756,9 @@ export const CheckNamespaceExistsResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.exists = reader.bool();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -756,28 +767,38 @@ export const CheckNamespaceExistsResponse = {
     return message;
   },
 
-  fromJSON(_: any): CheckNamespaceExistsResponse {
+  fromJSON(object: any): CheckNamespaceExistsResponse {
     const message = {
       ...baseCheckNamespaceExistsResponse,
     } as CheckNamespaceExistsResponse;
+    message.exists =
+      object.exists !== undefined && object.exists !== null ? Boolean(object.exists) : false;
     return message;
   },
 
-  toJSON(_: CheckNamespaceExistsResponse): unknown {
+  toJSON(message: CheckNamespaceExistsResponse): unknown {
     const obj: any = {};
+    message.exists !== undefined && (obj.exists = message.exists);
     return obj;
   },
 
   fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsResponse>, I>>(
-    _: I,
+    object: I,
   ): CheckNamespaceExistsResponse {
     const message = {
       ...baseCheckNamespaceExistsResponse,
     } as CheckNamespaceExistsResponse;
+    message.exists = object.exists ?? false;
     return message;
   },
 };
 
+/**
+ * ResourcesService
+ *
+ * The Resources service is a plugin that enables some limited access to Kubernetes
+ * resources on the cluster, using the user credentials sent with the request.
+ */
 export interface ResourcesService {
   GetResources(
     request: DeepPartial<GetResourcesRequest>,

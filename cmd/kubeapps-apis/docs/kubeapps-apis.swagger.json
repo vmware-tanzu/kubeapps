@@ -3090,6 +3090,11 @@
     },
     "v1alpha1CheckNamespaceExistsResponse": {
       "type": "object",
+      "properties": {
+        "exists": {
+          "type": "boolean"
+        }
+      },
       "description": "Response for CheckNamespaceExists",
       "title": "CheckNamespaceExistsResponse"
     },

@@ -7,6 +7,10 @@ import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
 
+// ResourcesService
+//
+// The Resources service is a plugin that enables some limited access to Kubernetes
+// resources on the cluster, using the user credentials sent with the request.
 service ResourcesService {
     rpc GetResources(GetResourcesRequest) returns (stream GetResourcesResponse) {
         option (google.api.http) = {
@@ -147,5 +151,6 @@ message CheckNamespaceExistsRequest {
 // CheckNamespaceExistsResponse
 //
 // Response for CheckNamespaceExists
-message CheckNamespaceExistsResponse {}
-
+message CheckNamespaceExistsResponse {
+    bool exists = 1;
+}
