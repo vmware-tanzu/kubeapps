@@ -178,45 +178,97 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 }
 
 //
-// repo-related utilities
+// implements plug-in specific cache-related functionality
 //
+type repoCacheCallSite struct {
+	clientGetter common.ClientGetterFunc
+	// other things may go in here
+}
 
-func isRepoReady(unstructuredRepo map[string]interface{}) bool {
-	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
-	// Confirm the state we are observing is for the current generation
-	if !common.CheckGeneration(unstructuredRepo) {
-		return false
+// this is what we store in the cache for each cached repo
+// all struct fields are capitalized so they're exported by gob encoding
+type repoCacheEntryValue struct {
+	Checksum   string
+	Charts     []models.Chart
+	ClientOpts *common.ClientOptions
+}
+
+// onAddRepo essentially tells the cache whether to and what to store for a given key
+func (s *repoCacheCallSite) onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
+	log.V(4).Info("+onAddRepo()")
+	defer log.V(4).Info("-onAddRepo()")
+
+	// TODO (gfichtenholt) use
+	// runtime.DefaultUnstructuredConverter.FromUnstructured to convert to flux typed API
+	// https://fluxcd.io/docs/components/source/api/#source.toolkit.fluxcd.io/v1beta1.HelmRepository
+
+	// first, check the repo is ready
+	if isRepoReady(unstructuredRepo) {
+		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+		checksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
+		if err != nil || !found {
+			return nil, false, status.Errorf(codes.Internal,
+				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
+				common.PrettyPrintMap(unstructuredRepo), err)
+		}
+		return s.indexAndEncode(checksum, unstructuredRepo)
+	} else {
+		// repo is not quite ready to be indexed - not really an error condition,
+		// just skip it eventually there will be another event when it is in ready state
+		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
+		return nil, false, nil
+	}
+}
+
+func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([]byte, bool, error) {
+	charts, opts, err := s.indexOneRepo(unstructuredRepo)
+	if err != nil {
+		return nil, false, err
 	}
 
-	completed, success, _ := isHelmRepositoryReady(unstructuredRepo)
-	return completed && success
+	cacheEntryValue := repoCacheEntryValue{
+		Checksum:   checksum,
+		Charts:     charts,
+		ClientOpts: opts,
+	}
+
+	// use gob encoding instead of json, it peforms much better
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err = enc.Encode(cacheEntryValue); err != nil {
+		return nil, false, err
+	}
+
+	return buf.Bytes(), true, nil
 }
 
 // it is assumed the caller has already checked that this repo is ready
 // At present, there is only one caller of indexOneRepo() and this check is already done by it
-func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
+func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, *common.ClientOptions, error) {
 	startTime := time.Now()
 
 	repo, err := packageRepositoryFromUnstructured(unstructuredRepo)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// this is only until https://github.com/kubeapps/kubeapps/issues/3496
 	// "Investigate and propose package repositories API with similar core interface to packages API"
 	// gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
-	_, found, err := unstructured.NestedString(unstructuredRepo, "spec", "secretRef", "name")
-	if found && err != nil {
-		// TODO: the problem is we need to be able to do something like
-		//caCertSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
-		// to be able to do that I need a typedClient instance
-
+	// The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
+	// ChartCache
+	var opts *common.ClientOptions
+	secretName, found, err := unstructured.NestedString(unstructuredRepo, "spec", "secretRef", "name")
+	if found && err == nil {
+		if opts, err = s.clientOptionsFromSecret(secretName, repo.Namespace); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 	indexUrl, found, err := unstructured.NestedString(unstructuredRepo, "status", "url")
 	if err != nil || !found {
-		return nil, status.Errorf(codes.Internal,
+		return nil, nil, status.Errorf(codes.Internal,
 			"expected field status.url not found on HelmRepository\n[%s], error %v",
 			repo.Name, err)
 	}
@@ -234,7 +286,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	// TODO (gfichtenholt) verify this is actually the case
 	byteArray, err := httpclient.Get(indexUrl, httpclient.New(), map[string]string{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	modelRepo := &models.Repo{
@@ -250,7 +302,7 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 	// for GetAvailablePackageVersions()
 	charts, err := helm.ChartsFromIndex(byteArray, modelRepo, false)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	duration := time.Since(startTime)
@@ -262,7 +314,105 @@ func indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, erro
 		// messed up and didn't parse successfully but the helm library didn't raise an error
 		log.Warning(msg)
 	}
-	return charts, nil
+	return charts, opts, nil
+}
+
+// onModifyRepo essentially tells the cache whether to and what to store for a given key
+func (s *repoCacheCallSite) onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue interface{}) (interface{}, bool, error) {
+	// first check the repo is ready
+	if isRepoReady(unstructuredRepo) {
+		// We should to compare checksums on what's stored in the cache
+		// vs the modified object to see if the contents has really changed before embarking on
+		// expensive operation indexOneRepo() below.
+		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+		newChecksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
+		if err != nil || !found {
+			return nil, false, status.Errorf(
+				codes.Internal,
+				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
+				common.PrettyPrintMap(unstructuredRepo), err)
+		}
+
+		cacheEntryUntyped, err := s.onGetRepo(key, oldValue)
+		if err != nil {
+			return nil, false, err
+		}
+
+		cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
+		if !ok {
+			return nil, false, status.Errorf(
+				codes.Internal,
+				"unexpected value found in cache for key [%s]: %v",
+				key, cacheEntryUntyped)
+		}
+
+		if cacheEntry.Checksum != newChecksum {
+			return s.indexAndEncode(newChecksum, unstructuredRepo)
+		} else {
+			// skip because the content did not change
+			return nil, false, nil
+		}
+	} else {
+		// repo is not quite ready to be indexed - not really an error condition,
+		// just skip it eventually there will be another event when it is in ready state
+		log.V(4).Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
+		return nil, false, nil
+	}
+}
+
+func (s *repoCacheCallSite) onGetRepo(key string, value interface{}) (interface{}, error) {
+	b, ok := value.([]byte)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "unexpected value found in cache for key [%s]: %v", key, value)
+	}
+
+	dec := gob.NewDecoder(bytes.NewReader(b))
+	var entryValue repoCacheEntryValue
+	if err := dec.Decode(&entryValue); err != nil {
+		return nil, err
+	}
+	return entryValue, nil
+}
+
+func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
+	return true, nil
+}
+
+func (s *repoCacheCallSite) clientOptionsFromSecret(secretName, namespace string) (*common.ClientOptions, error) {
+	if s == nil || s.clientGetter == nil {
+		return nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
+	}
+	ctx := context.Background()
+	typedClient, _, _, err := s.clientGetter(ctx)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := typedClient.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		// TODO (gfichtenholt) if I can't get the secret due to RBAC settings,
+		// return a nice friendly error message
+		return nil, err
+	}
+
+	// I wish I could use the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
+	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
+	// *Sigh*
+	return common.ClientOptionsFromSecret(secret)
+}
+
+//
+// repo-related utilities
+//
+
+func isRepoReady(unstructuredRepo map[string]interface{}) bool {
+	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
+	// Confirm the state we are observing is for the current generation
+	if !common.CheckGeneration(unstructuredRepo) {
+		return false
+	}
+
+	completed, success, _ := isHelmRepositoryReady(unstructuredRepo)
+	return completed && success
 }
 
 func packageRepositoryFromUnstructured(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
@@ -328,131 +478,4 @@ func isHelmRepositoryReady(unstructuredObj map[string]interface{}) (complete boo
 		}
 	}
 	return false, false, reason
-}
-
-//
-// implements plug-in specific cache-related functionality
-//
-
-// this is what we store in the cache for each cached repo
-// all struct fields are capitalized so they're exported by gob encoding
-type repoCacheEntryValue struct {
-	Checksum string
-	Charts   []models.Chart
-}
-
-// onAddRepo essentially tells the cache whether to and what to store for a given key
-func (s *Server) onAddRepoX(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	log.V(4).Info("+onAddRepoX()")
-	defer log.V(4).Info("-onAddRepoX()")
-	return nil, false, nil
-}
-
-// onAddRepo essentially tells the cache whether to and what to store for a given key
-func onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	log.V(4).Info("+onAddRepo()")
-	defer log.V(4).Info("-onAddRepo()")
-
-	// TODO (gfichtenholt) use
-	// runtime.DefaultUnstructuredConverter.FromUnstructured to convert to flux typed API
-	// https://fluxcd.io/docs/components/source/api/#source.toolkit.fluxcd.io/v1beta1.HelmRepository
-
-	// first, check the repo is ready
-	if isRepoReady(unstructuredRepo) {
-		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-		checksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
-		if err != nil || !found {
-			return nil, false, status.Errorf(codes.Internal,
-				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
-				common.PrettyPrintMap(unstructuredRepo), err)
-		}
-		return indexAndEncode(checksum, unstructuredRepo)
-	} else {
-		// repo is not quite ready to be indexed - not really an error condition,
-		// just skip it eventually there will be another event when it is in ready state
-		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
-		return nil, false, nil
-	}
-}
-
-// onModifyRepo essentially tells the cache whether to and what to store for a given key
-func onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue interface{}) (interface{}, bool, error) {
-	// first check the repo is ready
-	if isRepoReady(unstructuredRepo) {
-		// We should to compare checksums on what's stored in the cache
-		// vs the modified object to see if the contents has really changed before embarking on
-		// expensive operation indexOneRepo() below.
-		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-		newChecksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
-		if err != nil || !found {
-			return nil, false, status.Errorf(
-				codes.Internal,
-				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
-				common.PrettyPrintMap(unstructuredRepo), err)
-		}
-
-		cacheEntryUntyped, err := onGetRepo(key, oldValue)
-		if err != nil {
-			return nil, false, err
-		}
-
-		cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
-		if !ok {
-			return nil, false, status.Errorf(
-				codes.Internal,
-				"unexpected value found in cache for key [%s]: %v",
-				key, cacheEntryUntyped)
-		}
-
-		if cacheEntry.Checksum != newChecksum {
-			return indexAndEncode(newChecksum, unstructuredRepo)
-		} else {
-			// skip because the content did not change
-			return nil, false, nil
-		}
-	} else {
-		// repo is not quite ready to be indexed - not really an error condition,
-		// just skip it eventually there will be another event when it is in ready state
-		log.V(4).Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
-		return nil, false, nil
-	}
-}
-
-func onGetRepo(key string, value interface{}) (interface{}, error) {
-	b, ok := value.([]byte)
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "unexpected value found in cache for key [%s]: %v", key, value)
-	}
-
-	dec := gob.NewDecoder(bytes.NewReader(b))
-	var entryValue repoCacheEntryValue
-	if err := dec.Decode(&entryValue); err != nil {
-		return nil, err
-	}
-	return entryValue, nil
-}
-
-func onDeleteRepo(key string) (bool, error) {
-	return true, nil
-}
-
-func indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([]byte, bool, error) {
-	charts, err := indexOneRepo(unstructuredRepo)
-	if err != nil {
-		return nil, false, err
-	}
-
-	cacheEntryValue := repoCacheEntryValue{
-		Checksum: checksum,
-		Charts:   charts,
-	}
-
-	// use gob encoding instead of json, it peforms much better
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	if err = enc.Encode(cacheEntryValue); err != nil {
-		return nil, false, err
-	}
-
-	return buf.Bytes(), true, nil
 }

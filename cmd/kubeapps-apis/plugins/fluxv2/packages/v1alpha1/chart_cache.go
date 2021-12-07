@@ -17,6 +17,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -34,6 +35,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8scache "k8s.io/client-go/tools/cache"
 	log "k8s.io/klog/v2"
+)
+
+const (
+	// copied from helm plug-in
+	UserAgentPrefix = "kubeapps-apis/plugins"
 )
 
 // For now:
@@ -71,6 +77,7 @@ type chartCacheStoreEntry struct {
 	id        string
 	version   string
 	url       string
+	opts      *common.ClientOptions
 	deleted   bool
 }
 
@@ -110,7 +117,7 @@ func (c *ChartCache) wrapOnAddFunc(fnAdd cache.ValueAdderFunc, fnGet cache.Value
 				log.Errorf("unexpected value fetched from cache: type: [%s], value: [%v]",
 					reflect.TypeOf(untypedValue), value)
 			} else {
-				c.syncCharts(typedValue.Charts)
+				c.syncCharts(typedValue)
 			}
 		}
 		return value, setValue, err
@@ -131,7 +138,7 @@ func (c *ChartCache) wrapOnModifyFunc(fnModify cache.ValueModifierFunc, fnGet ca
 				// value, e.g. redis v.14, and then sync chart redis v.15. Having said
 				// that, I don't see much harm in leaving the entry for the old value
 				// in the cache, so...
-				c.syncCharts(typedValue.Charts)
+				c.syncCharts(typedValue)
 			}
 		}
 		return value, setValue, err
@@ -150,8 +157,8 @@ func (c *ChartCache) wrapOnDeleteFunc(fnDelete cache.KeyDeleterFunc) cache.KeyDe
 
 // this will enqueue work items into chart work queue and return.
 // the charts will be synced by a worker thread running in the background
-func (c *ChartCache) syncCharts(charts []models.Chart) {
-	log.Infof("+syncCharts()")
+func (c *ChartCache) syncCharts(repo repoCacheEntryValue) {
+	log.Infof("+syncCharts(client opts=[%s])", repo.ClientOpts)
 	totalToSync := 0
 	defer func() {
 		log.Infof("-syncCharts(): [%d] total charts to sync", totalToSync)
@@ -159,7 +166,7 @@ func (c *ChartCache) syncCharts(charts []models.Chart) {
 
 	// let's just cache the latest one for now. The chart versions array would
 	// have already been sorted and the latest chart version will be at array index 0
-	for _, chart := range charts {
+	for _, chart := range repo.Charts {
 		// add chart to temp store. It will be removed when processed by background
 		// runWorker/syncHandler
 		if len(chart.ChartVersions) == 0 {
@@ -176,6 +183,7 @@ func (c *ChartCache) syncCharts(charts []models.Chart) {
 			id:        chart.ID,
 			version:   chart.ChartVersions[0].Version,
 			url:       chart.ChartVersions[0].URLs[0],
+			opts:      repo.ClientOpts,
 			deleted:   false,
 		}
 		c.processing.Add(entry)
@@ -361,7 +369,7 @@ func (c *ChartCache) syncHandler(key string) (err error) {
 		log.Infof("Redis [DEL %s]: %d", key, keysremoved)
 	} else {
 		var byteArray []byte
-		byteArray, err = chartCacheComputeValue(chart.id, chart.url, chart.version)
+		byteArray, err = chartCacheComputeValue(chart.id, chart.url, chart.version, chart.opts)
 		if err == nil {
 			var result string
 			startTime := time.Now()
@@ -498,28 +506,63 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 	return fmt.Sprintf("helmcharts:%s:%s:%s", namespace, chartID, chartVersion), nil
 }
 
-func chartCacheComputeValue(chartID, url, version string) ([]byte, error) {
-	// TODO (gfichtenholt) if there is a secret associated with owner HelmRepository
-	// we need to use it below
+// The work queue should be able to retry transient HTTP errors
+// so I shouldn't have to do retries here.
+// TODO (gfichtenholt) verify this is actually the case. Gasp! it appears NOT to be the
+// case:
+//	I1207 03:25:03.694088       1 chart_cache.go:337] +syncHandler(helmcharts:default:bitnami-0/wavefront-hpa-adapter:1.0.4)
+//	I1207 03:25:25.494913       1 chart_cache.go:386] -syncHandler(helmcharts:default:bitnami-0/wavefront-hpa-adapter:1.0.4)
+//	E1207 03:25:25.495069       1 chart_cache.go:256] error syncing key [helmcharts:default:bitnami-0/wavefront-hpa-adapter:1.0.4] due to: Get "https://charts.bitnami.com/bitnami/wavefront-hpa-adapter-1.0.4.tgz": EOF
+// which breaks a fundamental assumption I rely on.
+// I am putting the retries back in here just as a workaround until I figure out why the queue is broken
 
-	// The work queue should be able to retry transient HTTP errors
-	// so I shouldn't have to do retries here.
-	// TODO (gfichtenholt) verify this is actually the case
-	reader, _, err := httpclient.GetStream(url, httpclient.New(), make(map[string]string))
-	if reader != nil {
-		defer reader.Close()
-	}
-	if err != nil {
-		return nil, err
+func chartCacheComputeValue(chartID, chartUrl, chartVersion string, opts *common.ClientOptions) ([]byte, error) {
+	// TODO (gfichtenholt) what about HTTP_PROXY
+
+	// this is always the same for all requests
+	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
+	// I wish I could use the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
+	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
+	// *Sigh*
+	headers := make(map[string]string)
+	headers["User-Agent"] = userAgentString
+	if opts != nil {
+		if opts.Authorization != "" {
+			headers["Authorization"] = opts.Authorization
+		}
 	}
 
-	chartTgz, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
+	// In theory, the work queue should be able to retry transient errors
+	// so I shouldn't have to do retries here. See above comment for explanation
+	const maxRetries = 5
+	var chartTgz []byte
+	ok := false
+	for i := 0; i < maxRetries && !ok; i++ {
+		reader, _, err := httpclient.GetStream(chartUrl, httpclient.New(), headers)
+		if reader != nil {
+			defer reader.Close()
+		}
+		if err == nil {
+			if chartTgz, err = ioutil.ReadAll(reader); err != nil {
+				log.Warningf("%+v", err)
+			} else {
+				ok = true
+				break
+			}
+		} else {
+			log.Warningf("%+v", err)
+		}
+		waitTime := math.Pow(2, float64(i))
+		log.Infof("Waiting [%d] seconds before retry...", int(waitTime))
+		time.Sleep(time.Duration(waitTime) * time.Second)
 	}
 
-	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: %d bytes",
-		chartID, version, url, len(chartTgz))
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "failed to retrieve chart [%s] from [%s]", chartID, chartUrl)
+	}
+
+	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: [%d] bytes",
+		chartID, chartVersion, chartUrl, len(chartTgz))
 
 	cacheEntryValue := chartCacheEntryValue{
 		ChartTarball: chartTgz,

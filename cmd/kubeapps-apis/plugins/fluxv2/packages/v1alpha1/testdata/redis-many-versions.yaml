@@ -5,108 +5,6 @@ entries:
         category: Database
       apiVersion: v2
       appVersion: 6.2.4
-      created: "2021-06-19T06:48:22.372295886Z"
-      dependencies:
-        - name: common
-          repository: https://charts.bitnami.com/bitnami
-          tags:
-            - bitnami-common
-          version: 1.x.x
-      description:
-        Open source, advanced key-value store. It is often referred to as
-        a data structure server since keys can contain strings, hashes, lists, sets
-        and sorted sets.
-      digest: c1f8e3913d9534aabe274b806d4ba7a9da42aeeaacddb732ecdaeb190ff0fba4
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
-      icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
-      keywords:
-        - redis
-        - keyvalue
-        - database
-      maintainers:
-        - email: containers@bitnami.com
-          name: Bitnami
-        - email: cedric@desaintmartin.fr
-          name: desaintmartin
-      name: redis
-      sources:
-        - https://github.com/bitnami/bitnami-docker-redis
-        - http://redis.io/
-      urls:
-        - https://charts.bitnami.com/bitnami/redis-14.6.1.tgz
-      version: 14.6.1
-    - annotations:
-        category: Database
-      apiVersion: v2
-      appVersion: 6.2.4
-      created: "2021-06-18T08:10:38.973975779Z"
-      dependencies:
-        - name: common
-          repository: https://charts.bitnami.com/bitnami
-          tags:
-            - bitnami-common
-          version: 1.x.x
-      description:
-        Open source, advanced key-value store. It is often referred to as
-        a data structure server since keys can contain strings, hashes, lists, sets
-        and sorted sets.
-      digest: 9e2e9ee9f17381a72eb9b70c416eb1438414aad0dd5c28a00994cf81681abb70
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
-      icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
-      keywords:
-        - redis
-        - keyvalue
-        - database
-      maintainers:
-        - email: containers@bitnami.com
-          name: Bitnami
-        - email: cedric@desaintmartin.fr
-          name: desaintmartin
-      name: redis
-      sources:
-        - https://github.com/bitnami/bitnami-docker-redis
-        - http://redis.io/
-      urls:
-        - https://charts.bitnami.com/bitnami/redis-14.6.0.tgz
-      version: 14.6.0
-    - annotations:
-        category: Database
-      apiVersion: v2
-      appVersion: 6.2.4
-      created: "2021-06-17T15:25:48.117755678Z"
-      dependencies:
-        - name: common
-          repository: https://charts.bitnami.com/bitnami
-          tags:
-            - bitnami-common
-          version: 1.x.x
-      description:
-        Open source, advanced key-value store. It is often referred to as
-        a data structure server since keys can contain strings, hashes, lists, sets
-        and sorted sets.
-      digest: f840f5adef96d0b08bb4519ad0927841777445e998d919e5ccb6c2db9453020e
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
-      icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
-      keywords:
-        - redis
-        - keyvalue
-        - database
-      maintainers:
-        - email: containers@bitnami.com
-          name: Bitnami
-        - email: cedric@desaintmartin.fr
-          name: desaintmartin
-      name: redis
-      sources:
-        - https://github.com/bitnami/bitnami-docker-redis
-        - http://redis.io/
-      urls:
-        - https://charts.bitnami.com/bitnami/redis-14.5.0.tgz
-      version: 14.5.0
-    - annotations:
-        category: Database
-      apiVersion: v2
-      appVersion: 6.2.4
       created: "2021-06-08T06:02:03.591660359Z"
       dependencies:
         - name: common
@@ -135,7 +33,8 @@ entries:
         - https://github.com/bitnami/bitnami-docker-redis
         - http://redis.io/
       urls:
-        - https://charts.bitnami.com/bitnami/redis-14.4.0.tgz
+        #- https://charts.bitnami.com/bitnami/redis-14.4.0.tgz
+        - "{{testdata/redis-14.4.0.tgz}}"
       version: 14.4.0
     - annotations:
         category: Database

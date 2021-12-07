@@ -30,6 +30,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	k8scorev1 "k8s.io/api/core/v1"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -488,12 +489,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			// the index.yaml will contain links to charts but for the purposes
 			// of this test they do not matter
-			s, mock, _, _, err := newServerWithRepos(t, repos, nil)
+			s, mock, _, _, err := newServerWithRepos(t, repos, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
+			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
 				t.Fatalf("%v", err)
 			}
 
@@ -565,12 +566,12 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil)
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -592,7 +593,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 
 		// see below
-		key, oldValue, err := redisKeyValueForRepo(repo)
+		key, oldValue, err := s.redisKeyValueForRepo(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -605,7 +606,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
 		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
 		mock.ExpectGet(key).SetVal(string(oldValue))
-		key, newValue, err := redisMockSetValueForRepo(mock, repo)
+		key, newValue, err := s.redisMockSetValueForRepo(mock, repo)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -647,12 +648,12 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 		defer ts2.Close()
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil)
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -718,12 +719,12 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil)
+		s, mock, _, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -748,7 +749,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
 		// background: a FLUSHDB followed by a SET
 		mock.ExpectFlushDB().SetVal("OK")
-		if _, _, err := redisMockSetValueForRepo(mock, repo); err != nil {
+		if _, _, err := s.redisMockSetValueForRepo(mock, repo); err != nil {
 			t.Fatalf("%+v", err)
 		}
 
@@ -760,7 +761,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if err = redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -877,7 +878,7 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, newRepos(tc.repoSpecs, tc.repoNamespace), nil)
+			s, mock, _, _, err := newServerWithRepos(t, newRepos(tc.repoSpecs, tc.repoNamespace), nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -908,15 +909,16 @@ func TestGetPackageRepositories(t *testing.T) {
 	}
 }
 
-// objects may contain flux HelmRepository CRDs and corresponding Secrets, if applicable
-func newServerWithRepos(t *testing.T, objects []runtime.Object, charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
-	typedClient := typfake.NewSimpleClientset()
+func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
+	t.Logf("newServerWithRepos: secrets: %v", secrets)
+
+	typedClient := typfake.NewSimpleClientset(secrets...)
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
 			repositoriesGvr: fluxHelmRepositoryList,
 		},
-		objects...)
+		repos...)
 
 	// here we are essentially adding on to how List() works for HelmRepository objects
 	// this is done so that the the item list returned by List() command with fake client contains
@@ -947,7 +949,7 @@ func newServerWithRepos(t *testing.T, objects []runtime.Object, charts []testSpe
 		return typedClient, dynamicClient, apiextIfc, nil
 	}
 
-	s, mock, err := newServer(t, clientGetter, nil, objects, charts)
+	s, mock, err := newServer(t, clientGetter, nil, repos, charts)
 	return s, mock, dynamicClient, watcher, err
 }
 
@@ -991,34 +993,26 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 }
 
 // ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
-func newBasicAuthSecret(name, namespace, user, password string) *unstructured.Unstructured {
-	metadata := map[string]interface{}{
-		"name":      name,
-		"namespace": namespace,
-	}
-	stringData := map[string]interface{}{
-		"username": user,
-		"password": password,
-	}
-
-	obj := map[string]interface{}{
-		"apiVersion": "v1",
-		"kind":       "Secret",
-		"metadata":   metadata,
-		"type":       "kubernetes.io/basic-auth",
-		"stringData": stringData,
-	}
-
-	return &unstructured.Unstructured{
-		Object: obj,
+func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secret {
+	return &k8scorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Type: k8scorev1.SecretTypeBasicAuth,
+		StringData: map[string]string{
+			"username": user,
+			"password": password,
+		},
 	}
 }
 
+// these functiosn should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
-func redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
+func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
 	mapVals := make(map[string][]byte)
 	for _, r := range repos {
-		key, bytes, err := redisKeyValueForRepo(r)
+		key, bytes, err := s.redisKeyValueForRepo(r)
 		if err != nil {
 			return err
 		}
@@ -1040,11 +1034,16 @@ func redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *c
 	return nil
 }
 
-func redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
+func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
+	cs := repoCacheCallSite{s.clientGetter}
+	return cs.redisMockSetValueForRepo(mock, repo)
+}
+
+func (cs *repoCacheCallSite) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
 	if key, err = redisKeyForRepo(repo); err != nil {
 		return key, nil, err
 	}
-	if key, bytes, err = redisKeyValueForRepo(repo); err != nil {
+	if key, bytes, err = cs.redisKeyValueForRepo(repo); err != nil {
 		mock.ExpectDel(key).SetVal(0)
 		return key, nil, err
 	} else {
@@ -1054,7 +1053,12 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (k
 	}
 }
 
-func redisKeyValueForRepo(r runtime.Object) (key string, bytes []byte, err error) {
+func (s *Server) redisKeyValueForRepo(r runtime.Object) (key string, bytes []byte, err error) {
+	cs := repoCacheCallSite{s.clientGetter}
+	return cs.redisKeyValueForRepo(r)
+}
+
+func (cs *repoCacheCallSite) redisKeyValueForRepo(r runtime.Object) (key string, bytes []byte, err error) {
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {
@@ -1062,7 +1066,7 @@ func redisKeyValueForRepo(r runtime.Object) (key string, bytes []byte, err error
 		// onAddRepo to compute the value that *WOULD* be stored in the cache
 		var byteArray interface{}
 		var add bool
-		byteArray, add, err = onAddRepo(key, r.(*unstructured.Unstructured).Object)
+		byteArray, add, err = cs.onAddRepo(key, r.(*unstructured.Unstructured).Object)
 		if err != nil {
 			return key, nil, err
 		} else if !add {

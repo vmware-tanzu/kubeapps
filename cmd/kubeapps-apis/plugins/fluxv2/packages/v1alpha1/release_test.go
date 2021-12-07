@@ -276,7 +276,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				}
 				defer ts2.Close()
 
-				redisKey, bytes, err := redisKeyValueForRepo(repo)
+				redisKey, bytes, err := s.redisKeyValueForRepo(repo)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -548,12 +548,12 @@ func TestCreateInstalledPackage(t *testing.T) {
 			defer ts.Close()
 
 			runtimeObjs = append(runtimeObjs, repo)
-			s, mock, _, _, err := newServerWithRepos(t, runtimeObjs, nil)
+			s, mock, _, _, err := newServerWithRepos(t, runtimeObjs, nil, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			redisKey, bytes, err := redisKeyValueForRepo(repo)
+			redisKey, bytes, err := s.redisKeyValueForRepo(repo)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1569,7 +1569,7 @@ var (
 		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 		Status:           statusInstalled,
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "14.6.1",
+			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
@@ -1593,7 +1593,7 @@ var (
 			UserReason: "InstallFailed: install retries exhausted",
 		},
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "14.6.1",
+			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
@@ -1617,7 +1617,7 @@ var (
 			UserReason: "Progressing: reconciliation in progress",
 		},
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "14.6.1",
+			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
@@ -1641,7 +1641,7 @@ var (
 			UserReason: "ArtifactFailed: HelmChart 'default/kubeapps-my-redis' is not ready",
 		},
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "14.6.1",
+			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
@@ -1681,7 +1681,7 @@ var (
 		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 		Status:           statusInstalled,
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "14.6.1",
+			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}

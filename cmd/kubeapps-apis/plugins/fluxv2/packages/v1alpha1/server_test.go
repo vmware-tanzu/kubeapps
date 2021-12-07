@@ -168,7 +168,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{tc.repo}, nil)
+			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{tc.repo}, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -213,6 +213,7 @@ type testSpecChartWithUrl struct {
 	chartID       string
 	chartRevision string
 	chartUrl      string
+	opts          *common.ClientOptions
 	repoNamespace string
 }
 
@@ -237,13 +238,16 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		return nil, mock, err
 	}
 
-	config := cache.NamespacedResourceWatcherCacheConfig{
+	cs := repoCacheCallSite{
+		clientGetter: clientGetter,
+	}
+	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 		Gvr:          repositoriesGvr,
 		ClientGetter: clientGetter,
-		OnAddFunc:    chartCache.wrapOnAddFunc(onAddRepo, onGetRepo),
-		OnModifyFunc: chartCache.wrapOnModifyFunc(onModifyRepo, onGetRepo),
-		OnGetFunc:    onGetRepo,
-		OnDeleteFunc: chartCache.wrapOnDeleteFunc(onDeleteRepo),
+		OnAddFunc:    chartCache.wrapOnAddFunc(cs.onAddRepo, cs.onGetRepo),
+		OnModifyFunc: chartCache.wrapOnModifyFunc(cs.onModifyRepo, cs.onGetRepo),
+		OnGetFunc:    cs.onGetRepo,
+		OnDeleteFunc: chartCache.wrapOnDeleteFunc(cs.onDeleteRepo),
 	}
 
 	okRepos := sets.String{}
@@ -253,7 +257,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 			// here and just skipping over to next repo. This is done for test
 			// TestGetAvailablePackagesStatus where we make sure that even if the flux CRD happens
 			// to be invalid flux plug in can still operate
-			key, _, err := redisMockSetValueForRepo(mock, r)
+			key, _, err := cs.redisMockSetValueForRepo(mock, r)
 			if err != nil {
 				t.Logf("Skipping repo [%s] due to %+v", key, err)
 			} else {
@@ -276,7 +280,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 
 		repoKey, err := redisKeyForRepoNamespacedName(repoName)
 		if err == nil && okRepos.Has(repoKey) {
-			err = redisMockSetValueForChart(mock, key, c.chartUrl)
+			err = redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
 			if err != nil {
 				return nil, mock, err
 			}
@@ -285,7 +289,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		}
 	}
 
-	repoCache, err := cache.NewNamespacedResourceWatcherCache(config, redisCli)
+	repoCache, err := cache.NewNamespacedResourceWatcherCache(cacheConfig, redisCli)
 	if err != nil {
 		return nil, mock, err
 	}
