@@ -3797,16 +3797,16 @@
     "v1alpha1SecretType": {
       "type": "string",
       "enum": [
-        "OPAQUE",
-        "SERVICE_ACCOUNT_TOKEN",
-        "DOCKER_CONFIG",
-        "DOCKER_CONFIG_JSON",
-        "BASIC_AUTH",
-        "SSH_AUTH",
-        "TLS",
-        "BOOTSTRAP_TOKEN"
+        "SECRET_TYPE_OPAQUE_UNSPECIFIED",
+        "SECRET_TYPE_SERVICE_ACCOUNT_TOKEN",
+        "SECRET_TYPE_DOCKER_CONFIG",
+        "SECRET_TYPE_DOCKER_CONFIG_JSON",
+        "SECRET_TYPE_BASIC_AUTH",
+        "SECRET_TYPE_SSH_AUTH",
+        "SECRET_TYPE_TLS",
+        "SECRET_TYPE_BOOTSTRAP_TOKEN"
       ],
-      "default": "OPAQUE",
+      "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
       "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
       "title": "SecretType"
     },

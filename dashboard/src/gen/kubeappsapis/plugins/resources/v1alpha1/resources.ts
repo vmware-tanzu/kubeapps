@@ -23,43 +23,43 @@ export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
  * See https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
  */
 export enum SecretType {
-  OPAQUE = 0,
-  SERVICE_ACCOUNT_TOKEN = 1,
-  DOCKER_CONFIG = 2,
-  DOCKER_CONFIG_JSON = 3,
-  BASIC_AUTH = 4,
-  SSH_AUTH = 5,
-  TLS = 6,
-  BOOTSTRAP_TOKEN = 7,
+  SECRET_TYPE_OPAQUE_UNSPECIFIED = 0,
+  SECRET_TYPE_SERVICE_ACCOUNT_TOKEN = 1,
+  SECRET_TYPE_DOCKER_CONFIG = 2,
+  SECRET_TYPE_DOCKER_CONFIG_JSON = 3,
+  SECRET_TYPE_BASIC_AUTH = 4,
+  SECRET_TYPE_SSH_AUTH = 5,
+  SECRET_TYPE_TLS = 6,
+  SECRET_TYPE_BOOTSTRAP_TOKEN = 7,
   UNRECOGNIZED = -1,
 }
 
 export function secretTypeFromJSON(object: any): SecretType {
   switch (object) {
     case 0:
-    case "OPAQUE":
-      return SecretType.OPAQUE;
+    case "SECRET_TYPE_OPAQUE_UNSPECIFIED":
+      return SecretType.SECRET_TYPE_OPAQUE_UNSPECIFIED;
     case 1:
-    case "SERVICE_ACCOUNT_TOKEN":
-      return SecretType.SERVICE_ACCOUNT_TOKEN;
+    case "SECRET_TYPE_SERVICE_ACCOUNT_TOKEN":
+      return SecretType.SECRET_TYPE_SERVICE_ACCOUNT_TOKEN;
     case 2:
-    case "DOCKER_CONFIG":
-      return SecretType.DOCKER_CONFIG;
+    case "SECRET_TYPE_DOCKER_CONFIG":
+      return SecretType.SECRET_TYPE_DOCKER_CONFIG;
     case 3:
-    case "DOCKER_CONFIG_JSON":
-      return SecretType.DOCKER_CONFIG_JSON;
+    case "SECRET_TYPE_DOCKER_CONFIG_JSON":
+      return SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON;
     case 4:
-    case "BASIC_AUTH":
-      return SecretType.BASIC_AUTH;
+    case "SECRET_TYPE_BASIC_AUTH":
+      return SecretType.SECRET_TYPE_BASIC_AUTH;
     case 5:
-    case "SSH_AUTH":
-      return SecretType.SSH_AUTH;
+    case "SECRET_TYPE_SSH_AUTH":
+      return SecretType.SECRET_TYPE_SSH_AUTH;
     case 6:
-    case "TLS":
-      return SecretType.TLS;
+    case "SECRET_TYPE_TLS":
+      return SecretType.SECRET_TYPE_TLS;
     case 7:
-    case "BOOTSTRAP_TOKEN":
-      return SecretType.BOOTSTRAP_TOKEN;
+    case "SECRET_TYPE_BOOTSTRAP_TOKEN":
+      return SecretType.SECRET_TYPE_BOOTSTRAP_TOKEN;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -69,22 +69,22 @@ export function secretTypeFromJSON(object: any): SecretType {
 
 export function secretTypeToJSON(object: SecretType): string {
   switch (object) {
-    case SecretType.OPAQUE:
-      return "OPAQUE";
-    case SecretType.SERVICE_ACCOUNT_TOKEN:
-      return "SERVICE_ACCOUNT_TOKEN";
-    case SecretType.DOCKER_CONFIG:
-      return "DOCKER_CONFIG";
-    case SecretType.DOCKER_CONFIG_JSON:
-      return "DOCKER_CONFIG_JSON";
-    case SecretType.BASIC_AUTH:
-      return "BASIC_AUTH";
-    case SecretType.SSH_AUTH:
-      return "SSH_AUTH";
-    case SecretType.TLS:
-      return "TLS";
-    case SecretType.BOOTSTRAP_TOKEN:
-      return "BOOTSTRAP_TOKEN";
+    case SecretType.SECRET_TYPE_OPAQUE_UNSPECIFIED:
+      return "SECRET_TYPE_OPAQUE_UNSPECIFIED";
+    case SecretType.SECRET_TYPE_SERVICE_ACCOUNT_TOKEN:
+      return "SECRET_TYPE_SERVICE_ACCOUNT_TOKEN";
+    case SecretType.SECRET_TYPE_DOCKER_CONFIG:
+      return "SECRET_TYPE_DOCKER_CONFIG";
+    case SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON:
+      return "SECRET_TYPE_DOCKER_CONFIG_JSON";
+    case SecretType.SECRET_TYPE_BASIC_AUTH:
+      return "SECRET_TYPE_BASIC_AUTH";
+    case SecretType.SECRET_TYPE_SSH_AUTH:
+      return "SECRET_TYPE_SSH_AUTH";
+    case SecretType.SECRET_TYPE_TLS:
+      return "SECRET_TYPE_TLS";
+    case SecretType.SECRET_TYPE_BOOTSTRAP_TOKEN:
+      return "SECRET_TYPE_BOOTSTRAP_TOKEN";
     default:
       return "UNKNOWN";
   }

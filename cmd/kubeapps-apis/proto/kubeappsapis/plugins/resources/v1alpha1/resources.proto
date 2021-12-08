@@ -172,14 +172,14 @@ message CheckNamespaceExistsResponse {
 // list the secret names with their types.
 // See https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
 enum SecretType {
-    OPAQUE = 0;
-    SERVICE_ACCOUNT_TOKEN = 1;
-    DOCKER_CONFIG = 2;
-    DOCKER_CONFIG_JSON = 3;
-    BASIC_AUTH = 4;
-    SSH_AUTH = 5;
-    TLS = 6;
-    BOOTSTRAP_TOKEN = 7;
+    SECRET_TYPE_OPAQUE_UNSPECIFIED = 0;
+    SECRET_TYPE_SERVICE_ACCOUNT_TOKEN = 1;
+    SECRET_TYPE_DOCKER_CONFIG = 2;
+    SECRET_TYPE_DOCKER_CONFIG_JSON = 3;
+    SECRET_TYPE_BASIC_AUTH = 4;
+    SECRET_TYPE_SSH_AUTH = 5;
+    SECRET_TYPE_TLS = 6;
+    SECRET_TYPE_BOOTSTRAP_TOKEN = 7;
 }
 
 // CreateSecretRequest
