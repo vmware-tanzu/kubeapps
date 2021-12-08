@@ -24,10 +24,10 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
@@ -417,7 +417,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	const MAX_REPOS_NEVER = 100
 	var totalRepos = 0
 	// ref https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait
-	evictedRepos := common.HashSet{}
+	evictedRepos := sets.String{}
 
 	// do this part in a func so we can defer subscribe.Close
 	func() {
@@ -437,7 +437,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		// so for now let it fetch directly from bitnami website
 		// we'll keep adding repos one at a time, until we get an event from redis
 		// about the first evicted repo entry
-		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.IsEmpty(); totalRepos++ {
+		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == 0; totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
 			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
@@ -448,8 +448,8 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 					t.Logf("%v", err)
 				}
 			})
-			// wait until this repo have been indexed and cached up to 5 minutes
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+			// wait until this repo have been indexed and cached up to 10 minutes
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
 			defer cancel()
 			if err := sem.Acquire(ctx, 1); err != nil {
 				t.Fatalf("Timed out waiting for Redis event: %v", err)
@@ -459,7 +459,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 			totalRepos, len(evictedRepos))
 	}()
 
-	if evictedRepos.IsEmpty() {
+	if evictedRepos.Len() == 0 {
 		t.Fatalf("Failing because redis did not evict any entries")
 	}
 
@@ -478,7 +478,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	grpcContext := newGrpcContext(t, "test-create-admin")
 
 	// copy the evicted list because before ForEach loop below will modify it in a goroutine
-	evictedCopy := evictedRepos.DeepCopy()
+	evictedCopy := sets.StringKeySet(evictedRepos)
 
 	// do this part in a func so we can defer subscribe.Close
 	func() {
@@ -487,8 +487,8 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 		go redisReceiveNotificationsLoop(t, subscribe.Channel(), nil, &evictedRepos)
 
-		evictedCopy.ForEach(func(k common.T) {
-			name := strings.Split(k.(string), ":")[2]
+		for _, k := range evictedCopy.List() {
+			name := strings.Split(k, ":")[2]
 			t.Logf("Checking apache version in repo [%s]...", name)
 			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 			defer cancel()
@@ -506,7 +506,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 			} else if len(resp.PackageAppVersions) < 5 {
 				t.Fatalf("Expected at least 5 versions for apache chart, got: %s", resp)
 			}
-		})
+		}
 
 		t.Logf("Done with second part of the test")
 	}()
@@ -525,7 +525,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		}
 		go redisReceiveNotificationsLoop(t, subscribe.Channel(), sem, &evictedRepos)
 
-		for ; totalRepos < MAX_REPOS_NEVER && len(evictedRepos) == len(evictedCopy); totalRepos++ {
+		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == evictedCopy.Len(); totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
 			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
@@ -536,8 +536,8 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 					t.Logf("%v", err)
 				}
 			})
-			// wait until this repo have been indexed and cached up to 5 minutes
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+			// wait until this repo have been indexed and cached up to 10 minutes
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
 			defer cancel()
 			if err := sem.Acquire(ctx, 1); err != nil {
 				t.Fatalf("Timed out waiting for Redis event: %v", err)
@@ -573,7 +573,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	// we need to make sure that response contains packages from all existing repositories
 	// regardless whether they're in the cache or not
-	expected := common.HashSet{}
+	expected := sets.String{}
 	for i := 0; i < totalRepos; i++ {
 		repo := fmt.Sprintf("bitnami-%d", i)
 		expected.Insert(repo)
@@ -583,9 +583,9 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		expected.Delete(id[0])
 	}
 
-	if !expected.IsEmpty() {
+	if expected.Len() != 0 {
 		t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
-			expected.Values())
+			expected.List())
 	}
 }
 

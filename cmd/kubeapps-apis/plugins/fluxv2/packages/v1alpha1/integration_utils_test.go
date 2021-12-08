@@ -30,7 +30,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -39,6 +38,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -656,11 +656,11 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	return redisCli, nil
 }
 
-func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *common.HashSet) {
+func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *sets.String) {
 	// this for loop running in the background will signal to the main goroutine
 	// when it is okay to proceed to load the next repo
 	t.Logf("Listening for events from redis in the background...")
-	reposAdded := common.HashSet{}
+	reposAdded := sets.String{}
 	var chartsLeftToSync = 0
 	for {
 		event, ok := <-ch
@@ -689,14 +689,14 @@ func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *
 				}
 				t.Logf("Charts left to sync: [%d]", chartsLeftToSync)
 			}
-			if !reposAdded.IsEmpty() && chartsLeftToSync == 0 && sem != nil {
+			if reposAdded.Len() > 0 && chartsLeftToSync == 0 && sem != nil {
 				// signal to the main goroutine it's okay to proceed to load the next copy
 				sem.Release(1)
 			}
 		} else if event.Channel == "__keyevent@0__:evicted" &&
 			strings.HasPrefix(event.Payload, "helmrepositories:default:bitnami-") {
 			evictedRepos.Insert(event.Payload)
-			if !reposAdded.IsEmpty() && sem != nil {
+			if reposAdded.Len() > 0 && sem != nil {
 				// signal to the main goroutine it's okay to proceed to load the next copy
 				sem.Release(1)
 			}

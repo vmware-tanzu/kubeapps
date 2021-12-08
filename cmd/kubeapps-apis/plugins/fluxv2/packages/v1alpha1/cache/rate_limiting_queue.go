@@ -17,17 +17,20 @@ Inspired by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/
 package cache
 
 import (
+	"fmt"
+	"reflect"
 	"sync"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/util/workqueue"
 )
 
 // RateLimitingInterface is an interface that rate limits items being added to the queue.
 type RateLimitingInterface interface {
 	workqueue.RateLimitingInterface
-	ExpectAdd(item interface{})
-	WaitUntilDoneWith(item interface{})
+	ExpectAdd(item string)
+	WaitUntilDoneWith(item string)
 }
 
 func NewRateLimitingQueue() RateLimitingInterface {
@@ -59,19 +62,19 @@ func (q *rateLimitingType) Forget(item interface{}) {
 	q.rateLimiter.Forget(item)
 }
 
-func (q *rateLimitingType) ExpectAdd(item interface{}) {
+func (q *rateLimitingType) ExpectAdd(item string) {
 	q.queue.expectAdd(item)
 }
 
-func (q *rateLimitingType) WaitUntilDoneWith(item interface{}) {
+func (q *rateLimitingType) WaitUntilDoneWith(item string) {
 	q.queue.waitUntilDoneWith(item)
 }
 
 func newQueue() *Type {
 	return &Type{
-		expected:   common.HashSet{},
-		dirty:      common.HashSet{},
-		processing: common.HashSet{},
+		expected:   sets.String{},
+		dirty:      sets.String{},
+		processing: sets.String{},
 		cond:       sync.NewCond(&sync.Mutex{}),
 	}
 }
@@ -82,20 +85,20 @@ type Type struct {
 	// queue defines the order in which we will work on items. Every
 	// element of queue should be in the dirty set and not in the
 	// processing set.
-	queue []common.T
+	queue []string
 
 	// expected defines all of the items that are expected to be processed.
 	// Used in unit tests only
-	expected common.HashSet
+	expected sets.String
 
 	// dirty defines all of the items that need to be processed.
-	dirty common.HashSet
+	dirty sets.String
 
 	// Things that are currently being processed are in the processing set.
 	// These things may be simultaneously in the dirty set. When we finish
 	// processing something and remove it from this set, we'll check if
 	// it's in the dirty set, and if so, add it to the queue.
-	processing common.HashSet
+	processing sets.String
 
 	cond *sync.Cond
 
@@ -110,18 +113,23 @@ func (q *Type) Add(item interface{}) {
 	if q.shuttingDown {
 		return
 	}
-	q.expected.Delete(item)
-	if q.dirty.Has(item) {
-		return
-	}
+	if itemstr, ok := item.(string); !ok {
+		// workqueue.Interface does not allow returning errors, so
+		runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
+	} else {
+		q.expected.Delete(itemstr)
+		if q.dirty.Has(itemstr) {
+			return
+		}
 
-	q.dirty.Insert(item)
-	if q.processing.Has(item) {
-		return
-	}
+		q.dirty.Insert(itemstr)
+		if q.processing.Has(itemstr) {
+			return
+		}
 
-	q.queue = append(q.queue, item)
-	q.cond.Signal()
+		q.queue = append(q.queue, itemstr)
+		q.cond.Signal()
+	}
 }
 
 // Len returns the current queue length, for informational purposes only. You
@@ -149,9 +157,14 @@ func (q *Type) Get() (item interface{}, shutdown bool) {
 			return nil, true
 		} else if len(q.queue) > 0 {
 			item, q.queue = q.queue[0], q.queue[1:]
-			q.processing.Insert(item)
-			q.dirty.Delete(item)
-			return item, false
+			if itemstr, ok := item.(string); !ok {
+				// workqueue.Interface does not allow returning errors, so
+				runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
+			} else {
+				q.processing.Insert(itemstr)
+				q.dirty.Delete(itemstr)
+				return item, false
+			}
 		}
 	}
 }
@@ -163,11 +176,16 @@ func (q *Type) Done(item interface{}) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
-	q.processing.Delete(item)
-	if q.dirty.Has(item) {
-		q.queue = append(q.queue, item)
+	if itemstr, ok := item.(string); !ok {
+		// workqueue.Interface does not allow returning errors, so
+		runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
+	} else {
+		q.processing.Delete(itemstr)
+		if q.dirty.Has(itemstr) {
+			q.queue = append(q.queue, itemstr)
+		}
+		q.cond.Broadcast()
 	}
-	q.cond.Broadcast()
 }
 
 // ShutDown will cause q to ignore all new items added to it. As soon as the
@@ -190,7 +208,7 @@ func (q *Type) ShuttingDown() bool {
 
 // Add marks item as expected to be processed in the near future
 // Used in unit tests only
-func (q *Type) expectAdd(item interface{}) {
+func (q *Type) expectAdd(item string) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
@@ -202,7 +220,7 @@ func (q *Type) expectAdd(item interface{}) {
 }
 
 // this func is the whole reason for the existence of this queue
-func (q *Type) waitUntilDoneWith(item interface{}) {
+func (q *Type) waitUntilDoneWith(item string) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
