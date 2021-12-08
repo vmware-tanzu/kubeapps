@@ -261,6 +261,12 @@ export interface CreateSecretRequest {
    */
   type: SecretType;
   /**
+   * Name
+   *
+   * The name of the secret.
+   */
+  name: string;
+  /**
    * StringData
    *
    * The map of keys and values. Note that we use StringData here so that
@@ -942,7 +948,7 @@ export const CheckNamespaceExistsResponse = {
   },
 };
 
-const baseCreateSecretRequest: object = { type: 0 };
+const baseCreateSecretRequest: object = { type: 0, name: "" };
 
 export const CreateSecretRequest = {
   encode(message: CreateSecretRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -952,10 +958,13 @@ export const CreateSecretRequest = {
     if (message.type !== 0) {
       writer.uint32(16).int32(message.type);
     }
+    if (message.name !== "") {
+      writer.uint32(26).string(message.name);
+    }
     Object.entries(message.stringData).forEach(([key, value]) => {
       CreateSecretRequest_StringDataEntry.encode(
         { key: key as any, value },
-        writer.uint32(26).fork(),
+        writer.uint32(34).fork(),
       ).ldelim();
     });
     return writer;
@@ -976,9 +985,12 @@ export const CreateSecretRequest = {
           message.type = reader.int32() as any;
           break;
         case 3:
-          const entry3 = CreateSecretRequest_StringDataEntry.decode(reader, reader.uint32());
-          if (entry3.value !== undefined) {
-            message.stringData[entry3.key] = entry3.value;
+          message.name = reader.string();
+          break;
+        case 4:
+          const entry4 = CreateSecretRequest_StringDataEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.stringData[entry4.key] = entry4.value;
           }
           break;
         default:
@@ -997,6 +1009,7 @@ export const CreateSecretRequest = {
         : undefined;
     message.type =
       object.type !== undefined && object.type !== null ? secretTypeFromJSON(object.type) : 0;
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
     message.stringData = Object.entries(object.stringData ?? {}).reduce<{
       [key: string]: string;
     }>((acc, [key, value]) => {
@@ -1011,6 +1024,7 @@ export const CreateSecretRequest = {
     message.context !== undefined &&
       (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     message.type !== undefined && (obj.type = secretTypeToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
     obj.stringData = {};
     if (message.stringData) {
       Object.entries(message.stringData).forEach(([k, v]) => {
@@ -1029,6 +1043,7 @@ export const CreateSecretRequest = {
         ? Context.fromPartial(object.context)
         : undefined;
     message.type = object.type ?? 0;
+    message.name = object.name ?? "";
     message.stringData = Object.entries(object.stringData ?? {}).reduce<{
       [key: string]: string;
     }>((acc, [key, value]) => {

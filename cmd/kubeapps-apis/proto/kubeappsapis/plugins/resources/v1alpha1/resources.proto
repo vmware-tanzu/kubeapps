@@ -196,12 +196,17 @@ message CreateSecretRequest {
     // The type of the secret. Valid values are defined by the Type enumeration.
     SecretType type = 2;
 
+    // Name
+    //
+    // The name of the secret.
+    string name = 3;
+
     // StringData
     //
     // The map of keys and values. Note that we use StringData here so that
     // Kubernetes handles the base64 encoding of the key values for us.
     // See https://kubernetes.io/docs/concepts/configuration/secret/#overview-of-secrets
-    map<string, string> string_data = 3;
+    map<string, string> string_data = 4;
 }
 
 // CreateSecretResponse
