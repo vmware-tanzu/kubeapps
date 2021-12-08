@@ -510,7 +510,7 @@ func (c *NamespacedResourceWatcherCache) onDelete(key string) error {
 
 	delete, err := c.config.OnDeleteFunc(key)
 	if err != nil {
-		log.Errorf("Invocation of 'onDelete' for object with key [%s] failed due to: %v", err)
+		log.Errorf("Invocation of 'onDelete' for object with key [%s] failed due to: %v", key, err)
 		return err
 	}
 

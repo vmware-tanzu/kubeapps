@@ -233,21 +233,9 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		}
 	}
 
-	chartCache, err := NewChartCache(redisCli)
-	if err != nil {
-		return nil, mock, err
-	}
-
 	cs := repoCacheCallSite{
 		clientGetter: clientGetter,
-	}
-	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
-		Gvr:          repositoriesGvr,
-		ClientGetter: clientGetter,
-		OnAddFunc:    chartCache.wrapOnAddFunc(cs.onAddRepo, cs.onGetRepo),
-		OnModifyFunc: chartCache.wrapOnModifyFunc(cs.onModifyRepo, cs.onGetRepo),
-		OnGetFunc:    cs.onGetRepo,
-		OnDeleteFunc: chartCache.wrapOnDeleteFunc(cs.onDeleteRepo),
+		chartCache:   nil,
 	}
 
 	okRepos := sets.String{}
@@ -266,27 +254,50 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		}
 	}
 
-	// for now we only cache latest chart
-	cachedCharts := sets.String{}
-	if len(charts) > 0 {
-		c := charts[0]
-		key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
-		if err != nil {
-			return nil, mock, err
-		}
-		repoName := types.NamespacedName{
-			Name:      strings.Split(c.chartID, "/")[0],
-			Namespace: c.repoNamespace}
+	chartCache, err := NewChartCache(redisCli)
+	if err != nil {
+		return nil, mock, err
+	}
 
-		repoKey, err := redisKeyForRepoNamespacedName(repoName)
-		if err == nil && okRepos.Has(repoKey) {
-			err = redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
+	// for now we only cache latest version of each chart
+	cachedChartKeys := sets.String{}
+	cachedChartIds := sets.String{}
+	for _, c := range charts {
+		// very simple logic for now, relies on the order of elements in the array
+		// to pick the latest version.
+		if !cachedChartIds.Has(c.chartID) {
+			cachedChartIds.Insert(c.chartID)
+			key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
 			if err != nil {
 				return nil, mock, err
 			}
-			cachedCharts.Insert(key)
-			chartCache.ExpectAdd(key)
+			repoName := types.NamespacedName{
+				Name:      strings.Split(c.chartID, "/")[0],
+				Namespace: c.repoNamespace}
+
+			repoKey, err := redisKeyForRepoNamespacedName(repoName)
+			if err == nil && okRepos.Has(repoKey) {
+				err = redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
+				if err != nil {
+					return nil, mock, err
+				}
+				cachedChartKeys.Insert(key)
+				chartCache.ExpectAdd(key)
+			}
 		}
+	}
+
+	cs = repoCacheCallSite{
+		clientGetter: clientGetter,
+		chartCache:   chartCache,
+	}
+	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
+		Gvr:          repositoriesGvr,
+		ClientGetter: clientGetter,
+		OnAddFunc:    cs.onAddRepo,
+		OnModifyFunc: cs.onModifyRepo,
+		OnGetFunc:    cs.onGetRepo,
+		OnDeleteFunc: cs.onDeleteRepo,
 	}
 
 	repoCache, err := cache.NewNamespacedResourceWatcherCache(cacheConfig, redisCli)
@@ -295,7 +306,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 	}
 
 	// need to wait until ChartCache has finished syncing
-	for key := range cachedCharts {
+	for key := range cachedChartKeys {
 		chartCache.WaitUntilDoneWith(key)
 	}
 

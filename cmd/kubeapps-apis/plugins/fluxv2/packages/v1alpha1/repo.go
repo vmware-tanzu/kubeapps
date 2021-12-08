@@ -182,15 +182,14 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 //
 type repoCacheCallSite struct {
 	clientGetter common.ClientGetterFunc
-	// other things may go in here
+	chartCache   *ChartCache // chartCache maybe nil only in unit tests
 }
 
 // this is what we store in the cache for each cached repo
 // all struct fields are capitalized so they're exported by gob encoding
 type repoCacheEntryValue struct {
-	Checksum   string
-	Charts     []models.Chart
-	ClientOpts *common.ClientOptions
+	Checksum string
+	Charts   []models.Chart
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
@@ -227,9 +226,8 @@ func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map
 	}
 
 	cacheEntryValue := repoCacheEntryValue{
-		Checksum:   checksum,
-		Charts:     charts,
-		ClientOpts: opts,
+		Checksum: checksum,
+		Charts:   charts,
 	}
 
 	// use gob encoding instead of json, it peforms much better
@@ -237,6 +235,12 @@ func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map
 	enc := gob.NewEncoder(&buf)
 	if err = enc.Encode(cacheEntryValue); err != nil {
 		return nil, false, err
+	}
+
+	if s.chartCache != nil {
+		if err = s.chartCache.syncCharts(charts, opts); err != nil {
+			return nil, false, err
+		}
 	}
 
 	return buf.Bytes(), true, nil
@@ -375,6 +379,11 @@ func (s *repoCacheCallSite) onGetRepo(key string, value interface{}) (interface{
 }
 
 func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
+	if s.chartCache != nil {
+		if err := s.chartCache.deleteChartsForRepo(key); err != nil {
+			return false, err
+		}
+	}
 	return true, nil
 }
 

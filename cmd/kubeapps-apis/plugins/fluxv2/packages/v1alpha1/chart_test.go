@@ -46,7 +46,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		testName              string
 		request               *corev1.GetAvailablePackageDetailRequest
 		chartCacheHit         bool
-		secureRepo            bool // also known as "private"
+		basicAuth             bool // also known as "private" or "secure"
+		tls                   bool // also known as "private" or "secure"
 		expectedPackageDetail *corev1.AvailablePackageDetail
 	}{
 		{
@@ -67,14 +68,26 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			expectedPackageDetail: expected_detail_redis_2,
 		},
 		{
-			testName: "it returns details about the latest redis package from a secured repo",
+			testName: "it returns details about the latest redis package from a repo with basic auth",
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
 			chartCacheHit:         true,
-			secureRepo:            true,
+			basicAuth:             true,
 			expectedPackageDetail: expected_detail_redis_1,
 		},
+		/*
+				{
+				testName: "it returns details about the latest redis package from a repo with TLS",
+				request: &corev1.GetAvailablePackageDetailRequest{
+					AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				},
+				chartCacheHit:         true,
+				basicAuth:             false,
+				tls:                   true,
+				expectedPackageDetail: expected_detail_redis_1,
+			},
+		*/
 	}
 
 	for _, tc := range testCases {
@@ -85,7 +98,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			charts := []testSpecChartWithUrl{}
 			requestChartUrl := ""
 			opts := &common.ClientOptions{}
-			if tc.secureRepo {
+			if tc.basicAuth {
 				opts.Authorization = "Basic " + base64.StdEncoding.EncodeToString([]byte("foo:bar"))
 			}
 			for _, s := range redis_charts_spec {
@@ -98,10 +111,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					w.WriteHeader(200)
 					w.Write(tarGzBytes)
 				})
-				if tc.secureRepo {
+				if tc.basicAuth {
 					handler = basicAuth(handler, "foo", "bar", "myrealm")
 				}
-				ts := httptest.NewServer(handler)
+				var ts *httptest.Server
+				if tc.tls {
+					ts = httptest.NewTLSServer(handler)
+				} else {
+					ts = httptest.NewServer(handler)
+				}
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
 				c := testSpecChartWithUrl{
@@ -119,9 +137,13 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			secretRef := ""
 			secretObjs := []runtime.Object{}
-			if tc.secureRepo {
+			// TODO (gfichtenholt) in theory we could have both TLS AND basic auth
+			if tc.basicAuth {
 				secretRef = "http-credentials"
 				secretObjs = append(secretObjs, newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar"))
+			} else if tc.tls {
+				secretRef = "https-credentials"
+				secretObjs = append(secretObjs, newTlsSecret(secretRef, repoNamespace))
 			}
 
 			ts2, repo, err := newRepoWithIndex(
@@ -609,6 +631,21 @@ func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string
 		mock.ExpectGet(key).SetVal(string(bytes))
 	} else {
 		mock.ExpectGet(key).RedisNil()
+	}
+	return nil
+}
+
+func redisMockExpectDeleteFromChartCache(mock redismock.ClientMock) error {
+	// TODO (gfichtenholt)
+	// everything hardcoded for one test for now :-)
+	// will clean it up when I am done with more important stuff
+	keys := []string{
+		"helmcharts:default:bitnami-1/acs-engine-autoscaler:2.1.1",
+		"helmcharts:default:bitnami-1/wordpress:0.7.5",
+	}
+	mock.ExpectScan(0, "helmcharts:default:bitnami-1/*:*", 0).SetVal(keys, 0)
+	for _, k := range keys {
+		mock.ExpectDel(k).SetVal(0)
 	}
 	return nil
 }

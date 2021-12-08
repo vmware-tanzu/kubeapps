@@ -107,58 +107,10 @@ func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
 	return &c, nil
 }
 
-func (c *ChartCache) wrapOnAddFunc(fnAdd cache.ValueAdderFunc, fnGet cache.ValueGetterFunc) cache.ValueAdderFunc {
-	return func(key string, obj map[string]interface{}) (interface{}, bool, error) {
-		value, setValue, err := fnAdd(key, obj)
-		if err == nil && setValue {
-			if untypedValue, err2 := fnGet(key, value); err2 != nil {
-				log.Errorf("%+v", err2)
-			} else if typedValue, ok := untypedValue.(repoCacheEntryValue); !ok {
-				log.Errorf("unexpected value fetched from cache: type: [%s], value: [%v]",
-					reflect.TypeOf(untypedValue), value)
-			} else {
-				c.syncCharts(typedValue)
-			}
-		}
-		return value, setValue, err
-	}
-}
-
-func (c *ChartCache) wrapOnModifyFunc(fnModify cache.ValueModifierFunc, fnGet cache.ValueGetterFunc) cache.ValueModifierFunc {
-	return func(key string, obj map[string]interface{}, oldVal interface{}) (interface{}, bool, error) {
-		value, setValue, err := fnModify(key, obj, oldVal)
-		if err == nil && setValue {
-			if untypedValue, err2 := fnGet(key, value); err2 != nil {
-				log.Errorf("%+v", err2)
-			} else if typedValue, ok := untypedValue.(repoCacheEntryValue); !ok {
-				log.Errorf("unexpected value fetched from cache: type: [%s], value: [%v]",
-					reflect.TypeOf(untypedValue), value)
-			} else {
-				// in theory, we need to delete the entries corresponding to the old
-				// value, e.g. redis v.14, and then sync chart redis v.15. Having said
-				// that, I don't see much harm in leaving the entry for the old value
-				// in the cache, so...
-				c.syncCharts(typedValue)
-			}
-		}
-		return value, setValue, err
-	}
-}
-
-func (c *ChartCache) wrapOnDeleteFunc(fnDelete cache.KeyDeleterFunc) cache.KeyDeleterFunc {
-	return func(key string) (bool, error) {
-		del, err := fnDelete(key)
-		if err == nil && del {
-			c.deleteChartsForRepo(key)
-		}
-		return del, err
-	}
-}
-
 // this will enqueue work items into chart work queue and return.
 // the charts will be synced by a worker thread running in the background
-func (c *ChartCache) syncCharts(repo repoCacheEntryValue) {
-	log.Infof("+syncCharts(client opts=[%s])", repo.ClientOpts)
+func (c *ChartCache) syncCharts(charts []models.Chart, opts *common.ClientOptions) error {
+	log.Infof("+syncCharts(client opts=[%s])", opts)
 	totalToSync := 0
 	defer func() {
 		log.Infof("-syncCharts(): [%d] total charts to sync", totalToSync)
@@ -166,7 +118,7 @@ func (c *ChartCache) syncCharts(repo repoCacheEntryValue) {
 
 	// let's just cache the latest one for now. The chart versions array would
 	// have already been sorted and the latest chart version will be at array index 0
-	for _, chart := range repo.Charts {
+	for _, chart := range charts {
 		// add chart to temp store. It will be removed when processed by background
 		// runWorker/syncHandler
 		if len(chart.ChartVersions) == 0 {
@@ -183,7 +135,7 @@ func (c *ChartCache) syncCharts(repo repoCacheEntryValue) {
 			id:        chart.ID,
 			version:   chart.ChartVersions[0].Version,
 			url:       chart.ChartVersions[0].URLs[0],
-			opts:      repo.ClientOpts,
+			opts:      opts,
 			deleted:   false,
 		}
 		c.processing.Add(entry)
@@ -194,6 +146,7 @@ func (c *ChartCache) syncCharts(repo repoCacheEntryValue) {
 			totalToSync++
 		}
 	}
+	return nil
 }
 
 // runWorker is a long-running function that will continually call the
@@ -320,7 +273,7 @@ func (c *ChartCache) deleteChartsForRepo(key string) error {
 				deleted:   true,
 			}
 			c.processing.Add(entry)
-			log.Infof("Marked key [%s] to be deleted", k)
+			log.V(4).Infof("Marked key [%s] to be deleted", k)
 			c.queue.Add(k)
 		}
 	}
@@ -416,6 +369,10 @@ func (c *ChartCache) fetchForOne(key string) ([]byte, error) {
 // k8s for the corresponding object, process it and then add it to the cache and return the
 // result.
 // TODO (gfichtenholt) get rid of chartModel models.Chart argument. This is breaking an abstraction
+// TODO (gfichtenholt) I promised Michael this would return an error if the entry could not be
+// computed due to not being able to read repo's secretRef. This is actually hard to do due to async
+// nature of how entries are added to the cache. Currently, it returns nil, same
+// as any invalid chart name
 func (c *ChartCache) GetForOne(key string, chart *models.Chart) ([]byte, error) {
 	log.Infof("+GetForOne(%s)", key)
 	var value []byte

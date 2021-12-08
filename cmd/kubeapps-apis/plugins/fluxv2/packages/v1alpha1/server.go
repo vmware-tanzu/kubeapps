@@ -72,14 +72,15 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 	} else {
 		s := repoCacheCallSite{
 			clientGetter: common.NewBackgroundClientGetter(),
+			chartCache:   chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 			Gvr:          repositoriesGvr,
 			ClientGetter: s.clientGetter,
-			OnAddFunc:    chartCache.wrapOnAddFunc(s.onAddRepo, s.onGetRepo),
-			OnModifyFunc: chartCache.wrapOnModifyFunc(s.onModifyRepo, s.onGetRepo),
+			OnAddFunc:    s.onAddRepo,
+			OnModifyFunc: s.onModifyRepo,
 			OnGetFunc:    s.onGetRepo,
-			OnDeleteFunc: chartCache.wrapOnDeleteFunc(s.onDeleteRepo),
+			OnDeleteFunc: s.onDeleteRepo,
 		}
 		if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli); err != nil {
 			return nil, err
