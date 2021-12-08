@@ -1214,17 +1214,33 @@ describe("fetchImagePullSecrets", () => {
 
 describe("createDockerRegistrySecret", () => {
   it("creates a docker registry", async () => {
-    const secret = {
-      type: "kubernetes.io/dockerconfigjson",
-    };
-    Secret.createPullSecret = jest.fn().mockReturnValue(secret);
+    Secret.createPullSecret = jest.fn();
     const expectedActions = [
       {
         type: getType(repoActions.createImagePullSecret),
-        payload: secret,
+        payload: "secret-name",
       },
     ];
-    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
+
+    await store.dispatch(
+      repoActions.createDockerRegistrySecret(
+        "secret-name",
+        "user",
+        "password",
+        "email",
+        "server",
+        "namespace",
+      ),
+    );
+    expect(Secret.createPullSecret).toHaveBeenCalledWith(
+      "default",
+      "secret-name",
+      "user",
+      "password",
+      "email",
+      "server",
+      "namespace",
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 
