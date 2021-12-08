@@ -28,9 +28,6 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
 
-	"log"
-	"os"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	packagesv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/packages/v1alpha1"
@@ -43,28 +40,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	klogv2 "k8s.io/klog/v2"
 )
-
-// LogRequest is a gRPC UnaryServerInterceptor that will log the API call
-func CreateRequestLogger() func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
-
-	// Include micro seconds in timestamp
-	logger := log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lmicroseconds)
-
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
-
-		start := time.Now()
-		res, err := handler(ctx, req)
-
-		// Format string : [timestamp] [status code] [duration] [full path]
-		// 2021-11-29 15:10:21.642313 OK 97.752µs /kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries
-		logger.Printf("%v %s %s\n",
-			status.Code(err),
-			time.Since(start),
-			info.FullMethod)
-
-		return res, err
-	}
-}
 
 func getLogLevelOfEndpoint(endpoint string) klogv2.Level {
 
@@ -84,6 +59,7 @@ func getLogLevelOfEndpoint(endpoint string) klogv2.Level {
 	return level
 }
 
+// LogRequest is a gRPC UnaryServerInterceptor that will log the API call
 func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
 
 	start := time.Now()
