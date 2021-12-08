@@ -37,6 +37,16 @@ service ResourcesService {
             get: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}"
         };
     }
+    rpc GetSecretNames(GetSecretNamesRequest) returns (GetSecretNamesResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/secretnames"
+        };
+    }
+    rpc CreateSecret(CreateSecretRequest) returns (CreateSecretResponse) {
+        option (google.api.http) = {
+            post: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/secrets"
+        };
+    }
 }
 
 // GetResourcesRequest
@@ -113,6 +123,16 @@ message GetNamespaceNamesRequest {
     string cluster = 1;
 }
 
+// GetNamespaceNamesResponse
+//
+// Response for GetNamespaceNames
+message GetNamespaceNamesResponse {
+    // NamespaceNames
+    //
+    // The list of Namespace names.
+    repeated string namespace_names = 1;
+}
+
 // CreateNamespaceRequest
 //
 // Request for CreateNamespace
@@ -127,16 +147,6 @@ message CreateNamespaceRequest {
 //
 // Response for CreateNamespace
 message CreateNamespaceResponse {}
-
-// GetNamespaceNamesResponse
-//
-// Response for GetNamespaceNames
-message GetNamespaceNamesResponse {
-    // NamespaceNames
-    //
-    // The list of Namespace names.
-    repeated string namespace_names = 1;
-}
 
 // CheckNamespaceExistsRequest
 //
@@ -153,4 +163,69 @@ message CheckNamespaceExistsRequest {
 // Response for CheckNamespaceExists
 message CheckNamespaceExistsResponse {
     bool exists = 1;
+}
+
+// SecretType
+//
+// The type of secret. Currently Kubeapps itself only deals with OPAQUE
+// and docker config json secrets, but we define all so we can correctly
+// list the secret names with their types.
+// See https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
+enum SecretType {
+    OPAQUE = 0;
+    SERVICE_ACCOUNT_TOKEN = 1;
+    DOCKER_CONFIG = 2;
+    DOCKER_CONFIG_JSON = 3;
+    BASIC_AUTH = 4;
+    SSH_AUTH = 5;
+    TLS = 6;
+    BOOTSTRAP_TOKEN = 7;
+}
+
+// CreateSecretRequest
+//
+// Request for CreateSecret
+message CreateSecretRequest {
+    // Context
+    //
+    // The context of the secret being created.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+
+    // Type
+    //
+    // The type of the secret. Valid values are defined by the Type enumeration.
+    SecretType type = 2;
+
+    // StringData
+    //
+    // The map of keys and values. Note that we use StringData here so that
+    // Kubernetes handles the base64 encoding of the key values for us.
+    // See https://kubernetes.io/docs/concepts/configuration/secret/#overview-of-secrets
+    map<string, string> string_data = 3;
+}
+
+// CreateSecretResponse
+//
+// Response for CreateSecret
+message CreateSecretResponse {}
+
+
+// GetSecretNamesRequest
+//
+// Request for GetSecretNames
+message GetSecretNamesRequest {
+    // Context
+    //
+    // The context for which the secret names are being fetched.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// GetSecretNamesResponse
+//
+// Response for GetSecretNames
+message GetSecretNamesResponse {
+    // SecretNames
+    //
+    // The list of Service Account names.
+    map<string, SecretType> secret_names = 1;
 }

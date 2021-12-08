@@ -23,6 +23,8 @@ type ResourcesServiceClient interface {
 	GetNamespaceNames(ctx context.Context, in *GetNamespaceNamesRequest, opts ...grpc.CallOption) (*GetNamespaceNamesResponse, error)
 	CreateNamespace(ctx context.Context, in *CreateNamespaceRequest, opts ...grpc.CallOption) (*CreateNamespaceResponse, error)
 	CheckNamespaceExists(ctx context.Context, in *CheckNamespaceExistsRequest, opts ...grpc.CallOption) (*CheckNamespaceExistsResponse, error)
+	GetSecretNames(ctx context.Context, in *GetSecretNamesRequest, opts ...grpc.CallOption) (*GetSecretNamesResponse, error)
+	CreateSecret(ctx context.Context, in *CreateSecretRequest, opts ...grpc.CallOption) (*CreateSecretResponse, error)
 }
 
 type resourcesServiceClient struct {
@@ -101,6 +103,24 @@ func (c *resourcesServiceClient) CheckNamespaceExists(ctx context.Context, in *C
 	return out, nil
 }
 
+func (c *resourcesServiceClient) GetSecretNames(ctx context.Context, in *GetSecretNamesRequest, opts ...grpc.CallOption) (*GetSecretNamesResponse, error) {
+	out := new(GetSecretNamesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/GetSecretNames", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourcesServiceClient) CreateSecret(ctx context.Context, in *CreateSecretRequest, opts ...grpc.CallOption) (*CreateSecretResponse, error) {
+	out := new(CreateSecretResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/CreateSecret", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourcesServiceServer is the server API for ResourcesService service.
 // All implementations should embed UnimplementedResourcesServiceServer
 // for forward compatibility
@@ -110,6 +130,8 @@ type ResourcesServiceServer interface {
 	GetNamespaceNames(context.Context, *GetNamespaceNamesRequest) (*GetNamespaceNamesResponse, error)
 	CreateNamespace(context.Context, *CreateNamespaceRequest) (*CreateNamespaceResponse, error)
 	CheckNamespaceExists(context.Context, *CheckNamespaceExistsRequest) (*CheckNamespaceExistsResponse, error)
+	GetSecretNames(context.Context, *GetSecretNamesRequest) (*GetSecretNamesResponse, error)
+	CreateSecret(context.Context, *CreateSecretRequest) (*CreateSecretResponse, error)
 }
 
 // UnimplementedResourcesServiceServer should be embedded to have forward compatible implementations.
@@ -130,6 +152,12 @@ func (UnimplementedResourcesServiceServer) CreateNamespace(context.Context, *Cre
 }
 func (UnimplementedResourcesServiceServer) CheckNamespaceExists(context.Context, *CheckNamespaceExistsRequest) (*CheckNamespaceExistsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckNamespaceExists not implemented")
+}
+func (UnimplementedResourcesServiceServer) GetSecretNames(context.Context, *GetSecretNamesRequest) (*GetSecretNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSecretNames not implemented")
+}
+func (UnimplementedResourcesServiceServer) CreateSecret(context.Context, *CreateSecretRequest) (*CreateSecretResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSecret not implemented")
 }
 
 // UnsafeResourcesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -236,6 +264,42 @@ func _ResourcesService_CheckNamespaceExists_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourcesService_GetSecretNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSecretNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcesServiceServer).GetSecretNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/GetSecretNames",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcesServiceServer).GetSecretNames(ctx, req.(*GetSecretNamesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourcesService_CreateSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSecretRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcesServiceServer).CreateSecret(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/CreateSecret",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcesServiceServer).CreateSecret(ctx, req.(*CreateSecretRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourcesService_ServiceDesc is the grpc.ServiceDesc for ResourcesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -258,6 +322,14 @@ var ResourcesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckNamespaceExists",
 			Handler:    _ResourcesService_CheckNamespaceExists_Handler,
+		},
+		{
+			MethodName: "GetSecretNames",
+			Handler:    _ResourcesService_GetSecretNames_Handler,
+		},
+		{
+			MethodName: "CreateSecret",
+			Handler:    _ResourcesService_CreateSecret_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
