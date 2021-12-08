@@ -1042,9 +1042,9 @@ func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secre
 			Namespace: namespace,
 		},
 		Type: k8scorev1.SecretTypeBasicAuth,
-		StringData: map[string]string{
-			"username": user,
-			"password": password,
+		Data: map[string][]byte{
+			"username": []byte(user),
+			"password": []byte(password),
 		},
 	}
 }

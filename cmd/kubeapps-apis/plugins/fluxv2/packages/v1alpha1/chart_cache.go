@@ -16,7 +16,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"reflect"
 	"strings"
@@ -26,9 +25,9 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/getter"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -73,12 +72,12 @@ type ChartCache struct {
 //  - deleted flag to true
 // setting both does not make sense
 type chartCacheStoreEntry struct {
-	namespace string
-	id        string
-	version   string
-	url       string
-	opts      *common.ClientOptions
-	deleted   bool
+	namespace     string
+	id            string
+	version       string
+	url           string
+	clientOptions []getter.Option
+	deleted       bool
 }
 
 func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
@@ -109,8 +108,8 @@ func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
 
 // this will enqueue work items into chart work queue and return.
 // the charts will be synced by a worker thread running in the background
-func (c *ChartCache) syncCharts(charts []models.Chart, opts *common.ClientOptions) error {
-	log.Infof("+syncCharts(client opts=[%s])", opts)
+func (c *ChartCache) syncCharts(charts []models.Chart, clientOptions []getter.Option) error {
+	log.Infof("+syncCharts()")
 	totalToSync := 0
 	defer func() {
 		log.Infof("-syncCharts(): [%d] total charts to sync", totalToSync)
@@ -131,12 +130,12 @@ func (c *ChartCache) syncCharts(charts []models.Chart, opts *common.ClientOption
 		// The tarball URL will always be the first URL in the repo.chartVersions.
 		// So says the helm plugin :-)
 		entry := chartCacheStoreEntry{
-			namespace: chart.Repo.Namespace,
-			id:        chart.ID,
-			version:   chart.ChartVersions[0].Version,
-			url:       chart.ChartVersions[0].URLs[0],
-			opts:      opts,
-			deleted:   false,
+			namespace:     chart.Repo.Namespace,
+			id:            chart.ID,
+			version:       chart.ChartVersions[0].Version,
+			url:           chart.ChartVersions[0].URLs[0],
+			clientOptions: clientOptions,
+			deleted:       false,
 		}
 		c.processing.Add(entry)
 		if key, err := chartCacheKeyFunc(entry); err != nil {
@@ -322,7 +321,7 @@ func (c *ChartCache) syncHandler(key string) (err error) {
 		log.Infof("Redis [DEL %s]: %d", key, keysremoved)
 	} else {
 		var byteArray []byte
-		byteArray, err = chartCacheComputeValue(chart.id, chart.url, chart.version, chart.opts)
+		byteArray, err = chartCacheComputeValue(chart.id, chart.url, chart.version, chart.clientOptions)
 		if err == nil {
 			var result string
 			startTime := time.Now()
@@ -473,36 +472,28 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 // which breaks a fundamental assumption I rely on.
 // I am putting the retries back in here just as a workaround until I figure out why the queue is broken
 
-func chartCacheComputeValue(chartID, chartUrl, chartVersion string, opts *common.ClientOptions) ([]byte, error) {
+func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions []getter.Option) ([]byte, error) {
 	// TODO (gfichtenholt) what about HTTP_PROXY
 
-	// this is always the same for all requests
+	// userAgent string is always the same for all requests
 	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 	// I wish I could use the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
 	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
 	// *Sigh*
-	headers := make(map[string]string)
-	headers["User-Agent"] = userAgentString
-	if opts != nil {
-		if opts.Authorization != "" {
-			headers["Authorization"] = opts.Authorization
-		}
-	}
+	clientOptions = append(clientOptions, getter.WithUserAgent(userAgentString))
+	clientOptions = append(clientOptions, getter.WithURL(chartUrl))
 
 	// In theory, the work queue should be able to retry transient errors
 	// so I shouldn't have to do retries here. See above comment for explanation
 	const maxRetries = 5
-	var chartTgz []byte
+	var buf *bytes.Buffer
 	ok := false
 	for i := 0; i < maxRetries && !ok; i++ {
-		reader, _, err := httpclient.GetStream(chartUrl, httpclient.New(), headers)
-		if reader != nil {
-			defer reader.Close()
-		}
+		getter, err := getter.NewHTTPGetter(clientOptions...)
 		if err == nil {
-			if chartTgz, err = ioutil.ReadAll(reader); err != nil {
+			if buf, err = getter.Get(chartUrl); err != nil {
 				log.Warningf("%+v", err)
-			} else {
+			} else if buf != nil && buf.Len() > 0 {
 				ok = true
 				break
 			}
@@ -519,18 +510,18 @@ func chartCacheComputeValue(chartID, chartUrl, chartVersion string, opts *common
 	}
 
 	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: [%d] bytes",
-		chartID, chartVersion, chartUrl, len(chartTgz))
+		chartID, chartVersion, chartUrl, buf.Len())
 
 	cacheEntryValue := chartCacheEntryValue{
-		ChartTarball: chartTgz,
+		ChartTarball: buf.Bytes(),
 	}
 
 	// use gob encoding instead of json, it peforms much better
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
+	var gobBuf bytes.Buffer
+	enc := gob.NewEncoder(&gobBuf)
 	if err := enc.Encode(cacheEntryValue); err != nil {
 		return nil, err
 	} else {
-		return buf.Bytes(), nil
+		return gobBuf.Bytes(), nil
 	}
 }

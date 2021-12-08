@@ -28,6 +28,7 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/getter"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -248,7 +249,7 @@ func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map
 
 // it is assumed the caller has already checked that this repo is ready
 // At present, there is only one caller of indexOneRepo() and this check is already done by it
-func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, *common.ClientOptions, error) {
+func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, []getter.Option, error) {
 	startTime := time.Now()
 
 	repo, err := packageRepositoryFromUnstructured(unstructuredRepo)
@@ -261,7 +262,7 @@ func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}
 	// gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
 	// The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
 	// ChartCache
-	var opts *common.ClientOptions
+	var opts = ([]getter.Option)(nil)
 	secretName, found, err := unstructured.NestedString(unstructuredRepo, "spec", "secretRef", "name")
 	if found && err == nil {
 		if opts, err = s.clientOptionsFromSecret(secretName, repo.Namespace); err != nil {
@@ -387,7 +388,7 @@ func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
 	return true, nil
 }
 
-func (s *repoCacheCallSite) clientOptionsFromSecret(secretName, namespace string) (*common.ClientOptions, error) {
+func (s *repoCacheCallSite) clientOptionsFromSecret(secretName, namespace string) ([]getter.Option, error) {
 	if s == nil || s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
 	}
@@ -406,7 +407,7 @@ func (s *repoCacheCallSite) clientOptionsFromSecret(secretName, namespace string
 	// I wish I could use the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
 	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
 	// *Sigh*
-	return common.ClientOptionsFromSecret(secret)
+	return common.ClientOptionsFromSecret(*secret)
 }
 
 //

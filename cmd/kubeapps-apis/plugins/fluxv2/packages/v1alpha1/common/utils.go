@@ -14,7 +14,6 @@ package common
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -30,6 +29,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/kube"
 	apiv1 "k8s.io/api/core/v1"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -284,51 +284,42 @@ func RedisMemoryStats(redisCli *redis.Client) (used, total string) {
 }
 
 // options are generic parameters to be provided to the getter during instantiation.
-//
-// Getters may or may not ignore these parameters as they are passed in.
-type ClientOptions struct {
-	Authorization string
-}
 
-// inspired by https://github.com/fluxcd/source-controller/blob/cfa72ad526d0472eda5e73d038f29bf28f9b9721/internal/helm/getter/getter.go#L53
-func ClientOptionsFromSecret(secret *apiv1.Secret) (*ClientOptions, error) {
-	opts := &ClientOptions{}
-	basicAuth, err := basicAuthFromSecret(secret)
-	if err != nil {
-		return nil, err
-	}
-	if basicAuth != "" {
-		opts.Authorization = basicAuth
-	}
-	/* TODO
-	tlsClientConfig, err := TLSClientConfigFromSecret(dir, secret)
+// inspired by https://github.com/fluxcd/source-controller/blob/main/internal/helm/getter/getter.go#L29
+func ClientOptionsFromSecret(secret apiv1.Secret) ([]getter.Option, error) {
+	var opts []getter.Option
+	basicAuth, err := BasicAuthFromSecret(secret)
 	if err != nil {
 		return opts, err
 	}
-	if tlsClientConfig != nil {
-		opts = append(opts, tlsClientConfig)
+	if basicAuth != nil {
+		opts = append(opts, basicAuth)
 	}
+	/*
+		    TODO
+			tlsClientConfig, err := TLSClientConfigFromSecret(dir, secret)
+			if err != nil {
+				return opts, err
+			}
+			if tlsClientConfig != nil {
+				opts = append(opts, tlsClientConfig)
+			}
 	*/
 	return opts, nil
 }
 
-// basicAuthFromSecret attempts to construct a basic auth getter.Option for the
+// BasicAuthFromSecret attempts to construct a basic auth getter.Option for the
 // given v1.Secret and returns the result.
 //
 // Secrets with no username AND password are ignored, if only one is defined it
 // returns an error.
-func basicAuthFromSecret(secret *apiv1.Secret) (string, error) {
-	username, password := secret.StringData["username"], secret.StringData["password"]
+func BasicAuthFromSecret(secret apiv1.Secret) (getter.Option, error) {
+	username, password := string(secret.Data["username"]), string(secret.Data["password"])
 	switch {
 	case username == "" && password == "":
-		return "", nil
+		return nil, nil
 	case username == "" || password == "":
-		return "", fmt.Errorf("invalid '%s' secret data: required fields 'username' and 'password'", secret.Name)
+		return nil, fmt.Errorf("invalid '%s' secret data: required fields 'username' and 'password'", secret.Name)
 	}
-	auth := username + ":" + password
-	return "Basic " + base64.StdEncoding.EncodeToString([]byte(auth)), nil
-}
-
-func (o *ClientOptions) String() string {
-	return fmt.Sprintf("{Authorization=[%s]}", o.Authorization)
+	return getter.WithBasicAuth(username, password), nil
 }

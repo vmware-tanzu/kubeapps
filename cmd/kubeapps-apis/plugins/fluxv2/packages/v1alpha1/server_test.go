@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/getter"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -213,7 +214,7 @@ type testSpecChartWithUrl struct {
 	chartID       string
 	chartRevision string
 	chartUrl      string
-	opts          *common.ClientOptions
+	opts          []getter.Option
 	repoNamespace string
 }
 

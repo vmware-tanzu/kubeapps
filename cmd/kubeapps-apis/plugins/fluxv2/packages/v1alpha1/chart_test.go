@@ -15,7 +15,6 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -28,9 +27,9 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/getter"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -97,10 +96,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			replaceUrls := make(map[string]string)
 			charts := []testSpecChartWithUrl{}
 			requestChartUrl := ""
-			opts := &common.ClientOptions{}
-			if tc.basicAuth {
-				opts.Authorization = "Basic " + base64.StdEncoding.EncodeToString([]byte("foo:bar"))
-			}
 			for _, s := range redis_charts_spec {
 				tarGzBytes, err := ioutil.ReadFile(s.tgzFile)
 				if err != nil {
@@ -122,6 +117,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
+				opts := []getter.Option{getter.WithURL(ts.URL)}
+				if tc.basicAuth {
+					opts = append(opts, getter.WithBasicAuth("foo", "bar"))
+				}
 				c := testSpecChartWithUrl{
 					chartID:       fmt.Sprintf("%s/%s", repoName, s.name),
 					chartRevision: s.revision,
@@ -170,6 +169,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				version)
 			if err != nil {
 				t.Fatalf("%+v", err)
+			}
+			opts := []getter.Option{getter.WithURL(requestChartUrl)}
+			if tc.basicAuth {
+				opts = append(opts, getter.WithBasicAuth("foo", "bar"))
 			}
 			if !tc.chartCacheHit {
 				// first a miss
@@ -603,7 +606,7 @@ func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 	}
 }
 
-func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts []getter.Option) error {
 	_, chartID, version, err := fromRedisKeyForChart(key)
 	if err != nil {
 		return err
@@ -618,7 +621,7 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts 
 }
 
 // does a series of mock.ExpectGet(...)
-func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts []getter.Option) error {
 	if url != "" {
 		_, chartID, version, err := fromRedisKeyForChart(key)
 		if err != nil {
