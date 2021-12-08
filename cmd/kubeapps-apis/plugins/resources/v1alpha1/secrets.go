@@ -45,7 +45,7 @@ func (s *Server) CreateSecret(ctx context.Context, r *v1alpha1.CreateSecretReque
 			Namespace: namespace,
 			Name:      r.GetName(),
 		},
-		Type:       secretTypeForEnum(r.GetType()),
+		Type:       k8sTypeForProtoType(r.GetType()),
 		StringData: r.GetStringData(),
 	}, metav1.CreateOptions{})
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *Server) CreateSecret(ctx context.Context, r *v1alpha1.CreateSecretReque
 	return &v1alpha1.CreateSecretResponse{}, nil
 }
 
-func secretTypeForEnum(secretType v1alpha1.SecretType) core.SecretType {
+func k8sTypeForProtoType(secretType v1alpha1.SecretType) core.SecretType {
 	switch secretType {
 	case v1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED:
 		return core.SecretTypeOpaque
@@ -75,4 +75,53 @@ func secretTypeForEnum(secretType v1alpha1.SecretType) core.SecretType {
 		return core.SecretTypeBootstrapToken
 	}
 	return core.SecretTypeOpaque
+}
+
+func protoTypeForK8sType(secretType core.SecretType) v1alpha1.SecretType {
+	switch secretType {
+	case core.SecretTypeOpaque:
+		return v1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED
+	case core.SecretTypeServiceAccountToken:
+		return v1alpha1.SecretType_SECRET_TYPE_SERVICE_ACCOUNT_TOKEN
+	case core.SecretTypeDockercfg:
+		return v1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG
+	case core.SecretTypeDockerConfigJson:
+		return v1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG_JSON
+	case core.SecretTypeBasicAuth:
+		return v1alpha1.SecretType_SECRET_TYPE_BASIC_AUTH
+	case core.SecretTypeSSHAuth:
+		return v1alpha1.SecretType_SECRET_TYPE_SSH_AUTH
+	case core.SecretTypeTLS:
+		return v1alpha1.SecretType_SECRET_TYPE_TLS
+	case core.SecretTypeBootstrapToken:
+		return v1alpha1.SecretType_SECRET_TYPE_BOOTSTRAP_TOKEN
+	}
+	return v1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED
+}
+
+// GetSecretNames returns a map of secret names with their types for the given
+// context if the user has the required RBAC.
+func (s *Server) GetSecretNames(ctx context.Context, r *v1alpha1.GetSecretNamesRequest) (*v1alpha1.GetSecretNamesResponse, error) {
+	cluster := r.GetContext().GetCluster()
+	namespace := r.GetContext().GetNamespace()
+	log.Infof("+resources GetSecretNames (cluster: %q, namespace: %q)", cluster, namespace)
+
+	typedClient, _, err := s.clientGetter(ctx, cluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+	}
+
+	secretList, err := typedClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, errorByStatus("list", "Secrets", "", err)
+	}
+
+	secrets := map[string]v1alpha1.SecretType{}
+	for _, s := range secretList.Items {
+		secrets[s.Name] = protoTypeForK8sType(s.Type)
+	}
+
+	return &v1alpha1.GetSecretNamesResponse{
+		SecretNames: secrets,
+	}, nil
 }
