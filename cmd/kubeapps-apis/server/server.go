@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -65,13 +66,48 @@ func CreateRequestLogger() func(ctx context.Context, req interface{}, info *grpc
 	}
 }
 
+func getLogLevelOfEndpoint(endpoint string) klogv2.Level {
+
+	// Add all endpoint function names which you want to suppress in interceptor logging
+	supressLoggingOfEndpoints := []string{"GetConfiguredPlugins"}
+	var level klogv2.Level
+
+	// level=3 is default logging level
+	level = 3
+	for i := 0; i < len(supressLoggingOfEndpoints); i++ {
+		if strings.Contains(endpoint, supressLoggingOfEndpoints[i]) {
+			level = 4
+			break
+		}
+	}
+
+	return level
+}
+
+func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
+
+	start := time.Now()
+	res, err := handler(ctx, req)
+
+	level := getLogLevelOfEndpoint(info.FullMethod)
+
+	// Format string : [status code] [duration] [full path]
+	// OK 97.752µs /kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries
+	klogv2.V(level).Infof("%v %s %s\n",
+		status.Code(err),
+		time.Since(start),
+		info.FullMethod)
+
+	return res, err
+}
+
 // Serve is the root command that is run when no other sub-commands are present.
 // It runs the gRPC service, registering the configured plugins.
 func Serve(serveOpts core.ServeOptions) error {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
-	logRequest := CreateRequestLogger()
-	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(logRequest))
+
+	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(LogRequest))
 	reflection.Register(grpcSrv)
 
 	// Create the http server, register our core service followed by any plugins.
