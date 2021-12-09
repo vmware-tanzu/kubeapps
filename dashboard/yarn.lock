@@ -2257,10 +2257,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/lodash@^4.14.177":
-  version "4.14.177"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.177.tgz#f70c0d19c30fab101cad46b52be60363c43c4578"
-  integrity sha512-0fDwydE2clKe9MNfvXHBHF9WEahRuj+msTuQqOmAApNORFvhMYZKNGGJdCzuhheVjMps/ti0Ak/iJPACMaevvw==
+"@types/lodash@^4.14.178":
+  version "4.14.178"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.178.tgz#341f6d2247db528d4a13ddbb374bcdc80406f4f8"
+  integrity sha512-0d5Wd09ItQWH1qFbEyQ7oTQ3GZrMfth5JkbN3EvTKLXcHLRDSXeLnlvlOn0wvxVIwK5o2M8JzP/OWz7T3NRsbw==
 
 "@types/long@^4.0.1":
   version "4.0.1"
@@ -14361,10 +14361,10 @@ ts-proto-descriptors@^1.2.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.92.1:
-  version "1.92.1"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.92.1.tgz#a9981d847e1a47a81f2a7a8fe5be79da8f4a5fd6"
-  integrity sha512-ofs0Drr2NNhZyl4zC7pCbSs2U4cBG5A8xXbgPYWTqsYew8HtwofoekhhAUXcgsMzo1G56MGagTZYZayqOKvN9A==
+ts-proto@^1.92.2:
+  version "1.93.1"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.93.1.tgz#6877f35b8f445c00637f115ff44f0b71d953ccac"
+  integrity sha512-2DEoZFrqfYisLeyAU6KX9p1SOZ6P7CBm4IQi+kJ/+OURYrpoTmgLWI4BmRAIKBFo0xla2U2ErhylM3e3wFC7vA==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
