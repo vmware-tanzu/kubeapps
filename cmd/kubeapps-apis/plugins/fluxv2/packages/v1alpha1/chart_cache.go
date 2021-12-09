@@ -14,9 +14,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"math"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -25,9 +28,9 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/getter"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -76,7 +79,7 @@ type chartCacheStoreEntry struct {
 	id            string
 	version       string
 	url           string
-	clientOptions []getter.Option
+	clientOptions *common.ClientOptions
 	deleted       bool
 }
 
@@ -108,7 +111,7 @@ func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
 
 // this will enqueue work items into chart work queue and return.
 // the charts will be synced by a worker thread running in the background
-func (c *ChartCache) syncCharts(charts []models.Chart, clientOptions []getter.Option) error {
+func (c *ChartCache) syncCharts(charts []models.Chart, clientOptions *common.ClientOptions) error {
 	log.Infof("+syncCharts()")
 	totalToSync := 0
 	defer func() {
@@ -407,7 +410,7 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart) ([]byte, error) 
 			c.processing.Add(*entry)
 			c.queue.Add(key)
 			// now need to wait until this item has been processed by runWorker().
-			c.queue.WaitUntilDoneWith(key)
+			c.queue.WaitUntilGone(key)
 			return c.fetchForOne(key)
 		}
 	}
@@ -438,8 +441,8 @@ func (c *ChartCache) ExpectAdd(key string) {
 }
 
 // this func is used by unit tests only
-func (c *ChartCache) WaitUntilDoneWith(key string) {
-	c.queue.WaitUntilDoneWith(key)
+func (c *ChartCache) WaitUntilGone(key string) {
+	c.queue.WaitUntilGone(key)
 }
 
 func chartCacheKeyFunc(obj interface{}) (string, error) {
@@ -472,33 +475,33 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 // which breaks a fundamental assumption I rely on.
 // I am putting the retries back in here just as a workaround until I figure out why the queue is broken
 
-func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions []getter.Option) ([]byte, error) {
+func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *common.ClientOptions) ([]byte, error) {
 	// TODO (gfichtenholt) what about HTTP_PROXY
-
-	// userAgent string is always the same for all requests
-	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
-	// I wish I could use the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
-	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
-	// *Sigh*
-	clientOptions = append(clientOptions, getter.WithUserAgent(userAgentString))
-	clientOptions = append(clientOptions, getter.WithURL(chartUrl))
 
 	// In theory, the work queue should be able to retry transient errors
 	// so I shouldn't have to do retries here. See above comment for explanation
 	const maxRetries = 5
-	var buf *bytes.Buffer
+	var chartTgz []byte
 	ok := false
 	for i := 0; i < maxRetries && !ok; i++ {
-		getter, err := getter.NewHTTPGetter(clientOptions...)
-		if err == nil {
-			if buf, err = getter.Get(chartUrl); err != nil {
-				log.Warningf("%+v", err)
-			} else if buf != nil && buf.Len() > 0 {
-				ok = true
-				break
-			}
-		} else {
+		client, headers, err := newHttpClientAndHeaders(clientOptions)
+		if err != nil {
 			log.Warningf("%+v", err)
+		} else {
+			reader, _, err := httpclient.GetStream(chartUrl, client, headers)
+			if reader != nil {
+				defer reader.Close()
+			}
+			if err == nil {
+				if chartTgz, err = ioutil.ReadAll(reader); err != nil {
+					log.Warningf("%+v", err)
+				} else {
+					ok = true
+					break
+				}
+			} else {
+				log.Warningf("%+v", err)
+			}
 		}
 		waitTime := math.Pow(2, float64(i))
 		log.Infof("Waiting [%d] seconds before retry...", int(waitTime))
@@ -510,10 +513,10 @@ func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOption
 	}
 
 	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: [%d] bytes",
-		chartID, chartVersion, chartUrl, buf.Len())
+		chartID, chartVersion, chartUrl, len(chartTgz))
 
 	cacheEntryValue := chartCacheEntryValue{
-		ChartTarball: buf.Bytes(),
+		ChartTarball: chartTgz,
 	}
 
 	// use gob encoding instead of json, it peforms much better
@@ -524,4 +527,37 @@ func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOption
 	} else {
 		return gobBuf.Bytes(), nil
 	}
+}
+
+func newHttpClientAndHeaders(clientOptions *common.ClientOptions) (*http.Client, map[string]string, error) {
+	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
+	// I wish I could have re-used the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
+	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
+	headers := make(map[string]string)
+	headers["User-Agent"] = userAgentString
+	if clientOptions != nil {
+		if clientOptions.Username != "" && clientOptions.Password != "" {
+			auth := clientOptions.Username + ":" + clientOptions.Password
+			headers["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
+		}
+	}
+	// In theory, the work queue should be able to retry transient errors
+	// so I shouldn't have to do retries here. See above comment for explanation
+	client := httpclient.New()
+	if clientOptions != nil {
+		if len(clientOptions.CaBytes) != 0 ||
+			len(clientOptions.CertBytes) != 0 ||
+			len(clientOptions.KeyBytes) != 0 {
+			tlsConfig, err := httpclient.NewClientTLS(
+				clientOptions.CertBytes, clientOptions.KeyBytes, clientOptions.CaBytes)
+			if err != nil {
+				return nil, nil, err
+			} else {
+				if err = httpclient.SetClientTLS(client, tlsConfig.RootCAs, tlsConfig.Certificates, false); err != nil {
+					return nil, nil, err
+				}
+			}
+		}
+	}
+	return client, headers, nil
 }

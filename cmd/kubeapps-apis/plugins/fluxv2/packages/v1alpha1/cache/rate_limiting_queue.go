@@ -12,7 +12,7 @@ limitations under the License.
 
 Inspired by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/queue.go and
          by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/rate_limiting_queue.go
-	but adds a couple of funcs: Expect() and WaitUntilDoneWith()
+	but adds a couple of funcs: Expect() and WaitUntilGone()
 */
 package cache
 
@@ -30,7 +30,7 @@ import (
 type RateLimitingInterface interface {
 	workqueue.RateLimitingInterface
 	ExpectAdd(item string)
-	WaitUntilDoneWith(item string)
+	WaitUntilGone(item string)
 }
 
 func NewRateLimitingQueue() RateLimitingInterface {
@@ -66,8 +66,8 @@ func (q *rateLimitingType) ExpectAdd(item string) {
 	q.queue.expectAdd(item)
 }
 
-func (q *rateLimitingType) WaitUntilDoneWith(item string) {
-	q.queue.waitUntilDoneWith(item)
+func (q *rateLimitingType) WaitUntilGone(item string) {
+	q.queue.waitUntilGone(item)
 }
 
 func newQueue() *Type {
@@ -220,7 +220,7 @@ func (q *Type) expectAdd(item string) {
 }
 
 // this func is the whole reason for the existence of this queue
-func (q *Type) waitUntilDoneWith(item string) {
+func (q *Type) waitUntilGone(item string) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 

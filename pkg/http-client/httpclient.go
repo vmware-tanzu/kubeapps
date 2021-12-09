@@ -77,7 +77,7 @@ func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 
 	// Return client with TLS skipVerify but no additional certs
 	client := New()
-	if err := SetClientTLS(client, nil, skipTLS); err != nil {
+	if err := SetClientTLS(client, nil, nil, skipTLS); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
 
 	// create and configure client
 	client := New()
-	if err := SetClientTLS(client, caCertPool, skipTLS); err != nil {
+	if err := SetClientTLS(client, caCertPool, nil, skipTLS); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +113,7 @@ func GetCertPool(certs []byte) (*x509.CertPool, error) {
 	}
 
 	// Append our cert to the system pool
-	if certs != nil && len(certs) > 0 {
+	if len(certs) > 0 {
 		if ok := caCertPool.AppendCertsFromPEM(certs); !ok {
 			return nil, fmt.Errorf("failed to append certs to RootCAs")
 		}
@@ -133,7 +133,9 @@ func SetClientProxy(client *http.Client, proxy func(*http.Request) (*url.URL, er
 }
 
 // configure the given tls on the given client
-func SetClientTLS(client *http.Client, caCertPool *x509.CertPool, skipTLS bool) error {
+// TODO (gfichtenholt) the signature of this func should be changed to accept an
+// instance of *tls.Config instead. For now I am trying to keep the changes to a minimum
+func SetClientTLS(client *http.Client, caCertPool *x509.CertPool, certs []tls.Certificate, skipTLS bool) error {
 	transport, ok := client.Transport.(*http.Transport)
 	if !ok {
 		return fmt.Errorf("transport was not an http.Transport")
@@ -142,7 +144,31 @@ func SetClientTLS(client *http.Client, caCertPool *x509.CertPool, skipTLS bool) 
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: skipTLS,
 	}
+	if len(certs) > 0 {
+		transport.TLSClientConfig.Certificates = certs
+	}
 	return nil
+}
+
+func NewClientTLS(certBytes, keyBytes, caBytes []byte) (*tls.Config, error) {
+	config := tls.Config{}
+
+	if len(certBytes) != 0 && len(keyBytes) != 0 {
+		cert, err := tls.X509KeyPair(certBytes, keyBytes)
+		if err != nil {
+			return nil, err
+		}
+		config.Certificates = []tls.Certificate{cert}
+	}
+
+	if len(caBytes) != 0 {
+		cp, err := GetCertPool(caBytes)
+		if err != nil {
+			return nil, err
+		}
+		config.RootCAs = cp
+	}
+	return &config, nil
 }
 
 // performs an HTTP GET request using provided client, URL and request headers.
@@ -161,7 +187,7 @@ func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
 
 // performs an HTTP GET request using provided client, URL and request headers.
 // returns response body, as bytes on successful status, or error body,
-// if applicable on error status	
+// if applicable on error status
 // returns response as a stream, as well as response content type
 // NOTE: it is the caller's responsibility to close the reader stream when no longer needed
 func GetStream(url string, cli Client, reqHeaders map[string]string) (io.ReadCloser, string, error) {

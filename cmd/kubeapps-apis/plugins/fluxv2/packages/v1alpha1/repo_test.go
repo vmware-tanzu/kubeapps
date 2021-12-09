@@ -616,7 +616,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 		s.repoCache.ExpectAdd(key)
 		watcher.Modify(repo)
-		s.repoCache.WaitUntilDoneWith(key)
+		s.repoCache.WaitUntilGone(key)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -728,9 +728,9 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			s.chartCache.ExpectAdd(k)
 		}
 		watcher.Delete(repo)
-		s.repoCache.WaitUntilDoneWith(key)
+		s.repoCache.WaitUntilGone(key)
 		for _, k := range chartCacheKeys {
-			s.chartCache.WaitUntilDoneWith(k)
+			s.chartCache.WaitUntilGone(k)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -1041,7 +1041,7 @@ func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secre
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: k8scorev1.SecretTypeBasicAuth,
+		Type: k8scorev1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"username": []byte(user),
 			"password": []byte(password),
@@ -1049,62 +1049,24 @@ func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secre
 	}
 }
 
-// ref: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
-// ref: https://medium.com/avmconsulting-blog/how-to-secure-applications-on-kubernetes-ssl-tls-certificates-8f7f5751d788
-// the shell commands I used to generate the relevant files:
-// 1. $ openssl genrsa -out rootCA.key 4096
-// 2. $ openssl req -x509 -new -key rootCA.key -days 3650 -out rootCA.crt
-//    You are about to be asked to enter information that will be incorporated
-//    into your certificate request.
-//    What you are about to enter is what is called a Distinguished Name or a DN.
-//    There are quite a few fields but you can leave some blank
-//    For some fields there will be a default value,
-//    If you enter '.', the field will be left blank.
-//    -----
-//    Country Name (2 letter code) []:US
-//    State or Province Name (full name) []:California
-//    Locality Name (eg, city) []:Palo Alto
-//    Organization Name (eg, company) []:VMware
-//    Organizational Unit Name (eg, section) []:MAPBU
-//    Common Name (eg, fully qualified host name) []:kubeapps
-//    Email Address []:
-// 3. $ openssl genrsa -out testTLS.key 2048
-// 4. $ openssl req -new -key testTLS.key -out testTLS.csr
-//    You are about to be asked to enter information that will be incorporated
-//    into your certificate request.
-//    What you are about to enter is what is called a Distinguished Name or a DN.
-//    There are quite a few fields but you can leave some blank
-//    For some fields there will be a default value,
-//    If you enter '.', the field will be left blank.
-//    -----
-//    Country Name (2 letter code) []:US
-//    State or Province Name (full name) []:California
-//    Locality Name (eg, city) []:Palo Alto
-//    Organization Name (eg, company) []:VMware
-//    Organizational Unit Name (eg, section) []:MAPBU
-//    Common Name (eg, fully qualified host name) []:test
-//    Email Address []:
-//
-//    Please enter the following 'extra' attributes
-//    to be sent with your certificate request
-//    A challenge password []:
-// 5. $ openssl x509 -req -in testTLS.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -days 365 -out testTLS.crt
-// 6. $ openssl x509 -in testTLS.crt -out testTLS.pem
-// 7. $ openssl x509 -in rootCA.crt -out rootCA.pem
-// To test
-// 8. $ kubectl create secret tls my-secret --cert=testTLS.pem --key=testTLS.key
-func newTlsSecret(name, namespace string) *k8scorev1.Secret {
+// Note that according to https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+// TLS secrets need to look one way, but according to
+// https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
+// in a different format:
+// certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
+func newTlsSecret(name, namespace string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
 	return &k8scorev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: k8scorev1.SecretTypeTLS,
+		Type: k8scorev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"tls.crt": nil,
-			"tls.key": nil,
+			"certFile": pub,
+			"keyFile":  priv,
+			"caFile":   ca,
 		},
-	}
+	}, nil
 }
 
 // these functiosn should affect only unit test, not production code

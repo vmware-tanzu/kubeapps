@@ -29,7 +29,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/kube"
 	apiv1 "k8s.io/api/core/v1"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -283,43 +282,62 @@ func RedisMemoryStats(redisCli *redis.Client) (used, total string) {
 	return used, total
 }
 
-// options are generic parameters to be provided to the getter during instantiation.
-
-// inspired by https://github.com/fluxcd/source-controller/blob/main/internal/helm/getter/getter.go#L29
-func ClientOptionsFromSecret(secret apiv1.Secret) ([]getter.Option, error) {
-	var opts []getter.Option
-	basicAuth, err := BasicAuthFromSecret(secret)
-	if err != nil {
-		return opts, err
-	}
-	if basicAuth != nil {
-		opts = append(opts, basicAuth)
-	}
-	/*
-		    TODO
-			tlsClientConfig, err := TLSClientConfigFromSecret(dir, secret)
-			if err != nil {
-				return opts, err
-			}
-			if tlsClientConfig != nil {
-				opts = append(opts, tlsClientConfig)
-			}
-	*/
-	return opts, nil
+// options are generic parameters to be provided to the httpclient during instantiation.
+type ClientOptions struct {
+	// for TLS connections
+	CertBytes []byte
+	KeyBytes  []byte
+	CaBytes   []byte
+	// for Basic Authentication
+	Username string
+	Password string
 }
 
-// BasicAuthFromSecret attempts to construct a basic auth getter.Option for the
-// given v1.Secret and returns the result.
+// inspired by https://github.com/fluxcd/source-controller/blob/main/internal/helm/getter/getter.go#L29
+
+// ClientOptionsFromSecret constructs a getter.Option slice for the given secret.
+// It returns the slice, or an error.
+func ClientOptionsFromSecret(secret apiv1.Secret) (*ClientOptions, error) {
+	var opts ClientOptions
+	if err := basicAuthFromSecret(secret, &opts); err != nil {
+		return nil, err
+	}
+	if err := tlsClientConfigFromSecret(secret, &opts); err != nil {
+		return nil, err
+	}
+	return &opts, nil
+}
+
 //
 // Secrets with no username AND password are ignored, if only one is defined it
 // returns an error.
-func BasicAuthFromSecret(secret apiv1.Secret) (getter.Option, error) {
+func basicAuthFromSecret(secret apiv1.Secret, options *ClientOptions) error {
 	username, password := string(secret.Data["username"]), string(secret.Data["password"])
 	switch {
 	case username == "" && password == "":
-		return nil, nil
+		return nil
 	case username == "" || password == "":
-		return nil, fmt.Errorf("invalid '%s' secret data: required fields 'username' and 'password'", secret.Name)
+		return fmt.Errorf("invalid '%s' secret data: required fields 'username' and 'password'", secret.Name)
 	}
-	return getter.WithBasicAuth(username, password), nil
+	options.Username = username
+	options.Password = password
+	return nil
+}
+
+// Secrets with no certFile, keyFile, AND caFile are ignored, if only a
+// certBytes OR keyBytes is defined it returns an error.
+func tlsClientConfigFromSecret(secret apiv1.Secret, options *ClientOptions) error {
+	certBytes, keyBytes, caBytes := secret.Data["certFile"], secret.Data["keyFile"], secret.Data["caFile"]
+	switch {
+	case len(certBytes)+len(keyBytes)+len(caBytes) == 0:
+		return nil
+	case (len(certBytes) > 0 && len(keyBytes) == 0) || (len(keyBytes) > 0 && len(certBytes) == 0):
+		return fmt.Errorf("invalid '%s' secret data: fields 'certFile' and 'keyFile' require each other's presence",
+			secret.Name)
+	}
+
+	options.CaBytes = caBytes
+	options.CertBytes = certBytes
+	options.KeyBytes = keyBytes
+	return nil
 }

@@ -697,7 +697,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 			for job := range requestChan {
 				// see GetForOne() for explanation of what is happening below
 				c.queue.Add(job.key)
-				c.queue.WaitUntilDoneWith(job.key)
+				c.queue.WaitUntilGone(job.key)
 				value, err := c.fetchForOne(job.key)
 				responseChan <- computeValueJobResult{job, value, err}
 			}
@@ -850,7 +850,7 @@ func (c *NamespacedResourceWatcherCache) GetForOne(key string) (interface{}, err
 		// But to get back the original data we have to decode it via config.onGet().
 		// It'd nice if there was a shortcut and skip the cycles spent decoding data from
 		// []byte to repoCacheEntry
-		c.queue.WaitUntilDoneWith(key)
+		c.queue.WaitUntilGone(key)
 		// yes, there is a small time window here between after we are done with WaitUntilDoneWith
 		// and the following fetch, where another concurrent goroutine may force the newly added
 		// cache entry out, but that is an edge case and I am willing to overlook it for now
@@ -867,8 +867,8 @@ func (c *NamespacedResourceWatcherCache) ExpectAdd(key string) {
 }
 
 // this func is used by unit tests only
-func (c *NamespacedResourceWatcherCache) WaitUntilDoneWith(key string) {
-	c.queue.WaitUntilDoneWith(key)
+func (c *NamespacedResourceWatcherCache) WaitUntilGone(key string) {
+	c.queue.WaitUntilGone(key)
 }
 
 // this func is used by unit tests only

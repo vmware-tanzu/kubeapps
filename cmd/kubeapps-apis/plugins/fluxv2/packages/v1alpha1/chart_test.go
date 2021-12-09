@@ -27,9 +27,11 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/getter"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -75,18 +77,28 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			basicAuth:             true,
 			expectedPackageDetail: expected_detail_redis_1,
 		},
-		/*
-				{
-				testName: "it returns details about the latest redis package from a repo with TLS",
-				request: &corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
-				},
-				chartCacheHit:         true,
-				basicAuth:             false,
-				tls:                   true,
-				expectedPackageDetail: expected_detail_redis_1,
+		{
+			testName: "it returns details about the latest redis package from a repo with TLS",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
-		*/
+			chartCacheHit:         true,
+			basicAuth:             false,
+			tls:                   true,
+			expectedPackageDetail: expected_detail_redis_1,
+		},
+	}
+
+	// these will be used further on for TLS-related scenarios. Init
+	// byte arrays up front so they can be re-used in multiple places later
+	var ca, pub, priv []byte
+	var err error
+	if ca, err = ioutil.ReadFile("testdata/rootCA.crt"); err != nil {
+		t.Fatalf("%+v", err)
+	} else if pub, err = ioutil.ReadFile("testdata/crt.pem"); err != nil {
+		t.Fatalf("%+v", err)
+	} else if priv, err = ioutil.ReadFile("testdata/key.pem"); err != nil {
+		t.Fatalf("%+v", err)
 	}
 
 	for _, tc := range testCases {
@@ -96,6 +108,18 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			replaceUrls := make(map[string]string)
 			charts := []testSpecChartWithUrl{}
 			requestChartUrl := ""
+
+			// these will be used later in a few places
+			opts := &common.ClientOptions{}
+			if tc.basicAuth {
+				opts.Username = "foo"
+				opts.Password = "bar"
+			} else if tc.tls {
+				opts.CaBytes = ca
+				opts.CertBytes = pub
+				opts.KeyBytes = priv
+			}
+
 			for _, s := range redis_charts_spec {
 				tarGzBytes, err := ioutil.ReadFile(s.tgzFile)
 				if err != nil {
@@ -111,16 +135,24 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}
 				var ts *httptest.Server
 				if tc.tls {
-					ts = httptest.NewTLSServer(handler)
+					// I cheated a bit in this test. Instead of generating my own certificates
+					// and keys using openssl tool, which I found time consuming and overly complicated,
+					// I just copied the ones being used by helm.sh tool for testing purposes
+					// from https://github.com/helm/helm/tree/main/testdata
+					// in order to save some time. Should n't affect any functionality of productionn
+					// code
+					ts = httptest.NewUnstartedServer(handler)
+					tlsConf, err := httpclient.NewClientTLS(pub, priv, ca)
+					if err != nil {
+						t.Fatal(errors.Wrap(err, "can't create TLS config for client"))
+					}
+					ts.TLS = tlsConf
+					ts.StartTLS()
 				} else {
 					ts = httptest.NewServer(handler)
 				}
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
-				opts := []getter.Option{getter.WithURL(ts.URL)}
-				if tc.basicAuth {
-					opts = append(opts, getter.WithBasicAuth("foo", "bar"))
-				}
 				c := testSpecChartWithUrl{
 					chartID:       fmt.Sprintf("%s/%s", repoName, s.name),
 					chartRevision: s.revision,
@@ -142,7 +174,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				secretObjs = append(secretObjs, newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar"))
 			} else if tc.tls {
 				secretRef = "https-credentials"
-				secretObjs = append(secretObjs, newTlsSecret(secretRef, repoNamespace))
+				if secret, err := newTlsSecret(secretRef, repoNamespace, pub, priv, ca); err != nil {
+					t.Fatalf("%+v", err)
+				} else {
+					secretObjs = append(secretObjs, secret)
+				}
 			}
 
 			ts2, repo, err := newRepoWithIndex(
@@ -170,10 +206,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
-			opts := []getter.Option{getter.WithURL(requestChartUrl)}
-			if tc.basicAuth {
-				opts = append(opts, getter.WithBasicAuth("foo", "bar"))
-			}
+
 			if !tc.chartCacheHit {
 				// first a miss
 				if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, "", nil); err != nil {
@@ -606,7 +639,7 @@ func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 	}
 }
 
-func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts []getter.Option) error {
+func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
 	_, chartID, version, err := fromRedisKeyForChart(key)
 	if err != nil {
 		return err
@@ -621,7 +654,7 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts 
 }
 
 // does a series of mock.ExpectGet(...)
-func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts []getter.Option) error {
+func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
 	if url != "" {
 		_, chartID, version, err := fromRedisKeyForChart(key)
 		if err != nil {
