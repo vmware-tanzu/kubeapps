@@ -266,8 +266,8 @@ describe("getValue", () => {
       description: "should return the default value if the path is not valid",
       values: "foo: bar",
       path: "foobar",
-      default: "\"BAR\"",
-      result: "\"BAR\"",
+      default: '"BAR"',
+      result: '"BAR"',
     },
     {
       description: "should return a value with slashes in the key",
@@ -279,7 +279,7 @@ describe("getValue", () => {
       description: "should return a value with slashes and dots in the key",
       values: "kubernetes.io/ingress.class: nginx",
       path: "kubernetes.io~1ingress.class",
-      result: 'nginx',
+      result: "nginx",
     },
   ].forEach(t => {
     it(t.description, () => {
