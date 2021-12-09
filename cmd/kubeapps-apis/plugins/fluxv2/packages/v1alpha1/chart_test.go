@@ -87,6 +87,16 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			tls:                   true,
 			expectedPackageDetail: expected_detail_redis_1,
 		},
+		{
+			testName: "it returns details about the latest redis package from a repo with TLS and basic auth",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+			},
+			chartCacheHit:         true,
+			basicAuth:             true,
+			tls:                   true,
+			expectedPackageDetail: expected_detail_redis_1,
+		},
 	}
 
 	// these will be used further on for TLS-related scenarios. Init
@@ -114,7 +124,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			if tc.basicAuth {
 				opts.Username = "foo"
 				opts.Password = "bar"
-			} else if tc.tls {
+			}
+			if tc.tls {
 				opts.CaBytes = ca
 				opts.CertBytes = pub
 				opts.KeyBytes = priv
@@ -168,8 +179,14 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			secretRef := ""
 			secretObjs := []runtime.Object{}
-			// TODO (gfichtenholt) in theory we could have both TLS AND basic auth
-			if tc.basicAuth {
+			if tc.basicAuth && tc.tls {
+				secretRef = "both-credentials"
+				if secret, err := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca); err != nil {
+					t.Fatalf("%+v", err)
+				} else {
+					secretObjs = append(secretObjs, secret)
+				}
+			} else if tc.basicAuth {
 				secretRef = "http-credentials"
 				secretObjs = append(secretObjs, newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar"))
 			} else if tc.tls {

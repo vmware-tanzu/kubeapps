@@ -14,8 +14,10 @@ package common
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"reflect"
@@ -26,6 +28,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/kubeapps/kubeapps/pkg/agent"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	"golang.org/x/net/http/httpproxy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -291,6 +295,8 @@ type ClientOptions struct {
 	// for Basic Authentication
 	Username string
 	Password string
+	//
+	UserAgent string
 }
 
 // inspired by https://github.com/fluxcd/source-controller/blob/main/internal/helm/getter/getter.go#L29
@@ -340,4 +346,45 @@ func tlsClientConfigFromSecret(secret apiv1.Secret, options *ClientOptions) erro
 	options.CertBytes = certBytes
 	options.KeyBytes = keyBytes
 	return nil
+}
+
+func NewHttpClientAndHeaders(clientOptions *ClientOptions) (*http.Client, map[string]string, error) {
+	// I wish I could have re-used the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
+	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
+	headers := make(map[string]string)
+	if clientOptions != nil {
+		if clientOptions.UserAgent != "" {
+			headers["User-Agent"] = clientOptions.UserAgent
+		}
+		if clientOptions.Username != "" && clientOptions.Password != "" {
+			auth := clientOptions.Username + ":" + clientOptions.Password
+			headers["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
+		}
+	}
+	// In theory, the work queue should be able to retry transient errors
+	// so I shouldn't have to do retries here. See above comment for explanation
+	client := httpclient.New()
+	if clientOptions != nil {
+		if len(clientOptions.CaBytes) != 0 ||
+			len(clientOptions.CertBytes) != 0 ||
+			len(clientOptions.KeyBytes) != 0 {
+			tlsConfig, err := httpclient.NewClientTLS(
+				clientOptions.CertBytes, clientOptions.KeyBytes, clientOptions.CaBytes)
+			if err != nil {
+				return nil, nil, err
+			} else {
+				if err = httpclient.SetClientTLS(client, tlsConfig.RootCAs, tlsConfig.Certificates, false); err != nil {
+					return nil, nil, err
+				}
+			}
+		}
+	}
+
+	// proxy config
+	proxyConfig := httpproxy.FromEnvironment()
+	proxyFunc := func(r *http.Request) (*url.URL, error) { return proxyConfig.ProxyFunc()(r.URL) }
+	if err := httpclient.SetClientProxy(client, proxyFunc); err != nil {
+		return nil, nil, err
+	}
+	return client, headers, nil
 }

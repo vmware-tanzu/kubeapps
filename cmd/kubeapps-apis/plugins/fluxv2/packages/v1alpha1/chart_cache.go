@@ -14,12 +14,10 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
 	"math"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -476,7 +474,11 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 // I am putting the retries back in here just as a workaround until I figure out why the queue is broken
 
 func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *common.ClientOptions) ([]byte, error) {
-	// TODO (gfichtenholt) what about HTTP_PROXY
+	if clientOptions == nil {
+		clientOptions = &common.ClientOptions{}
+	}
+	// this string is the same for all charts
+	clientOptions.UserAgent = fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 
 	// In theory, the work queue should be able to retry transient errors
 	// so I shouldn't have to do retries here. See above comment for explanation
@@ -484,7 +486,7 @@ func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOption
 	var chartTgz []byte
 	ok := false
 	for i := 0; i < maxRetries && !ok; i++ {
-		client, headers, err := newHttpClientAndHeaders(clientOptions)
+		client, headers, err := common.NewHttpClientAndHeaders(clientOptions)
 		if err != nil {
 			log.Warningf("%+v", err)
 		} else {
@@ -527,37 +529,4 @@ func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOption
 	} else {
 		return gobBuf.Bytes(), nil
 	}
-}
-
-func newHttpClientAndHeaders(clientOptions *common.ClientOptions) (*http.Client, map[string]string, error) {
-	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
-	// I wish I could have re-used the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
-	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
-	headers := make(map[string]string)
-	headers["User-Agent"] = userAgentString
-	if clientOptions != nil {
-		if clientOptions.Username != "" && clientOptions.Password != "" {
-			auth := clientOptions.Username + ":" + clientOptions.Password
-			headers["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
-		}
-	}
-	// In theory, the work queue should be able to retry transient errors
-	// so I shouldn't have to do retries here. See above comment for explanation
-	client := httpclient.New()
-	if clientOptions != nil {
-		if len(clientOptions.CaBytes) != 0 ||
-			len(clientOptions.CertBytes) != 0 ||
-			len(clientOptions.KeyBytes) != 0 {
-			tlsConfig, err := httpclient.NewClientTLS(
-				clientOptions.CertBytes, clientOptions.KeyBytes, clientOptions.CaBytes)
-			if err != nil {
-				return nil, nil, err
-			} else {
-				if err = httpclient.SetClientTLS(client, tlsConfig.RootCAs, tlsConfig.Certificates, false); err != nil {
-					return nil, nil, err
-				}
-			}
-		}
-	}
-	return client, headers, nil
 }

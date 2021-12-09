@@ -1069,6 +1069,23 @@ func newTlsSecret(name, namespace string, pub, priv, ca []byte) (*k8scorev1.Secr
 	}, nil
 }
 
+func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
+	return &k8scorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Type: k8scorev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"username": []byte(user),
+			"password": []byte(password),
+			"certFile": pub,
+			"keyFile":  priv,
+			"caFile":   ca,
+		},
+	}, nil
+}
+
 // these functiosn should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
 func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
