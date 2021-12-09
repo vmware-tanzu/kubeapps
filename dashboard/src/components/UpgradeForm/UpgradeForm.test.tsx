@@ -385,7 +385,7 @@ it("triggers an upgrade when submitting the form", async () => {
   const updateInstalledPackage = jest.fn();
   actions.apps.updateInstalledPackage = updateInstalledPackage;
 
-  const appValues = "initial: values\nfoo: bar\n";
+  const appValues = 'initial: "values"\n"foo": "bar"\n';
   const state = {
     ...defaultStore,
     apps: {
@@ -438,8 +438,8 @@ describe("when receiving new props", () => {
   it("should calculate the modifications from the default and the current values", () => {
     const defaultValues = "initial: values\na: b\n";
     const deployedValues = "a: b\n";
-    const currentValues = "a: b\nc: d\n";
-    const expectedValues = "initial: values\na: b\nc: d\n";
+    const currentValues = 'a: b\n"c": "d"\n';
+    const expectedValues = 'initial: values\na: b\n"c": "d"\n';
 
     const state = {
       ...defaultStore,
@@ -471,8 +471,8 @@ describe("when receiving new props", () => {
   it("should apply modifications if a new version is selected", () => {
     const defaultValues = "a: b\n";
     const deployedValues = "a: B\n";
-    const currentValues = "a: B\nc: d\n";
-    const expectedValues = "a: b\nc: d\n";
+    const currentValues = 'a: B\n"c": "d"\n';
+    const expectedValues = 'a: b\n"c": "d"\n';
     const state = {
       ...defaultStore,
       apps: {
@@ -540,23 +540,23 @@ describe("when receiving new props", () => {
     {
       description: "should merge modifications from the values and the new version defaults",
       defaultValues: "foo: bar\n",
-      deployedValues: "foo: bar\nmy: var\n",
+      deployedValues: 'foo: bar\n"my": "var"\n',
       newDefaultValues: "notFoo: bar",
-      result: "notFoo: bar\nmy: var\n",
+      result: 'notFoo: bar\n"my": "var"\n',
     },
     {
       description: "should modify the default values",
       defaultValues: "foo: bar\n",
       deployedValues: "foo: BAR\nmy: var\n",
       newDefaultValues: "foo: bar",
-      result: "foo: BAR\nmy: var\n",
+      result: 'foo: "BAR"\n"my": "var"\n',
     },
     {
       description: "should delete an element in the defaults",
       defaultValues: "foo: bar\n",
       deployedValues: "my: var\n",
       newDefaultValues: "foo: bar\n",
-      result: "my: var\n",
+      result: '"my": "var"\n',
     },
     {
       description: "should add an element in an array",
@@ -574,9 +574,14 @@ describe("when receiving new props", () => {
     - foo1:
       bar1: value1
 `,
-      result: [`foo:`, `  - foo1: `, `    bar1: value1`, `  - foo2: `, `    bar2: value2`, ``].join(
-        "\n",
-      ),
+      result: [
+        `foo:`,
+        `  - foo1: `,
+        `    bar1: value1`,
+        `  - "foo2": `,
+        `    "bar2": "value2"`,
+        ``,
+      ].join("\n"),
     },
     {
       description: "should delete an element in an array",
@@ -603,7 +608,7 @@ describe("when receiving new props", () => {
       defaultValues: "foo.bar/foobar: ",
       deployedValues: "foo.bar/foobar: value",
       newDefaultValues: "foo.bar/foobar: ",
-      result: "foo.bar/foobar: value\n",
+      result: 'foo.bar/foobar: "value"\n',
     },
   ].forEach(t => {
     it(t.description, () => {
@@ -654,7 +659,7 @@ it("shows, by default, the default values of the deployed package plus any modif
   const defaultValues = "initial: values";
   const deployedValues = "# A comment\nfoo: bar\n";
   const currentValues = "foo: not-bar";
-  const expectedValues = "# A comment\nfoo: not-bar\n";
+  const expectedValues = '# A comment\nfoo: "not-bar"\n';
 
   const state = {
     ...defaultStore,
