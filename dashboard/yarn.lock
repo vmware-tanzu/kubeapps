@@ -1244,10 +1244,10 @@
     "@cds/city" "^1.1.0"
     modern-normalize "^1.1.0"
 
-"@clr/ui@^12.0.7":
-  version "12.0.7"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.7.tgz#26ae63608582f83259cfc168308c9f8b3e74ffda"
-  integrity sha512-cPekv1WIbyceuPk7ct/iq+Ead4TZrCg6n3snCzSmU9PCAoX3VX0BHW+9WPxxOwpzE3nAXp/8tUa/LNc0AEiwnw==
+"@clr/ui@^12.0.8":
+  version "12.0.8"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-12.0.8.tgz#11e597753df8575a89471de652bec9658901481c"
+  integrity sha512-OlJRCcufCgQZ3Lb2b8tFUkxQXGIUeZiNfK0fgSrCVrEMTy/eCebQgiZMNoHN7ePyraSg+o8u7rC6JiqEHojXMQ==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -2848,28 +2848,25 @@
     "@webassemblyjs/wast-parser" "1.9.0"
     "@xtuc/long" "4.2.2"
 
-"@wojtekmaj/enzyme-adapter-react-17@^0.6.5":
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/@wojtekmaj/enzyme-adapter-react-17/-/enzyme-adapter-react-17-0.6.5.tgz#1925e17aaea7089e7ec66c7c35e5771e49b6bf7e"
-  integrity sha512-ChIObUiXXYUiqzXPqOai+p6KF5dlbItpDDYsftUOQiAiygbMDlLeJIjynC6ZrJIa2U2MpRp4YJmtR2GQyIHjgA==
+"@wojtekmaj/enzyme-adapter-react-17@^0.6.6":
+  version "0.6.6"
+  resolved "https://registry.yarnpkg.com/@wojtekmaj/enzyme-adapter-react-17/-/enzyme-adapter-react-17-0.6.6.tgz#2ee3d4956caea4de05e372e5d9f39b31becffe6a"
+  integrity sha512-gSfhg8CiL0Vwc2UgUblGVZIy7M0KyXaZsd8+QwzV8TSVRLkGyzdLtYEcs9wRWyQTsdmOd+oRGqbVgUX7AVJxug==
   dependencies:
-    "@wojtekmaj/enzyme-adapter-utils" "^0.1.1"
+    "@wojtekmaj/enzyme-adapter-utils" "^0.1.2"
     enzyme-shallow-equal "^1.0.0"
     has "^1.0.0"
-    object.assign "^4.1.0"
-    object.values "^1.1.0"
     prop-types "^15.7.0"
-    react-is "^17.0.2"
+    react-is "^17.0.0"
     react-test-renderer "^17.0.0"
 
-"@wojtekmaj/enzyme-adapter-utils@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@wojtekmaj/enzyme-adapter-utils/-/enzyme-adapter-utils-0.1.1.tgz#17773cf264570fbcfc0d33bb74e4002c17f2f1ec"
-  integrity sha512-bNPWtN/d8huKOkC6j1E3EkSamnRrHHT7YuR6f9JppAQqtoAm3v4/vERe4J14jQKmHLCyEBHXrlgb7H6l817hVg==
+"@wojtekmaj/enzyme-adapter-utils@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@wojtekmaj/enzyme-adapter-utils/-/enzyme-adapter-utils-0.1.2.tgz#82b81801e234b8f1febde91b243aaa8c5ba4aaa9"
+  integrity sha512-MM/DqDqvxNVlWLqSVQiUbRN9MuDLJfefmPbJ8ZKdmdf5ID8G+i42XhFpoQh5bAZUCdwzRae3+WSZl2lXcFOrhw==
   dependencies:
     function.prototype.name "^1.1.0"
     has "^1.0.0"
-    object.assign "^4.1.0"
     object.fromentries "^2.0.0"
     prop-types "^15.7.0"
 
@@ -13750,12 +13747,12 @@ stylelint-order@^3.1.1:
     postcss "^7.0.17"
     postcss-sorting "^5.0.1"
 
-stylelint-scss@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/stylelint-scss/-/stylelint-scss-4.0.0.tgz#4901ced92b9c68e37649799a39defbd5f2ac5bcd"
-  integrity sha512-lIRhPqtI6I065EJ6aI4mWKsmQt8Krnu6aF9XSL9s8Nd2f/cDKImST0T9TfjnUul3ReKYWozkG9dlpNTZH2FB9w==
+stylelint-scss@^4.0.0, stylelint-scss@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/stylelint-scss/-/stylelint-scss-4.0.1.tgz#da03f687c5bf8b91ea40d389ad29e07c328582b1"
+  integrity sha512-Ea+KY7ZFsDhU6Ne9r84y7NvFSNA843w352MSdQeDmklar0pDbeQj9flKrVAuDIlK0pDDdhFtgBl/N0FrtWHq0g==
   dependencies:
-    lodash "^4.17.15"
+    lodash "^4.17.21"
     postcss-media-query-parser "^0.2.3"
     postcss-resolve-nested-selector "^0.1.1"
     postcss-selector-parser "^6.0.6"
