@@ -368,12 +368,13 @@ func (c *ChartCache) fetchForOne(key string) ([]byte, error) {
 // GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the
 // k8s for the corresponding object, process it and then add it to the cache and return the
 // result.
-// TODO (gfichtenholt) get rid of chartModel models.Chart argument. This is breaking an abstraction
+// TODO (gfichtenholt) get rid of models.Chart and clientOptions argument if possible
+//    This is kind of breaking an abstraction
 // TODO (gfichtenholt) I promised Michael this would return an error if the entry could not be
 // computed due to not being able to read repo's secretRef. This is actually hard to do due to async
 // nature of how entries are added to the cache. Currently, it returns nil, same
 // as any invalid chart name
-func (c *ChartCache) GetForOne(key string, chart *models.Chart) ([]byte, error) {
+func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *common.ClientOptions) ([]byte, error) {
 	log.Infof("+GetForOne(%s)", key)
 	var value []byte
 	var err error
@@ -395,10 +396,11 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart) ([]byte, error) 
 					log.Warningf("chart: [%s], version: [%s] has no URLs", chart.ID, v.Version)
 				} else {
 					entry = &chartCacheStoreEntry{
-						namespace: namespace,
-						id:        chartID,
-						version:   v.Version,
-						url:       v.URLs[0],
+						namespace:     namespace,
+						id:            chartID,
+						version:       v.Version,
+						url:           v.URLs[0],
+						clientOptions: clientOptions,
 					}
 				}
 				break

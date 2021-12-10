@@ -18,7 +18,7 @@ entries:
       sources:
         - https://github.com/stefanprodan/podinfo
       urls:
-        - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo/podinfo-6.0.0.tgz
+        - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/podinfo-6.0.0.tgz
       version: 6.0.0
     - apiVersion: v1
       appVersion: 5.2.1
@@ -33,6 +33,6 @@ entries:
       sources:
       - https://github.com/stefanprodan/podinfo
       urls:
-      - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo/podinfo-5.2.1.tgz
+      - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/podinfo-5.2.1.tgz
       version: 5.2.1
 generated: "2021-06-16T12:51:07.135685319Z"

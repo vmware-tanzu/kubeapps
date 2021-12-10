@@ -177,6 +177,27 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 	return chartsTyped, nil
 }
 
+func (s *Server) clientOptionsForRepo(ctx context.Context, repo types.NamespacedName) (*common.ClientOptions, error) {
+	unstructuredRepo, err := s.getRepoInCluster(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+	// notice a bit of inconsistency here, we are using s.clientGetter
+	// (i.e. the context of the incoming request) to read the secret
+	// as opposed to s.repoCache.clientGetter (which uses the context of
+	//	User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis")
+	// which is what is used when the repo is being processed/indexed.
+	// I don't think it's necessarily a bad thing if the incoming user's RBAC
+	// settings are more permissive than that of the default RBAC for
+	// kubeapps-internal-kubeappsapis account. If we don't like that behavior,
+	// I can easily switch to using common.NewBackgroundClientGetter here
+	callSite := repoCacheCallSite{
+		clientGetter: s.clientGetter,
+		chartCache:   s.chartCache,
+	}
+	return callSite.clientOptionsForRepo(ctx, unstructuredRepo.Object)
+}
+
 //
 // implements plug-in specific cache-related functionality
 //
@@ -220,7 +241,7 @@ func (s *repoCacheCallSite) onAddRepo(key string, unstructuredRepo map[string]in
 }
 
 func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([]byte, bool, error) {
-	charts, opts, err := s.indexOneRepo(unstructuredRepo)
+	charts, err := s.indexOneRepo(unstructuredRepo)
 	if err != nil {
 		return nil, false, err
 	}
@@ -238,41 +259,36 @@ func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map
 	}
 
 	if s.chartCache != nil {
-		if err = s.chartCache.syncCharts(charts, opts); err != nil {
+		if opts, err := s.clientOptionsForRepo(context.Background(), unstructuredRepo); err != nil {
+			// ref: https://github.com/kubeapps/kubeapps/pull/3899#issuecomment-990446931
+			// I don't want this func to fail onAdd/onModify() if we can't read
+			// the corresponding secret due to something like default RBAC settings:
+			// "secrets "podinfo-basic-auth-secret" is forbidden:
+			// User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis" cannot get
+			// resource "secrets" in API group "" in the namespace "default"
+			// So we still finish the indexing of the repo but skip the charts
+			log.Errorf("Failed to read secret for repo due to: %+v", err)
+		} else if err = s.chartCache.syncCharts(charts, opts); err != nil {
 			return nil, false, err
 		}
 	}
-
 	return buf.Bytes(), true, nil
 }
 
 // it is assumed the caller has already checked that this repo is ready
 // At present, there is only one caller of indexOneRepo() and this check is already done by it
-func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, *common.ClientOptions, error) {
+func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
 	startTime := time.Now()
 
 	repo, err := packageRepositoryFromUnstructured(unstructuredRepo)
 	if err != nil {
-		return nil, nil, err
-	}
-
-	// this is only until https://github.com/kubeapps/kubeapps/issues/3496
-	// "Investigate and propose package repositories API with similar core interface to packages API"
-	// gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
-	// The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
-	// ChartCache
-	var opts *common.ClientOptions
-	secretName, found, err := unstructured.NestedString(unstructuredRepo, "spec", "secretRef", "name")
-	if found && err == nil {
-		if opts, err = s.clientOptionsFromSecret(secretName, repo.Namespace); err != nil {
-			return nil, nil, err
-		}
+		return nil, err
 	}
 
 	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 	indexUrl, found, err := unstructured.NestedString(unstructuredRepo, "status", "url")
 	if err != nil || !found {
-		return nil, nil, status.Errorf(codes.Internal,
+		return nil, status.Errorf(codes.Internal,
 			"expected field status.url not found on HelmRepository\n[%s], error %v",
 			repo.Name, err)
 	}
@@ -290,7 +306,7 @@ func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}
 	// TODO (gfichtenholt) verify this is actually the case
 	byteArray, err := httpclient.Get(indexUrl, httpclient.New(), map[string]string{})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	modelRepo := &models.Repo{
@@ -306,7 +322,7 @@ func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}
 	// for GetAvailablePackageVersions()
 	charts, err := helm.ChartsFromIndex(byteArray, modelRepo, false)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	duration := time.Since(startTime)
@@ -318,7 +334,7 @@ func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}
 		// messed up and didn't parse successfully but the helm library didn't raise an error
 		log.Warning(msg)
 	}
-	return charts, opts, nil
+	return charts, nil
 }
 
 // onModifyRepo essentially tells the cache whether to and what to store for a given key
@@ -387,25 +403,34 @@ func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
 	return true, nil
 }
 
-func (s *repoCacheCallSite) clientOptionsFromSecret(secretName, namespace string) (*common.ClientOptions, error) {
+// unstructuredRepo is passed as map[string]interface{}
+// this is only until https://github.com/kubeapps/kubeapps/issues/3496
+// "Investigate and propose package repositories API with similar core interface to packages API"
+// gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
+// The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
+// ChartCache
+func (s *repoCacheCallSite) clientOptionsForRepo(ctx context.Context, unstructuredRepo map[string]interface{}) (*common.ClientOptions, error) {
+	secretName, found, err := unstructured.NestedString(unstructuredRepo, "spec", "secretRef", "name")
+	if !found || err != nil || secretName == "" {
+		return nil, nil
+	}
 	if s == nil || s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
 	}
-	ctx := context.Background()
 	typedClient, _, _, err := s.clientGetter(ctx)
 	if err != nil {
 		return nil, err
 	}
-	secret, err := typedClient.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
+	repoName, err := common.NamespacedName(unstructuredRepo)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
 		// TODO (gfichtenholt) if I can't get the secret due to RBAC settings,
 		// return a nice friendly error message
 		return nil, err
 	}
-
-	// I wish I could use the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
-	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
-	// So we'll stick with lower-level http-client library
 	return common.ClientOptionsFromSecret(*secret)
 }
 

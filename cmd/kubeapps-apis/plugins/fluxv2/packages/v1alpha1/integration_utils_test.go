@@ -165,7 +165,7 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 
 // This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
 // the design
-func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
+func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
 	unstructuredRepo := unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -182,6 +182,10 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
 		},
 	}
 
+	if secretName != "" {
+		unstructured.SetNestedField(unstructuredRepo.Object, secretName, "spec", "secretRef", "name")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
@@ -195,6 +199,7 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
 
 func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
+
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
 	} else {
@@ -449,6 +454,35 @@ func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error
 		}
 		return string(token), nil
 	}
+}
+
+func kubeCreateBasicAuthSecret(t *testing.T, namespace, name, user, password string) error {
+	t.Logf("+kubeCreateBasicAuthSecret(%s, %s, %s)", namespace, name, user)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.CoreV1().Secrets(namespace).Create(
+		ctx,
+		newBasicAuthSecret(name, namespace, user, password),
+		metav1.CreateOptions{})
+	return err
+}
+
+func kubeDeleteSecret(t *testing.T, namespace, name string) error {
+	t.Logf("+kubeDeleteSecret(%s, %s)", namespace, name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	return typedClient.CoreV1().Secrets(namespace).Delete(
+		ctx,
+		name,
+		metav1.DeleteOptions{})
 }
 
 func kubePortForwardToRedis(t *testing.T) error {

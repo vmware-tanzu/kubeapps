@@ -39,12 +39,15 @@ import (
 // 3) run './kind-cluster-setup.sh deploy' once prior to these tests
 
 const (
-	// the only repo these tests use so far. This is local copy of the first few entries
+	// This is local copy of the first few entries
 	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
 	// urls modified to link to .tgz files also within the local cluster.
 	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
 	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/kind-cluster-setup.sh
-	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80"
+	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo"
+
+	// same as above but requires HTTP basic authentication: user: foo, password: bar
+	podinfo_basic_auth_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth"
 )
 
 type integrationTestCreateSpec struct {
@@ -440,7 +443,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == 0; totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
+			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
 				t.Fatalf("%v", err)
 			}
 			t.Cleanup(func() {
@@ -528,7 +531,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == evictedCopy.Len(); totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default"); err != nil {
+			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
 				t.Fatalf("%v", err)
 			}
 			t.Cleanup(func() {
@@ -604,7 +607,7 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 	// now load some large repos (bitnami)
 	// I didn't want to store a large (10MB) copy of bitnami repo in our git,
 	// so for now let it fetch from bitnami website
-	if err = kubeCreateHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default"); err != nil {
+	if err = kubeCreateHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
 		t.Fatalf("%v", err)
 	}
 	// wait until this repo reaches 'Ready' state so that long indexation process kicks in
@@ -628,10 +631,97 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 	}
 }
 
+func TestKindClusterRepoWithBasicAuth(t *testing.T) {
+	fluxPluginClient := checkEnv(t)
+
+	secretName := "podinfo-basic-auth-secret"
+	repoName := "podinfo-basic-auth"
+
+	if err := kubeCreateBasicAuthSecret(t, "default", secretName, "foo", "bar"); err != nil {
+		t.Fatalf("%v", err)
+	}
+	t.Cleanup(func() {
+		err := kubeDeleteSecret(t, "default", secretName)
+		if err != nil {
+			t.Logf("Failed to delete helm repository due to [%v]", err)
+		}
+	})
+
+	if err := kubeCreateHelmRepository(t, repoName, podinfo_basic_auth_repo_url, "default", secretName); err != nil {
+		t.Fatalf("%v", err)
+	}
+	t.Cleanup(func() {
+		err := kubeDeleteHelmRepository(t, repoName, "default")
+		if err != nil {
+			t.Logf("Failed to delete helm repository due to [%v]", err)
+		}
+	})
+
+	// wait until this repo reaches 'Ready'
+	if err := kubeWaitUntilHelmRepositoryIsReady(t, repoName, "default"); err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	grpcContext := newGrpcContext(t, "test-create-admin-basic-auth")
+
+	const maxWait = 25
+	for i := 0; i <= maxWait; i++ {
+		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+		resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+			grpcContext,
+			&corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: "default",
+				},
+			})
+		if err == nil {
+			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if got, want := resp, available_package_summaries_podinfo_basic_auth; !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
+			break
+		} else if i == maxWait {
+			t.Fatalf("Timed out waiting for available package summaries, last response: %v, last error: [%v]", resp, err)
+		} else {
+			t.Logf("Waiting 2s for repository [%s] to be indexed, attempt [%d/%d]...", repoName, i+1, maxWait)
+			time.Sleep(2 * time.Second)
+		}
+	}
+
+	availablePackageRef := availableRef(repoName+"/podinfo", "default")
+
+	grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+	defer cancel()
+	resp, err := fluxPluginClient.GetAvailablePackageDetail(
+		grpcContext,
+		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+	// these few fields a bit special in that they are all very long strings,
+	// so we'll do a 'Contains' check for these instead of 'Equals'
+	opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
+	if got, want := resp, expected_detail_podinfo_basic_auth; !cmp.Equal(got, want, opt1, opt2) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+	}
+	if !strings.Contains(resp.AvailablePackageDetail.Readme, expected_detail_podinfo_basic_auth.AvailablePackageDetail.Readme) {
+		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected_detail_podinfo_basic_auth.AvailablePackageDetail.Readme, resp.AvailablePackageDetail.Readme)
+	}
+	if !strings.Contains(resp.AvailablePackageDetail.DefaultValues, expected_detail_podinfo_basic_auth.AvailablePackageDetail.DefaultValues) {
+		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected_detail_podinfo_basic_auth.AvailablePackageDetail.DefaultValues, resp.AvailablePackageDetail.DefaultValues)
+	}
+	if !strings.Contains(resp.AvailablePackageDetail.ValuesSchema, expected_detail_podinfo_basic_auth.AvailablePackageDetail.ValuesSchema) {
+		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected_detail_podinfo_basic_auth.AvailablePackageDetail.ValuesSchema, resp.AvailablePackageDetail.ValuesSchema)
+	}
+}
+
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
-	err := kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace)
+	err := kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "")
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
@@ -1295,6 +1385,35 @@ var (
 		TargetContext: &corev1.Context{
 			Namespace: "test-15",
 			Cluster:   KubeappsCluster,
+		},
+	}
+
+	available_package_summaries_podinfo_basic_auth = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			{
+				AvailablePackageRef: availableRef("podinfo-basic-auth/podinfo", "default"),
+				LatestVersion:       &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+			},
+		},
+	}
+
+	expected_detail_podinfo_basic_auth = &corev1.GetAvailablePackageDetailResponse{
+		AvailablePackageDetail: &corev1.AvailablePackageDetail{
+			AvailablePackageRef: availableRef("podinfo-basic-auth/podinfo", "default"),
+			Name:                "podinfo",
+			Version:             &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
+			RepoUrl:             "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth",
+			HomeUrl:             "https://github.com/stefanprodan/podinfo",
+			DisplayName:         "podinfo",
+			ShortDescription:    "Podinfo Helm chart for Kubernetes",
+			SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+			Maintainers: []*corev1.Maintainer{
+				{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+			},
+			Readme:        "Podinfo is used by CNCF projects like [Flux](https://github.com/fluxcd/flux2)",
+			DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
 		},
 	}
 )

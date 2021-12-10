@@ -92,6 +92,11 @@ func (s *Server) availableChartDetail(ctx context.Context, repoName types.Namesp
 		return nil, status.Errorf(codes.NotFound, "Chart [%s] not found", chartName)
 	}
 
+	opts, err := s.clientOptionsForRepo(ctx, repoName)
+	if err != nil {
+		return nil, err
+	}
+
 	if chartVersion == "" {
 		chartVersion = chartModel.ChartVersions[0].Version
 	}
@@ -100,7 +105,7 @@ func (s *Server) availableChartDetail(ctx context.Context, repoName types.Namesp
 		return nil, err
 	}
 
-	byteArray, err := s.chartCache.GetForOne(key, chartModel)
+	byteArray, err := s.chartCache.GetForOne(key, chartModel, opts)
 	if err != nil {
 		return nil, err
 	} else if byteArray == nil {
