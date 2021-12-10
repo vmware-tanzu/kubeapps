@@ -93,7 +93,7 @@
     "@types/react-transition-group": "^4.4.3",
     "@types/redux-mock-store": "^1.0.3",
     "@types/swagger-ui-react": "^4.1.0",
-    "@wojtekmaj/enzyme-adapter-react-17": "^0.6.5",
+    "@wojtekmaj/enzyme-adapter-react-17": "^0.6.6",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-import-resolver-typescript": "^2.5.0",
@@ -118,7 +118,7 @@
     "stylelint-scss": "^4.0.0",
     "ts-jest": "^27.1.1",
     "ts-proto": "^1.92.2",
-    "typescript": "^4.5.2"
+    "typescript": "^4.5.3"
   },
   "resolutions": {
     "@babel/parser": "^7.15.3"
