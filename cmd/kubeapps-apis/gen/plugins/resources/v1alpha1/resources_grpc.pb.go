@@ -20,6 +20,9 @@ const _ = grpc.SupportPackageIsVersion7
 type ResourcesServiceClient interface {
 	GetResources(ctx context.Context, in *GetResourcesRequest, opts ...grpc.CallOption) (ResourcesService_GetResourcesClient, error)
 	GetServiceAccountNames(ctx context.Context, in *GetServiceAccountNamesRequest, opts ...grpc.CallOption) (*GetServiceAccountNamesResponse, error)
+	GetNamespaceNames(ctx context.Context, in *GetNamespaceNamesRequest, opts ...grpc.CallOption) (*GetNamespaceNamesResponse, error)
+	CreateNamespace(ctx context.Context, in *CreateNamespaceRequest, opts ...grpc.CallOption) (*CreateNamespaceResponse, error)
+	CheckNamespaceExists(ctx context.Context, in *CheckNamespaceExistsRequest, opts ...grpc.CallOption) (*CheckNamespaceExistsResponse, error)
 }
 
 type resourcesServiceClient struct {
@@ -71,12 +74,42 @@ func (c *resourcesServiceClient) GetServiceAccountNames(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *resourcesServiceClient) GetNamespaceNames(ctx context.Context, in *GetNamespaceNamesRequest, opts ...grpc.CallOption) (*GetNamespaceNamesResponse, error) {
+	out := new(GetNamespaceNamesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/GetNamespaceNames", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourcesServiceClient) CreateNamespace(ctx context.Context, in *CreateNamespaceRequest, opts ...grpc.CallOption) (*CreateNamespaceResponse, error) {
+	out := new(CreateNamespaceResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/CreateNamespace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourcesServiceClient) CheckNamespaceExists(ctx context.Context, in *CheckNamespaceExistsRequest, opts ...grpc.CallOption) (*CheckNamespaceExistsResponse, error) {
+	out := new(CheckNamespaceExistsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/CheckNamespaceExists", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourcesServiceServer is the server API for ResourcesService service.
 // All implementations should embed UnimplementedResourcesServiceServer
 // for forward compatibility
 type ResourcesServiceServer interface {
 	GetResources(*GetResourcesRequest, ResourcesService_GetResourcesServer) error
 	GetServiceAccountNames(context.Context, *GetServiceAccountNamesRequest) (*GetServiceAccountNamesResponse, error)
+	GetNamespaceNames(context.Context, *GetNamespaceNamesRequest) (*GetNamespaceNamesResponse, error)
+	CreateNamespace(context.Context, *CreateNamespaceRequest) (*CreateNamespaceResponse, error)
+	CheckNamespaceExists(context.Context, *CheckNamespaceExistsRequest) (*CheckNamespaceExistsResponse, error)
 }
 
 // UnimplementedResourcesServiceServer should be embedded to have forward compatible implementations.
@@ -88,6 +121,15 @@ func (UnimplementedResourcesServiceServer) GetResources(*GetResourcesRequest, Re
 }
 func (UnimplementedResourcesServiceServer) GetServiceAccountNames(context.Context, *GetServiceAccountNamesRequest) (*GetServiceAccountNamesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServiceAccountNames not implemented")
+}
+func (UnimplementedResourcesServiceServer) GetNamespaceNames(context.Context, *GetNamespaceNamesRequest) (*GetNamespaceNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNamespaceNames not implemented")
+}
+func (UnimplementedResourcesServiceServer) CreateNamespace(context.Context, *CreateNamespaceRequest) (*CreateNamespaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateNamespace not implemented")
+}
+func (UnimplementedResourcesServiceServer) CheckNamespaceExists(context.Context, *CheckNamespaceExistsRequest) (*CheckNamespaceExistsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckNamespaceExists not implemented")
 }
 
 // UnsafeResourcesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -140,6 +182,60 @@ func _ResourcesService_GetServiceAccountNames_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourcesService_GetNamespaceNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNamespaceNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcesServiceServer).GetNamespaceNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/GetNamespaceNames",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcesServiceServer).GetNamespaceNames(ctx, req.(*GetNamespaceNamesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourcesService_CreateNamespace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateNamespaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcesServiceServer).CreateNamespace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/CreateNamespace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcesServiceServer).CreateNamespace(ctx, req.(*CreateNamespaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourcesService_CheckNamespaceExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckNamespaceExistsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcesServiceServer).CheckNamespaceExists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/CheckNamespaceExists",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcesServiceServer).CheckNamespaceExists(ctx, req.(*CheckNamespaceExistsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourcesService_ServiceDesc is the grpc.ServiceDesc for ResourcesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -150,6 +246,18 @@ var ResourcesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetServiceAccountNames",
 			Handler:    _ResourcesService_GetServiceAccountNames_Handler,
+		},
+		{
+			MethodName: "GetNamespaceNames",
+			Handler:    _ResourcesService_GetNamespaceNames_Handler,
+		},
+		{
+			MethodName: "CreateNamespace",
+			Handler:    _ResourcesService_CreateNamespace_Handler,
+		},
+		{
+			MethodName: "CheckNamespaceExists",
+			Handler:    _ResourcesService_CheckNamespaceExists_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
