@@ -13750,12 +13750,12 @@ stylelint-order@^3.1.1:
     postcss "^7.0.17"
     postcss-sorting "^5.0.1"
 
-stylelint-scss@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/stylelint-scss/-/stylelint-scss-4.0.0.tgz#4901ced92b9c68e37649799a39defbd5f2ac5bcd"
-  integrity sha512-lIRhPqtI6I065EJ6aI4mWKsmQt8Krnu6aF9XSL9s8Nd2f/cDKImST0T9TfjnUul3ReKYWozkG9dlpNTZH2FB9w==
+stylelint-scss@^4.0.0, stylelint-scss@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/stylelint-scss/-/stylelint-scss-4.0.1.tgz#da03f687c5bf8b91ea40d389ad29e07c328582b1"
+  integrity sha512-Ea+KY7ZFsDhU6Ne9r84y7NvFSNA843w352MSdQeDmklar0pDbeQj9flKrVAuDIlK0pDDdhFtgBl/N0FrtWHq0g==
   dependencies:
-    lodash "^4.17.15"
+    lodash "^4.17.21"
     postcss-media-query-parser "^0.2.3"
     postcss-resolve-nested-selector "^0.1.1"
     postcss-selector-parser "^6.0.6"
