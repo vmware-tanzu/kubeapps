@@ -254,7 +254,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		}
 	}
 
-	chartCache, err := NewChartCache(redisCli)
+	chartCache, err := NewChartCache("chartCacheTest", redisCli)
 	if err != nil {
 		return nil, mock, err
 	}
@@ -300,7 +300,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		OnDeleteFunc: cs.onDeleteRepo,
 	}
 
-	repoCache, err := cache.NewNamespacedResourceWatcherCache(cacheConfig, redisCli)
+	repoCache, err := cache.NewNamespacedResourceWatcherCache("repoCacheTest", cacheConfig, redisCli)
 	if err != nil {
 		return nil, mock, err
 	}

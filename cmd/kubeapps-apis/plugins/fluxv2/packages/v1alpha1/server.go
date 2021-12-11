@@ -67,7 +67,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 
 	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
 		return nil, err
-	} else if chartCache, err := NewChartCache(redisCli); err != nil {
+	} else if chartCache, err := NewChartCache("chartCache", redisCli); err != nil {
 		return nil, err
 	} else {
 		s := repoCacheCallSite{
@@ -82,7 +82,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 			OnGetFunc:    s.onGetRepo,
 			OnDeleteFunc: s.onDeleteRepo,
 		}
-		if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli); err != nil {
+		if repoCache, err := cache.NewNamespacedResourceWatcherCache("repoCache", repoCacheConfig, redisCli); err != nil {
 			return nil, err
 		} else {
 			return &Server{

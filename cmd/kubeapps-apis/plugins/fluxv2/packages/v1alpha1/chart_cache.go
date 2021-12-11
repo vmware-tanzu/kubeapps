@@ -17,7 +17,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -40,6 +39,8 @@ import (
 const (
 	// copied from helm plug-in
 	UserAgentPrefix = "kubeapps-apis/plugins"
+	// max number of retries due to transient errors
+	MaxRetries = 5
 )
 
 // For now:
@@ -81,16 +82,19 @@ type chartCacheStoreEntry struct {
 	deleted       bool
 }
 
-func NewChartCache(redisCli *redis.Client) (*ChartCache, error) {
-	log.Infof("+NewChartCache(%v)", redisCli)
+func NewChartCache(name string, redisCli *redis.Client) (*ChartCache, error) {
+	log.Infof("+NewChartCache(%s, %v)", name, redisCli)
 
 	if redisCli == nil {
 		return nil, fmt.Errorf("server not configured with redis client")
 	}
 
+	// TODO (gfichtenholt) low priority - do not hardcode the value of debugEnabled flag
+	// read the value from an environment variable or something that does require re-compiling
+	// the code to enable the flag in production
 	c := ChartCache{
 		redisCli:   redisCli,
-		queue:      cache.NewRateLimitingQueue(),
+		queue:      cache.NewRateLimitingQueue(name, false),
 		processing: k8scache.NewStore(chartCacheKeyFunc),
 	}
 
@@ -162,9 +166,12 @@ func (c *ChartCache) runWorker() {
 
 // processNextWorkItem will read a single work item off the work queue and
 // attempt to process it, by calling the syncHandler.
+
+// ref: https://engineering.bitnami.com/articles/kubewatch-an-example-of-kubernetes-custom-controller.html
+// ref: https://github.com/bitnami-labs/kubewatch/blob/master/pkg/controller/controller.go
 func (c *ChartCache) processNextWorkItem() bool {
-	log.V(4).Infof("+processNextWorkItem()")
-	defer log.V(4).Infof("-processNextWorkItem()")
+	log.Infof("+processNextWorkItem()")
+	defer log.Infof("-processNextWorkItem()")
 
 	obj, shutdown := c.queue.Get()
 	if shutdown {
@@ -172,42 +179,36 @@ func (c *ChartCache) processNextWorkItem() bool {
 		return false
 	}
 
-	// We wrap this block in a func so we can defer c.queue.Done.
-	err := func(obj interface{}) error {
-		// We call Done here so the queue knows we have finished
-		// processing this item. We also must remember to call Forget if we
-		// do not want this work item being re-queued. For example, we do
-		// not call Forget if a transient error occurs, instead the item is
-		// put back on the queue and attempted again after a back-off
-		// period.
-		defer c.queue.Done(obj)
-		// We expect strings to come off the work queue. These are of the
-		// form namespace/name. We do this as the delayed nature of the
-		// work queue means the items in k8s may actually be more up to date
-		// that when the item was initially put onto the work queue.
-		if key, ok := obj.(string); !ok {
-			// As the item in the work queue is actually invalid, we call
-			// Forget() here else we'd go into a loop of attempting to
-			// process a work item that is invalid.
-			c.queue.Forget(obj)
-			runtime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
-			return nil
-		} else {
-			// Run the syncHandler, passing it the namespace/name string of the
-			// resource to be synced.
-			if err := c.syncHandler(key); err != nil {
-				return fmt.Errorf("error syncing key [%s] due to: %v", key, err)
-			}
-			// Finally, if no error occurs we Forget this item so it does not
-			// get queued again until another change happens.
-			c.queue.Forget(obj)
-			log.V(4).Infof("Done syncing key [%s]", key)
-			return nil
-		}
-	}(obj)
-
-	if err != nil {
-		runtime.HandleError(err)
+	// We call Done here so the queue knows we have finished
+	// processing this item. We also must remember to call Forget if we
+	// do not want this work item being re-queued. For example, we do
+	// not call Forget if a transient error occurs, instead the item is
+	// put back on the queue and attempted again after a back-off
+	// period.
+	defer c.queue.Done(obj)
+	key, ok := obj.(string)
+	if !ok {
+		// As the item in the work queue is actually invalid, we call
+		// Forget() here else we'd go into a loop of attempting to
+		// process a work item that is invalid.
+		c.queue.Forget(obj)
+		runtime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
+		return true
+	}
+	err := c.syncHandler(key)
+	if err == nil {
+		// No error, reset the ratelimit counters
+		c.queue.Forget(key)
+		c.processing.Delete(key)
+	} else if c.queue.NumRequeues(key) < MaxRetries {
+		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, MaxRetries-c.queue.NumRequeues(key), err)
+		c.queue.AddRateLimited(key)
+	} else {
+		// err != nil and too many retries
+		log.Errorf("Error processing %s (giving up): %v", key, err)
+		c.queue.Forget(key)
+		c.processing.Delete(key)
+		runtime.HandleError(fmt.Errorf("error syncing key [%s] due to: %v", key, err))
 	}
 	return true
 }
@@ -299,14 +300,6 @@ func (c *ChartCache) syncHandler(key string) (err error) {
 	} else if !exists {
 		return fmt.Errorf("no object exists in cache store for key: [%s]", key)
 	}
-
-	// we need to keep track whether or not this func returns an error,
-	// because if it does, we still need the entry in store for when retry kicks in
-	defer func() {
-		if err != nil {
-			c.processing.Delete(entry)
-		}
-	}()
 
 	chart, ok := entry.(chartCacheStoreEntry)
 	if !ok {
@@ -465,16 +458,7 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 	return fmt.Sprintf("helmcharts:%s:%s:%s", namespace, chartID, chartVersion), nil
 }
 
-// The work queue should be able to retry transient HTTP errors
-// so I shouldn't have to do retries here.
-// TODO (gfichtenholt) verify this is actually the case. Gasp! it appears NOT to be the
-// case:
-//	I1207 03:25:03.694088       1 chart_cache.go:337] +syncHandler(helmcharts:default:bitnami-0/wavefront-hpa-adapter:1.0.4)
-//	I1207 03:25:25.494913       1 chart_cache.go:386] -syncHandler(helmcharts:default:bitnami-0/wavefront-hpa-adapter:1.0.4)
-//	E1207 03:25:25.495069       1 chart_cache.go:256] error syncing key [helmcharts:default:bitnami-0/wavefront-hpa-adapter:1.0.4] due to: Get "https://charts.bitnami.com/bitnami/wavefront-hpa-adapter-1.0.4.tgz": EOF
-// which breaks a fundamental assumption I rely on.
-// I am putting the retries back in here just as a workaround until I figure out why the queue is broken
-
+// FYI: The work queue is able to retry transient HTTP errors
 func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *common.ClientOptions) ([]byte, error) {
 	if clientOptions == nil {
 		clientOptions = &common.ClientOptions{}
@@ -482,38 +466,22 @@ func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOption
 	// this string is the same for all charts
 	clientOptions.UserAgent = fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 
-	// In theory, the work queue should be able to retry transient errors
-	// so I shouldn't have to do retries here. See above comment for explanation
-	const maxRetries = 5
-	var chartTgz []byte
-	ok := false
-	for i := 0; i < maxRetries && !ok; i++ {
-		client, headers, err := common.NewHttpClientAndHeaders(clientOptions)
-		if err != nil {
-			log.Warningf("%+v", err)
-		} else {
-			reader, _, err := httpclient.GetStream(chartUrl, client, headers)
-			if reader != nil {
-				defer reader.Close()
-			}
-			if err == nil {
-				if chartTgz, err = ioutil.ReadAll(reader); err != nil {
-					log.Warningf("%+v", err)
-				} else {
-					ok = true
-					break
-				}
-			} else {
-				log.Warningf("%+v", err)
-			}
-		}
-		waitTime := math.Pow(2, float64(i))
-		log.Infof("Waiting [%d] seconds before retry...", int(waitTime))
-		time.Sleep(time.Duration(waitTime) * time.Second)
+	client, headers, err := common.NewHttpClientAndHeaders(clientOptions)
+	if err != nil {
+		return nil, err
 	}
 
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "failed to retrieve chart [%s] from [%s]", chartID, chartUrl)
+	reader, _, err := httpclient.GetStream(chartUrl, client, headers)
+	if reader != nil {
+		defer reader.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	chartTgz, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: [%d] bytes",

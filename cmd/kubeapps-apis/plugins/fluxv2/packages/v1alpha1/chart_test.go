@@ -211,15 +211,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			s.redisMockExpectGetFromRepoCache(mock, nil, repo)
-			version := tc.request.PkgVersion
-			if version == "" {
-				version = charts[0].chartRevision
+			chartVersion := tc.request.PkgVersion
+			if chartVersion == "" {
+				chartVersion = charts[0].chartRevision
 				requestChartUrl = charts[0].chartUrl
 			}
 			chartCacheKey, err := s.chartCache.keyFor(
 				repoNamespace,
 				tc.request.AvailablePackageRef.Identifier,
-				version)
+				chartVersion)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -243,28 +243,98 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{}, corev1.PackageAppVersion{})
-			// these few fields a bit special in that they are all very long strings,
-			// so we'll do a 'Contains' check for these instead of 'Equals'
-			opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
-			if got, want := response.AvailablePackageDetail, tc.expectedPackageDetail; !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
-			if !strings.Contains(response.AvailablePackageDetail.Readme, tc.expectedPackageDetail.Readme) {
-				t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", tc.expectedPackageDetail.Readme, response.AvailablePackageDetail.Readme)
-			}
-			if !strings.Contains(response.AvailablePackageDetail.DefaultValues, tc.expectedPackageDetail.DefaultValues) {
-				t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", tc.expectedPackageDetail.DefaultValues, response.AvailablePackageDetail.DefaultValues)
-			}
-			if !strings.Contains(response.AvailablePackageDetail.ValuesSchema, tc.expectedPackageDetail.ValuesSchema) {
-				t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", tc.expectedPackageDetail.ValuesSchema, response.AvailablePackageDetail.ValuesSchema)
-			}
+			compareActualVsExpectedAvailablePackageDetail(t, response.AvailablePackageDetail, tc.expectedPackageDetail)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
 		})
 	}
+}
+
+func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
+	t.Run("successfully populates chart cache when transient HTTP errors occur", func(t *testing.T) {
+		repoName := "bitnami-1"
+		repoNamespace := "default"
+		replaceUrls := make(map[string]string)
+		charts := []testSpecChartWithUrl{}
+
+		for _, s := range redis_charts_spec {
+			tarGzBytes, err := ioutil.ReadFile(s.tgzFile)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			// stand up an http server just for the duration of this test
+			// this server will simulate a failure on 1st and 2nd request
+			failuresAllowed := 2
+			var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, nofail := r.URL.Query()["Nofail"]
+				if !nofail && failuresAllowed > 0 {
+					failuresAllowed--
+					w.WriteHeader(503)
+					w.Write([]byte(fmt.Sprintf("The server is not ready to handle the request: [%d try left before OK]", failuresAllowed)))
+				} else {
+					w.WriteHeader(200)
+					w.Write(tarGzBytes)
+				}
+			})
+			ts := httptest.NewServer(handler)
+			defer ts.Close()
+			replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
+			c := testSpecChartWithUrl{
+				chartID:       fmt.Sprintf("%s/%s", repoName, s.name),
+				chartRevision: s.revision,
+				chartUrl:      ts.URL + "/?Nofail=true",
+				repoNamespace: repoNamespace,
+			}
+			charts = append(charts, c)
+		}
+
+		ts2, repo, err := newRepoWithIndex(
+			"testdata/redis-two-versions.yaml", repoName, repoNamespace, replaceUrls, "")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		defer ts2.Close()
+
+		s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		packageIdentifier := repoName + "/redis"
+		chartVersion := charts[0].chartRevision
+		requestChartUrl := charts[0].chartUrl
+
+		s.redisMockExpectGetFromRepoCache(mock, nil, repo)
+		chartCacheKey, err := s.chartCache.keyFor(
+			repoNamespace,
+			packageIdentifier,
+			chartVersion)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, requestChartUrl, nil); err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		response, err := s.GetAvailablePackageDetail(
+			context.Background(),
+			&corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: availableRef(packageIdentifier, repoNamespace),
+			})
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		compareActualVsExpectedAvailablePackageDetail(t,
+			response.AvailablePackageDetail, expected_detail_redis_1)
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
 }
 
 func TestNegativeGetAvailablePackageDetail(t *testing.T) {
@@ -709,6 +779,25 @@ func fromRedisKeyForChart(key string) (namespace, chartID, chartVersion string, 
 		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
 	return parts[1], parts[2], parts[3], nil
+}
+
+func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.AvailablePackageDetail, expected *corev1.AvailablePackageDetail) {
+	opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+	// these few fields a bit special in that they are all very long strings,
+	// so we'll do a 'Contains' check for these instead of 'Equals'
+	opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
+	if got, want := actual, expected; !cmp.Equal(got, want, opt1, opt2) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+	}
+	if !strings.Contains(actual.Readme, expected.Readme) {
+		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected.Readme, actual.Readme)
+	}
+	if !strings.Contains(actual.DefaultValues, expected.DefaultValues) {
+		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected.DefaultValues, actual.DefaultValues)
+	}
+	if !strings.Contains(actual.ValuesSchema, expected.ValuesSchema) {
+		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected.ValuesSchema, actual.ValuesSchema)
+	}
 }
 
 // global vars

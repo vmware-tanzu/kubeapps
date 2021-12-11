@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/util/workqueue"
+	log "k8s.io/klog/v2"
 )
 
 // RateLimitingInterface is an interface that rate limits items being added to the queue.
@@ -33,8 +34,11 @@ type RateLimitingInterface interface {
 	WaitUntilGone(item string)
 }
 
-func NewRateLimitingQueue() RateLimitingInterface {
-	queue := newQueue()
+func NewRateLimitingQueue(name string, debugEnabled bool) RateLimitingInterface {
+	if debugEnabled {
+		log.Infof("+NewRateLimitingQueue[%s]", name)
+	}
+	queue := newQueue(name, debugEnabled)
 	return &rateLimitingType{
 		queue:             queue,
 		DelayingInterface: workqueue.NewDelayingQueueWithCustomQueue(queue, ""),
@@ -51,7 +55,17 @@ type rateLimitingType struct {
 
 // AddRateLimited AddAfter's the item based on the time when the rate limiter says it's ok
 func (q *rateLimitingType) AddRateLimited(item interface{}) {
-	q.DelayingInterface.AddAfter(item, q.rateLimiter.When(item))
+	duration := q.rateLimiter.When(item)
+	if q.queue.debugEnabled {
+		log.Infof("[%s]: AddRateLimited(%s) - %d ms", q.queue.name, item, duration.Milliseconds())
+	}
+	if itemstr, ok := item.(string); !ok {
+		// workqueue.Interface does not allow returning errors, so
+		runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
+	} else {
+		q.ExpectAdd(itemstr)
+		q.DelayingInterface.AddAfter(itemstr, duration)
+	}
 }
 
 func (q *rateLimitingType) NumRequeues(item interface{}) int {
@@ -67,21 +81,30 @@ func (q *rateLimitingType) ExpectAdd(item string) {
 }
 
 func (q *rateLimitingType) WaitUntilGone(item string) {
-	q.queue.waitUntilGone(item)
+	// this neeeds to take into account both the rateLimiter and the queue
+	q.queue.waitUntilGone(item, q.rateLimiter)
 }
 
-func newQueue() *Type {
+func newQueue(name string, debugEnabled bool) *Type {
 	return &Type{
-		expected:   sets.String{},
-		dirty:      sets.String{},
-		processing: sets.String{},
-		cond:       sync.NewCond(&sync.Mutex{}),
+		name:         name,
+		debugEnabled: debugEnabled,
+		expected:     sets.String{},
+		dirty:        sets.String{},
+		processing:   sets.String{},
+		cond:         sync.NewCond(&sync.Mutex{}),
 	}
 }
 
 // Type is a work queue.
 // Ref https://pkg.go.dev/k8s.io/client-go/util/workqueue
 type Type struct {
+	// just for debugging purposes
+	name string
+
+	// just for debugging purposes
+	debugEnabled bool
+
 	// queue defines the order in which we will work on items. Every
 	// element of queue should be in the dirty set and not in the
 	// processing set.
@@ -128,6 +151,9 @@ func (q *Type) Add(item interface{}) {
 		}
 
 		q.queue = append(q.queue, itemstr)
+		if q.debugEnabled {
+			log.Infof("[%s]: Add(%s) expected: %s, dirty: %s, processing %s, queue: %s", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+		}
 		q.cond.Signal()
 	}
 }
@@ -156,15 +182,14 @@ func (q *Type) Get() (item interface{}, shutdown bool) {
 			// We must be shutting down.
 			return nil, true
 		} else if len(q.queue) > 0 {
-			item, q.queue = q.queue[0], q.queue[1:]
-			if itemstr, ok := item.(string); !ok {
-				// workqueue.Interface does not allow returning errors, so
-				runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
-			} else {
-				q.processing.Insert(itemstr)
-				q.dirty.Delete(itemstr)
-				return item, false
+			var itemstr string
+			itemstr, q.queue = q.queue[0], q.queue[1:]
+			q.processing.Insert(itemstr)
+			q.dirty.Delete(itemstr)
+			if q.debugEnabled {
+				log.Infof("[%s]: Get() returning %s expected: %s, dirty: %s, processing %s, queue: %s", q.name, itemstr, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
 			}
+			return itemstr, false
 		}
 	}
 }
@@ -183,6 +208,9 @@ func (q *Type) Done(item interface{}) {
 		q.processing.Delete(itemstr)
 		if q.dirty.Has(itemstr) {
 			q.queue = append(q.queue, itemstr)
+		}
+		if q.debugEnabled {
+			log.Infof("[%s]: Done(%s) expected: %s, dirty: %s, processing %s, queue: %s", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
 		}
 		q.cond.Broadcast()
 	}
@@ -217,14 +245,27 @@ func (q *Type) expectAdd(item string) {
 	}
 
 	q.expected.Insert(item)
+	if q.debugEnabled {
+		log.Infof("[%s]: expectAdd(%s) expected: %s, dirty: %s, processing %s, queue: %s", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+	}
 }
 
 // this func is the whole reason for the existence of this queue
-func (q *Type) waitUntilGone(item string) {
+func (q *Type) waitUntilGone(item string, rateLimiter workqueue.RateLimiter) {
+	if q.debugEnabled {
+		log.Infof("[%s]: +waitUntilGone(%s)", q.name, item)
+	}
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
+	if q.debugEnabled {
+		defer log.Infof("[%s]: -waitUntilGone(%s)", q.name, item)
+	}
 
 	for q.expected.Has(item) || q.dirty.Has(item) || q.processing.Has(item) {
 		q.cond.Wait()
+
+		if q.debugEnabled {
+			log.Infof("[%s]: waitUntilGone expected: %s, dirty: %s, processing %s, queue: %s", q.name, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+		}
 	}
 }

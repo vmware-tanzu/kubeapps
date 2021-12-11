@@ -40,6 +40,11 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+const (
+	// max number of retries due to transient errors
+	MaxRetries = 5
+)
+
 // a type of cache that is based on watching for changes to specified kubernetes resources.
 // The resource is assumed to be namespace-scoped. Cluster-wide resources are not
 // supported at this time
@@ -114,8 +119,8 @@ type NamespacedResourceWatcherCacheConfig struct {
 	OnDeleteFunc KeyDeleterFunc
 }
 
-func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client) (*NamespacedResourceWatcherCache, error) {
-	log.Infof("+NewNamespacedResourceWatcherCache(%v, %v)", config.Gvr, redisCli)
+func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client) (*NamespacedResourceWatcherCache, error) {
+	log.Infof("+NewNamespacedResourceWatcherCache(%s, %v, %v)", name, config.Gvr, redisCli)
 
 	if redisCli == nil {
 		return nil, fmt.Errorf("server not configured with redis Client")
@@ -125,10 +130,13 @@ func NewNamespacedResourceWatcherCache(config NamespacedResourceWatcherCacheConf
 		return nil, fmt.Errorf("server not configured with expected cache hooks")
 	}
 
+	// TODO (gfichtenholt) low priority - do not hardcode the value of debugEnabled flag
+	// read the value from an environment variable or something that does require re-compiling
+	// the code to enable the flag in production
 	c := NamespacedResourceWatcherCache{
 		config:     config,
 		redisCli:   redisCli,
-		queue:      NewRateLimitingQueue(),
+		queue:      NewRateLimitingQueue(name, false),
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
@@ -216,6 +224,7 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	defer log.V(4).Infof("-processNextWorkItem()")
 
 	obj, shutdown := c.queue.Get()
+
 	// ref https://go101.org/article/concurrent-synchronization-more.html
 	c.resyncCond.L.(*sync.RWMutex).RLock()
 	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
@@ -225,42 +234,34 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 		return false
 	}
 
-	// We wrap this block in a func so we can defer c.queue.Done.
-	err := func(obj interface{}) error {
-		// We call Done here so the queue knows we have finished
-		// processing this item. We also must remember to call Forget if we
-		// do not want this work item being re-queued. For example, we do
-		// not call Forget if a transient error occurs, instead the item is
-		// put back on the queue and attempted again after a back-off
-		// period.
-		defer c.queue.Done(obj)
-		// We expect strings to come off the work queue. These are of the
-		// form namespace/name. We do this as the delayed nature of the
-		// work queue means the items in k8s may actually be more up to date
-		// that when the item was initially put onto the work queue.
-		if key, ok := obj.(string); !ok {
-			// As the item in the work queue is actually invalid, we call
-			// Forget() here else we'd go into a loop of attempting to
-			// process a work item that is invalid.
-			c.queue.Forget(obj)
-			runtime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
-			return nil
-		} else {
-			// Run the syncHandler, passing it the namespace/name string of the
-			// resource to be synced.
-			if err := c.syncHandler(key); err != nil {
-				return fmt.Errorf("error syncing key [%s] due to: %v", key, err)
-			}
-			// Finally, if no error occurs we Forget this item so it does not
-			// get queued again until another change happens.
-			c.queue.Forget(obj)
-			log.V(4).Infof("Done syncing key [%s]", key)
-			return nil
-		}
-	}(obj)
-
-	if err != nil {
-		runtime.HandleError(err)
+	// We call Done here so the queue knows we have finished
+	// processing this item. We also must remember to call Forget if we
+	// do not want this work item being re-queued. For example, we do
+	// not call Forget if a transient error occurs, instead the item is
+	// put back on the queue and attempted again after a back-off
+	// period.
+	defer c.queue.Done(obj)
+	key, ok := obj.(string)
+	if !ok {
+		// As the item in the work queue is actually invalid, we call
+		// Forget() here else we'd go into a loop of attempting to
+		// process a work item that is invalid.
+		c.queue.Forget(obj)
+		runtime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
+		return true
+	}
+	err := c.syncHandler(key)
+	if err == nil {
+		// No error, reset the ratelimit counters
+		c.queue.Forget(key)
+	} else if c.queue.NumRequeues(key) < MaxRetries {
+		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, MaxRetries-c.queue.NumRequeues(key), err)
+		c.queue.AddRateLimited(key)
+	} else {
+		// err != nil and too many retries
+		log.Errorf("Error processing %s (giving up): %v", key, err)
+		c.queue.Forget(key)
+		runtime.HandleError(fmt.Errorf("error syncing key [%s] due to: %v", key, err))
 	}
 	return true
 }

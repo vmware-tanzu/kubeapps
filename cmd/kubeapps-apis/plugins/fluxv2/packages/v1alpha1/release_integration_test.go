@@ -700,22 +700,8 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageDetailResponse{}, corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{}, corev1.PackageAppVersion{})
-	// these few fields a bit special in that they are all very long strings,
-	// so we'll do a 'Contains' check for these instead of 'Equals'
-	opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
-	if got, want := resp, expected_detail_podinfo_basic_auth; !cmp.Equal(got, want, opt1, opt2) {
-		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-	}
-	if !strings.Contains(resp.AvailablePackageDetail.Readme, expected_detail_podinfo_basic_auth.AvailablePackageDetail.Readme) {
-		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected_detail_podinfo_basic_auth.AvailablePackageDetail.Readme, resp.AvailablePackageDetail.Readme)
-	}
-	if !strings.Contains(resp.AvailablePackageDetail.DefaultValues, expected_detail_podinfo_basic_auth.AvailablePackageDetail.DefaultValues) {
-		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected_detail_podinfo_basic_auth.AvailablePackageDetail.DefaultValues, resp.AvailablePackageDetail.DefaultValues)
-	}
-	if !strings.Contains(resp.AvailablePackageDetail.ValuesSchema, expected_detail_podinfo_basic_auth.AvailablePackageDetail.ValuesSchema) {
-		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected_detail_podinfo_basic_auth.AvailablePackageDetail.ValuesSchema, resp.AvailablePackageDetail.ValuesSchema)
-	}
+
+	compareActualVsExpectedAvailablePackageDetail(t, resp.AvailablePackageDetail, expected_detail_podinfo_basic_auth.AvailablePackageDetail)
 }
 
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
