@@ -215,6 +215,8 @@ type testSpecChartWithUrl struct {
 	chartUrl      string
 	opts          *common.ClientOptions
 	repoNamespace string
+	// this is for a negative test TestTransientHttpFailuresAreRetriedForChartCache
+	numRetries int
 }
 
 // This func does not create a kubernetes dynamic client. It is meant to work in conjunction with
@@ -254,43 +256,51 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		}
 	}
 
-	chartCache, err := NewChartCache("chartCacheTest", redisCli)
-	if err != nil {
-		return nil, mock, err
-	}
-
-	// for now we only cache latest version of each chart
+	var chartCache *ChartCache
+	var err error
 	cachedChartKeys := sets.String{}
 	cachedChartIds := sets.String{}
-	for _, c := range charts {
-		// very simple logic for now, relies on the order of elements in the array
-		// to pick the latest version.
-		if !cachedChartIds.Has(c.chartID) {
-			cachedChartIds.Insert(c.chartID)
-			key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
-			if err != nil {
-				return nil, mock, err
-			}
-			repoName := types.NamespacedName{
-				Name:      strings.Split(c.chartID, "/")[0],
-				Namespace: c.repoNamespace}
 
-			repoKey, err := redisKeyForRepoNamespacedName(repoName)
-			if err == nil && okRepos.Has(repoKey) {
-				err = redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
+	if charts != nil {
+		chartCache, err = NewChartCache("chartCacheTest", redisCli)
+		if err != nil {
+			return nil, mock, err
+		}
+
+		// for now we only cache latest version of each chart
+		for _, c := range charts {
+			// very simple logic for now, relies on the order of elements in the array
+			// to pick the latest version.
+			if !cachedChartIds.Has(c.chartID) {
+				cachedChartIds.Insert(c.chartID)
+				key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
 				if err != nil {
 					return nil, mock, err
 				}
-				cachedChartKeys.Insert(key)
-				chartCache.ExpectAdd(key)
+				repoName := types.NamespacedName{
+					Name:      strings.Split(c.chartID, "/")[0],
+					Namespace: c.repoNamespace}
+
+				repoKey, err := redisKeyForRepoNamespacedName(repoName)
+				if err == nil && okRepos.Has(repoKey) {
+					for i := 0; i < c.numRetries+1; i++ {
+						mock.ExpectExists(key).SetVal(0)
+					}
+					err = redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
+					if err != nil {
+						return nil, mock, err
+					}
+					cachedChartKeys.Insert(key)
+					chartCache.ExpectAdd(key)
+				}
 			}
+		}
+		cs = repoCacheCallSite{
+			clientGetter: clientGetter,
+			chartCache:   chartCache,
 		}
 	}
 
-	cs = repoCacheCallSite{
-		clientGetter: clientGetter,
-		chartCache:   chartCache,
-	}
 	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 		Gvr:          repositoriesGvr,
 		ClientGetter: clientGetter,

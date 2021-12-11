@@ -132,6 +132,7 @@ func (c *ChartCache) syncCharts(charts []models.Chart, clientOptions *common.Cli
 			log.Warningf("Chart: [%s], version: [%s] has no URLs", chart.ID, chart.ChartVersions[0].Version)
 			continue
 		}
+
 		// The tarball URL will always be the first URL in the repo.chartVersions.
 		// So says the helm plugin :-)
 		entry := chartCacheStoreEntry{
@@ -142,10 +143,10 @@ func (c *ChartCache) syncCharts(charts []models.Chart, clientOptions *common.Cli
 			clientOptions: clientOptions,
 			deleted:       false,
 		}
-		c.processing.Add(entry)
 		if key, err := chartCacheKeyFunc(entry); err != nil {
 			log.Errorf("Failed to get key for chart due to %+v", err)
 		} else {
+			c.processing.Add(entry)
 			c.queue.AddRateLimited(key)
 			totalToSync++
 		}
@@ -288,13 +289,11 @@ type chartCacheEntryValue struct {
 }
 
 // syncs the current state of the given resource in k8s with that in the cache
-func (c *ChartCache) syncHandler(key string) (err error) {
+func (c *ChartCache) syncHandler(key string) error {
 	log.Infof("+syncHandler(%s)", key)
 	defer log.Infof("-syncHandler(%s)", key)
 
-	var entry interface{}
-	var exists bool
-	entry, exists, err = c.processing.GetByKey(key)
+	entry, exists, err := c.processing.GetByKey(key)
 	if err != nil {
 		return err
 	} else if !exists {
@@ -310,24 +309,34 @@ func (c *ChartCache) syncHandler(key string) (err error) {
 	if chart.deleted {
 		// TODO: (gfichtenholt) DEL has the capability to delete multiple keys in one
 		// atomic operation. It would be nice to come up with a way to utilize that here
-		var keysremoved int64
-		keysremoved, err = c.redisCli.Del(c.redisCli.Context(), key).Result()
-		log.Infof("Redis [DEL %s]: %d", key, keysremoved)
+		keysRemoved, _ := c.redisCli.Del(c.redisCli.Context(), key).Result()
+		log.Infof("Redis [DEL %s]: %d", key, keysRemoved)
 	} else {
-		var byteArray []byte
-		byteArray, err = chartCacheComputeValue(chart.id, chart.url, chart.version, chart.clientOptions)
-		if err == nil {
-			var result string
-			startTime := time.Now()
-			result, err = c.redisCli.Set(c.redisCli.Context(), key, byteArray, 0).Result()
-			if err != nil {
-				err = fmt.Errorf("failed to set value for object with key [%s] in cache due to: %v", key, err)
-			} else {
-				duration := time.Since(startTime)
-				usedMemory, totalMemory := common.RedisMemoryStats(c.redisCli)
-				log.Infof("Redis [SET %s]: %s in [%d] ms. Redis [INFO memory]: [%s/%s]",
-					key, result, duration.Milliseconds(), usedMemory, totalMemory)
+		// unlike helm repositories, specific version chart tarball contents never changes
+		// so before embarking on expensive operation such as getting chart tarball
+		// via HTTP/S, first see if the cache already's got this entry
+		if keysExist, err := c.redisCli.Exists(c.redisCli.Context(), key).Result(); err != nil {
+			log.Errorf("Error checking whether key [%s] exists in redis: %+v", key, err)
+		} else {
+			log.Infof("Redis [EXISTS %s]: %d", key, keysExist)
+			if keysExist == 1 {
+				// nothing to do
+				return nil
 			}
+		}
+		byteArray, err := chartCacheComputeValue(chart.id, chart.url, chart.version, chart.clientOptions)
+		if err != nil {
+			return err
+		}
+		startTime := time.Now()
+		result, err := c.redisCli.Set(c.redisCli.Context(), key, byteArray, 0).Result()
+		if err != nil {
+			return fmt.Errorf("failed to set value for object with key [%s] in cache due to: %v", key, err)
+		} else {
+			duration := time.Since(startTime)
+			usedMemory, totalMemory := common.RedisMemoryStats(c.redisCli)
+			log.Infof("Redis [SET %s]: %s in [%d] ms. Redis [INFO memory]: [%s/%s]",
+				key, result, duration.Milliseconds(), usedMemory, totalMemory)
 		}
 	}
 	return err

@@ -51,14 +51,16 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		tls                   bool // also known as "private" or "secure"
 		expectedPackageDetail *corev1.AvailablePackageDetail
 	}{
-		{
-			testName: "it returns details about the latest redis package in bitnami repo",
-			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+		/*
+			{
+				testName: "it returns details about the latest redis package in bitnami repo",
+				request: &corev1.GetAvailablePackageDetailRequest{
+					AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				},
+				chartCacheHit:         true,
+				expectedPackageDetail: expected_detail_redis_1,
 			},
-			chartCacheHit:         true,
-			expectedPackageDetail: expected_detail_redis_1,
-		},
+		*/
 		{
 			testName: "it returns details about the redis package with specific version in bitnami repo",
 			request: &corev1.GetAvailablePackageDetailRequest{
@@ -230,6 +232,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					t.Fatalf("%+v", err)
 				}
 				// followed by a set and a hit
+				mock.ExpectExists(chartCacheKey).SetVal(0)
 				if err = redisMockSetValueForChart(mock, chartCacheKey, requestChartUrl, opts); err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -286,6 +289,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 				chartRevision: s.revision,
 				chartUrl:      ts.URL + "/?Nofail=true",
 				repoNamespace: repoNamespace,
+				numRetries:    2,
 			}
 			charts = append(charts, c)
 		}
