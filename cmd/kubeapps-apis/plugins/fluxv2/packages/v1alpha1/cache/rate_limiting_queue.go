@@ -57,7 +57,7 @@ type rateLimitingType struct {
 func (q *rateLimitingType) AddRateLimited(item interface{}) {
 	duration := q.rateLimiter.When(item)
 	if q.queue.debugEnabled {
-		log.Infof("[%s]: AddRateLimited(%s) - %d ms", q.queue.name, item, duration.Milliseconds())
+		log.Infof("[%s]: AddRateLimited(%s) - in %d ms", q.queue.name, item, duration.Milliseconds())
 	}
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
@@ -154,7 +154,7 @@ func (q *Type) Add(item interface{}) {
 		if q.debugEnabled {
 			log.Infof("[%s]: Add(%s) expected: %s, dirty: %s, processing %s, queue: %s", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
 		}
-		q.cond.Signal()
+		q.cond.Broadcast()
 	}
 }
 
