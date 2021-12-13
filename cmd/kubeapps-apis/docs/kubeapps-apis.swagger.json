@@ -2666,6 +2666,90 @@
         ]
       }
     },
+    "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/secretnames": {
+      "get": {
+        "operationId": "ResourcesService_GetSecretNames",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetSecretNamesResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ResourcesService"
+        ]
+      }
+    },
+    "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/secrets": {
+      "post": {
+        "operationId": "ResourcesService_CreateSecret",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1CreateSecretResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ResourcesService"
+        ]
+      }
+    },
     "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/serviceaccountnames": {
       "get": {
         "operationId": "ResourcesService_GetServiceAccountNames",
@@ -3164,6 +3248,11 @@
       "description": "Response for CreateNamespace",
       "title": "CreateNamespaceResponse"
     },
+    "v1alpha1CreateSecretResponse": {
+      "type": "object",
+      "description": "Response for CreateSecret",
+      "title": "CreateSecretResponse"
+    },
     "v1alpha1DeleteInstalledPackageResponse": {
       "type": "object",
       "description": "Response for DeleteInstalledPackage",
@@ -3362,6 +3451,21 @@
           "title": "Manifest"
         }
       }
+    },
+    "v1alpha1GetSecretNamesResponse": {
+      "type": "object",
+      "properties": {
+        "secretNames": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1alpha1SecretType"
+          },
+          "description": "The list of Service Account names.",
+          "title": "SecretNames"
+        }
+      },
+      "description": "Response for GetSecretNames",
+      "title": "GetSecretNamesResponse"
     },
     "v1alpha1GetServiceAccountNamesResponse": {
       "type": "object",
@@ -3689,6 +3793,22 @@
       },
       "description": "Response for RollbackInstalledPackage",
       "title": "RollbackInstalledPackageResponse"
+    },
+    "v1alpha1SecretType": {
+      "type": "string",
+      "enum": [
+        "SECRET_TYPE_OPAQUE_UNSPECIFIED",
+        "SECRET_TYPE_SERVICE_ACCOUNT_TOKEN",
+        "SECRET_TYPE_DOCKER_CONFIG",
+        "SECRET_TYPE_DOCKER_CONFIG_JSON",
+        "SECRET_TYPE_BASIC_AUTH",
+        "SECRET_TYPE_SSH_AUTH",
+        "SECRET_TYPE_TLS",
+        "SECRET_TYPE_BOOTSTRAP_TOKEN"
+      ],
+      "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
+      "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
+      "title": "SecretType"
     },
     "v1alpha1UpdateInstalledPackageRequest": {
       "type": "object",
