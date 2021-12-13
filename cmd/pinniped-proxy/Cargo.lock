@@ -623,48 +623,13 @@ dependencies = [
 
 [[package]]
 name = "kube"
-version = "0.64.0"
+version = "0.65.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84dcc2f8ca3f2427a72acc31fa9538159f6b33a97002e315a3fcd5323cf51a2b"
+checksum = "9ec231e9ec9e84789f9eb414d1ac40ce6c90d0517fb272a335b4233f2e272b1e"
 dependencies = [
  "k8s-openapi",
- "kube-client 0.64.0",
- "kube-core 0.64.0",
-]
-
-[[package]]
-name = "kube-client"
-version = "0.64.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8957106140aa24a76de3f7d005966f381b30a4cd6a9c003b3bba6828e9617535"
-dependencies = [
- "base64",
- "bytes",
- "chrono",
- "dirs-next",
- "either",
- "futures",
- "http",
- "http-body",
- "hyper",
- "hyper-timeout",
- "hyper-tls",
- "jsonpath_lib",
- "k8s-openapi",
- "kube-core 0.64.0",
- "openssl",
- "pem",
- "pin-project",
- "serde",
- "serde_json",
- "serde_yaml",
- "thiserror",
- "tokio",
- "tokio-native-tls",
- "tokio-util",
- "tower",
- "tower-http 0.1.2",
- "tracing",
+ "kube-client",
+ "kube-core",
 ]
 
 [[package]]
@@ -683,9 +648,11 @@ dependencies = [
  "http-body",
  "hyper",
  "hyper-timeout",
+ "hyper-tls",
  "jsonpath_lib",
  "k8s-openapi",
- "kube-core 0.65.0",
+ "kube-core",
+ "openssl",
  "pem",
  "pin-project",
  "serde",
@@ -693,26 +660,11 @@ dependencies = [
  "serde_yaml",
  "thiserror",
  "tokio",
+ "tokio-native-tls",
  "tokio-util",
  "tower",
- "tower-http 0.2.0",
+ "tower-http",
  "tracing",
-]
-
-[[package]]
-name = "kube-core"
-version = "0.64.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ec73e7d8e937dd055d962af06e635e262fdb6ed341c36ecf659d4fece0a8005"
-dependencies = [
- "chrono",
- "form_urlencoded",
- "http",
- "k8s-openapi",
- "once_cell",
- "serde",
- "serde_json",
- "thiserror",
 ]
 
 [[package]]
@@ -756,7 +708,7 @@ dependencies = [
  "futures",
  "json-patch",
  "k8s-openapi",
- "kube-client 0.65.0",
+ "kube-client",
  "pin-project",
  "serde",
  "serde_json",
@@ -1631,24 +1583,6 @@ dependencies = [
  "pin-project-lite",
  "tokio",
  "tokio-util",
- "tower-layer",
- "tower-service",
- "tracing",
-]
-
-[[package]]
-name = "tower-http"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f70061b0592867f0a60e67a6e699da5fe000c88a360a5b92ebdba9d73b2238c"
-dependencies = [
- "base64",
- "bytes",
- "futures-core",
- "futures-util",
- "http",
- "http-body",
- "pin-project",
  "tower-layer",
  "tower-service",
  "tracing",
