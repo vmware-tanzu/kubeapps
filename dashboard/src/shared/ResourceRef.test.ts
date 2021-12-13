@@ -125,37 +125,6 @@ describe("ResourceRef", () => {
     });
   });
 
-  describe("watchResourceURL", () => {
-    let kubeWatchResourceURLMock: jest.Mock;
-    beforeEach(() => {
-      kubeWatchResourceURLMock = jest.fn();
-      Kube.watchResourceURL = kubeWatchResourceURLMock;
-    });
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-    it("calls Kube.watchResourceURL with the correct arguments", () => {
-      const r = {
-        apiVersion: "v1",
-        kind: "Service",
-        name: "foo",
-        namespace: "bar",
-      } as APIResourceRef;
-
-      const ref = new ResourceRef(r, clusterName, "services", true, "default");
-
-      ref.watchResourceURL();
-      expect(kubeWatchResourceURLMock).toBeCalledWith(
-        clusterName,
-        "v1",
-        "services",
-        true,
-        "bar",
-        "foo",
-      );
-    });
-  });
-
   describe("getResource", () => {
     let kubeGetResourceMock: jest.Mock;
     beforeEach(() => {
@@ -196,37 +165,6 @@ describe("ResourceRef", () => {
       });
       const res = await ref.getResource();
       expect(res).toEqual({ items: [] });
-    });
-  });
-
-  describe("watchResource", () => {
-    let kubeWatchResourceMock: jest.Mock;
-    beforeEach(() => {
-      kubeWatchResourceMock = jest.fn();
-      Kube.watchResource = kubeWatchResourceMock;
-    });
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-    it("calls Kube.watchResource with the correct arguments", () => {
-      const r = {
-        apiVersion: "v1",
-        kind: "Service",
-        name: "foo",
-        namespace: "bar",
-      } as APIResourceRef;
-
-      const ref = new ResourceRef(r, clusterName, "services", true, "default");
-
-      ref.watchResource();
-      expect(kubeWatchResourceMock).toBeCalledWith(
-        clusterName,
-        "v1",
-        "services",
-        true,
-        "bar",
-        "foo",
-      );
     });
   });
 });

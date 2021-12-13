@@ -22,13 +22,11 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
-
-	"log"
-	"os"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
@@ -43,26 +41,40 @@ import (
 	klogv2 "k8s.io/klog/v2"
 )
 
-// LogRequest is a gRPC UnaryServerInterceptor that will log the API call
-func CreateRequestLogger() func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
+func getLogLevelOfEndpoint(endpoint string) klogv2.Level {
 
-	// Include micro seconds in timestamp
-	logger := log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+	// Add all endpoint function names which you want to suppress in interceptor logging
+	supressLoggingOfEndpoints := []string{"GetConfiguredPlugins"}
+	var level klogv2.Level
 
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
-
-		start := time.Now()
-		res, err := handler(ctx, req)
-
-		// Format string : [timestamp] [status code] [duration] [full path]
-		// 2021-11-29 15:10:21.642313 OK 97.752µs /kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries
-		logger.Printf("%v %s %s\n",
-			status.Code(err),
-			time.Since(start),
-			info.FullMethod)
-
-		return res, err
+	// level=3 is default logging level
+	level = 3
+	for i := 0; i < len(supressLoggingOfEndpoints); i++ {
+		if strings.Contains(endpoint, supressLoggingOfEndpoints[i]) {
+			level = 4
+			break
+		}
 	}
+
+	return level
+}
+
+// LogRequest is a gRPC UnaryServerInterceptor that will log the API call
+func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
+
+	start := time.Now()
+	res, err := handler(ctx, req)
+
+	level := getLogLevelOfEndpoint(info.FullMethod)
+
+	// Format string : [status code] [duration] [full path]
+	// OK 97.752µs /kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries
+	klogv2.V(level).Infof("%v %s %s\n",
+		status.Code(err),
+		time.Since(start),
+		info.FullMethod)
+
+	return res, err
 }
 
 // Serve is the root command that is run when no other sub-commands are present.
@@ -70,8 +82,8 @@ func CreateRequestLogger() func(ctx context.Context, req interface{}, info *grpc
 func Serve(serveOpts core.ServeOptions) error {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
-	logRequest := CreateRequestLogger()
-	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(logRequest))
+
+	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(LogRequest))
 	reflection.Register(grpcSrv)
 
 	// Create the http server, register our core service followed by any plugins.

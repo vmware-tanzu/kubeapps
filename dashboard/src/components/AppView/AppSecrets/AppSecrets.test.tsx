@@ -33,12 +33,7 @@ it("shows a message if there are no secrets", () => {
 });
 
 it("renders a secretItemDatum per secret", () => {
-  const key = keyForResourceRef(
-    sampleResourceRef.apiVersion,
-    sampleResourceRef.kind,
-    sampleResourceRef.namespace,
-    sampleResourceRef.name,
-  );
+  const key = keyForResourceRef(sampleResourceRef);
   const state = getStore({
     kube: {
       items: {

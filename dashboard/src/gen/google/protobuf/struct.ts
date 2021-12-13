@@ -341,7 +341,7 @@ export const Value = {
 
   wrap(value: any): Value {
     if (value === null) {
-      return { nullValue: 0 } as Value;
+      return { nullValue: NullValue.NULL_VALUE } as Value;
     } else if (typeof value === "boolean") {
       return { boolValue: value } as Value;
     } else if (typeof value === "number") {
@@ -360,21 +360,20 @@ export const Value = {
   },
 
   unwrap(message: Value): string | number | boolean | Object | null | Array<any> | undefined {
-    if (message.stringValue !== undefined) {
+    if (message?.stringValue !== undefined) {
       return message.stringValue;
-    } else if (message.numberValue !== undefined) {
+    } else if (message?.numberValue !== undefined) {
       return message.numberValue;
-    } else if (message.boolValue !== undefined) {
+    } else if (message?.boolValue !== undefined) {
       return message.boolValue;
-    } else if (message.structValue !== undefined) {
+    } else if (message?.structValue !== undefined) {
       return message.structValue;
-    } else if (message.listValue !== undefined) {
+    } else if (message?.listValue !== undefined) {
       return message.listValue;
-    } else if (message.nullValue !== undefined) {
+    } else if (message?.nullValue !== undefined) {
       return null;
-    } else {
-      return undefined;
     }
+    return undefined;
   },
 };
 

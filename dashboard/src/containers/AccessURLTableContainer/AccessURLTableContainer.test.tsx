@@ -14,9 +14,7 @@ const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
     items: resources,
     kinds: initialKinds,
-    sockets: {},
     subscriptions: {},
-    timers: {},
   };
   return mockStore({ kube: state, config: { featureFlags: {} } });
 };
@@ -39,24 +37,14 @@ describe("AccessURLTableContainer", () => {
       namespace: ns,
       name: `${name}-service`,
     } as ResourceRef;
-    const serviceKey = keyForResourceRef(
-      serviceRef.apiVersion,
-      serviceRef.kind,
-      serviceRef.namespace,
-      serviceRef.name,
-    );
+    const serviceKey = keyForResourceRef(serviceRef);
     const ingressRef = {
       apiVersion: "v1",
       kind: "Ingress",
       namespace: ns,
       name: `${name}-ingress`,
     } as ResourceRef;
-    const ingressKey = keyForResourceRef(
-      ingressRef.apiVersion,
-      ingressRef.kind,
-      ingressRef.namespace,
-      ingressRef.name,
-    );
+    const ingressKey = keyForResourceRef(ingressRef);
     const store = makeStore({
       [serviceKey]: service,
       [ingressKey]: ingress,

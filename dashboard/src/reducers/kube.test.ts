@@ -17,17 +17,13 @@ describe("kubeReducer", () => {
     receiveResourceKinds: getType(actions.kube.receiveResourceKinds),
     requestResourceKinds: getType(actions.kube.requestResourceKinds),
     receiveKindsError: getType(actions.kube.receiveKindsError),
-    addTimer: getType(actions.kube.addTimer),
-    removeTimer: getType(actions.kube.removeTimer),
   };
 
   beforeEach(() => {
     initialState = {
       items: {},
-      sockets: {},
       subscriptions: {},
       kinds: initialKinds,
-      timers: {},
     };
   });
 
@@ -47,67 +43,6 @@ describe("kubeReducer", () => {
       expect(kubeReducer(undefined, { type, payload })).toEqual({
         ...initialState,
         items: { foo: { isFetching: false, error } },
-      });
-    });
-
-    describe("addTimer", () => {
-      it("should add a timer", () => {
-        const newState = kubeReducer(initialState, {
-          type: actionTypes.addTimer,
-          payload: { id: "foo", timer: jest.fn() },
-        });
-        expect(newState).toEqual({
-          ...initialState,
-          timers: { foo: expect.any(Number) },
-        });
-      });
-
-      it("should not add a timer if there is already one", () => {
-        jest.useFakeTimers();
-        const f1 = jest.fn();
-        const f2 = jest.fn();
-        const timer = setTimeout(f1, 1);
-        const newState = kubeReducer(
-          {
-            ...initialState,
-            timers: { foo: timer },
-          },
-          {
-            type: actionTypes.addTimer,
-            payload: { id: "foo", timer: f2 },
-          },
-        );
-        expect(newState).toEqual({
-          ...initialState,
-          timers: { foo: timer },
-        });
-        jest.runAllTimers();
-        expect(f1).toHaveBeenCalled();
-        expect(f2).not.toHaveBeenCalled();
-      });
-    });
-
-    describe("removeTimer", () => {
-      it("remove a timer", () => {
-        jest.useFakeTimers();
-        const f1 = jest.fn();
-        const timer = setTimeout(f1, 1);
-        const newState = kubeReducer(
-          {
-            ...initialState,
-            timers: { foo: timer },
-          },
-          {
-            type: actionTypes.removeTimer,
-            payload: "foo",
-          },
-        );
-        expect(newState).toEqual({
-          ...initialState,
-          timers: { foo: undefined },
-        });
-        jest.runAllTimers();
-        expect(f1).not.toHaveBeenCalled();
       });
     });
 
@@ -155,6 +90,19 @@ describe("kubeReducer", () => {
       // Ensure our shared/Kube helper is not calling out on the network.
       jest.mock("shared/Kube");
 
+      const subscribe = jest.fn(() => true);
+
+      beforeEach(() => {
+        const observable = {
+          subscribe,
+        };
+        Kube.getResources = jest.fn(() => observable as any);
+      });
+
+      afterEach(() => {
+        jest.resetAllMocks();
+      });
+
       const pkg = {
         context: {
           cluster: "default",
@@ -173,29 +121,32 @@ describe("kubeReducer", () => {
         onComplete: jest.fn(),
       };
 
-      it("adds a new subscription to the state for the requested package", () => {
+      it("adds a new subscription to the state when watching the requested package", () => {
         const newState = kubeReducer(undefined, {
           type: getType(actions.kube.requestResources),
-          payload: defaultPayload,
+          payload: {
+            ...defaultPayload,
+            watch: true,
+          },
         });
 
+        expect(Kube.getResources).toBeCalledWith(pkg, [], true);
+        expect(subscribe).toHaveBeenCalled();
         expect(newState.subscriptions[key]).toBeDefined();
       });
 
-      it("does not create a new subscription if one exists in the state", () => {
-        const subscription = Kube.getResources(pkg, [], true).subscribe({});
-        const state = {
-          ...initialState,
-          subscriptions: {
-            [key]: subscription,
-          },
-        };
-        const newState = kubeReducer(state, {
+      it("does not add a new subscription to the state when getting the requested package", () => {
+        const newState = kubeReducer(undefined, {
           type: getType(actions.kube.requestResources),
-          payload: defaultPayload,
+          payload: {
+            ...defaultPayload,
+            watch: false,
+          },
         });
-        expect(newState).toBe(state);
-        expect(newState.subscriptions[key]).toBe(subscription);
+
+        expect(Kube.getResources).toBeCalledWith(pkg, [], false);
+        expect(subscribe).toHaveBeenCalled();
+        expect(newState.subscriptions[key]).toBeUndefined();
       });
     });
   });

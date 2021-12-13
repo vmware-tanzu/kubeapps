@@ -422,7 +422,9 @@ func errorByStatus(verb, resource, identifier string, err error) error {
 	if errors.IsNotFound(err) {
 		return status.Errorf(codes.NotFound, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
 	} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-		return status.Errorf(codes.Unauthenticated, "Unauthorized to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+		return status.Errorf(codes.PermissionDenied, "Unauthorized to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+	} else if errors.IsAlreadyExists(err) {
+		return status.Errorf(codes.AlreadyExists, "Cannot %s the %s '%s' due to '%v' as it already exists", verb, resource, identifier, err)
 	}
 	return status.Errorf(codes.Internal, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
 }

@@ -149,7 +149,6 @@ export default function AppView() {
   } as IAppViewResourceRefs);
   const {
     apps: { error, selected: app, selectedDetails: appDetails },
-    kube: { kinds },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
@@ -166,33 +165,40 @@ export default function AppView() {
   }, [cluster, dispatch, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
-    if (!app || !app.apiResourceRefs) {
-      return () => {};
-    }
-
-    // If there are at least some resource types (ingresses, deployments) that are populated
-    // then avoid re-requesting the refs.
-    if (Object.values(appViewResourceRefs).some(ref => ref.length)) {
+    if (!app?.apiResourceRefs) {
       return () => {};
     }
 
     const parsedRefs = parseResources(app.apiResourceRefs);
     setAppViewResourceRefs(parsedRefs);
     return () => {};
-  }, [app, cluster, kinds, appViewResourceRefs]);
+  }, [app?.apiResourceRefs]);
 
   useEffect(() => {
-    if (!app || !app.installedPackageRef || !app.apiResourceRefs) {
+    if (!app?.installedPackageRef) {
       return () => {};
     }
-    // TODO(minelson): Update to watch only those resources that
-    // we're interested in watching change (deployments, statefulsets etc.)
-    // and get the rest.
-    dispatch(actions.kube.getResources(app.installedPackageRef, app.apiResourceRefs, true));
-    return function cleanup() {
-      dispatch(actions.kube.closeRequestResources(app!.installedPackageRef!));
-    };
-  }, [dispatch, app]);
+    const installedPackageRef = app.installedPackageRef;
+    // Watch Deployments, StatefulSets, DaemonSets, Ingresses and Services.
+    const refsToWatch = appViewResourceRefs.deployments.concat(
+      appViewResourceRefs.statefulsets,
+      appViewResourceRefs.daemonsets,
+      appViewResourceRefs.ingresses,
+      appViewResourceRefs.services,
+    );
+    // And just get the rest.
+    const refsToGet = appViewResourceRefs.secrets.concat(appViewResourceRefs.otherResources);
+    if (refsToGet.length > 0) {
+      dispatch(actions.kube.getResources(installedPackageRef, refsToGet, false));
+    }
+    if (refsToWatch.length > 0) {
+      dispatch(actions.kube.getResources(installedPackageRef, refsToWatch, true));
+      return function cleanup() {
+        dispatch(actions.kube.closeRequestResources(installedPackageRef));
+      };
+    }
+    return () => {};
+  }, [dispatch, app?.installedPackageRef, appViewResourceRefs]);
 
   const forceRetry = () => {
     dispatch(actions.apps.clearErrorApp());

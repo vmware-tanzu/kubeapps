@@ -9,8 +9,6 @@ import ResourceTable from "./ResourceTable";
 const defaultProps = {
   id: "test",
   resourceRefs: [],
-  watchResource: jest.fn(),
-  closeWatch: jest.fn(),
 };
 
 const sampleResourceRef = {
@@ -20,12 +18,7 @@ const sampleResourceRef = {
   namespace: "default",
 } as ResourceRef;
 
-const sampleKey = keyForResourceRef(
-  sampleResourceRef.apiVersion,
-  sampleResourceRef.kind,
-  sampleResourceRef.namespace,
-  sampleResourceRef.name,
-);
+const sampleKey = keyForResourceRef(sampleResourceRef);
 
 const deployment = {
   kind: "Deployment",

@@ -39,7 +39,7 @@ export const requestResources = createAction("REQUEST_RESOURCES", resolve => {
     watch: boolean,
     handler: (r: GetResourcesResponse) => void,
     onError: (e: Event) => void,
-    onComplete: (pkg: InstalledPackageReference) => void,
+    onComplete: () => void,
   ) => resolve({ pkg, refs, watch, handler, onError, onComplete });
 });
 
@@ -51,14 +51,6 @@ export const closeRequestResources = createAction("CLOSE_REQUEST_RESOURCES", res
   return (pkg: InstalledPackageReference) => resolve(pkg);
 });
 
-export const addTimer = createAction("ADD_TIMER", resolve => {
-  return (id: string, timer: () => void) => resolve({ id, timer });
-});
-
-export const removeTimer = createAction("REMOVE_TIMER", resolve => {
-  return (id: string) => resolve(id);
-});
-
 const allActions = [
   receiveResource,
   receiveResourceError,
@@ -68,8 +60,6 @@ const allActions = [
   requestResourceKinds,
   receiveResourceKinds,
   receiveKindsError,
-  addTimer,
-  removeTimer,
 ];
 
 export type KubeAction = ActionType<typeof allActions[number]>;
@@ -108,8 +98,14 @@ export function getResources(
         (e: any) => {
           dispatch(receiveResourcesError(e));
         },
-        (pkg: InstalledPackageReference) => {
-          dispatch(closeRequestResources(pkg));
+        () => {
+          // The onComplete handler should only dispatch a closeRequestResources
+          // action if this call to `getResources` is for watching. If it is not
+          // watching resources, the server will close the request automatically
+          // (and we have no book-keeping in the redux state).
+          if (watch) {
+            dispatch(closeRequestResources(pkg));
+          }
         },
       ),
     );
@@ -124,12 +120,7 @@ export function processGetResourcesResponse(
     dispatch(receiveResourcesError(new Error("received resource without a resource reference")));
     return;
   }
-  const key = keyForResourceRef(
-    r.resourceRef!.apiVersion,
-    r.resourceRef!.kind,
-    r.resourceRef!.namespace,
-    r.resourceRef!.name,
-  );
+  const key = keyForResourceRef(r.resourceRef);
   const manifest = new TextDecoder().decode(r.manifest!.value);
   const resource: IResource = JSON.parse(manifest);
   dispatch(receiveResource({ key, resource }));

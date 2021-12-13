@@ -15,12 +15,7 @@ describe("filterByResourceRefs", () => {
     name: "bar",
     namespace: "foo",
   } as ResourceRef;
-  const svc1Key = keyForResourceRef(
-    svc1Ref.apiVersion,
-    svc1Ref.kind,
-    svc1Ref.namespace,
-    svc1Ref.name,
-  );
+  const svc1Key = keyForResourceRef(svc1Ref);
   const svc2 = {
     apiVersion: "v1",
     kind: "Service",
@@ -32,12 +27,7 @@ describe("filterByResourceRefs", () => {
     name: "bar",
     namespace: "foo1",
   } as ResourceRef;
-  const svc2Key = keyForResourceRef(
-    svc2Ref.apiVersion,
-    svc2Ref.kind,
-    svc2Ref.namespace,
-    svc2Ref.name,
-  );
+  const svc2Key = keyForResourceRef(svc2Ref);
   const deploy = {
     apiVersion: "apps/v1",
     kind: "Deployment",
