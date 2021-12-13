@@ -8,11 +8,11 @@ import {
   createNamespace,
   errorNamespaces,
   fetchNamespaces,
-  getNamespace,
+  checkNamespaceExists,
   postNamespace,
-  receiveNamespace,
+  receiveNamespaceExists,
   receiveNamespaces,
-  requestNamespace,
+  requestNamespaceExists,
   setAllowCreate,
   setNamespace,
   setNamespaceState,
@@ -155,31 +155,47 @@ describe("createNamespace", () => {
   });
 });
 
-describe("getNamespace", () => {
-  it("dispatches requested namespace", async () => {
-    const ns = { metadata: { name: "default" } };
-    Namespace.get = jest.fn().mockReturnValue(ns);
+describe("checkNamespaceExists", () => {
+  it("returns true if the namespace exists", async () => {
+    Namespace.exists = jest.fn().mockReturnValue(true);
     const expectedActions = [
       {
-        type: getType(requestNamespace),
+        type: getType(requestNamespaceExists),
         payload: { cluster: "default-c", namespace: "default-ns" },
       },
       {
-        type: getType(receiveNamespace),
-        payload: { cluster: "default-c", namespace: ns },
+        type: getType(receiveNamespaceExists),
+        payload: { cluster: "default-c", namespace: "default-ns" },
       },
     ];
-    const r = await store.dispatch(getNamespace("default-c", "default-ns"));
-    expect(r).toBe(true);
+
+    const exists = await store.dispatch(checkNamespaceExists("default-c", "default-ns"));
+
+    expect(exists).toBe(true);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("returns false if the namespace does not exist", async () => {
+    Namespace.exists = jest.fn().mockReturnValue(false);
+    const expectedActions = [
+      {
+        type: getType(requestNamespaceExists),
+        payload: { cluster: "default-c", namespace: "default-ns" },
+      },
+    ];
+
+    const exists = await store.dispatch(checkNamespaceExists("default-c", "default-ns"));
+
+    expect(exists).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("dispatches errorNamespace if error creating a namespace", async () => {
     const err = new Error("Bang!");
-    Namespace.get = jest.fn().mockImplementationOnce(() => Promise.reject(err));
+    Namespace.exists = jest.fn().mockImplementationOnce(() => Promise.reject(err));
     const expectedActions = [
       {
-        type: getType(requestNamespace),
+        type: getType(requestNamespaceExists),
         payload: { cluster: "default-c", namespace: "default-ns" },
       },
       {
@@ -187,7 +203,7 @@ describe("getNamespace", () => {
         payload: { cluster: "default-c", err, op: "get" },
       },
     ];
-    const r = await store.dispatch(getNamespace("default-c", "default-ns"));
+    const r = await store.dispatch(checkNamespaceExists("default-c", "default-ns"));
     expect(r).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });

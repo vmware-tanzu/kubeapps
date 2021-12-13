@@ -39,7 +39,7 @@ function ContextSelector() {
 
   useEffect(() => {
     if (namespaceSelected) {
-      dispatch(actions.namespace.getNamespace(clusters.currentCluster, namespaceSelected));
+      dispatch(actions.namespace.checkNamespaceExists(clusters.currentCluster, namespaceSelected));
     }
   }, [dispatch, namespaceSelected, clusters.currentCluster]);
 

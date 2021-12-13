@@ -44,12 +44,8 @@ const clusterReducer = (
   action: ConfigAction | NamespaceAction | LocationChangeAction | AuthAction,
 ): IClustersState => {
   switch (action.type) {
-    case getType(actions.namespace.receiveNamespace): {
-      if (
-        !state.clusters[action.payload.cluster].namespaces.includes(
-          action.payload.namespace.metadata.name,
-        )
-      ) {
+    case getType(actions.namespace.receiveNamespaceExists): {
+      if (!state.clusters[action.payload.cluster].namespaces.includes(action.payload.namespace)) {
         return {
           ...state,
           clusters: {
@@ -57,7 +53,7 @@ const clusterReducer = (
             [action.payload.cluster]: {
               ...state.clusters[action.payload.cluster],
               namespaces: state.clusters[action.payload.cluster].namespaces
-                .concat(action.payload.namespace.metadata.name)
+                .concat(action.payload.namespace)
                 .sort(),
               error: undefined,
             },
