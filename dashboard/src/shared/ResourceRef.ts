@@ -21,13 +21,10 @@ export function fromCRD(
   return ref;
 }
 
-// TODO(minelson): Update to use API resourceRef type once old model removed.
-export const keyForResourceRef = (
-  apiVersion: string,
-  kind: string,
-  namespace: string,
-  name: string,
-) => `${apiVersion}/${kind}/${namespace}/${name}`;
+// keyForResourceRef is used to create a key for the redux state tracking resources
+// keyed by references.
+export const keyForResourceRef = (r: APIResourceRef) =>
+  `${r.apiVersion}/${r.kind}/${r.namespace}/${r.name}`;
 
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
 // provides helpers to retrieve the resource URL
@@ -72,17 +69,6 @@ class ResourceRef {
     );
   }
 
-  public watchResourceURL() {
-    return Kube.watchResourceURL(
-      this.cluster,
-      this.apiVersion,
-      this.plural,
-      this.namespaced,
-      this.namespace,
-      this.name,
-    );
-  }
-
   public async getResource() {
     const resource = await Kube.getResource(
       this.cluster,
@@ -98,21 +84,6 @@ class ResourceRef {
       return resourceList;
     }
     return resource;
-  }
-
-  // Opens and returns a WebSocket for the requested resource. Note: it is
-  // important that this socket be properly closed when no longer needed. The
-  // returned WebSocket can be attached to an event listener to read data from
-  // the socket.
-  public watchResource() {
-    return Kube.watchResource(
-      this.cluster,
-      this.apiVersion,
-      this.plural,
-      this.namespaced,
-      this.namespace,
-      this.name,
-    );
   }
 }
 

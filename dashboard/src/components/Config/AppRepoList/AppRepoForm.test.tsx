@@ -50,6 +50,25 @@ it("disables the submit button while fetching", () => {
   ).toBe(true);
 });
 
+it("submit button can not be fired more than once", async () => {
+  const onSubmit = jest.fn().mockReturnValue(true);
+  const onAfterInstall = jest.fn().mockReturnValue(true);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoForm {...defaultProps} onSubmit={onSubmit} onAfterInstall={onAfterInstall} />,
+  );
+  const installButton = wrapper.find(CdsButton).filterWhere(b => b.html().includes("Install Repo"));
+  await act(async () => {
+    Promise.all([
+      installButton.simulate("submit"),
+      installButton.simulate("submit"),
+      installButton.simulate("submit"),
+    ]);
+  });
+  wrapper.update();
+  expect(onSubmit.mock.calls.length).toBe(1);
+});
+
 it("should show a validation error", () => {
   const wrapper = mountWrapper(
     getStore({ repos: { errors: { validate: new Error("Boom!") } } }),
@@ -104,15 +123,13 @@ it("should not call the install method when the validation fails unless forced",
       .text(),
   ).toContain("Install Repo (force)");
 
-  // So disabling this test for the moment.
   await act(async () => {
-    await (
-      wrapper
-        .find(CdsButton)
-        .filterWhere(b => b.html().includes("Install Repo (force)"))
-        .prop("onClick") as () => Promise<any>
-    )();
+    wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.html().includes("Install Repo (force)"))
+      .simulate("submit");
   });
+  wrapper.update();
   expect(install).toHaveBeenCalled();
 });
 

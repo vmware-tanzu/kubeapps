@@ -7,7 +7,7 @@ COPY pkg pkg
 COPY cmd cmd
 ARG VERSION="devel"
 
-ARG BUF_VERSION="0.52.0"
+ARG BUF_VERSION="1.0.0-rc8"
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
 
 # With the trick below, Go's build cache is kept between builds.

@@ -442,11 +442,11 @@ export interface IKind {
 
 export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
-  sockets: { [s: string]: { socket: WebSocket; onError: (e: Event) => void } };
   subscriptions: { [s: string]: Subscription };
+  // TODO(minelson): Remove kinds and kindsError once the operator support is
+  // removed from the dashboard or replaced with a plugin.
   kinds: { [kind: string]: IKind };
   kindsError?: Error;
-  timers: { [id: string]: NodeJS.Timer | undefined };
 }
 
 export interface IBasicFormParam {

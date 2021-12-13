@@ -7,10 +7,34 @@ import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
 
+// ResourcesService
+//
+// The Resources service is a plugin that enables some limited access to Kubernetes
+// resources on the cluster, using the user credentials sent with the request.
 service ResourcesService {
     rpc GetResources(GetResourcesRequest) returns (stream GetResourcesResponse) {
         option (google.api.http) = {
             get: "/plugins/resources/v1alpha1/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+        };
+    }
+    rpc GetServiceAccountNames(GetServiceAccountNamesRequest) returns (GetServiceAccountNamesResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/serviceaccountnames"
+        };
+    }
+    rpc GetNamespaceNames(GetNamespaceNamesRequest) returns (GetNamespaceNamesResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{cluster}/namespacenames"
+        };
+    }
+    rpc CreateNamespace(CreateNamespaceRequest) returns (CreateNamespaceResponse) {
+        option (google.api.http) = {
+            post: "/plugins/resources/v1alpha1/c/{context.cluster}/ns"
+        };
+    }
+    rpc CheckNamespaceExists(CheckNamespaceExistsRequest) returns (CheckNamespaceExistsResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}"
         };
     }
 }
@@ -54,4 +78,79 @@ message GetResourcesResponse {
     // watching of resources, but we may in the future pull out further
     // structured metadata into this message as needed.
     google.protobuf.Any manifest = 2;
+}
+
+// GetServiceAccountNamesRequest
+//
+// Request for GetServiceAccountNames
+message GetServiceAccountNamesRequest {
+    // Context
+    //
+    // The context for which the service account names are being fetched.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// GetServiceAccountNamesResponse
+//
+// Response for GetServiceAccountNames
+message GetServiceAccountNamesResponse {
+    // ServiceAccountNames
+    //
+    // The list of Service Account names.
+    repeated string serviceaccount_names = 1;
+}
+
+
+// GetNamespaceNamesRequest
+//
+// Request for GetNamespaceNames
+message GetNamespaceNamesRequest {
+    // Cluster
+    //
+    // The context for which the namespace names are being fetched.  The service
+    // will attempt to list namespaces across the cluster, first with the users
+    // credential, then with a configured service account if available.
+    string cluster = 1;
+}
+
+// CreateNamespaceRequest
+//
+// Request for CreateNamespace
+message CreateNamespaceRequest {
+    // Context
+    //
+    // The context of the namespace being created.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// CreateNamespaceResponse
+//
+// Response for CreateNamespace
+message CreateNamespaceResponse {}
+
+// GetNamespaceNamesResponse
+//
+// Response for GetNamespaceNames
+message GetNamespaceNamesResponse {
+    // NamespaceNames
+    //
+    // The list of Namespace names.
+    repeated string namespace_names = 1;
+}
+
+// CheckNamespaceExistsRequest
+//
+// Request for CheckNamespaceExists
+message CheckNamespaceExistsRequest {
+    // Context
+    //
+    // The context of the namespace being checked for existence.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// CheckNamespaceExistsResponse
+//
+// Response for CheckNamespaceExists
+message CheckNamespaceExistsResponse {
+    bool exists = 1;
 }

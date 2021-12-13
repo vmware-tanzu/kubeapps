@@ -15,13 +15,11 @@ import {
   DeleteError,
   FetchError,
   FetchWarning,
-  IKubeState,
   IStoreState,
 } from "shared/types";
 import { PluginNames } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
-import ResourceRef from "../../shared/ResourceRef";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
@@ -34,7 +32,7 @@ import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 import {
-  ResourceRef as APIResourceRef,
+  ResourceRef,
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { CdsButton } from "@cds/react/button";
@@ -49,12 +47,7 @@ export interface IAppViewResourceRefs {
   otherResources: ResourceRef[];
 }
 
-function parseResources(
-  apiResourceRefs: Array<APIResourceRef>,
-  kinds: IKubeState["kinds"],
-  cluster: string,
-  releaseNamespace: string,
-) {
+function parseResources(resourceRefs: Array<ResourceRef>) {
   const result: IAppViewResourceRefs = {
     ingresses: [],
     deployments: [],
@@ -64,43 +57,28 @@ function parseResources(
     services: [],
     secrets: [],
   };
-  apiResourceRefs.forEach(apiRef => {
-    const kind = kinds[apiRef.kind] || {};
-    switch (apiRef.kind) {
+  resourceRefs.forEach(ref => {
+    switch (ref.kind) {
       case "Deployment":
-        result.deployments.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.deployments.push(ref);
         break;
       case "StatefulSet":
-        result.statefulsets.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.statefulsets.push(ref);
         break;
       case "DaemonSet":
-        result.daemonsets.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.daemonsets.push(ref);
         break;
       case "Service":
-        result.services.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.services.push(ref);
         break;
       case "Ingress":
-        result.ingresses.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.ingresses.push(ref);
         break;
       case "Secret":
-        result.secrets.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.secrets.push(ref);
         break;
       default:
-        result.otherResources.push(
-          new ResourceRef(apiRef, cluster, kind.plural, kind.namespaced, releaseNamespace),
-        );
+        result.otherResources.push(ref);
     }
   });
   return result;
@@ -160,7 +138,7 @@ export default function AppView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const { cluster, namespace, releaseName, pluginName, pluginVersion } =
     ReactRouter.useParams() as IRouteParams;
-  const [resourceRefs, setResourceRefs] = useState({
+  const [appViewResourceRefs, setAppViewResourceRefs] = useState({
     ingresses: [],
     deployments: [],
     statefulsets: [],
@@ -171,7 +149,6 @@ export default function AppView() {
   } as IAppViewResourceRefs);
   const {
     apps: { error, selected: app, selectedDetails: appDetails },
-    kube: { kinds },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
@@ -188,36 +165,40 @@ export default function AppView() {
   }, [cluster, dispatch, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
-    if (!app || !app.apiResourceRefs) {
+    if (!app?.apiResourceRefs) {
       return () => {};
     }
 
-    // If there are at least some resource types (ingresses, deployments) that are populated
-    // then avoid re-requesting the refs.
-    if (Object.values(resourceRefs).some(ref => ref.length)) {
-      return () => {};
-    }
-
-    const parsedRefs = parseResources(
-      app.apiResourceRefs,
-      kinds,
-      cluster,
-      app.installedPackageRef?.context?.namespace || "",
-    );
-    setResourceRefs(parsedRefs);
+    const parsedRefs = parseResources(app.apiResourceRefs);
+    setAppViewResourceRefs(parsedRefs);
     return () => {};
-  }, [app, cluster, kinds, resourceRefs]);
+  }, [app?.apiResourceRefs]);
 
   useEffect(() => {
-    Object.values(resourceRefs).forEach((refs: ResourceRef[]) => {
-      refs.forEach(ref => dispatch(actions.kube.getAndWatchResource(ref)));
-    });
-    return function cleanup() {
-      Object.values(resourceRefs).forEach((refs: ResourceRef[]) => {
-        refs.forEach(ref => dispatch(actions.kube.closeWatchResource(ref)));
-      });
-    };
-  }, [dispatch, resourceRefs]);
+    if (!app?.installedPackageRef) {
+      return () => {};
+    }
+    const installedPackageRef = app.installedPackageRef;
+    // Watch Deployments, StatefulSets, DaemonSets, Ingresses and Services.
+    const refsToWatch = appViewResourceRefs.deployments.concat(
+      appViewResourceRefs.statefulsets,
+      appViewResourceRefs.daemonsets,
+      appViewResourceRefs.ingresses,
+      appViewResourceRefs.services,
+    );
+    // And just get the rest.
+    const refsToGet = appViewResourceRefs.secrets.concat(appViewResourceRefs.otherResources);
+    if (refsToGet.length > 0) {
+      dispatch(actions.kube.getResources(installedPackageRef, refsToGet, false));
+    }
+    if (refsToWatch.length > 0) {
+      dispatch(actions.kube.getResources(installedPackageRef, refsToWatch, true));
+      return function cleanup() {
+        dispatch(actions.kube.closeRequestResources(installedPackageRef));
+      };
+    }
+    return () => {};
+  }, [dispatch, app?.installedPackageRef, appViewResourceRefs]);
 
   const forceRetry = () => {
     dispatch(actions.apps.clearErrorApp());
@@ -242,7 +223,7 @@ export default function AppView() {
     );
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
-    resourceRefs;
+    appViewResourceRefs;
   const revision = app?.revision ?? 0;
   const icon = appDetails?.iconUrl ?? placeholder;
 
@@ -256,7 +237,7 @@ export default function AppView() {
       entry => entry.name === appName && entry.plugin === appPlugin && entry.repository === appRepo,
     )
   ) {
-    return <CustomAppView resourceRefs={resourceRefs} app={app!} appDetails={appDetails!} />;
+    return <CustomAppView resourceRefs={appViewResourceRefs} app={app!} appDetails={appDetails!} />;
   }
 
   return (

@@ -17,16 +17,17 @@ limitations under the License.
 package cmd
 
 import (
+	goflag "flag"
 	"fmt"
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	log "k8s.io/klog/v2"
-
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	homedir "github.com/mitchellh/go-homedir"
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	log "k8s.io/klog/v2"
 )
 
 var (
@@ -65,10 +66,14 @@ func Execute() {
 }
 
 func init() {
+	log.InitFlags(nil)
 	cobra.OnInitialize(initConfig)
 	rootCmd = newRootCmd()
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
+        //set initial value of verbosity
+	goflag.Set("v", "3")
+	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 }
 
 func setFlags(c *cobra.Command) {
@@ -79,6 +84,7 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.PluginConfigPath, "plugin-config-path", "", "Configuration for plugins")
 	c.Flags().StringVar(&serveOpts.PinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
 	c.Flags().BoolVar(&serveOpts.UnsafeLocalDevKubeconfig, "unsafe-local-dev-kubeconfig", false, "if true, it will use the local kubeconfig at the KUBECONFIG env var instead of using the inCluster configuration.")
+
 }
 
 // initConfig reads in config file and ENV variables if set.

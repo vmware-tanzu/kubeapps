@@ -151,7 +151,7 @@ export interface Swagger {
   security: SecurityRequirement[];
   /** Additional external documentation. */
   externalDocs?: ExternalDocumentation;
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 export interface Swagger_ResponsesEntry {
@@ -161,7 +161,7 @@ export interface Swagger_ResponsesEntry {
 
 export interface Swagger_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -252,7 +252,7 @@ export interface Operation {
    * security declaration, an empty array can be used.
    */
   security: SecurityRequirement[];
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 export interface Operation_ResponsesEntry {
@@ -262,7 +262,7 @@ export interface Operation_ResponsesEntry {
 
 export interface Operation_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -314,7 +314,7 @@ export interface Response {
    * See: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#example-object
    */
   examples: { [key: string]: string };
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 export interface Response_HeadersEntry {
@@ -329,7 +329,7 @@ export interface Response_ExamplesEntry {
 
 export interface Response_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -376,12 +376,12 @@ export interface Info {
    * with the specification version).
    */
   version: string;
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 export interface Info_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -752,7 +752,7 @@ export interface SecurityScheme {
    * Valid for oauth2.
    */
   scopes?: Scopes;
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 /**
@@ -898,7 +898,7 @@ export function securityScheme_FlowToJSON(object: SecurityScheme_Flow): string {
 
 export interface SecurityScheme_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -1007,10 +1007,12 @@ export const Swagger = {
       ExternalDocumentation.encode(message.externalDocs, writer.uint32(114).fork()).ldelim();
     }
     Object.entries(message.extensions).forEach(([key, value]) => {
-      Swagger_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(122).fork(),
-      ).ldelim();
+      if (value !== undefined) {
+        Swagger_ExtensionsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(122).fork(),
+        ).ldelim();
+      }
     });
     return writer;
   },
@@ -1097,12 +1099,12 @@ export const Swagger = {
     message.schemes = (object.schemes ?? []).map((e: any) => schemeFromJSON(e));
     message.consumes = (object.consumes ?? []).map((e: any) => String(e));
     message.produces = (object.produces ?? []).map((e: any) => String(e));
-    message.responses = {};
-    if (object.responses !== undefined && object.responses !== null) {
-      Object.entries(object.responses).forEach(([key, value]) => {
-        message.responses[key] = Response.fromJSON(value);
-      });
-    }
+    message.responses = Object.entries(object.responses ?? {}).reduce<{
+      [key: string]: Response;
+    }>((acc, [key, value]) => {
+      acc[key] = Response.fromJSON(value);
+      return acc;
+    }, {});
     message.securityDefinitions =
       object.securityDefinitions !== undefined && object.securityDefinitions !== null
         ? SecurityDefinitions.fromJSON(object.securityDefinitions)
@@ -1112,12 +1114,12 @@ export const Swagger = {
       object.externalDocs !== undefined && object.externalDocs !== null
         ? ExternalDocumentation.fromJSON(object.externalDocs)
         : undefined;
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -1164,47 +1166,47 @@ export const Swagger = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Swagger>): Swagger {
+  fromPartial<I extends Exact<DeepPartial<Swagger>, I>>(object: I): Swagger {
     const message = { ...baseSwagger } as Swagger;
     message.swagger = object.swagger ?? "";
     message.info =
       object.info !== undefined && object.info !== null ? Info.fromPartial(object.info) : undefined;
     message.host = object.host ?? "";
     message.basePath = object.basePath ?? "";
-    message.schemes = (object.schemes ?? []).map(e => e);
-    message.consumes = (object.consumes ?? []).map(e => e);
-    message.produces = (object.produces ?? []).map(e => e);
-    message.responses = {};
-    if (object.responses !== undefined && object.responses !== null) {
-      Object.entries(object.responses).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.responses[key] = Response.fromPartial(value);
-        }
-      });
-    }
+    message.schemes = object.schemes?.map(e => e) || [];
+    message.consumes = object.consumes?.map(e => e) || [];
+    message.produces = object.produces?.map(e => e) || [];
+    message.responses = Object.entries(object.responses ?? {}).reduce<{
+      [key: string]: Response;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Response.fromPartial(value);
+      }
+      return acc;
+    }, {});
     message.securityDefinitions =
       object.securityDefinitions !== undefined && object.securityDefinitions !== null
         ? SecurityDefinitions.fromPartial(object.securityDefinitions)
         : undefined;
-    message.security = (object.security ?? []).map(e => SecurityRequirement.fromPartial(e));
+    message.security = object.security?.map(e => SecurityRequirement.fromPartial(e)) || [];
     message.externalDocs =
       object.externalDocs !== undefined && object.externalDocs !== null
         ? ExternalDocumentation.fromPartial(object.externalDocs)
         : undefined;
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -1261,7 +1263,9 @@ export const Swagger_ResponsesEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Swagger_ResponsesEntry>): Swagger_ResponsesEntry {
+  fromPartial<I extends Exact<DeepPartial<Swagger_ResponsesEntry>, I>>(
+    object: I,
+  ): Swagger_ResponsesEntry {
     const message = { ...baseSwagger_ResponsesEntry } as Swagger_ResponsesEntry;
     message.key = object.key ?? "";
     message.value =
@@ -1280,7 +1284,7 @@ export const Swagger_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -1298,7 +1302,7 @@ export const Swagger_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -1313,30 +1317,25 @@ export const Swagger_ExtensionsEntry = {
       ...baseSwagger_ExtensionsEntry,
     } as Swagger_ExtensionsEntry;
     message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromJSON(object.value)
-        : undefined;
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: Swagger_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Swagger_ExtensionsEntry>): Swagger_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<Swagger_ExtensionsEntry>, I>>(
+    object: I,
+  ): Swagger_ExtensionsEntry {
     const message = {
       ...baseSwagger_ExtensionsEntry,
     } as Swagger_ExtensionsEntry;
     message.key = object.key ?? "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromPartial(object.value)
-        : undefined;
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -1393,10 +1392,12 @@ export const Operation = {
       SecurityRequirement.encode(v!, writer.uint32(98).fork()).ldelim();
     }
     Object.entries(message.extensions).forEach(([key, value]) => {
-      Operation_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(106).fork(),
-      ).ldelim();
+      if (value !== undefined) {
+        Operation_ExtensionsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(106).fork(),
+        ).ldelim();
+      }
     });
     return writer;
   },
@@ -1491,24 +1492,24 @@ export const Operation = {
         : "";
     message.consumes = (object.consumes ?? []).map((e: any) => String(e));
     message.produces = (object.produces ?? []).map((e: any) => String(e));
-    message.responses = {};
-    if (object.responses !== undefined && object.responses !== null) {
-      Object.entries(object.responses).forEach(([key, value]) => {
-        message.responses[key] = Response.fromJSON(value);
-      });
-    }
+    message.responses = Object.entries(object.responses ?? {}).reduce<{
+      [key: string]: Response;
+    }>((acc, [key, value]) => {
+      acc[key] = Response.fromJSON(value);
+      return acc;
+    }, {});
     message.schemes = (object.schemes ?? []).map((e: any) => schemeFromJSON(e));
     message.deprecated =
       object.deprecated !== undefined && object.deprecated !== null
         ? Boolean(object.deprecated)
         : false;
     message.security = (object.security ?? []).map((e: any) => SecurityRequirement.fromJSON(e));
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -1556,15 +1557,15 @@ export const Operation = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Operation>): Operation {
+  fromPartial<I extends Exact<DeepPartial<Operation>, I>>(object: I): Operation {
     const message = { ...baseOperation } as Operation;
-    message.tags = (object.tags ?? []).map(e => e);
+    message.tags = object.tags?.map(e => e) || [];
     message.summary = object.summary ?? "";
     message.description = object.description ?? "";
     message.externalDocs =
@@ -1572,27 +1573,27 @@ export const Operation = {
         ? ExternalDocumentation.fromPartial(object.externalDocs)
         : undefined;
     message.operationId = object.operationId ?? "";
-    message.consumes = (object.consumes ?? []).map(e => e);
-    message.produces = (object.produces ?? []).map(e => e);
-    message.responses = {};
-    if (object.responses !== undefined && object.responses !== null) {
-      Object.entries(object.responses).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.responses[key] = Response.fromPartial(value);
-        }
-      });
-    }
-    message.schemes = (object.schemes ?? []).map(e => e);
+    message.consumes = object.consumes?.map(e => e) || [];
+    message.produces = object.produces?.map(e => e) || [];
+    message.responses = Object.entries(object.responses ?? {}).reduce<{
+      [key: string]: Response;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Response.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    message.schemes = object.schemes?.map(e => e) || [];
     message.deprecated = object.deprecated ?? false;
-    message.security = (object.security ?? []).map(e => SecurityRequirement.fromPartial(e));
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+    message.security = object.security?.map(e => SecurityRequirement.fromPartial(e)) || [];
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -1653,7 +1654,9 @@ export const Operation_ResponsesEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Operation_ResponsesEntry>): Operation_ResponsesEntry {
+  fromPartial<I extends Exact<DeepPartial<Operation_ResponsesEntry>, I>>(
+    object: I,
+  ): Operation_ResponsesEntry {
     const message = {
       ...baseOperation_ResponsesEntry,
     } as Operation_ResponsesEntry;
@@ -1674,7 +1677,7 @@ export const Operation_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -1692,7 +1695,7 @@ export const Operation_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -1707,30 +1710,25 @@ export const Operation_ExtensionsEntry = {
       ...baseOperation_ExtensionsEntry,
     } as Operation_ExtensionsEntry;
     message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromJSON(object.value)
-        : undefined;
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: Operation_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Operation_ExtensionsEntry>): Operation_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<Operation_ExtensionsEntry>, I>>(
+    object: I,
+  ): Operation_ExtensionsEntry {
     const message = {
       ...baseOperation_ExtensionsEntry,
     } as Operation_ExtensionsEntry;
     message.key = object.key ?? "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromPartial(object.value)
-        : undefined;
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -1819,7 +1817,7 @@ export const Header = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Header>): Header {
+  fromPartial<I extends Exact<DeepPartial<Header>, I>>(object: I): Header {
     const message = { ...baseHeader } as Header;
     message.description = object.description ?? "";
     message.type = object.type ?? "";
@@ -1847,10 +1845,12 @@ export const Response = {
       Response_ExamplesEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).ldelim();
     });
     Object.entries(message.extensions).forEach(([key, value]) => {
-      Response_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(42).fork(),
-      ).ldelim();
+      if (value !== undefined) {
+        Response_ExtensionsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(42).fork(),
+        ).ldelim();
+      }
     });
     return writer;
   },
@@ -1907,24 +1907,24 @@ export const Response = {
       object.schema !== undefined && object.schema !== null
         ? Schema.fromJSON(object.schema)
         : undefined;
-    message.headers = {};
-    if (object.headers !== undefined && object.headers !== null) {
-      Object.entries(object.headers).forEach(([key, value]) => {
-        message.headers[key] = Header.fromJSON(value);
-      });
-    }
-    message.examples = {};
-    if (object.examples !== undefined && object.examples !== null) {
-      Object.entries(object.examples).forEach(([key, value]) => {
-        message.examples[key] = String(value);
-      });
-    }
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.headers = Object.entries(object.headers ?? {}).reduce<{
+      [key: string]: Header;
+    }>((acc, [key, value]) => {
+      acc[key] = Header.fromJSON(value);
+      return acc;
+    }, {});
+    message.examples = Object.entries(object.examples ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      acc[key] = String(value);
+      return acc;
+    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -1948,43 +1948,43 @@ export const Response = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Response>): Response {
+  fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = { ...baseResponse } as Response;
     message.description = object.description ?? "";
     message.schema =
       object.schema !== undefined && object.schema !== null
         ? Schema.fromPartial(object.schema)
         : undefined;
-    message.headers = {};
-    if (object.headers !== undefined && object.headers !== null) {
-      Object.entries(object.headers).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.headers[key] = Header.fromPartial(value);
-        }
-      });
-    }
-    message.examples = {};
-    if (object.examples !== undefined && object.examples !== null) {
-      Object.entries(object.examples).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.examples[key] = String(value);
-        }
-      });
-    }
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+    message.headers = Object.entries(object.headers ?? {}).reduce<{
+      [key: string]: Header;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Header.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    message.examples = Object.entries(object.examples ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -2041,7 +2041,9 @@ export const Response_HeadersEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Response_HeadersEntry>): Response_HeadersEntry {
+  fromPartial<I extends Exact<DeepPartial<Response_HeadersEntry>, I>>(
+    object: I,
+  ): Response_HeadersEntry {
     const message = { ...baseResponse_HeadersEntry } as Response_HeadersEntry;
     message.key = object.key ?? "";
     message.value =
@@ -2100,7 +2102,9 @@ export const Response_ExamplesEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Response_ExamplesEntry>): Response_ExamplesEntry {
+  fromPartial<I extends Exact<DeepPartial<Response_ExamplesEntry>, I>>(
+    object: I,
+  ): Response_ExamplesEntry {
     const message = { ...baseResponse_ExamplesEntry } as Response_ExamplesEntry;
     message.key = object.key ?? "";
     message.value = object.value ?? "";
@@ -2116,7 +2120,7 @@ export const Response_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -2134,7 +2138,7 @@ export const Response_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -2149,30 +2153,25 @@ export const Response_ExtensionsEntry = {
       ...baseResponse_ExtensionsEntry,
     } as Response_ExtensionsEntry;
     message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromJSON(object.value)
-        : undefined;
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: Response_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Response_ExtensionsEntry>): Response_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<Response_ExtensionsEntry>, I>>(
+    object: I,
+  ): Response_ExtensionsEntry {
     const message = {
       ...baseResponse_ExtensionsEntry,
     } as Response_ExtensionsEntry;
     message.key = object.key ?? "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromPartial(object.value)
-        : undefined;
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -2205,7 +2204,9 @@ export const Info = {
       writer.uint32(50).string(message.version);
     }
     Object.entries(message.extensions).forEach(([key, value]) => {
-      Info_ExtensionsEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).ldelim();
+      if (value !== undefined) {
+        Info_ExtensionsEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).ldelim();
+      }
     });
     return writer;
   },
@@ -2271,12 +2272,12 @@ export const Info = {
         : undefined;
     message.version =
       object.version !== undefined && object.version !== null ? String(object.version) : "";
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -2293,13 +2294,13 @@ export const Info = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Info>): Info {
+  fromPartial<I extends Exact<DeepPartial<Info>, I>>(object: I): Info {
     const message = { ...baseInfo } as Info;
     message.title = object.title ?? "";
     message.description = object.description ?? "";
@@ -2313,14 +2314,14 @@ export const Info = {
         ? License.fromPartial(object.license)
         : undefined;
     message.version = object.version ?? "";
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -2333,7 +2334,7 @@ export const Info_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -2349,7 +2350,7 @@ export const Info_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -2362,28 +2363,23 @@ export const Info_ExtensionsEntry = {
   fromJSON(object: any): Info_ExtensionsEntry {
     const message = { ...baseInfo_ExtensionsEntry } as Info_ExtensionsEntry;
     message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromJSON(object.value)
-        : undefined;
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: Info_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Info_ExtensionsEntry>): Info_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<Info_ExtensionsEntry>, I>>(
+    object: I,
+  ): Info_ExtensionsEntry {
     const message = { ...baseInfo_ExtensionsEntry } as Info_ExtensionsEntry;
     message.key = object.key ?? "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromPartial(object.value)
-        : undefined;
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -2444,7 +2440,7 @@ export const Contact = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Contact>): Contact {
+  fromPartial<I extends Exact<DeepPartial<Contact>, I>>(object: I): Contact {
     const message = { ...baseContact } as Contact;
     message.name = object.name ?? "";
     message.url = object.url ?? "";
@@ -2501,7 +2497,7 @@ export const License = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<License>): License {
+  fromPartial<I extends Exact<DeepPartial<License>, I>>(object: I): License {
     const message = { ...baseLicense } as License;
     message.name = object.name ?? "";
     message.url = object.url ?? "";
@@ -2560,7 +2556,9 @@ export const ExternalDocumentation = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<ExternalDocumentation>): ExternalDocumentation {
+  fromPartial<I extends Exact<DeepPartial<ExternalDocumentation>, I>>(
+    object: I,
+  ): ExternalDocumentation {
     const message = { ...baseExternalDocumentation } as ExternalDocumentation;
     message.description = object.description ?? "";
     message.url = object.url ?? "";
@@ -2655,7 +2653,7 @@ export const Schema = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Schema>): Schema {
+  fromPartial<I extends Exact<DeepPartial<Schema>, I>>(object: I): Schema {
     const message = { ...baseSchema } as Schema;
     message.jsonSchema =
       object.jsonSchema !== undefined && object.jsonSchema !== null
@@ -2980,7 +2978,7 @@ export const JSONSchema = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<JSONSchema>): JSONSchema {
+  fromPartial<I extends Exact<DeepPartial<JSONSchema>, I>>(object: I): JSONSchema {
     const message = { ...baseJSONSchema } as JSONSchema;
     message.ref = object.ref ?? "";
     message.title = object.title ?? "";
@@ -3001,11 +2999,11 @@ export const JSONSchema = {
     message.uniqueItems = object.uniqueItems ?? false;
     message.maxProperties = object.maxProperties ?? 0;
     message.minProperties = object.minProperties ?? 0;
-    message.required = (object.required ?? []).map(e => e);
-    message.array = (object.array ?? []).map(e => e);
-    message.type = (object.type ?? []).map(e => e);
+    message.required = object.required?.map(e => e) || [];
+    message.array = object.array?.map(e => e) || [];
+    message.type = object.type?.map(e => e) || [];
     message.format = object.format ?? "";
-    message.enum = (object.enum ?? []).map(e => e);
+    message.enum = object.enum?.map(e => e) || [];
     return message;
   },
 };
@@ -3067,7 +3065,7 @@ export const Tag = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Tag>): Tag {
+  fromPartial<I extends Exact<DeepPartial<Tag>, I>>(object: I): Tag {
     const message = { ...baseTag } as Tag;
     message.description = object.description ?? "";
     message.externalDocs =
@@ -3115,12 +3113,12 @@ export const SecurityDefinitions = {
 
   fromJSON(object: any): SecurityDefinitions {
     const message = { ...baseSecurityDefinitions } as SecurityDefinitions;
-    message.security = {};
-    if (object.security !== undefined && object.security !== null) {
-      Object.entries(object.security).forEach(([key, value]) => {
-        message.security[key] = SecurityScheme.fromJSON(value);
-      });
-    }
+    message.security = Object.entries(object.security ?? {}).reduce<{
+      [key: string]: SecurityScheme;
+    }>((acc, [key, value]) => {
+      acc[key] = SecurityScheme.fromJSON(value);
+      return acc;
+    }, {});
     return message;
   },
 
@@ -3135,16 +3133,18 @@ export const SecurityDefinitions = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SecurityDefinitions>): SecurityDefinitions {
+  fromPartial<I extends Exact<DeepPartial<SecurityDefinitions>, I>>(
+    object: I,
+  ): SecurityDefinitions {
     const message = { ...baseSecurityDefinitions } as SecurityDefinitions;
-    message.security = {};
-    if (object.security !== undefined && object.security !== null) {
-      Object.entries(object.security).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.security[key] = SecurityScheme.fromPartial(value);
-        }
-      });
-    }
+    message.security = Object.entries(object.security ?? {}).reduce<{
+      [key: string]: SecurityScheme;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = SecurityScheme.fromPartial(value);
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -3208,8 +3208,8 @@ export const SecurityDefinitions_SecurityEntry = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<SecurityDefinitions_SecurityEntry>,
+  fromPartial<I extends Exact<DeepPartial<SecurityDefinitions_SecurityEntry>, I>>(
+    object: I,
   ): SecurityDefinitions_SecurityEntry {
     const message = {
       ...baseSecurityDefinitions_SecurityEntry,
@@ -3260,10 +3260,12 @@ export const SecurityScheme = {
       Scopes.encode(message.scopes, writer.uint32(66).fork()).ldelim();
     }
     Object.entries(message.extensions).forEach(([key, value]) => {
-      SecurityScheme_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(74).fork(),
-      ).ldelim();
+      if (value !== undefined) {
+        SecurityScheme_ExtensionsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(74).fork(),
+        ).ldelim();
+      }
     });
     return writer;
   },
@@ -3341,12 +3343,12 @@ export const SecurityScheme = {
       object.scopes !== undefined && object.scopes !== null
         ? Scopes.fromJSON(object.scopes)
         : undefined;
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -3364,13 +3366,13 @@ export const SecurityScheme = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SecurityScheme>): SecurityScheme {
+  fromPartial<I extends Exact<DeepPartial<SecurityScheme>, I>>(object: I): SecurityScheme {
     const message = { ...baseSecurityScheme } as SecurityScheme;
     message.type = object.type ?? 0;
     message.description = object.description ?? "";
@@ -3383,14 +3385,14 @@ export const SecurityScheme = {
       object.scopes !== undefined && object.scopes !== null
         ? Scopes.fromPartial(object.scopes)
         : undefined;
-    message.extensions = {};
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -3406,7 +3408,7 @@ export const SecurityScheme_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -3424,7 +3426,7 @@ export const SecurityScheme_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -3439,30 +3441,25 @@ export const SecurityScheme_ExtensionsEntry = {
       ...baseSecurityScheme_ExtensionsEntry,
     } as SecurityScheme_ExtensionsEntry;
     message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromJSON(object.value)
-        : undefined;
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: SecurityScheme_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SecurityScheme_ExtensionsEntry>): SecurityScheme_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<SecurityScheme_ExtensionsEntry>, I>>(
+    object: I,
+  ): SecurityScheme_ExtensionsEntry {
     const message = {
       ...baseSecurityScheme_ExtensionsEntry,
     } as SecurityScheme_ExtensionsEntry;
     message.key = object.key ?? "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? Value.fromPartial(object.value)
-        : undefined;
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -3507,13 +3504,12 @@ export const SecurityRequirement = {
 
   fromJSON(object: any): SecurityRequirement {
     const message = { ...baseSecurityRequirement } as SecurityRequirement;
-    message.securityRequirement = {};
-    if (object.securityRequirement !== undefined && object.securityRequirement !== null) {
-      Object.entries(object.securityRequirement).forEach(([key, value]) => {
-        message.securityRequirement[key] =
-          SecurityRequirement_SecurityRequirementValue.fromJSON(value);
-      });
-    }
+    message.securityRequirement = Object.entries(object.securityRequirement ?? {}).reduce<{
+      [key: string]: SecurityRequirement_SecurityRequirementValue;
+    }>((acc, [key, value]) => {
+      acc[key] = SecurityRequirement_SecurityRequirementValue.fromJSON(value);
+      return acc;
+    }, {});
     return message;
   },
 
@@ -3528,17 +3524,18 @@ export const SecurityRequirement = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SecurityRequirement>): SecurityRequirement {
+  fromPartial<I extends Exact<DeepPartial<SecurityRequirement>, I>>(
+    object: I,
+  ): SecurityRequirement {
     const message = { ...baseSecurityRequirement } as SecurityRequirement;
-    message.securityRequirement = {};
-    if (object.securityRequirement !== undefined && object.securityRequirement !== null) {
-      Object.entries(object.securityRequirement).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.securityRequirement[key] =
-            SecurityRequirement_SecurityRequirementValue.fromPartial(value);
-        }
-      });
-    }
+    message.securityRequirement = Object.entries(object.securityRequirement ?? {}).reduce<{
+      [key: string]: SecurityRequirement_SecurityRequirementValue;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = SecurityRequirement_SecurityRequirementValue.fromPartial(value);
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -3598,13 +3595,13 @@ export const SecurityRequirement_SecurityRequirementValue = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<SecurityRequirement_SecurityRequirementValue>,
+  fromPartial<I extends Exact<DeepPartial<SecurityRequirement_SecurityRequirementValue>, I>>(
+    object: I,
   ): SecurityRequirement_SecurityRequirementValue {
     const message = {
       ...baseSecurityRequirement_SecurityRequirementValue,
     } as SecurityRequirement_SecurityRequirementValue;
-    message.scope = (object.scope ?? []).map(e => e);
+    message.scope = object.scope?.map(e => e) || [];
     return message;
   },
 };
@@ -3679,8 +3676,8 @@ export const SecurityRequirement_SecurityRequirementEntry = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<SecurityRequirement_SecurityRequirementEntry>,
+  fromPartial<I extends Exact<DeepPartial<SecurityRequirement_SecurityRequirementEntry>, I>>(
+    object: I,
   ): SecurityRequirement_SecurityRequirementEntry {
     const message = {
       ...baseSecurityRequirement_SecurityRequirementEntry,
@@ -3728,12 +3725,12 @@ export const Scopes = {
 
   fromJSON(object: any): Scopes {
     const message = { ...baseScopes } as Scopes;
-    message.scope = {};
-    if (object.scope !== undefined && object.scope !== null) {
-      Object.entries(object.scope).forEach(([key, value]) => {
-        message.scope[key] = String(value);
-      });
-    }
+    message.scope = Object.entries(object.scope ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      acc[key] = String(value);
+      return acc;
+    }, {});
     return message;
   },
 
@@ -3748,16 +3745,16 @@ export const Scopes = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Scopes>): Scopes {
+  fromPartial<I extends Exact<DeepPartial<Scopes>, I>>(object: I): Scopes {
     const message = { ...baseScopes } as Scopes;
-    message.scope = {};
-    if (object.scope !== undefined && object.scope !== null) {
-      Object.entries(object.scope).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.scope[key] = String(value);
-        }
-      });
-    }
+    message.scope = Object.entries(object.scope ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -3810,7 +3807,7 @@ export const Scopes_ScopeEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Scopes_ScopeEntry>): Scopes_ScopeEntry {
+  fromPartial<I extends Exact<DeepPartial<Scopes_ScopeEntry>, I>>(object: I): Scopes_ScopeEntry {
     const message = { ...baseScopes_ScopeEntry } as Scopes_ScopeEntry;
     message.key = object.key ?? "";
     message.value = object.value ?? "";
@@ -3830,6 +3827,7 @@ var globalThis: any = (() => {
 })();
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -3839,6 +3837,11 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {

@@ -1,5 +1,4 @@
 import * as url from "shared/url";
-import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
 import { IK8sList, IKubeState, IResource } from "./types";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
@@ -46,26 +45,6 @@ export class Kube {
     return u;
   }
 
-  public static watchResourceURL(
-    cluster: string,
-    apiVersion: string,
-    resource: string,
-    namespaced: boolean,
-    namespace?: string,
-    name?: string,
-    query?: string,
-  ) {
-    let u = this.getResourceURL(cluster, apiVersion, resource, namespaced, namespace);
-    u = `${WebSocketAPIBase}${u}?watch=true`;
-    if (name) {
-      u += `&fieldSelector=metadata.name%3D${name}`;
-    }
-    if (query) {
-      u += `&${query}`;
-    }
-    return u;
-  }
-
   public static async getResource(
     cluster: string,
     apiVersion: string,
@@ -79,25 +58,6 @@ export class Kube {
       this.getResourceURL(cluster, apiVersion, resource, namespaced, namespace, name, query),
     );
     return data;
-  }
-
-  // Opens and returns a WebSocket for the requested resource. Note: it is
-  // important that this socket be properly closed when no longer needed. The
-  // returned WebSocket can be attached to an event listener to read data from
-  // the socket.
-  public static watchResource(
-    cluster: string,
-    apiVersion: string,
-    resource: string,
-    namespaced: boolean,
-    namespace?: string,
-    name?: string,
-    query?: string,
-  ) {
-    return new WebSocket(
-      this.watchResourceURL(cluster, apiVersion, resource, namespaced, namespace, name, query),
-      Auth.wsProtocols(),
-    );
   }
 
   // getResources returns a subscription to an observable for resources from the server.

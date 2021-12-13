@@ -46,6 +46,7 @@ tags:
   - name: FluxV2PackagesService
   - name: HelmPackagesService
   - name: KappControllerPackagesService
+  - name: ResourcesService
 externalDocs:
   description: Kuebapps GitHub repository
   url: "https://github.com/kubeapps/kubeapps"
@@ -904,6 +905,7 @@ paths:
             text/plain:
               schema:
                 type: string
+  
   # Temporarily manually extracted from /cmd/kubeapps-apis/docs/kubeapps-apis.swagger.json
   /apis/core/packages/v1alpha1/availablepackages:
     get:
@@ -1606,6 +1608,91 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
       tags:
         - PackagesService
+  "/apis/core/packages/v1alpha1/installedpackages/plugin/{installedPackageRef.plugin.name}/{installedPackageRef.plugin.version}/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
+    get:
+      operationId: PackagesService_GetInstalledPackageResourceRefs
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefs\
+                  Response"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.plugin.name
+          description: >-
+            Plugin name
+
+
+            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: |-
+            Plugin version
+
+            The version of the plugin, such as v1alpha1
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace
+
+
+            A namespace must be provided if the context of the operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: path
+          required: true
+          schema:
+            type: string
+      tags:
+        - PackagesService
   /apis/core/plugins/v1alpha1/configured-plugins:
     get:
       summary: GetConfiguredPlugins returns a map of short and longnames for the
@@ -1632,7 +1719,7 @@ paths:
                 $ref: "#/components/schemas/rpcStatus"
       tags:
         - PluginsService
-  /plugins/fluxv2/packages/v1alpha1/availablepackages:
+  /apis/plugins/fluxv2/packages/v1alpha1/availablepackages:
     get:
       summary: GetAvailablePackageSummaries returns the available packages managed by
         the 'fluxv2' plugin
@@ -2301,6 +2388,90 @@ paths:
             type: string
       requestBody:
         $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
+      tags:
+        - FluxV2PackagesService
+  "/apis/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
+    get:
+      summary: >-
+        GetInstalledPackageResourceRefs returns the references for the
+        Kubernetes
+
+        resources created by an installed package.
+      operationId: FluxV2PackagesService_GetInstalledPackageResourceRefs
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefs\
+                  Response"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace
+
+
+            A namespace must be provided if the context of the operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
       tags:
         - FluxV2PackagesService
   /apis/plugins/fluxv2/packages/v1alpha1/packagerepositories:
@@ -3028,6 +3199,90 @@ paths:
             type: string
       requestBody:
         $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
+      tags:
+        - HelmPackagesService
+  "/apis/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
+    get:
+      summary: >-
+        GetInstalledPackageResourceRefs returns the references for the
+        Kubernetes resources created by
+
+        an installed package.
+      operationId: HelmPackagesService_GetInstalledPackageResourceRefs
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefs\
+                  Response"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace
+
+
+            A namespace must be provided if the context of the operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
       tags:
         - HelmPackagesService
   "/apis/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/rollback":
@@ -3774,6 +4029,90 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
       tags:
         - KappControllerPackagesService
+  "/apis/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
+    get:
+      summary: >-
+        GetInstalledPackageResourceRefs returns the references for the
+        Kubernetes resources created by
+
+        an installed package.
+      operationId: KappControllerPackagesService_GetInstalledPackageResourceRefs
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefs\
+                  Response"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace
+
+
+            A namespace must be provided if the context of the operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.name
+          description: Plugin name. The name of the plugin, such as `fluxv2.packages` or
+            `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: Plugin version. The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - KappControllerPackagesService
   /apis/plugins/kapp_controller/packages/v1alpha1/packagerepositories:
     get:
       summary: GetPackageRepositories returns the repositories managed by the
@@ -3830,6 +4169,165 @@ paths:
             type: string
       tags:
         - KappControllerPackagesService
+  "/apis/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/serviceaccountnames":
+    get:
+      operationId: ResourcesService_GetServiceAccountNames
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetServiceAccountNamesResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace
+
+
+            A namespace must be provided if the context of the operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: path
+          required: true
+          schema:
+            type: string
+      tags:
+        - ResourcesService
+  "/apis/plugins/resources/v1alpha1/{installedPackageRef.plugin.name}/{installedPackageRef.plugin.version}/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}":
+    get:
+      operationId: ResourcesService_GetResources
+      responses:
+        "200":
+          description: A successful response.(streaming responses)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/v1alpha1GetResourcesResponse"
+                  error:
+                    $ref: "#/components/schemas/rpcStatus"
+                title: Stream result of v1alpha1GetResourcesResponse
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: installedPackageRef.plugin.name
+          description: >-
+            Plugin name
+
+
+            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.plugin.version
+          description: |-
+            Plugin version
+
+            The version of the plugin, such as v1alpha1
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.context.namespace
+          description: >-
+            Namespace
+
+
+            A namespace must be provided if the context of the operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: installedPackageRef.identifier
+          description: |-
+            The fully qualified identifier for the installed package
+            (ie. a unique name for the context).
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: watch
+          description: >-
+            Watch. When true, this will cause the stream to remain open with
+            updated
+
+            resources being sent as events are received from the Kubernetes API
+
+            server.
+          in: query
+          required: false
+          schema:
+            type: boolean
+      tags:
+        - ResourcesService
 components:
   schemas:
     # pkg/chart/models/chart.go
@@ -4366,7 +4864,7 @@ components:
     protobufAny:
       type: object
       properties:
-        typeUrl:
+        "@type":
           type: string
           description: >-
             A URL/resource name that uniquely identifies the type of the
@@ -4412,11 +4910,7 @@ components:
             Schemes other than `http`, `https` (or the empty scheme) might be
 
             used with implementation specific semantics.
-        value:
-          type: string
-          format: byte
-          description: Must be a valid serialized protocol buffer of the above specified
-            type.
+      additionalProperties: {}
       description: >-
         `Any` contains an arbitrary serialized protocol buffer message along
         with a
@@ -4869,6 +5363,17 @@ components:
           $ref: "#/components/schemas/v1alpha1InstalledPackageDetail"
       description: Response for GetInstalledPackageDetail
       title: GetInstalledPackageDetailResponse
+    v1alpha1GetInstalledPackageResourceRefsResponse:
+      type: object
+      properties:
+        context:
+          $ref: "#/components/schemas/v1alpha1Context"
+        resourceRefs:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1alpha1ResourceRef"
+      description: Response for GetInstalledPackageResourceRefs
+      title: GetInstalledPackageResourceRefsResponse
     v1alpha1GetInstalledPackageSummariesResponse:
       type: object
       properties:
@@ -4888,6 +5393,24 @@ components:
           title: Next page token
       description: Response for GetInstalledPackageSummaries
       title: GetInstalledPackageSummariesResponse
+    v1alpha1GetResourcesResponse:
+      type: object
+      properties:
+        resourceRef:
+          $ref: "#/components/schemas/v1alpha1ResourceRef"
+        manifest:
+          $ref: "#/components/schemas/protobufAny"
+    v1alpha1GetServiceAccountNamesResponse:
+      type: object
+      properties:
+        serviceaccountNames:
+          type: array
+          items:
+            type: string
+          description: The list of Service Account names.
+          title: ServiceAccountNames
+      description: Response for GetServiceAccountNames
+      title: GetServiceAccountNamesResponse
     v1alpha1InstalledPackageDetail:
       type: object
       properties:
@@ -5084,7 +5607,10 @@ components:
           title: Reconciliation Interval
         suspend:
           type: boolean
-          description: Whether reconciliation should be suspended until otherwise enabled.
+          description: |-
+            Whether reconciliation should be suspended until otherwise enabled.
+            This can be utilized to e.g. temporarily ignore chart changes, and
+            prevent a Helm release from getting upgraded
           title: Suspend
         serviceAccountName:
           type: string
@@ -5104,6 +5630,46 @@ components:
 
         InstalledPackage.
       title: ReconciliationOptions
+    v1alpha1ResourceRef:
+      type: object
+      properties:
+        apiVersion:
+          type: string
+          description: >-
+            The APIVersion directly from the resource has the group and version,
+            eg. "apps/v1"
+
+            or just the version for core resources.
+        kind:
+          type: string
+          description: >-
+            The Kind directly from the templated manifest. Together with the
+            APIVersion this
+
+            forms the GroupVersionKind.
+        name:
+          type: string
+          description: The name of the specific resource in the context of the installed
+            package.
+        namespace:
+          type: string
+          description: >-
+            The namespace of the specific resource in the context of the
+            installed
+
+            package. In most cases this will be identical to the namespace of the
+
+            installed package. Exceptions will be non-namespaced resources and packages
+
+            that install resources in other namespaces for special reasons.
+      description: >-
+        A reference to a Kubernetes resource related to a specific installed
+        package.
+
+        The context (cluster) for each resource is that of the related
+
+        installed package.
+      title: Resource reference
     v1alpha1RollbackInstalledPackageRequest:
       type: object
       properties:
