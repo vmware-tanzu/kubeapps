@@ -125,3 +125,11 @@ export function getPluginPackageName(plugin?: Plugin | string) {
     }
   }
 }
+
+export function getPluginsRequiringSA(): string[] {
+  return [PluginNames.PACKAGES_FLUX, PluginNames.PACKAGES_KAPP];
+}
+
+export function getPluginsSupportingRollback(): string[] {
+  return [PluginNames.PACKAGES_HELM];
+}

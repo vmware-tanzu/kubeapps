@@ -403,9 +403,6 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			Namespace: targetNamespace,
 		},
 		Spec: packagingv1alpha1.PackageInstallSpec{
-			// TODO(agamez): remove this when we have a real service account selector/creator? in the UI
-			ServiceAccountName: "default",
-
 			// This is the Carvel's way of supporting deployments across clusters
 			// without having kapp-controller on those other clusters
 			// We, currently, don't support deploying to another cluster without kapp-controller

@@ -1,3 +1,4 @@
+import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
 import { JSONSchemaType } from "ajv";
 import Alert from "components/js/Alert";
@@ -6,15 +7,19 @@ import {
   AvailablePackageDetail,
   AvailablePackageReference,
   PackageAppVersion,
+  ReconciliationOptions,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { GetServiceAccountNamesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import { createMemoryHistory } from "history";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router";
+import { Kube } from "shared/Kube";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
+import { PluginNames } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
 
@@ -33,7 +38,10 @@ const defaultSelectedPkg = {
   versions: [{ appVersion: "10.0.0", pkgVersion: "1.2.3" } as PackageAppVersion],
   availablePackageDetail: {
     name: "test",
-    availablePackageRef: { identifier: "test/test" },
+    availablePackageRef: {
+      identifier: "test/test",
+      plugin: { name: "my.plugin", version: "0.0.1" },
+    } as AvailablePackageReference,
   } as AvailablePackageDetail,
   pkgVersion: "1.2.4",
   values: "bar: foo",
@@ -54,7 +62,6 @@ beforeEach(() => {
     .spyOn(ReactRouter, "useHistory")
     .mockReturnValue({ push: jest.fn() } as any);
 });
-
 afterEach(() => {
   jest.restoreAllMocks();
   spyOnUseDispatch.mockRestore();
@@ -160,6 +167,36 @@ describe("renders an error", () => {
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("bar: foo");
   });
 
+  it("display the service account selector", () => {
+    const history = createMemoryHistory({
+      initialEntries: [
+        `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${PluginNames.PACKAGES_KAPP}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`,
+      ],
+    });
+    Kube.getServiceAccountNames = jest.fn().mockReturnValue({
+      then: jest.fn((f: any) =>
+        f({ serviceaccountNames: ["my-sa-1", "my-sa-2"] } as GetServiceAccountNamesResponse),
+      ),
+    });
+
+    const wrapper = mountWrapper(
+      getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
+    );
+    const saSelect = wrapper
+      .find(CdsSelect)
+      .findWhere(a => a.prop("id") === "serviceaccount-selector");
+
+    expect(saSelect).toExist();
+    expect(saSelect.find("option").at(0)).not.toHaveProperty("value");
+    expect(saSelect.find("option").at(1)).toHaveProp("value", "my-sa-1");
+    expect(saSelect.find("option").at(2)).toHaveProp("value", "my-sa-2");
+  });
+
   it("keep values if the version changes", () => {
     const wrapper = mountWrapper(
       getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
@@ -243,6 +280,7 @@ describe("renders an error", () => {
       defaultProps.releaseName,
       appValues,
       schema,
+      {} as ReconciliationOptions,
     );
 
     expect(history.location.pathname).toBe(

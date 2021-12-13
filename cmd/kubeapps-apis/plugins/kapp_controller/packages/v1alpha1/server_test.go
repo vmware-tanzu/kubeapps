@@ -1697,6 +1697,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Namespace: "default",
 					Cluster:   "default",
 				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -1809,6 +1812,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 				TargetContext: &corev1.Context{
 					Namespace: "default",
 					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
 				},
 			},
 			existingObjects: []runtime.Object{
@@ -2038,6 +2044,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 				TargetContext: &corev1.Context{
 					Namespace: "default",
 					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
 				},
 			},
 			existingObjects: []runtime.Object{
