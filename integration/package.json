@@ -15,7 +15,7 @@
     "expect-puppeteer": "^6.0.2",
     "jest": "^27.4.5",
     "jest-circus": "^27.4.5",
-    "jest-puppeteer": "^6.0.2",
+    "jest-puppeteer": "^6.0.3",
     "puppeteer": "^13.0.0",
     "wait-on": "^6.0.0"
   },
