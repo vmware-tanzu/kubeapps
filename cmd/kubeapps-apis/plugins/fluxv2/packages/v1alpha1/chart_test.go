@@ -34,6 +34,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type testSpecChartWithFile struct {
@@ -762,15 +763,22 @@ func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string
 	return nil
 }
 
-func redisMockExpectDeleteFromChartCache(mock redismock.ClientMock) error {
-	// TODO (gfichtenholt)
-	// everything hardcoded for one test for now :-)
-	// will clean it up when I am done with more important stuff
-	keys := []string{
-		"helmcharts:default:bitnami-1/acs-engine-autoscaler:2.1.1",
-		"helmcharts:default:bitnami-1/wordpress:0.7.5",
+func redisMockExpectDeleteRepoWithCharts(mock redismock.ClientMock, name types.NamespacedName, charts []string) error {
+	key, err := redisKeyForRepoNamespacedName(name)
+	if err != nil {
+		return err
+	} else {
+		mock.ExpectDel(key).SetVal(0)
 	}
-	mock.ExpectScan(0, "helmcharts:default:bitnami-1/*:*", 0).SetVal(keys, 0)
+
+	// each element of charts[] array looks like "chartName:chartVersion"
+	keys := []string{}
+	for _, c := range charts {
+		keys = append(keys, fmt.Sprintf("helmcharts:%s:%s/%s", name.Namespace, name.Name, c))
+	}
+
+	scanWildcard := fmt.Sprintf("helmcharts:%s:%s/*:*", name.Namespace, name.Name)
+	mock.ExpectScan(0, scanWildcard, 0).SetVal(keys, 0)
 	for _, k := range keys {
 		mock.ExpectDel(k).SetVal(0)
 	}

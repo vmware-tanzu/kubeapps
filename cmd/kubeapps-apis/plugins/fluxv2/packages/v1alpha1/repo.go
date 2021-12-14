@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
@@ -396,11 +397,24 @@ func (s *repoCacheCallSite) onGetRepo(key string, value interface{}) (interface{
 
 func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
 	if s.chartCache != nil {
-		if err := s.chartCache.deleteChartsForRepo(key); err != nil {
+		if name, err := s.fromKey(key); err != nil {
+			return false, err
+		} else if err := s.chartCache.deleteChartsForRepo(name); err != nil {
 			return false, err
 		}
 	}
 	return true, nil
+}
+
+// TODO (gfichtenholt) low priority: don't really like the fact that these 4 lines of code
+// basically repeat same logic as NamespacedResourceWatcherCache.fromKey() but can't
+// quite come up with with a more elegant alternative right now
+func (c *repoCacheCallSite) fromKey(key string) (*types.NamespacedName, error) {
+	parts := strings.Split(key, ":")
+	if len(parts) != 3 || parts[0] != fluxHelmRepositories || len(parts[1]) == 0 || len(parts[2]) == 0 {
+		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
+	}
+	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
 // unstructuredRepo is passed as map[string]interface{}

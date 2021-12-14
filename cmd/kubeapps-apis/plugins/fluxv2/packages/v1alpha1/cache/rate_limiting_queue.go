@@ -30,6 +30,7 @@ import (
 // RateLimitingInterface is an interface that rate limits items being added to the queue.
 type RateLimitingInterface interface {
 	workqueue.RateLimitingInterface
+	Name() string
 	ExpectAdd(item string)
 	WaitUntilGone(item string)
 }
@@ -41,7 +42,7 @@ func NewRateLimitingQueue(name string, debugEnabled bool) RateLimitingInterface 
 	queue := newQueue(name, debugEnabled)
 	return &rateLimitingType{
 		queue:             queue,
-		DelayingInterface: workqueue.NewDelayingQueueWithCustomQueue(queue, ""),
+		DelayingInterface: workqueue.NewDelayingQueueWithCustomQueue(queue, name),
 		rateLimiter:       workqueue.DefaultControllerRateLimiter(),
 	}
 }
@@ -66,6 +67,10 @@ func (q *rateLimitingType) AddRateLimited(item interface{}) {
 		q.ExpectAdd(itemstr)
 		q.DelayingInterface.AddAfter(itemstr, duration)
 	}
+}
+
+func (q *rateLimitingType) Name() string {
+	return q.queue.name
 }
 
 func (q *rateLimitingType) NumRequeues(item interface{}) int {

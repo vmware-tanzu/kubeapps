@@ -41,6 +41,8 @@ const (
 	UserAgentPrefix = "kubeapps-apis/plugins"
 	// max number of retries due to transient errors
 	MaxRetries = 5
+	// number of background workers to process work queue items
+	MaxWorkers = 2
 )
 
 // For now:
@@ -98,20 +100,26 @@ func NewChartCache(name string, redisCli *redis.Client) (*ChartCache, error) {
 		processing: k8scache.NewStore(chartCacheKeyFunc),
 	}
 
-	// dummy channel for now. Ideally, this would be passed in as an input argument
-	// and the caller would indicate when to stop
+	// TODO (gfichtenholt) dummy channel for now. Ideally, this would be passed in as
+	// an input argument and the caller would indicate when to stop
 	stopCh := make(chan struct{})
 
-	// this will launch a single worker that processes items on the work queue as they come in
-	// runWorker will loop until "something bad" happens.  The .Until will
-	// then rekick the worker after one second
-	// TODO (gfichtenholt) we should have multiple workers
-	go wait.Until(c.runWorker, time.Second, stopCh)
+	// each loop iteration will launch a single worker that processes items on the work
+	//  queue as they come in. runWorker will loop until "something bad" happens.
+	// The .Until will then rekick the worker after one second
+	for i := 0; i < MaxWorkers; i++ {
+		// let's give each worker a unique name - easier to debug
+		name := fmt.Sprintf("%s-worker-%d", c.queue.Name(), i)
+		fn := func() {
+			c.runWorker(name)
+		}
+		go wait.Until(fn, time.Second, stopCh)
+	}
 
 	return &c, nil
 }
 
-// this will enqueue work items into chart work queue and return.
+// this func will enqueue work items into chart work queue and return.
 // the charts will be synced by a worker thread running in the background
 func (c *ChartCache) syncCharts(charts []models.Chart, clientOptions *common.ClientOptions) error {
 	log.Infof("+syncCharts()")
@@ -157,11 +165,11 @@ func (c *ChartCache) syncCharts(charts []models.Chart, clientOptions *common.Cli
 // runWorker is a long-running function that will continually call the
 // processNextWorkItem function in order to read and process a message on the
 // workqueue.
-func (c *ChartCache) runWorker() {
-	log.Infof("+runWorker()")
-	defer log.Infof("-runWorker()")
+func (c *ChartCache) runWorker(workerName string) {
+	log.Infof("+runWorker(%s)", workerName)
+	defer log.Infof("-runWorker(%s)", workerName)
 
-	for c.processNextWorkItem() {
+	for c.processNextWorkItem(workerName) {
 	}
 }
 
@@ -170,9 +178,9 @@ func (c *ChartCache) runWorker() {
 
 // ref: https://engineering.bitnami.com/articles/kubewatch-an-example-of-kubernetes-custom-controller.html
 // ref: https://github.com/bitnami-labs/kubewatch/blob/master/pkg/controller/controller.go
-func (c *ChartCache) processNextWorkItem() bool {
-	log.Infof("+processNextWorkItem()")
-	defer log.Infof("-processNextWorkItem()")
+func (c *ChartCache) processNextWorkItem(workerName string) bool {
+	log.V(4).Infof("+processNextWorkItem(%s)", workerName)
+	defer log.V(4).Infof("-processNextWorkItem(%s)", workerName)
 
 	obj, shutdown := c.queue.Get()
 	if shutdown {
@@ -196,7 +204,7 @@ func (c *ChartCache) processNextWorkItem() bool {
 		runtime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
 		return true
 	}
-	err := c.syncHandler(key)
+	err := c.syncHandler(workerName, key)
 	if err == nil {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
@@ -214,26 +222,19 @@ func (c *ChartCache) processNextWorkItem() bool {
 	return true
 }
 
-func (c *ChartCache) deleteChartsForRepo(key string) error {
-	log.Infof("+deleteChartsFor(%s)", key)
-	defer log.Infof("-deleteChartsFor(%s)", key)
+func (c *ChartCache) deleteChartsForRepo(repo *types.NamespacedName) error {
+	log.Infof("+deleteChartsFor(%s)", repo)
+	defer log.Infof("-deleteChartsFor(%s)", repo)
 
 	// need to get a list of all charts/versions for this repo that are either:
 	//   a. already in the cache OR
 	//   b. being processed
 
-	// TODO HACK this is a copied from NamespacedResourceCache.fromKey
-	parts := strings.Split(key, ":")
-	if len(parts) != 3 || parts[0] != fluxHelmRepositories || len(parts[1]) == 0 || len(parts[2]) == 0 {
-		return status.Errorf(codes.Internal, "invalid key [%s]", key)
-	}
-	repo := &types.NamespacedName{Namespace: parts[1], Name: parts[2]}
-	redisKeysToDelete := sets.String{}
-
 	// this loop should take care of (a)
 	// glob-style pattern, you can use https://www.digitalocean.com/community/tools/glob to test
 	// also ref. https://stackoverflow.com/questions/4006324/how-to-atomically-delete-keys-matching-a-pattern-using-redis
 	match := fmt.Sprintf("helmcharts:%s:%s/*:*", repo.Namespace, repo.Name)
+	redisKeysToDelete := sets.String{}
 	// https://redis.io/commands/scan An iteration starts when the cursor is set to 0,
 	// and terminates when the cursor returned by the server is 0
 	cursor := uint64(0)
@@ -289,9 +290,9 @@ type chartCacheEntryValue struct {
 }
 
 // syncs the current state of the given resource in k8s with that in the cache
-func (c *ChartCache) syncHandler(key string) error {
-	log.Infof("+syncHandler(%s)", key)
-	defer log.Infof("-syncHandler(%s)", key)
+func (c *ChartCache) syncHandler(workerName, key string) error {
+	log.Infof("+syncHandler(%s, %s)", workerName, key)
+	defer log.Infof("-syncHandler(%s, %s)", workerName, key)
 
 	entry, exists, err := c.processing.GetByKey(key)
 	if err != nil {

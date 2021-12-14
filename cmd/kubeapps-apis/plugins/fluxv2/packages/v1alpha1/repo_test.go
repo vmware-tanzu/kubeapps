@@ -643,8 +643,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
-		repoName := "bitnami-1"
-		repoNamespace := "default"
+		repoName := types.NamespacedName{Namespace: "default", Name: "bitnami-1"}
 		replaceUrls := make(map[string]string)
 		charts := []testSpecChartWithUrl{}
 		for _, s := range valid_index_charts_spec {
@@ -660,14 +659,15 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			defer ts.Close()
 			replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
 			c := testSpecChartWithUrl{
-				chartID:       fmt.Sprintf("%s/%s", repoName, s.name),
+				chartID:       fmt.Sprintf("%s/%s", repoName.Name, s.name),
 				chartRevision: s.revision,
 				chartUrl:      ts.URL,
-				repoNamespace: repoNamespace,
+				repoNamespace: repoName.Namespace,
 			}
 			charts = append(charts, c)
 		}
-		ts, repo, err := newRepoWithIndex("testdata/valid-index.yaml", repoName, repoNamespace, replaceUrls, "")
+		ts, repo, err := newRepoWithIndex(
+			"testdata/valid-index.yaml", repoName.Name, repoName.Namespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -706,29 +706,36 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
-		key, err := redisKeyForRepo(repo)
+		chartsInCache := []string{
+			"acs-engine-autoscaler:2.1.1",
+			"wordpress:0.7.5",
+		}
+
+		repoKey, err := redisKeyForRepoNamespacedName(repoName)
 		if err != nil {
 			t.Fatalf("%v", err)
-		} else {
-			mock.ExpectDel(key).SetVal(0)
 		}
-		redisMockExpectDeleteFromChartCache(mock)
-		if err = dyncli.Resource(repositoriesGvr).Namespace("default").Delete(context.Background(), "bitnami-1", metav1.DeleteOptions{}); err != nil {
+
+		if err = redisMockExpectDeleteRepoWithCharts(mock, repoName, chartsInCache); err != nil {
 			t.Fatalf("%v", err)
 		}
-		// TODO (gfichtenholt)
-		// everything hardcoded for one test for now :-)
-		// will clean it up when I am done with more important stuff
-		s.repoCache.ExpectAdd(key)
-		chartCacheKeys := []string{
-			"helmcharts:default:bitnami-1/acs-engine-autoscaler:2.1.1",
-			"helmcharts:default:bitnami-1/wordpress:0.7.5",
+
+		if err = dyncli.Resource(repositoriesGvr).Namespace(repoName.Namespace).Delete(
+			context.Background(), repoName.Name, metav1.DeleteOptions{}); err != nil {
+			t.Fatalf("%v", err)
 		}
+
+		chartCacheKeys := []string{}
+		for _, c := range chartsInCache {
+			chartCacheKeys = append(chartCacheKeys, fmt.Sprintf("helmcharts:%s:%s/%s", repoName.Namespace, repoName.Name, c))
+		}
+
+		s.repoCache.ExpectAdd(repoKey)
 		for _, k := range chartCacheKeys {
 			s.chartCache.ExpectAdd(k)
 		}
 		watcher.Delete(repo)
-		s.repoCache.WaitUntilGone(key)
+		s.repoCache.WaitUntilGone(repoKey)
 		for _, k := range chartCacheKeys {
 			s.chartCache.WaitUntilGone(k)
 		}

@@ -751,7 +751,7 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 	return fmt.Sprintf("%s:%s:%s", c.config.Gvr.Resource, name.Namespace, name.Name)
 }
 
-// the opposite of keyFor
+// the opposite of keyFor()
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, ":")
