@@ -59,7 +59,7 @@ export class AppRepository {
           ociRepositories,
           tlsInsecureSkipVerify: skipTLS,
           passCredentials: passCredentials,
-          filter,
+          filterRule: filter,
         },
       },
     );
