@@ -247,7 +247,10 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `apprepository.initialRepos`                          | Initial chart repositories to configure                                                   | `[]`                                |
 | `apprepository.customAnnotations`                     | Custom annotations be added to each AppRepository-generated CronJob, Job and Pod          | `{}`                                |
 | `apprepository.customLabels`                          | Custom labels be added to each AppRepository-generated CronJob, Job and Pod               | `{}`                                |
-| `apprepository.initialReposProxy`                     | Proxy configuration to access chart repositories                                          | `{}`                                |
+| `apprepository.initialReposProxy.enabled`             | Enables the proxy                                                                         | `false`                             |
+| `apprepository.initialReposProxy.httpProxy`           | URL for the http proxy                                                                    | `""`                                |
+| `apprepository.initialReposProxy.httpsProxy`          | URL for the https proxy                                                                   | `""`                                |
+| `apprepository.initialReposProxy.noProxy`             | URL to exclude traffic destined to from using the proxy                                   | `""`                                |
 | `apprepository.crontab`                               | Schedule for syncing App repositories (default to 10 minutes)                             | `""`                                |
 | `apprepository.watchAllNamespaces`                    | Watch all namespaces to support separate AppRepositories per namespace                    | `true`                              |
 | `apprepository.replicaCount`                          | Number of AppRepository Controller replicas to deploy                                     | `1`                                 |
@@ -482,7 +485,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 | Name                                                                       | Description                                                                               | Value                    |
 | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------ |
-| `kubeappsapis.enabledPlugins`                                              | Enabled plugins for the Kubeapps-APIs service                                             | `["helm"]`               |
+| `kubeappsapis.enabledPlugins`                                              | Enabled plugins for the Kubeapps-APIs service                                             | `["helm","resources"]`   |
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.major` | Number of major versions to display in the summary                                        | `3`                      |
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.minor` | Number of minor versions to display in the summary                                        | `3`                      |
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.patch` | Number of patch versions to display in the summary                                        | `3`                      |
