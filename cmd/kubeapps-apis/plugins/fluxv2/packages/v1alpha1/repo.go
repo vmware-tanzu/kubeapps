@@ -303,8 +303,7 @@ func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}
 	// into local cluster based on secretRef associated with HelmRepository, if applicable
 	// This is only true of index.yaml, not the individual chart URLs within it
 
-	// if a transient error occurs the item should be re-queued and retried after a back-off period
-	// TODO (gfichtenholt) verify this is actually the case
+	// if a transient error occurs the item will be re-queued and retried after a back-off period
 	byteArray, err := httpclient.Get(indexUrl, httpclient.New(), nil)
 	if err != nil {
 		return nil, err
@@ -441,9 +440,11 @@ func (s *repoCacheCallSite) clientOptionsForRepo(ctx context.Context, unstructur
 	}
 	secret, err := typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
-		// TODO (gfichtenholt) if I can't get the secret due to RBAC settings,
-		// return a nice friendly error message
-		return nil, err
+		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
+			return nil, status.Errorf(codes.Unauthenticated, "unable to get secret due to %v", err)
+		} else {
+			return nil, status.Errorf(codes.Internal, "unable to get secret due to %v", err)
+		}
 	}
 	return common.ClientOptionsFromSecret(*secret)
 }

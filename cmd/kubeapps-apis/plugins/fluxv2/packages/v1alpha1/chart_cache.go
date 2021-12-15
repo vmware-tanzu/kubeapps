@@ -17,6 +17,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -91,12 +92,11 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 		return nil, fmt.Errorf("server not configured with redis client")
 	}
 
-	// TODO (gfichtenholt) low priority - do not hardcode the value of debugEnabled flag
-	// read the value from an environment variable or something that does require re-compiling
-	// the code to enable the flag in production
+	debugQueue := os.Getenv("DEBUG_CHART_CACHE_QUEUE") == "true"
+
 	c := ChartCache{
 		redisCli:   redisCli,
-		queue:      cache.NewRateLimitingQueue(name, false),
+		queue:      cache.NewRateLimitingQueue(name, debugQueue),
 		processing: k8scache.NewStore(chartCacheKeyFunc),
 	}
 
@@ -180,7 +180,7 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 
 	obj, shutdown := c.queue.Get()
 	if shutdown {
-		log.Infof("[%s] shutting down...", c.queue.Name())
+		log.Infof("[%s] shutting down...", workerName)
 		return false
 	}
 
@@ -306,6 +306,7 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 	if chart.deleted {
 		// TODO: (gfichtenholt) DEL has the capability to delete multiple keys in one
 		// atomic operation. It would be nice to come up with a way to utilize that here
+		// the problem is the queue is designed to work on one item at a time
 		keysRemoved, _ := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		log.Infof("Redis [DEL %s]: %d", key, keysRemoved)
 	} else {
@@ -442,6 +443,10 @@ func (c *ChartCache) ExpectAdd(key string) {
 // this func is used by unit tests only
 func (c *ChartCache) WaitUntilGone(key string) {
 	c.queue.WaitUntilGone(key)
+}
+
+func (c *ChartCache) Shutdown() {
+	c.queue.ShutDown()
 }
 
 func chartCacheKeyFunc(obj interface{}) (string, error) {

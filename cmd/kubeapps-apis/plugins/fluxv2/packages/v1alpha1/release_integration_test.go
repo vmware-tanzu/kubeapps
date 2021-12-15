@@ -129,7 +129,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext := newGrpcContext(t, "test-create-admin")
+	grpcContext := newGrpcAdminContext(t, "test-create-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -219,7 +219,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		// TODO (gfichtenholt) test automatic upgrade to new version when it becomes available
 	}
 
-	grpcContext := newGrpcContext(t, "test-create-admin")
+	grpcContext := newGrpcAdminContext(t, "test-create-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -296,7 +296,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext := newGrpcContext(t, "test-delete-admin")
+	grpcContext := newGrpcAdminContext(t, "test-delete-admin")
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -482,7 +482,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	// one particular code path I'd like to test:
 	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
-	grpcContext := newGrpcContext(t, "test-create-admin")
+	grpcContext := newGrpcAdminContext(t, "test-create-admin")
 
 	// copy the evicted list because before ForEach loop below will modify it in a goroutine
 	evictedCopy := sets.StringKeySet(evictedRepos)
@@ -666,7 +666,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	grpcContext := newGrpcContext(t, "test-create-admin-basic-auth")
+	grpcContext := newGrpcAdminContext(t, "test-create-admin-basic-auth")
 
 	const maxWait = 25
 	for i := 0; i <= maxWait; i++ {
@@ -696,7 +696,22 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 
 	availablePackageRef := availableRef(repoName+"/podinfo", "default")
 
-	grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+	// first try the negative case, no auth - should fail due to not being able to
+	// read secrets in all namespaces
+	fluxPluginServiceAccount := "test-repo-with-basic-auth"
+	ctx, cancel := context.WithTimeout(newGrpcFluxPluginContext(t, fluxPluginServiceAccount), defaultContextTimeout)
+	defer cancel()
+	_, err := fluxPluginClient.GetAvailablePackageDetail(
+		ctx,
+		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
+	if err == nil {
+		t.Fatalf("Expected error, did not get one")
+	} else if status.Code(err) != codes.Unauthenticated {
+		t.Fatalf("GetAvailablePackageDetailRequest expected Unauthenticated got %v", err)
+	}
+
+	// this should succeed as it is done in the context of cluster admin
+	grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
 	defer cancel()
 	resp, err := fluxPluginClient.GetAvailablePackageDetail(
 		grpcContext,

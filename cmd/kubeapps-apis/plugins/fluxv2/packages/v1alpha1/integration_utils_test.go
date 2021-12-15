@@ -295,10 +295,8 @@ func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error)
 	}
 }
 
-// will create a service account with cluster-admin privs and return the associated
-// Bearer token (base64-encoded)
-func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
-	t.Logf("+kubeCreateAdminServiceAccount(%s,%s)", name, namespace)
+func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return "", err
@@ -365,7 +363,7 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 			},
 			RoleRef: kuberbacv1.RoleRef{
 				Kind: "ClusterRole",
-				Name: "cluster-admin",
+				Name: role,
 			},
 		},
 		metav1.CreateOptions{})
@@ -373,6 +371,17 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 		return "", err
 	}
 	return string(token), nil
+}
+
+// ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
+// will create a service account with cluster-admin privs and return the associated
+// Bearer token (base64-encoded)
+func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
+	return kubeCreateServiceAccountWithClusterRole(t, name, namespace, "cluster-admin")
+}
+
+func kubeCreateFluxPluginServiceAccount(t *testing.T, name, namespace string) (string, error) {
+	return kubeCreateServiceAccountWithClusterRole(t, name, namespace, "kubeapps:controller:kubeapps-apis-fluxv2-plugin")
 }
 
 func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
@@ -603,7 +612,13 @@ func randSeq(n int) string {
 	return string(b)
 }
 
-func newGrpcContext(t *testing.T, name string) context.Context {
+func newGrpcContext(t *testing.T, token string) context.Context {
+	return metadata.NewOutgoingContext(
+		context.TODO(),
+		metadata.Pairs("Authorization", "Bearer "+token))
+}
+
+func newGrpcAdminContext(t *testing.T, name string) context.Context {
 	token, err := kubeCreateAdminServiceAccount(t, name, "default")
 	if err != nil {
 		t.Fatalf("Failed to create service account due to: %+v", err)
@@ -613,9 +628,20 @@ func newGrpcContext(t *testing.T, name string) context.Context {
 			t.Logf("Failed to delete service account due to: %+v", err)
 		}
 	})
-	return metadata.NewOutgoingContext(
-		context.TODO(),
-		metadata.Pairs("Authorization", "Bearer "+token))
+	return newGrpcContext(t, token)
+}
+
+func newGrpcFluxPluginContext(t *testing.T, name string) context.Context {
+	token, err := kubeCreateFluxPluginServiceAccount(t, name, "default")
+	if err != nil {
+		t.Fatalf("Failed to create service account due to: %+v", err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
+			t.Logf("Failed to delete service account due to: %+v", err)
+		}
+	})
+	return newGrpcContext(t, token)
 }
 
 func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMemory string) error {

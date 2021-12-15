@@ -269,6 +269,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		if err != nil {
 			return nil, mock, err
 		}
+		t.Cleanup(func() { chartCache.Shutdown() })
 
 		// for now we only cache latest version of each chart
 		for _, c := range charts {

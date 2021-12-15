@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -130,13 +131,12 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		return nil, fmt.Errorf("server not configured with expected cache hooks")
 	}
 
-	// TODO (gfichtenholt) low priority - do not hardcode the value of debugEnabled flag
-	// read the value from an environment variable or something that does require re-compiling
-	// the code to enable the flag in production
+	debugQueue := os.Getenv("DEBUG_WATCHER_CACHE_QUEUE") == "true"
+
 	c := NamespacedResourceWatcherCache{
 		config:     config,
 		redisCli:   redisCli,
-		queue:      NewRateLimitingQueue(name, false),
+		queue:      NewRateLimitingQueue(name, debugQueue),
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
