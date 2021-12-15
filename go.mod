@@ -64,7 +64,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/soheilhy/cmux v0.1.5
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.0
 	github.com/srwiley/oksvg v0.0.0-20211120171407-1837d6608d8c
@@ -72,11 +72,11 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/negroni v1.0.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.30.0
-	github.com/vmware-tanzu/carvel-vendir v0.23.0
+	github.com/vmware-tanzu/carvel-vendir v0.24.0
 	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
-	google.golang.org/grpc v1.42.0
+	google.golang.org/grpc v1.43.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
