@@ -30,6 +30,9 @@ import (
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/helm"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -691,6 +694,11 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 }
 
 func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *sets.String) {
+	if totalBitnamiCharts == -1 {
+		t.Errorf("Error: unexpected state: number of charts in bitnami catalog is not initialized")
+		return
+	}
+
 	// this for loop running in the background will signal to the main goroutine
 	// when it is okay to proceed to load the next repo
 	t.Logf("Listening for events from redis in the background...")
@@ -706,15 +714,13 @@ func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *
 		if event.Channel == "__keyevent@0__:set" {
 			if strings.HasPrefix(event.Payload, "helmrepositories:default:bitnami-") {
 				reposAdded.Insert(event.Payload)
-				// TODO (gifchtenholt) HACK: so here I am cheating, I happen to know there
-				// are exactly this many packages currently in bitnami repo today.
 				// I am keeping track of charts being synced in the cache so that I only
 				// start to load repository N+1 after completely done with N, meaning waiting until
 				// the model for the repo and all its (latest) charts are in the cache. Thinking
 				// about it now, I am not sure it's actually critical for this test to enforce
 				// that a repo AND its charts are completely synced before proceeding. To be
 				// continued...
-				chartsLeftToSync += 97
+				chartsLeftToSync += totalBitnamiCharts
 			} else if strings.HasPrefix(event.Payload, "helmcharts:default:bitnami-") {
 				chartID := strings.Split(event.Payload, ":")[2]
 				repoKey := "helmrepositories:default:" + strings.Split(chartID, "/")[0]
@@ -738,9 +744,39 @@ func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *
 	}
 }
 
+func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
+	t.Logf("+initNumberOfChartsInBitnamiCatalog")
+
+	bitnamiUrl := "https://charts.bitnami.com/bitnami"
+
+	byteArray, err := httpclient.Get(bitnamiUrl+"/index.yaml", httpclient.New(), nil)
+	if err != nil {
+		return err
+	}
+
+	modelRepo := &models.Repo{
+		Namespace: "default",
+		Name:      "bitnami",
+		URL:       bitnamiUrl,
+		Type:      "helm",
+	}
+
+	charts, err := helm.ChartsFromIndex(byteArray, modelRepo, true)
+	if err != nil {
+		return err
+	}
+
+	totalBitnamiCharts = len(charts)
+	t.Logf("+initNumberOfChartsInBitnamiCatalog: total [%d] charts", totalBitnamiCharts)
+	return nil
+}
+
 // global vars
 var (
 	dynamicClient dynamic.Interface
 	typedClient   kubernetes.Interface
 	letters       = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	// total number of unique packages in bitnami repo,
+	// initialized during running of the integration test
+	totalBitnamiCharts = -1
 )

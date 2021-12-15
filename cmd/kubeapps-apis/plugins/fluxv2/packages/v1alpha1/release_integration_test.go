@@ -401,7 +401,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		t.Fatalf("%+v", err)
 	}
 
-	// assume 30Mb redis cache for now
+	// assume 30Mb redis cache for now. See comment above
 	if err = redisCheckTinyMaxMemory(t, redisCli, "31457280"); err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -416,6 +416,10 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 			t.Logf("%v", err)
 		}
 	})
+
+	if err = initNumberOfChartsInBitnamiCatalog(t); err != nil {
+		t.Errorf("Failed to get number of charts in bitnami catalog due to: %v", err)
+	}
 
 	const MAX_REPOS_NEVER = 100
 	var totalRepos = 0

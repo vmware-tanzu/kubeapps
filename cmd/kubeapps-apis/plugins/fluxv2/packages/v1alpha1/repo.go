@@ -305,7 +305,7 @@ func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}
 
 	// if a transient error occurs the item should be re-queued and retried after a back-off period
 	// TODO (gfichtenholt) verify this is actually the case
-	byteArray, err := httpclient.Get(indexUrl, httpclient.New(), map[string]string{})
+	byteArray, err := httpclient.Get(indexUrl, httpclient.New(), nil)
 	if err != nil {
 		return nil, err
 	}
