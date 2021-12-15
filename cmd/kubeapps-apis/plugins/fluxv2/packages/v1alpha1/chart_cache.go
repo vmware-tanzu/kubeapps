@@ -84,7 +84,7 @@ type chartCacheStoreEntry struct {
 	deleted       bool
 }
 
-func NewChartCache(name string, redisCli *redis.Client) (*ChartCache, error) {
+func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) (*ChartCache, error) {
 	log.Infof("+NewChartCache(%s, %v)", name, redisCli)
 
 	if redisCli == nil {
@@ -99,10 +99,6 @@ func NewChartCache(name string, redisCli *redis.Client) (*ChartCache, error) {
 		queue:      cache.NewRateLimitingQueue(name, false),
 		processing: k8scache.NewStore(chartCacheKeyFunc),
 	}
-
-	// TODO (gfichtenholt) dummy channel for now. Ideally, this would be passed in as
-	// an input argument and the caller would indicate when to stop
-	stopCh := make(chan struct{})
 
 	// each loop iteration will launch a single worker that processes items on the work
 	//  queue as they come in. runWorker will loop until "something bad" happens.
@@ -184,7 +180,7 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 
 	obj, shutdown := c.queue.Get()
 	if shutdown {
-		log.Info("Shutting down...")
+		log.Infof("[%s] shutting down...", c.queue.Name())
 		return false
 	}
 

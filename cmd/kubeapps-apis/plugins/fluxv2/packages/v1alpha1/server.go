@@ -57,7 +57,7 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string) (*Server, error) {
+func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}) (*Server, error) {
 	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v])", kubeappsCluster)
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
@@ -67,7 +67,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 
 	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
 		return nil, err
-	} else if chartCache, err := NewChartCache("chartCache", redisCli); err != nil {
+	} else if chartCache, err := NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err
 	} else {
 		s := repoCacheCallSite{
@@ -82,7 +82,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 			OnGetFunc:    s.onGetRepo,
 			OnDeleteFunc: s.onDeleteRepo,
 		}
-		if repoCache, err := cache.NewNamespacedResourceWatcherCache("repoCache", repoCacheConfig, redisCli); err != nil {
+		if repoCache, err := cache.NewNamespacedResourceWatcherCache(
+			"repoCache", repoCacheConfig, redisCli, stopCh); err != nil {
 			return nil, err
 		} else {
 			return &Server{

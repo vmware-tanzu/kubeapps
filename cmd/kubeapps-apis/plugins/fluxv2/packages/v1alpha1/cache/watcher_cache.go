@@ -119,7 +119,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	OnDeleteFunc KeyDeleterFunc
 }
 
-func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client) (*NamespacedResourceWatcherCache, error) {
+func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client, stopCh <-chan struct{}) (*NamespacedResourceWatcherCache, error) {
 	log.Infof("+NewNamespacedResourceWatcherCache(%s, %v, %v)", name, config.Gvr, redisCli)
 
 	if redisCli == nil {
@@ -153,14 +153,11 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		return nil, err
 	}
 
-	// dummy channel for now. Ideally, this would be passed in as an input argument
-	// and the caller would indicate when to stop
-	stopCh := make(chan struct{})
 	// this will launch a single worker that processes items on the work queue as they come in
 	// runWorker will loop until "something bad" happens.  The .Until will
 	// then rekick the worker after one second
-	// TODO (gfichtenholt) in theory, we should be able to launch multiple workers,
-	// and the workqueue will make sure that only a single worker works on an item with a given key.
+	// We should be able to launch multiple workers, and the workqueue will make sure that
+	// only a single worker works on an item with a given key.
 	// Test that actually is the case
 	go wait.Until(c.runWorker, time.Second, stopCh)
 
@@ -175,7 +172,7 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		return nil, err
 	}
 
-	go c.watchLoop(watcher)
+	go c.watchLoop(watcher, stopCh)
 	return &c, nil
 }
 
@@ -266,15 +263,21 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	return true
 }
 
-func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher) {
+func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher, stopCh <-chan struct{}) {
 	for {
-		c.processWatchEvents(watcher.ResultChan())
+		shutdown := c.processWatchEvents(watcher.ResultChan(), stopCh)
 		// if we are here, that means the RetryWatcher has stopped processing events
 		// due to what it thinks is an un-retryable error (such as HTTP 410 GONE),
 		// i.e. a pretty bad/unsual situation, we'll need to resync and restart the watcher
 		watcher.Stop()
 		// this should close the watcher channel
 		<-watcher.Done()
+
+		if shutdown {
+			log.Infof("[%s]: shutting down...", c.queue.Name())
+			return
+		}
+
 		// per https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes
 		log.Infof("Current watcher stopped. Will resync/create a new RetryWatcher...")
 		ok := false
@@ -372,44 +375,53 @@ func (c *NamespacedResourceWatcherCache) resync() (string, error) {
 }
 
 // this is loop that waits for new events and processes them when they happen
-func (c *NamespacedResourceWatcherCache) processWatchEvents(ch <-chan watch.Event) {
+func (c *NamespacedResourceWatcherCache) processWatchEvents(watchCh <-chan watch.Event, stopCh <-chan struct{}) (shutttingDown bool) {
 	for {
-		event, ok := <-ch
-		if !ok {
-			// This may happen due to
-			//   HTTP 410 (HTTP_GONE) "message": "too old resource version: 1 (2200654)"
-			// which according to https://kubernetes.io/docs/reference/using-api/api-concepts/
-			// "...means clients must handle the case by recognizing the status code 410 Gone,
-			// clearing their local cache, performing a list operation, and starting the watch
-			// from the resourceVersion returned by that new list operation
-			// OR it may also happen due to "cancel-able" context being canceled for whatever reason
-			log.Warning("Channel was closed unexpectedly")
-			return
-		}
-		if event.Type == "" {
-			// not quite sure why this happens (the docs don't say), but it seems to happen quite often
-			continue
-		}
-		log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrintObject(event.Object))
-		switch event.Type {
-		case watch.Added, watch.Modified, watch.Deleted:
-			if unstructuredObj, ok := event.Object.(*unstructured.Unstructured); !ok {
-				runtime.HandleError(fmt.Errorf("could not cast %s to unstructured.Unstructured", reflect.TypeOf(event.Object)))
-			} else {
-				if key, err := c.keyFor(unstructuredObj.Object); err != nil {
-					runtime.HandleError(err)
-				} else {
-					c.queue.AddRateLimited(key)
-				}
+		select {
+		case event, ok := <-watchCh:
+			if !ok {
+				// This may happen due to
+				//   HTTP 410 (HTTP_GONE) "message": "too old resource version: 1 (2200654)"
+				// which according to https://kubernetes.io/docs/reference/using-api/api-concepts/
+				// "...means clients must handle the case by recognizing the status code 410 Gone,
+				// clearing their local cache, performing a list operation, and starting the watch
+				// from the resourceVersion returned by that new list operation
+				// OR it may also happen due to "cancel-able" context being canceled for whatever reason
+				log.Warning("Channel was closed unexpectedly")
+				return false
 			}
-		case watch.Error:
-			// will let caller (RetryWatcher) deal with it
-			continue
+			c.processOneWatchEvent(event)
 
-		default:
-			// TODO (gfichtenholt) handle other kinds of events?
-			runtime.HandleError(fmt.Errorf("got unexpected event: %v", event))
+		case <-stopCh:
+			return true
 		}
+	}
+}
+
+func (c *NamespacedResourceWatcherCache) processOneWatchEvent(event watch.Event) {
+	if event.Type == "" {
+		// not quite sure why this happens (the docs don't say), but it seems to happen quite often
+		return
+	}
+	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrintObject(event.Object))
+	switch event.Type {
+	case watch.Added, watch.Modified, watch.Deleted:
+		if unstructuredObj, ok := event.Object.(*unstructured.Unstructured); !ok {
+			runtime.HandleError(fmt.Errorf("could not cast %s to unstructured.Unstructured", reflect.TypeOf(event.Object)))
+		} else {
+			if key, err := c.keyFor(unstructuredObj.Object); err != nil {
+				runtime.HandleError(err)
+			} else {
+				c.queue.AddRateLimited(key)
+			}
+		}
+	case watch.Error:
+		// will let caller (RetryWatcher) deal with it
+		return
+
+	default:
+		// TODO (gfichtenholt) handle other kinds of events?
+		runtime.HandleError(fmt.Errorf("got unexpected event: %v", event))
 	}
 }
 

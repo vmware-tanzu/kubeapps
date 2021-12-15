@@ -47,11 +47,12 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.Kubernete
 	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
 
-	// TODO (gfichtenholt) dummy channel for now. Ideally the caller (kubeappsapis-server)
-	// passes that in and signals when is being gracefully shut down.
+	// TODO (gfichtenholt) dummy channel for now. Ideally, the caller (kubeappsapis-server)
+	// passes that in and closes when is being gracefully shut down. That, or provide a
+	// 'Shutdown' hook
 	stopCh := make(chan struct{})
 
-	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName)
+	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName, stopCh)
 	if err != nil {
 		return nil, err
 	}

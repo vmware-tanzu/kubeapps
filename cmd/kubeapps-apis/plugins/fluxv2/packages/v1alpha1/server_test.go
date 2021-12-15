@@ -224,6 +224,9 @@ type testSpecChartWithUrl struct {
 // (unlike charts or releases) is that repos are treated special because
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
 func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig *action.Configuration, repos []runtime.Object, charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
+	stopCh := make(chan struct{})
+	t.Cleanup(func() { close(stopCh) })
+
 	redisCli, mock := redismock.NewClientMock()
 	mock.MatchExpectationsInOrder(false)
 
@@ -262,7 +265,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 	cachedChartIds := sets.String{}
 
 	if charts != nil {
-		chartCache, err = NewChartCache("chartCacheTest", redisCli)
+		chartCache, err = NewChartCache("chartCacheTest", redisCli, stopCh)
 		if err != nil {
 			return nil, mock, err
 		}
@@ -310,7 +313,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		OnDeleteFunc: cs.onDeleteRepo,
 	}
 
-	repoCache, err := cache.NewNamespacedResourceWatcherCache("repoCacheTest", cacheConfig, redisCli)
+	repoCache, err := cache.NewNamespacedResourceWatcherCache("repoCacheTest", cacheConfig, redisCli, stopCh)
 	if err != nil {
 		return nil, mock, err
 	}
