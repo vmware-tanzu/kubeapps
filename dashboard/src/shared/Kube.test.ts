@@ -264,5 +264,9 @@ describe("App", () => {
       const allowed = await Kube.canI("cluster", "v1", "namespaces", "create", "");
       expect(allowed).toBe(true);
     });
+    it("should ignore empty clusters", async () => {
+      const allowed = await Kube.canI("", "v1", "namespaces", "create", "");
+      expect(allowed).toBe(false);
+    });
   });
 });
