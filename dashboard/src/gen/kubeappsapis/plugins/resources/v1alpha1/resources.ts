@@ -15,6 +15,82 @@ import { share } from "rxjs/operators";
 export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
 
 /**
+ * SecretType
+ *
+ * The type of secret. Currently Kubeapps itself only deals with OPAQUE
+ * and docker config json secrets, but we define all so we can correctly
+ * list the secret names with their types.
+ * See https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
+ */
+export enum SecretType {
+  SECRET_TYPE_OPAQUE_UNSPECIFIED = 0,
+  SECRET_TYPE_SERVICE_ACCOUNT_TOKEN = 1,
+  SECRET_TYPE_DOCKER_CONFIG = 2,
+  SECRET_TYPE_DOCKER_CONFIG_JSON = 3,
+  SECRET_TYPE_BASIC_AUTH = 4,
+  SECRET_TYPE_SSH_AUTH = 5,
+  SECRET_TYPE_TLS = 6,
+  SECRET_TYPE_BOOTSTRAP_TOKEN = 7,
+  UNRECOGNIZED = -1,
+}
+
+export function secretTypeFromJSON(object: any): SecretType {
+  switch (object) {
+    case 0:
+    case "SECRET_TYPE_OPAQUE_UNSPECIFIED":
+      return SecretType.SECRET_TYPE_OPAQUE_UNSPECIFIED;
+    case 1:
+    case "SECRET_TYPE_SERVICE_ACCOUNT_TOKEN":
+      return SecretType.SECRET_TYPE_SERVICE_ACCOUNT_TOKEN;
+    case 2:
+    case "SECRET_TYPE_DOCKER_CONFIG":
+      return SecretType.SECRET_TYPE_DOCKER_CONFIG;
+    case 3:
+    case "SECRET_TYPE_DOCKER_CONFIG_JSON":
+      return SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON;
+    case 4:
+    case "SECRET_TYPE_BASIC_AUTH":
+      return SecretType.SECRET_TYPE_BASIC_AUTH;
+    case 5:
+    case "SECRET_TYPE_SSH_AUTH":
+      return SecretType.SECRET_TYPE_SSH_AUTH;
+    case 6:
+    case "SECRET_TYPE_TLS":
+      return SecretType.SECRET_TYPE_TLS;
+    case 7:
+    case "SECRET_TYPE_BOOTSTRAP_TOKEN":
+      return SecretType.SECRET_TYPE_BOOTSTRAP_TOKEN;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return SecretType.UNRECOGNIZED;
+  }
+}
+
+export function secretTypeToJSON(object: SecretType): string {
+  switch (object) {
+    case SecretType.SECRET_TYPE_OPAQUE_UNSPECIFIED:
+      return "SECRET_TYPE_OPAQUE_UNSPECIFIED";
+    case SecretType.SECRET_TYPE_SERVICE_ACCOUNT_TOKEN:
+      return "SECRET_TYPE_SERVICE_ACCOUNT_TOKEN";
+    case SecretType.SECRET_TYPE_DOCKER_CONFIG:
+      return "SECRET_TYPE_DOCKER_CONFIG";
+    case SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON:
+      return "SECRET_TYPE_DOCKER_CONFIG_JSON";
+    case SecretType.SECRET_TYPE_BASIC_AUTH:
+      return "SECRET_TYPE_BASIC_AUTH";
+    case SecretType.SECRET_TYPE_SSH_AUTH:
+      return "SECRET_TYPE_SSH_AUTH";
+    case SecretType.SECRET_TYPE_TLS:
+      return "SECRET_TYPE_TLS";
+    case SecretType.SECRET_TYPE_BOOTSTRAP_TOKEN:
+      return "SECRET_TYPE_BOOTSTRAP_TOKEN";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+/**
  * GetResourcesRequest
  *
  * Request for GetResources that specifies the resource references to get or watch.
@@ -109,6 +185,20 @@ export interface GetNamespaceNamesRequest {
 }
 
 /**
+ * GetNamespaceNamesResponse
+ *
+ * Response for GetNamespaceNames
+ */
+export interface GetNamespaceNamesResponse {
+  /**
+   * NamespaceNames
+   *
+   * The list of Namespace names.
+   */
+  namespaceNames: string[];
+}
+
+/**
  * CreateNamespaceRequest
  *
  * Request for CreateNamespace
@@ -128,20 +218,6 @@ export interface CreateNamespaceRequest {
  * Response for CreateNamespace
  */
 export interface CreateNamespaceResponse {}
-
-/**
- * GetNamespaceNamesResponse
- *
- * Response for GetNamespaceNames
- */
-export interface GetNamespaceNamesResponse {
-  /**
-   * NamespaceNames
-   *
-   * The list of Namespace names.
-   */
-  namespaceNames: string[];
-}
 
 /**
  * CheckNamespaceExistsRequest
@@ -164,6 +240,85 @@ export interface CheckNamespaceExistsRequest {
  */
 export interface CheckNamespaceExistsResponse {
   exists: boolean;
+}
+
+/**
+ * CreateSecretRequest
+ *
+ * Request for CreateSecret
+ */
+export interface CreateSecretRequest {
+  /**
+   * Context
+   *
+   * The context of the secret being created.
+   */
+  context?: Context;
+  /**
+   * Type
+   *
+   * The type of the secret. Valid values are defined by the Type enumeration.
+   */
+  type: SecretType;
+  /**
+   * Name
+   *
+   * The name of the secret.
+   */
+  name: string;
+  /**
+   * StringData
+   *
+   * The map of keys and values. Note that we use StringData here so that
+   * Kubernetes handles the base64 encoding of the key values for us.
+   * See https://kubernetes.io/docs/concepts/configuration/secret/#overview-of-secrets
+   */
+  stringData: { [key: string]: string };
+}
+
+export interface CreateSecretRequest_StringDataEntry {
+  key: string;
+  value: string;
+}
+
+/**
+ * CreateSecretResponse
+ *
+ * Response for CreateSecret
+ */
+export interface CreateSecretResponse {}
+
+/**
+ * GetSecretNamesRequest
+ *
+ * Request for GetSecretNames
+ */
+export interface GetSecretNamesRequest {
+  /**
+   * Context
+   *
+   * The context for which the secret names are being fetched.
+   */
+  context?: Context;
+}
+
+/**
+ * GetSecretNamesResponse
+ *
+ * Response for GetSecretNames
+ */
+export interface GetSecretNamesResponse {
+  /**
+   * SecretNames
+   *
+   * The list of Service Account names.
+   */
+  secretNames: { [key: string]: SecretType };
+}
+
+export interface GetSecretNamesResponse_SecretNamesEntry {
+  key: string;
+  value: SecretType;
 }
 
 const baseGetResourcesRequest: object = { watch: false };
@@ -507,6 +662,66 @@ export const GetNamespaceNamesRequest = {
   },
 };
 
+const baseGetNamespaceNamesResponse: object = { namespaceNames: "" };
+
+export const GetNamespaceNamesResponse = {
+  encode(message: GetNamespaceNamesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.namespaceNames) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetNamespaceNamesResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseGetNamespaceNamesResponse,
+    } as GetNamespaceNamesResponse;
+    message.namespaceNames = [];
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.namespaceNames.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetNamespaceNamesResponse {
+    const message = {
+      ...baseGetNamespaceNamesResponse,
+    } as GetNamespaceNamesResponse;
+    message.namespaceNames = (object.namespaceNames ?? []).map((e: any) => String(e));
+    return message;
+  },
+
+  toJSON(message: GetNamespaceNamesResponse): unknown {
+    const obj: any = {};
+    if (message.namespaceNames) {
+      obj.namespaceNames = message.namespaceNames.map(e => e);
+    } else {
+      obj.namespaceNames = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesResponse>, I>>(
+    object: I,
+  ): GetNamespaceNamesResponse {
+    const message = {
+      ...baseGetNamespaceNamesResponse,
+    } as GetNamespaceNamesResponse;
+    message.namespaceNames = object.namespaceNames?.map(e => e) || [];
+    return message;
+  },
+};
+
 const baseCreateNamespaceRequest: object = {};
 
 export const CreateNamespaceRequest = {
@@ -605,66 +820,6 @@ export const CreateNamespaceResponse = {
     const message = {
       ...baseCreateNamespaceResponse,
     } as CreateNamespaceResponse;
-    return message;
-  },
-};
-
-const baseGetNamespaceNamesResponse: object = { namespaceNames: "" };
-
-export const GetNamespaceNamesResponse = {
-  encode(message: GetNamespaceNamesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.namespaceNames) {
-      writer.uint32(10).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetNamespaceNamesResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseGetNamespaceNamesResponse,
-    } as GetNamespaceNamesResponse;
-    message.namespaceNames = [];
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.namespaceNames.push(reader.string());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): GetNamespaceNamesResponse {
-    const message = {
-      ...baseGetNamespaceNamesResponse,
-    } as GetNamespaceNamesResponse;
-    message.namespaceNames = (object.namespaceNames ?? []).map((e: any) => String(e));
-    return message;
-  },
-
-  toJSON(message: GetNamespaceNamesResponse): unknown {
-    const obj: any = {};
-    if (message.namespaceNames) {
-      obj.namespaceNames = message.namespaceNames.map(e => e);
-    } else {
-      obj.namespaceNames = [];
-    }
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesResponse>, I>>(
-    object: I,
-  ): GetNamespaceNamesResponse {
-    const message = {
-      ...baseGetNamespaceNamesResponse,
-    } as GetNamespaceNamesResponse;
-    message.namespaceNames = object.namespaceNames?.map(e => e) || [];
     return message;
   },
 };
@@ -793,6 +948,419 @@ export const CheckNamespaceExistsResponse = {
   },
 };
 
+const baseCreateSecretRequest: object = { type: 0, name: "" };
+
+export const CreateSecretRequest = {
+  encode(message: CreateSecretRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.type !== 0) {
+      writer.uint32(16).int32(message.type);
+    }
+    if (message.name !== "") {
+      writer.uint32(26).string(message.name);
+    }
+    Object.entries(message.stringData).forEach(([key, value]) => {
+      CreateSecretRequest_StringDataEntry.encode(
+        { key: key as any, value },
+        writer.uint32(34).fork(),
+      ).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateSecretRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseCreateSecretRequest } as CreateSecretRequest;
+    message.stringData = {};
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.type = reader.int32() as any;
+          break;
+        case 3:
+          message.name = reader.string();
+          break;
+        case 4:
+          const entry4 = CreateSecretRequest_StringDataEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.stringData[entry4.key] = entry4.value;
+          }
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSecretRequest {
+    const message = { ...baseCreateSecretRequest } as CreateSecretRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    message.type =
+      object.type !== undefined && object.type !== null ? secretTypeFromJSON(object.type) : 0;
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.stringData = Object.entries(object.stringData ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      acc[key] = String(value);
+      return acc;
+    }, {});
+    return message;
+  },
+
+  toJSON(message: CreateSecretRequest): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.type !== undefined && (obj.type = secretTypeToJSON(message.type));
+    message.name !== undefined && (obj.name = message.name);
+    obj.stringData = {};
+    if (message.stringData) {
+      Object.entries(message.stringData).forEach(([k, v]) => {
+        obj.stringData[k] = v;
+      });
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CreateSecretRequest>, I>>(
+    object: I,
+  ): CreateSecretRequest {
+    const message = { ...baseCreateSecretRequest } as CreateSecretRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    message.type = object.type ?? 0;
+    message.name = object.name ?? "";
+    message.stringData = Object.entries(object.stringData ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+const baseCreateSecretRequest_StringDataEntry: object = { key: "", value: "" };
+
+export const CreateSecretRequest_StringDataEntry = {
+  encode(
+    message: CreateSecretRequest_StringDataEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateSecretRequest_StringDataEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseCreateSecretRequest_StringDataEntry,
+    } as CreateSecretRequest_StringDataEntry;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateSecretRequest_StringDataEntry {
+    const message = {
+      ...baseCreateSecretRequest_StringDataEntry,
+    } as CreateSecretRequest_StringDataEntry;
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value = object.value !== undefined && object.value !== null ? String(object.value) : "";
+    return message;
+  },
+
+  toJSON(message: CreateSecretRequest_StringDataEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CreateSecretRequest_StringDataEntry>, I>>(
+    object: I,
+  ): CreateSecretRequest_StringDataEntry {
+    const message = {
+      ...baseCreateSecretRequest_StringDataEntry,
+    } as CreateSecretRequest_StringDataEntry;
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+const baseCreateSecretResponse: object = {};
+
+export const CreateSecretResponse = {
+  encode(_: CreateSecretResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateSecretResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseCreateSecretResponse } as CreateSecretResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): CreateSecretResponse {
+    const message = { ...baseCreateSecretResponse } as CreateSecretResponse;
+    return message;
+  },
+
+  toJSON(_: CreateSecretResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CreateSecretResponse>, I>>(_: I): CreateSecretResponse {
+    const message = { ...baseCreateSecretResponse } as CreateSecretResponse;
+    return message;
+  },
+};
+
+const baseGetSecretNamesRequest: object = {};
+
+export const GetSecretNamesRequest = {
+  encode(message: GetSecretNamesRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetSecretNamesRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseGetSecretNamesRequest } as GetSecretNamesRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSecretNamesRequest {
+    const message = { ...baseGetSecretNamesRequest } as GetSecretNamesRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
+    return message;
+  },
+
+  toJSON(message: GetSecretNamesRequest): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetSecretNamesRequest>, I>>(
+    object: I,
+  ): GetSecretNamesRequest {
+    const message = { ...baseGetSecretNamesRequest } as GetSecretNamesRequest;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    return message;
+  },
+};
+
+const baseGetSecretNamesResponse: object = {};
+
+export const GetSecretNamesResponse = {
+  encode(message: GetSecretNamesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    Object.entries(message.secretNames).forEach(([key, value]) => {
+      GetSecretNamesResponse_SecretNamesEntry.encode(
+        { key: key as any, value },
+        writer.uint32(10).fork(),
+      ).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetSecretNamesResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseGetSecretNamesResponse } as GetSecretNamesResponse;
+    message.secretNames = {};
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          const entry1 = GetSecretNamesResponse_SecretNamesEntry.decode(reader, reader.uint32());
+          if (entry1.value !== undefined) {
+            message.secretNames[entry1.key] = entry1.value;
+          }
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSecretNamesResponse {
+    const message = { ...baseGetSecretNamesResponse } as GetSecretNamesResponse;
+    message.secretNames = Object.entries(object.secretNames ?? {}).reduce<{
+      [key: string]: SecretType;
+    }>((acc, [key, value]) => {
+      acc[key] = value as number;
+      return acc;
+    }, {});
+    return message;
+  },
+
+  toJSON(message: GetSecretNamesResponse): unknown {
+    const obj: any = {};
+    obj.secretNames = {};
+    if (message.secretNames) {
+      Object.entries(message.secretNames).forEach(([k, v]) => {
+        obj.secretNames[k] = secretTypeToJSON(v);
+      });
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetSecretNamesResponse>, I>>(
+    object: I,
+  ): GetSecretNamesResponse {
+    const message = { ...baseGetSecretNamesResponse } as GetSecretNamesResponse;
+    message.secretNames = Object.entries(object.secretNames ?? {}).reduce<{
+      [key: string]: SecretType;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value as number;
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+const baseGetSecretNamesResponse_SecretNamesEntry: object = {
+  key: "",
+  value: 0,
+};
+
+export const GetSecretNamesResponse_SecretNamesEntry = {
+  encode(
+    message: GetSecretNamesResponse_SecretNamesEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== 0) {
+      writer.uint32(16).int32(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetSecretNamesResponse_SecretNamesEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseGetSecretNamesResponse_SecretNamesEntry,
+    } as GetSecretNamesResponse_SecretNamesEntry;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.int32() as any;
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetSecretNamesResponse_SecretNamesEntry {
+    const message = {
+      ...baseGetSecretNamesResponse_SecretNamesEntry,
+    } as GetSecretNamesResponse_SecretNamesEntry;
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value =
+      object.value !== undefined && object.value !== null ? secretTypeFromJSON(object.value) : 0;
+    return message;
+  },
+
+  toJSON(message: GetSecretNamesResponse_SecretNamesEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = secretTypeToJSON(message.value));
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetSecretNamesResponse_SecretNamesEntry>, I>>(
+    object: I,
+  ): GetSecretNamesResponse_SecretNamesEntry {
+    const message = {
+      ...baseGetSecretNamesResponse_SecretNamesEntry,
+    } as GetSecretNamesResponse_SecretNamesEntry;
+    message.key = object.key ?? "";
+    message.value = object.value ?? 0;
+    return message;
+  },
+};
+
 /**
  * ResourcesService
  *
@@ -820,6 +1388,14 @@ export interface ResourcesService {
     request: DeepPartial<CheckNamespaceExistsRequest>,
     metadata?: grpc.Metadata,
   ): Promise<CheckNamespaceExistsResponse>;
+  GetSecretNames(
+    request: DeepPartial<GetSecretNamesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetSecretNamesResponse>;
+  CreateSecret(
+    request: DeepPartial<CreateSecretRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateSecretResponse>;
 }
 
 export class ResourcesServiceClientImpl implements ResourcesService {
@@ -832,6 +1408,8 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     this.GetNamespaceNames = this.GetNamespaceNames.bind(this);
     this.CreateNamespace = this.CreateNamespace.bind(this);
     this.CheckNamespaceExists = this.CheckNamespaceExists.bind(this);
+    this.GetSecretNames = this.GetSecretNames.bind(this);
+    this.CreateSecret = this.CreateSecret.bind(this);
   }
 
   GetResources(
@@ -885,6 +1463,28 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     return this.rpc.unary(
       ResourcesServiceCheckNamespaceExistsDesc,
       CheckNamespaceExistsRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetSecretNames(
+    request: DeepPartial<GetSecretNamesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetSecretNamesResponse> {
+    return this.rpc.unary(
+      ResourcesServiceGetSecretNamesDesc,
+      GetSecretNamesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  CreateSecret(
+    request: DeepPartial<CreateSecretRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateSecretResponse> {
+    return this.rpc.unary(
+      ResourcesServiceCreateSecretDesc,
+      CreateSecretRequest.fromPartial(request),
       metadata,
     );
   }
@@ -996,6 +1596,50 @@ export const ResourcesServiceCheckNamespaceExistsDesc: UnaryMethodDefinitionish 
     deserializeBinary(data: Uint8Array) {
       return {
         ...CheckNamespaceExistsResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const ResourcesServiceGetSecretNamesDesc: UnaryMethodDefinitionish = {
+  methodName: "GetSecretNames",
+  service: ResourcesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetSecretNamesRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetSecretNamesResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const ResourcesServiceCreateSecretDesc: UnaryMethodDefinitionish = {
+  methodName: "CreateSecret",
+  service: ResourcesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CreateSecretRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CreateSecretResponse.decode(data),
         toObject() {
           return this;
         },

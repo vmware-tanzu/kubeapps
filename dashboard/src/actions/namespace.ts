@@ -7,11 +7,11 @@ import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
 
-export const requestNamespace = createAction("REQUEST_NAMESPACE", resolve => {
+export const requestNamespaceExists = createAction("REQUEST_NAMESPACE", resolve => {
   return (cluster: string, namespace: string) => resolve({ cluster, namespace });
 });
-export const receiveNamespace = createAction("RECEIVE_NAMESPACE", resolve => {
-  return (cluster: string, namespace: IResource) => resolve({ cluster, namespace });
+export const receiveNamespaceExists = createAction("RECEIVE_NAMESPACE", resolve => {
+  return (cluster: string, namespace: string) => resolve({ cluster, namespace });
 });
 
 export const setNamespaceState = createAction("SET_NAMESPACE", resolve => {
@@ -37,8 +37,8 @@ export const setAllowCreate = createAction("ALLOW_CREATE_NAMESPACE", resolve => 
 export const clearClusters = createAction("CLEAR_CLUSTERS");
 
 const allActions = [
-  requestNamespace,
-  receiveNamespace,
+  requestNamespaceExists,
+  receiveNamespaceExists,
   setNamespaceState,
   receiveNamespaces,
   errorNamespaces,
@@ -93,16 +93,18 @@ export function createNamespace(
   };
 }
 
-export function getNamespace(
+export function checkNamespaceExists(
   cluster: string,
   ns: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
-      dispatch(requestNamespace(cluster, ns));
-      const namespace = await Namespace.get(cluster, ns);
-      dispatch(receiveNamespace(cluster, namespace));
-      return true;
+      dispatch(requestNamespaceExists(cluster, ns));
+      const exists = await Namespace.exists(cluster, ns);
+      if (exists) {
+        dispatch(receiveNamespaceExists(cluster, ns));
+      }
+      return exists;
     } catch (e: any) {
       dispatch(errorNamespaces(cluster, e, "get"));
       return false;

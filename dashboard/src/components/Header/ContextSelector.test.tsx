@@ -19,7 +19,7 @@ beforeEach(() => {
   actions.namespace = {
     ...actions.namespace,
     fetchNamespaces: jest.fn(),
-    getNamespace: jest.fn(),
+    checkNamespaceExists: jest.fn(),
     setNamespace: jest.fn(),
     createNamespace: jest.fn(),
   };
@@ -37,11 +37,11 @@ afterEach(() => {
 });
 
 it("gets a namespace", () => {
-  const getNamespace = jest.fn();
-  actions.namespace.getNamespace = getNamespace;
+  const checkNamespaceExists = jest.fn();
+  actions.namespace.checkNamespaceExists = checkNamespaceExists;
   mountWrapper(defaultStore, <ContextSelector />);
 
-  expect(getNamespace).toHaveBeenCalledWith(
+  expect(checkNamespaceExists).toHaveBeenCalledWith(
     initialState.clusters.currentCluster,
     initialState.clusters.clusters[initialState.clusters.currentCluster].currentNamespace,
   );

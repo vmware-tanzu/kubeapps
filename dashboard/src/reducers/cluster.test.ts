@@ -3,7 +3,6 @@ import { Location } from "history";
 import context from "jest-plugin-context";
 import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";
-import { IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import clusterReducer, { IClustersState, initialState } from "./cluster";
@@ -179,10 +178,10 @@ describe("clusterReducer", () => {
             },
           } as IClustersState,
           {
-            type: getType(actions.namespace.receiveNamespace),
+            type: getType(actions.namespace.receiveNamespaceExists),
             payload: {
               cluster: "other",
-              namespace: { metadata: { name: "bar" } } as IResource,
+              namespace: "bar",
             },
           },
         ),

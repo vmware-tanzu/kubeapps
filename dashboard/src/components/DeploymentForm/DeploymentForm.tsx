@@ -1,5 +1,6 @@
-import { CdsFormGroup } from "@cds/react/forms";
+import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
+import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import Alert from "components/js/Alert";
@@ -7,7 +8,10 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import { push } from "connected-react-router";
-import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageReference,
+  ReconciliationOptions,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,11 +19,12 @@ import * as ReactRouter from "react-router";
 import "react-tabs/style/react-tabs.css";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { Kube } from "shared/Kube";
 import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
+import { getPluginsRequiringSA } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
-
 interface IRouteParams {
   cluster: string;
   namespace: string;
@@ -52,10 +57,19 @@ export default function DeploymentForm() {
   const [releaseName, setReleaseName] = useState("");
   const [appValues, setAppValues] = useState(selectedPackage.values || "");
   const [valuesModified, setValuesModified] = useState(false);
+  const [serviceAccountList, setServiceAccountList] = useState([] as string[]);
+  const [reconciliationOptions, setReconciliationOptions] = useState({} as ReconciliationOptions);
 
   const error = apps.error || selectedPackage.error;
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
+
+  const onChangeSA = (e: React.FormEvent<HTMLSelectElement>) => {
+    setReconciliationOptions({
+      ...reconciliationOptions,
+      serviceAccountName: e.currentTarget.value,
+    });
+  };
 
   const [packageReference] = useState({
     context: {
@@ -75,6 +89,17 @@ export default function DeploymentForm() {
     dispatch(actions.packages.fetchAvailablePackageVersions(packageReference));
     return () => {};
   }, [dispatch, packageReference, packageVersion]);
+
+  useEffect(() => {
+    // Populate the service account list if the plugin requires it
+    if (getPluginsRequiringSA().includes(pluginObj.name)) {
+      // We assume the user has enough permissions to do that. Fallback to a simple input maybe?
+      Kube.getServiceAccountNames(targetCluster, targetNamespace).then(saList =>
+        setServiceAccountList(saList.serviceaccountNames),
+      );
+    }
+    return () => {};
+  }, [dispatch, targetCluster, targetNamespace, pluginObj.name]);
 
   useEffect(() => {
     if (!valuesModified) {
@@ -108,6 +133,7 @@ export default function DeploymentForm() {
           releaseName,
           appValues,
           selectedPackage.schema,
+          reconciliationOptions,
         ),
       );
       setDeploying(false);
@@ -191,7 +217,37 @@ export default function DeploymentForm() {
                     value={releaseName}
                     required={true}
                   />
+                  <CdsControlMessage error="valueMissing">
+                    A descriptive name for this application
+                  </CdsControlMessage>
                 </CdsInput>
+                {
+                  // TODO(agamez): let plugins define their own components instead of hardcoding the logic here
+                  getPluginsRequiringSA().includes(pluginObj.name) ? (
+                    <>
+                      <CdsSelect layout="horizontal" id="serviceaccount-selector">
+                        <label>Service Account</label>
+                        <select
+                          value={reconciliationOptions.serviceAccountName}
+                          onChange={onChangeSA}
+                          required={true}
+                        >
+                          <option key=""></option>
+                          {serviceAccountList?.map(o => (
+                            <option key={o} value={o}>
+                              {o}
+                            </option>
+                          ))}
+                        </select>
+                        <CdsControlMessage error="valueMissing">
+                          The Service Account name this application will be installed with.
+                        </CdsControlMessage>
+                      </CdsSelect>
+                    </>
+                  ) : (
+                    <></>
+                  )
+                }
               </CdsFormGroup>
               <DeploymentFormBody
                 deploymentEvent="install"
