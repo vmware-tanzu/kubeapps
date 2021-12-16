@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/kubeapps/common/response"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/kubeapps/kubeapps/pkg/kube"
+	"github.com/kubeapps/kubeapps/pkg/response"
 	"github.com/urfave/negroni"
 )
 
