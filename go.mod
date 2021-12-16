@@ -35,7 +35,7 @@ replace (
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.4
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.22.4
 
-	// required by helm 3.7.1, new versions have breaking changes
+	// required by helm, new versions have breaking changes
 	oras.land/oras-go => oras.land/oras-go v0.4.0
 )
 
@@ -57,7 +57,6 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.6
 	github.com/jinzhu/copier v0.3.4
-	github.com/kubeapps/common v0.0.0-20200304064434-f6ba82e79f47
 	github.com/lib/pq v1.10.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.2
@@ -120,7 +119,6 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-errors/errors v1.4.1 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
@@ -184,7 +182,6 @@ require (
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
-	github.com/unrolled/render v1.4.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect

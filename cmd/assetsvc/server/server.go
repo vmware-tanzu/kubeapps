@@ -23,8 +23,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/urfave/negroni"
 	log "k8s.io/klog/v2"
 )
@@ -75,7 +75,7 @@ func setupRoutes() http.Handler {
 }
 
 func Serve(serveOpts ServeOptions) error {
-	dbConfig := datastore.Config{URL: *&serveOpts.DbURL, Database: *&serveOpts.DbName, Username: *&serveOpts.DbUsername, Password: serveOpts.DbPassword}
+	dbConfig := dbutils.Config{URL: *&serveOpts.DbURL, Database: *&serveOpts.DbName, Username: *&serveOpts.DbUsername, Password: serveOpts.DbPassword}
 
 	var err error
 	manager, err = utils.NewManager("postgresql", dbConfig, serveOpts.KubeappsNamespace)

@@ -35,9 +35,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/disintegration/imaging"
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/common/datastore"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
@@ -377,7 +377,7 @@ func Test_newManager(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := datastore.Config{URL: tt.dbURL, Database: tt.dbName, Username: tt.dbUser, Password: tt.dbPass}
+			config := dbutils.Config{URL: tt.dbURL, Database: tt.dbName, Username: tt.dbUser, Password: tt.dbPass}
 			_, err := newManager(config, "kubeapps")
 			assert.NoError(t, err)
 		})

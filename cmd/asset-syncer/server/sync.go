@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "k8s.io/klog/v2"
@@ -34,7 +34,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 		return fmt.Errorf("Need exactly three arguments: [REPO NAME] [REPO URL] [REPO TYPE] (got %v)", len(args))
 	}
 
-	dbConfig := datastore.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
+	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
 	kubeappsNamespace := serveOpts.KubeappsNamespace
 	manager, err := newManager(dbConfig, kubeappsNamespace)
 	if err != nil {
