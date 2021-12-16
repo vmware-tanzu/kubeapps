@@ -18,16 +18,9 @@ limitations under the License.
 package response
 
 import (
+	"encoding/json"
 	"net/http"
-
-	"github.com/unrolled/render"
 )
-
-var renderer *render.Render
-
-func init() {
-	renderer = render.New(render.Options{})
-}
 
 /*
 ErrorResponse describes a JSON error response with the following body:
@@ -47,7 +40,12 @@ func NewErrorResponse(code int, message string) ErrorResponse {
 }
 
 func (e ErrorResponse) Write(w http.ResponseWriter) {
-	renderer.JSON(w, e.Code, e)
+	responseBody, err := json.Marshal(e)
+	if err != nil {
+		return
+	}
+	w.WriteHeader(e.Code)
+	w.Write(responseBody)
 }
 
 /*
@@ -82,6 +80,11 @@ func (r DataResponse) WithCode(code int) DataResponse {
 	return r
 }
 
-func (r DataResponse) Write(w http.ResponseWriter) {
-	renderer.JSON(w, r.Code, r)
+func (d DataResponse) Write(w http.ResponseWriter) {
+	responseBody, err := json.Marshal(d)
+	if err != nil {
+		return
+	}
+	w.WriteHeader(d.Code)
+	w.Write(responseBody)
 }
