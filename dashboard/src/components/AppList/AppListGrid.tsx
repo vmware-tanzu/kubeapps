@@ -67,7 +67,7 @@ function AppListGrid(props: IAppListProps) {
           return (
             <CustomResourceListItem
               cluster={cluster}
-              key={r.metadata.name}
+              key={r.metadata.name + "_" + r.metadata.namespace}
               resource={r}
               csv={csv!}
             />
