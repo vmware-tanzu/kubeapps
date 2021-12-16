@@ -67,7 +67,7 @@ type PostgresAssetManager struct {
 }
 
 // NewPGManager creates an asset manager for PG
-func NewPGManager(config dbutils.Config, kubeappsNamespace string) (*PostgresAssetManager, error) {
+func NewPGManager(config Config, kubeappsNamespace string) (*PostgresAssetManager, error) {
 	url := strings.Split(config.URL, ":")
 	if len(url) != 2 {
 		return nil, fmt.Errorf("Can't parse database URL: %s", config.URL)

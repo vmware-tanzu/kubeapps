@@ -25,7 +25,7 @@ import (
 )
 
 func Test_NewPGManager(t *testing.T) {
-	config := dbutils.Config{URL: "10.11.12.13:5432", Database: "assets", Username: "postgres", Password: "123"}
+	config := Config{URL: "10.11.12.13:5432", Database: "assets", Username: "postgres", Password: "123"}
 	m, err := NewPGManager(config, "kubeapps")
 	if err != nil {
 		t.Errorf("Found error %v", err)
