@@ -24,7 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	_ "github.com/lib/pq"
@@ -36,7 +35,7 @@ type postgresAssetManager struct {
 	*dbutils.PostgresAssetManager
 }
 
-func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
+func newPGManager(config dbutils.Config, kubeappsNamespace string) (assetManager, error) {
 	m, err := dbutils.NewPGManager(config, kubeappsNamespace)
 	if err != nil {
 		return nil, err

@@ -17,8 +17,8 @@ limitations under the License.
 package utils
 
 import (
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
 type AssetManager interface {
@@ -42,6 +42,6 @@ type ChartQuery struct {
 	Categories  []string
 }
 
-func NewManager(databaseType string, config datastore.Config, kubeappsNamespace string) (AssetManager, error) {
+func NewManager(databaseType string, config dbutils.Config, kubeappsNamespace string) (AssetManager, error) {
 	return NewPGManager(config, kubeappsNamespace)
 }

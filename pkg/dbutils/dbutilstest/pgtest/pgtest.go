@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
@@ -39,7 +38,7 @@ func SkipIfNoDB(t *testing.T) {
 }
 
 func openTestManager(t *testing.T) *dbutils.PostgresAssetManager {
-	pam, err := dbutils.NewPGManager(datastore.Config{
+	pam, err := dbutils.NewPGManager(dbutils.Config{
 		URL:      "localhost:5432",
 		Database: "testdb",
 		Username: "postgres",

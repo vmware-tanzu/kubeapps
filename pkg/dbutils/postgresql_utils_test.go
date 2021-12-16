@@ -21,12 +21,11 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 )
 
 func Test_NewPGManager(t *testing.T) {
-	config := datastore.Config{URL: "10.11.12.13:5432", Database: "assets", Username: "postgres", Password: "123"}
+	config := dbutils.Config{URL: "10.11.12.13:5432", Database: "assets", Username: "postgres", Password: "123"}
 	m, err := NewPGManager(config, "kubeapps")
 	if err != nil {
 		t.Errorf("Found error %v", err)
