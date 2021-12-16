@@ -27,6 +27,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
@@ -44,6 +45,27 @@ import (
 	"k8s.io/client-go/rest"
 	log "k8s.io/klog/v2"
 )
+
+const (
+	// copied from helm plug-in
+	UserAgentPrefix = "kubeapps-apis/plugins"
+)
+
+// Set the pluginDetail once during a module init function so the single struct
+// can be used throughout the plugin.
+var (
+	pluginDetail plugins.Plugin
+	// This version var is updated during the build (see the -ldflags option
+	// in the cmd/kubeapps-apis/Dockerfile)
+	version = "devel"
+)
+
+func init() {
+	pluginDetail = plugins.Plugin{
+		Name:    "fluxv2.packages",
+		Version: "v1alpha1",
+	}
+}
 
 //
 // miscellaneous utility funcs
@@ -352,10 +374,8 @@ func NewHttpClientAndHeaders(clientOptions *ClientOptions) (*http.Client, map[st
 	// I wish I could have re-used the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
 	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
 	headers := make(map[string]string)
+	headers["User-Agent"] = userAgentString()
 	if clientOptions != nil {
-		if clientOptions.UserAgent != "" {
-			headers["User-Agent"] = clientOptions.UserAgent
-		}
 		if clientOptions.Username != "" && clientOptions.Password != "" {
 			auth := clientOptions.Username + ":" + clientOptions.Password
 			headers["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
@@ -387,4 +407,14 @@ func NewHttpClientAndHeaders(clientOptions *ClientOptions) (*http.Client, map[st
 		return nil, nil, err
 	}
 	return client, headers, nil
+}
+
+// this string is the same for all outbound calls
+func userAgentString() string {
+	return fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
+}
+
+// GetPluginDetail returns a core.plugins.Plugin describing itself.
+func GetPluginDetail() *plugins.Plugin {
+	return &pluginDetail
 }

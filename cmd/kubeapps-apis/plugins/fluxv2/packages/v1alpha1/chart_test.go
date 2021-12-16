@@ -27,6 +27,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/pkg/errors"
@@ -219,7 +220,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				chartVersion = charts[0].chartRevision
 				requestChartUrl = charts[0].chartUrl
 			}
-			chartCacheKey, err := s.chartCache.keyFor(
+			chartCacheKey, err := s.chartCache.KeyFor(
 				repoNamespace,
 				tc.request.AvailablePackageRef.Identifier,
 				chartVersion)
@@ -312,7 +313,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		requestChartUrl := charts[0].chartUrl
 
 		s.redisMockExpectGetFromRepoCache(mock, nil, repo)
-		chartCacheKey, err := s.chartCache.keyFor(
+		chartCacheKey, err := s.chartCache.KeyFor(
 			repoNamespace,
 			packageIdentifier,
 			chartVersion)
@@ -487,7 +488,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				requestChartName := strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[1]
 				chartExists := requestChartName == "redis"
 				if chartExists {
-					chartCacheKey, err := s.chartCache.keyFor(
+					chartCacheKey, err := s.chartCache.KeyFor(
 						requestRepoNamespace,
 						tc.request.AvailablePackageRef.Identifier,
 						tc.request.PkgVersion)
@@ -736,7 +737,7 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts 
 	if err != nil {
 		return err
 	}
-	byteArray, err := chartCacheComputeValue(chartID, url, version, opts)
+	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
 	if err != nil {
 		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
 	}
@@ -752,7 +753,7 @@ func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string
 		if err != nil {
 			return err
 		}
-		bytes, err := chartCacheComputeValue(chartID, url, version, opts)
+		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
 		if err != nil {
 			return err
 		}

@@ -22,6 +22,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
@@ -100,7 +101,7 @@ func (s *Server) availableChartDetail(ctx context.Context, repoName types.Namesp
 	if chartVersion == "" {
 		chartVersion = chartModel.ChartVersions[0].Version
 	}
-	key, err := s.chartCache.keyFor(repoName.Namespace, chartModel.ID, chartVersion)
+	key, err := s.chartCache.KeyFor(repoName.Namespace, chartModel.ID, chartVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +191,7 @@ func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 
 	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
 		Identifier: chart.ID,
-		Plugin:     GetPluginDetail(),
+		Plugin:     common.GetPluginDetail(),
 	}
 	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 
@@ -336,7 +337,7 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 		Maintainers:      maintainers,
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: chartID,
-			Plugin:     GetPluginDetail(),
+			Plugin:     common.GetPluginDetail(),
 			Context:    &corev1.Context{},
 		},
 	}

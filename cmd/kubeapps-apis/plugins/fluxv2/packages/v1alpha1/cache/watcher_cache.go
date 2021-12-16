@@ -43,7 +43,7 @@ import (
 
 const (
 	// max number of retries due to transient errors
-	MaxRetries = 5
+	NamespacedResourceWatcherCacheMaxRetries = 5
 )
 
 // a type of cache that is based on watching for changes to specified kubernetes resources.
@@ -251,8 +251,8 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	if err == nil {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
-	} else if c.queue.NumRequeues(key) < MaxRetries {
-		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, MaxRetries-c.queue.NumRequeues(key), err)
+	} else if c.queue.NumRequeues(key) < NamespacedResourceWatcherCacheMaxRetries {
+		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, NamespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
 		c.queue.AddRateLimited(key)
 	} else {
 		// err != nil and too many retries

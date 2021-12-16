@@ -52,7 +52,7 @@ type Server struct {
 	actionConfigGetter common.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
-	chartCache *ChartCache
+	chartCache *cache.ChartCache
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -67,7 +67,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 
 	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
 		return nil, err
-	} else if chartCache, err := NewChartCache("chartCache", redisCli, stopCh); err != nil {
+	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err
 	} else {
 		s := repoCacheCallSite{

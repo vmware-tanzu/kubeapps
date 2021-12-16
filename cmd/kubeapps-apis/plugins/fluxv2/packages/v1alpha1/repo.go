@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
@@ -204,7 +205,7 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repo types.Namespaced
 //
 type repoCacheCallSite struct {
 	clientGetter common.ClientGetterFunc
-	chartCache   *ChartCache // chartCache maybe nil only in unit tests
+	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
 }
 
 // this is what we store in the cache for each cached repo
@@ -269,7 +270,7 @@ func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map
 			// resource "secrets" in API group "" in the namespace "default"
 			// So we still finish the indexing of the repo but skip the charts
 			log.Errorf("Failed to read secret for repo due to: %+v", err)
-		} else if err = s.chartCache.syncCharts(charts, opts); err != nil {
+		} else if err = s.chartCache.SyncCharts(charts, opts); err != nil {
 			return nil, false, err
 		}
 	}
@@ -398,7 +399,7 @@ func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
 	if s.chartCache != nil {
 		if name, err := s.fromKey(key); err != nil {
 			return false, err
-		} else if err := s.chartCache.deleteChartsForRepo(name); err != nil {
+		} else if err := s.chartCache.DeleteChartsForRepo(name); err != nil {
 			return false, err
 		}
 	}

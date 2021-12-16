@@ -10,7 +10,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package cache
 
 import (
 	"bytes"
@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -38,20 +37,15 @@ import (
 )
 
 const (
-	// copied from helm plug-in
-	UserAgentPrefix = "kubeapps-apis/plugins"
 	// max number of retries due to transient errors
-	MaxRetries = 5
+	ChartCacheMaxRetries = 5
 	// number of background workers to process work queue items
-	MaxWorkers = 2
+	ChartCacheMaxWorkers = 2
 )
 
-// For now:
 // unlike NamespacedResourceWatcherCache this is not a general purpose cache meant to
 // be re-used. It is written specifically for one purpose of caching helm chart details
-// and has ties into the internals of repo and chart.go. So, it exists outside the cache
-// package
-// TODO (gfichtenholt): clean this up if possible, and move into cache package
+// and has ties into the internals of repo and chart.go.
 
 type ChartCache struct {
 	redisCli *redis.Client
@@ -61,7 +55,7 @@ type ChartCache struct {
 	// means we can ensure we only process a fixed amount of resources at a
 	// time and makes it easy to ensure we are never processing the same item
 	// simultaneously in different workers.
-	queue cache.RateLimitingInterface
+	queue RateLimitingInterface
 
 	// this is a transient (temporary) store only used to keep track of
 	// state (chart url, etc) during the time window between AddRateLimited()
@@ -96,14 +90,14 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 
 	c := ChartCache{
 		redisCli:   redisCli,
-		queue:      cache.NewRateLimitingQueue(name, debugQueue),
+		queue:      NewRateLimitingQueue(name, debugQueue),
 		processing: k8scache.NewStore(chartCacheKeyFunc),
 	}
 
 	// each loop iteration will launch a single worker that processes items on the work
 	//  queue as they come in. runWorker will loop until "something bad" happens.
 	// The .Until will then rekick the worker after one second
-	for i := 0; i < MaxWorkers; i++ {
+	for i := 0; i < ChartCacheMaxWorkers; i++ {
 		// let's give each worker a unique name - easier to debug
 		name := fmt.Sprintf("%s-worker-%d", c.queue.Name(), i)
 		fn := func() {
@@ -117,11 +111,11 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 
 // this func will enqueue work items into chart work queue and return.
 // the charts will be synced by a worker thread running in the background
-func (c *ChartCache) syncCharts(charts []models.Chart, clientOptions *common.ClientOptions) error {
-	log.Infof("+syncCharts()")
+func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.ClientOptions) error {
+	log.Infof("+SyncCharts()")
 	totalToSync := 0
 	defer func() {
-		log.Infof("-syncCharts(): [%d] total charts to sync", totalToSync)
+		log.Infof("-SyncCharts(): [%d] total charts to sync", totalToSync)
 	}()
 
 	// let's just cache the latest one for now. The chart versions array would
@@ -205,8 +199,8 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
 		c.processing.Delete(key)
-	} else if c.queue.NumRequeues(key) < MaxRetries {
-		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, MaxRetries-c.queue.NumRequeues(key), err)
+	} else if c.queue.NumRequeues(key) < NamespacedResourceWatcherCacheMaxRetries {
+		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, NamespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
 		c.queue.AddRateLimited(key)
 	} else {
 		// err != nil and too many retries
@@ -218,9 +212,9 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 	return true
 }
 
-func (c *ChartCache) deleteChartsForRepo(repo *types.NamespacedName) error {
-	log.Infof("+deleteChartsFor(%s)", repo)
-	defer log.Infof("-deleteChartsFor(%s)", repo)
+func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
+	log.Infof("+DeleteChartsFor(%s)", repo)
+	defer log.Infof("-DeleteChartsFor(%s)", repo)
 
 	// need to get a list of all charts/versions for this repo that are either:
 	//   a. already in the cache OR
@@ -322,7 +316,7 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 				return nil
 			}
 		}
-		byteArray, err := chartCacheComputeValue(chart.id, chart.url, chart.version, chart.clientOptions)
+		byteArray, err := ChartCacheComputeValue(chart.id, chart.url, chart.version, chart.clientOptions)
 		if err != nil {
 			return err
 		}
@@ -417,7 +411,7 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *c
 	return value, nil
 }
 
-func (c *ChartCache) keyFor(namespace, chartID, chartVersion string) (string, error) {
+func (c *ChartCache) KeyFor(namespace, chartID, chartVersion string) (string, error) {
 	return chartCacheKeyFor(namespace, chartID, chartVersion)
 }
 
@@ -470,13 +464,7 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 }
 
 // FYI: The work queue is able to retry transient HTTP errors
-func chartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *common.ClientOptions) ([]byte, error) {
-	if clientOptions == nil {
-		clientOptions = &common.ClientOptions{}
-	}
-	// this string is the same for all charts
-	clientOptions.UserAgent = fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
-
+func ChartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *common.ClientOptions) ([]byte, error) {
 	client, headers, err := common.NewHttpClientAndHeaders(clientOptions)
 	if err != nil {
 		return nil, err

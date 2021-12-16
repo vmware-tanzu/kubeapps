@@ -259,13 +259,13 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		}
 	}
 
-	var chartCache *ChartCache
+	var chartCache *cache.ChartCache
 	var err error
 	cachedChartKeys := sets.String{}
 	cachedChartIds := sets.String{}
 
 	if charts != nil {
-		chartCache, err = NewChartCache("chartCacheTest", redisCli, stopCh)
+		chartCache, err = cache.NewChartCache("chartCacheTest", redisCli, stopCh)
 		if err != nil {
 			return nil, mock, err
 		}
@@ -277,7 +277,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 			// to pick the latest version.
 			if !cachedChartIds.Has(c.chartID) {
 				cachedChartIds.Insert(c.chartID)
-				key, err := chartCache.keyFor(c.repoNamespace, c.chartID, c.chartRevision)
+				key, err := chartCache.KeyFor(c.repoNamespace, c.chartID, c.chartRevision)
 				if err != nil {
 					return nil, mock, err
 				}

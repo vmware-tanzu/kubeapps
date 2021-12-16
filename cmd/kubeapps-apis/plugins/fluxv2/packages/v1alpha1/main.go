@@ -19,27 +19,10 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "k8s.io/klog/v2"
 )
-
-// Set the pluginDetail once during a module init function so the single struct
-// can be used throughout the plugin.
-var (
-	pluginDetail plugins.Plugin
-	// This version var is updated during the build (see the -ldflags option
-	// in the cmd/kubeapps-apis/Dockerfile)
-	version = "devel"
-)
-
-func init() {
-	pluginDetail = plugins.Plugin{
-		Name:    "fluxv2.packages",
-		Version: "v1alpha1",
-	}
-}
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
@@ -65,9 +48,4 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.Kubernete
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	log.Infof("+fluxv2 RegisterHTTPHandlerFromEndpoint")
 	return v1alpha1.RegisterFluxV2PackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-}
-
-// GetPluginDetail returns a core.plugins.Plugin describing itself.
-func GetPluginDetail() *plugins.Plugin {
-	return &pluginDetail
 }
