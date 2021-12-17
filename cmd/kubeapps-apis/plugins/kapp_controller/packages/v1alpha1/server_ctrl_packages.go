@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
 )
 
@@ -524,6 +525,25 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 			return nil, errorByStatus("delete", "Secret", secret.Name, err)
 		}
 		return nil, errorByStatus("create", "PackageInstall", newPkgInstall.Name, err)
+	}
+
+	// TODO(agamez): some seconds should be enough, however, make it configurable
+	err = wait.PollImmediateWithContext(ctx, time.Second*1, time.Second*5, func(ctx context.Context) (bool, error) {
+		_, err := s.getApp(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				// the resource hasn't been created yet
+				return false, nil
+			} else {
+				// any other real error
+				return false, err
+			}
+		}
+		// the resource is created now
+		return true, nil
+	})
+	if err != nil {
+		return nil, errorByStatus("get", "App", newPkgInstall.Name, err)
 	}
 
 	// generate the response
