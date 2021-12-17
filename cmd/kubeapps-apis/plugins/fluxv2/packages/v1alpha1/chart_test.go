@@ -53,16 +53,14 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		tls                   bool // also known as "private" or "secure"
 		expectedPackageDetail *corev1.AvailablePackageDetail
 	}{
-		/*
-			{
-				testName: "it returns details about the latest redis package in bitnami repo",
-				request: &corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
-				},
-				chartCacheHit:         true,
-				expectedPackageDetail: expected_detail_redis_1,
+		{
+			testName: "it returns details about the latest redis package in bitnami repo",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
-		*/
+			chartCacheHit:         true,
+			expectedPackageDetail: expected_detail_redis_1,
+		},
 		{
 			testName: "it returns details about the redis package with specific version in bitnami repo",
 			request: &corev1.GetAvailablePackageDetailRequest{
@@ -229,9 +227,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			if !tc.chartCacheHit {
-				// first a miss
-				if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, "", nil); err != nil {
-					t.Fatalf("%+v", err)
+				// first a miss (there will be actually two calls to Redis GET based on current code path)
+				for i := 0; i < 2; i++ {
+					if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, "", nil); err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}
 				// followed by a set and a hit
 				mock.ExpectExists(chartCacheKey).SetVal(0)
@@ -495,7 +495,12 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 					if err != nil {
 						t.Fatalf("%+v", err)
 					}
-					redisMockExpectGetFromChartCache(mock, chartCacheKey, "", nil)
+					// on a cache miss (there will be actually two calls to Redis GET based on current code path)
+					for i := 0; i < 2; i++ {
+						if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, "", nil); err != nil {
+							t.Fatalf("%+v", err)
+						}
+					}
 				}
 			}
 

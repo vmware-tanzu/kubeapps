@@ -335,8 +335,8 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 }
 
 // this is effectively a cache GET operation
-func (c *ChartCache) fetchForOne(key string) ([]byte, error) {
-	log.Infof("+fetchForOne(%s)", key)
+func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
+	log.Infof("+FetchForOne(%s)", key)
 	// read back from cache: should be either:
 	//  - what we previously wrote OR
 	//  - redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry
@@ -344,12 +344,12 @@ func (c *ChartCache) fetchForOne(key string) ([]byte, error) {
 	byteArray, err := c.redisCli.Get(c.redisCli.Context(), key).Bytes()
 	// debugging an intermittent issue
 	if err == redis.Nil {
-		log.V(4).Infof("Redis [GET %s]: Nil", key)
+		log.Infof("Redis [GET %s]: Nil", key)
 		return nil, nil
 	} else if err != nil {
 		return nil, fmt.Errorf("fetchForOne() failed to get value for key [%s] from cache due to: %v", key, err)
 	}
-	log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(byteArray))
+	log.Infof("Redis [GET %s]: %d bytes read", key, len(byteArray))
 
 	dec := gob.NewDecoder(bytes.NewReader(byteArray))
 	var entryValue chartCacheEntryValue
@@ -359,20 +359,27 @@ func (c *ChartCache) fetchForOne(key string) ([]byte, error) {
 	return entryValue.ChartTarball, nil
 }
 
-// GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the
-// k8s for the corresponding object, process it and then add it to the cache and return the
-// result.
-// TODO (gfichtenholt) get rid of models.Chart and clientOptions argument if possible
-//    This is kind of breaking an abstraction
-// TODO (gfichtenholt) I promised Michael this would return an error if the entry could not be
-// computed due to not being able to read repo's secretRef. This is actually hard to do due to async
-// nature of how entries are added to the cache. Currently, it returns nil, same
-// as any invalid chart name
+/*
+ GetForOne() is like FetchForOne() but if there is a cache miss, it will then get chart data based on
+ the corresponding repo object, process it and then add it to the cache and return the
+ result.
+ This func should:
+
+ • return an error if the entry could not be computed due to not being able to read
+ repos secretRef.
+
+ • return nil for any invalid chart name.
+
+ • otherwise return the bytes stored in the
+ chart cache for the given entry
+*/
 func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *common.ClientOptions) ([]byte, error) {
+	// TODO (gfichtenholt) it'd be nice to get rid of all arguments except for the key, similar to that of
+	// NamespacedResourceWatcherCache.GetForOne()
 	log.Infof("+GetForOne(%s)", key)
 	var value []byte
 	var err error
-	if value, err = c.fetchForOne(key); err != nil {
+	if value, err = c.FetchForOne(key); err != nil {
 		return nil, err
 	} else if value == nil {
 		// cache miss
@@ -405,7 +412,7 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *c
 			c.queue.Add(key)
 			// now need to wait until this item has been processed by runWorker().
 			c.queue.WaitUntilGone(key)
-			return c.fetchForOne(key)
+			return c.FetchForOne(key)
 		}
 	}
 	return value, nil
@@ -455,6 +462,12 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 	if namespace == "" || chartID == "" || chartVersion == "" {
 		return "", fmt.Errorf("invalid chart in chartCacheKeyFor: [%s,%s,%s]", namespace, chartID, chartVersion)
 	}
+
+	var err error
+	if chartID, err = common.GetUnescapedChartID(chartID); err != nil {
+		return "", fmt.Errorf("invalid chart ID in chartCacheKeyFor: [%s]: %v", chartID, err)
+	}
+
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".

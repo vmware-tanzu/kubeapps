@@ -16,6 +16,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -85,40 +86,50 @@ func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*un
 }
 
 func (s *Server) availableChartDetail(ctx context.Context, repoName types.NamespacedName, chartName, chartVersion string) (*corev1.AvailablePackageDetail, error) {
-	log.V(4).Infof("+availableChartDetail(%s, %s, %s)", repoName, chartName, chartVersion)
-	chartModel, err := s.getChart(ctx, repoName, chartName)
-	if err != nil {
-		return nil, err
-	} else if chartModel == nil {
-		return nil, status.Errorf(codes.NotFound, "Chart [%s] not found", chartName)
+	log.Infof("+availableChartDetail(%s, %s, %s)", repoName, chartName, chartVersion)
+
+	chartID := fmt.Sprintf("%s/%s", repoName.Name, chartName)
+	// first, try the happy path - we have the chart version and the corresponding entry
+	// happens to be in the cache
+	var byteArray []byte
+	if chartVersion != "" {
+		if key, err := s.chartCache.KeyFor(repoName.Namespace, chartID, chartVersion); err != nil {
+			return nil, err
+		} else if byteArray, err = s.chartCache.FetchForOne(key); err != nil {
+			return nil, err
+		}
 	}
 
-	opts, err := s.clientOptionsForRepo(ctx, repoName)
+	if byteArray == nil {
+		// no specific chart version was provided or a cache miss, need to do a bit of work
+		chartModel, err := s.getChart(ctx, repoName, chartName)
+		if err != nil {
+			return nil, err
+		} else if chartModel == nil {
+			return nil, status.Errorf(codes.NotFound, "chart [%s] not found", chartName)
+		}
+
+		if chartVersion == "" {
+			chartVersion = chartModel.ChartVersions[0].Version
+		}
+
+		if key, err := s.chartCache.KeyFor(repoName.Namespace, chartID, chartVersion); err != nil {
+			return nil, err
+		} else if opts, err := s.clientOptionsForRepo(ctx, repoName); err != nil {
+			return nil, err
+		} else if byteArray, err = s.chartCache.GetForOne(key, chartModel, opts); err != nil {
+			return nil, err
+		} else if byteArray == nil {
+			return nil, status.Errorf(codes.Internal, "failed to load details for chart [%s]", chartModel.ID)
+		}
+	}
+
+	chartDetail, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(byteArray), chartID)
 	if err != nil {
 		return nil, err
 	}
 
-	if chartVersion == "" {
-		chartVersion = chartModel.ChartVersions[0].Version
-	}
-	key, err := s.chartCache.KeyFor(repoName.Namespace, chartModel.ID, chartVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	byteArray, err := s.chartCache.GetForOne(key, chartModel, opts)
-	if err != nil {
-		return nil, err
-	} else if byteArray == nil {
-		return nil, status.Errorf(codes.Internal, "Failed to load details for chart [%s]", chartModel.ID)
-	}
-
-	chartDetail, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(byteArray), chartModel.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return availablePackageDetailFromChartDetail(chartModel.ID, chartDetail)
+	return availablePackageDetailFromChartDetail(chartID, chartDetail)
 }
 
 func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {
