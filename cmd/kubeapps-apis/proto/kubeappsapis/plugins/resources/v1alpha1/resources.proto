@@ -1,0 +1,236 @@
+syntax = "proto3";
+package kubeappsapis.plugins.resources.v1alpha1;
+option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1";
+
+import "kubeappsapis/core/packages/v1alpha1/packages.proto";
+
+import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
+
+// ResourcesService
+//
+// The Resources service is a plugin that enables some limited access to Kubernetes
+// resources on the cluster, using the user credentials sent with the request.
+service ResourcesService {
+    rpc GetResources(GetResourcesRequest) returns (stream GetResourcesResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+        };
+    }
+    rpc GetServiceAccountNames(GetServiceAccountNamesRequest) returns (GetServiceAccountNamesResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/serviceaccountnames"
+        };
+    }
+    rpc GetNamespaceNames(GetNamespaceNamesRequest) returns (GetNamespaceNamesResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{cluster}/namespacenames"
+        };
+    }
+    rpc CreateNamespace(CreateNamespaceRequest) returns (CreateNamespaceResponse) {
+        option (google.api.http) = {
+            post: "/plugins/resources/v1alpha1/c/{context.cluster}/ns"
+        };
+    }
+    rpc CheckNamespaceExists(CheckNamespaceExistsRequest) returns (CheckNamespaceExistsResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}"
+        };
+    }
+    rpc GetSecretNames(GetSecretNamesRequest) returns (GetSecretNamesResponse) {
+        option (google.api.http) = {
+            get: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/secretnames"
+        };
+    }
+    rpc CreateSecret(CreateSecretRequest) returns (CreateSecretResponse) {
+        option (google.api.http) = {
+            post: "/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/secrets"
+        };
+    }
+}
+
+// GetResourcesRequest
+//
+// Request for GetResources that specifies the resource references to get or watch.
+message GetResourcesRequest {
+    // InstalledPackageRef
+    //
+    // The installed package reference for which the resources are being fetched.
+    kubeappsapis.core.packages.v1alpha1.InstalledPackageReference installed_package_ref = 1;
+
+    // ResourceRefs
+    //
+    // The references to the resources that are to be fetched or watched.
+    // If empty, all resources for the installed package are returned when only
+    // getting the resources. It must be populated to watch resources to avoid
+    // watching all resources unnecessarily.
+    repeated kubeappsapis.core.packages.v1alpha1.ResourceRef resource_refs = 2;
+
+    // Watch
+    //
+    // When true, this will cause the stream to remain open with updated
+    // resources being sent as events are received from the Kubernetes API
+    // server.
+    bool watch = 3;
+}
+
+message GetResourcesResponse {
+    // ResourceRef
+    //
+    // The resource reference for this single resource.
+    kubeappsapis.core.packages.v1alpha1.ResourceRef resource_ref = 1;
+
+    // Manifest
+    //
+    // The current manifest of the requested resource.
+    // Initially the JSON manifest will be returned as an Any, enabling the
+    // existing Kubeapps UI to replace its current direct api-server getting and
+    // watching of resources, but we may in the future pull out further
+    // structured metadata into this message as needed.
+    google.protobuf.Any manifest = 2;
+}
+
+// GetServiceAccountNamesRequest
+//
+// Request for GetServiceAccountNames
+message GetServiceAccountNamesRequest {
+    // Context
+    //
+    // The context for which the service account names are being fetched.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// GetServiceAccountNamesResponse
+//
+// Response for GetServiceAccountNames
+message GetServiceAccountNamesResponse {
+    // ServiceAccountNames
+    //
+    // The list of Service Account names.
+    repeated string serviceaccount_names = 1;
+}
+
+
+// GetNamespaceNamesRequest
+//
+// Request for GetNamespaceNames
+message GetNamespaceNamesRequest {
+    // Cluster
+    //
+    // The context for which the namespace names are being fetched.  The service
+    // will attempt to list namespaces across the cluster, first with the users
+    // credential, then with a configured service account if available.
+    string cluster = 1;
+}
+
+// GetNamespaceNamesResponse
+//
+// Response for GetNamespaceNames
+message GetNamespaceNamesResponse {
+    // NamespaceNames
+    //
+    // The list of Namespace names.
+    repeated string namespace_names = 1;
+}
+
+// CreateNamespaceRequest
+//
+// Request for CreateNamespace
+message CreateNamespaceRequest {
+    // Context
+    //
+    // The context of the namespace being created.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// CreateNamespaceResponse
+//
+// Response for CreateNamespace
+message CreateNamespaceResponse {}
+
+// CheckNamespaceExistsRequest
+//
+// Request for CheckNamespaceExists
+message CheckNamespaceExistsRequest {
+    // Context
+    //
+    // The context of the namespace being checked for existence.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// CheckNamespaceExistsResponse
+//
+// Response for CheckNamespaceExists
+message CheckNamespaceExistsResponse {
+    bool exists = 1;
+}
+
+// SecretType
+//
+// The type of secret. Currently Kubeapps itself only deals with OPAQUE
+// and docker config json secrets, but we define all so we can correctly
+// list the secret names with their types.
+// See https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
+enum SecretType {
+    SECRET_TYPE_OPAQUE_UNSPECIFIED = 0;
+    SECRET_TYPE_SERVICE_ACCOUNT_TOKEN = 1;
+    SECRET_TYPE_DOCKER_CONFIG = 2;
+    SECRET_TYPE_DOCKER_CONFIG_JSON = 3;
+    SECRET_TYPE_BASIC_AUTH = 4;
+    SECRET_TYPE_SSH_AUTH = 5;
+    SECRET_TYPE_TLS = 6;
+    SECRET_TYPE_BOOTSTRAP_TOKEN = 7;
+}
+
+// CreateSecretRequest
+//
+// Request for CreateSecret
+message CreateSecretRequest {
+    // Context
+    //
+    // The context of the secret being created.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+
+    // Type
+    //
+    // The type of the secret. Valid values are defined by the Type enumeration.
+    SecretType type = 2;
+
+    // Name
+    //
+    // The name of the secret.
+    string name = 3;
+
+    // StringData
+    //
+    // The map of keys and values. Note that we use StringData here so that
+    // Kubernetes handles the base64 encoding of the key values for us.
+    // See https://kubernetes.io/docs/concepts/configuration/secret/#overview-of-secrets
+    map<string, string> string_data = 4;
+}
+
+// CreateSecretResponse
+//
+// Response for CreateSecret
+message CreateSecretResponse {}
+
+
+// GetSecretNamesRequest
+//
+// Request for GetSecretNames
+message GetSecretNamesRequest {
+    // Context
+    //
+    // The context for which the secret names are being fetched.
+    kubeappsapis.core.packages.v1alpha1.Context context = 1;
+}
+
+// GetSecretNamesResponse
+//
+// Response for GetSecretNames
+message GetSecretNamesResponse {
+    // SecretNames
+    //
+    // The list of Service Account names.
+    map<string, SecretType> secret_names = 1;
+}

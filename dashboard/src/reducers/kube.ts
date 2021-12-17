@@ -1,9 +1,9 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
-
+import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
+import { IKubeState } from "shared/types";
+import { Kube } from "shared/Kube";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { KubeAction } from "../actions/kube";
-import { IK8sList, IKubeState, IResource } from "../shared/types";
 
 export const initialKinds = {
   // In case it's not possible to retrieve the api groups (e.g. with lacking permissions)
@@ -121,24 +121,18 @@ export const initialKinds = {
 export const initialState: IKubeState = {
   items: {},
   kinds: initialKinds,
-  sockets: {},
-  timers: {},
+  // We book keep on subscriptions, keyed by the installed package ref,
+  // so that we can unsubscribe when the closeRequestResources action is
+  // dispatched (usually because the component is unmounted when the user
+  // navigates away).
+  subscriptions: {},
 };
 
 const kubeReducer = (
   state: IKubeState = initialState,
   action: KubeAction | LocationChangeAction,
 ): IKubeState => {
-  let key: string;
   switch (action.type) {
-    case getType(actions.kube.requestResource): {
-      let item = state.items[action.payload];
-      if (!item) {
-        item = { isFetching: true };
-      }
-      const requestedItem = { [action.payload]: item };
-      return { ...state, items: { ...state.items, ...requestedItem } };
-    }
     case getType(actions.kube.receiveResource): {
       const receivedItem = {
         [action.payload.key]: { isFetching: false, item: action.payload.resource },
@@ -149,112 +143,54 @@ const kubeReducer = (
       return { ...state, kinds: action.payload };
     case getType(actions.kube.receiveKindsError):
       return { ...state, kinds: initialKinds, kindsError: action.payload };
-    case getType(actions.kube.receiveResourceFromList): {
-      const stateListItem = state.items[action.payload.key].item as IK8sList<IResource, {}>;
-      const newItem = action.payload.resource as IResource;
-      if (!stateListItem || !stateListItem.items) {
-        return {
-          ...state,
-          items: {
-            ...state.items,
-            [action.payload.key]: {
-              isFetching: false,
-              item: { ...stateListItem, items: [newItem] },
-            },
-          },
-        };
-      }
-      const updatedItems = stateListItem.items.map(it => {
-        if (it.metadata.selfLink === newItem.metadata.selfLink) {
-          return action.payload.resource as IResource;
-        }
-        return it;
-      });
-      return {
-        ...state,
-        items: {
-          ...state.items,
-          [action.payload.key]: {
-            isFetching: false,
-            item: { ...stateListItem, items: updatedItems },
-          },
-        },
-      };
-    }
     case getType(actions.kube.receiveResourceError): {
       const erroredItem = {
         [action.payload.key]: { isFetching: false, error: action.payload.error },
       };
       return { ...state, items: { ...state.items, ...erroredItem } };
     }
-    case getType(actions.kube.openWatchResource): {
-      const { ref, handler, onError } = action.payload;
-      key = ref.watchResourceURL();
-      if (state.sockets[key]) {
-        // Socket for this resource already open, do nothing
-        return state;
-      }
-      const socket = ref.watchResource();
-      socket.addEventListener("message", handler);
-      socket.addEventListener("error", onError);
-      return {
-        ...state,
-        sockets: {
-          ...state.sockets,
-          [key]: { socket, onError },
+    case getType(actions.kube.requestResources): {
+      const { pkg, refs, handler, watch, onError, onComplete } = action.payload;
+      const observable = Kube.getResources(pkg, refs, watch);
+      const subscription = observable.subscribe({
+        next(r) {
+          handler(r);
         },
-      };
-    }
-    // TODO(adnan): this won't handle cases where one component closes a socket
-    // another one is using. Whilst not a problem today, a reference counter
-    // approach could be used here to enable this in the future.
-    case getType(actions.kube.closeWatchResource): {
-      key = action.payload.watchResourceURL();
-      const { sockets } = state;
-      const { [key]: foundSocket, ...otherSockets } = sockets;
-      const timerID = action.payload.getResourceURL();
-      const timer = state.timers[timerID];
-      // close the socket if it exists
-      if (foundSocket !== undefined) {
-        foundSocket.socket.removeEventListener("error", foundSocket.onError);
-        foundSocket.socket.close();
-      }
-      if (timer) {
-        clearInterval(timer);
-      }
-      return {
-        ...state,
-        sockets: otherSockets,
-        timers: {
-          ...state.timers,
-          [timerID]: undefined,
+        error(e) {
+          onError(e);
         },
-      };
-    }
-    case getType(actions.kube.addTimer): {
-      if (!state.timers[action.payload.id]) {
+        complete() {
+          onComplete();
+        },
+      });
+      // We only record the subscription if watching the result, since otherwise
+      // the call is terminated by the server automatically once results are
+      // returned and we don't need any book-keeping.
+      if (watch) {
+        const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
         return {
           ...state,
-          timers: {
-            ...state.timers,
-            [action.payload.id]: setInterval(action.payload.timer, 5000),
+          subscriptions: {
+            ...state.subscriptions,
+            [key]: subscription,
           },
         };
       }
       return state;
     }
-    case getType(actions.kube.removeTimer): {
-      if (state.timers[action.payload]) {
-        clearInterval(state.timers[action.payload] as NodeJS.Timer);
-        return {
-          ...state,
-          timers: {
-            ...state.timers,
-            [action.payload]: undefined,
-          },
-        };
+    case getType(actions.kube.closeRequestResources): {
+      const pkg = action.payload;
+      const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
+      const { subscriptions } = state;
+      const { [key]: foundSubscription, ...otherSubscriptions } = subscriptions;
+      // unsubscribe if it exists
+      if (foundSubscription !== undefined) {
+        foundSubscription.unsubscribe();
       }
-      return state;
+      return {
+        ...state,
+        subscriptions: otherSubscriptions,
+      };
     }
     case LOCATION_CHANGE:
       return { ...state, items: {} };

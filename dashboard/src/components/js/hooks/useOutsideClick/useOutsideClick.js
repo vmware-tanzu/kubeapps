@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 /**
  * Detects when there's a click event outside the given element
@@ -25,7 +25,7 @@ const useOutsideClick = (callback, refs, enabled = true) => {
 
   useEffect(() => {
     if (enabled) {
-      document.addEventListener("mousedown", memoizeClick);
+      document.addEventListener("mousedown", memoizeClick, { capture: true });
     }
     return () => document.removeEventListener("mousedown", memoizeClick);
   }, [memoizeClick, enabled]);

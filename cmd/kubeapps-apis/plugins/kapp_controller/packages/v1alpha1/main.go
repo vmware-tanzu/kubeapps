@@ -18,9 +18,9 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
@@ -37,8 +37,9 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter, clustersConfig kube.ClustersConfig) (interface{}, error) {
-	svr := NewServer(configGetter)
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.KubernetesConfigGetter,
+	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
+	svr := NewServer(configGetter, clustersConfig.KubeappsClusterName)
 	v1alpha1.RegisterKappControllerPackagesServiceServer(s, svr)
 	return svr, nil
 }

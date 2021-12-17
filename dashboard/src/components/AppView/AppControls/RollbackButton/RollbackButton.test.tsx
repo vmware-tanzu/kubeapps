@@ -2,19 +2,28 @@ import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import Alert from "components/js/Alert";
+import {
+  InstalledPackageReference,
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import ReactTooltip from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { RollbackError } from "shared/types";
 import RollbackButton from "./RollbackButton";
-import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
-  cluster: "default",
-  namespace: "kubeapps",
-  releaseName: "foo",
+  installedPackageRef: {
+    context: { cluster: "default", namespace: "kubeapps" },
+    identifier: " foo",
+    plugin: { name: "my.plugin", version: "0.0.1" },
+  } as InstalledPackageReference,
   revision: 3,
   releaseStatus: null,
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -22,7 +31,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.apps = {
     ...actions.apps,
-    rollbackApp: jest.fn(),
+    rollbackInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -34,8 +43,8 @@ afterEach(() => {
 });
 
 it("rolls back an application", async () => {
-  const rollbackApp = jest.fn();
-  actions.apps.rollbackApp = rollbackApp;
+  const rollbackInstalledPackage = jest.fn();
+  actions.apps.rollbackInstalledPackage = rollbackInstalledPackage;
   const wrapper = mountWrapper(defaultStore, <RollbackButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
@@ -54,12 +63,7 @@ it("rolls back an application", async () => {
         .prop("onClick") as any
     )();
   });
-  expect(rollbackApp).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.releaseName,
-    1,
-  );
+  expect(rollbackInstalledPackage).toHaveBeenCalledWith(defaultProps.installedPackageRef, 1);
 });
 
 it("renders an error", async () => {
@@ -78,8 +82,10 @@ it("should render a disabled button if when passing an in-progress status", asyn
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {
-      code: 6,
-    },
+      ready: false,
+      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      userReason: "Pending",
+    } as InstalledPackageStatus,
   };
   const wrapper = mountWrapper(defaultStore, <RollbackButton {...disabledProps} />);
 

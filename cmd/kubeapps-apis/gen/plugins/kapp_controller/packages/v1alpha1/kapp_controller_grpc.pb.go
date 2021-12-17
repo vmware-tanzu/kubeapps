@@ -31,6 +31,15 @@ type KappControllerPackagesServiceClient interface {
 	GetInstalledPackageSummaries(ctx context.Context, in *v1alpha1.GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 	// GetInstalledPackageDetail returns the requested installed package managed by the 'kapp_controller' plugin
 	GetInstalledPackageDetail(ctx context.Context, in *v1alpha1.GetInstalledPackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageDetailResponse, error)
+	// CreateInstalledPackage creates an installed package based on the request.
+	CreateInstalledPackage(ctx context.Context, in *v1alpha1.CreateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.CreateInstalledPackageResponse, error)
+	// UpdateInstalledPackage updates an installed package based on the request.
+	UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error)
+	// DeleteInstalledPackage deletes an installed package based on the request.
+	DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error)
+	// GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
+	// an installed package.
+	GetInstalledPackageResourceRefs(ctx context.Context, in *v1alpha1.GetInstalledPackageResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error)
 }
 
 type kappControllerPackagesServiceClient struct {
@@ -95,6 +104,42 @@ func (c *kappControllerPackagesServiceClient) GetInstalledPackageDetail(ctx cont
 	return out, nil
 }
 
+func (c *kappControllerPackagesServiceClient) CreateInstalledPackage(ctx context.Context, in *v1alpha1.CreateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.CreateInstalledPackageResponse, error) {
+	out := new(v1alpha1.CreateInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/CreateInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kappControllerPackagesServiceClient) UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error) {
+	out := new(v1alpha1.UpdateInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kappControllerPackagesServiceClient) DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error) {
+	out := new(v1alpha1.DeleteInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kappControllerPackagesServiceClient) GetInstalledPackageResourceRefs(ctx context.Context, in *v1alpha1.GetInstalledPackageResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error) {
+	out := new(v1alpha1.GetInstalledPackageResourceRefsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageResourceRefs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KappControllerPackagesServiceServer is the server API for KappControllerPackagesService service.
 // All implementations should embed UnimplementedKappControllerPackagesServiceServer
 // for forward compatibility
@@ -111,6 +156,15 @@ type KappControllerPackagesServiceServer interface {
 	GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 	// GetInstalledPackageDetail returns the requested installed package managed by the 'kapp_controller' plugin
 	GetInstalledPackageDetail(context.Context, *v1alpha1.GetInstalledPackageDetailRequest) (*v1alpha1.GetInstalledPackageDetailResponse, error)
+	// CreateInstalledPackage creates an installed package based on the request.
+	CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error)
+	// UpdateInstalledPackage updates an installed package based on the request.
+	UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error)
+	// DeleteInstalledPackage deletes an installed package based on the request.
+	DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error)
+	// GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
+	// an installed package.
+	GetInstalledPackageResourceRefs(context.Context, *v1alpha1.GetInstalledPackageResourceRefsRequest) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error)
 }
 
 // UnimplementedKappControllerPackagesServiceServer should be embedded to have forward compatible implementations.
@@ -134,6 +188,18 @@ func (UnimplementedKappControllerPackagesServiceServer) GetInstalledPackageSumma
 }
 func (UnimplementedKappControllerPackagesServiceServer) GetInstalledPackageDetail(context.Context, *v1alpha1.GetInstalledPackageDetailRequest) (*v1alpha1.GetInstalledPackageDetailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageDetail not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateInstalledPackage not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateInstalledPackage not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteInstalledPackage not implemented")
+}
+func (UnimplementedKappControllerPackagesServiceServer) GetInstalledPackageResourceRefs(context.Context, *v1alpha1.GetInstalledPackageResourceRefsRequest) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageResourceRefs not implemented")
 }
 
 // UnsafeKappControllerPackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -255,6 +321,78 @@ func _KappControllerPackagesService_GetInstalledPackageDetail_Handler(srv interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KappControllerPackagesService_CreateInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.CreateInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).CreateInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/CreateInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).CreateInstalledPackage(ctx, req.(*v1alpha1.CreateInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KappControllerPackagesService_UpdateInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.UpdateInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).UpdateInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).UpdateInstalledPackage(ctx, req.(*v1alpha1.UpdateInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KappControllerPackagesService_DeleteInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.DeleteInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).DeleteInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).DeleteInstalledPackage(ctx, req.(*v1alpha1.DeleteInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KappControllerPackagesService_GetInstalledPackageResourceRefs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetInstalledPackageResourceRefsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerPackagesServiceServer).GetInstalledPackageResourceRefs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageResourceRefs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerPackagesServiceServer).GetInstalledPackageResourceRefs(ctx, req.(*v1alpha1.GetInstalledPackageResourceRefsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KappControllerPackagesService_ServiceDesc is the grpc.ServiceDesc for KappControllerPackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -285,6 +423,22 @@ var KappControllerPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInstalledPackageDetail",
 			Handler:    _KappControllerPackagesService_GetInstalledPackageDetail_Handler,
+		},
+		{
+			MethodName: "CreateInstalledPackage",
+			Handler:    _KappControllerPackagesService_CreateInstalledPackage_Handler,
+		},
+		{
+			MethodName: "UpdateInstalledPackage",
+			Handler:    _KappControllerPackagesService_UpdateInstalledPackage_Handler,
+		},
+		{
+			MethodName: "DeleteInstalledPackage",
+			Handler:    _KappControllerPackagesService_DeleteInstalledPackage_Handler,
+		},
+		{
+			MethodName: "GetInstalledPackageResourceRefs",
+			Handler:    _KappControllerPackagesService_GetInstalledPackageResourceRefs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

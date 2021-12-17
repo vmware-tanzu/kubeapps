@@ -4,6 +4,8 @@ certs:
   web:
     create: false
 config:
+  expiry:
+    signingKeys: 2160h
   # TODO: Don't assume that kind network will be the first non-default bridged network (ie. 172.18.0.2)
   # This means we'll need to generate the certs as well, rather than pre-configuring them.
   # Or check if we can use cert generated for tls with k8s node?
@@ -25,6 +27,7 @@ config:
       redirectURIs:
         - "http://localhost/oauth2/callback"
         - "https://localhost/oauth2/callback"
+        - "http://kubeapps.kubeapps/oauth2/callback"
       name: "Default-Cluster"
       secret: ZXhhbXBsZS1hcHAtc2VjcmV0
     # The second-cluster clientid exists for the additional cluster but not used
@@ -34,6 +37,7 @@ config:
       redirectURIs:
         - "http://localhost/oauth2/callback"
         - "https://localhost/oauth2/callback"
+        - "http://kubeapps.kubeapps/oauth2/callback"
       name: "Second-Cluster"
       secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
       trustedPeers:

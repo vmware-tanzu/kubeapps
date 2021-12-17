@@ -61,7 +61,7 @@ First of all, execute `docker network inspect kind | jq '.[0].IPAM.Config[0].Gat
 
 Next, follow the steps in [/docs/developer/using-makefiles.md](../developer/using-makefiles.md) to modify the proper yaml files by replacing with this value.
 
-Next, replace `172.18.0.2` with the previous IP (and `172.18.0.3` with the next one) the following files: - [script/deploy-dev.mk](../../script/deploy-dev.mk) - [kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) - [kubeapps-local-dev-auth-proxy-values.yaml](../user/manifests/kubeapps-local-dev-auth-proxy-values.yaml) - [kubeapps-local-dev-dex-values.yaml](../user/manifests/kubeapps-local-dev-dex-values.yaml)
+Next, replace `172.18.0.2` with the previous IP (and `172.18.0.3` with the next one) the following files: - [script/makefiles/deploy-dev.mk](../../script/makefiles/deploy-dev.mk) - [kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) - [kubeapps-local-dev-auth-proxy-values.yaml](../user/manifests/kubeapps-local-dev-auth-proxy-values.yaml) - [kubeapps-local-dev-dex-values.yaml](../user/manifests/kubeapps-local-dev-dex-values.yaml)
 
 ### Launching the multi-cluster dev environment
 

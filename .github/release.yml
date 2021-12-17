@@ -1,0 +1,14 @@
+
+# release.yml
+
+changelog:
+  categories:
+    - title: Main changes in this release
+      labels:
+        - "*"
+      exclude:
+        authors:
+          - dependabot
+    - title: Dependency upgrades
+      labels:
+        - "*"

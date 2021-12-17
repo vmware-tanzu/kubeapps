@@ -1,9 +1,10 @@
 .docker-creds-subform {
   width: 84%;
-  padding-left: 10px;
   padding-right: 10px;
+  padding-left: 10px;
   margin-top: -0.6em;
   background-color: var(--cds-alias-object-app-background, #fff);
+
   h6:not([cds-text]) {
     margin-top: 0.6em;
   }

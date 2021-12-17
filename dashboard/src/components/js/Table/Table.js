@@ -1,10 +1,9 @@
-import React from "react";
-import PropTypes from "prop-types";
-import TableTypes from "./Table.types";
 import cs from "classnames";
+import PropTypes from "prop-types";
+import React from "react";
 import TableRow from "./components/TableRow/TableRow";
-
 import "./Table.scss";
+import TableTypes from "./Table.types";
 
 const Table = ({ className, columns, data, compact, noBorder, valign }) => {
   const cssClass = cs("table", className, {

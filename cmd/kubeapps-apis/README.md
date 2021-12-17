@@ -14,7 +14,7 @@ Though it is possible to use a JS/TypeScript client, it is also possible to use 
 
 Together, this enables the best of both worlds: a well known and used Interface Definition Language for defining extensible APIs that can also be exposed via a rest-like http interface.
 
-Finally, we've also chosen to use the [buf](https://buf.build/) tool for generating the code from the proto files. In the past we've used `protoc` (proto buffer compiler) and its extensions directly, but `buf` allows you to specify a simple yaml config instead, and also provides a `lint` command to ensure that your choice of API structure follows best practise, as well as ensuring you're aware when you break backwards compatability.
+Finally, we've also chosen to use the [buf](https://buf.build/) tool for generating the code from the proto files. In the past we've used `protoc` (proto buffer compiler) and its extensions directly, but `buf` allows you to specify a simple yaml config instead, and also provides a `lint` command to ensure that your choice of API structure follows best practise, as well as ensuring you're aware when you break backwards compatibility.
 
 ## Plug-able
 
@@ -22,8 +22,8 @@ The kubeapps-apis service uses the standard [go plugin package](https://golang.o
 
 Each plugin consists of 2 source files (and some generated files):
 
-* A `.proto` file defining the service that uses the messages defined in relevant part of kubeappsapis.core, in `./proto/kubeappsapis/plugins/<plugin-name>`,
-* A `main.go` that compiles to an .so file for that plugin. This `main.go` has two public functions: one to register the plugin with a GRPC server and one to register the plugin for the http handler as well as the implementation for the server. This may be split into further modules as the complexity of the plugin grows. This file is under `./plugins/<plugin-name>`
+- A `.proto` file defining the service that uses the messages defined in relevant part of kubeappsapis.core, in `./proto/kubeappsapis/plugins/<plugin-name>`,
+- A `main.go` that compiles to an .so file for that plugin. This `main.go` has two public functions: one to register the plugin with a GRPC server and one to register the plugin for the http handler as well as the implementation for the server. This may be split into further modules as the complexity of the plugin grows. This file is under `./plugins/<plugin-name>`
 
 With this structure, the kubeapps-apis' main.go simply loads the `.so` files from the specified plugin dirs and register them when starting. You can see this in the [kubeapps-apis/server/server.go](server/server.go) file.
 
@@ -96,7 +96,7 @@ and make that image available on your cluster somehow. If using kind, you can si
 kind load docker-image kubeapps/kubeapps-apis:dev1 --name kubeapps
 ```
 
-When you deploy or upgrade Kubeapps, be sure to include the values file at `docs/developer/manifests/values.kubeappsapis.yaml` which provides the configuration to include the kubeapps-apis deployment and service etc. You can edit that file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match, such as:
+You can edit the values file to change the `kubeappsapis.image.tag` field to match the tag above, or edit the deployment once deployed to match, such as:
 
 ```bash
 kubectl set image deployment/kubeapps-internal-kubeappsapis -n kubeapps kubeappsapis=kubeapps/kubeapps-apis:dev1 --record
@@ -111,7 +111,9 @@ kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 and then curling or grpcurling in another:
 
 ```bash
-$ curl -s http://localhost:8080/plugins/fluxv2/packages/v1alpha1/packagerepositories | jq .
+# TOKEN value comes from the k8s secret associated with the service account of the user on behalf of which the call below is made 
+$ export TOKEN="Bearer eyJhbGciO..."
+$ curl -s http://localhost:8080/plugins/fluxv2/packages/v1alpha1/packagerepositories?context.cluster=default -H "Authorization: $TOKEN" | jq .
 {
   "repositories": [
     {
@@ -130,6 +132,50 @@ $ curl -s http://localhost:8080/plugins/kapp_controller/packages/v1alpha1/packag
       "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
     }
   ]
+}
+```
+
+Here is an example that shows how to use grpcurl to get the details on package "bitnami/apache" from helm plugin
+```bash
+$ export token="Bearer eyJhbGciO..."
+$ grpcurl -plaintext -d '{"available_package_ref": {"context": {"cluster": "default", "namespace": "kubeapps"}, "plugin": {"name": "helm.packages", "version": "v1alpha1"}, "identifier": "bitnami/apache"}}' -H "Authorization: $token" localhost:8080 kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageDetail
+{
+  "availablePackageDetail": {
+    "availablePackageRef": {
+      "context": {
+        "namespace": "kubeapps"
+      },
+      "identifier": "bitnami/apache",
+      "plugin": {
+        "name": "helm.packages",
+        "version": "v1alpha1"
+      }
+    },
+    "name": "apache",
+    "version": {
+      "pkgVersion": "8.8.6",
+      "appVersion": "2.4.51"
+    },
+    "repoUrl": "https://charts.bitnami.com/bitnami",
+    "homeUrl": "https://github.com/bitnami/charts/tree/master/bitnami/apache",
+    "iconUrl": "https://bitnami.com/assets/stacks/apache/img/apache-stack-220x234.png",
+    "displayName": "apache",
+    "shortDescription": "Chart for Apache HTTP Server",
+    "readme": "...",
+    "sourceUrls": [
+      "https://github.com/bitnami/bitnami-docker-apache",
+      "https://httpd.apache.org"
+    ],
+    "maintainers": [
+      {
+        "name": "Bitnami",
+        "email": "containers@bitnami.com"
+      }
+    ],
+    "categories": [
+      "Infrastructure"
+    ]
+  }
 }
 ```
 
@@ -161,21 +207,23 @@ curl -s http://localhost:8080/core/packages/v1alpha1/packagerepositories | jq .
 ```
 
 Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available ([example](https://github.com/vmware-tanzu/carvel-kapp-controller/tree/develop/examples/packaging-with-repo)) in your cluster.
+
 ## Hacking
 
 A few extra tools will be needed to contribute to the development of this service.
 
-### GOPATH env variable 
+### GOPATH env variable
 
-Make sure your GOPATH environment variable is set. 
+Make sure your GOPATH environment variable is set.
 You can use the value of command
+
 ```bash
 go env GOPATH
 ```
 
 ### Install go cli deps
 
-You should be able to install the exact versions of the various go CLI dependencies into your $GOPATH/bin with the following, after ensuring `$GOPATH/bin` is included in your `$PATH`:
+You should be able to install the exact versions of the various go CLI dependencies into your $GOPATH/bin with the following, after ensuring `$GOPATH/bin`is included in your`$PATH`:
 
 ```bash
 make cli-dependencies

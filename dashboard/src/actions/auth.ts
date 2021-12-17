@@ -1,9 +1,8 @@
 import { ThunkAction } from "redux-thunk";
+import { Auth } from "shared/Auth";
 import * as Namespace from "shared/Namespace";
+import { IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-
-import { Auth } from "../shared/Auth";
-import { IStoreState } from "../shared/types";
 import { clearClusters, NamespaceAction } from "./namespace";
 
 const { createAction } = deprecated;
@@ -42,7 +41,7 @@ export function authenticate(
       if (oidc) {
         dispatch(setSessionExpired(false));
       }
-    } catch (e) {
+    } catch (e: any) {
       dispatch(authenticationError(e.toString()));
     }
   };

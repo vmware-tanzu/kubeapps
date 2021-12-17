@@ -1,10 +1,10 @@
 clusters:
   - name: default
     pinnipedConfig:
-      enable: true
+      enabled: true
   - name: second-cluster
     pinnipedConfig:
-      enable: true
+      enabled: true
     apiServiceURL: https://172.18.0.3:6443
     # insecure is set to true only for local dev cluster testing. Always specify the
     # certificateAuthorityData as documented in the values.yaml.

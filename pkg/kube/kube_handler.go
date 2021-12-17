@@ -49,6 +49,8 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+const OCIImageManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
+
 // ClusterConfig contains required info to talk to additional clusters.
 type ClusterConfig struct {
 	Name                     string `json:"name"`
@@ -90,8 +92,10 @@ type ClusterConfig struct {
 // PinnipedConciergeConfig enables each cluster configuration to specify the
 // pinniped-concierge installation to use for any credential exchange.
 type PinnipedConciergeConfig struct {
-	// Enable flags whether this cluster should use
+	// Enabled flags whether this cluster should use
 	// pinniped to exchange credentials.
+	Enabled bool `json:"enabled"`
+	// Enable is deprecated and will be removed in a future release.
 	Enable bool `json:"enable"`
 	// The Namespace, AuthenticatorType and Authenticator name to use
 	// when exchanging credentials.
@@ -126,7 +130,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
 	}
 
-	if userToken != "" && clusterConfig.PinnipedConfig.Enable {
+	if userToken != "" && (clusterConfig.PinnipedConfig.Enabled || clusterConfig.PinnipedConfig.Enable) {
 		// Create a config for routing requests via the pinniped-proxy for credential
 		// exchange.
 		config.Host = clustersConfig.PinnipedProxyURL
@@ -713,46 +717,217 @@ func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespa
 	return appRepo, cli, nil
 }
 
-func doValidationRequest(cli httpclient.Client, req *http.Request) (*ValidationResponse, error) {
-	res, err := cli.Do(req)
+// repoTagsList stores the list of tags for an OCI repository.
+type repoTagsList struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
+
+type repoConfig struct {
+	MediaType string `json:"mediaType"`
+}
+
+// repoManifest stores the mediatype for an OCI repository.
+type repoManifest struct {
+	Config repoConfig `json:"config"`
+}
+
+//  getOCIAppRepositoryTag  get a tag for the given repoURL & repoName
+func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName string) (string, error) {
+	// This function is the implementation of below curl command
+	// curl -XGET -H "Authorization: Basic $harborauthz"
+	//		-H "Accept: application/vnd.oci.image.manifest.v1+json"
+	//		-s https://demo.goharbor.io/v2/test10/podinfo/podinfo/tags/list\?n\=1
+
+	parsedURL, err := url.ParseRequestURI(repoURL)
+	if err != nil {
+		return "", err
+	}
+
+	parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "tags", "list")
+	q := parsedURL.Query()
+	q.Add("n", "1")
+	parsedURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequest("GET", parsedURL.String(), nil)
+	if err != nil {
+		return "", err
+	}
+
+	//This header is required for a successful request
+	req.Header.Set("Accept", OCIImageManifestMediaType)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Unexpected status code when querying %q: %d", repoName, resp.StatusCode)
+	}
+
+	var body []byte
+	var repoTagsData repoTagsList
+
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("ioutil.ReadAll : unable to get: %v", err)
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &repoTagsData)
+	if err != nil {
+		err = fmt.Errorf("OCI Repo tag at %q could not be parsed: %w", parsedURL.String(), err)
+		return "", err
+	}
+
+	if len(repoTagsData.Tags) == 0 {
+		err = fmt.Errorf("OCI Repo tag at %q could not be parsed: %w", parsedURL.String(), err)
+		return "", err
+	}
+
+	tagVersion := repoTagsData.Tags[0]
+	return tagVersion, nil
+}
+
+//  getOCIAppRepositoryMediaType  get manifests config.MediaType for the given repoURL & repoName
+func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoName string, tagVersion string) (string, error) {
+	// This function is the implementation of below curl command
+	// curl -XGET -H "Authorization: Basic $harborauthz"
+	//		 -H "Accept: application/vnd.oci.image.manifest.v1+json"
+	//		-s https://demo.goharbor.io/v2/test10/podinfo/podinfo/manifests/6.0.0
+
+	parsedURL, err := url.ParseRequestURI(repoURL)
+	if err != nil {
+		return "", err
+	}
+	parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "manifests", tagVersion)
+
+	log.Infof("parsedURL %v", parsedURL.String())
+	req, err := http.NewRequest("GET", parsedURL.String(), nil)
+	if err != nil {
+		return "", err
+	}
+
+	//This header is required for a successful request
+	req.Header.Set("Accept", OCIImageManifestMediaType)
+
+	resp, err := cli.Do(req)
+
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var mediaData repoManifest
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, &mediaData)
+	if err != nil {
+		err = fmt.Errorf("OCI Repo manifest at %q could not be parsed: %w", parsedURL.String(), err)
+		return "", err
+	}
+	mediaType := mediaData.Config.MediaType
+	return mediaType, nil
+}
+
+// ValidateOCIAppRepository validates OCI Repos only
+// return true if mediaType == "application/vnd.cncf.helm.config" otherwise false
+func ValidateOCIAppRepository(appRepo *v1alpha1.AppRepository, cli httpclient.Client) (bool, error) {
+
+	repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
+
+	// For the OCI case, we want to validate that all the given repositories are valid
+	if len(appRepo.Spec.OCIRepositories) == 0 {
+		return false, ErrEmptyOCIRegistry
+	}
+	for _, repoName := range appRepo.Spec.OCIRepositories {
+		tagVersion, err := getOCIAppRepositoryTag(cli, repoURL, repoName)
+		if err != nil {
+			return false, err
+		}
+
+		mediaType, err := getOCIAppRepositoryMediaType(cli, repoURL, repoName, tagVersion)
+		if err != nil {
+			return false, err
+		}
+
+		if !strings.HasPrefix(mediaType, "application/vnd.cncf.helm.config") {
+			err := fmt.Errorf("%v is not a Helm OCI Repo. mediaType starting with %q expected, found %q", repoName, "application/vnd.cncf.helm.config", mediaType)
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+// HttpValidator is an interface for checking the validity of an AppRepo via Http requests.
+type HttpValidator interface {
+	// Validate returns a validation response.
+	Validate(cli httpclient.Client) (*ValidationResponse, error)
+}
+
+// HelmNonOCIValidator is an HttpValidator for non-OCI Helm repositories.
+type HelmNonOCIValidator struct {
+	Req *http.Request
+}
+
+func (r HelmNonOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, error) {
+
+	response := &ValidationResponse{}
+
+	res, err := cli.Do(r.Req)
 	if err != nil {
 		// If the request fail, it's not an internal error
 		return &ValidationResponse{Code: 400, Message: err.Error()}, nil
 	}
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse validation response. Got: %v", err)
+	response = &ValidationResponse{Code: res.StatusCode, Message: "OK"}
+	if response.Code != 200 {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse validation response. Got: %w", err)
+		}
+		response.Message = string(body)
 	}
-	return &ValidationResponse{Code: res.StatusCode, Message: string(body)}, nil
+
+	return response, nil
 }
 
-func getRequests(appRepo *v1alpha1.AppRepository, cli httpclient.Client) ([]*http.Request, error) {
-	result := []*http.Request{}
+type HelmOCIValidator struct {
+	AppRepo *v1alpha1.AppRepository
+}
+
+func (r HelmOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, error) {
+
+	var response *ValidationResponse
+	response = &ValidationResponse{Code: 200, Message: "OK"}
+
+	// If there was an error validating the OCI repository, it's not an internal error.
+	isValidRepo, err := ValidateOCIAppRepository(r.AppRepo, cli)
+	if err != nil || !isValidRepo {
+		response = &ValidationResponse{Code: 400, Message: err.Error()}
+	}
+	return response, nil
+}
+
+// getValidator return appropriate HttpValidator interface for OCI and non-OCI Repos
+func getValidator(appRepo *v1alpha1.AppRepository) (HttpValidator, error) {
+
 	repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
 
-	switch appRepo.Spec.Type {
-	case "oci":
+	if appRepo.Spec.Type == "oci" {
 		// For the OCI case, we want to validate that all the given repositories are valid
 		if len(appRepo.Spec.OCIRepositories) == 0 {
 			return nil, ErrEmptyOCIRegistry
 		}
-		for _, repoName := range appRepo.Spec.OCIRepositories {
-			parsedURL, err := url.ParseRequestURI(repoURL)
-			if err != nil {
-				return nil, err
-			}
-			parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "tags", "list")
-			q := parsedURL.Query()
-			q.Add("n", "1")
-			parsedURL.RawQuery = q.Encode()
-			req, err := http.NewRequest("GET", parsedURL.String(), nil)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, req)
-		}
-		break
-	default:
+		return HelmOCIValidator{
+			AppRepo: appRepo,
+		}, nil
+	} else {
 		parsedURL, err := url.ParseRequestURI(repoURL)
 		if err != nil {
 			return nil, err
@@ -762,30 +937,29 @@ func getRequests(appRepo *v1alpha1.AppRepository, cli httpclient.Client) ([]*htt
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, req)
+		return HelmNonOCIValidator{
+			Req: req,
+		}, nil
+
 	}
-	return result, nil
 }
 
 func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error) {
 	// Split body parsing to a different function for ease testing
 	appRepo, cli, err := a.getValidationCli(appRepoBody, requestNamespace, a.kubeappsNamespace)
 	if err != nil {
-		return nil, err
+		return &ValidationResponse{
+			Code:    400,
+			Message: err.Error(),
+		}, nil
 	}
-	reqs, err := getRequests(appRepo, cli)
+	httpValidator, err := getValidator(appRepo)
 	if err != nil {
 		return nil, err
 	}
-	response := &ValidationResponse{}
-	for _, req := range reqs {
-		response, err = doValidationRequest(cli, req)
-		if err != nil {
-			return nil, err
-		}
-		if response.Code != 200 {
-			return response, nil
-		}
+	response, err := httpValidator.Validate(cli)
+	if err != nil {
+		return nil, err
 	}
 	return response, nil
 }

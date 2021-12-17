@@ -377,6 +377,7 @@ func SetupDefaultRoutes(r *mux.Router, namespaceHeaderName, namespaceHeaderPatte
 	if err != nil {
 		return err
 	}
+	//TODO(agamez): move these endpoints to a separate plugin when possible
 	r.Methods("POST").Path("/clusters/{cluster}/can-i").Handler(http.HandlerFunc(CanI(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))

@@ -10,19 +10,18 @@ module.exports = {
         break;
       } catch (e) {
         testName = testName || "unknown";
-        let screenshotFilename = `../../${screenshotsFolder}/${testName}-${retries - retriesLeft}.png`;
+        let screenshotFilename = `../../${screenshotsFolder}/${testName}-${
+          retries - retriesLeft
+        }.png`;
         console.log(`Saving screenshot to ${screenshotFilename}`);
         await page.screenshot({
-          path: path.join(
-            __dirname,
-            screenshotFilename
-          ),
+          path: path.join(__dirname, screenshotFilename),
         });
         if (retriesLeft === 1) {
           // Unable to get it done
           throw e;
         }
-        // Refresh since the chart will get a bit of time to populate
+        // Refresh since the package will get a bit of time to populate
         try {
           await page.reload({
             waitUntil: ["domcontentloaded"],
@@ -89,7 +88,7 @@ module.exports = {
     }
   },
   getRandomName: base => {
-    const randomNumber = Math.floor(Math.random() * Math.floor(100));
+    const randomNumber = Math.floor(Math.random() * Math.floor(10000));
     const name = base + "-" + randomNumber;
     return name;
   },

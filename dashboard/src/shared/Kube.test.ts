@@ -98,71 +98,6 @@ describe("App", () => {
     });
   });
 
-  describe("watchResourceURL", () => {
-    [
-      {
-        description: "returns the version and resource",
-        args: {
-          cluster: clusterName,
-          apiVersion: "",
-          resource: "pods",
-          namespaced: true,
-        },
-        result: `ws://localhost/api/clusters/${clusterName}/api/v1/pods?watch=true`,
-      },
-      {
-        description: "returns the version, resource in a namespace",
-        args: {
-          cluster: clusterName,
-          apiVersion: "",
-          resource: "pods",
-          namespaced: true,
-          namespace: "default",
-        },
-        result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true`,
-      },
-      {
-        description: "returns the version, resource in a namespace with a name",
-        args: {
-          cluster: clusterName,
-          apiVersion: "",
-          resource: "pods",
-          namespaced: true,
-          namespace: "default",
-          name: "foo",
-        },
-        result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo`,
-      },
-      {
-        description: "returns the version, resource in a namespace with a name and a query",
-        args: {
-          cluster: clusterName,
-          apiVersion: "",
-          resource: "pods",
-          namespaced: true,
-          namespace: "default",
-          name: "foo",
-          query: "label=bar",
-        },
-        result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo&label=bar`,
-      },
-    ].forEach(t => {
-      it(t.description, () => {
-        expect(
-          Kube.watchResourceURL(
-            t.args.cluster,
-            t.args.apiVersion,
-            t.args.resource,
-            t.args.namespaced,
-            t.args.namespace,
-            t.args.name,
-            t.args.query,
-          ),
-        ).toBe(t.result);
-      });
-    });
-  });
-
   describe("getResource", () => {
     const resource = { name: "foo" };
     beforeEach(() => {
@@ -180,17 +115,6 @@ describe("App", () => {
       expect(moxios.requests.mostRecent().url).toBe(
         `api/clusters/${clusterName}/api/v1/namespaces/default/pods/foo?label=bar`,
       );
-    });
-  });
-
-  describe("watchResource", () => {
-    it("should open a socket", async () => {
-      const socket = Kube.watchResource(clusterName, "v1", "pods", true, "default", "foo");
-      expect(socket.url).toBe(
-        `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo`,
-      );
-      // it's a mock socket, so doesn't actually need to be closed
-      socket.close();
     });
   });
 
@@ -316,10 +240,12 @@ describe("App", () => {
       },
     ].forEach(t => {
       it(t.description, async () => {
+        // eslint-disable-next-line redos/no-vulnerable
         moxios.stubRequest(/.*api\/v1/, t.apiV1Response);
         const groups: any[] = [];
         t.groups.forEach((g: any) => {
           groups.push(g.input);
+          // eslint-disable-next-line redos/no-vulnerable
           moxios.stubOnce("GET", /.*apis\/.*/, g.apiResponse);
         });
         expect(await Kube.getResourceKinds("cluster", groups)).toEqual(t.result);
@@ -337,6 +263,10 @@ describe("App", () => {
     it("should check permissions", async () => {
       const allowed = await Kube.canI("cluster", "v1", "namespaces", "create", "");
       expect(allowed).toBe(true);
+    });
+    it("should ignore empty clusters", async () => {
+      const allowed = await Kube.canI("", "v1", "namespaces", "create", "");
+      expect(allowed).toBe(false);
     });
   });
 });

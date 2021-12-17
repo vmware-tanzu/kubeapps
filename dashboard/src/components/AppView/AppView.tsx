@@ -1,37 +1,40 @@
-import { assignWith, get } from "lodash";
-
-import { useEffect, useState } from "react";
-import YAML from "yaml";
-import placeholder from "../../placeholder.png";
-
+import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import {
+  InstalledPackageReference,
+  ResourceRef,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import * as yaml from "js-yaml";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import ResourceRef from "../../shared/ResourceRef";
 import {
+  CustomInstalledPackageDetail,
   DeleteError,
   FetchError,
-  IK8sList,
-  IKubeState,
-  IResource,
+  FetchWarning,
   IStoreState,
-} from "../../shared/types";
+} from "shared/types";
+import { getPluginsSupportingRollback } from "shared/utils";
+import ApplicationStatus from "../../containers/ApplicationStatusContainer";
+import placeholder from "../../placeholder.png";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
-import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
-import AppNotes from "./AppNotes";
+import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
+import AppNotes from "./AppNotes/AppNotes";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues";
-import ChartInfo from "./ChartInfo/ChartInfo";
+import CustomAppView from "./CustomAppView";
+import PackageInfo from "./PackageInfo/PackageInfo";
 import ResourceTabs from "./ResourceTabs";
 
 export interface IAppViewResourceRefs {
@@ -44,12 +47,7 @@ export interface IAppViewResourceRefs {
   otherResources: ResourceRef[];
 }
 
-function parseResources(
-  resources: Array<IResource | IK8sList<IResource, {}>>,
-  kinds: IKubeState["kinds"],
-  cluster: string,
-  releaseNamespace: string,
-) {
+function parseResources(resourceRefs: Array<ResourceRef>) {
   const result: IAppViewResourceRefs = {
     ingresses: [],
     deployments: [],
@@ -59,75 +57,88 @@ function parseResources(
     services: [],
     secrets: [],
   };
-  resources.forEach(i => {
-    // The item may be a list
-    const itemList = i as IK8sList<IResource, {}>;
-    if (itemList.items) {
-      // If the resource  has a list of items, treat them as a list
-      // A List can contain an arbitrary set of resources so we treat them as an
-      // additional manifest. We merge the current result with the resources of
-      // the List, concatenating items from both.
-      assignWith(
-        result,
-        parseResources((i as IK8sList<IResource, {}>).items, kinds, cluster, releaseNamespace),
-        // Merge the list with the current result
-        (prev, newArray) => prev.concat(newArray),
-      );
-    } else {
-      const item = i as IResource;
-      const resource = { isFetching: true, item };
-      const kind = kinds[item.kind] || {};
-      switch (i.kind) {
-        case "Deployment":
-          result.deployments.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "StatefulSet":
-          result.statefulsets.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "DaemonSet":
-          result.daemonsets.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "Service":
-          result.services.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "Ingress":
-          result.ingresses.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        case "Secret":
-          result.secrets.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-          break;
-        default:
-          result.otherResources.push(
-            new ResourceRef(resource.item, cluster, kind.plural, kind.namespaced, releaseNamespace),
-          );
-      }
+  resourceRefs.forEach(ref => {
+    switch (ref.kind) {
+      case "Deployment":
+        result.deployments.push(ref);
+        break;
+      case "StatefulSet":
+        result.statefulsets.push(ref);
+        break;
+      case "DaemonSet":
+        result.daemonsets.push(ref);
+        break;
+      case "Service":
+        result.services.push(ref);
+        break;
+      case "Ingress":
+        result.ingresses.push(ref);
+        break;
+      case "Secret":
+        result.secrets.push(ref);
+        break;
+      default:
+        result.otherResources.push(ref);
     }
   });
   return result;
 }
 
-interface IRouteParams {
+function getButtons(app: CustomInstalledPackageDetail, error: any, revision: number) {
+  if (!app || !app?.installedPackageRef || !app.installedPackageRef.plugin) {
+    return [];
+  }
+
+  const buttons = [];
+
+  // Upgrade is a core operation, it will always be available
+  buttons.push(
+    <UpgradeButton
+      key="upgrade-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+      disabled={error !== undefined}
+    />,
+  );
+
+  // Rollback is a helm-only operation, it will only be available for helm-plugin packages
+  if (getPluginsSupportingRollback().includes(app.installedPackageRef.plugin.name)) {
+    buttons.push(
+      <RollbackButton
+        key="rollback-button"
+        installedPackageRef={app.installedPackageRef}
+        revision={revision}
+        releaseStatus={app?.status}
+        disabled={error !== undefined}
+      />,
+    );
+  }
+
+  // Delete is a core operation, it will always be available
+  buttons.push(
+    <DeleteButton
+      key="delete-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+    />,
+  );
+
+  return buttons;
+}
+
+export interface IRouteParams {
   cluster: string;
   namespace: string;
   releaseName: string;
+  pluginName: string;
+  pluginVersion: string;
 }
 
 export default function AppView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName } = ReactRouter.useParams() as IRouteParams;
-  const [resourceRefs, setResourceRefs] = useState({
+  const { cluster, namespace, releaseName, pluginName, pluginVersion } =
+    ReactRouter.useParams() as IRouteParams;
+  const [appViewResourceRefs, setAppViewResourceRefs] = useState({
     ingresses: [],
     deployments: [],
     statefulsets: [],
@@ -137,125 +148,168 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: app },
-    kube: { kinds },
+    apps: { error, selected: app, selectedDetails: appDetails },
+    config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
-  useEffect(() => {
-    dispatch(actions.apps.getAppWithUpdateInfo(cluster, namespace, releaseName));
-  }, [cluster, dispatch, namespace, releaseName]);
+
+  const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
   useEffect(() => {
-    if (!app?.manifest) {
-      return;
-    }
-
-    if (Object.values(resourceRefs).some(ref => ref.length)) {
-      // Already populated, skip
-      return;
-    }
-
-    let parsedManifest: IResource[] = YAML.parseAllDocuments(app.manifest).map(
-      (doc: YAML.Document) => doc.toJSON(),
+    dispatch(
+      actions.apps.getApp({
+        context: { cluster: cluster, namespace: namespace },
+        identifier: releaseName,
+        plugin: pluginObj,
+      } as InstalledPackageReference),
     );
-    // Filter out elements in the manifest that does not comply
-    // with { kind: foo }
-    parsedManifest = parsedManifest.filter(r => r && r.kind);
-    const parsedRefs = parseResources(parsedManifest, kinds, cluster, app.namespace);
-    if (Object.values(parsedRefs).some(ref => ref.length)) {
-      // Avoid setting refs if the manifest is empty
-      setResourceRefs(parsedRefs);
-    }
-  }, [app, cluster, kinds, resourceRefs]);
+  }, [cluster, dispatch, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
-    Object.values(resourceRefs).forEach((refs: ResourceRef[]) => {
-      refs.forEach(ref => dispatch(actions.kube.getAndWatchResource(ref)));
-    });
-    return function cleanup() {
-      Object.values(resourceRefs).forEach((refs: ResourceRef[]) => {
-        refs.forEach(ref => dispatch(actions.kube.closeWatchResource(ref)));
-      });
-    };
-  }, [dispatch, resourceRefs]);
+    if (!app?.apiResourceRefs) {
+      return () => {};
+    }
+
+    const parsedRefs = parseResources(app.apiResourceRefs);
+    setAppViewResourceRefs(parsedRefs);
+    return () => {};
+  }, [app?.apiResourceRefs]);
+
+  useEffect(() => {
+    if (!app?.installedPackageRef) {
+      return () => {};
+    }
+    const installedPackageRef = app.installedPackageRef;
+    // Watch Deployments, StatefulSets, DaemonSets, Ingresses and Services.
+    const refsToWatch = appViewResourceRefs.deployments.concat(
+      appViewResourceRefs.statefulsets,
+      appViewResourceRefs.daemonsets,
+      appViewResourceRefs.ingresses,
+      appViewResourceRefs.services,
+    );
+    // And just get the rest.
+    const refsToGet = appViewResourceRefs.secrets.concat(appViewResourceRefs.otherResources);
+    if (refsToGet.length > 0) {
+      dispatch(actions.kube.getResources(installedPackageRef, refsToGet, false));
+    }
+    if (refsToWatch.length > 0) {
+      dispatch(actions.kube.getResources(installedPackageRef, refsToWatch, true));
+      return function cleanup() {
+        dispatch(actions.kube.closeRequestResources(installedPackageRef));
+      };
+    }
+    return () => {};
+  }, [dispatch, app?.installedPackageRef, appViewResourceRefs]);
+
+  const forceRetry = () => {
+    dispatch(actions.apps.clearErrorApp());
+    dispatch(
+      actions.apps.getApp({
+        context: { cluster: cluster, namespace: namespace },
+        identifier: releaseName,
+        plugin: pluginObj,
+      } as InstalledPackageReference),
+    );
+  };
 
   if (error && error.constructor === FetchError) {
-    return <Alert theme="danger">Application not found. Received: {error.message}</Alert>;
+    return (
+      <Alert theme="danger">
+        Application not found: {error.message}
+        <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
+          {" "}
+          Try again{" "}
+        </CdsButton>
+      </Alert>
+    );
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
-    resourceRefs;
-  const icon = get(app, "chart.metadata.icon", placeholder);
+    appViewResourceRefs;
+  const revision = app?.revision ?? 0;
+  const icon = appDetails?.iconUrl ?? placeholder;
+
+  // If the package identifier matches the current list of loaded customAppViews,
+  // then load the custom view from external bundle instead of the default one.
+  const appRepo = app?.availablePackageRef?.identifier.split("/")[0];
+  const appName = app?.availablePackageRef?.identifier.split("/")[1];
+  const appPlugin = app?.availablePackageRef?.plugin?.name;
+  if (
+    customAppViews.some(
+      entry => entry.name === appName && entry.plugin === appPlugin && entry.repository === appRepo,
+    )
+  ) {
+    return <CustomAppView resourceRefs={appViewResourceRefs} app={app!} appDetails={appDetails!} />;
+  }
+
   return (
-    <section>
-      <PageHeader
-        title={releaseName}
-        titleSize="md"
-        helm={true}
-        icon={icon}
-        buttons={[
-          <UpgradeButton
-            key="upgrade-button"
-            cluster={cluster}
-            namespace={namespace}
-            releaseName={releaseName}
-            releaseStatus={app?.info?.status}
-          />,
-          <RollbackButton
-            key="rollback-button"
-            cluster={cluster}
-            namespace={namespace}
-            releaseName={releaseName}
-            revision={app?.version || 0}
-            releaseStatus={app?.info?.status}
-          />,
-          <DeleteButton
-            key="delete-button"
-            cluster={cluster}
-            namespace={namespace}
-            releaseName={releaseName}
-            releaseStatus={app?.info?.status}
-          />,
-        ]}
-      />
-      {error &&
-        (error.constructor === DeleteError ? (
-          <Alert theme="danger">Unable to delete the application. Received: {error.message}</Alert>
-        ) : (
-          <Alert theme="danger">An error occurred: {error.message}</Alert>
-        ))}
-      {!app || !app.info ? (
-        <LoadingWrapper loadingText={`Loading ${releaseName}...`} />
+    <LoadingWrapper loaded={!!app} loadingText="Retrieving application..." className="margin-t-xl">
+      {!app || !app?.installedPackageRef ? (
+        <Alert theme="danger">There is a problem with this package</Alert>
       ) : (
-        <Row>
-          <Column span={3}>
-            <ChartInfo app={app} cluster={cluster} />
-          </Column>
-          <Column span={9}>
-            <div className="appview-separator">
-              <div className="appview-first-row">
-                <ApplicationStatus
-                  deployRefs={deployments}
-                  statefulsetRefs={statefulsets}
-                  daemonsetRefs={daemonsets}
-                  info={app.info}
-                />
-                <AccessURLTable serviceRefs={services} ingressRefs={ingresses} />
-                <AppSecrets secretRefs={secrets} />
-              </div>
-            </div>
-            <div className="appview-separator">
-              <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-            </div>
-            <div className="appview-separator">
-              <ResourceTabs
-                {...{ deployments, statefulsets, daemonsets, secrets, services, otherResources }}
-              />
-            </div>
-            <div className="appview-separator">
-              <AppValues values={(app.config && app.config.raw) || ""} />
-            </div>
-          </Column>
-        </Row>
+        <section>
+          <PageHeader
+            title={releaseName}
+            titleSize="md"
+            plugin={app?.availablePackageRef?.plugin}
+            icon={icon}
+            buttons={getButtons(app, error, revision)}
+          />
+          {error &&
+            (error.constructor === FetchWarning ? (
+              <Alert theme="warning">
+                There is a problem with this package: {error["message"]}
+              </Alert>
+            ) : error.constructor === DeleteError ? (
+              <Alert theme="danger">
+                Unable to delete the application. Received: {error["message"]}
+              </Alert>
+            ) : (
+              <Alert theme="danger">An error occurred: {error["message"]}</Alert>
+            ))}
+          {!app || !app?.status?.userReason ? (
+            <LoadingWrapper loadingText={`Loading ${releaseName}...`} />
+          ) : (
+            <Row>
+              <Column span={3}>
+                <PackageInfo installedPackageDetail={app} availablePackageDetail={appDetails!} />
+              </Column>
+              <Column span={9}>
+                <div className="appview-separator">
+                  <div className="appview-first-row">
+                    <ApplicationStatus
+                      deployRefs={deployments}
+                      statefulsetRefs={statefulsets}
+                      daemonsetRefs={daemonsets}
+                      info={app}
+                    />
+                    <AccessURLTable serviceRefs={services} ingressRefs={ingresses} />
+                    <AppSecrets secretRefs={secrets} />
+                  </div>
+                </div>
+                <div className="appview-separator">
+                  <AppNotes notes={app?.postInstallationNotes} />
+                </div>
+                <div className="appview-separator">
+                  <ResourceTabs
+                    {...{
+                      deployments,
+                      statefulsets,
+                      daemonsets,
+                      secrets,
+                      services,
+                      otherResources,
+                    }}
+                  />
+                </div>
+                <div className="appview-separator">
+                  <AppValues
+                    values={app?.valuesApplied ? yaml.dump(yaml.load(app.valuesApplied)) : ""}
+                  />
+                </div>
+              </Column>
+            </Row>
+          )}
+        </section>
       )}
-    </section>
+    </LoadingWrapper>
   );
 }

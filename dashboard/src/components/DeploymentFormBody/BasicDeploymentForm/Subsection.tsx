@@ -1,6 +1,6 @@
-import { setValue } from "../../../shared/schema";
-import { DeploymentEvent, IBasicFormParam } from "../../../shared/types";
-import { getValueFromEvent } from "../../../shared/utils";
+import { setValue } from "shared/schema";
+import { DeploymentEvent, IBasicFormParam } from "shared/types";
+import { getValueFromEvent } from "shared/utils";
 import Param from "./Param";
 
 export interface ISubsectionProps {

@@ -1,5 +1,4 @@
 import { shallow } from "enzyme";
-
 import NotFound from "./NotFound";
 
 it("should render the 404 page", () => {

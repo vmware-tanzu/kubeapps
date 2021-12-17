@@ -7,14 +7,13 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/kubeapps/common/response"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	"github.com/kubeapps/kubeapps/pkg/chart"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	"github.com/kubeapps/kubeapps/pkg/kube"
+	"github.com/kubeapps/kubeapps/pkg/response"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"helm.sh/helm/v3/pkg/action"
@@ -52,12 +51,13 @@ type Options struct {
 // Config represents data needed by each handler to be able to create Helm 3 actions.
 // It cannot be created without a bearer token, so a new one must be created upon each HTTP request.
 type Config struct {
-	ActionConfig *action.Configuration
-	Options      Options
-	KubeHandler  kube.AuthHandler
-	Resolver     handlerutil.ResolverFactory
-	Cluster      string
-	Token        string
+	ActionConfig       *action.Configuration
+	Options            Options
+	KubeHandler        kube.AuthHandler
+	ChartClientFactory chartUtils.ChartClientFactoryInterface
+	Cluster            string
+	Token              string
+	userClientSet      kubernetes.Interface
 }
 
 // WithHandlerConfig takes a dependentHandler and creates a regular (WithParams) handler that,
@@ -66,7 +66,7 @@ type Config struct {
 func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options) func(f dependentHandler) handlerutil.WithParams {
 	return func(f dependentHandler) handlerutil.WithParams {
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-			// Don't assume the cluster name was in the url for backwards compatability
+			// Don't assume the cluster name was in the url for backwards compatibility
 			// for now.
 			cluster, ok := params[clusterParam]
 			if !ok {
@@ -109,12 +109,13 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			}
 
 			cfg := Config{
-				Options:      options,
-				ActionConfig: actionConfig,
-				KubeHandler:  kubeHandler,
-				Cluster:      cluster,
-				Token:        token,
-				Resolver:     &handlerutil.ClientResolver{},
+				Options:            options,
+				ActionConfig:       actionConfig,
+				KubeHandler:        kubeHandler,
+				Cluster:            cluster,
+				Token:              token,
+				ChartClientFactory: &chartUtils.ChartClientFactory{},
+				userClientSet:      userKubeClient,
 			}
 			f(cfg, w, req, params)
 		}
@@ -189,7 +190,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		chartDetails,
 		appRepo,
 		caCertSecret, authSecret,
-		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
+		cfg.ChartClientFactory.New(appRepo.Spec.Type, cfg.Options.UserAgent),
 	)
 	if err != nil {
 		returnErrMessage(err, w)
@@ -199,12 +200,12 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
-	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo.Spec.DockerRegistrySecrets, cfg.Cluster, appRepo.Namespace, cfg.Token, cfg.KubeHandler)
+	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(req.Context(), appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, cfg.userClientSet)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, registrySecrets)
+	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, registrySecrets, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -233,7 +234,8 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(err, w)
 		return
 	}
-	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Cluster, cfg.Options.KubeappsNamespace, cfg.Options.ClustersConfig.KubeappsClusterName)
+	// TODO: currently app repositories are only supported on the cluster on which Kubeapps is installed. #1982
+	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Options.ClustersConfig.KubeappsClusterName, cfg.Options.KubeappsNamespace, cfg.Options.ClustersConfig.KubeappsClusterName)
 	if err != nil {
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
@@ -242,25 +244,20 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		chartDetails,
 		appRepo,
 		caCertSecret, authSecret,
-		cfg.Resolver.New(appRepo.Spec.Type, cfg.Options.UserAgent),
+		cfg.ChartClientFactory.New(appRepo.Spec.Type, cfg.Options.UserAgent),
 	)
-	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(appRepo.Spec.DockerRegistrySecrets, cfg.Cluster, appRepo.Namespace, cfg.Token, cfg.KubeHandler)
+	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(req.Context(), appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, cfg.userClientSet)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
 
-	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets)
+	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	compatRelease, err := helm3to2.Convert(*rel)
-	if err != nil {
-		returnErrMessage(err, w)
-		return
-	}
-	response.NewDataResponse(compatRelease).Write(w)
+	response.NewDataResponse(*rel).Write(w)
 }
 
 func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
@@ -275,17 +272,12 @@ func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, param
 		returnErrMessage(err, w)
 		return
 	}
-	rel, err := agent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt))
+	rel, err := agent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt), 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	compatRelease, err := helm3to2.Convert(*rel)
-	if err != nil {
-		returnErrMessage(err, w)
-		return
-	}
-	response.NewDataResponse(compatRelease).Write(w)
+	response.NewDataResponse(*rel).Write(w)
 }
 
 // GetRelease returns a release.
@@ -297,12 +289,7 @@ func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params han
 		returnErrMessage(err, w)
 		return
 	}
-	compatRelease, err := helm3to2.Convert(*release)
-	if err != nil {
-		returnErrMessage(err, w)
-		return
-	}
-	response.NewDataResponse(compatRelease).Write(w)
+	response.NewDataResponse(*release).Write(w)
 }
 
 // DeleteRelease deletes a release.
@@ -312,7 +299,7 @@ func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	// Helm 3 has --purge by default; --keep-history in Helm 3 corresponds to omitting --purge in Helm 2.
 	// https://stackoverflow.com/a/59210923/2135002
 	keepHistory := !purge
-	err := agent.DeleteRelease(cfg.ActionConfig, releaseName, keepHistory)
+	err := agent.DeleteRelease(cfg.ActionConfig, releaseName, keepHistory, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return

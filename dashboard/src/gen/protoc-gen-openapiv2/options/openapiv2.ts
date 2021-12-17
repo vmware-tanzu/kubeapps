@@ -151,7 +151,7 @@ export interface Swagger {
   security: SecurityRequirement[];
   /** Additional external documentation. */
   externalDocs?: ExternalDocumentation;
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 export interface Swagger_ResponsesEntry {
@@ -161,7 +161,7 @@ export interface Swagger_ResponsesEntry {
 
 export interface Swagger_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -252,7 +252,7 @@ export interface Operation {
    * security declaration, an empty array can be used.
    */
   security: SecurityRequirement[];
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 export interface Operation_ResponsesEntry {
@@ -262,7 +262,7 @@ export interface Operation_ResponsesEntry {
 
 export interface Operation_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -314,7 +314,7 @@ export interface Response {
    * See: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#example-object
    */
   examples: { [key: string]: string };
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 export interface Response_HeadersEntry {
@@ -329,7 +329,7 @@ export interface Response_ExamplesEntry {
 
 export interface Response_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -376,12 +376,12 @@ export interface Info {
    * with the specification version).
    */
   version: string;
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 export interface Info_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -532,7 +532,7 @@ export interface Schema {
  *    // Id represents the message identifier.
  *    string id = 1; [
  *        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
- *          {description: "The unique identifier of the simple message."
+ *          description: "The unique identifier of the simple message."
  *        }];
  *  }
  */
@@ -752,7 +752,7 @@ export interface SecurityScheme {
    * Valid for oauth2.
    */
   scopes?: Scopes;
-  extensions: { [key: string]: Value };
+  extensions: { [key: string]: any };
 }
 
 /**
@@ -898,7 +898,7 @@ export function securityScheme_FlowToJSON(object: SecurityScheme_Flow): string {
 
 export interface SecurityScheme_ExtensionsEntry {
   key: string;
-  value?: Value;
+  value?: any;
 }
 
 /**
@@ -1007,10 +1007,12 @@ export const Swagger = {
       ExternalDocumentation.encode(message.externalDocs, writer.uint32(114).fork()).ldelim();
     }
     Object.entries(message.extensions).forEach(([key, value]) => {
-      Swagger_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(122).fork(),
-      ).ldelim();
+      if (value !== undefined) {
+        Swagger_ExtensionsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(122).fork(),
+        ).ldelim();
+      }
     });
     return writer;
   },
@@ -1087,72 +1089,37 @@ export const Swagger = {
 
   fromJSON(object: any): Swagger {
     const message = { ...baseSwagger } as Swagger;
-    message.schemes = [];
-    message.consumes = [];
-    message.produces = [];
-    message.responses = {};
-    message.security = [];
-    message.extensions = {};
-    if (object.swagger !== undefined && object.swagger !== null) {
-      message.swagger = String(object.swagger);
-    } else {
-      message.swagger = "";
-    }
-    if (object.info !== undefined && object.info !== null) {
-      message.info = Info.fromJSON(object.info);
-    } else {
-      message.info = undefined;
-    }
-    if (object.host !== undefined && object.host !== null) {
-      message.host = String(object.host);
-    } else {
-      message.host = "";
-    }
-    if (object.basePath !== undefined && object.basePath !== null) {
-      message.basePath = String(object.basePath);
-    } else {
-      message.basePath = "";
-    }
-    if (object.schemes !== undefined && object.schemes !== null) {
-      for (const e of object.schemes) {
-        message.schemes.push(schemeFromJSON(e));
-      }
-    }
-    if (object.consumes !== undefined && object.consumes !== null) {
-      for (const e of object.consumes) {
-        message.consumes.push(String(e));
-      }
-    }
-    if (object.produces !== undefined && object.produces !== null) {
-      for (const e of object.produces) {
-        message.produces.push(String(e));
-      }
-    }
-    if (object.responses !== undefined && object.responses !== null) {
-      Object.entries(object.responses).forEach(([key, value]) => {
-        message.responses[key] = Response.fromJSON(value);
-      });
-    }
-    if (object.securityDefinitions !== undefined && object.securityDefinitions !== null) {
-      message.securityDefinitions = SecurityDefinitions.fromJSON(object.securityDefinitions);
-    } else {
-      message.securityDefinitions = undefined;
-    }
-    if (object.security !== undefined && object.security !== null) {
-      for (const e of object.security) {
-        message.security.push(SecurityRequirement.fromJSON(e));
-      }
-    }
-    if (object.externalDocs !== undefined && object.externalDocs !== null) {
-      message.externalDocs = ExternalDocumentation.fromJSON(object.externalDocs);
-    } else {
-      message.externalDocs = undefined;
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.swagger =
+      object.swagger !== undefined && object.swagger !== null ? String(object.swagger) : "";
+    message.info =
+      object.info !== undefined && object.info !== null ? Info.fromJSON(object.info) : undefined;
+    message.host = object.host !== undefined && object.host !== null ? String(object.host) : "";
+    message.basePath =
+      object.basePath !== undefined && object.basePath !== null ? String(object.basePath) : "";
+    message.schemes = (object.schemes ?? []).map((e: any) => schemeFromJSON(e));
+    message.consumes = (object.consumes ?? []).map((e: any) => String(e));
+    message.produces = (object.produces ?? []).map((e: any) => String(e));
+    message.responses = Object.entries(object.responses ?? {}).reduce<{
+      [key: string]: Response;
+    }>((acc, [key, value]) => {
+      acc[key] = Response.fromJSON(value);
+      return acc;
+    }, {});
+    message.securityDefinitions =
+      object.securityDefinitions !== undefined && object.securityDefinitions !== null
+        ? SecurityDefinitions.fromJSON(object.securityDefinitions)
+        : undefined;
+    message.security = (object.security ?? []).map((e: any) => SecurityRequirement.fromJSON(e));
+    message.externalDocs =
+      object.externalDocs !== undefined && object.externalDocs !== null
+        ? ExternalDocumentation.fromJSON(object.externalDocs)
+        : undefined;
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -1199,84 +1166,47 @@ export const Swagger = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Swagger>): Swagger {
+  fromPartial<I extends Exact<DeepPartial<Swagger>, I>>(object: I): Swagger {
     const message = { ...baseSwagger } as Swagger;
-    message.schemes = [];
-    message.consumes = [];
-    message.produces = [];
-    message.responses = {};
-    message.security = [];
-    message.extensions = {};
-    if (object.swagger !== undefined && object.swagger !== null) {
-      message.swagger = object.swagger;
-    } else {
-      message.swagger = "";
-    }
-    if (object.info !== undefined && object.info !== null) {
-      message.info = Info.fromPartial(object.info);
-    } else {
-      message.info = undefined;
-    }
-    if (object.host !== undefined && object.host !== null) {
-      message.host = object.host;
-    } else {
-      message.host = "";
-    }
-    if (object.basePath !== undefined && object.basePath !== null) {
-      message.basePath = object.basePath;
-    } else {
-      message.basePath = "";
-    }
-    if (object.schemes !== undefined && object.schemes !== null) {
-      for (const e of object.schemes) {
-        message.schemes.push(e);
+    message.swagger = object.swagger ?? "";
+    message.info =
+      object.info !== undefined && object.info !== null ? Info.fromPartial(object.info) : undefined;
+    message.host = object.host ?? "";
+    message.basePath = object.basePath ?? "";
+    message.schemes = object.schemes?.map(e => e) || [];
+    message.consumes = object.consumes?.map(e => e) || [];
+    message.produces = object.produces?.map(e => e) || [];
+    message.responses = Object.entries(object.responses ?? {}).reduce<{
+      [key: string]: Response;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Response.fromPartial(value);
       }
-    }
-    if (object.consumes !== undefined && object.consumes !== null) {
-      for (const e of object.consumes) {
-        message.consumes.push(e);
+      return acc;
+    }, {});
+    message.securityDefinitions =
+      object.securityDefinitions !== undefined && object.securityDefinitions !== null
+        ? SecurityDefinitions.fromPartial(object.securityDefinitions)
+        : undefined;
+    message.security = object.security?.map(e => SecurityRequirement.fromPartial(e)) || [];
+    message.externalDocs =
+      object.externalDocs !== undefined && object.externalDocs !== null
+        ? ExternalDocumentation.fromPartial(object.externalDocs)
+        : undefined;
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
       }
-    }
-    if (object.produces !== undefined && object.produces !== null) {
-      for (const e of object.produces) {
-        message.produces.push(e);
-      }
-    }
-    if (object.responses !== undefined && object.responses !== null) {
-      Object.entries(object.responses).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.responses[key] = Response.fromPartial(value);
-        }
-      });
-    }
-    if (object.securityDefinitions !== undefined && object.securityDefinitions !== null) {
-      message.securityDefinitions = SecurityDefinitions.fromPartial(object.securityDefinitions);
-    } else {
-      message.securityDefinitions = undefined;
-    }
-    if (object.security !== undefined && object.security !== null) {
-      for (const e of object.security) {
-        message.security.push(SecurityRequirement.fromPartial(e));
-      }
-    }
-    if (object.externalDocs !== undefined && object.externalDocs !== null) {
-      message.externalDocs = ExternalDocumentation.fromPartial(object.externalDocs);
-    } else {
-      message.externalDocs = undefined;
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -1317,16 +1247,11 @@ export const Swagger_ResponsesEntry = {
 
   fromJSON(object: any): Swagger_ResponsesEntry {
     const message = { ...baseSwagger_ResponsesEntry } as Swagger_ResponsesEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Response.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? Response.fromJSON(object.value)
+        : undefined;
     return message;
   },
 
@@ -1338,18 +1263,15 @@ export const Swagger_ResponsesEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Swagger_ResponsesEntry>): Swagger_ResponsesEntry {
+  fromPartial<I extends Exact<DeepPartial<Swagger_ResponsesEntry>, I>>(
+    object: I,
+  ): Swagger_ResponsesEntry {
     const message = { ...baseSwagger_ResponsesEntry } as Swagger_ResponsesEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Response.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? Response.fromPartial(object.value)
+        : undefined;
     return message;
   },
 };
@@ -1362,7 +1284,7 @@ export const Swagger_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -1380,7 +1302,7 @@ export const Swagger_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -1394,41 +1316,26 @@ export const Swagger_ExtensionsEntry = {
     const message = {
       ...baseSwagger_ExtensionsEntry,
     } as Swagger_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: Swagger_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Swagger_ExtensionsEntry>): Swagger_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<Swagger_ExtensionsEntry>, I>>(
+    object: I,
+  ): Swagger_ExtensionsEntry {
     const message = {
       ...baseSwagger_ExtensionsEntry,
     } as Swagger_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -1485,10 +1392,12 @@ export const Operation = {
       SecurityRequirement.encode(v!, writer.uint32(98).fork()).ldelim();
     }
     Object.entries(message.extensions).forEach(([key, value]) => {
-      Operation_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(106).fork(),
-      ).ldelim();
+      if (value !== undefined) {
+        Operation_ExtensionsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(106).fork(),
+        ).ldelim();
+      }
     });
     return writer;
   },
@@ -1566,73 +1475,41 @@ export const Operation = {
 
   fromJSON(object: any): Operation {
     const message = { ...baseOperation } as Operation;
-    message.tags = [];
-    message.consumes = [];
-    message.produces = [];
-    message.responses = {};
-    message.schemes = [];
-    message.security = [];
-    message.extensions = {};
-    if (object.tags !== undefined && object.tags !== null) {
-      for (const e of object.tags) {
-        message.tags.push(String(e));
-      }
-    }
-    if (object.summary !== undefined && object.summary !== null) {
-      message.summary = String(object.summary);
-    } else {
-      message.summary = "";
-    }
-    if (object.description !== undefined && object.description !== null) {
-      message.description = String(object.description);
-    } else {
-      message.description = "";
-    }
-    if (object.externalDocs !== undefined && object.externalDocs !== null) {
-      message.externalDocs = ExternalDocumentation.fromJSON(object.externalDocs);
-    } else {
-      message.externalDocs = undefined;
-    }
-    if (object.operationId !== undefined && object.operationId !== null) {
-      message.operationId = String(object.operationId);
-    } else {
-      message.operationId = "";
-    }
-    if (object.consumes !== undefined && object.consumes !== null) {
-      for (const e of object.consumes) {
-        message.consumes.push(String(e));
-      }
-    }
-    if (object.produces !== undefined && object.produces !== null) {
-      for (const e of object.produces) {
-        message.produces.push(String(e));
-      }
-    }
-    if (object.responses !== undefined && object.responses !== null) {
-      Object.entries(object.responses).forEach(([key, value]) => {
-        message.responses[key] = Response.fromJSON(value);
-      });
-    }
-    if (object.schemes !== undefined && object.schemes !== null) {
-      for (const e of object.schemes) {
-        message.schemes.push(schemeFromJSON(e));
-      }
-    }
-    if (object.deprecated !== undefined && object.deprecated !== null) {
-      message.deprecated = Boolean(object.deprecated);
-    } else {
-      message.deprecated = false;
-    }
-    if (object.security !== undefined && object.security !== null) {
-      for (const e of object.security) {
-        message.security.push(SecurityRequirement.fromJSON(e));
-      }
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.tags = (object.tags ?? []).map((e: any) => String(e));
+    message.summary =
+      object.summary !== undefined && object.summary !== null ? String(object.summary) : "";
+    message.description =
+      object.description !== undefined && object.description !== null
+        ? String(object.description)
+        : "";
+    message.externalDocs =
+      object.externalDocs !== undefined && object.externalDocs !== null
+        ? ExternalDocumentation.fromJSON(object.externalDocs)
+        : undefined;
+    message.operationId =
+      object.operationId !== undefined && object.operationId !== null
+        ? String(object.operationId)
+        : "";
+    message.consumes = (object.consumes ?? []).map((e: any) => String(e));
+    message.produces = (object.produces ?? []).map((e: any) => String(e));
+    message.responses = Object.entries(object.responses ?? {}).reduce<{
+      [key: string]: Response;
+    }>((acc, [key, value]) => {
+      acc[key] = Response.fromJSON(value);
+      return acc;
+    }, {});
+    message.schemes = (object.schemes ?? []).map((e: any) => schemeFromJSON(e));
+    message.deprecated =
+      object.deprecated !== undefined && object.deprecated !== null
+        ? Boolean(object.deprecated)
+        : false;
+    message.security = (object.security ?? []).map((e: any) => SecurityRequirement.fromJSON(e));
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -1680,85 +1557,43 @@ export const Operation = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Operation>): Operation {
+  fromPartial<I extends Exact<DeepPartial<Operation>, I>>(object: I): Operation {
     const message = { ...baseOperation } as Operation;
-    message.tags = [];
-    message.consumes = [];
-    message.produces = [];
-    message.responses = {};
-    message.schemes = [];
-    message.security = [];
-    message.extensions = {};
-    if (object.tags !== undefined && object.tags !== null) {
-      for (const e of object.tags) {
-        message.tags.push(e);
+    message.tags = object.tags?.map(e => e) || [];
+    message.summary = object.summary ?? "";
+    message.description = object.description ?? "";
+    message.externalDocs =
+      object.externalDocs !== undefined && object.externalDocs !== null
+        ? ExternalDocumentation.fromPartial(object.externalDocs)
+        : undefined;
+    message.operationId = object.operationId ?? "";
+    message.consumes = object.consumes?.map(e => e) || [];
+    message.produces = object.produces?.map(e => e) || [];
+    message.responses = Object.entries(object.responses ?? {}).reduce<{
+      [key: string]: Response;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Response.fromPartial(value);
       }
-    }
-    if (object.summary !== undefined && object.summary !== null) {
-      message.summary = object.summary;
-    } else {
-      message.summary = "";
-    }
-    if (object.description !== undefined && object.description !== null) {
-      message.description = object.description;
-    } else {
-      message.description = "";
-    }
-    if (object.externalDocs !== undefined && object.externalDocs !== null) {
-      message.externalDocs = ExternalDocumentation.fromPartial(object.externalDocs);
-    } else {
-      message.externalDocs = undefined;
-    }
-    if (object.operationId !== undefined && object.operationId !== null) {
-      message.operationId = object.operationId;
-    } else {
-      message.operationId = "";
-    }
-    if (object.consumes !== undefined && object.consumes !== null) {
-      for (const e of object.consumes) {
-        message.consumes.push(e);
+      return acc;
+    }, {});
+    message.schemes = object.schemes?.map(e => e) || [];
+    message.deprecated = object.deprecated ?? false;
+    message.security = object.security?.map(e => SecurityRequirement.fromPartial(e)) || [];
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
       }
-    }
-    if (object.produces !== undefined && object.produces !== null) {
-      for (const e of object.produces) {
-        message.produces.push(e);
-      }
-    }
-    if (object.responses !== undefined && object.responses !== null) {
-      Object.entries(object.responses).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.responses[key] = Response.fromPartial(value);
-        }
-      });
-    }
-    if (object.schemes !== undefined && object.schemes !== null) {
-      for (const e of object.schemes) {
-        message.schemes.push(e);
-      }
-    }
-    if (object.deprecated !== undefined && object.deprecated !== null) {
-      message.deprecated = object.deprecated;
-    } else {
-      message.deprecated = false;
-    }
-    if (object.security !== undefined && object.security !== null) {
-      for (const e of object.security) {
-        message.security.push(SecurityRequirement.fromPartial(e));
-      }
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -1803,16 +1638,11 @@ export const Operation_ResponsesEntry = {
     const message = {
       ...baseOperation_ResponsesEntry,
     } as Operation_ResponsesEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Response.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? Response.fromJSON(object.value)
+        : undefined;
     return message;
   },
 
@@ -1824,20 +1654,17 @@ export const Operation_ResponsesEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Operation_ResponsesEntry>): Operation_ResponsesEntry {
+  fromPartial<I extends Exact<DeepPartial<Operation_ResponsesEntry>, I>>(
+    object: I,
+  ): Operation_ResponsesEntry {
     const message = {
       ...baseOperation_ResponsesEntry,
     } as Operation_ResponsesEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Response.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? Response.fromPartial(object.value)
+        : undefined;
     return message;
   },
 };
@@ -1850,7 +1677,7 @@ export const Operation_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -1868,7 +1695,7 @@ export const Operation_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -1882,41 +1709,26 @@ export const Operation_ExtensionsEntry = {
     const message = {
       ...baseOperation_ExtensionsEntry,
     } as Operation_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: Operation_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Operation_ExtensionsEntry>): Operation_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<Operation_ExtensionsEntry>, I>>(
+    object: I,
+  ): Operation_ExtensionsEntry {
     const message = {
       ...baseOperation_ExtensionsEntry,
     } as Operation_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -1981,31 +1793,17 @@ export const Header = {
 
   fromJSON(object: any): Header {
     const message = { ...baseHeader } as Header;
-    if (object.description !== undefined && object.description !== null) {
-      message.description = String(object.description);
-    } else {
-      message.description = "";
-    }
-    if (object.type !== undefined && object.type !== null) {
-      message.type = String(object.type);
-    } else {
-      message.type = "";
-    }
-    if (object.format !== undefined && object.format !== null) {
-      message.format = String(object.format);
-    } else {
-      message.format = "";
-    }
-    if (object.default !== undefined && object.default !== null) {
-      message.default = String(object.default);
-    } else {
-      message.default = "";
-    }
-    if (object.pattern !== undefined && object.pattern !== null) {
-      message.pattern = String(object.pattern);
-    } else {
-      message.pattern = "";
-    }
+    message.description =
+      object.description !== undefined && object.description !== null
+        ? String(object.description)
+        : "";
+    message.type = object.type !== undefined && object.type !== null ? String(object.type) : "";
+    message.format =
+      object.format !== undefined && object.format !== null ? String(object.format) : "";
+    message.default =
+      object.default !== undefined && object.default !== null ? String(object.default) : "";
+    message.pattern =
+      object.pattern !== undefined && object.pattern !== null ? String(object.pattern) : "";
     return message;
   },
 
@@ -2019,33 +1817,13 @@ export const Header = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Header>): Header {
+  fromPartial<I extends Exact<DeepPartial<Header>, I>>(object: I): Header {
     const message = { ...baseHeader } as Header;
-    if (object.description !== undefined && object.description !== null) {
-      message.description = object.description;
-    } else {
-      message.description = "";
-    }
-    if (object.type !== undefined && object.type !== null) {
-      message.type = object.type;
-    } else {
-      message.type = "";
-    }
-    if (object.format !== undefined && object.format !== null) {
-      message.format = object.format;
-    } else {
-      message.format = "";
-    }
-    if (object.default !== undefined && object.default !== null) {
-      message.default = object.default;
-    } else {
-      message.default = "";
-    }
-    if (object.pattern !== undefined && object.pattern !== null) {
-      message.pattern = object.pattern;
-    } else {
-      message.pattern = "";
-    }
+    message.description = object.description ?? "";
+    message.type = object.type ?? "";
+    message.format = object.format ?? "";
+    message.default = object.default ?? "";
+    message.pattern = object.pattern ?? "";
     return message;
   },
 };
@@ -2067,10 +1845,12 @@ export const Response = {
       Response_ExamplesEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).ldelim();
     });
     Object.entries(message.extensions).forEach(([key, value]) => {
-      Response_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(42).fork(),
-      ).ldelim();
+      if (value !== undefined) {
+        Response_ExtensionsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(42).fork(),
+        ).ldelim();
+      }
     });
     return writer;
   },
@@ -2119,34 +1899,32 @@ export const Response = {
 
   fromJSON(object: any): Response {
     const message = { ...baseResponse } as Response;
-    message.headers = {};
-    message.examples = {};
-    message.extensions = {};
-    if (object.description !== undefined && object.description !== null) {
-      message.description = String(object.description);
-    } else {
-      message.description = "";
-    }
-    if (object.schema !== undefined && object.schema !== null) {
-      message.schema = Schema.fromJSON(object.schema);
-    } else {
-      message.schema = undefined;
-    }
-    if (object.headers !== undefined && object.headers !== null) {
-      Object.entries(object.headers).forEach(([key, value]) => {
-        message.headers[key] = Header.fromJSON(value);
-      });
-    }
-    if (object.examples !== undefined && object.examples !== null) {
-      Object.entries(object.examples).forEach(([key, value]) => {
-        message.examples[key] = String(value);
-      });
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.description =
+      object.description !== undefined && object.description !== null
+        ? String(object.description)
+        : "";
+    message.schema =
+      object.schema !== undefined && object.schema !== null
+        ? Schema.fromJSON(object.schema)
+        : undefined;
+    message.headers = Object.entries(object.headers ?? {}).reduce<{
+      [key: string]: Header;
+    }>((acc, [key, value]) => {
+      acc[key] = Header.fromJSON(value);
+      return acc;
+    }, {});
+    message.examples = Object.entries(object.examples ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      acc[key] = String(value);
+      return acc;
+    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -2170,48 +1948,43 @@ export const Response = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Response>): Response {
+  fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = { ...baseResponse } as Response;
-    message.headers = {};
-    message.examples = {};
-    message.extensions = {};
-    if (object.description !== undefined && object.description !== null) {
-      message.description = object.description;
-    } else {
-      message.description = "";
-    }
-    if (object.schema !== undefined && object.schema !== null) {
-      message.schema = Schema.fromPartial(object.schema);
-    } else {
-      message.schema = undefined;
-    }
-    if (object.headers !== undefined && object.headers !== null) {
-      Object.entries(object.headers).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.headers[key] = Header.fromPartial(value);
-        }
-      });
-    }
-    if (object.examples !== undefined && object.examples !== null) {
-      Object.entries(object.examples).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.examples[key] = String(value);
-        }
-      });
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+    message.description = object.description ?? "";
+    message.schema =
+      object.schema !== undefined && object.schema !== null
+        ? Schema.fromPartial(object.schema)
+        : undefined;
+    message.headers = Object.entries(object.headers ?? {}).reduce<{
+      [key: string]: Header;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Header.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    message.examples = Object.entries(object.examples ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -2252,16 +2025,11 @@ export const Response_HeadersEntry = {
 
   fromJSON(object: any): Response_HeadersEntry {
     const message = { ...baseResponse_HeadersEntry } as Response_HeadersEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Header.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? Header.fromJSON(object.value)
+        : undefined;
     return message;
   },
 
@@ -2273,18 +2041,15 @@ export const Response_HeadersEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Response_HeadersEntry>): Response_HeadersEntry {
+  fromPartial<I extends Exact<DeepPartial<Response_HeadersEntry>, I>>(
+    object: I,
+  ): Response_HeadersEntry {
     const message = { ...baseResponse_HeadersEntry } as Response_HeadersEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Header.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? Header.fromPartial(object.value)
+        : undefined;
     return message;
   },
 };
@@ -2325,16 +2090,8 @@ export const Response_ExamplesEntry = {
 
   fromJSON(object: any): Response_ExamplesEntry {
     const message = { ...baseResponse_ExamplesEntry } as Response_ExamplesEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = String(object.value);
-    } else {
-      message.value = "";
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value = object.value !== undefined && object.value !== null ? String(object.value) : "";
     return message;
   },
 
@@ -2345,18 +2102,12 @@ export const Response_ExamplesEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Response_ExamplesEntry>): Response_ExamplesEntry {
+  fromPartial<I extends Exact<DeepPartial<Response_ExamplesEntry>, I>>(
+    object: I,
+  ): Response_ExamplesEntry {
     const message = { ...baseResponse_ExamplesEntry } as Response_ExamplesEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = object.value;
-    } else {
-      message.value = "";
-    }
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
@@ -2369,7 +2120,7 @@ export const Response_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -2387,7 +2138,7 @@ export const Response_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -2401,41 +2152,26 @@ export const Response_ExtensionsEntry = {
     const message = {
       ...baseResponse_ExtensionsEntry,
     } as Response_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: Response_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Response_ExtensionsEntry>): Response_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<Response_ExtensionsEntry>, I>>(
+    object: I,
+  ): Response_ExtensionsEntry {
     const message = {
       ...baseResponse_ExtensionsEntry,
     } as Response_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -2468,7 +2204,9 @@ export const Info = {
       writer.uint32(50).string(message.version);
     }
     Object.entries(message.extensions).forEach(([key, value]) => {
-      Info_ExtensionsEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).ldelim();
+      if (value !== undefined) {
+        Info_ExtensionsEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).ldelim();
+      }
     });
     return writer;
   },
@@ -2515,42 +2253,31 @@ export const Info = {
 
   fromJSON(object: any): Info {
     const message = { ...baseInfo } as Info;
-    message.extensions = {};
-    if (object.title !== undefined && object.title !== null) {
-      message.title = String(object.title);
-    } else {
-      message.title = "";
-    }
-    if (object.description !== undefined && object.description !== null) {
-      message.description = String(object.description);
-    } else {
-      message.description = "";
-    }
-    if (object.termsOfService !== undefined && object.termsOfService !== null) {
-      message.termsOfService = String(object.termsOfService);
-    } else {
-      message.termsOfService = "";
-    }
-    if (object.contact !== undefined && object.contact !== null) {
-      message.contact = Contact.fromJSON(object.contact);
-    } else {
-      message.contact = undefined;
-    }
-    if (object.license !== undefined && object.license !== null) {
-      message.license = License.fromJSON(object.license);
-    } else {
-      message.license = undefined;
-    }
-    if (object.version !== undefined && object.version !== null) {
-      message.version = String(object.version);
-    } else {
-      message.version = "";
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.title = object.title !== undefined && object.title !== null ? String(object.title) : "";
+    message.description =
+      object.description !== undefined && object.description !== null
+        ? String(object.description)
+        : "";
+    message.termsOfService =
+      object.termsOfService !== undefined && object.termsOfService !== null
+        ? String(object.termsOfService)
+        : "";
+    message.contact =
+      object.contact !== undefined && object.contact !== null
+        ? Contact.fromJSON(object.contact)
+        : undefined;
+    message.license =
+      object.license !== undefined && object.license !== null
+        ? License.fromJSON(object.license)
+        : undefined;
+    message.version =
+      object.version !== undefined && object.version !== null ? String(object.version) : "";
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -2567,52 +2294,34 @@ export const Info = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Info>): Info {
+  fromPartial<I extends Exact<DeepPartial<Info>, I>>(object: I): Info {
     const message = { ...baseInfo } as Info;
-    message.extensions = {};
-    if (object.title !== undefined && object.title !== null) {
-      message.title = object.title;
-    } else {
-      message.title = "";
-    }
-    if (object.description !== undefined && object.description !== null) {
-      message.description = object.description;
-    } else {
-      message.description = "";
-    }
-    if (object.termsOfService !== undefined && object.termsOfService !== null) {
-      message.termsOfService = object.termsOfService;
-    } else {
-      message.termsOfService = "";
-    }
-    if (object.contact !== undefined && object.contact !== null) {
-      message.contact = Contact.fromPartial(object.contact);
-    } else {
-      message.contact = undefined;
-    }
-    if (object.license !== undefined && object.license !== null) {
-      message.license = License.fromPartial(object.license);
-    } else {
-      message.license = undefined;
-    }
-    if (object.version !== undefined && object.version !== null) {
-      message.version = object.version;
-    } else {
-      message.version = "";
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+    message.title = object.title ?? "";
+    message.description = object.description ?? "";
+    message.termsOfService = object.termsOfService ?? "";
+    message.contact =
+      object.contact !== undefined && object.contact !== null
+        ? Contact.fromPartial(object.contact)
+        : undefined;
+    message.license =
+      object.license !== undefined && object.license !== null
+        ? License.fromPartial(object.license)
+        : undefined;
+    message.version = object.version ?? "";
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -2625,7 +2334,7 @@ export const Info_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -2641,7 +2350,7 @@ export const Info_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -2653,39 +2362,24 @@ export const Info_ExtensionsEntry = {
 
   fromJSON(object: any): Info_ExtensionsEntry {
     const message = { ...baseInfo_ExtensionsEntry } as Info_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: Info_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Info_ExtensionsEntry>): Info_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<Info_ExtensionsEntry>, I>>(
+    object: I,
+  ): Info_ExtensionsEntry {
     const message = { ...baseInfo_ExtensionsEntry } as Info_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -2732,21 +2426,9 @@ export const Contact = {
 
   fromJSON(object: any): Contact {
     const message = { ...baseContact } as Contact;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = String(object.url);
-    } else {
-      message.url = "";
-    }
-    if (object.email !== undefined && object.email !== null) {
-      message.email = String(object.email);
-    } else {
-      message.email = "";
-    }
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.url = object.url !== undefined && object.url !== null ? String(object.url) : "";
+    message.email = object.email !== undefined && object.email !== null ? String(object.email) : "";
     return message;
   },
 
@@ -2758,23 +2440,11 @@ export const Contact = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Contact>): Contact {
+  fromPartial<I extends Exact<DeepPartial<Contact>, I>>(object: I): Contact {
     const message = { ...baseContact } as Contact;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
-    }
-    if (object.email !== undefined && object.email !== null) {
-      message.email = object.email;
-    } else {
-      message.email = "";
-    }
+    message.name = object.name ?? "";
+    message.url = object.url ?? "";
+    message.email = object.email ?? "";
     return message;
   },
 };
@@ -2815,16 +2485,8 @@ export const License = {
 
   fromJSON(object: any): License {
     const message = { ...baseLicense } as License;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = String(object.url);
-    } else {
-      message.url = "";
-    }
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.url = object.url !== undefined && object.url !== null ? String(object.url) : "";
     return message;
   },
 
@@ -2835,18 +2497,10 @@ export const License = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<License>): License {
+  fromPartial<I extends Exact<DeepPartial<License>, I>>(object: I): License {
     const message = { ...baseLicense } as License;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
-    }
+    message.name = object.name ?? "";
+    message.url = object.url ?? "";
     return message;
   },
 };
@@ -2887,16 +2541,11 @@ export const ExternalDocumentation = {
 
   fromJSON(object: any): ExternalDocumentation {
     const message = { ...baseExternalDocumentation } as ExternalDocumentation;
-    if (object.description !== undefined && object.description !== null) {
-      message.description = String(object.description);
-    } else {
-      message.description = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = String(object.url);
-    } else {
-      message.url = "";
-    }
+    message.description =
+      object.description !== undefined && object.description !== null
+        ? String(object.description)
+        : "";
+    message.url = object.url !== undefined && object.url !== null ? String(object.url) : "";
     return message;
   },
 
@@ -2907,18 +2556,12 @@ export const ExternalDocumentation = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<ExternalDocumentation>): ExternalDocumentation {
+  fromPartial<I extends Exact<DeepPartial<ExternalDocumentation>, I>>(
+    object: I,
+  ): ExternalDocumentation {
     const message = { ...baseExternalDocumentation } as ExternalDocumentation;
-    if (object.description !== undefined && object.description !== null) {
-      message.description = object.description;
-    } else {
-      message.description = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
-    }
+    message.description = object.description ?? "";
+    message.url = object.url ?? "";
     return message;
   },
 };
@@ -2977,31 +2620,22 @@ export const Schema = {
 
   fromJSON(object: any): Schema {
     const message = { ...baseSchema } as Schema;
-    if (object.jsonSchema !== undefined && object.jsonSchema !== null) {
-      message.jsonSchema = JSONSchema.fromJSON(object.jsonSchema);
-    } else {
-      message.jsonSchema = undefined;
-    }
-    if (object.discriminator !== undefined && object.discriminator !== null) {
-      message.discriminator = String(object.discriminator);
-    } else {
-      message.discriminator = "";
-    }
-    if (object.readOnly !== undefined && object.readOnly !== null) {
-      message.readOnly = Boolean(object.readOnly);
-    } else {
-      message.readOnly = false;
-    }
-    if (object.externalDocs !== undefined && object.externalDocs !== null) {
-      message.externalDocs = ExternalDocumentation.fromJSON(object.externalDocs);
-    } else {
-      message.externalDocs = undefined;
-    }
-    if (object.example !== undefined && object.example !== null) {
-      message.example = String(object.example);
-    } else {
-      message.example = "";
-    }
+    message.jsonSchema =
+      object.jsonSchema !== undefined && object.jsonSchema !== null
+        ? JSONSchema.fromJSON(object.jsonSchema)
+        : undefined;
+    message.discriminator =
+      object.discriminator !== undefined && object.discriminator !== null
+        ? String(object.discriminator)
+        : "";
+    message.readOnly =
+      object.readOnly !== undefined && object.readOnly !== null ? Boolean(object.readOnly) : false;
+    message.externalDocs =
+      object.externalDocs !== undefined && object.externalDocs !== null
+        ? ExternalDocumentation.fromJSON(object.externalDocs)
+        : undefined;
+    message.example =
+      object.example !== undefined && object.example !== null ? String(object.example) : "";
     return message;
   },
 
@@ -3019,33 +2653,19 @@ export const Schema = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Schema>): Schema {
+  fromPartial<I extends Exact<DeepPartial<Schema>, I>>(object: I): Schema {
     const message = { ...baseSchema } as Schema;
-    if (object.jsonSchema !== undefined && object.jsonSchema !== null) {
-      message.jsonSchema = JSONSchema.fromPartial(object.jsonSchema);
-    } else {
-      message.jsonSchema = undefined;
-    }
-    if (object.discriminator !== undefined && object.discriminator !== null) {
-      message.discriminator = object.discriminator;
-    } else {
-      message.discriminator = "";
-    }
-    if (object.readOnly !== undefined && object.readOnly !== null) {
-      message.readOnly = object.readOnly;
-    } else {
-      message.readOnly = false;
-    }
-    if (object.externalDocs !== undefined && object.externalDocs !== null) {
-      message.externalDocs = ExternalDocumentation.fromPartial(object.externalDocs);
-    } else {
-      message.externalDocs = undefined;
-    }
-    if (object.example !== undefined && object.example !== null) {
-      message.example = object.example;
-    } else {
-      message.example = "";
-    }
+    message.jsonSchema =
+      object.jsonSchema !== undefined && object.jsonSchema !== null
+        ? JSONSchema.fromPartial(object.jsonSchema)
+        : undefined;
+    message.discriminator = object.discriminator ?? "";
+    message.readOnly = object.readOnly ?? false;
+    message.externalDocs =
+      object.externalDocs !== undefined && object.externalDocs !== null
+        ? ExternalDocumentation.fromPartial(object.externalDocs)
+        : undefined;
+    message.example = object.example ?? "";
     return message;
   },
 };
@@ -3256,130 +2876,60 @@ export const JSONSchema = {
 
   fromJSON(object: any): JSONSchema {
     const message = { ...baseJSONSchema } as JSONSchema;
-    message.required = [];
-    message.array = [];
-    message.type = [];
-    message.enum = [];
-    if (object.ref !== undefined && object.ref !== null) {
-      message.ref = String(object.ref);
-    } else {
-      message.ref = "";
-    }
-    if (object.title !== undefined && object.title !== null) {
-      message.title = String(object.title);
-    } else {
-      message.title = "";
-    }
-    if (object.description !== undefined && object.description !== null) {
-      message.description = String(object.description);
-    } else {
-      message.description = "";
-    }
-    if (object.default !== undefined && object.default !== null) {
-      message.default = String(object.default);
-    } else {
-      message.default = "";
-    }
-    if (object.readOnly !== undefined && object.readOnly !== null) {
-      message.readOnly = Boolean(object.readOnly);
-    } else {
-      message.readOnly = false;
-    }
-    if (object.example !== undefined && object.example !== null) {
-      message.example = String(object.example);
-    } else {
-      message.example = "";
-    }
-    if (object.multipleOf !== undefined && object.multipleOf !== null) {
-      message.multipleOf = Number(object.multipleOf);
-    } else {
-      message.multipleOf = 0;
-    }
-    if (object.maximum !== undefined && object.maximum !== null) {
-      message.maximum = Number(object.maximum);
-    } else {
-      message.maximum = 0;
-    }
-    if (object.exclusiveMaximum !== undefined && object.exclusiveMaximum !== null) {
-      message.exclusiveMaximum = Boolean(object.exclusiveMaximum);
-    } else {
-      message.exclusiveMaximum = false;
-    }
-    if (object.minimum !== undefined && object.minimum !== null) {
-      message.minimum = Number(object.minimum);
-    } else {
-      message.minimum = 0;
-    }
-    if (object.exclusiveMinimum !== undefined && object.exclusiveMinimum !== null) {
-      message.exclusiveMinimum = Boolean(object.exclusiveMinimum);
-    } else {
-      message.exclusiveMinimum = false;
-    }
-    if (object.maxLength !== undefined && object.maxLength !== null) {
-      message.maxLength = Number(object.maxLength);
-    } else {
-      message.maxLength = 0;
-    }
-    if (object.minLength !== undefined && object.minLength !== null) {
-      message.minLength = Number(object.minLength);
-    } else {
-      message.minLength = 0;
-    }
-    if (object.pattern !== undefined && object.pattern !== null) {
-      message.pattern = String(object.pattern);
-    } else {
-      message.pattern = "";
-    }
-    if (object.maxItems !== undefined && object.maxItems !== null) {
-      message.maxItems = Number(object.maxItems);
-    } else {
-      message.maxItems = 0;
-    }
-    if (object.minItems !== undefined && object.minItems !== null) {
-      message.minItems = Number(object.minItems);
-    } else {
-      message.minItems = 0;
-    }
-    if (object.uniqueItems !== undefined && object.uniqueItems !== null) {
-      message.uniqueItems = Boolean(object.uniqueItems);
-    } else {
-      message.uniqueItems = false;
-    }
-    if (object.maxProperties !== undefined && object.maxProperties !== null) {
-      message.maxProperties = Number(object.maxProperties);
-    } else {
-      message.maxProperties = 0;
-    }
-    if (object.minProperties !== undefined && object.minProperties !== null) {
-      message.minProperties = Number(object.minProperties);
-    } else {
-      message.minProperties = 0;
-    }
-    if (object.required !== undefined && object.required !== null) {
-      for (const e of object.required) {
-        message.required.push(String(e));
-      }
-    }
-    if (object.array !== undefined && object.array !== null) {
-      for (const e of object.array) {
-        message.array.push(String(e));
-      }
-    }
-    if (object.type !== undefined && object.type !== null) {
-      for (const e of object.type) {
-        message.type.push(jSONSchema_JSONSchemaSimpleTypesFromJSON(e));
-      }
-    }
-    if (object.format !== undefined && object.format !== null) {
-      message.format = String(object.format);
-    } else {
-      message.format = "";
-    }
-    if (object.enum !== undefined && object.enum !== null) {
-      for (const e of object.enum) {
-        message.enum.push(String(e));
-      }
-    }
+    message.ref = object.ref !== undefined && object.ref !== null ? String(object.ref) : "";
+    message.title = object.title !== undefined && object.title !== null ? String(object.title) : "";
+    message.description =
+      object.description !== undefined && object.description !== null
+        ? String(object.description)
+        : "";
+    message.default =
+      object.default !== undefined && object.default !== null ? String(object.default) : "";
+    message.readOnly =
+      object.readOnly !== undefined && object.readOnly !== null ? Boolean(object.readOnly) : false;
+    message.example =
+      object.example !== undefined && object.example !== null ? String(object.example) : "";
+    message.multipleOf =
+      object.multipleOf !== undefined && object.multipleOf !== null ? Number(object.multipleOf) : 0;
+    message.maximum =
+      object.maximum !== undefined && object.maximum !== null ? Number(object.maximum) : 0;
+    message.exclusiveMaximum =
+      object.exclusiveMaximum !== undefined && object.exclusiveMaximum !== null
+        ? Boolean(object.exclusiveMaximum)
+        : false;
+    message.minimum =
+      object.minimum !== undefined && object.minimum !== null ? Number(object.minimum) : 0;
+    message.exclusiveMinimum =
+      object.exclusiveMinimum !== undefined && object.exclusiveMinimum !== null
+        ? Boolean(object.exclusiveMinimum)
+        : false;
+    message.maxLength =
+      object.maxLength !== undefined && object.maxLength !== null ? Number(object.maxLength) : 0;
+    message.minLength =
+      object.minLength !== undefined && object.minLength !== null ? Number(object.minLength) : 0;
+    message.pattern =
+      object.pattern !== undefined && object.pattern !== null ? String(object.pattern) : "";
+    message.maxItems =
+      object.maxItems !== undefined && object.maxItems !== null ? Number(object.maxItems) : 0;
+    message.minItems =
+      object.minItems !== undefined && object.minItems !== null ? Number(object.minItems) : 0;
+    message.uniqueItems =
+      object.uniqueItems !== undefined && object.uniqueItems !== null
+        ? Boolean(object.uniqueItems)
+        : false;
+    message.maxProperties =
+      object.maxProperties !== undefined && object.maxProperties !== null
+        ? Number(object.maxProperties)
+        : 0;
+    message.minProperties =
+      object.minProperties !== undefined && object.minProperties !== null
+        ? Number(object.minProperties)
+        : 0;
+    message.required = (object.required ?? []).map((e: any) => String(e));
+    message.array = (object.array ?? []).map((e: any) => String(e));
+    message.type = (object.type ?? []).map((e: any) => jSONSchema_JSONSchemaSimpleTypesFromJSON(e));
+    message.format =
+      object.format !== undefined && object.format !== null ? String(object.format) : "";
+    message.enum = (object.enum ?? []).map((e: any) => String(e));
     return message;
   },
 
@@ -3428,132 +2978,32 @@ export const JSONSchema = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<JSONSchema>): JSONSchema {
+  fromPartial<I extends Exact<DeepPartial<JSONSchema>, I>>(object: I): JSONSchema {
     const message = { ...baseJSONSchema } as JSONSchema;
-    message.required = [];
-    message.array = [];
-    message.type = [];
-    message.enum = [];
-    if (object.ref !== undefined && object.ref !== null) {
-      message.ref = object.ref;
-    } else {
-      message.ref = "";
-    }
-    if (object.title !== undefined && object.title !== null) {
-      message.title = object.title;
-    } else {
-      message.title = "";
-    }
-    if (object.description !== undefined && object.description !== null) {
-      message.description = object.description;
-    } else {
-      message.description = "";
-    }
-    if (object.default !== undefined && object.default !== null) {
-      message.default = object.default;
-    } else {
-      message.default = "";
-    }
-    if (object.readOnly !== undefined && object.readOnly !== null) {
-      message.readOnly = object.readOnly;
-    } else {
-      message.readOnly = false;
-    }
-    if (object.example !== undefined && object.example !== null) {
-      message.example = object.example;
-    } else {
-      message.example = "";
-    }
-    if (object.multipleOf !== undefined && object.multipleOf !== null) {
-      message.multipleOf = object.multipleOf;
-    } else {
-      message.multipleOf = 0;
-    }
-    if (object.maximum !== undefined && object.maximum !== null) {
-      message.maximum = object.maximum;
-    } else {
-      message.maximum = 0;
-    }
-    if (object.exclusiveMaximum !== undefined && object.exclusiveMaximum !== null) {
-      message.exclusiveMaximum = object.exclusiveMaximum;
-    } else {
-      message.exclusiveMaximum = false;
-    }
-    if (object.minimum !== undefined && object.minimum !== null) {
-      message.minimum = object.minimum;
-    } else {
-      message.minimum = 0;
-    }
-    if (object.exclusiveMinimum !== undefined && object.exclusiveMinimum !== null) {
-      message.exclusiveMinimum = object.exclusiveMinimum;
-    } else {
-      message.exclusiveMinimum = false;
-    }
-    if (object.maxLength !== undefined && object.maxLength !== null) {
-      message.maxLength = object.maxLength;
-    } else {
-      message.maxLength = 0;
-    }
-    if (object.minLength !== undefined && object.minLength !== null) {
-      message.minLength = object.minLength;
-    } else {
-      message.minLength = 0;
-    }
-    if (object.pattern !== undefined && object.pattern !== null) {
-      message.pattern = object.pattern;
-    } else {
-      message.pattern = "";
-    }
-    if (object.maxItems !== undefined && object.maxItems !== null) {
-      message.maxItems = object.maxItems;
-    } else {
-      message.maxItems = 0;
-    }
-    if (object.minItems !== undefined && object.minItems !== null) {
-      message.minItems = object.minItems;
-    } else {
-      message.minItems = 0;
-    }
-    if (object.uniqueItems !== undefined && object.uniqueItems !== null) {
-      message.uniqueItems = object.uniqueItems;
-    } else {
-      message.uniqueItems = false;
-    }
-    if (object.maxProperties !== undefined && object.maxProperties !== null) {
-      message.maxProperties = object.maxProperties;
-    } else {
-      message.maxProperties = 0;
-    }
-    if (object.minProperties !== undefined && object.minProperties !== null) {
-      message.minProperties = object.minProperties;
-    } else {
-      message.minProperties = 0;
-    }
-    if (object.required !== undefined && object.required !== null) {
-      for (const e of object.required) {
-        message.required.push(e);
-      }
-    }
-    if (object.array !== undefined && object.array !== null) {
-      for (const e of object.array) {
-        message.array.push(e);
-      }
-    }
-    if (object.type !== undefined && object.type !== null) {
-      for (const e of object.type) {
-        message.type.push(e);
-      }
-    }
-    if (object.format !== undefined && object.format !== null) {
-      message.format = object.format;
-    } else {
-      message.format = "";
-    }
-    if (object.enum !== undefined && object.enum !== null) {
-      for (const e of object.enum) {
-        message.enum.push(e);
-      }
-    }
+    message.ref = object.ref ?? "";
+    message.title = object.title ?? "";
+    message.description = object.description ?? "";
+    message.default = object.default ?? "";
+    message.readOnly = object.readOnly ?? false;
+    message.example = object.example ?? "";
+    message.multipleOf = object.multipleOf ?? 0;
+    message.maximum = object.maximum ?? 0;
+    message.exclusiveMaximum = object.exclusiveMaximum ?? false;
+    message.minimum = object.minimum ?? 0;
+    message.exclusiveMinimum = object.exclusiveMinimum ?? false;
+    message.maxLength = object.maxLength ?? 0;
+    message.minLength = object.minLength ?? 0;
+    message.pattern = object.pattern ?? "";
+    message.maxItems = object.maxItems ?? 0;
+    message.minItems = object.minItems ?? 0;
+    message.uniqueItems = object.uniqueItems ?? false;
+    message.maxProperties = object.maxProperties ?? 0;
+    message.minProperties = object.minProperties ?? 0;
+    message.required = object.required?.map(e => e) || [];
+    message.array = object.array?.map(e => e) || [];
+    message.type = object.type?.map(e => e) || [];
+    message.format = object.format ?? "";
+    message.enum = object.enum?.map(e => e) || [];
     return message;
   },
 };
@@ -3594,16 +3044,14 @@ export const Tag = {
 
   fromJSON(object: any): Tag {
     const message = { ...baseTag } as Tag;
-    if (object.description !== undefined && object.description !== null) {
-      message.description = String(object.description);
-    } else {
-      message.description = "";
-    }
-    if (object.externalDocs !== undefined && object.externalDocs !== null) {
-      message.externalDocs = ExternalDocumentation.fromJSON(object.externalDocs);
-    } else {
-      message.externalDocs = undefined;
-    }
+    message.description =
+      object.description !== undefined && object.description !== null
+        ? String(object.description)
+        : "";
+    message.externalDocs =
+      object.externalDocs !== undefined && object.externalDocs !== null
+        ? ExternalDocumentation.fromJSON(object.externalDocs)
+        : undefined;
     return message;
   },
 
@@ -3617,18 +3065,13 @@ export const Tag = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Tag>): Tag {
+  fromPartial<I extends Exact<DeepPartial<Tag>, I>>(object: I): Tag {
     const message = { ...baseTag } as Tag;
-    if (object.description !== undefined && object.description !== null) {
-      message.description = object.description;
-    } else {
-      message.description = "";
-    }
-    if (object.externalDocs !== undefined && object.externalDocs !== null) {
-      message.externalDocs = ExternalDocumentation.fromPartial(object.externalDocs);
-    } else {
-      message.externalDocs = undefined;
-    }
+    message.description = object.description ?? "";
+    message.externalDocs =
+      object.externalDocs !== undefined && object.externalDocs !== null
+        ? ExternalDocumentation.fromPartial(object.externalDocs)
+        : undefined;
     return message;
   },
 };
@@ -3670,12 +3113,12 @@ export const SecurityDefinitions = {
 
   fromJSON(object: any): SecurityDefinitions {
     const message = { ...baseSecurityDefinitions } as SecurityDefinitions;
-    message.security = {};
-    if (object.security !== undefined && object.security !== null) {
-      Object.entries(object.security).forEach(([key, value]) => {
-        message.security[key] = SecurityScheme.fromJSON(value);
-      });
-    }
+    message.security = Object.entries(object.security ?? {}).reduce<{
+      [key: string]: SecurityScheme;
+    }>((acc, [key, value]) => {
+      acc[key] = SecurityScheme.fromJSON(value);
+      return acc;
+    }, {});
     return message;
   },
 
@@ -3690,16 +3133,18 @@ export const SecurityDefinitions = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SecurityDefinitions>): SecurityDefinitions {
+  fromPartial<I extends Exact<DeepPartial<SecurityDefinitions>, I>>(
+    object: I,
+  ): SecurityDefinitions {
     const message = { ...baseSecurityDefinitions } as SecurityDefinitions;
-    message.security = {};
-    if (object.security !== undefined && object.security !== null) {
-      Object.entries(object.security).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.security[key] = SecurityScheme.fromPartial(value);
-        }
-      });
-    }
+    message.security = Object.entries(object.security ?? {}).reduce<{
+      [key: string]: SecurityScheme;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = SecurityScheme.fromPartial(value);
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -3747,16 +3192,11 @@ export const SecurityDefinitions_SecurityEntry = {
     const message = {
       ...baseSecurityDefinitions_SecurityEntry,
     } as SecurityDefinitions_SecurityEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = SecurityScheme.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? SecurityScheme.fromJSON(object.value)
+        : undefined;
     return message;
   },
 
@@ -3768,22 +3208,17 @@ export const SecurityDefinitions_SecurityEntry = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<SecurityDefinitions_SecurityEntry>,
+  fromPartial<I extends Exact<DeepPartial<SecurityDefinitions_SecurityEntry>, I>>(
+    object: I,
   ): SecurityDefinitions_SecurityEntry {
     const message = {
       ...baseSecurityDefinitions_SecurityEntry,
     } as SecurityDefinitions_SecurityEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = SecurityScheme.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? SecurityScheme.fromPartial(object.value)
+        : undefined;
     return message;
   },
 };
@@ -3825,10 +3260,12 @@ export const SecurityScheme = {
       Scopes.encode(message.scopes, writer.uint32(66).fork()).ldelim();
     }
     Object.entries(message.extensions).forEach(([key, value]) => {
-      SecurityScheme_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(74).fork(),
-      ).ldelim();
+      if (value !== undefined) {
+        SecurityScheme_ExtensionsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(74).fork(),
+        ).ldelim();
+      }
     });
     return writer;
   },
@@ -3881,52 +3318,37 @@ export const SecurityScheme = {
 
   fromJSON(object: any): SecurityScheme {
     const message = { ...baseSecurityScheme } as SecurityScheme;
-    message.extensions = {};
-    if (object.type !== undefined && object.type !== null) {
-      message.type = securityScheme_TypeFromJSON(object.type);
-    } else {
-      message.type = 0;
-    }
-    if (object.description !== undefined && object.description !== null) {
-      message.description = String(object.description);
-    } else {
-      message.description = "";
-    }
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.in !== undefined && object.in !== null) {
-      message.in = securityScheme_InFromJSON(object.in);
-    } else {
-      message.in = 0;
-    }
-    if (object.flow !== undefined && object.flow !== null) {
-      message.flow = securityScheme_FlowFromJSON(object.flow);
-    } else {
-      message.flow = 0;
-    }
-    if (object.authorizationUrl !== undefined && object.authorizationUrl !== null) {
-      message.authorizationUrl = String(object.authorizationUrl);
-    } else {
-      message.authorizationUrl = "";
-    }
-    if (object.tokenUrl !== undefined && object.tokenUrl !== null) {
-      message.tokenUrl = String(object.tokenUrl);
-    } else {
-      message.tokenUrl = "";
-    }
-    if (object.scopes !== undefined && object.scopes !== null) {
-      message.scopes = Scopes.fromJSON(object.scopes);
-    } else {
-      message.scopes = undefined;
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
+    message.type =
+      object.type !== undefined && object.type !== null
+        ? securityScheme_TypeFromJSON(object.type)
+        : 0;
+    message.description =
+      object.description !== undefined && object.description !== null
+        ? String(object.description)
+        : "";
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.in =
+      object.in !== undefined && object.in !== null ? securityScheme_InFromJSON(object.in) : 0;
+    message.flow =
+      object.flow !== undefined && object.flow !== null
+        ? securityScheme_FlowFromJSON(object.flow)
+        : 0;
+    message.authorizationUrl =
+      object.authorizationUrl !== undefined && object.authorizationUrl !== null
+        ? String(object.authorizationUrl)
+        : "";
+    message.tokenUrl =
+      object.tokenUrl !== undefined && object.tokenUrl !== null ? String(object.tokenUrl) : "";
+    message.scopes =
+      object.scopes !== undefined && object.scopes !== null
+        ? Scopes.fromJSON(object.scopes)
+        : undefined;
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      acc[key] = value as any;
+      return acc;
+    }, {});
     return message;
   },
 
@@ -3944,62 +3366,33 @@ export const SecurityScheme = {
     obj.extensions = {};
     if (message.extensions) {
       Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
+        obj.extensions[k] = v;
       });
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SecurityScheme>): SecurityScheme {
+  fromPartial<I extends Exact<DeepPartial<SecurityScheme>, I>>(object: I): SecurityScheme {
     const message = { ...baseSecurityScheme } as SecurityScheme;
-    message.extensions = {};
-    if (object.type !== undefined && object.type !== null) {
-      message.type = object.type;
-    } else {
-      message.type = 0;
-    }
-    if (object.description !== undefined && object.description !== null) {
-      message.description = object.description;
-    } else {
-      message.description = "";
-    }
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.in !== undefined && object.in !== null) {
-      message.in = object.in;
-    } else {
-      message.in = 0;
-    }
-    if (object.flow !== undefined && object.flow !== null) {
-      message.flow = object.flow;
-    } else {
-      message.flow = 0;
-    }
-    if (object.authorizationUrl !== undefined && object.authorizationUrl !== null) {
-      message.authorizationUrl = object.authorizationUrl;
-    } else {
-      message.authorizationUrl = "";
-    }
-    if (object.tokenUrl !== undefined && object.tokenUrl !== null) {
-      message.tokenUrl = object.tokenUrl;
-    } else {
-      message.tokenUrl = "";
-    }
-    if (object.scopes !== undefined && object.scopes !== null) {
-      message.scopes = Scopes.fromPartial(object.scopes);
-    } else {
-      message.scopes = undefined;
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
+    message.type = object.type ?? 0;
+    message.description = object.description ?? "";
+    message.name = object.name ?? "";
+    message.in = object.in ?? 0;
+    message.flow = object.flow ?? 0;
+    message.authorizationUrl = object.authorizationUrl ?? "";
+    message.tokenUrl = object.tokenUrl ?? "";
+    message.scopes =
+      object.scopes !== undefined && object.scopes !== null
+        ? Scopes.fromPartial(object.scopes)
+        : undefined;
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
+      [key: string]: any;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -4015,7 +3408,7 @@ export const SecurityScheme_ExtensionsEntry = {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
     }
     return writer;
   },
@@ -4033,7 +3426,7 @@ export const SecurityScheme_ExtensionsEntry = {
           message.key = reader.string();
           break;
         case 2:
-          message.value = Value.decode(reader, reader.uint32());
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -4047,41 +3440,26 @@ export const SecurityScheme_ExtensionsEntry = {
     const message = {
       ...baseSecurityScheme_ExtensionsEntry,
     } as SecurityScheme_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value = object.value;
     return message;
   },
 
   toJSON(message: SecurityScheme_ExtensionsEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SecurityScheme_ExtensionsEntry>): SecurityScheme_ExtensionsEntry {
+  fromPartial<I extends Exact<DeepPartial<SecurityScheme_ExtensionsEntry>, I>>(
+    object: I,
+  ): SecurityScheme_ExtensionsEntry {
     const message = {
       ...baseSecurityScheme_ExtensionsEntry,
     } as SecurityScheme_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value = object.value ?? undefined;
     return message;
   },
 };
@@ -4126,13 +3504,12 @@ export const SecurityRequirement = {
 
   fromJSON(object: any): SecurityRequirement {
     const message = { ...baseSecurityRequirement } as SecurityRequirement;
-    message.securityRequirement = {};
-    if (object.securityRequirement !== undefined && object.securityRequirement !== null) {
-      Object.entries(object.securityRequirement).forEach(([key, value]) => {
-        message.securityRequirement[key] =
-          SecurityRequirement_SecurityRequirementValue.fromJSON(value);
-      });
-    }
+    message.securityRequirement = Object.entries(object.securityRequirement ?? {}).reduce<{
+      [key: string]: SecurityRequirement_SecurityRequirementValue;
+    }>((acc, [key, value]) => {
+      acc[key] = SecurityRequirement_SecurityRequirementValue.fromJSON(value);
+      return acc;
+    }, {});
     return message;
   },
 
@@ -4147,17 +3524,18 @@ export const SecurityRequirement = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<SecurityRequirement>): SecurityRequirement {
+  fromPartial<I extends Exact<DeepPartial<SecurityRequirement>, I>>(
+    object: I,
+  ): SecurityRequirement {
     const message = { ...baseSecurityRequirement } as SecurityRequirement;
-    message.securityRequirement = {};
-    if (object.securityRequirement !== undefined && object.securityRequirement !== null) {
-      Object.entries(object.securityRequirement).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.securityRequirement[key] =
-            SecurityRequirement_SecurityRequirementValue.fromPartial(value);
-        }
-      });
-    }
+    message.securityRequirement = Object.entries(object.securityRequirement ?? {}).reduce<{
+      [key: string]: SecurityRequirement_SecurityRequirementValue;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = SecurityRequirement_SecurityRequirementValue.fromPartial(value);
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -4203,12 +3581,7 @@ export const SecurityRequirement_SecurityRequirementValue = {
     const message = {
       ...baseSecurityRequirement_SecurityRequirementValue,
     } as SecurityRequirement_SecurityRequirementValue;
-    message.scope = [];
-    if (object.scope !== undefined && object.scope !== null) {
-      for (const e of object.scope) {
-        message.scope.push(String(e));
-      }
-    }
+    message.scope = (object.scope ?? []).map((e: any) => String(e));
     return message;
   },
 
@@ -4222,18 +3595,13 @@ export const SecurityRequirement_SecurityRequirementValue = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<SecurityRequirement_SecurityRequirementValue>,
+  fromPartial<I extends Exact<DeepPartial<SecurityRequirement_SecurityRequirementValue>, I>>(
+    object: I,
   ): SecurityRequirement_SecurityRequirementValue {
     const message = {
       ...baseSecurityRequirement_SecurityRequirementValue,
     } as SecurityRequirement_SecurityRequirementValue;
-    message.scope = [];
-    if (object.scope !== undefined && object.scope !== null) {
-      for (const e of object.scope) {
-        message.scope.push(e);
-      }
-    }
+    message.scope = object.scope?.map(e => e) || [];
     return message;
   },
 };
@@ -4290,16 +3658,11 @@ export const SecurityRequirement_SecurityRequirementEntry = {
     const message = {
       ...baseSecurityRequirement_SecurityRequirementEntry,
     } as SecurityRequirement_SecurityRequirementEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = SecurityRequirement_SecurityRequirementValue.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? SecurityRequirement_SecurityRequirementValue.fromJSON(object.value)
+        : undefined;
     return message;
   },
 
@@ -4313,22 +3676,17 @@ export const SecurityRequirement_SecurityRequirementEntry = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<SecurityRequirement_SecurityRequirementEntry>,
+  fromPartial<I extends Exact<DeepPartial<SecurityRequirement_SecurityRequirementEntry>, I>>(
+    object: I,
   ): SecurityRequirement_SecurityRequirementEntry {
     const message = {
       ...baseSecurityRequirement_SecurityRequirementEntry,
     } as SecurityRequirement_SecurityRequirementEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = SecurityRequirement_SecurityRequirementValue.fromPartial(object.value);
-    } else {
-      message.value = undefined;
-    }
+    message.key = object.key ?? "";
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? SecurityRequirement_SecurityRequirementValue.fromPartial(object.value)
+        : undefined;
     return message;
   },
 };
@@ -4367,12 +3725,12 @@ export const Scopes = {
 
   fromJSON(object: any): Scopes {
     const message = { ...baseScopes } as Scopes;
-    message.scope = {};
-    if (object.scope !== undefined && object.scope !== null) {
-      Object.entries(object.scope).forEach(([key, value]) => {
-        message.scope[key] = String(value);
-      });
-    }
+    message.scope = Object.entries(object.scope ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      acc[key] = String(value);
+      return acc;
+    }, {});
     return message;
   },
 
@@ -4387,16 +3745,16 @@ export const Scopes = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Scopes>): Scopes {
+  fromPartial<I extends Exact<DeepPartial<Scopes>, I>>(object: I): Scopes {
     const message = { ...baseScopes } as Scopes;
-    message.scope = {};
-    if (object.scope !== undefined && object.scope !== null) {
-      Object.entries(object.scope).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.scope[key] = String(value);
-        }
-      });
-    }
+    message.scope = Object.entries(object.scope ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -4437,16 +3795,8 @@ export const Scopes_ScopeEntry = {
 
   fromJSON(object: any): Scopes_ScopeEntry {
     const message = { ...baseScopes_ScopeEntry } as Scopes_ScopeEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = String(object.value);
-    } else {
-      message.value = "";
-    }
+    message.key = object.key !== undefined && object.key !== null ? String(object.key) : "";
+    message.value = object.value !== undefined && object.value !== null ? String(object.value) : "";
     return message;
   },
 
@@ -4457,24 +3807,17 @@ export const Scopes_ScopeEntry = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<Scopes_ScopeEntry>): Scopes_ScopeEntry {
+  fromPartial<I extends Exact<DeepPartial<Scopes_ScopeEntry>, I>>(object: I): Scopes_ScopeEntry {
     const message = { ...baseScopes_ScopeEntry } as Scopes_ScopeEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = object.value;
-    } else {
-      message.value = "";
-    }
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
 
 declare var self: any | undefined;
 declare var window: any | undefined;
+declare var global: any | undefined;
 var globalThis: any = (() => {
   if (typeof globalThis !== "undefined") return globalThis;
   if (typeof self !== "undefined") return self;
@@ -4484,6 +3827,7 @@ var globalThis: any = (() => {
 })();
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -4493,6 +3837,11 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {

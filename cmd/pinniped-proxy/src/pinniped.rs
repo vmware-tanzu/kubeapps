@@ -6,7 +6,9 @@ use http::Uri;
 use k8s_openapi::api::core::v1 as corev1;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1 as metav1;
 use kube::{
-    api::{Api, ApiResource, DynamicObject, PostParams}, core::GroupVersionKind, Client, Config,
+    api::{Api, ApiResource, DynamicObject, PostParams},
+    core::GroupVersionKind,
+    Client, Config,
 };
 use log::debug;
 use native_tls::Identity;

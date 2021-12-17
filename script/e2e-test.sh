@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2018-2020 Bitnami
+# Copyright 2018-2021 VMware. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
 # limitations under the License.
 
 set -o errexit
+set -o nounset
 set -o pipefail
 
 # Constants
-ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.18.2"}
 DEV_TAG=${3:?missing dev tag}
@@ -28,17 +29,17 @@ ADDITIONAL_CLUSTER_IP=${6:-"172.18.0.3"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
-if [[ -n "$TEST_LATEST_RELEASE" ]]; then
+if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
   DEV_TAG=${DEV_TAG/-beta.*/}
 fi
 
 # Load Generic Libraries
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libtest.sh"
+. "${ROOT_DIR}/script/lib/libtest.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/liblog.sh"
+. "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
-. "${ROOT_DIR}/script/libutil.sh"
+. "${ROOT_DIR}/script/lib/libutil.sh"
 
 # Auxiliar functions
 
@@ -74,36 +75,36 @@ isOperatorHubCatalogRunning() {
 # Returns: None
 #########################
 installOLM() {
-    local release=$1
-    info "Installing OLM ${release} ..."
-    url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
-    namespace=olm
+  local release=$1
+  info "Installing OLM ${release} ..."
+  url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
+  namespace=olm
 
-    kubectl apply -f "${url}/crds.yaml"
-    kubectl wait --for=condition=Established -f "${url}/crds.yaml"
-    kubectl apply -f "${url}/olm.yaml"
+  kubectl apply -f "${url}/crds.yaml"
+  kubectl wait --for=condition=Established -f "${url}/crds.yaml"
+  kubectl apply -f "${url}/olm.yaml"
 
-    # wait for deployments to be ready
-    kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
-    kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
+  # wait for deployments to be ready
+  kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
+  kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
 
-    retries=30
-    until [[ $retries == 0 ]]; do
-        new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
-        if [[ $new_csv_phase != "$csv_phase" ]]; then
-            csv_phase=$new_csv_phase
-            echo "CSV \"packageserver\" phase: $csv_phase"
-        fi
-        if [[ "$new_csv_phase" == "Succeeded" ]]; then
+  retries=30
+  until [[ $retries == 0 ]]; do
+    new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
+    if [[ $new_csv_phase != "${csv_phase:-}" ]]; then
+      csv_phase=$new_csv_phase
+      echo "CSV \"packageserver\" phase: $csv_phase"
+    fi
+    if [[ "$new_csv_phase" == "Succeeded" ]]; then
       break
-        fi
-        sleep 10
-        retries=$((retries - 1))
-    done
+    fi
+    sleep 10
+    retries=$((retries - 1))
+  done
 
   if [ $retries == 0 ]; then
-      echo "CSV \"packageserver\" failed to reach phase succeeded"
-      exit 1
+    echo "CSV \"packageserver\" failed to reach phase succeeded"
+    exit 1
   fi
 
   kubectl rollout status -w deployment/packageserver --namespace="${namespace}"
@@ -118,15 +119,15 @@ installOLM() {
 # Returns: None
 #########################
 installChartmuseum() {
-    local user=$1
-    local password=$2
-    info "Installing ChartMuseum ..."
-    helm install chartmuseum --namespace kubeapps https://github.com/chartmuseum/charts/releases/download/chartmuseum-2.14.2/chartmuseum-2.14.2.tgz \
-      --set env.open.DISABLE_API=false \
-      --set persistence.enabled=true \
-      --set secret.AUTH_USER=$user \
-      --set secret.AUTH_PASS=$password
-    kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
+  local user=$1
+  local password=$2
+  info "Installing ChartMuseum ..."
+  helm install chartmuseum --namespace kubeapps https://github.com/chartmuseum/charts/releases/download/chartmuseum-2.14.2/chartmuseum-2.14.2.tgz \
+    --set env.open.DISABLE_API=false \
+    --set persistence.enabled=true \
+    --set secret.AUTH_USER=$user \
+    --set secret.AUTH_PASS=$password
+  kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
 }
 
 ########################
@@ -140,18 +141,33 @@ installChartmuseum() {
 # Returns: None
 #########################
 pushChart() {
-    local chart=$1
-    local version=$2
-    local user=$3
-    local password=$4
-    info "Adding ${chart}-${version} to ChartMuseum ..."
-    curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+  local chart=$1
+  local version=$2
+  local user=$3
+  local password=$4
+  prefix="kubeapps-"
+  description="foo ${chart} chart for CI"
 
-    local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
-    /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
-    sleep 2
-    curl -u "${user}:${password}" --data-binary "@${chart}-${version}.tgz" http://localhost:8080/api/charts
-    pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
+  info "Adding ${chart}-${version} to ChartMuseum ..."
+  curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+
+  # Mutate the chart name and description, then re-package the tarball
+  # For instance, the apache's Chart.yaml file becomes modified to:
+  #   name: kubeapps-apache
+  #   description: foo apache chart for CI
+  # consequently, the new packaged chart is "${prefix}${chart}-${version}.tgz"
+  # This workaround should mitigate https://github.com/kubeapps/kubeapps/issues/3339
+  mkdir ./${chart}-${version}
+  tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
+  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
+  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
+  helm package ./${chart}-${version}/${chart} -d .
+
+  local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
+  /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
+  sleep 2
+  curl -u "${user}:${password}" --data-binary "@${prefix}${chart}-${version}.tgz" http://localhost:8080/api/charts
+  pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
 }
 
 ########################
@@ -161,30 +177,31 @@ pushChart() {
 # Returns: None
 #########################
 installOrUpgradeKubeapps() {
-    local chartSource=$1
-    # Install Kubeapps
-    info "Installing Kubeapps from ${chartSource}..."
-    kubectl -n kubeapps delete secret localhost-tls || true
+  local chartSource=$1
+  # Install Kubeapps
+  info "Installing Kubeapps from ${chartSource}..."
+  kubectl -n kubeapps delete secret localhost-tls || true
 
-    cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
-      ${invalidateCacheFlag} \
-      "${img_flags[@]}" \
-      "${@:2}" \
-      "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}" \
-      --set frontend.replicaCount=1 \
-      --set kubeops.replicaCount=1 \
-      --set assetsvc.replicaCount=1 \
-      --set dashboard.replicaCount=1 \
-      --set postgresql.replication.enabled=false \
-      --set postgresql.postgresqlPassword=password \
-      --set redis.auth.password=password \
-      # TODO: remove these lines once kubeapps-apis got merged in the main branch
-      --set featureFlags.kubeappsAPIsServer=true \
-      --set redis.enabled=false \
-      --wait)
+  cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}"
+    "${img_flags[@]}"
+    "${@:2}"
+    "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
+    --set frontend.replicaCount=1
+    --set kubeops.replicaCount=1
+    --set dashboard.replicaCount=1
+    --set kubeappsapis.replicaCount=2
+    --set kubeops.enabled=true
+    --set postgresql.replication.enabled=false
+    --set postgresql.postgresqlPassword=password
+    --set redis.auth.password=password
+    --set apprepository.initialRepos[0].name=bitnami
+    --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
+    --set apprepository.initialRepos[0].basicAuth.user=admin
+    --set apprepository.initialRepos[0].basicAuth.password=password
+    --wait)
 
-    echo "${cmd[@]}"
-    "${cmd[@]}"
+  echo "${cmd[@]}"
+  "${cmd[@]}"
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -199,7 +216,8 @@ info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVers
 
 # Use dev images or Bitnami if testing the latest release
 image_prefix="kubeapps/"
-[[ -n "${TEST_LATEST_RELEASE:-}" ]] && image_prefix="bitnami/kubeapps-"
+kubeapps_apis_image="kubeapps-apis"
+[[ -n "${TEST_LATEST_RELEASE:-}" ]] && image_prefix="bitnami/kubeapps-" && kubeapps_apis_image="apis"
 images=(
   "apprepository-controller"
   "asset-syncer"
@@ -207,8 +225,7 @@ images=(
   "dashboard"
   "kubeops"
   "pinniped-proxy"
-  # TODO: uncomment once the image is being built by bitnami
-  # "kubeappsapis"
+  "${kubeapps_apis_image}"
 )
 images=("${images[@]/#/${image_prefix}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
@@ -226,18 +243,10 @@ img_flags=(
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
   "--set" "pinnipedProxy.image.repository=${images[5]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=kubeapps/kubeapps-apis-ci"
-  # TODO: uncomment once the image is being built by bitnami
-  # "--set" "kubeappsapis.image.repository=${images[6]}"
+  "--set" "kubeappsapis.image.repository=${images[6]}"
 )
 
-# TODO(andresmgot): Remove this condition with the parameter in the next version
-invalidateCacheFlag=""
-if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
-  invalidateCacheFlag="--set featureFlags.invalidateCache=true"
-fi
-
-if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ] ; then
+if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   multiclusterFlags=(
     "--set" "ingress.enabled=true"
     "--set" "ingress.hostname=localhost"
@@ -268,11 +277,11 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
 
-if [[ -n "${TEST_UPGRADE}" ]]; then
+if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps bitnami/kubeapps \
-    "--set" "apprepository.initialRepos=null"
+    "--set" "apprepository.initialRepos={}"
 
   info "Waiting for Kubeapps components to be ready (bitnami chart)..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
@@ -282,8 +291,8 @@ installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 installChartmuseum admin password
-pushChart apache 7.3.15 admin password
-pushChart apache 7.3.16 admin password
+pushChart apache 8.6.2 admin password
+pushChart apache 8.6.3 admin password
 
 # Ensure that we are testing the correct image
 info ""
@@ -297,10 +306,9 @@ info "Waiting for Kubeapps components to be ready..."
 deployments=(
   "kubeapps-ci"
   "kubeapps-ci-internal-apprepository-controller"
-  "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
-  "kubeapps-ci-internal-kubeops"
   "kubeapps-ci-internal-kubeappsapis"
+  "kubeapps-ci-internal-kubeops"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
@@ -322,8 +330,9 @@ kubectl get pods -n kubeapps -o wide
 kubectl get ep --namespace=kubeapps
 svcs=(
   "kubeapps-ci"
-  "kubeapps-ci-internal-assetsvc"
   "kubeapps-ci-internal-dashboard"
+  "kubeapps-ci-internal-kubeappsapis"
+  "kubeapps-ci-internal-kubeops"
 )
 for svc in "${svcs[@]}"; do
   k8s_wait_for_endpoints kubeapps "$svc" 1
@@ -339,7 +348,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   if ! retry_while testHelm "2" "1"; then
     warn "PODS status on failure"
     kubectl get pods -n kubeapps
-    for pod in $(kubectl get po -l release=kubeapps-ci -oname -n kubeapps); do
+    for pod in $(kubectl get po -l='app.kubernetes.io/managed-by=Helm,app.kubernetes.io/instance=kubeapps-ci' -oname -n kubeapps); do
       warn "LOGS for pod $pod ------------"
       if [[ "$pod" =~ .*internal.* ]]; then
         kubectl logs -n kubeapps "$pod"
@@ -347,15 +356,13 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
         kubectl logs -n kubeapps "$pod" nginx
         kubectl logs -n kubeapps "$pod" auth-proxy
       fi
-    done;
+    done
     echo
-    warn "LOGS for assetsvc tests --------"
-    kubectl logs kubeapps-ci-assetsvc-test --namespace kubeapps
     warn "LOGS for dashboard tests --------"
     kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
     exit 1
   fi
-  info "Helm tests succeded!!"
+  info "Helm tests succeeded!!"
 fi
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -401,6 +408,7 @@ kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceacco
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
 kubectl create rolebinding kubeapps-edit -n default --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
+kubectl create rolebinding kubeapps-repositories-read -n kubeapps --clusterrole kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-edit
 
 ## Give the cluster some time to avoid issues like
 ## https://circleci.com/gh/kubeapps/kubeapps/16102
@@ -420,4 +428,4 @@ if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRA
   kubectl cp "${pod}:/app/reports" ./reports
   exit 1
 fi
-info "Integration tests succeded!!"
+info "Integration tests succeeded!!"

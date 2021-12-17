@@ -22,7 +22,7 @@ import (
 
 	"database/sql/driver"
 
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 )
 
 // Repo holds the App repository basic details

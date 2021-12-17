@@ -19,23 +19,33 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
+	"regexp"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"sigs.k8s.io/yaml"
+
+	"github.com/kubeapps/kubeapps/pkg/agent"
+	"github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	kube "helm.sh/helm/v3/pkg/kube"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
@@ -48,10 +58,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
-
-	// TODO(mnelson): models.Chart.Maintainers is depending on the old v1 chart
-	// code. I don't expect there is any reason other than a historical one.
-	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
 	log "k8s.io/klog/v2"
 )
 
@@ -59,6 +65,7 @@ const (
 	globalPackagingNamespace = "kubeapps"
 	globalPackagingCluster   = "default"
 	DefaultAppVersion        = "1.2.6"
+	DefaultReleaseRevision   = 1
 	DefaultChartDescription  = "default chart description"
 	DefaultChartIconURL      = "https://example.com/chart.svg"
 	DefaultChartHomeURL      = "https://helm.sh/helm"
@@ -76,7 +83,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) 
 }
 
 func TestGetClient(t *testing.T) {
-	dbConfig := datastore.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
+	dbConfig := dbutils.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
 	manager, err := utils.NewPGManager(dbConfig, globalPackagingNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -265,7 +272,7 @@ func TestIsValidChart(t *testing.T) {
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me"}},
+				Maintainers: []chart.Maintainer{{Name: "me"}},
 			},
 			expected: true,
 		},
@@ -279,7 +286,7 @@ func TestIsValidChart(t *testing.T) {
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me"}, {Email: "you"}},
+				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
 			},
 			expected: false,
 		},
@@ -316,7 +323,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 				ChartVersions: []models.ChartVersion{
 					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
 					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
@@ -324,10 +331,12 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{
-				Name:             "foo",
-				DisplayName:      "foo",
-				LatestPkgVersion: "3.0.0",
-				LatestAppVersion: DefaultAppVersion,
+				Name:        "foo",
+				DisplayName: "foo",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
 				IconUrl:          "foo.bar/icon.svg",
 				ShortDescription: "best chart",
 				Categories:       []string{DefaultChartCategory},
@@ -356,11 +365,13 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{
-				Name:             "foo",
-				DisplayName:      "foo",
-				LatestPkgVersion: "3.0.0",
-				LatestAppVersion: DefaultAppVersion,
-				Categories:       []string{""},
+				Name:        "foo",
+				DisplayName: "foo",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Categories: []string{""},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
@@ -390,7 +401,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -408,7 +419,7 @@ func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions
 		Description: DefaultChartDescription,
 		Home:        DefaultChartHomeURL,
 		Icon:        DefaultChartIconURL,
-		Maintainers: []chartv1.Maintainer{{Name: "me", Email: "me@me.me"}},
+		Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 		Sources:     []string{"http://source-1"},
 		Repo: &models.Repo{
 			Name:      repo_name,
@@ -462,13 +473,19 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 }
 
 // makeServer returns a server backed with an sql mock and a cleanup function
-func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration) (*Server, sqlmock.Sqlmock, func()) {
+func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration, objects ...runtime.Object) (*Server, sqlmock.Sqlmock, func()) {
 	// Creating the dynamic client
+	scheme := runtime.NewScheme()
+	err := v1alpha1.AddToScheme(scheme)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
 	dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
+		scheme,
 		map[schema.GroupVersionResource]string{
 			{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
 		},
+		objects...,
 	)
 
 	// Creating an authorized clientGetter
@@ -490,9 +507,13 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		manager:                  manager,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
-		actionConfigGetter: func(context.Context, string, string) (*action.Configuration, error) {
+		actionConfigGetter: func(context.Context, *corev1.Context) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
+		chartClientFactory: &fake.ChartClientFactory{},
+		versionsInSummary: VersionsInSummary{MajorVersionsInSummary,
+			MinorVersionsInSummary, PatchVersionsInSummary},
+		createReleaseFunc: agent.CreateRelease,
 	}, mock, cleanup
 }
 
@@ -525,10 +546,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-1",
-						DisplayName:      "chart-1",
-						LatestPkgVersion: "3.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-1",
+						DisplayName: "chart-1",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
@@ -539,10 +562,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 					{
-						Name:             "chart-2",
-						DisplayName:      "chart-2",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
@@ -553,10 +578,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 					{
-						Name:             "chart-3-global",
-						DisplayName:      "chart-3-global",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-3-global",
+						DisplayName: "chart-3-global",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
@@ -587,10 +614,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-1",
-						DisplayName:      "chart-1",
-						LatestPkgVersion: "3.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-1",
+						DisplayName: "chart-1",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
@@ -601,10 +630,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 					{
-						Name:             "chart-2",
-						DisplayName:      "chart-2",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
@@ -636,10 +667,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-1",
-						DisplayName:      "chart-1",
-						LatestPkgVersion: "3.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-1",
+						DisplayName: "chart-1",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
@@ -650,10 +683,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 					{
-						Name:             "chart-2",
-						DisplayName:      "chart-2",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
@@ -725,10 +760,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-2",
-						DisplayName:      "chart-2",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						ShortDescription: DefaultChartDescription,
 						Categories:       []string{DefaultChartCategory},
@@ -767,10 +804,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-3",
-						DisplayName:      "chart-3",
-						LatestPkgVersion: "1.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-3",
+						DisplayName: "chart-3",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{DefaultChartCategory},
 						ShortDescription: DefaultChartDescription,
@@ -818,10 +857,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 					{
-						Name:             "chart-1",
-						DisplayName:      "chart-1",
-						LatestPkgVersion: "3.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-1",
+						DisplayName: "chart-1",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{"foo"},
 						ShortDescription: DefaultChartDescription,
@@ -832,10 +873,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 					{
-						Name:             "chart-2",
-						DisplayName:      "chart-2",
-						LatestPkgVersion: "2.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-2",
+						DisplayName: "chart-2",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "2.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{"bar"},
 						ShortDescription: DefaultChartDescription,
@@ -846,10 +889,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 					{
-						Name:             "chart-3",
-						DisplayName:      "chart-3",
-						LatestPkgVersion: "1.0.0",
-						LatestAppVersion: DefaultAppVersion,
+						Name:        "chart-3",
+						DisplayName: "chart-3",
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.0.0",
+							AppVersion: DefaultAppVersion,
+						},
 						IconUrl:          DefaultChartIconURL,
 						Categories:       []string{"bar"},
 						ShortDescription: DefaultChartDescription,
@@ -923,7 +968,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -961,13 +1006,15 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
-				PkgVersion:       "3.0.0",
-				AppVersion:       DefaultAppVersion,
-				Readme:           "chart readme",
-				DefaultValues:    "chart values",
-				ValuesSchema:     "chart schema",
-				SourceUrls:       []string{"http://source-1"},
-				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				ValuesSchema:  "chart schema",
+				SourceUrls:    []string{"http://source-1"},
+				Maintainers:   []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "repo-1/foo",
@@ -997,7 +1044,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageDetail, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -1033,13 +1080,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				IconUrl:          DefaultChartIconURL,
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
-				PkgVersion:       "3.0.0",
-				AppVersion:       DefaultAppVersion,
-				Readme:           "chart readme",
-				DefaultValues:    "chart values",
-				ValuesSchema:     "chart schema",
-				SourceUrls:       []string{"http://source-1"},
-				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				ValuesSchema:  "chart schema",
+				SourceUrls:    []string{"http://source-1"},
+				Maintainers:   []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "repo-1/foo",
@@ -1068,13 +1117,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				Categories:       []string{DefaultChartCategory},
 				ShortDescription: DefaultChartDescription,
 				LongDescription:  "",
-				PkgVersion:       "1.0.0",
-				AppVersion:       DefaultAppVersion,
-				Readme:           "chart readme",
-				DefaultValues:    "chart values",
-				ValuesSchema:     "chart schema",
-				SourceUrls:       []string{"http://source-1"},
-				Maintainers:      []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "1.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				ValuesSchema:  "chart schema",
+				SourceUrls:    []string{"http://source-1"},
+				Maintainers:   []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{Namespace: "my-ns"},
 					Identifier: "repo-1/foo",
@@ -1171,7 +1222,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				mock.ExpectQuery("SELECT info FROM charts").
 					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, chartIDUnescaped).
 					WillReturnRows(rows)
-				fileID := fileIDForChart(chartIDUnescaped, tc.expectedPackage.PkgVersion)
+				fileID := fileIDForChart(chartIDUnescaped, tc.expectedPackage.Version.PkgVersion)
 				fileJSON, err := json.Marshal(models.ChartFiles{
 					Readme: tc.expectedPackage.Readme,
 					Values: tc.expectedPackage.DefaultValues,
@@ -1194,7 +1245,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{})
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageDetails.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -1265,7 +1316,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+				PackageAppVersions: []*corev1.PackageAppVersion{
 					{
 						PkgVersion: "3.0.0",
 						AppVersion: DefaultAppVersion,
@@ -1315,7 +1366,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -1329,9 +1380,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 func TestPackageAppVersionsSummary(t *testing.T) {
 	testCases := []struct {
-		name            string
-		chart_versions  []models.ChartVersion
-		version_summary []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion
+		name                      string
+		chart_versions            []models.ChartVersion
+		version_summary           []*corev1.PackageAppVersion
+		input_versions_in_summary VersionsInSummary
 	}{
 		{
 			name: "it includes the latest three major versions only",
@@ -1341,11 +1393,12 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "6.5.6", AppVersion: DefaultAppVersion},
 				{Version: "5.5.6", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			version_summary: []*corev1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "7.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
 			},
+			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
 		},
 		{
 			name: "it includes the latest three minor versions for each major version only",
@@ -1355,11 +1408,12 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "8.3.6", AppVersion: DefaultAppVersion},
 				{Version: "8.2.6", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			version_summary: []*corev1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.4.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.3.6", AppVersion: DefaultAppVersion},
 			},
+			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
 		},
 		{
 			name: "it includes the latest three patch versions for each minor version only",
@@ -1369,11 +1423,12 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "8.5.4", AppVersion: DefaultAppVersion},
 				{Version: "8.5.3", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			version_summary: []*corev1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
 			},
+			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
 		},
 		{
 			name: "it includes the latest three patch versions of the latest three minor versions of the latest three major versions only",
@@ -1443,7 +1498,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "2.2.4", AppVersion: DefaultAppVersion},
 				{Version: "2.2.3", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
+			version_summary: []*corev1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
@@ -1472,20 +1527,326 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{PkgVersion: "4.3.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "4.3.4", AppVersion: DefaultAppVersion},
 			},
+			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
+		},
+		{
+			name: "it includes the latest four patch versions of the latest one minor versions of the latest two major versions only",
+			chart_versions: []models.ChartVersion{
+				{Version: "8.5.6", AppVersion: DefaultAppVersion},
+				{Version: "8.5.5", AppVersion: DefaultAppVersion},
+				{Version: "8.5.4", AppVersion: DefaultAppVersion},
+				{Version: "8.5.3", AppVersion: DefaultAppVersion},
+				{Version: "8.4.6", AppVersion: DefaultAppVersion},
+				{Version: "8.4.5", AppVersion: DefaultAppVersion},
+				{Version: "8.4.4", AppVersion: DefaultAppVersion},
+				{Version: "8.4.3", AppVersion: DefaultAppVersion},
+				{Version: "8.3.6", AppVersion: DefaultAppVersion},
+				{Version: "8.3.5", AppVersion: DefaultAppVersion},
+				{Version: "8.3.4", AppVersion: DefaultAppVersion},
+				{Version: "8.3.3", AppVersion: DefaultAppVersion},
+				{Version: "8.2.6", AppVersion: DefaultAppVersion},
+				{Version: "8.2.5", AppVersion: DefaultAppVersion},
+				{Version: "8.2.4", AppVersion: DefaultAppVersion},
+				{Version: "8.2.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.6", AppVersion: DefaultAppVersion},
+				{Version: "6.5.5", AppVersion: DefaultAppVersion},
+				{Version: "6.5.4", AppVersion: DefaultAppVersion},
+				{Version: "6.5.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.2", AppVersion: DefaultAppVersion},
+				{Version: "6.5.1", AppVersion: DefaultAppVersion},
+				{Version: "6.4.6", AppVersion: DefaultAppVersion},
+				{Version: "6.4.5", AppVersion: DefaultAppVersion},
+				{Version: "6.4.4", AppVersion: DefaultAppVersion},
+				{Version: "6.4.3", AppVersion: DefaultAppVersion},
+				{Version: "6.3.6", AppVersion: DefaultAppVersion},
+				{Version: "6.3.5", AppVersion: DefaultAppVersion},
+				{Version: "6.3.4", AppVersion: DefaultAppVersion},
+				{Version: "6.3.3", AppVersion: DefaultAppVersion},
+				{Version: "6.2.6", AppVersion: DefaultAppVersion},
+				{Version: "6.2.5", AppVersion: DefaultAppVersion},
+				{Version: "6.2.4", AppVersion: DefaultAppVersion},
+				{Version: "6.2.3", AppVersion: DefaultAppVersion},
+				{Version: "4.5.6", AppVersion: DefaultAppVersion},
+				{Version: "4.5.5", AppVersion: DefaultAppVersion},
+				{Version: "4.5.4", AppVersion: DefaultAppVersion},
+				{Version: "4.5.3", AppVersion: DefaultAppVersion},
+				{Version: "4.4.6", AppVersion: DefaultAppVersion},
+				{Version: "4.4.5", AppVersion: DefaultAppVersion},
+				{Version: "4.4.4", AppVersion: DefaultAppVersion},
+				{Version: "4.4.3", AppVersion: DefaultAppVersion},
+				{Version: "4.3.6", AppVersion: DefaultAppVersion},
+				{Version: "4.3.5", AppVersion: DefaultAppVersion},
+				{Version: "4.3.4", AppVersion: DefaultAppVersion},
+				{Version: "4.3.3", AppVersion: DefaultAppVersion},
+				{Version: "4.2.6", AppVersion: DefaultAppVersion},
+				{Version: "4.2.5", AppVersion: DefaultAppVersion},
+				{Version: "4.2.4", AppVersion: DefaultAppVersion},
+				{Version: "4.2.3", AppVersion: DefaultAppVersion},
+				{Version: "2.5.6", AppVersion: DefaultAppVersion},
+				{Version: "2.5.5", AppVersion: DefaultAppVersion},
+				{Version: "2.5.4", AppVersion: DefaultAppVersion},
+				{Version: "2.5.3", AppVersion: DefaultAppVersion},
+				{Version: "2.4.6", AppVersion: DefaultAppVersion},
+				{Version: "2.4.5", AppVersion: DefaultAppVersion},
+				{Version: "2.4.4", AppVersion: DefaultAppVersion},
+				{Version: "2.4.3", AppVersion: DefaultAppVersion},
+				{Version: "2.3.6", AppVersion: DefaultAppVersion},
+				{Version: "2.3.5", AppVersion: DefaultAppVersion},
+				{Version: "2.3.4", AppVersion: DefaultAppVersion},
+				{Version: "2.3.3", AppVersion: DefaultAppVersion},
+				{Version: "2.2.6", AppVersion: DefaultAppVersion},
+				{Version: "2.2.5", AppVersion: DefaultAppVersion},
+				{Version: "2.2.4", AppVersion: DefaultAppVersion},
+				{Version: "2.2.3", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.PackageAppVersion{
+				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "8.5.3", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.3", AppVersion: DefaultAppVersion},
+			},
+			input_versions_in_summary: VersionsInSummary{Major: 2,
+				Minor: 1,
+				Patch: 4},
+		},
+		{
+			name: "it includes the latest zero patch versions of the latest zero minor versions of the latest six major versions only",
+			chart_versions: []models.ChartVersion{
+				{Version: "8.5.6", AppVersion: DefaultAppVersion},
+				{Version: "8.5.5", AppVersion: DefaultAppVersion},
+				{Version: "8.5.4", AppVersion: DefaultAppVersion},
+				{Version: "8.5.3", AppVersion: DefaultAppVersion},
+				{Version: "8.4.6", AppVersion: DefaultAppVersion},
+				{Version: "8.4.5", AppVersion: DefaultAppVersion},
+				{Version: "8.4.4", AppVersion: DefaultAppVersion},
+				{Version: "8.4.3", AppVersion: DefaultAppVersion},
+				{Version: "8.3.6", AppVersion: DefaultAppVersion},
+				{Version: "8.3.5", AppVersion: DefaultAppVersion},
+				{Version: "8.3.4", AppVersion: DefaultAppVersion},
+				{Version: "8.3.3", AppVersion: DefaultAppVersion},
+				{Version: "8.2.6", AppVersion: DefaultAppVersion},
+				{Version: "8.2.5", AppVersion: DefaultAppVersion},
+				{Version: "8.2.4", AppVersion: DefaultAppVersion},
+				{Version: "8.2.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.6", AppVersion: DefaultAppVersion},
+				{Version: "6.5.5", AppVersion: DefaultAppVersion},
+				{Version: "6.5.4", AppVersion: DefaultAppVersion},
+				{Version: "6.5.3", AppVersion: DefaultAppVersion},
+				{Version: "6.5.2", AppVersion: DefaultAppVersion},
+				{Version: "6.5.1", AppVersion: DefaultAppVersion},
+				{Version: "6.4.6", AppVersion: DefaultAppVersion},
+				{Version: "6.4.5", AppVersion: DefaultAppVersion},
+				{Version: "6.4.4", AppVersion: DefaultAppVersion},
+				{Version: "6.4.3", AppVersion: DefaultAppVersion},
+				{Version: "6.3.6", AppVersion: DefaultAppVersion},
+				{Version: "6.3.5", AppVersion: DefaultAppVersion},
+				{Version: "6.3.4", AppVersion: DefaultAppVersion},
+				{Version: "6.3.3", AppVersion: DefaultAppVersion},
+				{Version: "6.2.6", AppVersion: DefaultAppVersion},
+				{Version: "6.2.5", AppVersion: DefaultAppVersion},
+				{Version: "6.2.4", AppVersion: DefaultAppVersion},
+				{Version: "6.2.3", AppVersion: DefaultAppVersion},
+				{Version: "4.5.6", AppVersion: DefaultAppVersion},
+				{Version: "4.5.5", AppVersion: DefaultAppVersion},
+				{Version: "4.5.4", AppVersion: DefaultAppVersion},
+				{Version: "4.5.3", AppVersion: DefaultAppVersion},
+				{Version: "4.4.6", AppVersion: DefaultAppVersion},
+				{Version: "4.4.5", AppVersion: DefaultAppVersion},
+				{Version: "4.4.4", AppVersion: DefaultAppVersion},
+				{Version: "4.4.3", AppVersion: DefaultAppVersion},
+				{Version: "4.3.6", AppVersion: DefaultAppVersion},
+				{Version: "4.3.5", AppVersion: DefaultAppVersion},
+				{Version: "4.3.4", AppVersion: DefaultAppVersion},
+				{Version: "4.3.3", AppVersion: DefaultAppVersion},
+				{Version: "4.2.6", AppVersion: DefaultAppVersion},
+				{Version: "4.2.5", AppVersion: DefaultAppVersion},
+				{Version: "4.2.4", AppVersion: DefaultAppVersion},
+				{Version: "4.2.3", AppVersion: DefaultAppVersion},
+				{Version: "3.4.6", AppVersion: DefaultAppVersion},
+				{Version: "3.4.5", AppVersion: DefaultAppVersion},
+				{Version: "3.4.4", AppVersion: DefaultAppVersion},
+				{Version: "2.4.3", AppVersion: DefaultAppVersion},
+				{Version: "2.3.6", AppVersion: DefaultAppVersion},
+				{Version: "2.3.5", AppVersion: DefaultAppVersion},
+				{Version: "2.3.4", AppVersion: DefaultAppVersion},
+				{Version: "2.3.3", AppVersion: DefaultAppVersion},
+				{Version: "1.2.6", AppVersion: DefaultAppVersion},
+				{Version: "1.2.5", AppVersion: DefaultAppVersion},
+				{Version: "1.2.4", AppVersion: DefaultAppVersion},
+				{Version: "1.2.3", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.PackageAppVersion{
+				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "4.5.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "3.4.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "2.4.3", AppVersion: DefaultAppVersion},
+				{PkgVersion: "1.2.6", AppVersion: DefaultAppVersion},
+			},
+			input_versions_in_summary: VersionsInSummary{Major: 6,
+				Minor: 0,
+				Patch: 0},
 		},
 	}
 
-	opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+	opts := cmpopts.IgnoreUnexported(corev1.PackageAppVersion{})
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := packageAppVersionsSummary(tc.chart_versions), tc.version_summary; !cmp.Equal(want, got, opts) {
+			if got, want := packageAppVersionsSummary(tc.chart_versions, tc.input_versions_in_summary), tc.version_summary; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})
 	}
 }
 
+func TestParsePluginConfig(t *testing.T) {
+	testCases := []struct {
+		name                    string
+		pluginYAMLConf          []byte
+		exp_versions_in_summary VersionsInSummary
+		exp_error_str           string
+	}{
+		{
+			name:                    "non existing plugin-config file",
+			pluginYAMLConf:          nil,
+			exp_versions_in_summary: VersionsInSummary{0, 0, 0},
+			exp_error_str:           "no such file or directory",
+		},
+		{
+			name: "non-default plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1
+      `),
+			exp_versions_in_summary: VersionsInSummary{4, 2, 1},
+			exp_error_str:           "",
+		},
+		{
+			name: "partial params in plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 1
+        `),
+			exp_versions_in_summary: VersionsInSummary{1, 0, 0},
+			exp_error_str:           "",
+		},
+		{
+			name: "invalid plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1-IFC-123
+      `),
+			exp_versions_in_summary: VersionsInSummary{},
+			exp_error_str:           "json: cannot unmarshal",
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			versions_in_summary, _, goterr := parsePluginConfig(filename)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
+			}
+			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+func TestParsePluginConfigTimeout(t *testing.T) {
+	testCases := []struct {
+		name           string
+		pluginYAMLConf []byte
+		exp_timeout    int32
+		exp_error_str  string
+	}{
+		{
+			name:           "no timeout specified in plugin config",
+			pluginYAMLConf: nil,
+			exp_timeout:    0,
+			exp_error_str:  "",
+		},
+		{
+			name: "specific timeout in plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      timeoutSeconds: 650
+      `),
+			exp_timeout:   650,
+			exp_error_str: "",
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			_, timeoutSeconds, goterr := parsePluginConfig(filename)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
+			}
+			if got, want := timeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name               string
@@ -1505,17 +1866,20 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      2,
 				},
 				{
 					name:      "my-release-2",
 					namespace: "other-namespace",
 					status:    release.StatusDeployed,
+					version:   4,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-1",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      6,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1534,9 +1898,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "1.2.3",
 						},
-						CurrentPkgVersion: "1.2.3",
-						LatestPkgVersion:  "1.2.3",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "1.2.3",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.2.3",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1556,9 +1925,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "4.5.6",
 						},
-						CurrentPkgVersion: "4.5.6",
-						LatestPkgVersion:  "4.5.6",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "4.5.6",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "4.5.6",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1579,18 +1953,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1609,9 +1986,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "1.2.3",
 						},
-						CurrentPkgVersion: "1.2.3",
-						LatestPkgVersion:  "1.2.3",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "1.2.3",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.2.3",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1631,9 +2013,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "3.4.5",
 						},
-						CurrentPkgVersion: "3.4.5",
-						LatestPkgVersion:  "3.4.5",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "3.4.5",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.4.5",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1653,9 +2040,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "4.5.6",
 						},
-						CurrentPkgVersion: "4.5.6",
-						LatestPkgVersion:  "4.5.6",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "4.5.6",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "4.5.6",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1679,18 +2071,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1709,9 +2104,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "1.2.3",
 						},
-						CurrentPkgVersion: "1.2.3",
-						LatestPkgVersion:  "1.2.3",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "1.2.3",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.2.3",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1731,9 +2131,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "3.4.5",
 						},
-						CurrentPkgVersion: "3.4.5",
-						LatestPkgVersion:  "3.4.5",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "3.4.5",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "3.4.5",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1759,18 +2164,21 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 				{
 					name:         "my-release-2",
 					namespace:    "namespace-2",
 					status:       release.StatusDeployed,
 					chartVersion: "3.4.5",
+					version:      1,
 				},
 				{
 					name:         "my-release-3",
 					namespace:    "namespace-3",
 					chartVersion: "4.5.6",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1789,9 +2197,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "4.5.6",
 						},
-						CurrentPkgVersion: "4.5.6",
-						LatestPkgVersion:  "4.5.6",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "4.5.6",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "4.5.6",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1813,6 +2226,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					namespace:    "namespace-1",
 					chartVersion: "1.2.3",
 					status:       release.StatusDeployed,
+					version:      1,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1831,9 +2245,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						PkgVersionReference: &corev1.VersionReference{
 							Version: "1.2.3",
 						},
-						CurrentPkgVersion: "1.2.3",
-						LatestPkgVersion:  "1.2.5",
-						CurrentAppVersion: DefaultAppVersion,
+						CurrentVersion: &corev1.PackageAppVersion{
+
+							PkgVersion: "1.2.3",
+							AppVersion: DefaultAppVersion,
+						},
+						LatestVersion: &corev1.PackageAppVersion{
+							PkgVersion: "1.2.5",
+						},
 						Status: &corev1.InstalledPackageStatus{
 							Ready:      true,
 							Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
@@ -1848,7 +2267,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetContext().GetNamespace(), tc.existingReleases)
+			actionConfig := newActionConfigFixture(t, tc.request.GetContext().GetNamespace(), tc.existingReleases, nil)
 			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
 
@@ -1867,7 +2286,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -1881,6 +2300,12 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 }
 
 func TestGetInstalledPackageDetail(t *testing.T) {
+	customDetailRevision2, err := anypb.New(&helmv1.InstalledPackageDetailCustomDataHelm{
+		ReleaseRevision: 2,
+	})
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
 	const (
 		releaseNamespace = "my-namespace-1"
 		releaseName      = "my-release-1"
@@ -1890,25 +2315,40 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	)
 	testCases := []struct {
 		name               string
-		existingRelease    releaseStub
+		existingReleases   []releaseStub
 		request            *corev1.GetInstalledPackageDetailRequest
 		expectedResponse   *corev1.GetInstalledPackageDetailResponse
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "returns an installed package detail",
-			existingRelease: releaseStub{
-				name:         releaseName,
-				namespace:    releaseNamespace,
-				chartVersion: releaseVersion,
-				values:       releaseValues,
-				notes:        releaseNotes,
-				status:       release.StatusDeployed,
+			existingReleases: []releaseStub{
+				{
+					name:           releaseName,
+					namespace:      releaseNamespace,
+					chartVersion:   releaseVersion,
+					chartNamespace: releaseNamespace,
+					values:         releaseValues,
+					notes:          releaseNotes,
+					status:         release.StatusSuperseded,
+					version:        1,
+				},
+				{
+					name:           releaseName,
+					namespace:      releaseNamespace,
+					chartVersion:   releaseVersion,
+					chartNamespace: releaseNamespace,
+					values:         releaseValues,
+					notes:          releaseNotes,
+					status:         release.StatusDeployed,
+					version:        2,
+				},
 			},
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Namespace: releaseNamespace,
+						Cluster:   globalPackagingCluster,
 					},
 					Identifier: releaseName,
 				},
@@ -1918,14 +2358,22 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					InstalledPackageRef: &corev1.InstalledPackageReference{
 						Context: &corev1.Context{
 							Namespace: releaseNamespace,
+							Cluster:   globalPackagingCluster,
 						},
 						Identifier: releaseName,
 					},
 					PkgVersionReference: &corev1.VersionReference{
 						Version: releaseVersion,
 					},
-					Name:                  releaseName,
-					CurrentPkgVersion:     releaseVersion,
+					Name: releaseName,
+					CurrentVersion: &corev1.PackageAppVersion{
+						PkgVersion: releaseVersion,
+						AppVersion: DefaultAppVersion,
+					},
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: releaseVersion,
+						AppVersion: DefaultAppVersion,
+					},
 					ValuesApplied:         releaseValues,
 					PostInstallationNotes: releaseNotes,
 					Status: &corev1.InstalledPackageStatus{
@@ -1936,10 +2384,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context: &corev1.Context{
 							Namespace: releaseNamespace,
+							Cluster:   globalPackagingCluster,
 						},
 						Identifier: "myrepo/" + releaseName,
 						Plugin:     GetPluginDetail(),
 					},
+					CustomDetail: customDetailRevision2,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1961,7 +2411,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), []releaseStub{tc.existingRelease})
+			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases, nil)
 			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
 
@@ -1980,7 +2430,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.AvailablePackageReference{}, plugins.Plugin{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.AvailablePackageReference{}, plugins.Plugin{}, corev1.PackageAppVersion{}, anypb.Any{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -1993,16 +2443,65 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	}
 }
 
+func TestChartTarballURLBuild(t *testing.T) {
+	testCases := []struct {
+		name         string
+		repo         *models.Repo
+		chartVersion *models.ChartVersion
+		expectedUrl  string
+	}{
+		{
+			name:         "tarball url with relative URL without leading slash in chart",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+		{
+			name:         "tarball url with relative URL with leading slash in chart",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"/chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+		{
+			name:         "tarball url with absolute URL",
+			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			chartVersion: &models.ChartVersion{URLs: []string{"https://demo.repo/repo1/chart/test"}},
+			expectedUrl:  "https://demo.repo/repo1/chart/test",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tarballUrl := chartTarballURL(tc.repo, *tc.chartVersion)
+
+			if got, want := tarballUrl, tc.expectedUrl; got != want {
+				t.Fatalf("got: %+v, want: %+v", got, want)
+			}
+		})
+	}
+}
+
 // newActionConfigFixture returns an action.Configuration with fake clients
 // and memory storage.
-func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub) *action.Configuration {
+func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub, kubeClient kube.Interface) *action.Configuration {
 	t.Helper()
 
 	memDriver := driver.NewMemory()
 
+	if kubeClient == nil {
+		kubeClient = &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+	}
+
 	actionConfig := &action.Configuration{
-		Releases:     storage.Init(memDriver),
-		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		// Create the Releases storage explicitly so we can set the
+		// internal log function used to see data in test output.
+		Releases: &storage.Storage{
+			Driver: memDriver,
+			Log: func(format string, v ...interface{}) {
+				t.Logf(format, v...)
+			},
+		},
+		KubeClient:   kubeClient,
 		Capabilities: chartutil.DefaultCapabilities,
 		Log: func(format string, v ...interface{}) {
 			t.Helper()
@@ -2035,6 +2534,7 @@ func releaseForStub(t *testing.T, r releaseStub) *release.Release {
 	return &release.Release{
 		Name:      r.name,
 		Namespace: r.namespace,
+		Manifest:  r.manifest,
 		Version:   r.version,
 		Info: &release.Info{
 			Status: r.status,
@@ -2053,13 +2553,13 @@ func releaseForStub(t *testing.T, r releaseStub) *release.Release {
 
 func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
 	chartVersions := []models.ChartVersion{}
-	if pkg.LatestPkgVersion != "" {
+	if pkg.LatestVersion.PkgVersion != "" {
 		chartVersions = append(chartVersions, models.ChartVersion{
-			Version: pkg.LatestPkgVersion,
+			Version: pkg.LatestVersion.PkgVersion,
 		})
 	}
 	chartVersions = append(chartVersions, models.ChartVersion{
-		Version: pkg.CurrentPkgVersion,
+		Version: pkg.CurrentVersion.PkgVersion,
 	})
 
 	return &models.Chart{
@@ -2073,17 +2573,19 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 	if rel.latestVersion != "" {
 		chartVersions = append(chartVersions, models.ChartVersion{
 			Version: rel.latestVersion,
+			URLs:    []string{fmt.Sprintf("https://example.com/%s-%s.tgz", rel.chartID, rel.latestVersion)},
 		})
 	}
 	chartVersions = append(chartVersions, models.ChartVersion{
-		Version: rel.chartVersion,
+		Version:    rel.chartVersion,
+		AppVersion: DefaultAppVersion,
 	})
 
 	return &models.Chart{
 		Name: rel.name,
 		ID:   rel.chartID,
 		Repo: &models.Repo{
-			Namespace: rel.namespace,
+			Namespace: rel.chartNamespace,
 		},
 		ChartVersions: chartVersions,
 	}
@@ -2092,13 +2594,14 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 func populateAssetDBWithSummaries(t *testing.T, mock sqlmock.Sqlmock, pkgs []*corev1.InstalledPackageSummary) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
-	rels := []*releaseStub{}
+	rels := []releaseStub{}
 	for _, pkg := range pkgs {
-		rels = append(rels, &releaseStub{
+		rels = append(rels, releaseStub{
 			name:          pkg.Name,
 			namespace:     pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
-			chartVersion:  pkg.CurrentPkgVersion,
-			latestVersion: pkg.LatestPkgVersion,
+			chartVersion:  pkg.CurrentVersion.PkgVersion,
+			latestVersion: pkg.LatestVersion.PkgVersion,
+			version:       DefaultReleaseRevision,
 		})
 	}
 	populateAssetDB(t, mock, rels)
@@ -2107,20 +2610,44 @@ func populateAssetDBWithSummaries(t *testing.T, mock sqlmock.Sqlmock, pkgs []*co
 func populateAssetDBWithDetail(t *testing.T, mock sqlmock.Sqlmock, pkg *corev1.InstalledPackageDetail) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
-	rel := &releaseStub{
-		name:         pkg.Name,
-		namespace:    pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
-		chartVersion: pkg.CurrentPkgVersion,
-		chartID:      pkg.AvailablePackageRef.Identifier,
+	rel := releaseStub{
+		name:           pkg.Name,
+		namespace:      pkg.GetInstalledPackageRef().GetContext().GetNamespace(),
+		chartVersion:   pkg.GetCurrentVersion().GetPkgVersion(),
+		chartID:        pkg.GetAvailablePackageRef().GetIdentifier(),
+		chartNamespace: pkg.GetAvailablePackageRef().GetContext().GetNamespace(),
+		version:        DefaultReleaseRevision,
 	}
-	populateAssetDB(t, mock, []*releaseStub{rel})
+	populateAssetDB(t, mock, []releaseStub{rel})
 }
 
-func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []*releaseStub) {
+func populateAssetForTarball(t *testing.T, mock sqlmock.Sqlmock, chartId, namespace, version string) {
+	chart := &models.Chart{
+		Name: chartId,
+		ID:   chartId,
+		Repo: &models.Repo{
+			Namespace: globalPackagingNamespace,
+		},
+		ChartVersions: []models.ChartVersion{{
+			Version: version,
+			URLs:    []string{fmt.Sprintf("https://example.com/%s-%s.tgz", chartId, version)}}},
+	}
+	chartJSON, err := json.Marshal(chart)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	rows := sqlmock.NewRows([]string{"info"})
+	rows.AddRow(string(chartJSON))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT info FROM charts WHERE repo_namespace = $1 AND chart_id ILIKE $2")).
+		WithArgs(chart.Repo.Namespace, chart.ID).
+		WillReturnRows(rows)
+}
+
+func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []releaseStub) {
 	// The code currently executes one query per release in the paginated
 	// results and should receive a single row response.
 	for _, rel := range rels {
-		chartJSON, err := json.Marshal(chartAssetForReleaseStub(rel))
+		chartJSON, err := json.Marshal(chartAssetForReleaseStub(&rel))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -2132,13 +2659,15 @@ func populateAssetDB(t *testing.T, mock sqlmock.Sqlmock, rels []*releaseStub) {
 }
 
 type releaseStub struct {
-	name          string
-	namespace     string
-	version       int
-	chartVersion  string
-	chartID       string
-	latestVersion string
-	values        string
-	notes         string
-	status        release.Status
+	name           string
+	namespace      string
+	version        int
+	chartVersion   string
+	chartID        string
+	chartNamespace string
+	latestVersion  string
+	values         string
+	notes          string
+	status         release.Status
+	manifest       string
 }

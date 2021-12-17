@@ -3,7 +3,6 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import React, { useEffect, useRef } from "react";
 import CopyToClipboard from "react-copy-to-clipboard";
-
 import ReactTooltip from "react-tooltip";
 import "./SecretItemDatum.css";
 

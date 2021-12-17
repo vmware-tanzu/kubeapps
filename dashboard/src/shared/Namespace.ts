@@ -3,12 +3,15 @@ import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
 import { ForbiddenError, IResource, NotFoundError } from "./types";
 import * as url from "./url";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class Namespace {
+  private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
+
   public static async list(cluster: string) {
     // This call is hitting an actual backend endpoint (see pkg/http-handler.go)
-    // while the other calls (create, get) are hitting the k8s API via the
-    // frountend nginx.
+    // while the other two calls (create, get) have been updated to use the
+    // resources client rather than the k8s API server.
     const { data } = await axiosWithAuth.get<{ namespaces: IResource[] }>(
       url.backend.namespaces.list(cluster),
     );
@@ -16,24 +19,26 @@ export default class Namespace {
   }
 
   public static async create(cluster: string, namespace: string) {
-    const { data } = await axiosWithAuth.post<IResource>(url.api.k8s.namespaces(cluster), {
-      apiVersion: "v1",
-      kind: "Namespace",
-      metadata: {
-        name: namespace,
+    await this.resourcesClient().CreateNamespace({
+      context: {
+        cluster,
+        namespace,
       },
     });
-    return data;
   }
 
-  public static async get(cluster: string, namespace: string) {
+  public static async exists(cluster: string, namespace: string) {
     try {
-      const { data } = await axiosWithAuth.get<IResource>(
-        url.api.k8s.namespace(cluster, namespace),
-      );
-      return data;
-    } catch (err) {
-      switch (err.constructor) {
+      const { exists } = await this.resourcesClient().CheckNamespaceExists({
+        context: {
+          cluster,
+          namespace,
+        },
+      });
+
+      return exists;
+    } catch (e: any) {
+      switch (e.constructor) {
         case ForbiddenError:
           throw new ForbiddenError(
             `You don't have sufficient permissions to use the namespace ${namespace}`,
@@ -41,7 +46,7 @@ export default class Namespace {
         case NotFoundError:
           throw new NotFoundError(`Namespace ${namespace} not found. Create it before using it.`);
         default:
-          throw err;
+          throw e;
       }
     }
   }
@@ -55,7 +60,7 @@ function parseStoredNS() {
   let parsedNS = {};
   try {
     parsedNS = JSON.parse(ns);
-  } catch (e) {
+  } catch (e: any) {
     // The stored value should be a json object, if not, ignore it
   }
   return parsedNS;

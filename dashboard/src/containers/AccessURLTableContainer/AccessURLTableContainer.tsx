@@ -1,11 +1,7 @@
 import { connect } from "react-redux";
-import { Action } from "redux";
-import { ThunkDispatch } from "redux-thunk";
-
-import actions from "../../actions";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { IStoreState } from "shared/types";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
-import ResourceRef from "../../shared/ResourceRef";
-import { IStoreState } from "../../shared/types";
 import { filterByResourceRefs } from "../helpers";
 
 interface IAccessURLTableContainerProps {
@@ -13,7 +9,7 @@ interface IAccessURLTableContainerProps {
   ingressRefs: ResourceRef[];
 }
 
-function mapStateToProps({ kube, config }: IStoreState, props: IAccessURLTableContainerProps) {
+function mapStateToProps({ kube }: IStoreState, props: IAccessURLTableContainerProps) {
   // Extract the Services and Ingresses form the Redux state using the keys for
   // each ResourceRef.
   return {
@@ -23,10 +19,4 @@ function mapStateToProps({ kube, config }: IStoreState, props: IAccessURLTableCo
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
-  return {
-    getResource: (r: ResourceRef) => dispatch(actions.kube.getResource(r)),
-  };
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(AccessURLTable);
+export default connect(mapStateToProps)(AccessURLTable);

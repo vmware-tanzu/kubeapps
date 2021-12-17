@@ -1,27 +1,36 @@
-import { Link } from "react-router-dom";
 import { CdsIcon } from "@cds/react/icon";
-import StatusAwareButton from "../StatusAwareButton";
+import {
+  InstalledPackageReference,
+  InstalledPackageStatus,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Link } from "react-router-dom";
 import * as url from "../../../../shared/url";
-import { hapi } from "../../../../shared/hapi/release";
+import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 
 interface IUpgradeButtonProps {
-  cluster: string;
-  namespace: string;
-  releaseName: string;
-  releaseStatus: hapi.release.IStatus | undefined | null;
+  installedPackageRef: InstalledPackageReference;
+  releaseStatus: InstalledPackageStatus | undefined | null;
+  disabled?: boolean;
 }
 
 export default function UpgradeButton({
-  cluster,
-  namespace,
-  releaseName,
+  installedPackageRef,
   releaseStatus,
+  disabled,
 }: IUpgradeButtonProps) {
-  return (
-    <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)}>
-      <StatusAwareButton id="upgrade-button" status="primary" releaseStatus={releaseStatus}>
-        <CdsIcon shape="upload-cloud" /> Upgrade
-      </StatusAwareButton>
-    </Link>
+  const button = (
+    <StatusAwareButton
+      id="upgrade-button"
+      status="primary"
+      disabled={disabled}
+      releaseStatus={releaseStatus}
+    >
+      <CdsIcon shape="upload-cloud" /> Upgrade
+    </StatusAwareButton>
+  );
+  return disabled ? (
+    <>{button}</>
+  ) : (
+    <Link to={url.app.apps.upgrade(installedPackageRef)}>{button}</Link>
   );
 }

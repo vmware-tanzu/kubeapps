@@ -89,13 +89,14 @@ kubectl cp ${pod}:/app/reports ./reports
 
 Our CI system relies on the [kubeapps/integration-tests](https://hub.docker.com/r/kubeapps/integration-tests) image to run browser tests (c.f., [CI config file](../../.circleci/config.yml) and [CI documentation](./ci.md)). Consequently, this image should be properly versioned to avoid CI issues.
 
-The `kubeapps/integration-tests` image is built using this [Makefile](../../integration/Makefile). Manually edit this file to specify the proper version tag.
+The `kubeapps/integration-tests` image is built using this [Makefile](../../integration/Makefile), it uses the `IMAGE_TAG` variable to pass the version with which the image is built. It is important to increase the version each time the image is built and pushed:
 
 ```bash
+# Get the latest tag from https://hub.docker.com/r/kubeapps/integration-tests/tags?page=1&ordering=last_updated
+# and then increment the patch version of the latest tag to get the IMAGE_TAG that you'll use below.
 cd integration
-# edit the Makefile with the proper version tag
-make build
-make push
+IMAGE_TAG=v1.0.1 make build
+IMAGE_TAG=v1.0.1 make push
 ```
 
 > It will build and push the image using this [Dockerfile](../../integration/Dockerfile) (we are using the base image as in the [Kubeapps Dashboard build image](../../dashboard/Dockerfile)).

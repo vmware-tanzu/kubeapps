@@ -18,15 +18,20 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
 // Set the pluginDetail once during a module init function so the single struct
 // can be used throughout the plugin.
-var pluginDetail plugins.Plugin
+var (
+	pluginDetail plugins.Plugin
+	// This version var is updated during the build (see the -ldflags option
+	// in the cmd/kubeapps-apis/Dockerfile)
+	version = "devel"
+)
 
 func init() {
 	pluginDetail = plugins.Plugin{
@@ -37,8 +42,9 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter server.KubernetesConfigGetter, clustersConfig kube.ClustersConfig) (interface{}, error) {
-	svr := NewServer(configGetter, clustersConfig.KubeappsClusterName)
+func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.KubernetesConfigGetter,
+	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
+	svr := NewServer(configGetter, clustersConfig.KubeappsClusterName, pluginConfigPath)
 	v1alpha1.RegisterHelmPackagesServiceServer(s, svr)
 	return svr, nil
 }

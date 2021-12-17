@@ -4,8 +4,8 @@ The main file is [Makefile](https://github.com/kubeapps/kubeapps/blob/master/Mak
 
 For setting up the environment for running Kubeapps, we also provide (as is) makefile targets for:
 
-- Creating a multicluster environment with Kind ([cluster-kind.mk](https://github.com/kubeapps/kubeapps/blob/master/script/cluster-kind.mk))
-- Deploying and configuring the components for getting Kubeapps running with OIDC login using Dex ([deploy-dev.mk](https://github.com/kubeapps/kubeapps/blob/master/script/deploy-dev.mk)).
+- Creating a multicluster environment with Kind ([cluster-kind.mk](https://github.com/kubeapps/kubeapps/blob/master/script/makefiles/cluster-kind.mk))
+- Deploying and configuring the components for getting Kubeapps running with OIDC login using Dex ([deploy-dev.mk](https://github.com/kubeapps/kubeapps/blob/master/script/makefiles/deploy-dev.mk)).
 
 > Disclaimer: these files are not being actively maintained, as they are solely intended for helping Kubeapp developers to set up the environment. If you are a contributor and you are having troubles, please feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new).
 
@@ -41,7 +41,7 @@ make kubeapps/asset-syncer
         * Another way to do so is to start the environment with `make cluster-kind` and manually verify the IP address by executing `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`, but you will need to re-create the cluster after you've updated the config files (below) by executing `make delete-cluster-kind`, as some of these files (the apiserver-config ones) are config for the cluster apiserver itself, which has to know where to find dex.
 
   - Then, replace `172.18.0.2` with the previous IP the following files:
-    - [script/deploy-dev.mk](../../script/deploy-dev.mk)
+    - [script/makefiles/deploy-dev.mk](../../script/makefiles/deploy-dev.mk)
     - [kubeapps-local-dev-additional-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
     - [kubeapps-local-dev-additional-kind-cluster.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
     - [kubeapps-local-dev-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-apiserver-config.yaml)

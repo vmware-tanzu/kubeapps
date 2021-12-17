@@ -2,17 +2,16 @@ import ReactDiffViewer, { DiffMethod } from "react-diff-viewer";
 import { useSelector } from "react-redux";
 import { SupportedThemes } from "shared/Config";
 import { IStoreState } from "shared/types";
-
 import "./Differential.css";
 
 export interface IDifferentialProps {
   oldValues: string;
   newValues: string;
-  emptyDiffText: string;
+  emptyDiffElement: JSX.Element;
 }
 
 function Differential(props: IDifferentialProps) {
-  const { oldValues, newValues, emptyDiffText } = props;
+  const { oldValues, newValues, emptyDiffElement } = props;
   const {
     config: { theme },
   } = useSelector((state: IStoreState) => state);
@@ -39,7 +38,7 @@ function Differential(props: IDifferentialProps) {
   return (
     <div className="diff deployment-form-tabs-data">
       {oldValues === newValues ? (
-        <span>{emptyDiffText}</span>
+        emptyDiffElement
       ) : (
         <ReactDiffViewer
           oldValue={oldValues}

@@ -1,12 +1,10 @@
 import { LOCATION_CHANGE, RouterActionType, RouterLocation } from "connected-react-router";
 import { Location } from "history";
 import context from "jest-plugin-context";
-import { getType } from "typesafe-actions";
-
 import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";
+import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState, initialState } from "./cluster";
 
 describe("clusterReducer", () => {
@@ -180,10 +178,10 @@ describe("clusterReducer", () => {
             },
           } as IClustersState,
           {
-            type: getType(actions.namespace.receiveNamespace),
+            type: getType(actions.namespace.receiveNamespaceExists),
             payload: {
               cluster: "other",
-              namespace: { metadata: { name: "bar" } } as IResource,
+              namespace: "bar",
             },
           },
         ),
@@ -448,6 +446,9 @@ describe("clusterReducer", () => {
       clusters: ["additionalCluster1", "additionalCluster2"],
       authProxySkipLoginPage: false,
       theme: "light",
+      remoteComponentsUrl: "",
+      customAppViews: [],
+      skipAvailablePackageDetails: false,
     } as IConfig;
     it("re-writes the clusters to match the config.clusters state", () => {
       expect(

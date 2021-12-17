@@ -17,7 +17,7 @@ limitations under the License.
 package chart
 
 import (
-	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -35,10 +35,12 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/kube"
-	helm3chart "helm.sh/helm/v3/pkg/chart"
-	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/helm/pkg/repo"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
@@ -74,39 +76,41 @@ type Details struct {
 	Version string `json:"version"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
+	// TarballURL is the URL to the tarball file
+	TarballURL string `json:"tarballURL,omitempty"`
 }
 
 // LoadHelmChart returns a helm3 Chart struct from an IOReader
-type LoadHelmChart func(in io.Reader) (*helm3chart.Chart, error)
+type LoadHelmChart func(in io.Reader) (*chart.Chart, error)
 
-// Resolver for exposed funcs
-type Resolver interface {
-	InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
-	GetChart(details *Details, repoURL string) (*helm3chart.Chart, error)
+// ChartClient for exposed funcs
+type ChartClient interface {
+	Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error
+	GetChart(details *Details, repoURL string) (*chart.Chart, error)
 }
 
-// Client struct contains the clients required to retrieve charts info
-type Client struct {
+// HelmRepoClient struct contains the clients required to retrieve charts info
+type HelmRepoClient struct {
 	userAgent string
 	netClient httpclient.Client
 }
 
 // NewChartClient returns a new ChartClient
-func NewChartClient(userAgent string) Resolver {
-	return &Client{
+func NewChartClient(userAgent string) ChartClient {
+	return &HelmRepoClient{
 		userAgent: userAgent,
 	}
 }
 
-// OCIClient struct contains the clients required to retrieve charts info from an OCI registry
-type OCIClient struct {
+// OCIRepoClient struct contains the clients required to retrieve charts info from an OCI registry
+type OCIRepoClient struct {
 	userAgent string
 	puller    helm.ChartPuller
 }
 
 // NewOCIClient returns a new OCIClient
-func NewOCIClient(userAgent string) Resolver {
-	return &OCIClient{
+func NewOCIClient(userAgent string) ChartClient {
+	return &OCIRepoClient{
 		userAgent: userAgent,
 	}
 }
@@ -125,6 +129,7 @@ func getReq(rawURL string) (*http.Request, error) {
 	return req, nil
 }
 
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func readResponseBody(res *http.Response) ([]byte, error) {
 	if res != nil {
 		defer res.Body.Close()
@@ -149,6 +154,7 @@ func checksum(data []byte) string {
 
 // Cache the result of parsing the repo index since parsing this YAML
 // is an expensive operation. See https://github.com/kubeapps/kubeapps/issues/1052
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func getIndexFromCache(repoURL string, data []byte) (*repo.IndexFile, string) {
 	sha := checksum(data)
 	if repoIndexes[repoURL] == nil || repoIndexes[repoURL].checksum != sha {
@@ -158,10 +164,12 @@ func getIndexFromCache(repoURL string, data []byte) (*repo.IndexFile, string) {
 	return repoIndexes[repoURL].index, sha
 }
 
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func storeIndexInCache(repoURL string, index *repo.IndexFile, sha string) {
 	repoIndexes[repoURL] = &repoIndex{sha, index}
 }
 
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func parseIndex(data []byte) (*repo.IndexFile, error) {
 	index := &repo.IndexFile{}
 	err := yaml.Unmarshal(data, index)
@@ -173,6 +181,7 @@ func parseIndex(data []byte) (*repo.IndexFile, error) {
 }
 
 // fetchRepoIndex returns a Helm repository
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFile, error) {
 	req, err := getReq(repoURL)
 	if err != nil {
@@ -200,19 +209,20 @@ func fetchRepoIndex(netClient *httpclient.Client, repoURL string) (*repo.IndexFi
 	return index, nil
 }
 
-func resolveChartURL(index, chart string) (string, error) {
-	indexURL, err := url.Parse(strings.TrimSpace(index))
+func resolveChartURL(indexURL, chartURL string) (string, error) {
+	parsedIndexURL, err := url.Parse(strings.TrimSpace(indexURL))
 	if err != nil {
 		return "", err
 	}
-	chartURL, err := indexURL.Parse(strings.TrimSpace(chart))
+	parsedChartURL, err := parsedIndexURL.Parse(strings.TrimSpace(chartURL))
 	if err != nil {
 		return "", err
 	}
-	return chartURL.String(), nil
+	return parsedChartURL.String(), nil
 }
 
 // findChartInRepoIndex returns the URL of a chart given a Helm repository and its name and version
+// TODO(agamez): remove this method once it is no longer used in kubeops
 func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVersion string) (string, error) {
 	errMsg := fmt.Sprintf("chart %q", chartName)
 	if chartVersion != "" {
@@ -229,7 +239,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Chart, error) {
+func fetchChart(netClient *httpclient.Client, chartURL string) (*chart.Chart, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -239,11 +249,12 @@ func fetchChart(netClient *httpclient.Client, chartURL string) (*helm3chart.Char
 	if err != nil {
 		return nil, err
 	}
-	data, err := readResponseBody(res)
-	if err != nil {
-		return nil, err
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("chart download request failed")
 	}
-	return helm3loader.LoadArchive(bytes.NewReader(data))
+
+	return loader.LoadArchive(res.Body)
 }
 
 // ParseDetails return Chart details
@@ -310,34 +321,42 @@ func GetAppRepoAndRelatedSecrets(appRepoName, appRepoNamespace string, handler k
 	return appRepo, caCertSecret, authSecret, nil
 }
 
-// InitClient returns an HTTP client based on the chart details loading a
+// Init initialises the HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *Client) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+func (c *HelmRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	var err error
 	c.netClient, err = kube.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
 	return err
 }
 
-// GetChart retrieves and loads a Chart from a registry in both
-// v2 and v3 formats.
-func (c *Client) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+// GetChart loads a Chart from a given tarball, if the tarball URL is not passed,
+// it will try to retrieve the chart by parsing the whole repo index
+func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
 	if c.netClient == nil {
-		return nil, fmt.Errorf("unable to retrieve chart, InitClient should be called first")
+		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	var chart *helm3chart.Chart
-	indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
-	repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
-	if err != nil {
-		return nil, err
+	var chartURL string
+	var err error
+	if details.TarballURL != "" {
+		chartURL, err = resolveChartURL(repoURL, details.TarballURL)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// TODO(agamez): remove this branch as it is really expensive and it is solely used in a few places in kubeops
+		log.Printf("calling GetChart without any tarball url, please note this action is memory-expensive")
+		indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
+		repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
+		if err != nil {
+			return nil, err
+		}
+		chartURL, err = findChartInRepoIndex(repoIndex, indexURL, details.ChartName, details.Version)
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	chartURL, err := findChartInRepoIndex(repoIndex, indexURL, details.ChartName, details.Version)
-	if err != nil {
-		return nil, err
-	}
-
 	log.Printf("Downloading %s ...", chartURL)
-	chart, err = fetchChart(&c.netClient, chartURL)
+	chart, err := fetchChart(&c.netClient, chartURL)
 	if err != nil {
 		return nil, err
 	}
@@ -347,15 +366,11 @@ func (c *Client) GetChart(details *Details, repoURL string) (*helm3chart.Chart, 
 
 // RegistrySecretsPerDomain checks the app repo and available secrets
 // to return the secret names per registry domain.
-func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
+func RegistrySecretsPerDomain(ctx context.Context, appRepoSecrets []string, namespace string, client kubernetes.Interface) (map[string]string, error) {
 	secretsPerDomain := map[string]string{}
-	client, err := authHandler.AsUser(token, cluster)
-	if err != nil {
-		return nil, err
-	}
 
 	for _, secretName := range appRepoSecrets {
-		secret, err := client.GetSecret(secretName, namespace)
+		secret, err := client.CoreV1().Secrets(namespace).Get(ctx, secretName, v1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -382,10 +397,10 @@ func RegistrySecretsPerDomain(appRepoSecrets []string, cluster, namespace, token
 	return secretsPerDomain, nil
 }
 
-// InitClient returns an HTTP client based on the chart details loading a
+// Init initialises the HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
 // TODO(andresmgot): Using a custom CA cert is not supported by ORAS (neither helm), only using the insecure flag
-func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+func (c *OCIRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	var err error
 	headers := http.Header{
 		"User-Agent": []string{c.userAgent},
@@ -408,9 +423,9 @@ func (c *OCIClient) InitClient(appRepo *appRepov1.AppRepository, caCertSecret *c
 }
 
 // GetChart retrieves and loads a Chart from a OCI registry
-func (c *OCIClient) GetChart(details *Details, repoURL string) (*helm3chart.Chart, error) {
+func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
 	if c.puller == nil {
-		return nil, fmt.Errorf("unable to retrieve chart, InitClient should be called first")
+		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
 	url, err := url.ParseRequestURI(strings.TrimSpace(repoURL))
 	if err != nil {
@@ -423,5 +438,30 @@ func (c *OCIClient) GetChart(details *Details, repoURL string) (*helm3chart.Char
 		return nil, err
 	}
 
-	return helm3loader.LoadArchive(chartBuffer)
+	return loader.LoadArchive(chartBuffer)
+}
+
+// ChartClientFactoryInterface defines how a ChartClientFactory implementation
+// can return a chart client.
+//
+// This can be implemented with a fake for tests.
+type ChartClientFactoryInterface interface {
+	New(repoType, userAgent string) ChartClient
+}
+
+// ChartClientFactory provides a real implementation of the ChartClientFactory interface
+// returning either an OCI repository client or a traditional helm repository chart client.
+type ChartClientFactory struct{}
+
+// New for ClientResolver
+func (c *ChartClientFactory) New(repoType, userAgent string) ChartClient {
+	var client ChartClient
+	switch repoType {
+	case "oci":
+		client = NewOCIClient(userAgent)
+		break
+	default:
+		client = NewChartClient(userAgent)
+	}
+	return client
 }

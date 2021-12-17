@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import placeholder from "../../placeholder.png";
 
 export interface IIconProps {

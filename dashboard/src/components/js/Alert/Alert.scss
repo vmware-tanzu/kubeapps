@@ -1,16 +1,16 @@
 .alert {
   &:not(.alert-app-level) {
     .alert-action {
-      padding: 0;
-      background: transparent;
-      border: 0;
-      font-size: 13px;
-      margin: 0;
-      text-transform: none;
       height: auto;
+      padding: 0;
+      border: 0;
+      margin: 0;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 400;
       letter-spacing: normal;
       line-height: 1.15;
-      font-weight: 400;
+      text-transform: none;
 
       &:hover {
         background-color: transparent;

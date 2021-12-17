@@ -1,5 +1,5 @@
-import React from "react";
 import { render, shallow } from "enzyme";
+import React from "react";
 import CardImage from ".";
 
 describe(CardImage, () => {

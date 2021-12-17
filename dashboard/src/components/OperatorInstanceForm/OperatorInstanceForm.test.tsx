@@ -6,7 +6,7 @@ import OperatorHeader from "components/OperatorView/OperatorHeader";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IClusterServiceVersion } from "../../shared/types";
+import { FetchError, IClusterServiceVersion } from "shared/types";
 import OperatorInstanceForm, { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
 
 const defaultProps: IOperatorInstanceFormProps = {

@@ -28,20 +28,19 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
-
-// global variable to keep track of flux helm charts created for the purpose of GetAvailablePackageDetail
-var createdChartCount int
 
 func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
@@ -60,92 +59,27 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				}},
-			chartName:     "redis",
-			chartTarGz:    "testdata/redis-14.4.0.tgz",
-			chartRevision: "14.4.0",
-			chartExists:   true,
-			expectedPackageDetail: &corev1.AvailablePackageDetail{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context:    &corev1.Context{Namespace: "default"},
-					Plugin:     fluxPlugin,
-				},
-				Name:             "redis",
-				PkgVersion:       "14.4.0",
-				AppVersion:       "6.2.4",
-				RepoUrl:          "https://example.repo.com/charts",
-				HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
-				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-				DisplayName:      "redis",
-				Categories:       []string{"Database"},
-				ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-				Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-				DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
-				ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
-				SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
-				Maintainers: []*corev1.Maintainer{
-					{
-						Name:  "Bitnami",
-						Email: "containers@bitnami.com",
-					},
-					{
-						Name:  "desaintmartin",
-						Email: "cedric@desaintmartin.fr",
-					},
-				},
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
+			chartName:             "redis",
+			chartTarGz:            "testdata/redis-14.4.0.tgz",
+			chartRevision:         "14.4.0",
+			chartExists:           true,
+			expectedPackageDetail: expected_detail_redis_1,
 		},
 		{
 			testName:      "it returns details about the redis package with specific version in bitnami repo",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context:    &corev1.Context{Namespace: "default"},
-				},
-				PkgVersion: "14.3.4",
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				PkgVersion:          "14.3.4",
 			},
-			chartName:     "redis",
-			chartTarGz:    "testdata/redis-14.3.4.tgz",
-			chartRevision: "14.4.0",
-			chartExists:   false,
-			expectedPackageDetail: &corev1.AvailablePackageDetail{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context:    &corev1.Context{Namespace: "default"},
-					Plugin:     fluxPlugin,
-				},
-				Name:             "redis",
-				PkgVersion:       "14.3.4",
-				AppVersion:       "6.2.4",
-				RepoUrl:          "https://example.repo.com/charts",
-				IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-				HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
-				DisplayName:      "redis",
-				Categories:       []string{"Database"},
-				ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-				Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-				DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
-				ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
-				SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
-				Maintainers: []*corev1.Maintainer{
-					{
-						Name:  "Bitnami",
-						Email: "containers@bitnami.com",
-					},
-					{
-						Name:  "desaintmartin",
-						Email: "cedric@desaintmartin.fr",
-					},
-				},
-			},
+			chartName:             "redis",
+			chartTarGz:            "testdata/redis-14.3.4.tgz",
+			chartRevision:         "14.4.0",
+			chartExists:           false,
+			expectedPackageDetail: expected_detail_redis_2,
 		},
 	}
 
@@ -213,18 +147,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			chartCountBefore := createdChartCount
 
-			key, bytes, err := redisKeyValueForRuntimeObject(repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
-			mock.ExpectGet(key).SetVal(string(bytes))
-
-			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
+			response, err := s.GetAvailablePackageDetail(common.NewContext(context.Background(), &wg), tc.request)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{})
+			opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 			// these few fields a bit special in that they are all very long strings,
 			// so we'll do a 'Contains' check for these instead of 'Equals'
 			opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
@@ -279,12 +207,8 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				}},
+				AvailablePackageRef: availableRef("redis", "default"),
+			},
 			chartName:  "redis",
 			statusCode: codes.InvalidArgument,
 		},
@@ -358,13 +282,8 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				},
-				PkgVersion: "99.99.0",
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+				PkgVersion:          "99.99.0",
 			},
 			chartName:  "redis",
 			statusCode: codes.Internal,
@@ -374,12 +293,8 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				}},
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+			},
 			chartName:  "redis",
 			statusCode: codes.Internal,
 		},
@@ -388,12 +303,8 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			repoName:      "bitnami-1",
 			repoNamespace: "non-default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				}},
+				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+			},
 			chartName:  "redis",
 			statusCode: codes.NotFound,
 		},
@@ -402,12 +313,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
 			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/redis-123",
-					Context: &corev1.Context{
-						Namespace: "default",
-					},
-				},
+				AvailablePackageRef: availableRef("bitnami-1/redis-123", "default"),
 			},
 			chartName:  "redis",
 			statusCode: codes.Internal,
@@ -447,23 +353,6 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				t.Fatalf("%+v", err)
 			}
 
-			existingName := types.NamespacedName{Namespace: tc.repoNamespace, Name: tc.repoName}
-			requestedName := types.NamespacedName{
-				Namespace: tc.request.AvailablePackageRef.Context.Namespace,
-				Name:      strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[0],
-			}
-
-			if existingName == requestedName {
-				key, bytes, err := redisKeyValueForRuntimeObject(repo)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				mock.ExpectGet(key).SetVal(string(bytes))
-			} else {
-				key := redisKeyForNamespacedName(requestedName)
-				mock.ExpectGet(key).RedisNil()
-			}
-
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 
@@ -472,7 +361,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				watcher.Modify(chart)
 			}()
 
-			response, err := s.GetAvailablePackageDetail(newContext(context.Background(), &wg), tc.request)
+			response, err := s.GetAvailablePackageDetail(common.NewContext(context.Background(), &wg), tc.request)
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
@@ -528,7 +417,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, err := newServerWithRepos()
+			s, mock, _, _, err := newServerWithRepos()
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -544,7 +433,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -572,32 +461,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
 			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "bitnami/redis",
-				},
+				AvailablePackageRef: availableRef("bitnami/redis", "kubeapps"),
 			},
 			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{
-					{PkgVersion: "14.6.1", AppVersion: "6.2.4"},
-					{PkgVersion: "14.6.0", AppVersion: "6.2.4"},
-					{PkgVersion: "14.5.0", AppVersion: "6.2.4"},
-					{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
-					{PkgVersion: "13.0.1", AppVersion: "6.2.1"},
-					{PkgVersion: "13.0.0", AppVersion: "6.2.1"},
-					{PkgVersion: "12.10.1", AppVersion: "6.0.12"},
-					{PkgVersion: "12.10.0", AppVersion: "6.0.12"},
-					{PkgVersion: "12.9.2", AppVersion: "6.0.12"},
-					{PkgVersion: "12.9.1", AppVersion: "6.0.12"},
-					{PkgVersion: "12.9.0", AppVersion: "6.0.12"},
-					{PkgVersion: "12.8.3", AppVersion: "6.0.12"},
-					{PkgVersion: "12.8.2", AppVersion: "6.0.12"},
-					{PkgVersion: "12.8.1", AppVersion: "6.0.12"},
-				},
-			},
+			expectedResponse:   expected_versions_redis,
 		},
 		{
 			name:          "it returns error for non-existent chart",
@@ -605,12 +472,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
 			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "kubeapps",
-					},
-					Identifier: "bitnami/redis-123",
-				},
+				AvailablePackageRef: availableRef("bitnami/redis-123", "kubeapps"),
 			},
 			expectedStatusCode: codes.Internal,
 		},
@@ -624,17 +486,22 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, _, err := newServerWithRepos(repo)
+			s, mock, _, _, err := newServerWithRepos(repo)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			redisKey, bytes, err := redisKeyValueForRuntimeObject(repo)
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+
+			key, bytes, err := redisKeyValueForRuntimeObject(repo)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			mock.ExpectGet(redisKey).SetVal(string(bytes))
+			mock.ExpectGet(key).SetVal(string(bytes))
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
 
@@ -654,7 +521,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			opts := cmpopts.IgnoreUnexported(
 				corev1.GetAvailablePackageVersionsResponse{},
-				corev1.GetAvailablePackageVersionsResponse_PackageAppVersion{})
+				corev1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -736,8 +603,10 @@ func newServerWithRepoAndCharts(repo runtime.Object, charts ...runtime.Object) (
 			return handled, ret, err
 		})
 
-	clientGetter := func(context.Context) (dynamic.Interface, error) {
-		return dynamicClient, nil
+	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+
+	clientGetter := func(context.Context) (dynamic.Interface, apiext.Interface, error) {
+		return dynamicClient, apiextIfc, nil
 	}
 
 	watcher := watch.NewFake()
@@ -751,4 +620,97 @@ func newServerWithRepoAndCharts(repo runtime.Object, charts ...runtime.Object) (
 		return nil, nil, nil, err
 	}
 	return s, mock, watcher, nil
+}
+
+func availableRef(id, namespace string) *corev1.AvailablePackageReference {
+	return &corev1.AvailablePackageReference{
+		Identifier: id,
+		Context: &corev1.Context{
+			Namespace: namespace,
+			Cluster:   KubeappsCluster,
+		},
+		Plugin: fluxPlugin,
+	}
+}
+
+// global vars
+
+// global variable to keep track of flux helm charts created for the purpose of GetAvailablePackageDetail
+var createdChartCount int
+
+var expected_detail_redis_1 = &corev1.AvailablePackageDetail{
+	AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+	Name:                "redis",
+	Version: &corev1.PackageAppVersion{
+		PkgVersion: "14.4.0",
+		AppVersion: "6.2.4",
+	},
+	RepoUrl:          "https://example.repo.com/charts",
+	HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
+	IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+	DisplayName:      "redis",
+	Categories:       []string{"Database"},
+	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
+	DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
+	ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
+	SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
+	Maintainers: []*corev1.Maintainer{
+		{
+			Name:  "Bitnami",
+			Email: "containers@bitnami.com",
+		},
+		{
+			Name:  "desaintmartin",
+			Email: "cedric@desaintmartin.fr",
+		},
+	},
+}
+
+var expected_detail_redis_2 = &corev1.AvailablePackageDetail{
+	AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+	Name:                "redis",
+	Version: &corev1.PackageAppVersion{
+		PkgVersion: "14.3.4",
+		AppVersion: "6.2.4",
+	},
+	RepoUrl:          "https://example.repo.com/charts",
+	IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+	HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
+	DisplayName:      "redis",
+	Categories:       []string{"Database"},
+	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+	Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
+	DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
+	ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
+	SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
+	Maintainers: []*corev1.Maintainer{
+		{
+			Name:  "Bitnami",
+			Email: "containers@bitnami.com",
+		},
+		{
+			Name:  "desaintmartin",
+			Email: "cedric@desaintmartin.fr",
+		},
+	},
+}
+
+var expected_versions_redis = &corev1.GetAvailablePackageVersionsResponse{
+	PackageAppVersions: []*corev1.PackageAppVersion{
+		{PkgVersion: "14.6.1", AppVersion: "6.2.4"},
+		{PkgVersion: "14.6.0", AppVersion: "6.2.4"},
+		{PkgVersion: "14.5.0", AppVersion: "6.2.4"},
+		{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
+		{PkgVersion: "13.0.1", AppVersion: "6.2.1"},
+		{PkgVersion: "13.0.0", AppVersion: "6.2.1"},
+		{PkgVersion: "12.10.1", AppVersion: "6.0.12"},
+		{PkgVersion: "12.10.0", AppVersion: "6.0.12"},
+		{PkgVersion: "12.9.2", AppVersion: "6.0.12"},
+		{PkgVersion: "12.9.1", AppVersion: "6.0.12"},
+		{PkgVersion: "12.9.0", AppVersion: "6.0.12"},
+		{PkgVersion: "12.8.3", AppVersion: "6.0.12"},
+		{PkgVersion: "12.8.2", AppVersion: "6.0.12"},
+		{PkgVersion: "12.8.1", AppVersion: "6.0.12"},
+	},
 }

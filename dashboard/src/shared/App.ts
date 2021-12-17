@@ -1,100 +1,104 @@
-import * as url from "shared/url";
-import { axiosWithAuth } from "./AxiosInstance";
-import { hapi } from "./hapi/release";
-import { IAppOverview, IChartVersion } from "./types";
-
-export const KUBEOPS_ROOT_URL = "api/kubeops/v1";
+import {
+  AvailablePackageReference,
+  Context,
+  CreateInstalledPackageRequest,
+  DeleteInstalledPackageRequest,
+  InstalledPackageReference,
+  ReconciliationOptions,
+  UpdateInstalledPackageRequest,
+  VersionReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  RollbackInstalledPackageRequest,
+  RollbackInstalledPackageResponse,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { getPluginsSupportingRollback } from "./utils";
 
 export class App {
-  public static async create(
+  private static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  private static helmPluginClient = () =>
+    new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
+
+  public static async GetInstalledPackageSummaries(
     cluster: string,
-    namespace: string,
-    releaseName: string,
-    chartNamespace: string,
-    chartVersion: IChartVersion,
-    values?: string,
+    namespace?: string,
+    page?: number,
+    size?: number,
   ) {
-    const chartAttrs = chartVersion.relationships.chart.data;
-    const endpoint = url.kubeops.releases.list(cluster, namespace);
-    const { data } = await axiosWithAuth.post(endpoint, {
-      appRepositoryResourceName: chartAttrs.repo.name,
-      appRepositoryResourceNamespace: chartNamespace,
-      chartName: decodeURIComponent(chartAttrs.name),
-      releaseName,
-      values,
-      version: chartVersion.attributes.version,
+    return await this.coreClient().GetInstalledPackageSummaries({
+      context: { cluster: cluster, namespace: namespace },
+      paginationOptions: { pageSize: size || 0, pageToken: page?.toString() || "0" },
     });
-    return data;
   }
 
-  public static async upgrade(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    chartNamespace: string,
-    chartVersion: IChartVersion,
-    values?: string,
-  ) {
-    const chartAttrs = chartVersion.relationships.chart.data;
-    const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
-    const { data } = await axiosWithAuth.put(endpoint, {
-      appRepositoryResourceName: chartAttrs.repo.name,
-      appRepositoryResourceNamespace: chartNamespace,
-      chartName: decodeURIComponent(chartAttrs.name),
-      releaseName,
-      values,
-      version: chartVersion.attributes.version,
+  public static async GetInstalledPackageDetail(installedPackageRef?: InstalledPackageReference) {
+    return await this.coreClient().GetInstalledPackageDetail({
+      installedPackageRef: installedPackageRef,
     });
-    return data;
   }
 
-  public static async rollback(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    revision: number,
+  public static async GetInstalledPackageResourceRefs(
+    installedPackageRef?: InstalledPackageReference,
   ) {
-    const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
-    const { data } = await axiosWithAuth.put(
-      endpoint,
-      {},
-      {
-        params: {
-          action: "rollback",
-          revision,
-        },
-      },
-    );
-    return data;
+    return await this.coreClient().GetInstalledPackageResourceRefs({
+      installedPackageRef: installedPackageRef,
+    });
   }
 
-  public static async delete(
-    cluster: string,
-    namespace: string,
-    releaseName: string,
-    purge: boolean,
+  public static async CreateInstalledPackage(
+    targetContext: Context,
+    name: string,
+    availablePackageRef: AvailablePackageReference,
+    pkgVersionReference: VersionReference,
+    values?: string,
+    reconciliationOptions?: ReconciliationOptions,
   ) {
-    let endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
-    if (purge) {
-      endpoint += "?purge=true";
+    return await this.coreClient().CreateInstalledPackage({
+      name,
+      values,
+      targetContext,
+      availablePackageRef,
+      pkgVersionReference,
+      reconciliationOptions,
+    } as CreateInstalledPackageRequest);
+  }
+
+  public static async UpdateInstalledPackage(
+    installedPackageRef: InstalledPackageReference,
+    pkgVersionReference: VersionReference,
+    values?: string,
+    reconciliationOptions?: ReconciliationOptions,
+  ) {
+    return await this.coreClient().UpdateInstalledPackage({
+      installedPackageRef,
+      pkgVersionReference,
+      values,
+      reconciliationOptions,
+    } as UpdateInstalledPackageRequest);
+  }
+
+  public static async RollbackInstalledPackage(
+    installedPackageRef: InstalledPackageReference,
+    releaseRevision: number,
+  ) {
+    // rollbackInstalledPackage is currently only available for Helm packages
+    if (
+      installedPackageRef?.plugin?.name &&
+      getPluginsSupportingRollback().includes(installedPackageRef.plugin.name)
+    ) {
+      return await this.helmPluginClient().RollbackInstalledPackage({
+        installedPackageRef,
+        releaseRevision,
+      } as RollbackInstalledPackageRequest);
+    } else {
+      return {} as RollbackInstalledPackageResponse;
     }
-    const { data } = await axiosWithAuth.delete(endpoint);
-    return data;
   }
 
-  public static async listApps(cluster: string, namespace?: string) {
-    let endpoint = namespace
-      ? url.kubeops.releases.list(cluster, namespace)
-      : url.kubeops.releases.listAll(cluster);
-    endpoint += "?statuses=all";
-    const { data } = await axiosWithAuth.get<{ data: IAppOverview[] }>(endpoint);
-    return data.data;
-  }
-
-  public static async getRelease(cluster: string, namespace: string, name: string) {
-    const { data } = await axiosWithAuth.get<{ data: hapi.release.Release }>(
-      url.kubeops.releases.get(cluster, namespace, name),
-    );
-    return data.data;
+  public static async DeleteInstalledPackage(installedPackageRef: InstalledPackageReference) {
+    return await this.coreClient().DeleteInstalledPackage({
+      installedPackageRef,
+    } as DeleteInstalledPackageRequest);
   }
 }

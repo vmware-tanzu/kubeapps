@@ -1,7 +1,7 @@
+import { IConfig, SupportedThemes } from "shared/Config";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { ConfigAction } from "../actions/config";
-import { IConfig, SupportedThemes } from "../shared/Config";
 
 export interface IConfigState extends IConfig {
   loaded: boolean;
@@ -18,6 +18,9 @@ export const initialState: IConfigState = {
   authProxySkipLoginPage: false,
   clusters: [],
   theme: SupportedThemes.light,
+  remoteComponentsUrl: "",
+  customAppViews: [],
+  skipAvailablePackageDetails: false,
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

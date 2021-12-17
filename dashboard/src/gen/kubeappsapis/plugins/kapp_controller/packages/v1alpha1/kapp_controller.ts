@@ -9,11 +9,19 @@ import {
   GetAvailablePackageVersionsRequest,
   GetInstalledPackageSummariesRequest,
   GetInstalledPackageDetailRequest,
+  CreateInstalledPackageRequest,
+  UpdateInstalledPackageRequest,
+  DeleteInstalledPackageRequest,
+  GetInstalledPackageResourceRefsRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageDetailResponse,
   GetAvailablePackageVersionsResponse,
   GetInstalledPackageSummariesResponse,
   GetInstalledPackageDetailResponse,
+  CreateInstalledPackageResponse,
+  UpdateInstalledPackageResponse,
+  DeleteInstalledPackageResponse,
+  GetInstalledPackageResourceRefsResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
@@ -113,11 +121,10 @@ export const GetPackageRepositoriesRequest = {
     const message = {
       ...baseGetPackageRepositoriesRequest,
     } as GetPackageRepositoriesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromJSON(object.context)
+        : undefined;
     return message;
   },
 
@@ -128,15 +135,16 @@ export const GetPackageRepositoriesRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesRequest>): GetPackageRepositoriesRequest {
+  fromPartial<I extends Exact<DeepPartial<GetPackageRepositoriesRequest>, I>>(
+    object: I,
+  ): GetPackageRepositoriesRequest {
     const message = {
       ...baseGetPackageRepositoriesRequest,
     } as GetPackageRepositoriesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     return message;
   },
 };
@@ -179,12 +187,9 @@ export const GetPackageRepositoriesResponse = {
     const message = {
       ...baseGetPackageRepositoriesResponse,
     } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromJSON(e));
-      }
-    }
+    message.repositories = (object.repositories ?? []).map((e: any) =>
+      PackageRepository.fromJSON(e),
+    );
     return message;
   },
 
@@ -200,16 +205,13 @@ export const GetPackageRepositoriesResponse = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesResponse>): GetPackageRepositoriesResponse {
+  fromPartial<I extends Exact<DeepPartial<GetPackageRepositoriesResponse>, I>>(
+    object: I,
+  ): GetPackageRepositoriesResponse {
     const message = {
       ...baseGetPackageRepositoriesResponse,
     } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromPartial(e));
-      }
-    }
+    message.repositories = object.repositories?.map(e => PackageRepository.fromPartial(e)) || [];
     return message;
   },
 };
@@ -262,26 +264,14 @@ export const PackageRepository = {
 
   fromJSON(object: any): PackageRepository {
     const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = String(object.namespace);
-    } else {
-      message.namespace = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = String(object.url);
-    } else {
-      message.url = "";
-    }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromJSON(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
+    message.namespace =
+      object.namespace !== undefined && object.namespace !== null ? String(object.namespace) : "";
+    message.url = object.url !== undefined && object.url !== null ? String(object.url) : "";
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromJSON(object.plugin)
+        : undefined;
     return message;
   },
 
@@ -295,28 +285,15 @@ export const PackageRepository = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<PackageRepository>): PackageRepository {
+  fromPartial<I extends Exact<DeepPartial<PackageRepository>, I>>(object: I): PackageRepository {
     const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = object.namespace;
-    } else {
-      message.namespace = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
-    }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromPartial(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+    message.name = object.name ?? "";
+    message.namespace = object.namespace ?? "";
+    message.url = object.url ?? "";
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromPartial(object.plugin)
+        : undefined;
     return message;
   },
 };
@@ -352,6 +329,29 @@ export interface KappControllerPackagesService {
     request: DeepPartial<GetInstalledPackageDetailRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetInstalledPackageDetailResponse>;
+  /** CreateInstalledPackage creates an installed package based on the request. */
+  CreateInstalledPackage(
+    request: DeepPartial<CreateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateInstalledPackageResponse>;
+  /** UpdateInstalledPackage updates an installed package based on the request. */
+  UpdateInstalledPackage(
+    request: DeepPartial<UpdateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdateInstalledPackageResponse>;
+  /** DeleteInstalledPackage deletes an installed package based on the request. */
+  DeleteInstalledPackage(
+    request: DeepPartial<DeleteInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeleteInstalledPackageResponse>;
+  /**
+   * GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
+   * an installed package.
+   */
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageResourceRefsResponse>;
 }
 
 export class KappControllerPackagesServiceClientImpl implements KappControllerPackagesService {
@@ -365,6 +365,10 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
+    this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
+    this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
+    this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
+    this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
 
   GetAvailablePackageSummaries(
@@ -429,6 +433,50 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     return this.rpc.unary(
       KappControllerPackagesServiceGetInstalledPackageDetailDesc,
       GetInstalledPackageDetailRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  CreateInstalledPackage(
+    request: DeepPartial<CreateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateInstalledPackageResponse> {
+    return this.rpc.unary(
+      KappControllerPackagesServiceCreateInstalledPackageDesc,
+      CreateInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  UpdateInstalledPackage(
+    request: DeepPartial<UpdateInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdateInstalledPackageResponse> {
+    return this.rpc.unary(
+      KappControllerPackagesServiceUpdateInstalledPackageDesc,
+      UpdateInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  DeleteInstalledPackage(
+    request: DeepPartial<DeleteInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeleteInstalledPackageResponse> {
+    return this.rpc.unary(
+      KappControllerPackagesServiceDeleteInstalledPackageDesc,
+      DeleteInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetInstalledPackageResourceRefs(
+    request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetInstalledPackageResourceRefsResponse> {
+    return this.rpc.unary(
+      KappControllerPackagesServiceGetInstalledPackageResourceRefsDesc,
+      GetInstalledPackageResourceRefsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -576,6 +624,95 @@ export const KappControllerPackagesServiceGetInstalledPackageDetailDesc: UnaryMe
     } as any,
   };
 
+export const KappControllerPackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "CreateInstalledPackage",
+  service: KappControllerPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CreateInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CreateInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const KappControllerPackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "UpdateInstalledPackage",
+  service: KappControllerPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return UpdateInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...UpdateInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const KappControllerPackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "DeleteInstalledPackage",
+  service: KappControllerPackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return DeleteInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...DeleteInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const KappControllerPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageResourceRefs",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageResourceRefsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageResourceRefsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
+
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
@@ -649,6 +786,7 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -658,6 +796,11 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
 
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;

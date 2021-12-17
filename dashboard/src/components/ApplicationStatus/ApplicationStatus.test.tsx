@@ -1,6 +1,10 @@
 import { mount, shallow } from "enzyme";
+import {
+  InstalledPackageDetail,
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { has } from "lodash";
-
 import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
 
@@ -27,7 +31,19 @@ it("renders a deleting status", () => {
     },
   ];
   const wrapper = shallow(
-    <ApplicationStatus {...defaultProps} deployments={deployments} info={{ deleted: {} }} />,
+    <ApplicationStatus
+      {...defaultProps}
+      deployments={deployments}
+      info={
+        {
+          status: {
+            ready: false,
+            reason: InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
+            userReason: "Deleted",
+          } as InstalledPackageStatus,
+        } as InstalledPackageDetail
+      }
+    />,
   );
   expect(wrapper.text()).toContain("Deleted");
 });
@@ -42,7 +58,15 @@ it("renders a failed status", () => {
     <ApplicationStatus
       {...defaultProps}
       deployments={deployments}
-      info={{ status: { code: 4 } }}
+      info={
+        {
+          status: {
+            ready: false,
+            reason: InstalledPackageStatus_StatusReason.STATUS_REASON_FAILED,
+            userReason: "Failed",
+          } as InstalledPackageStatus,
+        } as InstalledPackageDetail
+      }
     />,
   );
   expect(wrapper.text()).toContain("Failed");

@@ -53,7 +53,7 @@ describe("Auth", () => {
         let err = null;
         try {
           await Auth.validateToken("default", "foo");
-        } catch (e) {
+        } catch (e: any) {
           err = e;
         } finally {
           expect(err).toEqual(testCase.expectedError);
@@ -179,6 +179,9 @@ describe("Auth", () => {
         clusters: [],
         authProxySkipLoginPage: false,
         theme: SupportedThemes.light,
+        remoteComponentsUrl: "",
+        customAppViews: [],
+        skipAvailablePackageDetails: false,
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -196,6 +199,9 @@ describe("Auth", () => {
         clusters: [],
         authProxySkipLoginPage: false,
         theme: SupportedThemes.light,
+        remoteComponentsUrl: "",
+        customAppViews: [],
+        skipAvailablePackageDetails: false,
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

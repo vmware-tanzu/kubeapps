@@ -20,7 +20,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	helmrepo "k8s.io/helm/pkg/repo"
+	helmrepo "helm.sh/helm/v3/pkg/repo"
 	log "k8s.io/klog/v2"
 )
 
@@ -78,7 +78,7 @@ func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Ch
 			continue
 		}
 
-		if entry[0].GetDeprecated() {
+		if entry[0].Deprecated {
 			log.Infof("skipping deprecated chart: [%s]", entry[0].Name)
 			continue
 		}

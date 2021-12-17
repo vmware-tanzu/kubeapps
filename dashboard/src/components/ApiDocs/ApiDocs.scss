@@ -1,3 +1,5 @@
+/* stylelint-disable selector-class-pattern  */
+
 .swagger-ui .info .title small pre {
   border: 0;
 }
@@ -7,6 +9,7 @@
 }
 
 .swagger-ui .info .title {
+  color: var(--cds-global-typography-color-400, #333);
   font-family: var(
     --cds-global-typography-header-font-family,
     "Clarity City",
@@ -14,7 +17,6 @@
     "sans-serif"
   );
   font-size: var(--cds-global-typography-font-size-6, 0.55rem);
-  color: var(--cds-global-typography-color-400, #333);
 }
 
 .swagger-ui a.nostyle,
@@ -23,6 +25,7 @@
 .swagger-ui .info h3,
 .swagger-ui .info h4,
 .swagger-ui .info h5 {
+  color: var(--cds-global-typography-color-400, #333);
   font-family: var(
     --cds-global-typography-header-font-family,
     "Clarity City",
@@ -30,7 +33,6 @@
     "sans-serif"
   );
   font-size: var(--cds-global-typography-font-size-5, 0.55rem);
-  color: var(--cds-global-typography-color-400, #333);
 }
 
 .swagger-ui,
@@ -56,6 +58,7 @@
 .swagger-ui .model-title,
 .swagger-ui section.models h4 span,
 .swagger-ui .model {
+  color: var(--cds-global-typography-color-400, #333);
   font-family: var(
     --cds-global-typography-header-font-family,
     "Clarity City",
@@ -63,7 +66,6 @@
     "sans-serif"
   );
   font-size: var(--cds-global-typography-font-size-4, 0.55rem);
-  color: var(--cds-global-typography-color-400, #333);
 }
 
 .swagger-ui select {
@@ -77,6 +79,7 @@
 }
 
 .swagger-ui .info a {
+  color: var(--cds-global-typography-link-color, #0072a3);
   font-family: var(
     --cds-global-typography-header-font-family,
     "Clarity City",
@@ -84,7 +87,6 @@
     "sans-serif"
   );
   font-size: var(--cds-global-typography-font-size-4, 0.55rem);
-  color: var(--cds-global-typography-link-color, #0072a3);
 }
 
 .swagger-ui .scheme-container {
@@ -93,8 +95,8 @@
 
 .swagger-ui .btn {
   border-color: var(--cds-alias-object-app-border-color, #fff);
-  color: var(--cds-global-typography-color-400, #000);
   background-color: var(--cds-alias-object-overlay-background, #fff);
+  color: var(--cds-global-typography-color-400, #000);
 }
 
 .swagger-ui input,
@@ -139,9 +141,9 @@
 .swagger-ui .expand-methods svg,
 .swagger-ui .expand-operation svg,
 .swagger-ui .models svg,
-.swagger-ui .model-toggle:after,
+.swagger-ui .model-toggle::after,
 .swagger-ui .loading-container {
-  filter: invert(1) brightness(80%) saturate(0%);
+  filter: invert(1) brightness(80%) saturate(0%); /* stylelint-disable-line scss/no-global-function-names */
 }
 
 .swagger-ui .opblock-body pre.microlight {
@@ -152,4 +154,14 @@
 .swagger-ui .opblock-tag,
 .swagger-ui section.models {
   border-color: var(--cds-alias-object-interaction-border-color);
+}
+
+.swagger-ui input[type="email"],
+.swagger-ui input[type="file"],
+.swagger-ui input[type="password"],
+.swagger-ui input[type="search"],
+.swagger-ui input[type="text"],
+.swagger-ui textarea {
+  background-color: var(--cds-global-typography-color-100, #333);
+  color: var(--cds-global-typography-color-500, #fff);
 }

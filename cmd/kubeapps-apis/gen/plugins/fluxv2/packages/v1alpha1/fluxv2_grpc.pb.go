@@ -31,6 +31,15 @@ type FluxV2PackagesServiceClient interface {
 	GetInstalledPackageSummaries(ctx context.Context, in *v1alpha1.GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 	// GetInstalledPackageDetail returns the requested installed package managed by the 'fluxv2' plugin
 	GetInstalledPackageDetail(ctx context.Context, in *v1alpha1.GetInstalledPackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageDetailResponse, error)
+	// CreateInstalledPackage creates an installed package based on the request.
+	CreateInstalledPackage(ctx context.Context, in *v1alpha1.CreateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.CreateInstalledPackageResponse, error)
+	// UpdateInstalledPackage updates an installed package based on the request.
+	UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error)
+	// DeleteInstalledPackage deletes an installed package based on the request.
+	DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error)
+	// GetInstalledPackageResourceRefs returns the references for the Kubernetes
+	// resources created by an installed package.
+	GetInstalledPackageResourceRefs(ctx context.Context, in *v1alpha1.GetInstalledPackageResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error)
 }
 
 type fluxV2PackagesServiceClient struct {
@@ -95,6 +104,42 @@ func (c *fluxV2PackagesServiceClient) GetInstalledPackageDetail(ctx context.Cont
 	return out, nil
 }
 
+func (c *fluxV2PackagesServiceClient) CreateInstalledPackage(ctx context.Context, in *v1alpha1.CreateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.CreateInstalledPackageResponse, error) {
+	out := new(v1alpha1.CreateInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/CreateInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fluxV2PackagesServiceClient) UpdateInstalledPackage(ctx context.Context, in *v1alpha1.UpdateInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.UpdateInstalledPackageResponse, error) {
+	out := new(v1alpha1.UpdateInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/UpdateInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fluxV2PackagesServiceClient) DeleteInstalledPackage(ctx context.Context, in *v1alpha1.DeleteInstalledPackageRequest, opts ...grpc.CallOption) (*v1alpha1.DeleteInstalledPackageResponse, error) {
+	out := new(v1alpha1.DeleteInstalledPackageResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/DeleteInstalledPackage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fluxV2PackagesServiceClient) GetInstalledPackageResourceRefs(ctx context.Context, in *v1alpha1.GetInstalledPackageResourceRefsRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error) {
+	out := new(v1alpha1.GetInstalledPackageResourceRefsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageResourceRefs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FluxV2PackagesServiceServer is the server API for FluxV2PackagesService service.
 // All implementations should embed UnimplementedFluxV2PackagesServiceServer
 // for forward compatibility
@@ -111,6 +156,15 @@ type FluxV2PackagesServiceServer interface {
 	GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 	// GetInstalledPackageDetail returns the requested installed package managed by the 'fluxv2' plugin
 	GetInstalledPackageDetail(context.Context, *v1alpha1.GetInstalledPackageDetailRequest) (*v1alpha1.GetInstalledPackageDetailResponse, error)
+	// CreateInstalledPackage creates an installed package based on the request.
+	CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error)
+	// UpdateInstalledPackage updates an installed package based on the request.
+	UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error)
+	// DeleteInstalledPackage deletes an installed package based on the request.
+	DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error)
+	// GetInstalledPackageResourceRefs returns the references for the Kubernetes
+	// resources created by an installed package.
+	GetInstalledPackageResourceRefs(context.Context, *v1alpha1.GetInstalledPackageResourceRefsRequest) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error)
 }
 
 // UnimplementedFluxV2PackagesServiceServer should be embedded to have forward compatible implementations.
@@ -134,6 +188,18 @@ func (UnimplementedFluxV2PackagesServiceServer) GetInstalledPackageSummaries(con
 }
 func (UnimplementedFluxV2PackagesServiceServer) GetInstalledPackageDetail(context.Context, *v1alpha1.GetInstalledPackageDetailRequest) (*v1alpha1.GetInstalledPackageDetailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageDetail not implemented")
+}
+func (UnimplementedFluxV2PackagesServiceServer) CreateInstalledPackage(context.Context, *v1alpha1.CreateInstalledPackageRequest) (*v1alpha1.CreateInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateInstalledPackage not implemented")
+}
+func (UnimplementedFluxV2PackagesServiceServer) UpdateInstalledPackage(context.Context, *v1alpha1.UpdateInstalledPackageRequest) (*v1alpha1.UpdateInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateInstalledPackage not implemented")
+}
+func (UnimplementedFluxV2PackagesServiceServer) DeleteInstalledPackage(context.Context, *v1alpha1.DeleteInstalledPackageRequest) (*v1alpha1.DeleteInstalledPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteInstalledPackage not implemented")
+}
+func (UnimplementedFluxV2PackagesServiceServer) GetInstalledPackageResourceRefs(context.Context, *v1alpha1.GetInstalledPackageResourceRefsRequest) (*v1alpha1.GetInstalledPackageResourceRefsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageResourceRefs not implemented")
 }
 
 // UnsafeFluxV2PackagesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -255,6 +321,78 @@ func _FluxV2PackagesService_GetInstalledPackageDetail_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FluxV2PackagesService_CreateInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.CreateInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2PackagesServiceServer).CreateInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/CreateInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2PackagesServiceServer).CreateInstalledPackage(ctx, req.(*v1alpha1.CreateInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FluxV2PackagesService_UpdateInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.UpdateInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2PackagesServiceServer).UpdateInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/UpdateInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2PackagesServiceServer).UpdateInstalledPackage(ctx, req.(*v1alpha1.UpdateInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FluxV2PackagesService_DeleteInstalledPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.DeleteInstalledPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2PackagesServiceServer).DeleteInstalledPackage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/DeleteInstalledPackage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2PackagesServiceServer).DeleteInstalledPackage(ctx, req.(*v1alpha1.DeleteInstalledPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FluxV2PackagesService_GetInstalledPackageResourceRefs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetInstalledPackageResourceRefsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2PackagesServiceServer).GetInstalledPackageResourceRefs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetInstalledPackageResourceRefs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2PackagesServiceServer).GetInstalledPackageResourceRefs(ctx, req.(*v1alpha1.GetInstalledPackageResourceRefsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FluxV2PackagesService_ServiceDesc is the grpc.ServiceDesc for FluxV2PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -285,6 +423,22 @@ var FluxV2PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInstalledPackageDetail",
 			Handler:    _FluxV2PackagesService_GetInstalledPackageDetail_Handler,
+		},
+		{
+			MethodName: "CreateInstalledPackage",
+			Handler:    _FluxV2PackagesService_CreateInstalledPackage_Handler,
+		},
+		{
+			MethodName: "UpdateInstalledPackage",
+			Handler:    _FluxV2PackagesService_UpdateInstalledPackage_Handler,
+		},
+		{
+			MethodName: "DeleteInstalledPackage",
+			Handler:    _FluxV2PackagesService_DeleteInstalledPackage_Handler,
+		},
+		{
+			MethodName: "GetInstalledPackageResourceRefs",
+			Handler:    _FluxV2PackagesService_GetInstalledPackageResourceRefs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

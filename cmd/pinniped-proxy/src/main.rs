@@ -3,7 +3,8 @@ use std::fs;
 
 use anyhow::{Context, Result};
 use hyper::{
-    service::{make_service_fn, service_fn}, Server
+    service::{make_service_fn, service_fn},
+    Server,
 };
 use log::info;
 use structopt::StructOpt;
@@ -14,7 +15,6 @@ mod https;
 mod logging;
 mod pinniped;
 mod service;
-
 #[tokio::main]
 async fn main() -> Result<()> {
     pretty_env_logger::init();

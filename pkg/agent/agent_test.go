@@ -4,7 +4,9 @@ import (
 	"io/ioutil"
 	"sort"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
 	kubechart "github.com/kubeapps/kubeapps/pkg/chart"
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"helm.sh/helm/v3/pkg/action"
@@ -16,10 +18,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
 const defaultListLimit = 256
@@ -189,12 +187,12 @@ func TestCreateReleases(t *testing.T) {
 			// Initialize environment for test
 			actionConfig := newActionConfigFixture(t)
 			makeReleases(t, actionConfig, tc.existingReleases)
-			fakechart := chartFake.Client{}
+			fakechart := chartFake.ChartClient{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
 			}, "")
 			// Perform test
-			rls, err := CreateRelease(actionConfig, tc.chartName, tc.namespace, tc.values, ch, nil)
+			rls, err := CreateRelease(actionConfig, tc.chartName, tc.namespace, tc.values, ch, nil, 0)
 			// Check result
 			if tc.shouldFail && err == nil {
 				t.Errorf("Should fail with %v; instead got %s in %s", tc.desc, tc.releaseName, tc.namespace)
@@ -220,7 +218,7 @@ func TestListReleases(t *testing.T) {
 		listLimit    int
 		status       string
 		releases     []releaseStub
-		expectedApps []proxy.AppOverview
+		expectedApps []AppOverview
 	}{
 		{
 			name:      "returns all apps across namespaces",
@@ -231,17 +229,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 				{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -250,10 +247,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.1",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.1",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -262,10 +258,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.2",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.2",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.2",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -279,17 +274,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 				{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -298,10 +292,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.1",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.1",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -315,17 +308,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
 				{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -338,17 +330,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
 				{"wordpress", "dev", 2, "2.0.0", release.StatusDeployed},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -357,10 +348,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "2.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "2.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "2.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -373,17 +363,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
 				{"wordpress", "dev", 2, "1.0.0", release.StatusUninstalled},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -397,17 +386,16 @@ func TestListReleases(t *testing.T) {
 				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
 				{"wordpress", "dev", 2, "1.0.1", release.StatusUninstalled},
 			},
-			expectedApps: []proxy.AppOverview{
+			expectedApps: []AppOverview{
 				{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.0",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 				{
@@ -416,10 +404,9 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "uninstalled",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.1",
-						Icon:        "https://example.com/icon.png",
-						Maintainers: []*chartv1.Maintainer{},
+					ChartMetadata: chart.Metadata{
+						Version: "1.0.1",
+						Icon:    "https://example.com/icon.png",
 					},
 				},
 			},
@@ -492,7 +479,7 @@ func TestDeleteRelease(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
-			err := DeleteRelease(cfg, tc.releaseToDelete, true)
+			err := DeleteRelease(cfg, tc.releaseToDelete, true, 0)
 			t.Logf("error: %v", err)
 			if didFail := err != nil; didFail != tc.shouldFail {
 				t.Errorf("wanted fail = %v, got fail = %v", tc.shouldFail, err != nil)
@@ -602,7 +589,7 @@ func TestRollbackRelease(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
 
-			newRelease, err := RollbackRelease(cfg, tc.release, tc.revision)
+			newRelease, err := RollbackRelease(cfg, tc.release, tc.revision, 0)
 			if got, want := err, tc.err; got != want {
 				t.Errorf("got: %v, want: %v", got, want)
 			}
@@ -678,11 +665,11 @@ func TestUpgradeRelease(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
-			fakechart := chartFake.Client{}
+			fakechart := chartFake.ChartClient{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
 			}, "")
-			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch, nil)
+			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch, nil, 0)
 			// Check for errors
 			if got, want := err != nil, tc.shouldFail; got != want {
 				t.Errorf("Failure: got: %v, want: %v", got, want)
@@ -743,6 +730,46 @@ func TestNewConfigFlagsFromCluster(t *testing.T) {
 			}
 
 			if got, want := config.BearerToken, tc.config.BearerToken; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
+}
+
+// Make sure that Helm command gets the timeout
+func TestNewInstallCommand(t *testing.T) {
+	testCases := []struct {
+		name     string
+		timeout  int32
+		expected time.Duration
+	}{
+		{
+			name:     "install command with no timeout",
+			timeout:  0,
+			expected: time.Duration(0),
+		},
+		{
+			name:     "install command with invalid timeout",
+			timeout:  -10,
+			expected: time.Duration(0),
+		},
+		{
+			name:     "install command with timeout",
+			timeout:  33,
+			expected: time.Duration(33) * time.Second,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newActionConfigFixture(t)
+			cmd, err := newInstallCommand(cfg, "", "", nil, tc.timeout)
+
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := cmd.Timeout, tc.expected; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})

@@ -1,11 +1,13 @@
 # syntax = docker/dockerfile:1
 
-FROM rust:1.53.0 as builder
+FROM rust:1.56.1 as builder
 
 WORKDIR /pinniped-proxy
+ARG VERSION
 
 # Create a release build of pinniped-proxy itself.
 COPY ./cmd/pinniped-proxy ./
+ENV PINNIPED_PROXY_VERSION=$VERSION
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/pinniped-proxy/target \
     cargo build --release

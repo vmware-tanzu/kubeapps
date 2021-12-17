@@ -9,5 +9,5 @@ lint:
   except:
     - RPC_REQUEST_RESPONSE_UNIQUE
 deps:
-  - buf.build/beta/googleapis
+  - buf.build/googleapis/googleapis
   - buf.build/grpc-ecosystem/grpc-gateway

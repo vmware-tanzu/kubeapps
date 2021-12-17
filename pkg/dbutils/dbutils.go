@@ -16,6 +16,8 @@ limitations under the License.
 
 package dbutils
 
+import "time"
+
 // AssetManager basic manager for the different db types
 type AssetManager interface {
 	Init() error
@@ -23,3 +25,11 @@ type AssetManager interface {
 }
 
 const AllNamespaces = "_all"
+
+type Config struct {
+	URL      string
+	Database string
+	Username string
+	Password string
+	Timeout  time.Duration
+}

@@ -1,10 +1,9 @@
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
+import { IStoreState } from "shared/types";
 import actions from "../../actions";
 import LoginForm from "../../components/LoginForm";
-import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({
   auth: { authenticated, authenticating, authenticationError },

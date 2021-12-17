@@ -1,0 +1,7 @@
+entries:
+  chart-with-spaces:
+    - appVersion: v1
+      name: "chart\x20with\x20spaces"
+  chart-without-spaces:
+    - appVersion: v2
+      name: "chart-without-spaces"

@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
@@ -8,10 +6,11 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import { push } from "connected-react-router";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Operators } from "../../shared/Operators";
-import { IStoreState } from "../../shared/types";
-import { api, app } from "../../shared/url";
+import { Operators } from "shared/Operators";
+import { IStoreState } from "shared/types";
+import { api, app } from "shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import OperatorDescription from "./OperatorDescription";
 import OperatorHeader from "./OperatorHeader";

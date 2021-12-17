@@ -1,8 +1,7 @@
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
-
+import { IStoreState } from "shared/types";
 import PrivateRoute from "../../components/PrivateRoute";
-import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({
   auth: { authenticated, oidcAuthenticated, sessionExpired },

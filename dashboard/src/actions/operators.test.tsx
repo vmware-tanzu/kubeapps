@@ -1,9 +1,9 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { Operators } from "shared/Operators";
 import { IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { Operators } from "../shared/Operators";
 
 const { operators: operatorActions } = actions;
 const mockStore = configureMockStore([thunk]);
@@ -14,10 +14,10 @@ beforeEach(() => {
   store = mockStore({});
 });
 
-afterEach(jest.resetAllMocks);
+afterEach(jest.restoreAllMocks);
 
 describe("checkOLMInstalled", () => {
-  it("dispatches OLM_INSTALLED when succeded", async () => {
+  it("dispatches OLM_INSTALLED when succeeded", async () => {
     Operators.isOLMInstalled = jest.fn().mockReturnValue(true);
     const expectedActions = [
       {
@@ -270,7 +270,7 @@ describe("updateResource", () => {
 describe("listResources", () => {
   it("list resources in a namespace", async () => {
     const csv = {
-      metadata: { name: "foo" },
+      metadata: { name: "foo", namespace: "default" },
       spec: {
         customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
       },
@@ -339,6 +339,43 @@ describe("listResources", () => {
     ];
     await store.dispatch(operatorActions.getResources("default", "default"));
     expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("lists resources with their corresponding namespace when empty namespace is requested", async () => {
+    const csvs = [
+      {
+        metadata: { name: "foo", namespace: "foo1-ns" },
+        spec: {
+          customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+        },
+      },
+      {
+        metadata: { name: "foo", namespace: "foo2-ns" },
+        spec: {
+          customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+        },
+      },
+    ];
+    Operators.getCSVs = jest.fn().mockReturnValue(csvs);
+
+    const resources = [{ metadata: { name: "resource" } }];
+    Operators.listResources = jest.fn().mockReturnValue({
+      items: resources,
+    });
+    // Request resources for all namespaces
+    await store.dispatch(operatorActions.getResources("default", ""));
+    expect(Operators.listResources).toHaveBeenCalledWith(
+      "default",
+      "foo1-ns",
+      "kubeapps.com/v1alpha1",
+      "foo",
+    );
+    expect(Operators.listResources).toHaveBeenCalledWith(
+      "default",
+      "foo2-ns",
+      "kubeapps.com/v1alpha1",
+      "foo",
+    );
   });
 
   it("ignores csv without owned crds", async () => {

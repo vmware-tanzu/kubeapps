@@ -17,7 +17,7 @@ beforeEach(() => {
 afterEach(() => {
   actions.namespace = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 const defaultState = {

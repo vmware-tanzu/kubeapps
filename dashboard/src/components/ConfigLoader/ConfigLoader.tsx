@@ -1,7 +1,6 @@
 import Alert from "components/js/Alert";
 import React from "react";
 import { useIntl } from "react-intl";
-
 import LoadingWrapper, {
   ILoadingWrapperProps,
 } from "../../components/LoadingWrapper/LoadingWrapper";

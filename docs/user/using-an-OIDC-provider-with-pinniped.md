@@ -10,11 +10,11 @@ Install Pinniped into a `pinniped-concierge` namespace on your cluster with:
 kubectl apply -f https://get.pinniped.dev/latest/install-pinniped-concierge.yaml
 ```
 
-**NOTE**: Due to a breaking change in [Pinniped 0.6.0](https://github.com/vmware-tanzu/pinniped/releases/tag/v0.6.0), the minimum version supported by Kubeapps is 0.6.0. Furthermore, [custom API suffixes](https://pinniped.dev/posts/multiple-pinnipeds) (introduced in Pinniped 0.5.0) are not yet fully supported. If your platform uses this feature, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new).
-
 ## Configure Pinniped to trust your OIDC identity provider
 
 Once Pinniped is running, you can add a `JWTAuthenticator` custom resource so that Pinniped knows to trust your OIDC identity provider.
+
+> You can find additional information in this [step-by-step guide](../step-by-step/kubeapps-on-tkg/step-1.md).
 
 ```yaml
 apiVersion: authentication.concierge.pinniped.dev/v1alpha1
@@ -71,7 +71,7 @@ Finally, because Kubeapps can be configured with multiple clusters, some of whic
 clusters:
   - name: default
     pinnipedConfig:
-      enable: true
+      enabled: true
 ```
 
 The [Kubeapps auth-proxy configuration](./using-an-OIDC-provider.md#deploying-an-auth-proxy-to-access-kubeapps) remains the same as for the standard OIDC setup so that Kubeapps knows to deploy the auth-proxy service configured to redirect to your OIDC provider.
@@ -115,7 +115,7 @@ clusters:
     apiServiceURL: https://... # impersonation proxy URL
     certificateAuthorityData: ... #  impersonation proxy CA
     pinnipedConfig:
-      enable: true
+      enabled: true
 ```
 
 ## Debugging auth failures when using OIDC

@@ -1,13 +1,12 @@
 import { RouterState } from "connected-react-router";
 import { mount } from "enzyme";
-import { merge, cloneDeep } from "lodash";
-
+import { cloneDeep, merge } from "lodash";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
 import { initialState as appsInitialState } from "reducers/apps";
 import { initialState as authInitialState } from "reducers/auth";
-import { initialState as chartsInitialState } from "reducers/charts";
+import { initialState as packagesInitialState } from "reducers/packages";
 import { initialState as clustersInitialState } from "reducers/cluster";
 import { initialState as configInitialState } from "reducers/config";
 import { initialState as kubeInitialState } from "reducers/kube";
@@ -16,14 +15,14 @@ import { initialState as reposInitialState } from "reducers/repos";
 import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
 import I18n from "shared/I18n";
-import { IStoreState } from "../../shared/types";
+import { IStoreState } from "shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
 export const initialState = {
   apps: cloneDeep(appsInitialState),
   auth: cloneDeep(authInitialState),
-  charts: cloneDeep(chartsInitialState),
+  packages: cloneDeep(packagesInitialState),
   config: {
     ...cloneDeep(configInitialState),
     kubeappsCluster: "default-cluster",

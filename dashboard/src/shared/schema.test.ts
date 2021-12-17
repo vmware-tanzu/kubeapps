@@ -1,5 +1,3 @@
-import { JSONSchema4 } from "json-schema";
-
 import { deleteValue, getValue, retrieveBasicFormParams, setValue, validate } from "./schema";
 import { IBasicFormParam } from "./types";
 
@@ -8,7 +6,9 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "should retrieve a param",
       values: "user: andres",
-      schema: { properties: { user: { type: "string", form: true } } } as JSONSchema4,
+      schema: {
+        properties: { user: { type: "string", form: true } },
+      } as any,
       result: [
         {
           path: "user",
@@ -19,7 +19,9 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "should retrieve a param without default value",
       values: "user:",
-      schema: { properties: { user: { type: "string", form: true } } } as JSONSchema4,
+      schema: {
+        properties: { user: { type: "string", form: true } },
+      } as any,
       result: [
         {
           path: "user",
@@ -31,7 +33,7 @@ describe("retrieveBasicFormParams", () => {
       values: "user:",
       schema: {
         properties: { user: { type: "string", form: true, default: "michael" } },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "user",
@@ -44,7 +46,7 @@ describe("retrieveBasicFormParams", () => {
       values: "user: foo",
       schema: {
         properties: { user: { type: "string", form: true, default: "bar" } },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "user",
@@ -57,7 +59,7 @@ describe("retrieveBasicFormParams", () => {
       values: "foo: bar",
       schema: {
         properties: { user: { type: "string", form: true, default: "andres" } },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "user",
@@ -75,7 +77,7 @@ describe("retrieveBasicFormParams", () => {
             properties: { user: { type: "string", form: true } },
           },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "credentials/user",
@@ -115,7 +117,7 @@ service: ClusterIP
           replicas: { type: "number", form: true },
           service: { type: "string" },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "credentials/admin/user",
@@ -143,7 +145,7 @@ service: ClusterIP
             description: "Title of the blog",
           },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "blogName",
@@ -172,7 +174,7 @@ externalDatabase:
             },
           },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "externalDatabase",
@@ -197,7 +199,7 @@ externalDatabase:
         properties: {
           foo: { type: "boolean", form: true },
         },
-      } as JSONSchema4,
+      } as any,
       result: [{ path: "foo", type: "boolean", value: false } as IBasicFormParam],
     },
     {
@@ -211,7 +213,7 @@ externalDatabase:
             enum: ["mariadb", "postgresql"],
           },
         },
-      } as JSONSchema4,
+      } as any,
       result: [
         {
           path: "databaseType",
@@ -264,8 +266,8 @@ describe("getValue", () => {
       description: "should return the default value if the path is not valid",
       values: "foo: bar",
       path: "foobar",
-      default: "BAR",
-      result: "BAR",
+      default: '"BAR"',
+      result: '"BAR"',
     },
     {
       description: "should return a value with slashes in the key",
@@ -293,35 +295,35 @@ describe("setValue", () => {
       values: "foo: bar",
       path: "foo",
       newValue: "BAR",
-      result: "foo: BAR\n",
+      result: 'foo: "BAR"\n',
     },
     {
       description: "should set a nested value",
       values: "foo:\n  bar: foobar",
       path: "foo/bar",
       newValue: "FOOBAR",
-      result: "foo:\n  bar: FOOBAR\n",
+      result: 'foo:\n  bar: "FOOBAR"\n',
     },
     {
       description: "should set a deeply nested value",
       values: "foo:\n  bar:\n    foobar: barfoo",
       path: "foo/bar/foobar",
       newValue: "BARFOO",
-      result: "foo:\n  bar:\n    foobar: BARFOO\n",
+      result: 'foo:\n  bar:\n    foobar: "BARFOO"\n',
     },
     {
       description: "should add a new value",
       values: "foo: bar",
       path: "new",
       newValue: "value",
-      result: "foo: bar\nnew: value\n",
+      result: 'foo: bar\n"new": "value"\n',
     },
     {
       description: "should add a new nested value",
       values: "foo: bar",
       path: "this/new",
       newValue: 1,
-      result: "foo: bar\nthis:\n  new: 1\n",
+      result: 'foo: bar\n"this":\n  "new": 1\n',
       error: false,
     },
     {
@@ -329,7 +331,7 @@ describe("setValue", () => {
       values: "foo: bar",
       path: "this/new/value",
       newValue: 1,
-      result: "foo: bar\nthis:\n  new:\n    value: 1\n",
+      result: 'foo: bar\n"this":\n  "new":\n    "value": 1\n',
       error: false,
     },
     {
@@ -337,7 +339,7 @@ describe("setValue", () => {
       values: "foo: bar\nthis:\n",
       path: "this/new/value",
       newValue: 1,
-      result: "foo: bar\nthis:\n  new:\n    value: 1\n",
+      result: 'foo: bar\nthis:\n  "new":\n    "value": 1\n',
       error: false,
     },
     {
@@ -345,7 +347,7 @@ describe("setValue", () => {
       values: "foo: bar\nthis: {}\n",
       path: "this/new/value",
       newValue: 1,
-      result: "foo: bar\nthis: { new: { value: 1 } }\n",
+      result: 'foo: bar\nthis: { "new": { "value": 1 } }\n',
       error: false,
     },
     {
@@ -353,7 +355,7 @@ describe("setValue", () => {
       values: "",
       path: "foo",
       newValue: "bar",
-      result: "foo: bar\n",
+      result: '"foo": "bar"\n',
       error: false,
     },
     {
@@ -361,14 +363,14 @@ describe("setValue", () => {
       values: "foo/bar: test",
       path: "foo~1bar",
       newValue: "value",
-      result: "foo/bar: value\n",
+      result: 'foo/bar: "value"\n',
     },
     {
       description: "should add a value with slashes and dots in the key",
       values: "kubernetes.io/ingress.class: default",
       path: "kubernetes.io~1ingress.class",
       newValue: "nginx",
-      result: "kubernetes.io/ingress.class: nginx\n",
+      result: 'kubernetes.io/ingress.class: "nginx"\n',
     },
   ].forEach(t => {
     it(t.description, () => {
@@ -401,7 +403,7 @@ describe("deleteValue", () => {
 `,
     },
     {
-      description: "should leave the document emtpy",
+      description: "should leave the document empty",
       values: "foo: bar",
       path: "foo",
       result: "\n",
@@ -424,14 +426,16 @@ describe("validate", () => {
     {
       description: "Should validate a valid object",
       values: "foo: bar\n",
-      schema: { properties: { foo: { type: "string" } } } as JSONSchema4,
+      schema: {
+        properties: { foo: { type: "string" } },
+      },
       valid: true,
       errors: null,
     },
     {
       description: "Should validate an invalid object",
       values: "foo: bar\n",
-      schema: { properties: { foo: { type: "integer" } } } as JSONSchema4,
+      schema: { properties: { foo: { type: "integer" } } },
       valid: false,
       errors: [
         {

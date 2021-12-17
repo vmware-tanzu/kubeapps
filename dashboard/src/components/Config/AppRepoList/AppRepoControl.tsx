@@ -1,6 +1,5 @@
-import { useState } from "react";
-
 import { CdsButton } from "@cds/react/button";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";

@@ -2,18 +2,24 @@ import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import Alert from "components/js/Alert";
-
+import {
+  InstalledPackageReference,
+  InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import ReactTooltip from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError } from "shared/types";
 import DeleteButton from "./DeleteButton";
-import ReactTooltip from "react-tooltip";
 
 const defaultProps = {
-  cluster: "default",
-  namespace: "kubeapps",
-  releaseName: "foo",
+  installedPackageRef: {
+    context: { cluster: "default", namespace: "kubeapps" },
+    identifier: " foo",
+    plugin: { name: "my.plugin", version: "0.0.1" },
+  } as InstalledPackageReference,
   releaseStatus: null,
 };
 
@@ -22,7 +28,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.apps = {
     ...actions.apps,
-    deleteApp: jest.fn(),
+    deleteInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -34,8 +40,8 @@ afterEach(() => {
 });
 
 it("deletes an application", async () => {
-  const deleteApp = jest.fn();
-  actions.apps.deleteApp = deleteApp;
+  const deleteInstalledPackage = jest.fn();
+  actions.apps.deleteInstalledPackage = deleteInstalledPackage;
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
@@ -50,12 +56,7 @@ it("deletes an application", async () => {
         .prop("onClick") as any
     )();
   });
-  expect(deleteApp).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.releaseName,
-    true,
-  );
+  expect(deleteInstalledPackage).toHaveBeenCalledWith(defaultProps.installedPackageRef);
 });
 
 it("renders an error", async () => {
@@ -74,8 +75,10 @@ it("should render a disabled button if when passing an in-progress status", asyn
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {
-      code: 7,
-    },
+      ready: false,
+      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      userReason: "Pending",
+    } as InstalledPackageStatus,
   };
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...disabledProps} />);
 

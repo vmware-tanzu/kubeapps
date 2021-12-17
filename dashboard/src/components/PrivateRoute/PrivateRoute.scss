@@ -1,16 +1,16 @@
 .centered-modal {
   position: absolute;
   top: 50%;
-  left: 50%;
   right: auto;
   bottom: auto;
-  border: 1px solid var(--cds-alias-object-border-color, #ccc);
-  background-color: var(--cds-alias-object-interaction-background), #fff;
+  left: 50%;
   overflow: auto;
+  padding: 20px;
+  border: 1px solid var(--cds-alias-object-border-color, #ccc);
+  margin-right: -50%;
+  background-color: var(--cds-alias-object-interaction-background), #fff;
   border-radius: 4px;
   outline: none;
-  padding: 20px;
-  margin-right: -50%;
   transform: translate(-50%, -50%);
 }
 
@@ -23,7 +23,7 @@
     margin-top: 0.6rem;
 
     cds-button {
-      margin: 0 0.6rem 0 0.6rem;
+      margin: 0 0.6rem;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 Bitnami
+Copyright 2021 VMware. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import (
 	"math"
 	"strings"
 
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	_ "github.com/lib/pq"
@@ -39,7 +38,7 @@ type PostgresAssetManager struct {
 	dbutils.PostgresAssetManagerIface
 }
 
-func NewPGManager(config datastore.Config, kubeappsNamespace string) (AssetManager, error) {
+func NewPGManager(config dbutils.Config, kubeappsNamespace string) (AssetManager, error) {
 	m, err := dbutils.NewPGManager(config, kubeappsNamespace)
 	if err != nil {
 		return nil, err

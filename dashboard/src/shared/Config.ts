@@ -5,6 +5,12 @@ export enum SupportedThemes {
   light = "light",
 }
 
+export interface ICustomAppViewIdentifier {
+  name: string;
+  plugin: string;
+  repository: string;
+}
+
 // IConfig is the configuration for Kubeapps
 export interface IConfig {
   kubeappsCluster: string;
@@ -17,6 +23,9 @@ export interface IConfig {
   error?: Error;
   clusters: string[];
   theme: string;
+  remoteComponentsUrl: string;
+  customAppViews: ICustomAppViewIdentifier[];
+  skipAvailablePackageDetails: boolean;
 }
 
 export default class Config {

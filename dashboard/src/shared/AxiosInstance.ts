@@ -1,5 +1,4 @@
 import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-
 import { Action, Store } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import actions from "../actions";
@@ -18,7 +17,7 @@ import {
 export function addAuthHeaders(axiosInstance: AxiosInstance) {
   axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
     const authToken = Auth.getAuthToken();
-    if (authToken) {
+    if (authToken && config?.headers) {
       config.headers.Authorization = `Bearer ${authToken}`;
     }
     return config;
@@ -30,7 +29,7 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
     response => response,
     e => {
       const dispatch = store.dispatch as ThunkDispatch<IStoreState, null, Action>;
-      const err: AxiosError = e;
+      const err: AxiosError<any, any> = e;
       if (
         err.code === undefined &&
         err.message === "Network Error" &&
@@ -57,7 +56,7 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
         // logout either way.
         dispatch(actions.auth.expireSession());
       };
-      const response = err.response as AxiosResponse;
+      const response = err.response as AxiosResponse<any>;
       switch (response && response.status) {
         case 401:
           dispatchErrorAndLogout(message);
@@ -92,7 +91,7 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
                   .join("; ")}`,
               ),
             );
-          } catch (e) {
+          } catch (e: any) {
             // Subcase 4:
             //   A non-parseable 403 error.
             //   Do not require reauthentication and display error (ie. edge cases of proxy auth)

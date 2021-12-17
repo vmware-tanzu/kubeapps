@@ -1,11 +1,11 @@
+import { IOperatorNewProps } from "components/OperatorNew/OperatorNew";
 import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
+import { IStoreState } from "shared/types";
 import actions from "../../actions";
 import OperatorNew from "../../components/OperatorNew";
-import { IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {
@@ -27,7 +27,7 @@ function mapStateToProps(
     operator: operators.operator,
     errors: operators.errors.operator,
     operatorName: params.operator,
-  };
+  } as Partial<IOperatorNewProps>;
 }
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
@@ -53,7 +53,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
         ),
       ),
     push: (location: string) => dispatch(push(location)),
-  };
+  } as unknown as IOperatorNewProps;
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(OperatorNew);

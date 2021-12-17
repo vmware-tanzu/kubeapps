@@ -1,12 +1,12 @@
 .empty-catalog {
-  text-align: center;
   width: 100%;
   height: calc(100vh - 6rem);
+  text-align: center;
 
   cds-icon {
-    margin-top: 2rem;
     width: 4rem;
     height: 4rem;
+    margin-top: 2rem;
   }
 
   cds-button {
@@ -18,17 +18,17 @@
   }
 }
 
-.scrollHandler {
+.scroll-handler {
+  min-height: 50vh;
   margin-top: 1rem;
   margin-bottom: 1rem;
-  min-height: 50vh;
 }
 
-.catalogContainer {
+.catalog-container {
   padding-bottom: 5vh;
 }
 
-.endPageMessage {
+.end-page-message {
   width: 100%;
   margin-top: 2rem;
   text-align: center;

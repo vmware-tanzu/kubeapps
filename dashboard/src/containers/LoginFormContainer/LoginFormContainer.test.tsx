@@ -16,7 +16,6 @@ const makeStore = (
   authenticating: boolean,
   oidcAuthenticated: boolean,
   authenticationError: string,
-  defaultNamespace: string,
   authProxyEnabled: boolean,
   oauthLoginURI: string,
 ) => {
@@ -38,6 +37,9 @@ const makeStore = (
     clusters: [],
     authProxySkipLoginPage: false,
     theme: SupportedThemes.light,
+    remoteComponentsUrl: "",
+    customAppViews: [],
+    skipAvailablePackageDetails: false,
   };
   const clusters: IClustersState = {
     currentCluster: "default",
@@ -69,7 +71,6 @@ describe("LoginFormContainer props", () => {
       true,
       true,
       "It's a trap",
-      "",
       authProxyEnabled,
       "/myoauth/start",
     );
@@ -91,7 +92,6 @@ describe("LoginFormContainer props", () => {
       true,
       true,
       "It's a trap",
-      "",
       authProxyEnabled,
       "/myoauth/start",
     );

@@ -253,13 +253,13 @@ func TestClientWithDefaults(t *testing.T) {
 
 			// check
 			if len(response.Header) != len(tc.expectedHeaders) {
-				t.Fatalf("repsonse header length differs from expected, got {%+v} when expecting {%+v}", response.Header, tc.expectedHeaders)
+				t.Fatalf("response header length differs from expected, got {%+v} when expecting {%+v}", response.Header, tc.expectedHeaders)
 			}
 			for k := range tc.expectedHeaders {
 				got := response.Header.Get(k)
 				expected := tc.expectedHeaders.Get(k)
 				if got != expected {
-					t.Fatalf("repsonse header differs from expected, got {%s} when expecting {%s}", got, expected)
+					t.Fatalf("response header differs from expected, got {%s} when expecting {%s}", got, expected)
 				}
 			}
 		})

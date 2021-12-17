@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Bitnami
+Copyright 2021 VMware. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ limitations under the License.
 package utils
 
 import (
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
 type AssetManager interface {
@@ -31,7 +31,7 @@ type AssetManager interface {
 	GetAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
 }
 
-// ChartQuery is a container for passing the supported query paramters for generating the WHERE query
+// ChartQuery is a container for passing the supported query parameters for generating the WHERE query
 type ChartQuery struct {
 	Namespace   string
 	ChartName   string
@@ -42,6 +42,6 @@ type ChartQuery struct {
 	Categories  []string
 }
 
-func NewManager(databaseType string, config datastore.Config, kubeappsNamespace string) (AssetManager, error) {
+func NewManager(databaseType string, config dbutils.Config, kubeappsNamespace string) (AssetManager, error) {
 	return NewPGManager(config, kubeappsNamespace)
 }

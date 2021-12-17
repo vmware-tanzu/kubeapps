@@ -1,4 +1,4 @@
-import olmLogo from "icons/olm-big.svg";
+import olmLogo from "icons/olm-logo.svg";
 
 export default function OLMNotFound() {
   return (

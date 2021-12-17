@@ -1,7 +1,6 @@
-import React from "react";
 import cs from "classnames";
 import PropTypes from "prop-types";
-
+import React from "react";
 import "./Spinner.scss";
 
 /**

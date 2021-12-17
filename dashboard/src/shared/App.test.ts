@@ -1,7 +1,18 @@
+import {
+  AvailablePackageReference,
+  Context,
+  CreateInstalledPackageResponse,
+  DeleteInstalledPackageResponse,
+  InstalledPackageReference,
+  UpdateInstalledPackageResponse,
+  VersionReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { RollbackInstalledPackageResponse } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import * as moxios from "moxios";
-import { App, KUBEOPS_ROOT_URL } from "./App";
+import { App } from "./App";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IAppOverview, IChartVersion } from "./types";
+import { PluginNames } from "./utils";
 
 describe("App", () => {
   beforeEach(() => {
@@ -10,144 +21,154 @@ describe("App", () => {
   });
   afterEach(() => {
     moxios.uninstall(axiosWithAuth as any);
-    jest.resetAllMocks();
+    jest.restoreAllMocks();
   });
 
-  describe("listApps", () => {
-    const apps = [{ releaseName: "foo" } as IAppOverview];
-    beforeEach(() => {
-      moxios.stubRequest(/.*/, {
-        response: { data: apps },
-        status: 200,
-      });
-    });
+  describe("createInstalledPackage", () => {
     [
       {
-        description: "should request all the releases if no namespace is given",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/releases?statuses=all`,
-      },
-      {
-        description: "should request the releases of a namespace with any status",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/default/releases?statuses=all`,
-        namespace: "default",
+        description: "should call to createInstalledPackage",
+        args: {
+          tagetContext: { cluster: "my-cluster", namespace: "my-namespace" } as Context,
+          name: "",
+          availablePackageRef: {
+            identifier: "foo/bar",
+            context: { cluster: "my-cluster", namespace: "my-namespace" },
+            plugin: { name: "my.plugin", version: "0.0.1" },
+          } as AvailablePackageReference,
+          pkgVersionReference: { version: "1.2.3" } as VersionReference,
+          values: "",
+          reconciliationOptions: undefined,
+        },
       },
     ].forEach(t => {
       it(t.description, async () => {
-        expect(await App.listApps("defaultc", t.namespace)).toEqual(apps);
-        expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
+        const mockCreateInstalledPackage = jest.fn().mockImplementation(() =>
+          Promise.resolve({
+            installedPackageRef: {
+              identifier: "foo/bar",
+              context: { cluster: "my-cluster", namespace: "my-namespace" },
+              plugin: { name: "my.plugin", version: "0.0.1" },
+            } as InstalledPackageReference,
+          } as CreateInstalledPackageResponse),
+        );
+        jest.spyOn(App, "CreateInstalledPackage").mockImplementation(mockCreateInstalledPackage);
+        const availablePackageSummaries = await App.CreateInstalledPackage(
+          t.args.tagetContext,
+          t.args.name,
+          t.args.availablePackageRef,
+          t.args.pkgVersionReference,
+          t.args.values,
+          t.args.reconciliationOptions,
+        );
+        expect(availablePackageSummaries).toStrictEqual({
+          installedPackageRef: {
+            identifier: "foo/bar",
+            context: { cluster: "my-cluster", namespace: "my-namespace" },
+            plugin: { name: "my.plugin", version: "0.0.1" },
+          } as InstalledPackageReference,
+        } as CreateInstalledPackageResponse);
+        expect(mockCreateInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
       });
     });
   });
 
-  describe("create", () => {
-    const expectedURL = `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/defaultns/releases`;
-    const testChartVersion: IChartVersion = {
-      attributes: {
-        version: "1.2.3",
-      },
-      relationships: {
-        chart: {
-          data: {
-            name: "test",
-            repo: {
-              name: "testrepo",
-              url: "http://example.com/charts",
-            },
-          },
-        },
-      },
-    } as IChartVersion;
-    it("creates an app in a namespace", async () => {
-      moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-      expect(
-        await App.create("defaultc", "defaultns", "absent-ant", "kubeapps", testChartVersion),
-      ).toBe("ok");
-      const request = moxios.requests.mostRecent();
-      expect(request.url).toBe(expectedURL);
-      expect(request.config.data).toEqual(
-        JSON.stringify({
-          appRepositoryResourceName: testChartVersion.relationships.chart.data.repo.name,
-          appRepositoryResourceNamespace: "kubeapps",
-          chartName: testChartVersion.relationships.chart.data.name,
-          releaseName: "absent-ant",
-          version: testChartVersion.attributes.version,
-        }),
-      );
-    });
-  });
-
-  describe("upgrade", () => {
-    const expectedURL = `${KUBEOPS_ROOT_URL}/clusters/default-c/namespaces/default-ns/releases/absent-ant`;
-    const testChartVersion: IChartVersion = {
-      attributes: {
-        version: "1.2.3",
-      },
-      relationships: {
-        chart: {
-          data: {
-            name: "test",
-            repo: {
-              name: "testrepo",
-              url: "http://example.com/charts",
-            },
-          },
-        },
-      },
-    } as IChartVersion;
-    it("upgrades an app in a namespace", async () => {
-      moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-      expect(
-        await App.upgrade("default-c", "default-ns", "absent-ant", "kubeapps", testChartVersion),
-      ).toBe("ok");
-      const request = moxios.requests.mostRecent();
-      expect(request.url).toBe(expectedURL);
-      expect(request.config.data).toEqual(
-        JSON.stringify({
-          appRepositoryResourceName: testChartVersion.relationships.chart.data.repo.name,
-          appRepositoryResourceNamespace: "kubeapps",
-          chartName: testChartVersion.relationships.chart.data.name,
-          releaseName: "absent-ant",
-          version: testChartVersion.attributes.version,
-        }),
-      );
-    });
-  });
-  describe("delete", () => {
+  describe("updateInstalledPackage", () => {
     [
       {
-        description: "should delete an app in a namespace",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/default-c/namespaces/default-ns/releases/foo`,
-        purge: false,
-      },
-      {
-        description: "should delete and purge an app in a namespace",
-        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/default-c/namespaces/default-ns/releases/foo?purge=true`,
-        purge: true,
+        description: "should call to updateInstalledPackage",
+        args: {
+          installedPackageRef: {
+            context: { cluster: "default-c", namespace: "default-ns" },
+            identifier: "foo",
+            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
+          pkgVersionReference: { version: "1.2.3" } as VersionReference,
+          values: "",
+          reconciliationOptions: undefined,
+        },
       },
     ].forEach(t => {
       it(t.description, async () => {
-        moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-        expect(await App.delete("default-c", "default-ns", "foo", t.purge)).toBe("ok");
-        expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
+        const mockUpdateInstalledPackage = jest.fn().mockImplementation(() =>
+          Promise.resolve({
+            installedPackageRef: {
+              identifier: "foo/bar",
+              context: { cluster: "my-cluster", namespace: "my-namespace" },
+              plugin: { name: "my.plugin", version: "0.0.1" },
+            } as InstalledPackageReference,
+          } as UpdateInstalledPackageResponse),
+        );
+        jest.spyOn(App, "UpdateInstalledPackage").mockImplementation(mockUpdateInstalledPackage);
+        const availablePackageSummaries = await App.UpdateInstalledPackage(
+          t.args.installedPackageRef,
+          t.args.pkgVersionReference,
+          t.args.values,
+          t.args.reconciliationOptions,
+        );
+        expect(availablePackageSummaries).toStrictEqual({
+          installedPackageRef: {
+            context: { cluster: "my-cluster", namespace: "my-namespace" },
+            identifier: "foo/bar",
+            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
+        } as UpdateInstalledPackageResponse);
+        expect(mockUpdateInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
       });
-    });
-    it("throws an error if returns an error 404", async () => {
-      moxios.stubRequest(/.*/, { status: 404 });
-      await expect(App.delete("default-c", "default-ns", "foo", false)).rejects.toThrow(
-        "Request failed with status code 404",
-      );
     });
   });
 
-  describe("rollback", () => {
-    it("should rollback an application", async () => {
-      axiosWithAuth.put = jest.fn().mockReturnValue({ data: "ok" });
-      expect(await App.rollback("default-c", "default-ns", "foo", 1)).toBe("ok");
-      expect(axiosWithAuth.put).toBeCalledWith(
-        "api/kubeops/v1/clusters/default-c/namespaces/default-ns/releases/foo",
-        {},
-        { params: { action: "rollback", revision: 1 } },
+  describe("deleteInstalledPackage", () => {
+    [
+      {
+        description: "should call to deleteInstalledPackage",
+        args: {
+          installedPackageReference: {
+            context: { cluster: "default-c", namespace: "default-ns" },
+            identifier: "foo",
+            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
+        },
+      },
+    ].forEach(t => {
+      it(t.description, async () => {
+        const mockDeleteInstalledPackage = jest
+          .fn()
+          .mockImplementation(() => Promise.resolve({} as DeleteInstalledPackageResponse));
+        jest.spyOn(App, "DeleteInstalledPackage").mockImplementation(mockDeleteInstalledPackage);
+        const res = await App.DeleteInstalledPackage(t.args.installedPackageReference);
+        expect(res).toStrictEqual({} as DeleteInstalledPackageResponse);
+        expect(mockDeleteInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
+      });
+    });
+  });
+});
+
+describe("rollbackInstalledPackage", () => {
+  [
+    {
+      description: "should call to rollbackInstalledPackage",
+      args: {
+        installedPackageReference: {
+          context: { cluster: "default-c", namespace: "default-ns" },
+          identifier: "foo",
+          plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
+        } as InstalledPackageReference,
+        revision: 1,
+      },
+    },
+  ].forEach(t => {
+    it(t.description, async () => {
+      const mockRollbackInstalledPackage = jest
+        .fn()
+        .mockImplementation(() => Promise.resolve({} as RollbackInstalledPackageResponse));
+      jest.spyOn(App, "RollbackInstalledPackage").mockImplementation(mockRollbackInstalledPackage);
+      const res = await App.RollbackInstalledPackage(
+        t.args.installedPackageReference,
+        t.args.revision,
       );
+      expect(res).toStrictEqual({} as RollbackInstalledPackageResponse);
+      expect(mockRollbackInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
     });
   });
 });

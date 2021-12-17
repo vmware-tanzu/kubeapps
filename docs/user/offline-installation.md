@@ -27,7 +27,7 @@ repository: bitnami/nginx
 tag: 1.19.2-debian-10-r32
 ```
 
-> This list includes but is not limited to: `bitnami/kubeapps-apprepository-controller`, `bitnami/kubeapps-asset-syncer`,`bitnami/kubeapps-assetsvc`, `bitnami/kubeapps-dashboard`, `bitnami/kubeapps-kubeops`, `bitnami/kubectl`, `bitnami/nginx`, `bitnami/oauth2-proxy`, `bitnami/postgresql`.
+> This list includes but is not limited to: `bitnami/kubeapps-apprepository-controller`, `bitnami/kubeapps-asset-syncer`,`bitnami/kubeapps-assetsvc`, `bitnami/kubeapps-dashboard`, `bitnami/kubeapps-kubeops`,`bitnami/kubeapps-pinniped-proxy`, `bitnami/kubeapps-apis`, `bitnami/nginx`, `bitnami/oauth2-proxy`, `bitnami/postgresql`.
 
 For simplicity, in this guide, we use a single-node cluster created with [Kubernetes in Docker (`kind`)](https://github.com/kubernetes-sigs/kind). In this environment, as the images have to be preloaded, we first have to pull the images (`docker pull`) and next load them into the cluster (`kind load docker-image`):
 

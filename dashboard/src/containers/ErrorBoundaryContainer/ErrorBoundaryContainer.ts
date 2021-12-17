@@ -1,14 +1,13 @@
 import { connect } from "react-redux";
-
+import { IStoreState } from "shared/types";
 import ErrorBoundary from "../../components/ErrorBoundary";
-import { IStoreState } from "../../shared/types";
 
 interface IErrorBoundaryProps {
   children: React.ReactChildren | React.ReactNode | string;
 }
 
 function mapStateToProps(
-  { clusters: { currentCluster, clusters }, config }: IStoreState,
+  { clusters: { currentCluster, clusters } }: IStoreState,
   { children }: IErrorBoundaryProps,
 ) {
   const cluster = clusters[currentCluster];

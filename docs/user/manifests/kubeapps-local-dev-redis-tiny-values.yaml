@@ -1,0 +1,22 @@
+kubeappsapis:
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  replicaCount: 1
+
+redis:
+  enabled: true
+  master: 
+    extraFlags:
+      ## Intentionally a small number to test scenarios where cache eviction policies kick in
+      - "--maxmemory 15mb"
+      - "--maxmemory-policy allkeys-lru"
+  replica:
+    extraFlags:
+      ## Intentionally a small number to test scenarios where cache eviction policies kick in
+      - "--maxmemory 15mb"
+      - "--maxmemory-policy allkeys-lru"

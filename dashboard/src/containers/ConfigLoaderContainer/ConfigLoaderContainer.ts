@@ -1,11 +1,9 @@
 import { connect } from "react-redux";
 import { ThunkDispatch } from "redux-thunk";
-
+import { IStoreState } from "shared/types";
 import actions from "../../actions";
 import { ConfigAction } from "../../actions/config";
-
 import ConfigLoader from "../../components/ConfigLoader";
-import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({ config }: IStoreState) {
   return {

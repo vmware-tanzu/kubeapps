@@ -1,16 +1,16 @@
 import Icon from "components/Icon/Icon";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import olmIcon from "icons/operator-framework.svg";
-import helmIcon from "../../icons/helm.svg";
+import { getPluginIcon, getPluginPackageName } from "shared/utils";
 import "./PageHeader.css";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 
 export interface IPageHeaderProps {
   title: string;
   titleSize?: "lg" | "md";
   icon?: any;
   filter?: JSX.Element;
-  helm?: boolean;
+  plugin?: Plugin;
   operator?: boolean;
   buttons?: JSX.Element[];
   version?: JSX.Element;
@@ -21,7 +21,7 @@ function PageHeader({
   icon,
   filter,
   buttons,
-  helm,
+  plugin,
   version,
   operator,
 }: IPageHeaderProps) {
@@ -29,28 +29,28 @@ function PageHeader({
     <header className="kubeapps-header">
       <div className="kubeapps-header-content">
         <Row>
-          <Column span={7}>
+          <Column>
             <div className="kubeapps-title-section">
               <div className="img-container">{icon && <Icon icon={icon} />}</div>
               <div className="kubeapps-title-block">
                 {titleSize === "lg" ? <h1>{title}</h1> : <h3>{title}</h3>}
-                {helm && (
+                {plugin && (
                   <div className="kubeapps-header-subtitle">
-                    <img src={helmIcon} alt="helm-icon" />
-                    <span>Helm Chart</span>
+                    <img src={getPluginIcon(plugin)} alt="helm-icon" />
+                    <span>{getPluginPackageName(plugin)}</span>
                   </div>
                 )}
                 {operator && (
                   <div className="kubeapps-header-subtitle">
-                    <img src={olmIcon} alt="olm-icon" />
-                    <span>Operator</span>
+                    <img src={getPluginIcon("operator")} alt="olm-icon" />
+                    <span>{getPluginPackageName("operator")}</span>
                   </div>
                 )}
               </div>
               {filter}
             </div>
           </Column>
-          <Column span={5}>
+          <Column>
             <div className="control-buttons">
               {version && <div className="header-version">{version}</div>}
               {buttons ? (

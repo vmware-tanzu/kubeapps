@@ -1,12 +1,17 @@
+import {
+  AvailablePackageReference,
+  InstalledPackageDetail,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { AppRepository } from "shared/AppRepository";
+import PackagesService from "shared/PackagesService";
+import Secret from "shared/Secret";
+import { IAppRepository, NotFoundError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { AppRepository } from "../shared/AppRepository";
-import Chart from "../shared/Chart";
-import Secret from "../shared/Secret";
-import { IAppRepository, NotFoundError } from "../shared/types";
 
 const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);
@@ -51,7 +56,7 @@ beforeEach(() => {
   });
 });
 
-afterEach(jest.resetAllMocks);
+afterEach(jest.restoreAllMocks);
 
 // Regular action creators
 interface ITestCase {
@@ -70,11 +75,6 @@ const actionTestCases: ITestCase[] = [
   { name: "receiveRepos", action: repoActions.receiveRepos, args: [[repo]], payload: [repo] },
   { name: "requestRepo", action: repoActions.requestRepo },
   { name: "receiveRepo", action: repoActions.receiveRepo, args: repo, payload: repo },
-  { name: "clearRepo", action: repoActions.clearRepo, payload: {} },
-  { name: "showForm", action: repoActions.showForm },
-  { name: "hideForm", action: repoActions.hideForm },
-  { name: "resetForm", action: repoActions.resetForm },
-  { name: "submitForm", action: repoActions.submitForm },
   { name: "redirect", action: repoActions.redirect, args: "/foo", payload: "/foo" },
   { name: "redirected", action: repoActions.redirected },
   {
@@ -1008,9 +1008,16 @@ describe("updateRepo", () => {
   });
 });
 
-describe("checkChart", () => {
+describe("findPackageInRepo", () => {
+  const installedPackageDetail = {
+    availablePackageRef: {
+      context: { cluster: "default", namespace: "my-ns" },
+      identifier: "my-repo/my-package",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    },
+  } as InstalledPackageDetail;
   it("dispatches requestRepo and receivedRepo if no error", async () => {
-    Chart.fetchChartVersions = jest.fn();
+    PackagesService.getAvailablePackageVersions = jest.fn();
     const expectedActions = [
       {
         type: getType(repoActions.requestRepo),
@@ -1020,20 +1027,24 @@ describe("checkChart", () => {
         payload: appRepo,
       },
     ];
-
     await store.dispatch(
-      repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
+      repoActions.findPackageInRepo(
+        "default",
+        "other-namespace",
+        "my-repo",
+        installedPackageDetail,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.fetchChartVersions).toBeCalledWith(
-      "default",
-      "other-namespace",
-      "my-repo/my-chart",
-    );
+    expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
+      context: { cluster: "default", namespace: "other-namespace" },
+      identifier: "my-repo/my-package",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    } as AvailablePackageReference);
   });
 
-  it("dispatches requestRepo and errorChart if error fetching", async () => {
-    Chart.fetchChartVersions = jest.fn(() => {
+  it("dispatches requestRepo and createErrorPackage if error fetching", async () => {
+    PackagesService.getAvailablePackageVersions = jest.fn(() => {
       throw new Error();
     });
 
@@ -1042,20 +1053,27 @@ describe("checkChart", () => {
         type: getType(repoActions.requestRepo),
       },
       {
-        type: getType(actions.charts.errorChart),
-        payload: new NotFoundError("Chart my-chart not found in the repository my-repo."),
+        type: getType(actions.packages.createErrorPackage),
+        payload: new NotFoundError(
+          "Package my-repo/my-package not found in the repository other-namespace.",
+        ),
       },
     ];
 
     await store.dispatch(
-      repoActions.checkChart("default", "other-namespace", "my-repo", "my-chart"),
+      repoActions.findPackageInRepo(
+        "default",
+        "other-namespace",
+        "my-repo",
+        installedPackageDetail,
+      ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Chart.fetchChartVersions).toBeCalledWith(
-      "default",
-      "other-namespace",
-      "my-repo/my-chart",
-    );
+    expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
+      context: { cluster: "default", namespace: "other-namespace" },
+      identifier: "my-repo/my-package",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    } as AvailablePackageReference);
   });
 });
 

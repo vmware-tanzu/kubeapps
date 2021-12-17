@@ -55,7 +55,7 @@ Note that we will still be showing the different application Secrets along with 
 
 The current approach is to show one button per action (Upgrade, Delete, Rollback). This list is growing over time (for example, the backend endpoint for running tests is ready to be used). It can also be confusing to show a different list of buttons depending on the release state. One example is the Rollback button that is only rendered if the application has been upgraded. In order to avoid these issues, we can show a clickable menu with the different options, graying out the options not available (potentially showing a tooltip).
 
-We could also differentiate between the configuration and the ugprade actions. While both actions translate to the same helm command (`upgrade`), while configuring the application, the same version will be used and when upgrading, the latest version can be auto-selected.
+We could also differentiate between the configuration and the upgrade actions. While both actions translate to the same helm command (`upgrade`), while configuring the application, the same version will be used and when upgrading, the latest version can be auto-selected.
 
 <img src="./img/configuration-options.png" width="300px">
 

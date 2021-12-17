@@ -14,7 +14,7 @@ export function toFilterRule(
       acc[`$var${i}`] = n;
       return acc;
     }, {});
-    const jq = namesArray.map((v, i) => `.name == $var${i}`).join(" or ");
+    const jq = namesArray.map((_v, i) => `.name == $var${i}`).join(" or ");
     filter = { jq, variables };
   }
   if (exclude) {

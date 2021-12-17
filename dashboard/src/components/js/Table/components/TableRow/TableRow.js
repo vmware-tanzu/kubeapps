@@ -1,7 +1,7 @@
-import React from "react";
-import PropTypes from "prop-types";
-import TableTypes from "../../Table.types";
 import cs from "classnames";
+import PropTypes from "prop-types";
+import React from "react";
+import TableTypes from "../../Table.types";
 
 const TableRow = ({ columns, row, index }) => (
   <tr>

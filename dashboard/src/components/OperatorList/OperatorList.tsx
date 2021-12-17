@@ -11,9 +11,9 @@ import { flatten, get, intersection, uniq, without } from "lodash";
 import { ParsedQs } from "qs";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { IPackageManifest, IPackageManifestStatus, IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { IPackageManifest, IPackageManifestStatus, IStoreState } from "../../shared/types";
-import { escapeRegExp } from "../../shared/utils";
+import { escapeRegExp } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import {
   AUTO_PILOT,
@@ -198,7 +198,7 @@ export default function OperatorList({
         filter={
           <SearchFilter
             key="searchFilter"
-            placeholder="search charts..."
+            placeholder="search operators..."
             onChange={setSearchFilter}
             value={searchFilter}
             submitFilters={submitFilters}
@@ -315,7 +315,7 @@ export default function OperatorList({
                     </div>
                     {installedOperators.length > 0 && (
                       <>
-                        <div className="operatorListContainer">
+                        <div className="operator-list-container">
                           <h3>Installed</h3>
                           <Row>
                             <OperatorItems operators={installedOperators} cluster={cluster} />
@@ -323,7 +323,7 @@ export default function OperatorList({
                         </div>
                       </>
                     )}
-                    <div className="operatorListContainer">
+                    <div className="operator-list-container">
                       <h3>Available Operators</h3>
                       <Row>
                         <OperatorItems operators={availableOperators} cluster={cluster} />

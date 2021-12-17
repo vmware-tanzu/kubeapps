@@ -2,27 +2,28 @@ import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import { push } from "connected-react-router";
+import {
+  InstalledPackageReference,
+  InstalledPackageStatus,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { hapi } from "../../../../shared/hapi/release";
-import StatusAwareButton from "../StatusAwareButton";
+import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 
 interface IDeleteButtonProps {
-  cluster: string;
-  namespace: string;
-  releaseName: string;
-  releaseStatus: hapi.release.IStatus | undefined | null;
+  installedPackageRef: InstalledPackageReference;
+  releaseStatus: InstalledPackageStatus | undefined | null;
+  disabled?: boolean;
 }
 
 export default function DeleteButton({
-  cluster,
-  namespace,
-  releaseName,
+  installedPackageRef,
   releaseStatus,
+  disabled,
 }: IDeleteButtonProps) {
   const [modalIsOpen, setModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -33,11 +34,17 @@ export default function DeleteButton({
   const closeModal = () => setModal(false);
   const handleDeleteClick = async () => {
     setDeleting(true);
-    // Purge the release in any case
-    const deleted = await dispatch(actions.apps.deleteApp(cluster, namespace, releaseName, true));
+    const deleted = await dispatch(actions.apps.deleteInstalledPackage(installedPackageRef));
     setDeleting(false);
     if (deleted) {
-      dispatch(push(app.apps.list(cluster, namespace)));
+      dispatch(
+        push(
+          app.apps.list(
+            installedPackageRef.context?.cluster,
+            installedPackageRef.context?.namespace,
+          ),
+        ),
+      );
     }
   };
 
@@ -48,6 +55,7 @@ export default function DeleteButton({
         onClick={openModal}
         releaseStatus={releaseStatus}
         id="delete-button"
+        disabled={disabled}
       >
         <CdsIcon shape="trash" /> Delete
       </StatusAwareButton>

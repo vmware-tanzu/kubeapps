@@ -1,5 +1,15 @@
-import ResourceRef from "./ResourceRef";
-import { IK8sList, IKubeItem, IResource, ISecret } from "./types";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import carvelIcon from "../icons/carvel.svg";
+import fluxIcon from "../icons/flux.svg";
+import helmIcon from "../icons/helm.svg";
+import olmIcon from "../icons/olm-icon.svg";
+import placeholder from "../placeholder.png";
+
+export enum PluginNames {
+  PACKAGES_HELM = "helm.packages",
+  PACKAGES_FLUX = "fluxv2.packages",
+  PACKAGES_KAPP = "kapp_controller.packages",
+}
 
 export function escapeRegExp(str: string) {
   return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
@@ -33,27 +43,93 @@ export function trimDescription(desc: string): string {
   return desc;
 }
 
-export function flattenResources(
-  refs: ResourceRef[],
-  resources: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> },
-) {
-  const result: Array<IKubeItem<IResource | ISecret>> = [];
-  refs.forEach(ref => {
-    const kubeItem = resources[ref.getResourceURL()];
-    if (kubeItem) {
-      const itemList = kubeItem.item as IK8sList<IResource | ISecret, {}>;
-      if (itemList && itemList.items) {
-        itemList.items.forEach(i => {
-          result.push({
-            isFetching: kubeItem.isFetching,
-            error: kubeItem.error,
-            item: i,
-          });
-        });
-      } else {
-        result.push(kubeItem as IKubeItem<IResource | ISecret>);
-      }
+// Perhaps the logic of these functions should be provided by each plugin itself, namely:
+// i) return its icon; ii) return its user-faced name; iii) return its user-faced package name
+export function getPluginIcon(plugin?: Plugin | string) {
+  // Temporary case while operators are not supported as kubeapps apis plugin
+  if (typeof plugin === "string") {
+    switch (plugin) {
+      case "chart":
+        return helmIcon;
+      case "helm":
+        return helmIcon;
+      case "operator":
+        return olmIcon;
+      default:
+        return placeholder;
     }
-  });
-  return result;
+  } else {
+    switch (plugin?.name) {
+      case PluginNames.PACKAGES_HELM:
+        return helmIcon;
+      case PluginNames.PACKAGES_FLUX:
+        return fluxIcon;
+      case PluginNames.PACKAGES_KAPP:
+        return carvelIcon;
+      default:
+        return placeholder;
+    }
+  }
+}
+
+export function getPluginName(plugin?: Plugin | string) {
+  // Temporary case while operators are not supported as kubeapps apis plugin
+  if (typeof plugin === "string") {
+    switch (plugin) {
+      case "chart":
+        return "Helm";
+      case "helm":
+        return "Helm";
+      case "operator":
+        return "Operator";
+      default:
+        return "unknown plugin";
+    }
+  } else {
+    switch (plugin?.name) {
+      case PluginNames.PACKAGES_HELM:
+        return "Helm";
+      case PluginNames.PACKAGES_FLUX:
+        return "Flux";
+      case PluginNames.PACKAGES_KAPP:
+        return "Carvel";
+      default:
+        return plugin?.name;
+    }
+  }
+}
+
+export function getPluginPackageName(plugin?: Plugin | string) {
+  // Temporary case while operators are not supported as kubeapps apis plugin
+  if (typeof plugin === "string") {
+    switch (plugin) {
+      case "chart":
+        return "Helm Chart";
+      case "helm":
+        return "Helm Chart";
+      case "operator":
+        return "Operator";
+      default:
+        return "unknown plugin package";
+    }
+  } else {
+    switch (plugin?.name) {
+      case PluginNames.PACKAGES_HELM:
+        return "Helm Chart";
+      case PluginNames.PACKAGES_FLUX:
+        return "Helm Chart via Flux";
+      case PluginNames.PACKAGES_KAPP:
+        return "Carvel Package";
+      default:
+        return `${plugin?.name} package`;
+    }
+  }
+}
+
+export function getPluginsRequiringSA(): string[] {
+  return [PluginNames.PACKAGES_FLUX, PluginNames.PACKAGES_KAPP];
+}
+
+export function getPluginsSupportingRollback(): string[] {
+  return [PluginNames.PACKAGES_HELM];
 }

@@ -5,8 +5,7 @@ import { NavLink } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
-
-import { app } from "../../shared/url";
+import { app } from "shared/url";
 import ContextSelector from "./ContextSelector";
 import "./Header.css";
 import Menu from "./Menu";
@@ -46,7 +45,7 @@ function Header() {
       <div className="container">
         <header className="header header-7">
           <NavLink to="/">
-            <div className="kubeapps__logo">
+            <div className="kubeapps-logo">
               <span className="sr-only">Homepage</span>
             </div>
           </NavLink>

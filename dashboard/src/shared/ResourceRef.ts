@@ -1,6 +1,7 @@
 import { filter, matches } from "lodash";
 import { Kube } from "./Kube";
 import { IClusterServiceVersionCRDResource, IK8sList, IKind, IResource } from "./types";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 export function fromCRD(
   r: IClusterServiceVersionCRDResource,
@@ -9,17 +10,21 @@ export function fromCRD(
   namespace: string,
   ownerReference: any,
 ) {
-  const resource = {
+  const apiResourceRef = {
     apiVersion: kind.apiVersion,
     kind: r.kind,
-    metadata: {},
-  } as IResource;
-  const ref = new ResourceRef(resource, cluster, kind.plural, kind.namespaced, namespace);
+  } as APIResourceRef;
+  const ref = new ResourceRef(apiResourceRef, cluster, kind.plural, kind.namespaced, namespace);
   ref.filter = {
     metadata: { ownerReferences: [ownerReference] },
   };
   return ref;
 }
+
+// keyForResourceRef is used to create a key for the redux state tracking resources
+// keyed by references.
+export const keyForResourceRef = (r: APIResourceRef) =>
+  `${r.apiVersion}/${r.kind}/${r.namespace}/${r.name}`;
 
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
 // provides helpers to retrieve the resource URL
@@ -36,18 +41,18 @@ class ResourceRef {
   // Creates a new ResourceRef instance from an existing IResource. Provide
   // defaultNamespace to set if the IResource doesn't specify a namespace.
   constructor(
-    r: IResource,
+    apiRef: APIResourceRef,
     cluster: string,
     plural: string,
     namespaced: boolean,
-    defaultNamespace?: string,
+    releaseNamespace: string,
   ) {
     this.cluster = cluster;
     this.plural = plural;
-    this.apiVersion = r.apiVersion;
-    this.kind = r.kind;
-    this.name = r.metadata.name;
-    this.namespace = namespaced ? r.metadata.namespace || defaultNamespace || "" : "";
+    this.apiVersion = apiRef.apiVersion;
+    this.kind = apiRef.kind;
+    this.name = apiRef.name;
+    this.namespace = namespaced ? apiRef.namespace || releaseNamespace || "" : "";
     this.namespaced = namespaced;
     return this;
   }
@@ -55,17 +60,6 @@ class ResourceRef {
   // Gets a full resource URL for the referenced resource
   public getResourceURL() {
     return Kube.getResourceURL(
-      this.cluster,
-      this.apiVersion,
-      this.plural,
-      this.namespaced,
-      this.namespace,
-      this.name,
-    );
-  }
-
-  public watchResourceURL() {
-    return Kube.watchResourceURL(
       this.cluster,
       this.apiVersion,
       this.plural,
@@ -90,21 +84,6 @@ class ResourceRef {
       return resourceList;
     }
     return resource;
-  }
-
-  // Opens and returns a WebSocket for the requested resource. Note: it is
-  // important that this socket be properly closed when no longer needed. The
-  // returned WebSocket can be attached to an event listener to read data from
-  // the socket.
-  public watchResource() {
-    return Kube.watchResource(
-      this.cluster,
-      this.apiVersion,
-      this.plural,
-      this.namespaced,
-      this.namespace,
-      this.name,
-    );
   }
 }
 

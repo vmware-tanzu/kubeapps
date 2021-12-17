@@ -1,9 +1,6 @@
 import { IIngressSpec, IIngressTLS, IResource } from "shared/types";
 import { IURLItem } from "./IURLItem";
 
-const isURLRegex =
-  /^(https?:\/\/)?((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z-]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i;
-
 // URLs returns the list of URLs obtained from the service status
 function URLs(ingress: IResource): string[] {
   const spec = ingress.spec as IIngressSpec;
@@ -48,6 +45,29 @@ export function GetURLItemFromIngress(ingress: IResource) {
   } as IURLItem;
 }
 
-export function IsURL(url: string): boolean {
-  return isURLRegex.test(url);
+// ShouldGenerateLink returns true if the string is, likely, a URL and
+// it, presumably, does not contain a regular expression.
+// For instance:
+//   http://wordpress.local/example-good should be true
+//   http://wordpress.local/example-bad(/|$)(.*) should be false
+export function ShouldGenerateLink(url: string): boolean {
+  // Check if it is a valid URL, delegating the check to the browser API
+  let builtURL;
+  try {
+    // Note this browser API constructor will accept many invalid URLs (not well-encoded, wrong IP octets, etc.)
+    builtURL = new URL(url);
+  } catch (_) {
+    return false;
+  }
+  if (!(builtURL.protocol === "http:" || builtURL.protocol === "https:")) {
+    return false;
+  }
+
+  // Check if any url fragment includes a character likely used in a regex, that is, is not encoded
+  // c.f. https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
+  // even if it won't catch every possible case, we avoid having an O(x^n) regex
+  const regex = /^[^:/?#[\]@!$&'*+,;=]*$/;
+
+  // If it is an URL but it includes some "ilegal" characters, then return false
+  return !builtURL.pathname.split("/")?.some(p => !regex.test(p));
 }

@@ -1,9 +1,8 @@
 import { CdsIcon } from "@cds/react/icon";
-import React from "react";
-import Input from "../js/Input";
-
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import React from "react";
+import Input from "../js/Input";
 import "./SearchFilter.css";
 
 export interface ISearchFilterProps {

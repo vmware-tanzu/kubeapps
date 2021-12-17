@@ -3,7 +3,6 @@ import { Location } from "history";
 import { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 import { Redirect } from "react-router";
-
 import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.css";
 import OAuthLogin from "./OauthLogin";

@@ -28,8 +28,8 @@ Currently supported integrations:
 
 You can setup environment to test Kubeapps integration with Harbor using the scripts below:
 
-- [setup-kubeapps](../../script/setup-kubeapps.sh).
-- [setup-harbor](../../script/setup-harbor.sh).
+- [setup-kubeapps](./scripts/setup-kubeapps.sh).
+- [setup-harbor](./scripts/setup-harbor.sh).
 
 These scripts will create the necessary namespaces, install the charts, wait for them to be available, and perform any extra action that might be needed. Find detailed information about how to use these scripts running the commands below:
 
@@ -38,7 +38,7 @@ These scripts will create the necessary namespaces, install the charts, wait for
 ./setup-harbor.sh --help
 ```
 
-You can also use the [setup-kubeapps-harbor](../../script/setup-kubeapps-harbor.sh) script which is a wrapper that uses both the scripts mentioned above with some default values:
+You can also use the [setup-kubeapps-harbor](./scripts/setup-kubeapps-harbor.sh) script which is a wrapper that uses both the scripts mentioned above with some default values:
 
 - Install Harbor under the `harbor` namespace.
 - Install Kubeapps under the `kubeapps` namespace.
@@ -46,6 +46,6 @@ You can also use the [setup-kubeapps-harbor](../../script/setup-kubeapps-harbor.
 
 #### Cleaning up the environment
 
-You can use the scripts [delete-kubeapps](../../script/delete-kubeapps.sh) and [delete-harbor](../../script/delete-harbor.sh) to uninstall Kubeapps and Harbor releases from the cluster, respectively. These scripts will also remove the associated namespaces and resources.
+You can use the scripts [delete-kubeapps](./scripts/delete-kubeapps.sh) and [delete-harbor](./scripts/delete-harbor.sh) to uninstall Kubeapps and Harbor releases from the cluster, respectively. These scripts will also remove the associated namespaces and resources.
 
-> Note: you can use the [delete-kubeapps-harbor](../../script/delete-kubeapps-harbor.sh) script to clean up the environment if you used the [setup-kubeapps-harbor](../../script/setup-kubeapps-harbor.sh) script to setup the environment.
+> Note: you can use the [delete-kubeapps-harbor](./scripts/delete-kubeapps-harbor.sh) script to clean up the environment if you used the [setup-kubeapps-harbor](./scripts/setup-kubeapps-harbor.sh) script to setup the environment.

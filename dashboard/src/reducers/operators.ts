@@ -1,10 +1,9 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
-import { getType } from "typesafe-actions";
-
 import { OperatorAction } from "actions/operators";
+import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
+import { IClusterServiceVersion, IPackageManifest, IResource } from "shared/types";
+import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
-import { IClusterServiceVersion, IPackageManifest, IResource } from "../shared/types";
 
 export interface IOperatorsStateError {
   fetch?: Error;

@@ -1,22 +1,20 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsCheckbox } from "@cds/react/checkbox";
 import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
-
 import { CdsInput } from "@cds/react/input";
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
 import { CdsTextarea } from "@cds/react/textarea";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import * as yaml from "js-yaml";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { toFilterRule, toParams } from "shared/jq";
-import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "../../../shared/types";
+import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
-
 interface IAppRepoFormProps {
   onSubmit: (
     name: string,
@@ -51,6 +49,7 @@ const TYPE_OCI = "oci";
 
 export function AppRepoForm(props: IAppRepoFormProps) {
   const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo, secret } = props;
+  const isInstallingRef = useRef(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const [authMethod, setAuthMethod] = useState(AUTH_METHOD_NONE);
@@ -158,6 +157,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
 
   const install = async () => {
+    if (isInstallingRef.current) {
+      // Another installation is ongoing
+      return;
+    }
+    isInstallingRef.current = true;
     let finalHeader = "";
     let dockerRegCreds = "";
     switch (authMethod) {
@@ -219,6 +223,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         onAfterInstall();
       }
     }
+    isInstallingRef.current = false;
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
@@ -264,21 +269,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     setOCIRepositories(e.target.value);
     setValidated(undefined);
   };
-  const handleSkipTLSChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSkipTLSChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setSkipTLS(!skipTLS);
     setValidated(undefined);
   };
-  const handlePassCredentialsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePassCredentialsChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setPassCredentials(!passCredentials);
     setValidated(undefined);
   };
   const handleFilterNames = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setFilterNames(e.target.value);
   };
-  const handleFilterRegex = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilterRegex = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterRegex(!filterRegex);
   };
-  const handleFilterExclude = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilterExclude = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterExclude(!filterExclude);
   };
 
@@ -293,7 +298,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       if (parsedMessage.code && parsedMessage.message) {
         message = `Code: ${parsedMessage.code}. Message: ${parsedMessage.message}`;
       }
-    } catch (e) {
+    } catch (e: any) {
       // Not a json message
     }
     return message;
@@ -347,7 +352,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
         <CdsRadioGroup layout="vertical">
           <label>Repository Type</label>
-          <CdsControlMessage>Select the chart storage type.</CdsControlMessage>
+          <CdsControlMessage>Select the package storage type.</CdsControlMessage>
           <CdsRadio>
             <label>Helm Repository</label>
             <input
@@ -603,7 +608,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       {namespace === kubeappsNamespace && (
         <p>
           <strong>NOTE:</strong> This App Repository will be created in the "{kubeappsNamespace}"
-          namespace and charts will be available in all namespaces for installation.
+          namespace and packages will be available in all namespaces for installation.
         </p>
       )}
       {validationError && (
@@ -622,7 +627,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         </Alert>
       )}
       <div className="margin-t-xl">
-        <CdsButton disabled={validating} onClick={install}>
+        <CdsButton type="submit" disabled={validating}>
           {validating
             ? "Validating..."
             : `${repo ? "Update" : "Install"} Repo ${validated === false ? "(force)" : ""}`}
