@@ -72,7 +72,7 @@ require (
 	github.com/urfave/negroni v1.0.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.30.0
 	github.com/vmware-tanzu/carvel-vendir v0.24.0
-	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
 	google.golang.org/grpc v1.43.0
@@ -86,7 +86,7 @@ require (
 	k8s.io/cli-runtime v0.22.4
 	k8s.io/client-go v1.5.2
 	k8s.io/klog/v2 v2.30.0
-	k8s.io/kubernetes v1.22.4
+	k8s.io/kubernetes v1.23.1
 	oras.land/oras-go v0.4.0
 	sigs.k8s.io/yaml v1.3.0
 )
