@@ -24,16 +24,14 @@ Please open an issue to track any initiative on the roadmap of Kubeapps (usually
 
 The following table includes the current roadmap for Kubeapps. If you have any questions or would like to contribute to Kubeapps, please contact by Slack on the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) to discuss with our team. If you don't know where to start, we are always looking for contributors that will help us reduce technical, automation, and documentation debt. Please take the timelines & dates as proposals and goals. Priorities and requirements change based on community feedback, roadblocks encountered, community contributions, etc. If you depend on a specific item, we encourage you to contact by Slack, or help us deliver that feature by contributing to Kubeapps.
 
-Last Updated: August 2021
+Last Updated: December 2021
 Theme|Description|Timeline|
 |--|--|--|
-|Pluggable architecture |Kubeapps moves forward to define a plugin interface as an extensible way to expand Kubeapps to support new packaging formats such as declarative Flux resources, Carvel bundles and other future packaging formats. |Q3 - 2021|
-|Kubeapps APIs service |Consistent API for interacting with packages of different formats in a unified way.  |Q3 - 2021|
-|UI integration for pluggable API|The UI interacts with a single service (Kubeapps APIs service) to present generic interactions with packages to the user, with format-specific content only where necessary.|Q3 - 2021|
-|direct-helm plugin |plugin-based support for different packaging systems. The direct-Helm plugin aims at just replacing the current Kubeapps logic (mostly implemented by the assetsvc) implemented within a plugin. |Q3 - 2021|
-|flux plugin |plugin-based support for different packaging systems, moving across our existing Helm support as well as adding fluxv2 support. |Q3 - 2021|
-|Update documentation |Reorganizing and updating Kubeapps docs (including new architecture and plugins); Kubeapps website |Exploring/Ongoing|
-|operators plugin |The operators plugin aims at just replacing the current support for operators in Kubeapps implemented within a plugin. |Exploring/Ongoing|
-|kapp-controller plugin |plugin-based support for different packaging systems, moving across our existing Helm support as well as adding Carvel packages support. |Exploring/Ongoing|
-|Improve CI/CD | Explore a replacement for CircleCI (Github actions or any other alternative); Upgrade tests; |Exploring/Ongoing|
-|Improve auditability |Design an interface which receives audit events for resources we're interested in and use the built-in support for auditing in Kubernetes (https://kubernetes.io/docs/tasks/debug-application-cluster/audit/) so that the cluster is configured to send the events. |Exploring/Ongoing|
+|Kubernetes API Service |Currently when an app is installed on the cluster, our AppView gets the data about the related k8s resources from the k8s api server. We want to replace that with an API call which allows getting the (relevant) resources for a particular installed package (only). |Q4 - 2021|
+|flux plugin |Plugin-based support for different packaging systems, moving across our existing Helm support as well as adding fluxv2 support. |Q4 - 2021|
+|kapp-controller plugin |Plugin-based support for different packaging systems, moving across our existing Helm support as well as adding Carvel packages support. |Q4 - 2021|
+|Package repository API |Define a package repositories API with similar core interface to packages API. |Q4 - 2021|
+|Improve CI/CD and Release process | Explore a replacement for CircleCI (Github actions or any other alternative); Upgrade tests; |Q4 -2021|
+|Update documentation |Reorganizing and updating Kubeapps docs (including new architecture and plugins); New Kubeapps website |Ongoing|
+|operators plugin |The operators plugin aims at just replacing the current support for operators in Kubeapps implemented within a plugin. |Backlog|
+|Improve auditability |Design an interface which receives audit events for resources we're interested in and use the built-in support for auditing in Kubernetes (https://kubernetes.io/docs/tasks/debug-application-cluster/audit/) so that the cluster is configured to send the events. |Backlog|
