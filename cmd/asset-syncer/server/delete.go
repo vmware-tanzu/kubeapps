@@ -19,8 +19,8 @@ package server
 import (
 	"fmt"
 
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	log "k8s.io/klog/v2"
 )
 
@@ -29,7 +29,7 @@ func Delete(serveOpts Config, args []string) error {
 		return fmt.Errorf("exactly one argument: [REPO NAME] (got %v)", len(args))
 	}
 
-	dbConfig := datastore.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
+	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
 	kubeappsNamespace := serveOpts.KubeappsNamespace
 	manager, err := newManager(dbConfig, kubeappsNamespace)
 	if err != nil {

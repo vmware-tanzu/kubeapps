@@ -39,9 +39,9 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/ghodss/yaml"
 	"github.com/itchyny/gojq"
-	"github.com/kubeapps/common/datastore"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
@@ -119,7 +119,7 @@ type assetManager interface {
 	insertFiles(chartID string, files models.ChartFiles) error
 }
 
-func newManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
+func newManager(config dbutils.Config, kubeappsNamespace string) (assetManager, error) {
 	return newPGManager(config, kubeappsNamespace)
 }
 

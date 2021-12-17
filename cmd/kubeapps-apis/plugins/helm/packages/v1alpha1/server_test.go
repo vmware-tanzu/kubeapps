@@ -28,7 +28,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -84,7 +83,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) 
 }
 
 func TestGetClient(t *testing.T) {
-	dbConfig := datastore.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
+	dbConfig := dbutils.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
 	manager, err := utils.NewPGManager(dbConfig, globalPackagingNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)

@@ -356,10 +356,14 @@ context("when apps available", () => {
 
 context("when custom resources available", () => {
   const state = deepClone(initialState) as IStoreState;
-  const cr = { kind: "KubeappsCluster", metadata: { name: "foo-cluster" } } as any;
+  const cr = {
+    kind: "KubeappsCluster",
+    metadata: { name: "foo-cluster", namespace: "foo-ns" },
+  } as any;
   const csv = {
     metadata: {
       name: "foo",
+      namespace: "foo-ns",
     },
     spec: {
       customresourcedefinitions: {
@@ -384,7 +388,7 @@ context("when custom resources available", () => {
     const wrapper = mountWrapper(getStore(state), <AppList />);
     const itemList = wrapper.find(CustomResourceListItem);
     expect(itemList).toExist();
-    expect(itemList.key()).toBe("foo-cluster");
+    expect(itemList.key()).toBe("foo-cluster_foo-ns");
   });
 
   it("filters out items", () => {

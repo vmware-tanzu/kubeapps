@@ -321,7 +321,7 @@ export function getResources(
         try {
           const csvResources = await Operators.listResources(
             cluster,
-            namespace,
+            csv.metadata.namespace,
             `${group}/${crd.version}`,
             plural,
           );

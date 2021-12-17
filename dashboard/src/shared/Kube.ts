@@ -120,6 +120,9 @@ export class Kube {
     namespace: string,
   ) {
     try {
+      if (!cluster) {
+        return false;
+      }
       const { data } = await axiosWithAuth.post<{ allowed: boolean }>(url.backend.canI(cluster), {
         group,
         resource,
