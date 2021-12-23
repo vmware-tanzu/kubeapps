@@ -42,7 +42,7 @@
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "modern-normalize": "^1.1.0",
-    "prop-types": "^15.7.2",
+    "prop-types": "^15.8.0",
     "protobufjs": "^6.11.2",
     "qs": "^6.10.2",
     "react": "^17.0.2",
