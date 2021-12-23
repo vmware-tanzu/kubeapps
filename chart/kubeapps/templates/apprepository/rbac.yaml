@@ -130,6 +130,7 @@ metadata:
   name: "kubeapps:{{ .Release.Namespace }}:apprepositories-read"
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: apprepository
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
     {{- if .Values.commonLabels }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" . ) | nindent 4 }}
     {{- end }}
@@ -174,6 +175,7 @@ metadata:
   name: "kubeapps:{{ .Release.Namespace }}:apprepositories-write"
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: apprepository
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
     {{- if .Values.commonLabels }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" . ) | nindent 4 }}
     {{- end }}
