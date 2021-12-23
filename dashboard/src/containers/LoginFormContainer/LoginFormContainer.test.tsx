@@ -32,6 +32,7 @@ const makeStore = (
     loaded: true,
     kubeappsCluster: "",
     kubeappsNamespace: "",
+    globalReposNamespace: "",
     appVersion: "",
     oauthLogoutURI: "",
     clusters: [],

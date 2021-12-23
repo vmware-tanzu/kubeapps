@@ -71,6 +71,7 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.DbURL, "database-url", "localhost", "Database URL")
 	c.Flags().StringVar(&serveOpts.DbUsername, "database-user", "root", "Database user")
 	c.Flags().StringVar(&serveOpts.DbName, "database-name", "charts", "Database name")
+	c.Flags().StringVar(&serveOpts.GlobalReposNamespace, "global-repos-namespace", "kubeapps-repos-global", "Namespace for global repos")
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -167,17 +167,18 @@ export const fetchRepos = (
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config: { kubeappsNamespace },
+      config: { globalReposNamespace },
     } = getState();
     try {
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(currentCluster, namespace);
-      if (!listGlobal || namespace === kubeappsNamespace) {
+      if (!listGlobal || namespace === globalReposNamespace) {
         dispatch(receiveRepos(repos.items));
       } else {
+        // Global repos need to be added
         let totalRepos = repos.items;
-        dispatch(requestRepos(kubeappsNamespace));
-        const globalRepos = await AppRepository.list(currentCluster, kubeappsNamespace);
+        dispatch(requestRepos(globalReposNamespace));
+        const globalRepos = await AppRepository.list(currentCluster, globalReposNamespace);
         // Avoid adding duplicated repos: if two repos have the same uid, filter out
         totalRepos = uniqBy(totalRepos.concat(globalRepos.items), "metadata.uid");
         dispatch(receiveRepos(totalRepos));

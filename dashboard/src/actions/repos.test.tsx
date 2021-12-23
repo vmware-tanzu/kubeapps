@@ -19,6 +19,7 @@ const mockStore = configureMockStore([thunk]);
 let store: any;
 const appRepo = { spec: { resyncRequests: 10000 } };
 const kubeappsNamespace = "kubeapps-namespace";
+const globalReposNamespace = "kubeapps-repos-global";
 
 const safeYAMLTemplate = `
 spec:
@@ -30,7 +31,7 @@ spec:
 
 beforeEach(() => {
   store = mockStore({
-    config: { kubeappsNamespace },
+    config: { kubeappsNamespace, globalReposNamespace },
     clusters: {
       currentCluster: "default",
       clusters: {
@@ -233,7 +234,7 @@ describe("fetchRepos", () => {
       },
       {
         type: getType(repoActions.requestRepos),
-        payload: kubeappsNamespace,
+        payload: globalReposNamespace,
       },
       {
         type: getType(repoActions.receiveRepos),
@@ -270,7 +271,7 @@ describe("fetchRepos", () => {
       },
       {
         type: getType(repoActions.requestRepos),
-        payload: kubeappsNamespace,
+        payload: globalReposNamespace,
       },
       {
         type: getType(repoActions.receiveRepos),
@@ -303,7 +304,7 @@ describe("fetchRepos", () => {
     const expectedActions = [
       {
         type: getType(repoActions.requestRepos),
-        payload: kubeappsNamespace,
+        payload: globalReposNamespace,
       },
       {
         type: getType(repoActions.receiveRepos),
@@ -311,7 +312,7 @@ describe("fetchRepos", () => {
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(kubeappsNamespace, true));
+    await store.dispatch(repoActions.fetchRepos(globalReposNamespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

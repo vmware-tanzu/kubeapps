@@ -35,8 +35,8 @@ func Sync(serveOpts Config, version string, args []string) error {
 	}
 
 	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
-	kubeappsNamespace := serveOpts.KubeappsNamespace
-	manager, err := newManager(dbConfig, kubeappsNamespace)
+	globalReposNamespace := serveOpts.GlobalReposNamespace
+	manager, err := newManager(dbConfig, globalReposNamespace)
 	if err != nil {
 		return fmt.Errorf("Error: %v", err)
 	}

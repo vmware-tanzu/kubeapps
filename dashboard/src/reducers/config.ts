@@ -11,6 +11,7 @@ export const initialState: IConfigState = {
   loaded: false,
   kubeappsCluster: "",
   kubeappsNamespace: "",
+  globalReposNamespace: "",
   appVersion: "",
   authProxyEnabled: false,
   oauthLoginURI: "",

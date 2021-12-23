@@ -16,7 +16,7 @@ import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
 
 const {
   clusters: { currentCluster, clusters },
-  config: { kubeappsNamespace },
+  config: { globalReposNamespace },
 } = initialState;
 const namespace = clusters[currentCluster].currentNamespace;
 
@@ -45,7 +45,7 @@ it("fetches repos and imagePullSecrets", () => {
   expect(actions.repos.fetchRepos).toHaveBeenCalledWith(namespace, true);
 });
 
-it("fetches repos only from the kubeappsNamespace", () => {
+it("fetches repos only from the globalReposNamespace", () => {
   mountWrapper(
     getStore({
       clusters: {
@@ -53,14 +53,14 @@ it("fetches repos only from the kubeappsNamespace", () => {
         clusters: {
           [currentCluster]: {
             ...initialState.clusters.clusters[currentCluster],
-            currentNamespace: kubeappsNamespace,
+            currentNamespace: globalReposNamespace,
           },
         },
       },
     }),
     <AppRepoList />,
   );
-  expect(actions.repos.fetchRepos).toHaveBeenCalledWith(kubeappsNamespace);
+  expect(actions.repos.fetchRepos).toHaveBeenCalledWith(globalReposNamespace);
 });
 
 it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
@@ -128,7 +128,7 @@ describe("global and namespaced repositories", () => {
   const globalRepo = {
     metadata: {
       name: "bitnami",
-      namespace: kubeappsNamespace,
+      namespace: globalReposNamespace,
     },
     spec: {},
   };
@@ -194,7 +194,7 @@ describe("global and namespaced repositories", () => {
           clusters: {
             [currentCluster]: {
               ...initialState.clusters.clusters[currentCluster],
-              currentNamespace: kubeappsNamespace,
+              currentNamespace: globalReposNamespace,
             },
           },
         },
