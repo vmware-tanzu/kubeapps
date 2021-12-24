@@ -276,6 +276,7 @@ fi
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
+GLOBAL_REPOS_NS=kubeapps-repos-global
 
 if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
@@ -319,7 +320,7 @@ done
 # Clean up existing jobs
 kubectl delete jobs -n kubeapps --all
 # Trigger update of the bitnami repository
-kubectl patch apprepositories.kubeapps.com -n kubeapps bitnami -p='[{"op": "replace", "path": "/spec/resyncRequests", "value":1}]' --type=json
+kubectl patch apprepositories.kubeapps.com -n ${GLOBAL_REPOS_NS} bitnami -p='[{"op": "replace", "path": "/spec/resyncRequests", "value":1}]' --type=json
 k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=bitnami
 info "Job apprepositories.kubeapps.com/repo-name=bitnami ready"
 

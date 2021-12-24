@@ -719,7 +719,7 @@ apprepository:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
-  ## @param apprepository.globalReposNamespace Default namespace for initial repos
+  ## @param apprepository.globalReposNamespaceSuffix Suffix for the namespace of global repos
   ##
   globalReposNamespaceSuffix: repos-global
   ## @param apprepository.initialRepos [array] Initial chart repositories to configure
