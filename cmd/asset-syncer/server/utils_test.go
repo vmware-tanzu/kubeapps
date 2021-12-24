@@ -1347,6 +1347,15 @@ func TestUnescapeChartsData(t *testing.T) {
 				{Name: "test/foo bar"},
 			},
 		},
+		{
+			"chart with encoded chars in name",
+			[]models.Chart{
+				{Name: "foo%23bar%2ebar"},
+			},
+			[]models.Chart{
+				{Name: "foo#bar.bar"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
@@ -1365,11 +1374,25 @@ func TestHelmRepoAppliesUnescape(t *testing.T) {
 	repoIndexYAML := string(repoIndexYAMLBytes)
 	expectedCharts := []models.Chart{
 		{
+			ID:            "test/chart$with$chars",
+			Name:          "chart$with$chars",
+			Repo:          expectedRepo,
+			Maintainers:   []chart.Maintainer{},
+			ChartVersions: []models.ChartVersion{{AppVersion: "v1"}},
+		},
+		{
 			ID:            "test/chart with spaces",
 			Name:          "chart with spaces",
 			Repo:          expectedRepo,
 			Maintainers:   []chart.Maintainer{},
 			ChartVersions: []models.ChartVersion{{AppVersion: "v1"}},
+		},
+		{
+			ID:            "test/chart#with#hashes",
+			Name:          "chart#with#hashes",
+			Repo:          expectedRepo,
+			Maintainers:   []chart.Maintainer{},
+			ChartVersions: []models.ChartVersion{{AppVersion: "v3"}},
 		},
 		{
 			ID:            "test/chart-without-spaces",
