@@ -2462,10 +2462,10 @@
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.1.tgz#20f18294f797f2209b5f65c8e3b5c8e8261d127c"
   integrity sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==
 
-"@types/swagger-ui-react@^4.1.0":
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-4.1.0.tgz#80f8ca30955848920a4a4105fb4104873a7e319e"
-  integrity sha512-KFbNpwNQHPVu/OEiADU4ZaWdb8SPCIX1J/fy1me3RnSKTxDxxncPzCM8jP/KE3i8Qt9Q8feaiT5tJ749aecdzA==
+"@types/swagger-ui-react@^4.1.1":
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-4.1.1.tgz#6ae70f5b966941eb6655d79d1114d9b9ef69a980"
+  integrity sha512-tZqX/nShvNqtJ7WAfwOK7mphK1jqmEre4mUJh+R1RyCFVODsMTG4My2nqjXpSm8NfhVGmbFH3giD17AXmgsaJw==
   dependencies:
     "@types/react" "*"
 
@@ -14256,10 +14256,10 @@ ts-proto-descriptors@^1.2.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.95.0:
-  version "1.95.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.95.0.tgz#cf75a06de4d0232ed9db406b1e6e75f56423e546"
-  integrity sha512-lZVZEbevtqs0g+8+Gd/Cp9xNmxWSTxMAAts8dREwQeDKAfddxAWV7Y8ZXtDuiHP9i0W0+Kz0ZvB8HFMYd02AZg==
+ts-proto@^1.95.1:
+  version "1.95.1"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.95.1.tgz#16068f128fb3bb7bcb7515d6cacf84ed14a819b4"
+  integrity sha512-Dt+1n0U4clSYxCmFX76AgokFvoEo0erNVXy5+1udgJ4WpulyeU1zow7Hfn36Kp9ldlphrlsQEjni7REJnbuzVg==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
