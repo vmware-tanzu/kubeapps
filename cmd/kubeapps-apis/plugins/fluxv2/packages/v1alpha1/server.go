@@ -81,6 +81,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			OnModifyFunc: s.onModifyRepo,
 			OnGetFunc:    s.onGetRepo,
 			OnDeleteFunc: s.onDeleteRepo,
+			OnResyncFunc: s.onResync,
 		}
 		if repoCache, err := cache.NewNamespacedResourceWatcherCache(
 			"repoCache", repoCacheConfig, redisCli, stopCh); err != nil {

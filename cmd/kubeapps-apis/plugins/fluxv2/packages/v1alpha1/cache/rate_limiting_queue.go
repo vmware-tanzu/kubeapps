@@ -32,12 +32,12 @@ type RateLimitingInterface interface {
 	workqueue.RateLimitingInterface
 	Name() string
 	ExpectAdd(item string)
-	WaitUntilGone(item string)
+	WaitUntilForgotten(item string)
 }
 
 func NewRateLimitingQueue(name string, debugEnabled bool) RateLimitingInterface {
 	if debugEnabled {
-		log.Infof("+NewRateLimitingQueue[%s]", name)
+		log.Infof("+NewRateLimitingQueue(%s)", name)
 	}
 	queue := newQueue(name, debugEnabled)
 	return &rateLimitingType{
@@ -85,9 +85,9 @@ func (q *rateLimitingType) ExpectAdd(item string) {
 	q.queue.expectAdd(item)
 }
 
-func (q *rateLimitingType) WaitUntilGone(item string) {
+func (q *rateLimitingType) WaitUntilForgotten(item string) {
 	// this neeeds to take into account both the rateLimiter and the queue
-	q.queue.waitUntilGone(item, q.rateLimiter)
+	q.queue.waitUntilForgotten(item, q.rateLimiter)
 }
 
 func newQueue(name string, debugEnabled bool) *Type {
@@ -157,7 +157,7 @@ func (q *Type) Add(item interface{}) {
 
 		q.queue = append(q.queue, itemstr)
 		if q.debugEnabled {
-			log.Infof("[%s]: Add(%s) expected: %s, dirty: %s, processing %s, queue: %s", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+			log.Infof("[%s]: Add(%s) [expected: %s, dirty: %s, processing %s, queue: %s]", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
 		}
 		q.cond.Broadcast()
 	}
@@ -192,7 +192,7 @@ func (q *Type) Get() (item interface{}, shutdown bool) {
 			q.processing.Insert(itemstr)
 			q.dirty.Delete(itemstr)
 			if q.debugEnabled {
-				log.Infof("[%s]: Get() returning %s expected: %s, dirty: %s, processing %s, queue: %s", q.name, itemstr, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+				log.Infof("[%s]: Get() returning [%s], [expected: %s, dirty: %s, processing %s, queue: %s]", q.name, itemstr, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
 			}
 			return itemstr, false
 		}
@@ -206,6 +206,10 @@ func (q *Type) Done(item interface{}) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
+	if q.shuttingDown {
+		return
+	}
+
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
 		runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
@@ -215,7 +219,7 @@ func (q *Type) Done(item interface{}) {
 			q.queue = append(q.queue, itemstr)
 		}
 		if q.debugEnabled {
-			log.Infof("[%s]: Done(%s) expected: %s, dirty: %s, processing %s, queue: %s", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+			log.Infof("[%s]: Done(%s) [expected: %s, dirty: %s, processing %s, queue: %s]", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
 		}
 		q.cond.Broadcast()
 	}
@@ -229,6 +233,10 @@ func (q *Type) ShutDown() {
 	defer q.cond.L.Unlock()
 
 	q.shuttingDown = true
+	if q.debugEnabled {
+		log.Infof("[%s]: Queue shutdown, sizes [empty=%d, dirty=%d, processing=%d, queue=%d]",
+			q.name, q.expected.Len(), q.dirty.Len(), q.processing.Len(), len(q.queue))
+	}
 	q.cond.Broadcast()
 }
 
@@ -251,26 +259,28 @@ func (q *Type) expectAdd(item string) {
 
 	q.expected.Insert(item)
 	if q.debugEnabled {
-		log.Infof("[%s]: expectAdd(%s) expected: %s, dirty: %s, processing %s, queue: %s", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+		log.Infof("[%s]: expectAdd(%s) [expected: %s, dirty: %s, processing %s, queue: %s]", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
 	}
 }
 
 // this func is the whole reason for the existence of this queue
-func (q *Type) waitUntilGone(item string, rateLimiter workqueue.RateLimiter) {
+func (q *Type) waitUntilForgotten(item string, rateLimiter workqueue.RateLimiter) {
 	if q.debugEnabled {
-		log.Infof("[%s]: +waitUntilGone(%s)", q.name, item)
+		log.Infof("[%s]: +waitUntilForgotten(%s)", q.name, item)
 	}
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
+
 	if q.debugEnabled {
-		defer log.Infof("[%s]: -waitUntilGone(%s)", q.name, item)
+		defer log.Infof("[%s]: -waitUntilForgotten(%s)", q.name, item)
 	}
 
 	for q.expected.Has(item) || q.dirty.Has(item) || q.processing.Has(item) {
 		q.cond.Wait()
 
 		if q.debugEnabled {
-			log.Infof("[%s]: waitUntilGone expected: %s, dirty: %s, processing %s, queue: %s", q.name, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+			log.Infof("[%s]: waitUntilForgotten(%s) [expected: %s, dirty: %s, processing %s, queue: %s]",
+				q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
 		}
 	}
 }

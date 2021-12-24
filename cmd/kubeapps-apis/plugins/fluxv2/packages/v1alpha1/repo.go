@@ -406,6 +406,14 @@ func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
 	return true, nil
 }
 
+func (s *repoCacheCallSite) onResync() error {
+	if s.chartCache != nil {
+		return s.chartCache.OnResync()
+	} else {
+		return nil
+	}
+}
+
 // TODO (gfichtenholt) low priority: don't really like the fact that these 4 lines of code
 // basically repeat same logic as NamespacedResourceWatcherCache.fromKey() but can't
 // quite come up with with a more elegant alternative right now

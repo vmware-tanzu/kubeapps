@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
@@ -39,6 +40,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
@@ -616,7 +618,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 		s.repoCache.ExpectAdd(key)
 		watcher.Modify(repo)
-		s.repoCache.WaitUntilGone(key)
+		s.repoCache.WaitUntilForgotten(key)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -735,9 +737,9 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			s.chartCache.ExpectAdd(k)
 		}
 		watcher.Delete(repo)
-		s.repoCache.WaitUntilGone(repoKey)
+		s.repoCache.WaitUntilForgotten(repoKey)
 		for _, k := range chartCacheKeys {
-			s.chartCache.WaitUntilGone(k)
+			s.chartCache.WaitUntilForgotten(k)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -829,6 +831,148 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+		}
+	})
+}
+
+// test that causes RetryWatcher to stop and the cache needs to resync
+// this test is focused on the repo cache work queue
+// I have yet to write a similar test for the chart cache, which is proving very laborsome
+func TestGetAvailablePackageSummariesAfterCacheResync(t *testing.T) {
+	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
+		// start with an empty server that only has an empty repo cache
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, nil, nil)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		// first, I'd like to fill up the work queue with a whole bunch of work items
+		repos := []*unstructured.Unstructured{}
+		mapReposCached := make(map[string][]byte)
+
+		const MAX_REPOS = 10
+		for i := 0; i < MAX_REPOS; i++ {
+			repoName := fmt.Sprintf("bitnami-%d", i)
+
+			ts, repo, err := newRepoWithIndex("testdata/valid-index.yaml", repoName, "default", nil, "")
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer ts.Close()
+
+			// the GETs and SETs will be done by background worker upon processing of Add event in
+			// NamespaceResourceWatcherCache.onAddOrModify()
+			key, byteArray, err := s.redisKeyValueForRepo(repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			mapReposCached[key] = byteArray
+			// Here I am setting up the expectations for what redis would find and set the
+			// cache entries for repos *in the absense* of any errors.
+			// However, in the goroutine below, I will asynchronously
+			// introduce an error as soon as the first repo's been synced. So
+			// we must take that into account and only set expectations for a subset of
+			// total repos - those repos that would be processed by the time.
+			// The exact number of repos that are processed by the time Error/Resync
+			// happens (and therefore mock needs to set up the correct expectations)
+			// has been found through a LOT of trial and error. I know I need to do better
+			// just haven't quite figured out how yet.
+			if i < 5 {
+				mock.ExpectGet(key).RedisNil()
+				redisMockSetValueForRepo(mock, key, byteArray)
+			}
+			repos = append(repos, repo)
+		}
+
+		for _, r := range repos {
+			if _, err = dyncli.Resource(repositoriesGvr).Namespace("default").
+				Create(context.Background(), r, metav1.CreateOptions{}); err != nil {
+				t.Fatalf("%v", err)
+			}
+		}
+
+		for i, r := range repos {
+			t.Logf("==> Adding repo [%d]...", i)
+			watcher.Add(r)
+		}
+		t.Logf("==> Sent Add events for all [%d] repositories", len(repos))
+		lock := sync.Mutex{}
+		lock.Lock()
+
+		go func() {
+			// wait until *SOME* of the added repos have been fully processed
+			s.repoCache.WaitUntilForgotten("helmrepositories:default:bitnami-0")
+
+			// now we will simulate a transient HTTP error in the watcher
+			mock.ExpectFlushDB().SetVal("OK")
+			// *SOME* of the repos have already been cached into redis at this point
+			// via the repo cache backround worker triggered by the Add event in the
+			// main goroutine. Those SET calls will need to be repeated due to
+			// populateWith() which will re-populate the cache from scratch based on
+			// the current state in k8s (all MAX_REPOS repos).
+
+			// TODO: how to find how exactly which repos were processed at this point,
+			// i.e. exactly how many redis SET commands were performed before FLUSHDB?
+
+			for key, byteArray := range mapReposCached {
+				redisMockSetValueForRepo(mock, key, byteArray)
+			}
+
+			if len := s.repoCache.ExpectResync(); len == 0 {
+				t.Errorf("ERROR: Expected non-empty repo work queue!")
+			} else {
+				watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+				t.Logf("Waiting until resync is complete, work queues: repo: [%d] items...", len)
+				if len = s.repoCache.WaitUntilResyncComplete(); len == 0 {
+					t.Errorf("Expected non-empty work queue!")
+				}
+				t.Logf("Done with resync, [%d] items were in the work queue...", len)
+			}
+			lock.Unlock()
+		}()
+
+		lock.Lock()
+
+		// in case the side go-routine had failures
+		if t.Failed() {
+			t.FailNow()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		// at this point I'd like to make sure that GetAvailablePackageSummaries returns
+		// packages from all repos
+		for key, byteArray := range mapReposCached {
+			mock.ExpectGet(key).SetVal(string(byteArray))
+		}
+
+		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
+			&corev1.GetAvailablePackageSummariesRequest{})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		// we need to make sure that response contains packages from all existing repositories
+		// regardless whether they're in the cache or not
+		expected := sets.String{}
+		for i := 0; i < len(repos); i++ {
+			repo := fmt.Sprintf("bitnami-%d", i)
+			expected.Insert(repo)
+		}
+		for _, s := range resp.AvailablePackageSummaries {
+			id := strings.Split(s.AvailablePackageRef.Identifier, "/")
+			expected.Delete(id[0])
+		}
+
+		if expected.Len() != 0 {
+			t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
+				expected.List())
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
 		}
 	})
 }
@@ -1128,21 +1272,25 @@ func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtim
 	return cs.redisMockSetValueForRepo(mock, repo)
 }
 
-func (cs *repoCacheCallSite) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
+func (cs *repoCacheCallSite) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(repo); err != nil {
 		return key, nil, err
 	}
-	if key, bytes, err = cs.redisKeyValueForRepo(repo); err != nil {
+	if key, byteArray, err = cs.redisKeyValueForRepo(repo); err != nil {
 		mock.ExpectDel(key).SetVal(0)
 		return key, nil, err
 	} else {
-		mock.ExpectSet(key, bytes, 0).SetVal("OK")
-		mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
-		return key, bytes, nil
+		redisMockSetValueForRepo(mock, key, byteArray)
+		return key, byteArray, nil
 	}
 }
 
-func (s *Server) redisKeyValueForRepo(r runtime.Object) (key string, bytes []byte, err error) {
+func redisMockSetValueForRepo(mock redismock.ClientMock, key string, byteArray []byte) {
+	mock.ExpectSet(key, byteArray, 0).SetVal("OK")
+	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
+}
+
+func (s *Server) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
 	cs := repoCacheCallSite{
 		clientGetter: s.clientGetter,
 		chartCache:   nil,
@@ -1150,7 +1298,7 @@ func (s *Server) redisKeyValueForRepo(r runtime.Object) (key string, bytes []byt
 	return cs.redisKeyValueForRepo(r)
 }
 
-func (cs *repoCacheCallSite) redisKeyValueForRepo(r runtime.Object) (key string, bytes []byte, err error) {
+func (cs *repoCacheCallSite) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {

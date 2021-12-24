@@ -38,16 +38,18 @@ import (
 
 const (
 	// max number of retries due to transient errors
-	ChartCacheMaxRetries = 5
+	MaxChartCacheRetries = 5
 	// number of background workers to process work queue items
-	ChartCacheMaxWorkers = 2
+	MaxChartCacheWorkers = 2
 )
 
-// unlike NamespacedResourceWatcherCache this is not a general purpose cache meant to
-// be re-used. It is written specifically for one purpose of caching helm chart details
-// and has ties into the internals of repo and chart.go.
+var (
+	// pretty much a constant, init pattern similar to that of asset-syncer
+	DebugChartCacheQueue = os.Getenv("DEBUG_CHART_CACHE_QUEUE") == "true"
+)
 
 type ChartCache struct {
+	// the redis client
 	redisCli *redis.Client
 
 	// queue is a rate limited work queue. This is used to queue work to be
@@ -86,18 +88,16 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 		return nil, fmt.Errorf("server not configured with redis client")
 	}
 
-	debugQueue := os.Getenv("DEBUG_CHART_CACHE_QUEUE") == "true"
-
 	c := ChartCache{
 		redisCli:   redisCli,
-		queue:      NewRateLimitingQueue(name, debugQueue),
+		queue:      NewRateLimitingQueue(name, DebugChartCacheQueue),
 		processing: k8scache.NewStore(chartCacheKeyFunc),
 	}
 
 	// each loop iteration will launch a single worker that processes items on the work
 	//  queue as they come in. runWorker will loop until "something bad" happens.
 	// The .Until will then rekick the worker after one second
-	for i := 0; i < ChartCacheMaxWorkers; i++ {
+	for i := 0; i < MaxChartCacheWorkers; i++ {
 		// let's give each worker a unique name - easier to debug
 		name := fmt.Sprintf("%s-worker-%d", c.queue.Name(), i)
 		fn := func() {
@@ -273,6 +273,15 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 	return nil
 }
 
+func (c *ChartCache) OnResync() error {
+	log.Infof("+OnResync(), queue size: [%d]", c.queue.Len())
+	defer log.Info("-OnResync()")
+
+	// TODO (gifchtenholt) do we want to reset c.queue and c.processing here?
+	// this requires some thought
+	return nil
+}
+
 // this is what we store in the cache for each cached repo
 // all struct fields are capitalized so they're exported by gob encoding
 type chartCacheEntryValue struct {
@@ -293,8 +302,7 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 
 	chart, ok := entry.(chartCacheStoreEntry)
 	if !ok {
-		err = fmt.Errorf("unexpected object in cache store: [%s]", reflect.TypeOf(entry))
-		return err
+		return fmt.Errorf("unexpected object in cache store: [%s]", reflect.TypeOf(entry))
 	}
 
 	if chart.deleted {
@@ -308,7 +316,7 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 		// so before embarking on expensive operation such as getting chart tarball
 		// via HTTP/S, first see if the cache already's got this entry
 		if keysExist, err := c.redisCli.Exists(c.redisCli.Context(), key).Result(); err != nil {
-			log.Errorf("Error checking whether key [%s] exists in redis: %+v", key, err)
+			return fmt.Errorf("error checking whether key [%s] exists in redis: %+v", key, err)
 		} else {
 			log.Infof("Redis [EXISTS %s]: %d", key, keysExist)
 			if keysExist == 1 {
@@ -411,7 +419,7 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *c
 			c.processing.Add(*entry)
 			c.queue.Add(key)
 			// now need to wait until this item has been processed by runWorker().
-			c.queue.WaitUntilGone(key)
+			c.queue.WaitUntilForgotten(key)
 			return c.FetchForOne(key)
 		}
 	}
@@ -442,8 +450,8 @@ func (c *ChartCache) ExpectAdd(key string) {
 }
 
 // this func is used by unit tests only
-func (c *ChartCache) WaitUntilGone(key string) {
-	c.queue.WaitUntilGone(key)
+func (c *ChartCache) WaitUntilForgotten(key string) {
+	c.queue.WaitUntilForgotten(key)
 }
 
 func (c *ChartCache) Shutdown() {

@@ -30,7 +30,6 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -157,7 +156,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					ts = httptest.NewUnstartedServer(handler)
 					tlsConf, err := httpclient.NewClientTLS(pub, priv, ca)
 					if err != nil {
-						t.Fatal(errors.Wrap(err, "can't create TLS config for client"))
+						t.Fatalf("%v", err)
 					}
 					ts.TLS = tlsConf
 					ts.StartTLS()

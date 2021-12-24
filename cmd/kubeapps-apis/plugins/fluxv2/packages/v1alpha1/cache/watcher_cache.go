@@ -42,8 +42,15 @@ import (
 )
 
 const (
-	// max number of retries due to transient errors
+	// max number of retries to process one cache entry due to transient errors
 	NamespacedResourceWatcherCacheMaxRetries = 5
+	// max number of attempts to resync before giving up
+	NamespacedResourceWatcherCacheMaxResyncBackoff = 2
+)
+
+var (
+	// pretty much a constant, init pattern similar to that of asset-syncer
+	DebugWatcherCacheQueue = os.Getenv("DEBUG_WATCHER_CACHE_QUEUE") == "true"
 )
 
 // a type of cache that is based on watching for changes to specified kubernetes resources.
@@ -90,6 +97,7 @@ type ValueGetterFunc func(key string, cachedValue interface{}) (rawValue interfa
 type ValueAdderFunc func(key string, obj map[string]interface{}) (cachedValue interface{}, setValue bool, err error)
 type ValueModifierFunc func(key string, obj map[string]interface{}, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
 type KeyDeleterFunc func(key string) (deleteValue bool, err error)
+type ResyncFunc func() error
 
 type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
@@ -116,8 +124,10 @@ type NamespacedResourceWatcherCacheConfig struct {
 	// stored in the cache (via onAdd/onModify hooks) to an object that the call site understands
 	// and wishes to be returned as part of response to various flavors of 'fetch' call
 	OnGetFunc ValueGetterFunc
-	// OnDeleteFunc hook is called on the plug-in when the corresponding object is deleted in k8s cluster
+	// OnDeleteFunc hook is called when the corresponding object is deleted in k8s cluster
 	OnDeleteFunc KeyDeleterFunc
+	// OnResync hook is called when the cache is resynced
+	OnResyncFunc ResyncFunc
 }
 
 func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client, stopCh <-chan struct{}) (*NamespacedResourceWatcherCache, error) {
@@ -127,16 +137,18 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		return nil, fmt.Errorf("server not configured with redis Client")
 	} else if config.ClientGetter == nil {
 		return nil, fmt.Errorf("server not configured with clientGetter")
-	} else if config.OnAddFunc == nil || config.OnModifyFunc == nil || config.OnDeleteFunc == nil || config.OnGetFunc == nil {
+	} else if config.OnAddFunc == nil ||
+		config.OnModifyFunc == nil ||
+		config.OnDeleteFunc == nil ||
+		config.OnGetFunc == nil ||
+		config.OnResyncFunc == nil {
 		return nil, fmt.Errorf("server not configured with expected cache hooks")
 	}
-
-	debugQueue := os.Getenv("DEBUG_WATCHER_CACHE_QUEUE") == "true"
 
 	c := NamespacedResourceWatcherCache{
 		config:     config,
 		redisCli:   redisCli,
-		queue:      NewRateLimitingQueue(name, debugQueue),
+		queue:      NewRateLimitingQueue(name, DebugWatcherCacheQueue),
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
@@ -145,10 +157,19 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		return nil, err
 	}
 
-	// let's do the initial re-sync and creating a new RetryWatcher here so
+	// let's do the initial sync and creating a new RetryWatcher here so
 	// bootstrap errors, if any, are flagged early synchronously and the
 	// caller does not end up with a partially initialized cache
-	resourceVersion, err := c.resync()
+
+	// TODO (gfichtenholt) put the initial resync and the following waitLoop in a
+	// wait.BackoffUntil(...) construct,
+	// so it keeps on retrying until stopCh is closed. That way I can get rid of
+	// code inside waitLoop() that does simple retries via time.Sleep()
+
+	// RetryWatcher will take care of re-starting the watcher if the underlying channel
+	// happens to close for some reason, as well as recover from other failures
+	// at the same time ensuring not to replay events that have been processed
+	watcher, err := c.resyncAndNewRetryWatcher(true)
 	if err != nil {
 		return nil, err
 	}
@@ -158,19 +179,7 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 	// then rekick the worker after one second
 	// We should be able to launch multiple workers, and the workqueue will make sure that
 	// only a single worker works on an item with a given key.
-	// Test that actually is the case
 	go wait.Until(c.runWorker, time.Second, stopCh)
-
-	// TODO (gfichtenholt) possibly put the following in a wait.Until(...) construct,
-	// so it keeps on retrying until stopCh is closed...
-
-	// RetryWatcher will take care of re-starting the watcher if the underlying channel
-	// happens to close for some reason, as well as recover from other failures
-	// at the same time ensuring not to replay events that have been processed
-	watcher, err := watchutil.NewRetryWatcher(resourceVersion, &c)
-	if err != nil {
-		return nil, err
-	}
 
 	go c.watchLoop(watcher, stopCh)
 	return &c, nil
@@ -220,16 +229,15 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	log.V(4).Infof("+processNextWorkItem()")
 	defer log.V(4).Infof("-processNextWorkItem()")
 
-	obj, shutdown := c.queue.Get()
+	var obj interface{}
+	var shutdown bool
+	if obj, shutdown = c.queue.Get(); shutdown {
+		return false
+	}
 
 	// ref https://go101.org/article/concurrent-synchronization-more.html
 	c.resyncCond.L.(*sync.RWMutex).RLock()
 	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
-
-	if shutdown {
-		log.Info("Shutting down...")
-		return false
-	}
 
 	// We call Done here so the queue knows we have finished
 	// processing this item. We also must remember to call Forget if we
@@ -266,41 +274,73 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher, stopCh <-chan struct{}) {
 	for {
 		shutdown := c.processWatchEvents(watcher.ResultChan(), stopCh)
-		// if we are here, that means the RetryWatcher has stopped processing events
-		// due to what it thinks is an un-retryable error (such as HTTP 410 GONE),
-		// i.e. a pretty bad/unsual situation, we'll need to resync and restart the watcher
+
+		// If we are here, that means either:
+		// a) stopCh was closed (i.e. graceful shutdown of the pod) OR
+		// b) the RetryWatcher has stopped processing events due to what it thinks is an
+		//    un-retryable error (such as HTTP 410 GONE),
+		// i.e. a pretty bad/unsual situation, we'll need to resync and create a new watcher
+		// In either case we should reset this resource cache work queue and
+		// chart cache work queue in here, because in case of (b) we are going to completely
+		// re-build both caches from scratch according to latest state in k8s and thus any
+		// current pending work is unnecessary and would be duplication of effort
+
 		watcher.Stop()
 		// this should close the watcher channel
 		<-watcher.Done()
 
 		if shutdown {
-			log.Infof("[%s]: shutting down...", c.queue.Name())
 			return
 		}
 
 		// per https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes
-		log.Infof("Current watcher stopped. Will resync/create a new RetryWatcher...")
-		ok := false
-		// max_backoff is 2^8 = 256 seconds
-		for i := 0; i < 8 && !ok; i++ {
-			if resourceVersion, err := c.resync(); err != nil {
-				runtime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
-			} else if watcher, err = watchutil.NewRetryWatcher(resourceVersion, c); err != nil {
-				runtime.HandleError(fmt.Errorf("failed to create a new RetryWatcher due to: %v", err))
-			} else {
-				ok = true
-				break
-			}
-			waitTime := math.Pow(2, float64(i))
-			log.Infof("Waiting [%d] seconds before retry...", int(waitTime))
-			time.Sleep(time.Duration(waitTime) * time.Second)
-		}
-		if !ok {
+		log.Infof("Current watcher stopped. Will try resync/create a new RetryWatcher...")
+
+		var err error
+		if watcher, err = c.resyncAndNewRetryWatcher(false); err != nil {
 			// this is a catastrophic error for the watcher. We've tried to create a new watcher a number
 			// of times and failed.
-			runtime.HandleError(fmt.Errorf("watch loop has been stopped after all retries were exhausted"))
+
+			err = fmt.Errorf(
+				"[%s]: Watch loop has been stopped after [%d] retries were exhausted, last error: %v",
+				c.queue.Name(), NamespacedResourceWatcherCacheMaxRetries, err)
+			// yes, I really want this to panic. Something is seriously wrong
 			// possibly restarting plugin/kubeapps-apis server is needed...
+			defer runtime.Must(err)
+			break
 		}
+	}
+}
+
+func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool) (watcher *watchutil.RetryWatcher, eror error) {
+	c.resyncCond.L.Lock()
+	defer func() {
+		c.expectResync = false
+		c.resyncCond.L.Unlock()
+		c.resyncCond.Broadcast()
+	}()
+
+	var err error
+	var resourceVersion string
+
+	// max backoff is 2^(NamespacedResourceWatcherCacheMaxResyncBackoff) seconds
+	for i := 0; i < NamespacedResourceWatcherCacheMaxResyncBackoff; i++ {
+		if resourceVersion, err = c.resync(bootstrap); err != nil {
+			runtime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
+		} else if watcher, err = watchutil.NewRetryWatcher(resourceVersion, c); err != nil {
+			runtime.HandleError(fmt.Errorf("failed to create a new RetryWatcher due to: %v", err))
+		} else {
+			break
+		}
+		waitTime := math.Pow(2, float64(i))
+		log.Infof("Waiting [%d] seconds before retrying to resync()...", int(waitTime))
+		time.Sleep(time.Duration(waitTime) * time.Second)
+	}
+
+	if err != nil {
+		return nil, err
+	} else {
+		return watcher, nil
 	}
 }
 
@@ -318,16 +358,28 @@ func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watc
 	return dynamicClient.Resource(c.config.Gvr).Namespace(apiv1.NamespaceAll).Watch(ctx, options)
 }
 
-func (c *NamespacedResourceWatcherCache) resync() (string, error) {
-	c.resyncCond.L.Lock()
-	defer func() {
-		c.expectResync = false
-		c.resyncCond.L.Unlock()
-		c.resyncCond.Broadcast()
-		log.Infof("-resync()")
-	}()
+// it is expected that the caller will perform lock/unlock of c.resyncCond as there maybe
+// multiple calls to resync() due to transient failure
+func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) {
+	log.Infof("+resync(), queue size: [%d]", c.queue.Len())
+	defer log.Info("-resync()")
 
-	log.Infof("+resync()")
+	// Sanity check: I'd like to make sure this is called within the context
+	// of resync, i.e. resync.Cond.L is locked by this goroutine.
+	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
+		return "", status.Errorf(codes.Internal, "Invalid state of the cache in resync()")
+	}
+
+	if !bootstrap {
+		// no need to do this on bootstrap, queue should be empty
+		log.Infof("Shutting down work queue [%s]...", c.queue.Name())
+		c.queue.ShutDown()
+		c.queue = NewRateLimitingQueue(c.queue.Name(), DebugWatcherCacheQueue)
+
+		if err := c.config.OnResyncFunc(); err != nil {
+			return "", status.Errorf(codes.Internal, "invocation of [onResync] failed due to: %v", err)
+		}
+	}
 
 	// clear the entire cache in one call
 	if result, err := c.redisCli.FlushDB(c.redisCli.Context()).Result(); err != nil {
@@ -368,8 +420,10 @@ func (c *NamespacedResourceWatcherCache) resync() (string, error) {
 
 	// re-populate the cache with current state from k8s
 	if err = c.populateWith(listItems.Items); err != nil {
-		// for now, just log the error(s)
-		log.Errorf("populateWith failed due to: %+v", err)
+		// we don't want to fail the whole re-sync process and trigger retries
+		// if, for example, just one of the repos fails to sync to cache, so
+		// for now log the error(s)
+		runtime.HandleError(fmt.Errorf("populateWith failed due to: %+v", err))
 	}
 	return rv, nil
 }
@@ -472,6 +526,8 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 	if checkOldValue {
 		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
 			return fmt.Errorf("onAddOrModify() failed to get value for key [%s] in cache due to: %v", key, err)
+		} else {
+			log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(oldValue))
 		}
 	}
 
@@ -710,7 +766,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 			for job := range requestChan {
 				// see GetForOne() for explanation of what is happening below
 				c.queue.Add(job.key)
-				c.queue.WaitUntilGone(job.key)
+				c.queue.WaitUntilForgotten(job.key)
 				value, err := c.fetchForOne(job.key)
 				responseChan <- computeValueJobResult{job, value, err}
 			}
@@ -775,13 +831,13 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 
 // This func is only called in the context of a resync() operation,
 // after emptying the cache via FLUSHDB, i.e. on startup or after
-// some major (network) failure.
+// some major (network) failure. It writes directly into redis cache, bypassing the work queue.
 // Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
 func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) error {
-	// Sanity check I'd like to make sure this is called within the context
-	// of resync, i.e. resync.Cond.L is locked by this goroutine. How?
+	// Sanity check: I'd like to make sure this is called within the context
+	// of resync, i.e. resync.Cond.L is locked by this goroutine.
 	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
 		return status.Errorf(codes.Internal, "Invalid state of the cache in populateWith()")
 	}
@@ -863,7 +919,7 @@ func (c *NamespacedResourceWatcherCache) GetForOne(key string) (interface{}, err
 		// But to get back the original data we have to decode it via config.onGet().
 		// It'd nice if there was a shortcut and skip the cycles spent decoding data from
 		// []byte to repoCacheEntry
-		c.queue.WaitUntilGone(key)
+		c.queue.WaitUntilForgotten(key)
 		// yes, there is a small time window here between after we are done with WaitUntilDoneWith
 		// and the following fetch, where another concurrent goroutine may force the newly added
 		// cache entry out, but that is an edge case and I am willing to overlook it for now
@@ -880,24 +936,35 @@ func (c *NamespacedResourceWatcherCache) ExpectAdd(key string) {
 }
 
 // this func is used by unit tests only
-func (c *NamespacedResourceWatcherCache) WaitUntilGone(key string) {
-	c.queue.WaitUntilGone(key)
+// TODO (gfichtenholt) I think there maybe a problem here in resync() scenario
+//     when the value of c.queue changes
+func (c *NamespacedResourceWatcherCache) WaitUntilForgotten(key string) {
+	c.queue.WaitUntilForgotten(key)
 }
 
 // this func is used by unit tests only
-func (c *NamespacedResourceWatcherCache) ExpectResync() {
+// returns the number of items in the work queue at the time of the call
+func (c *NamespacedResourceWatcherCache) ExpectResync() int {
 	c.resyncCond.L.Lock()
 	defer c.resyncCond.L.Unlock()
 
+	len := c.queue.Len()
 	c.expectResync = true
+	return len
 }
 
 // this func is used by unit tests only
-func (c *NamespacedResourceWatcherCache) WaitUntilResyncComplete() {
+// returns the number of items in the work queue at the start of the call
+// By the end of the call the work queue should be empty
+func (c *NamespacedResourceWatcherCache) WaitUntilResyncComplete() int {
 	c.resyncCond.L.Lock()
 	defer c.resyncCond.L.Unlock()
+
+	len := c.queue.Len()
 
 	for c.expectResync {
 		c.resyncCond.Wait()
 	}
+
+	return len
 }
