@@ -308,7 +308,10 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 	if chart.deleted {
 		// TODO: (gfichtenholt) DEL has the capability to delete multiple keys in one
 		// atomic operation. It would be nice to come up with a way to utilize that here
-		// the problem is the queue is designed to work on one item at a time
+		// the problem is the queue is designed to work on one item at a time. I think to
+		// be able to do this, we need to add a .GetAll() method to RateLimitingInterface,
+		// which will be a little tricky to make sure to get the logic right t be atomic and
+		// also when *SOME* of the items fail and some succeed
 		keysRemoved, _ := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		log.Infof("Redis [DEL %s]: %d", key, keysRemoved)
 	} else {

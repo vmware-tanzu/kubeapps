@@ -89,8 +89,8 @@ type NamespacedResourceWatcherCache struct {
 	//    no readers are allowed
 	resyncCond *sync.Cond
 
-	// used exclusively by unit tests
-	expectResync bool
+	// bi-directional channel used exclusively by unit tests
+	resyncCh chan int
 }
 
 type ValueGetterFunc func(key string, cachedValue interface{}) (rawValue interface{}, err error)
@@ -160,11 +160,6 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 	// let's do the initial sync and creating a new RetryWatcher here so
 	// bootstrap errors, if any, are flagged early synchronously and the
 	// caller does not end up with a partially initialized cache
-
-	// TODO (gfichtenholt) put the initial resync and the following waitLoop in a
-	// wait.BackoffUntil(...) construct,
-	// so it keeps on retrying until stopCh is closed. That way I can get rid of
-	// code inside waitLoop() that does simple retries via time.Sleep()
 
 	// RetryWatcher will take care of re-starting the watcher if the underlying channel
 	// happens to close for some reason, as well as recover from other failures
@@ -239,10 +234,10 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	c.resyncCond.L.(*sync.RWMutex).RLock()
 	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
-	// We call Done here so the queue knows we have finished
-	// processing this item. We also must remember to call Forget if we
+	// We call Done() here so the queue knows we have finished
+	// processing this item. We also must remember to call Forget() if we
 	// do not want this work item being re-queued. For example, we do
-	// not call Forget if a transient error occurs, instead the item is
+	// not call Forget() if a transient error occurs, instead the item is
 	// put back on the queue and attempted again after a back-off
 	// period.
 	defer c.queue.Done(obj)
@@ -273,7 +268,7 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 
 func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher, stopCh <-chan struct{}) {
 	for {
-		shutdown := c.processWatchEvents(watcher.ResultChan(), stopCh)
+		shutdown := c.processEvents(watcher.ResultChan(), stopCh)
 
 		// If we are here, that means either:
 		// a) stopCh was closed (i.e. graceful shutdown of the pod) OR
@@ -315,7 +310,10 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool) (watcher *watchutil.RetryWatcher, eror error) {
 	c.resyncCond.L.Lock()
 	defer func() {
-		c.expectResync = false
+		if c.resyncCh != nil {
+			close(c.resyncCh)
+			c.resyncCh = nil
+		}
 		c.resyncCond.L.Unlock()
 		c.resyncCond.Broadcast()
 	}()
@@ -374,6 +372,14 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 		// no need to do this on bootstrap, queue should be empty
 		log.Infof("Shutting down work queue [%s]...", c.queue.Name())
 		c.queue.ShutDown()
+		if c.resyncCh != nil {
+			c.resyncCh <- c.queue.Len()
+			// now lets wait for the client (unit test code) that it's ok to proceed
+			// to re-build the whole cache. Presumably the client will have set up the
+			// right expectations for redis mock. Don't care what the client sends,
+			// just need an indication its ok to proceed
+			<-c.resyncCh
+		}
 		c.queue = NewRateLimitingQueue(c.queue.Name(), DebugWatcherCacheQueue)
 
 		if err := c.config.OnResyncFunc(); err != nil {
@@ -429,7 +435,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 }
 
 // this is loop that waits for new events and processes them when they happen
-func (c *NamespacedResourceWatcherCache) processWatchEvents(watchCh <-chan watch.Event, stopCh <-chan struct{}) (shutttingDown bool) {
+func (c *NamespacedResourceWatcherCache) processEvents(watchCh <-chan watch.Event, stopCh <-chan struct{}) (shuttingDown bool) {
 	for {
 		select {
 		case event, ok := <-watchCh:
@@ -444,7 +450,7 @@ func (c *NamespacedResourceWatcherCache) processWatchEvents(watchCh <-chan watch
 				log.Warning("Channel was closed unexpectedly")
 				return false
 			}
-			c.processOneWatchEvent(event)
+			c.processOneEvent(event)
 
 		case <-stopCh:
 			return true
@@ -452,7 +458,7 @@ func (c *NamespacedResourceWatcherCache) processWatchEvents(watchCh <-chan watch
 	}
 }
 
-func (c *NamespacedResourceWatcherCache) processOneWatchEvent(event watch.Event) {
+func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 	if event.Type == "" {
 		// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 		return
@@ -470,7 +476,7 @@ func (c *NamespacedResourceWatcherCache) processOneWatchEvent(event watch.Event)
 			}
 		}
 	case watch.Error:
-		// will let caller (RetryWatcher) deal with it
+		// will let RetryWatcher deal with it, which will close the channel
 		return
 
 	default:
@@ -943,28 +949,28 @@ func (c *NamespacedResourceWatcherCache) WaitUntilForgotten(key string) {
 }
 
 // this func is used by unit tests only
-// returns the number of items in the work queue at the time of the call
-func (c *NamespacedResourceWatcherCache) ExpectResync() int {
+// returns birectional channel where the number of items in the work queue will be sent
+// at the time of the resync() call and guarantees no more work items will be processed
+// until resync() finishes
+func (c *NamespacedResourceWatcherCache) ExpectResync() (chan int, error) {
 	c.resyncCond.L.Lock()
 	defer c.resyncCond.L.Unlock()
 
-	len := c.queue.Len()
-	c.expectResync = true
-	return len
+	if c.resyncCh != nil {
+		return nil, status.Errorf(codes.Internal, "ExpectSync() already called")
+	} else {
+		c.resyncCh = make(chan int, 1)
+		return c.resyncCh, nil
+	}
 }
 
 // this func is used by unit tests only
-// returns the number of items in the work queue at the start of the call
 // By the end of the call the work queue should be empty
-func (c *NamespacedResourceWatcherCache) WaitUntilResyncComplete() int {
+func (c *NamespacedResourceWatcherCache) WaitUntilResyncComplete() {
 	c.resyncCond.L.Lock()
 	defer c.resyncCond.L.Unlock()
 
-	len := c.queue.Len()
-
-	for c.expectResync {
+	for c.resyncCh != nil {
 		c.resyncCond.Wait()
 	}
-
-	return len
 }

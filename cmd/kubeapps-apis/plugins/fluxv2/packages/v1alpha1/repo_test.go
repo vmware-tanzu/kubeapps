@@ -798,16 +798,27 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
+		resyncCh, err := s.repoCache.ExpectResync()
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
 		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
 		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
 		// background: a FLUSHDB followed by a SET
+		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+
+		// wait for the server to start the resync process. Don't care how big the work queue is
+		<-resyncCh
+
+		// set up expectations
 		mock.ExpectFlushDB().SetVal("OK")
 		if _, _, err := s.redisMockSetValueForRepo(mock, repo); err != nil {
 			t.Fatalf("%+v", err)
 		}
 
-		s.repoCache.ExpectResync()
-		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+		// tell server its okay to proceed
+		resyncCh <- 0
 		s.repoCache.WaitUntilResyncComplete()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -849,6 +860,7 @@ func TestGetAvailablePackageSummariesAfterCacheResync(t *testing.T) {
 		// first, I'd like to fill up the work queue with a whole bunch of work items
 		repos := []*unstructured.Unstructured{}
 		mapReposCached := make(map[string][]byte)
+		keysInOrder := []string{}
 
 		const MAX_REPOS = 10
 		for i := 0; i < MAX_REPOS; i++ {
@@ -867,20 +879,9 @@ func TestGetAvailablePackageSummariesAfterCacheResync(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 			mapReposCached[key] = byteArray
-			// Here I am setting up the expectations for what redis would find and set the
-			// cache entries for repos *in the absense* of any errors.
-			// However, in the goroutine below, I will asynchronously
-			// introduce an error as soon as the first repo's been synced. So
-			// we must take that into account and only set expectations for a subset of
-			// total repos - those repos that would be processed by the time.
-			// The exact number of repos that are processed by the time Error/Resync
-			// happens (and therefore mock needs to set up the correct expectations)
-			// has been found through a LOT of trial and error. I know I need to do better
-			// just haven't quite figured out how yet.
-			if i < 5 {
-				mock.ExpectGet(key).RedisNil()
-				redisMockSetValueForRepo(mock, key, byteArray)
-			}
+			keysInOrder = append(keysInOrder, key)
+			mock.ExpectGet(key).RedisNil()
+			redisMockSetValueForRepo(mock, key, byteArray)
 			repos = append(repos, repo)
 		}
 
@@ -891,42 +892,50 @@ func TestGetAvailablePackageSummariesAfterCacheResync(t *testing.T) {
 			}
 		}
 
-		for i, r := range repos {
-			t.Logf("==> Adding repo [%d]...", i)
+		for _, r := range repos {
 			watcher.Add(r)
 		}
-		t.Logf("==> Sent Add events for all [%d] repositories", len(repos))
 		lock := sync.Mutex{}
 		lock.Lock()
 
 		go func() {
-			// wait until *SOME* of the added repos have been fully processed
+			// wait until the first of the added repos have been fully processed
 			s.repoCache.WaitUntilForgotten("helmrepositories:default:bitnami-0")
 
-			// now we will simulate a transient HTTP error in the watcher
-			mock.ExpectFlushDB().SetVal("OK")
-			// *SOME* of the repos have already been cached into redis at this point
-			// via the repo cache backround worker triggered by the Add event in the
-			// main goroutine. Those SET calls will need to be repeated due to
-			// populateWith() which will re-populate the cache from scratch based on
-			// the current state in k8s (all MAX_REPOS repos).
-
-			// TODO: how to find how exactly which repos were processed at this point,
-			// i.e. exactly how many redis SET commands were performed before FLUSHDB?
-
-			for key, byteArray := range mapReposCached {
-				redisMockSetValueForRepo(mock, key, byteArray)
+			// pretty delicate dance between the server and the client below using
+			// bi-directional channels in order to make sure the right expectations
+			// are set at the right time.
+			resyncCh, err := s.repoCache.ExpectResync()
+			if err != nil {
+				t.Errorf("%v", err)
 			}
 
-			if len := s.repoCache.ExpectResync(); len == 0 {
+			// now we will simulate a HTTP 410 Gone error in the watcher
+			watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+			// we need to wait until server can guarantee no more Redis SETs after
+			// this until resync() kicks in
+			len := <-resyncCh
+			if len == 0 {
 				t.Errorf("ERROR: Expected non-empty repo work queue!")
 			} else {
-				watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
-				t.Logf("Waiting until resync is complete, work queues: repo: [%d] items...", len)
-				if len = s.repoCache.WaitUntilResyncComplete(); len == 0 {
-					t.Errorf("Expected non-empty work queue!")
+				mock.ExpectFlushDB().SetVal("OK")
+				// *SOME* of the repos have already been cached into redis at this point
+				// via the repo cache backround worker triggered by the Add event in the
+				// main goroutine. Those SET calls will need to be repeated due to
+				// populateWith() which will re-populate the cache from scratch based on
+				// the current state in k8s (all MAX_REPOS repos).
+				for i := 0; i <= (MAX_REPOS - len); i++ {
+					redisMockSetValueForRepo(mock, keysInOrder[i], mapReposCached[keysInOrder[i]])
 				}
-				t.Logf("Done with resync, [%d] items were in the work queue...", len)
+				// now we can signal to the server it's ok to proceed
+				resyncCh <- 0
+				s.repoCache.WaitUntilResyncComplete()
+				// we do ClearExpect() here to avoid things like
+				// "there is a remaining expectation which was not matched:
+				// [get helmrepositories:default:bitnami-4]"
+				// which might happened because the for loop in the main goroutine may have done a GET
+				// right before resync() kicked in. We don't care about that
+				mock.ClearExpect()
 			}
 			lock.Unlock()
 		}()
