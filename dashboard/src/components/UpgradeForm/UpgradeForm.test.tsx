@@ -226,6 +226,9 @@ it("hides the PackageVersionSelector in the PackageHeader", () => {
       selectedDetails: availablePkgDetail,
       isFetching: false,
     } as IAppState,
+    packages: {
+      selected: selectedPkg,
+    } as IPackageState,
   };
   const wrapper = mountWrapper(
     getStore({ ...state }),
