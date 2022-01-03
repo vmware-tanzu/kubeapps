@@ -189,27 +189,6 @@ describe("it behaves like a loading component", () => {
 });
 
 it("fetches the available versions", () => {
-  const state = {
-    ...defaultStore,
-    apps: {
-      selected: installedPkgDetail,
-      selectedDetails: availablePkgDetail,
-      isFetching: false,
-    } as IAppState,
-  };
-  mountWrapper(
-    getStore({ ...state }),
-    <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
-    </MemoryRouter>,
-  );
-
-  expect(UpgradeForm);
-});
-
-it("fetches the available versions", () => {
   const getAvailablePackageVersions = jest.fn();
   PackagesService.getAvailablePackageVersions = getAvailablePackageVersions;
 
@@ -239,6 +218,27 @@ it("fetches the available versions", () => {
   } as AvailablePackageReference);
 });
 
+it("hides the PackageVersionSelector in the PackageHeader", () => {
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: installedPkgDetail,
+      selectedDetails: availablePkgDetail,
+      isFetching: false,
+    } as IAppState,
+  };
+  const wrapper = mountWrapper(
+    getStore({ ...state }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
+  );
+  expect(wrapper.find(PackageVersionSelector)).toHaveLength(1);
+  expect(wrapper.find(PackageHeader)).toHaveProp("hideVersionsSelector", true);
+});
+
 it("does not fetch the current package version if there is already one in the state", () => {
   const getAvailablePackageDetail = jest.fn();
   PackagesService.getAvailablePackageDetail = getAvailablePackageDetail;
@@ -253,7 +253,7 @@ it("does not fetch the current package version if there is already one in the st
       selected: selectedPkg,
     } as IPackageState,
   };
-  const wrapper = mountWrapper(
+  mountWrapper(
     getStore({ ...state }),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
@@ -261,8 +261,7 @@ it("does not fetch the current package version if there is already one in the st
       </Route>
     </MemoryRouter>,
   );
-  expect(wrapper.find(PackageVersionSelector)).toHaveLength(1);
-  expect(wrapper.find(PackageHeader)).toHaveProp("hideVersionsSelector", true);
+  expect(getAvailablePackageDetail).not.toHaveBeenCalled();
 });
 
 describe("renders an error", () => {
