@@ -73,7 +73,7 @@
     "yaml": "^1.10.2"
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.5.0",
+    "@formatjs/cli": "^4.6.0",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@types/enzyme": "^3.10.11",
     "@types/enzyme-adapter-react-16": "^1.0.6",
