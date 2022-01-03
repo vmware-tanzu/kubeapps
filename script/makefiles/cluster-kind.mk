@@ -31,10 +31,10 @@ cluster-kind: ${CLUSTER_CONFIG}
 # reuse the key and cert from the apiserver, which already includes v3 extensions
 # for the correct alternative name (using the IP address).
 devel/dex.crt:
-	docker cp kubeapps-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
+	docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
 
 devel/dex.key:
-	docker cp kubeapps-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
+	docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
 
 ${ADDITIONAL_CLUSTER_CONFIG}: devel/dex.crt
 	kind create cluster \
