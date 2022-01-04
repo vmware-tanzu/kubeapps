@@ -38,8 +38,8 @@ func (s *Server) CreateSecret(ctx context.Context, r *v1alpha1.CreateSecretReque
 
 	_, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, &core.Secret{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
+			Kind:       core.ResourceSecrets.String(),
+			APIVersion: core.SchemeGroupVersion.WithResource(core.ResourceSecrets.String()).String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
