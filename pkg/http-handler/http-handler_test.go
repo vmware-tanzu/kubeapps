@@ -73,7 +73,7 @@ func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError
 	}
 }
 
-func TestCreateListAppRepositories(t *testing.T) {
+func TestListAppRepositories(t *testing.T) {
 	testCases := []struct {
 		name         string
 		appRepos     []*v1alpha1.AppRepository
@@ -112,6 +112,46 @@ func TestCreateListAppRepositories(t *testing.T) {
 	}
 }
 
+func TestGetAppRepository(t *testing.T) {
+	testCases := []struct {
+		name         string
+		appRepo      *v1alpha1.AppRepository
+		err          error
+		expectedCode int
+	}{
+		{
+			name:         "it should return a 200 if the repo is found",
+			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"}},
+			expectedCode: 200,
+		},
+		{
+			name:         "it should return a 404 if not found",
+			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
+			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
+			expectedCode: 404,
+		},
+		{
+			name:         "it should return a 403 when forbidden",
+			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
+			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
+			expectedCode: 403,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			getAppFunc := GetAppRepository(&kube.FakeHandler{AppRepos: []*v1alpha1.AppRepository{tc.appRepo}, Err: tc.err})
+			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/foo", strings.NewReader(""))
+			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps", "name": "foo"})
+
+			response := httptest.NewRecorder()
+			getAppFunc(response, req)
+
+			if got, want := response.Code, tc.expectedCode; got != want {
+				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+		})
+	}
+}
 func TestCreateAppRepository(t *testing.T) {
 	testCases := []struct {
 		name         string

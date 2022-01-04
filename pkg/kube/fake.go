@@ -23,6 +23,8 @@ import (
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // FakeHandler represents a fake Handler for testing purposes
@@ -85,12 +87,15 @@ func (c *FakeHandler) DeleteAppRepository(name, namespace string) error {
 
 // GetAppRepository fake
 func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRepository, error) {
+	if c.Err != nil {
+		return nil, c.Err
+	}
 	for _, r := range c.AppRepos {
 		if r.Name == name && r.Namespace == namespace {
 			return r, nil
 		}
 	}
-	return nil, fmt.Errorf("not found")
+	return nil, k8sErrors.NewNotFound(schema.GroupResource{}, "foo")
 }
 
 // GetNamespaces fake
