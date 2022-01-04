@@ -17,6 +17,7 @@ export const initialState: IConfigState = {
   oauthLogoutURI: "",
   authProxySkipLoginPage: false,
   clusters: [],
+  featureFlags: { operators: false },
   theme: SupportedThemes.light,
   remoteComponentsUrl: "",
   customAppViews: [],

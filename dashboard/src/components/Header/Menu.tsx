@@ -35,7 +35,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
   useOutsideClick(setOpen, [ref], open);
 
   const {
-    config: { theme },
+    config: { theme, featureFlags },
   } = useSelector((state: IStoreState) => state);
 
   const toggleOpen = () => setOpen(!open);
@@ -81,17 +81,19 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 </div>
               </Link>
               <div className="dropdown-divider" role="separator" />
-              <Link
-                to={app.config.operators(clusters.currentCluster, namespaceSelected)}
-                className="dropdown-menu-link"
-                onClick={toggleOpen}
-              >
-                <div className="dropdown-menu-item" role="menuitem">
-                  <img src={operatorIcon} alt="operators-icon" />
-                  <span>Operators</span>
-                </div>
-              </Link>
-              <div className="dropdown-divider" role="separator" />
+              {featureFlags.operators && (
+                <Link
+                  to={app.config.operators(clusters.currentCluster, namespaceSelected)}
+                  className="dropdown-menu-link"
+                  onClick={toggleOpen}
+                >
+                  <div className="dropdown-menu-item" role="menuitem">
+                    <img src={operatorIcon} alt="operators-icon" />
+                    <span>Operators</span>
+                  </div>
+                </Link>
+              )}
+              {featureFlags.operators && <div className="dropdown-divider" role="separator" />}
             </div>
             <div>
               <div className="dropdown-menu-subtext">

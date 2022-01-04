@@ -84,7 +84,7 @@ export default function Catalog() {
     },
     operators,
     repos: { repos },
-    config: { kubeappsCluster, kubeappsNamespace },
+    config: { kubeappsCluster, kubeappsNamespace, featureFlags },
   } = useSelector((state: IStoreState) => state);
   const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
   const location = ReactRouter.useLocation();
@@ -184,8 +184,11 @@ export default function Catalog() {
   }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
 
   useEffect(() => {
-    dispatch(actions.operators.getCSVs(cluster, namespace));
-  }, [dispatch, cluster, namespace]);
+    // Ignore operators if specified
+    if (featureFlags.operators) {
+      dispatch(actions.operators.getCSVs(cluster, namespace));
+    }
+  }, [dispatch, cluster, namespace, featureFlags]);
 
   // detect changes in cluster/ns/repos/search and reset the current package list
   useEffect(() => {
