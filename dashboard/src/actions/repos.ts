@@ -73,7 +73,7 @@ export const receiveImagePullSecrets = createAction("RECEIVE_IMAGE_PULL_SECRETS"
 });
 
 export const createImagePullSecret = createAction("CREATE_IMAGE_PULL_SECRET", resolve => {
-  return (secret: ISecret) => resolve(secret);
+  return (secretName: string) => resolve(secretName);
 });
 
 const allActions = [
@@ -433,16 +433,8 @@ export function createDockerRegistrySecret(
       clusters: { currentCluster },
     } = getState();
     try {
-      const secret = await Secret.createPullSecret(
-        currentCluster,
-        name,
-        user,
-        password,
-        email,
-        server,
-        namespace,
-      );
-      dispatch(createImagePullSecret(secret));
+      await Secret.createPullSecret(currentCluster, name, user, password, email, server, namespace);
+      dispatch(createImagePullSecret(name));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
