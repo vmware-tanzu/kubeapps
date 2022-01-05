@@ -1,5 +1,4 @@
 import { axiosWithAuth } from "./AxiosInstance";
-import { APIBase } from "./Kube";
 import { IAppRepositoryFilter, ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
@@ -151,14 +150,5 @@ export class AppRepository {
       },
     );
     return data;
-  }
-
-  private static APIEndpoint(cluster: string): string {
-    return `${APIBase(cluster)}/apis/kubeapps.com/v1alpha1`;
-  }
-  private static getSelfLink(cluster: string, namespace: string, name?: string): string {
-    return `${AppRepository.APIEndpoint(cluster)}/namespaces/${namespace}/apprepositories${
-      name ? `/${name}` : ""
-    }`;
   }
 }
