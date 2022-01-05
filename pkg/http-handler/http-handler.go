@@ -41,6 +41,7 @@ type namespacesResponse struct {
 // appRepositoryResponse is used to marshal the JSON response
 type appRepositoryResponse struct {
 	AppRepository v1alpha1.AppRepository `json:"appRepository"`
+	Secret        corev1.Secret          `json:"secret"`
 }
 
 // appRepositoryListResponse is used to marshal the JSON response
@@ -272,7 +273,7 @@ func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWrite
 	}
 }
 
-// GetAppRepository gets an App Repository
+// GetAppRepository gets an App Repository with a related secret if present.
 func GetAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
@@ -294,6 +295,25 @@ func GetAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, 
 		response := appRepositoryResponse{
 			AppRepository: *appRepo,
 		}
+
+		auth := &appRepo.Spec.Auth
+		if auth != nil {
+			var secretSelector *corev1.SecretKeySelector
+			if auth.CustomCA != nil {
+				secretSelector = &auth.CustomCA.SecretKeyRef
+			} else if auth.Header != nil {
+				secretSelector = &auth.Header.SecretKeyRef
+			}
+			if secretSelector != nil {
+				secret, err := clientset.GetSecret(secretSelector.Name, requestNamespace)
+				if err != nil {
+					returnK8sError(err, "get", "Secret", w)
+					return
+				}
+				response.Secret = *secret
+			}
+		}
+
 		responseBody, err := json.Marshal(response)
 		if err != nil {
 			JSONError(w, err.Error(), http.StatusInternalServerError)

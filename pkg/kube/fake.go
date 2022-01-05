@@ -17,7 +17,6 @@ limitations under the License.
 package kube
 
 import (
-	"fmt"
 	"io"
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -113,7 +112,7 @@ func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 			return r, nil
 		}
 	}
-	return nil, fmt.Errorf("not found")
+	return nil, k8sErrors.NewNotFound(schema.GroupResource{}, "foo")
 }
 
 // ValidateAppRepository fake
