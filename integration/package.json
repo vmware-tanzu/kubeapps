@@ -10,7 +10,7 @@
     "prettier": "prettier --write './**/*.{js, json}'"
   },
   "dependencies": {
-    "@jest/test-sequencer": "^27.4.5",
+    "@jest/test-sequencer": "^27.4.6",
     "axios": "^0.24.0",
     "expect-puppeteer": "^6.0.2",
     "jest": "^27.4.5",
