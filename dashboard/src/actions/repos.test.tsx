@@ -784,10 +784,6 @@ describe("updateRepo", () => {
         type: getType(repoActions.repoUpdated),
         payload: r,
       },
-      {
-        type: getType(repoActions.receiveReposSecret),
-        payload: secret,
-      },
     ];
 
     await store.dispatch(
@@ -845,10 +841,6 @@ describe("updateRepo", () => {
       {
         type: getType(repoActions.repoUpdated),
         payload: r,
-      },
-      {
-        type: getType(repoActions.receiveReposSecret),
-        payload: secret,
       },
     ];
 

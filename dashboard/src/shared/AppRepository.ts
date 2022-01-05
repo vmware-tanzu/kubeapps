@@ -12,10 +12,17 @@ export class AppRepository {
   }
 
   public static async get(cluster: string, namespace: string, name: string) {
-    const { data } = await axiosWithAuth.get<any>(
-      AppRepository.getSelfLink(cluster, namespace, name),
-    );
-    return data;
+    const {
+      data: { appRepository },
+    } = await axiosWithAuth.get<any>(url.backend.apprepositories.get(cluster, namespace, name));
+    return appRepository;
+  }
+
+  public static async getSecretForRepo(cluster: string, namespace: string, name: string) {
+    const {
+      data: { secret },
+    } = await axiosWithAuth.get<any>(url.backend.apprepositories.get(cluster, namespace, name));
+    return secret;
   }
 
   public static async resync(cluster: string, namespace: string, name: string) {

@@ -287,22 +287,6 @@ export const updateRepo = (
         filter,
       );
       dispatch(repoUpdated(data.appRepository));
-      // Re-fetch the helm repo secret that could have been modified with the updated headers
-      // so that if the user chooses to edit the app repo again, they will see the current value.
-      if (data.appRepository.spec?.auth) {
-        let secretName = "";
-        if (data.appRepository.spec.auth.header) {
-          secretName = data.appRepository.spec.auth.header.secretKeyRef.name;
-          dispatch(fetchRepoSecret(namespace, secretName));
-        }
-        if (
-          data.appRepository.spec.auth.customCA &&
-          secretName !== data.appRepository.spec.auth.customCA.secretKeyRef.name
-        ) {
-          secretName = data.appRepository.spec.auth.customCA.secretKeyRef.name;
-          dispatch(fetchRepoSecret(namespace, secretName));
-        }
-      }
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "update"));
