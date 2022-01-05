@@ -22,7 +22,6 @@ export interface IAppRepositoryState {
   validating: boolean;
   repo: IAppRepository;
   repos: IAppRepository[];
-  repoSecrets: ISecret[];
   form: {
     name: string;
     namespace: string;
@@ -50,7 +49,6 @@ export const initialState: IAppRepositoryState = {
   validating: false,
   repo: {} as IAppRepository,
   repos: [],
-  repoSecrets: [],
   imagePullSecrets: [],
 };
 
@@ -84,22 +82,6 @@ const reposReducer = (
         repo: action.payload,
         errors: {},
       };
-    case getType(actions.repos.receiveReposSecret): {
-      const secret = action.payload;
-      const existingSecret = state.repoSecrets.findIndex(
-        s =>
-          s.metadata.name === secret.metadata.name &&
-          s.metadata.namespace === secret.metadata.namespace,
-      );
-      let repoSecrets: ISecret[];
-      if (existingSecret > -1) {
-        repoSecrets = [...state.repoSecrets];
-        repoSecrets[existingSecret] = secret;
-      } else {
-        repoSecrets = state.repoSecrets.concat(secret);
-      }
-      return { ...state, repoSecrets };
-    }
     case getType(actions.repos.requestRepos):
       return { ...state, ...isFetching(state, "repositories", true) };
     case getType(actions.repos.addRepo):

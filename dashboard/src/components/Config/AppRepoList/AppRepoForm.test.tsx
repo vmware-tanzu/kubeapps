@@ -537,6 +537,7 @@ describe("when the repository info is already populated", () => {
       });
 
       await waitFor(() => {
+        wrapper.update();
         expect(AppRepository.getSecretForRepo).toHaveBeenCalledWith(
           "default-cluster",
           "default",
@@ -560,6 +561,7 @@ describe("when the repository info is already populated", () => {
       });
 
       await waitFor(() => {
+        wrapper.update();
         expect(AppRepository.getSecretForRepo).toHaveBeenCalledWith(
           "default-cluster",
           "default",
@@ -570,7 +572,10 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should parse the existing basic auth", async () => {
-      const repo = { metadata: { name: "foo", namespace: "default" } } as any;
+      const repo = {
+        metadata: { name: "foo", namespace: "default" },
+        spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
+      } as any;
       const secret = { data: { authorizationHeader: "QmFzaWMgWm05dk9tSmhjZz09" } } as any;
       AppRepository.getSecretForRepo = jest.fn(() => secret);
 
@@ -580,6 +585,7 @@ describe("when the repository info is already populated", () => {
       });
 
       await waitFor(() => {
+        wrapper.update();
         expect(wrapper.find("#kubeapps-repo-username").prop("value")).toBe("foo");
         expect(wrapper.find("#kubeapps-repo-password").prop("value")).toBe("bar");
       });
@@ -607,7 +613,10 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should parse a bearer token", async () => {
-      const repo = { metadata: { name: "foo" } } as any;
+      const repo = {
+        metadata: { name: "foo", namespace: "default" },
+        spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
+      } as any;
       const secret = { data: { authorizationHeader: "QmVhcmVyIGZvbw==" } } as any;
       AppRepository.getSecretForRepo = jest.fn(() => secret);
 
@@ -617,12 +626,16 @@ describe("when the repository info is already populated", () => {
       });
 
       await waitFor(() => {
+        wrapper.update();
         expect(wrapper.find("#kubeapps-repo-token").prop("value")).toBe("foo");
       });
     });
 
     it("should select a docker secret as auth mechanism", async () => {
-      const repo = { metadata: { name: "foo" } } as any;
+      const repo = {
+        metadata: { name: "foo", namespace: "default" },
+        spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
+      } as any;
       const secret = { data: { ".dockerconfigjson": "QmVhcmVyIGZvbw==" } } as any;
       AppRepository.getSecretForRepo = jest.fn(() => secret);
 
@@ -632,6 +645,7 @@ describe("when the repository info is already populated", () => {
       });
 
       await waitFor(() => {
+        wrapper.update();
         expect(wrapper.find("#kubeapps-repo-auth-method-registry")).toBeChecked();
       });
     });

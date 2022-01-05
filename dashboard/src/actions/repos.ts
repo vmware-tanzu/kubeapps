@@ -41,10 +41,6 @@ export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: IAppRepository[]) => resolve(repos);
 });
 
-export const receiveReposSecret = createAction("RECEIVE_REPOS_SECRET", resolve => {
-  return (secret: ISecret) => resolve(secret);
-});
-
 export const requestRepo = createAction("REQUEST_REPO");
 export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
   return (repo: IAppRepository) => resolve(repo);
@@ -87,7 +83,6 @@ const allActions = [
   requestRepos,
   receiveRepo,
   receiveRepos,
-  receiveReposSecret,
   createErrorPackage,
   requestRepo,
   redirect,
@@ -139,23 +134,6 @@ export const resyncAllRepos = (
     repos.forEach(repo => {
       dispatch(resyncRepo(repo.name, repo.namespace));
     });
-  };
-};
-
-export const fetchRepoSecret = (
-  namespace: string,
-  name: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-    } = getState();
-    try {
-      const secret = await Secret.get(currentCluster, namespace, name);
-      dispatch(receiveReposSecret(secret));
-    } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
-    }
   };
 };
 
