@@ -13,6 +13,7 @@ limitations under the License.
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -139,10 +140,11 @@ func extractValue(body string, key string) string {
 }
 
 // defaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
-func defaultValuesFromSchema(schema []byte) (string, error) {
+func defaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error) {
 	if len(schema) == 0 {
 		return "", nil
 	}
+	// Deserialize the schema passed into the function
 	jsonSchemaProps := &apiextensions.JSONSchemaProps{}
 	if err := yaml.Unmarshal(schema, jsonSchemaProps); err != nil {
 		return "", err
@@ -151,14 +153,28 @@ func defaultValuesFromSchema(schema []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	unstructured := make(map[string]interface{})
 
-	defaultValues(unstructured, structural)
-	yaml, err := yaml.Marshal(unstructured)
+	// Generate the default values
+	unstructuredDefaultValues := make(map[string]interface{})
+	defaultValues(unstructuredDefaultValues, structural)
+	yamlDefaultValues, err := yaml.Marshal(unstructuredDefaultValues)
 	if err != nil {
 		return "", err
 	}
-	return string(yaml), nil
+	strYamlDefaultValues := string(yamlDefaultValues)
+
+	// If isCommentedOut, add a yaml comment character '#' to the beginning of each line
+	if isCommentedOut {
+		var sb strings.Builder
+		scanner := bufio.NewScanner(strings.NewReader(strYamlDefaultValues))
+		scanner.Split(bufio.ScanLines)
+		for scanner.Scan() {
+			sb.WriteString("# ")
+			sb.WriteString(fmt.Sprintln(scanner.Text()))
+		}
+		strYamlDefaultValues = sb.String()
+	}
+	return strYamlDefaultValues, nil
 }
 
 // Default does defaulting of x depending on default values in s.
@@ -167,7 +183,7 @@ func defaultValuesFromSchema(schema []byte) (string, error) {
 // In short, it differs from upstream in that:
 // -- 1. Prevent deep copy of int as it panics
 // -- 2. For type object scan the first level properties for any defaults to create an empty map to populate
-// -- 3. If the property does not have a default, add one based on the type ("", false,)
+// -- 3. If the property does not have a default, add one based on the type ("", false, etc)
 func defaultValues(x interface{}, s *structuralschema.Structural) {
 	if s == nil {
 		return

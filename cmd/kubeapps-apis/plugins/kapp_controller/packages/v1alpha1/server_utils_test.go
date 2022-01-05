@@ -14,6 +14,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -211,51 +212,107 @@ func TestExtractValue(t *testing.T) {
 
 func TestDefaultValuesFromSchema(t *testing.T) {
 	tests := []struct {
-		name     string
-		schema   []byte
-		expected string
+		name           string
+		isCommentedOut bool
+		schema         []byte
+		expected       string
+		expectedErr    error
 	}{
-		{"schema with and without defaults", []byte(`properties:
+		{"schema with defaults", false, []byte(`properties:
   valueWithDefault:
     default: 80
     description: Value with default
-    type: integer
+    type: integer`,
+		),
+			`valueWithDefault: 80
+`, nil},
+		{"schema with without defaults (integer)", false, []byte(`properties:
   missingDefaultInteger:
-    description: Missing default integer
-    type: integer
+    description: Missing default
+    type: integer`,
+		),
+			`missingDefaultInteger: 0
+`, nil},
+		{"schema with without defaults (number)", false, []byte(`properties:
   missingDefaultNumber:
-    description: Missing default number
-    type: number
+    description: Missing default
+    type: number`,
+		),
+			`missingDefaultNumber: 0
+`, nil},
+		{"schema with without defaults (string)", false, []byte(`properties:
   missingDefaultString:
-    description: Missing default string
-    type: string
+    description: Missing default
+    type: string`,
+		),
+			`missingDefaultString: ""
+`, nil},
+		{"schema with without defaults (boolean)", false, []byte(`properties:
   missingDefaultBoolean:
-    description: Missing default boolean
-    type: boolean
+    description: Missing default
+    type: boolean`,
+		),
+			`missingDefaultBoolean: false
+`, nil},
+		{"schema with without defaults (array)", false, []byte(`properties:
   missingDefaultArray:
-    description: Missing default array
-    type: array
-  missingDefaultObject:
-    description: Missing default object
-    type: object`,
+    description: Missing default
+    type: array`,
 		),
 			`missingDefaultArray: []
-missingDefaultBoolean: false
-missingDefaultInteger: 0
-missingDefaultNumber: 0
-missingDefaultObject: {}
-missingDefaultString: ""
+`, nil},
+		{"schema with without defaults (object)", false, []byte(`properties:
+  missingDefaultObject:
+    description: Missing default
+    type: object`,
+		),
+			`missingDefaultObject: {}
+`, nil},
+		{"schema (mixed) with isCommentedOut=false", false, []byte(`properties:
+  missingDefaultObject:
+    description: Missing default
+    type: object
+  valueWithDefault:
+    default: 80
+    description: Value with default
+    type: integer`,
+		),
+			`missingDefaultObject: {}
 valueWithDefault: 80
-`},
+`, nil},
+		{"schema (mixed) with isCommentedOut=true", true, []byte(`properties:
+  missingDefaultObject:
+    description: Missing default
+    type: object
+  valueWithDefault:
+    default: 80
+    description: Value with default
+    type: integer`,
+		),
+			`# missingDefaultObject: {}
+# valueWithDefault: 80
+`, nil},
+		{"bad schema", true, []byte(`properties:
+  fluent_bit:
+    description: fluent-bit Kubernetes configuration.
+    additionalProperties: string
+`,
+		), "", fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go struct field JSONSchemaProps.Properties.AdditionalProperties of type apiextensions.JSONSchemaPropsOrBool")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			values, err := defaultValuesFromSchema(tt.schema)
-			if err != nil {
+			values, err := defaultValuesFromSchema(tt.schema, tt.isCommentedOut)
+			if err != nil && tt.expectedErr == nil {
 				t.Errorf("unexpected error = %v", err)
 			}
-			if !cmp.Equal(tt.expected, values) {
-				t.Errorf("mismatch in '%s': %s", tt.name, cmp.Diff(tt.expected, values))
+			if tt.expectedErr != nil {
+				if want, got := tt.expectedErr.Error(), err.Error(); !cmp.Equal(want, got) {
+					t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
+				}
+			} else {
+				if want, got := tt.expected, values; !cmp.Equal(want, got) {
+					t.Errorf("mismatch in '%s': %s", tt.name, cmp.Diff(tt.expected, values))
+				}
 			}
 		})
 	}
