@@ -86,7 +86,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   useEffect(() => {
     fetchImagePullSecrets(currentCluster, namespace);
-  }, [dispatch, namespace]);
+  }, [dispatch, namespace, currentCluster]);
 
   async function fetchImagePullSecrets(cluster: string, repoNamespace: string) {
     setImagePullSecrets(await Secret.getDockerConfigSecretNames(cluster, repoNamespace));
@@ -96,7 +96,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     // Select the pull secrets if they are already selected in the existing repo
     imagePullSecrets.forEach(secretName => {
       if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secretName)) {
-        console.log(`setting selectedImagePullSecret: ${secretName}`);
         setSelectedImagePullSecret(secretName);
       }
     });

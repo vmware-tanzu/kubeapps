@@ -15,9 +15,9 @@ export default class Secret {
       },
     });
 
-    let secretNames = [];
+    const secretNames = [];
     for (const [name, type] of Object.entries(result.secretNames)) {
-      if (type == SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON) {
+      if (type === SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON) {
         secretNames.push(name);
       }
     }
