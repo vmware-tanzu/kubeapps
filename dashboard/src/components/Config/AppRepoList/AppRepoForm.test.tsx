@@ -23,7 +23,6 @@ beforeEach(() => {
   actions.repos = {
     ...actions.repos,
     validateRepo: jest.fn().mockReturnValue(true),
-    fetchImagePullSecrets: jest.fn(),
   };
   const mockDispatch = jest.fn(r => r);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -37,7 +36,10 @@ afterEach(() => {
 
 it("fetches repos and imagePullSecrets", () => {
   mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
-  expect(Secret.getDockerConfigSecretNames).toHaveBeenCalledWith("default-cluster", defaultProps.namespace);
+  expect(Secret.getDockerConfigSecretNames).toHaveBeenCalledWith(
+    "default-cluster",
+    defaultProps.namespace,
+  );
 });
 
 it("disables the submit button while fetching", () => {
@@ -652,12 +654,14 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should pre-select the existing docker registry secret", async () => {
-      const repo = { metadata: { name: "foo" }, spec: { dockerRegistrySecrets: ["secret-2"] } } as any;
-      Secret.getDockerConfigSecretNames = jest.fn(() => Promise.resolve(["secret-1", "secret-2", "secret-3"]));
-      const wrapper = mountWrapper(
-        defaultStore,
-        <AppRepoForm {...defaultProps} repo={repo} />,
+      const repo = {
+        metadata: { name: "foo" },
+        spec: { dockerRegistrySecrets: ["secret-2"] },
+      } as any;
+      Secret.getDockerConfigSecretNames = jest.fn(() =>
+        Promise.resolve(["secret-1", "secret-2", "secret-3"]),
       );
+      const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
       await waitFor(() => {
         wrapper.update();
         expect(wrapper.find("select").prop("value")).toBe("secret-2");

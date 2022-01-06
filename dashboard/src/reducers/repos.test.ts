@@ -43,8 +43,6 @@ describe("reposReducer", () => {
       redirect: getType(actions.repos.redirect),
       redirected: getType(actions.repos.redirected),
       errorRepos: getType(actions.repos.errorRepos),
-      requestImagePullSecrets: getType(actions.repos.requestImagePullSecrets),
-      receiveImagePullSecrets: getType(actions.repos.receiveImagePullSecrets),
       createImagePullSecret: getType(actions.repos.createImagePullSecret),
     };
 
@@ -141,24 +139,6 @@ describe("reposReducer", () => {
           type: actionTypes.repoValidated as any,
         }),
       ).toEqual({ ...initialState });
-    });
-
-    it("receives image pull secrets", () => {
-      const pullSecret = { metadata: { name: "foo" } } as any;
-      const state = reposReducer(undefined, {
-        type: actionTypes.requestImagePullSecrets as any,
-      });
-      expect(state).toEqual({
-        ...initialState,
-        isFetching: true,
-        isFetchingElem: { repositories: false, secrets: true },
-      });
-      expect(
-        reposReducer(state, {
-          type: actionTypes.receiveImagePullSecrets as any,
-          payload: [pullSecret],
-        }),
-      ).toEqual({ ...initialState, imagePullSecrets: [pullSecret] });
     });
   });
 });

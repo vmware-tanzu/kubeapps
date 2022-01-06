@@ -96,7 +96,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     // Select the pull secrets if they are already selected in the existing repo
     imagePullSecrets.forEach(secretName => {
       if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secretName)) {
-        console.log(`setting selectedImagePullSecret: ${secretName}`)
+        console.log(`setting selectedImagePullSecret: ${secretName}`);
         setSelectedImagePullSecret(secretName);
       }
     });

@@ -1113,50 +1113,6 @@ describe("validateRepo", () => {
   });
 });
 
-describe("fetchImagePullSecrets", () => {
-  it("fetches image pull secrets", async () => {
-    const secret1 = {
-      type: "kubernetes.io/dockerconfigjson",
-    };
-    Secret.list = jest.fn().mockReturnValue({
-      items: [secret1],
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.requestImagePullSecrets),
-        payload: "default",
-      },
-      {
-        type: getType(repoActions.receiveImagePullSecrets),
-        payload: [secret1],
-      },
-    ];
-    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("dispatches an error", async () => {
-    Secret.list = jest.fn(() => {
-      throw new Error("boom");
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.requestImagePullSecrets),
-        payload: "default",
-      },
-      {
-        type: getType(repoActions.errorRepos),
-        payload: {
-          err: new Error("boom"),
-          op: "fetch",
-        },
-      },
-    ];
-    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
 describe("createDockerRegistrySecret", () => {
   it("creates a docker registry", async () => {
     Secret.createPullSecret = jest.fn();

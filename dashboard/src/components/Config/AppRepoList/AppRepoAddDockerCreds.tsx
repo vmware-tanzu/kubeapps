@@ -70,9 +70,7 @@ export function AppRepoAddDockerCreds({
     if (success) {
       // Re-fetching secrets cause a re-render and the modal to be closed,
       // using local state to avoid that.
-      setCurrentImagePullSecrets(
-        currentImagePullSecrets.concat(secretName),
-      );
+      setCurrentImagePullSecrets(currentImagePullSecrets.concat(secretName));
       setUser("");
       setSecretName("");
       setPassword("");
