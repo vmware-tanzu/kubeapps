@@ -17,6 +17,7 @@ export interface IPackageHeaderProps {
   currentVersion?: string;
   selectedVersion?: string;
   deployButton?: JSX.Element;
+  hideVersionsSelector?: boolean;
 }
 
 export default function PackageHeader({
@@ -27,6 +28,7 @@ export default function PackageHeader({
   currentVersion,
   deployButton,
   selectedVersion,
+  hideVersionsSelector,
 }: IPackageHeaderProps) {
   return availablePackageDetail?.availablePackageRef?.identifier ? (
     <PageHeader
@@ -41,35 +43,39 @@ export default function PackageHeader({
       icon={availablePackageDetail?.iconUrl ? availablePackageDetail.iconUrl : placeholder}
       plugin={availablePackageDetail.availablePackageRef.plugin}
       version={
-        <>
-          <PackageVersionSelector
-            versions={versions}
-            onSelect={onSelect}
-            selectedVersion={selectedVersion}
-            currentVersion={currentVersion}
-            label={
-              <>
-                Package Version{" "}
-                <Tooltip
-                  label="package-versions-tooltip"
-                  id="package-versions-tooltip"
-                  position="bottom-left"
-                  iconProps={{ solid: true, size: "sm" }}
-                >
-                  Package and application versions can be increased independently.{" "}
-                  <a
-                    href="https://helm.sh/docs/topics/charts/#charts-and-versioning"
-                    target="_blank"
-                    rel="noopener noreferrer"
+        hideVersionsSelector ? (
+          <></>
+        ) : (
+          <>
+            <PackageVersionSelector
+              versions={versions}
+              onSelect={onSelect}
+              selectedVersion={selectedVersion}
+              currentVersion={currentVersion}
+              label={
+                <>
+                  Package Version{" "}
+                  <Tooltip
+                    label="package-versions-tooltip"
+                    id="package-versions-tooltip"
+                    position="bottom-left"
+                    iconProps={{ solid: true, size: "sm" }}
                   >
-                    More info here
-                  </a>
-                  .{" "}
-                </Tooltip>
-              </>
-            }
-          />
-        </>
+                    Package and application versions can be increased independently.{" "}
+                    <a
+                      href="https://helm.sh/docs/topics/charts/#charts-and-versioning"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      More info here
+                    </a>
+                    .{" "}
+                  </Tooltip>
+                </>
+              }
+            />
+          </>
+        )
       }
       buttons={deployButton ? [deployButton] : undefined}
     />
