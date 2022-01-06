@@ -1,4 +1,3 @@
-import { axiosWithAuth } from "./AxiosInstance";
 import Secret from "./Secret";
 import {
   CreateSecretRequest,

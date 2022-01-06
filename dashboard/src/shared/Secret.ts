@@ -1,6 +1,3 @@
-import { axiosWithAuth } from "./AxiosInstance";
-import { IK8sList, ISecret } from "./types";
-import * as url from "./url";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import {
   CreateSecretRequest,

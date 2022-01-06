@@ -12,7 +12,6 @@ import {
   IAppRepository,
   IAppRepositoryFilter,
   IAppRepositoryKey,
-  ISecret,
   IStoreState,
   NotFoundError,
 } from "shared/types";

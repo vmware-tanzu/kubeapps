@@ -2,19 +2,8 @@ import actions from "actions";
 import { shallow } from "enzyme";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { ISecret } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 
-const secret1 = {
-  metadata: {
-    name: "foo",
-  },
-} as ISecret;
-const secret2 = {
-  metadata: {
-    name: "bar",
-  },
-} as ISecret;
 const defaultProps = {
   imagePullSecrets: [],
   selectPullSecret: jest.fn(),
