@@ -51,9 +51,6 @@ beforeEach(() => {
   AppRepository.create = jest.fn().mockImplementationOnce(() => {
     return { appRepository: { metadata: { name: "repo-abc" } } };
   });
-  Secret.list = jest.fn().mockReturnValue({
-    items: [],
-  });
 });
 
 afterEach(jest.restoreAllMocks);
@@ -724,11 +721,9 @@ describe("updateRepo", () => {
       metadata: { name: "repo-abc" },
       spec: { auth: { header: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
-    const secret = { metadata: { name: "apprepo-repo-abc" } };
     AppRepository.update = jest.fn().mockReturnValue({
       appRepository: r,
     });
-    Secret.get = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoUpdate),
@@ -782,11 +777,9 @@ describe("updateRepo", () => {
       metadata: { name: "repo-abc" },
       spec: { auth: { customCA: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
-    const secret = { metadata: { name: "apprepo-repo-abc" } };
     AppRepository.update = jest.fn().mockReturnValue({
       appRepository: r,
     });
-    Secret.get = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoUpdate),

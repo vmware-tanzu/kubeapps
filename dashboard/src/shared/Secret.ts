@@ -9,11 +9,6 @@ import {
 
 export default class Secret {
   public static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
-  public static async get(cluster: string, namespace: string, name: string) {
-    const u = url.api.k8s.secret(cluster, namespace, name);
-    const { data } = await axiosWithAuth.get<ISecret>(u);
-    return data;
-  }
 
   public static async getDockerConfigSecretNames(cluster: string, namespace: string) {
     const result = await this.resourcesClient().GetSecretNames({
@@ -30,12 +25,6 @@ export default class Secret {
       }
     }
     return secretNames;
-  }
-
-  public static async list(cluster: string, namespace: string, fieldSelector?: string) {
-    const u = url.api.k8s.secrets(cluster, namespace, fieldSelector);
-    const { data } = await axiosWithAuth.get<IK8sList<ISecret, {}>>(u);
-    return data;
   }
 
   public static async createPullSecret(

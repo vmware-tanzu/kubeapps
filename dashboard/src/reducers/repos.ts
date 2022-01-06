@@ -111,10 +111,6 @@ const reposReducer = (
       return { ...state, redirectTo: action.payload };
     case getType(actions.repos.redirected):
       return { ...state, redirectTo: undefined };
-    case getType(actions.repos.requestImagePullSecrets):
-      return { ...state, ...isFetching(state, "secrets", true) };
-    case getType(actions.repos.receiveImagePullSecrets):
-      return { ...state, ...isFetching(state, "secrets", false), imagePullSecrets: action.payload };
     case getType(actions.repos.errorRepos):
       return {
         ...state,

@@ -38,22 +38,6 @@ describe("getSecretNames", () => {
   });
 });
 
-it("gets a secret", async () => {
-  axiosWithAuth.get = jest.fn().mockReturnValue({ data: "ok" });
-  await Secret.get("default", "bar", "foo");
-  expect(axiosWithAuth.get).toHaveBeenCalledWith(
-    "api/clusters/default/api/v1/namespaces/bar/secrets/foo",
-  );
-});
-
-it("lists secrets", async () => {
-  axiosWithAuth.get = jest.fn().mockReturnValue({ data: "ok" });
-  await Secret.list("default", "foo");
-  expect(axiosWithAuth.get).toHaveBeenCalledWith(
-    "api/clusters/default/api/v1/namespaces/foo/secrets",
-  );
-});
-
 describe("createSecret", () => {
   // Create a real client, but we'll stub out the function we're interested in.
   const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();

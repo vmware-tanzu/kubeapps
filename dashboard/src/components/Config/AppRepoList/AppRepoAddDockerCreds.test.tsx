@@ -48,22 +48,22 @@ it("shows an info message if there are no secrets", () => {
 
 it("shows the list of available pull secrets", () => {
   const wrapper = shallow(
-    <AppRepoAddDockerCreds {...defaultProps} imagePullSecrets={[secret1, secret2]} />,
+    <AppRepoAddDockerCreds {...defaultProps} imagePullSecrets={["secret-1", "secret-2"]} />,
   );
-  expect(wrapper.text()).toContain(secret1.metadata.name);
-  expect(wrapper.text()).toContain(secret2.metadata.name);
+  expect(wrapper.text()).toContain("secret-1");
+  expect(wrapper.text()).toContain("secret-2");
 });
 
 it("select a secret", () => {
   const wrapper = shallow(
     <AppRepoAddDockerCreds
       {...defaultProps}
-      imagePullSecrets={[secret1, secret2]}
-      selectedImagePullSecret={secret1.metadata.name}
+      imagePullSecrets={["secret-1", "secret-2", "secret-3"]}
+      selectedImagePullSecret={"secret-2"}
     />,
   );
 
-  expect(wrapper.find("select").prop("value")).toBe(secret1.metadata.name);
+  expect(wrapper.find("select").prop("value")).toBe("secret-2");
 });
 
 it("renders the form to create a registry secret", () => {
