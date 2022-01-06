@@ -7,11 +7,11 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { ISecret, IStoreState } from "shared/types";
+import { IStoreState } from "shared/types";
 import "./AppRepoAddDockerCreds.css";
 
 interface IAppRepoFormProps {
-  imagePullSecrets: ISecret[];
+  imagePullSecrets: string[];
   selectPullSecret: (imagePullSecret: string) => void;
   selectedImagePullSecret: string;
   namespace: string;
@@ -70,9 +70,7 @@ export function AppRepoAddDockerCreds({
     if (success) {
       // Re-fetching secrets cause a re-render and the modal to be closed,
       // using local state to avoid that.
-      setCurrentImagePullSecrets(
-        currentImagePullSecrets.concat({ metadata: { name: secretName, namespace } } as ISecret),
-      );
+      setCurrentImagePullSecrets(currentImagePullSecrets.concat(secretName));
       setUser("");
       setSecretName("");
       setPassword("");
@@ -132,8 +130,8 @@ export function AppRepoAddDockerCreds({
           disabled={disabled}
         >
           <option />
-          {currentImagePullSecrets.map(secret => {
-            return <option key={`option-${secret.metadata.name}`}>{secret.metadata.name}</option>;
+          {currentImagePullSecrets.map(secretName => {
+            return <option key={`option-${secretName}`}>{secretName}</option>;
           })}
         </select>
       </CdsSelect>

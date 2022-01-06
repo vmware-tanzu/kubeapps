@@ -9,6 +9,7 @@ import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import { AppRepoForm } from "./AppRepoForm";
 import { AppRepository } from "shared/AppRepository";
 import { waitFor } from "@testing-library/react";
+import Secret from "shared/Secret";
 
 const defaultProps = {
   onSubmit: jest.fn(),
@@ -22,10 +23,10 @@ beforeEach(() => {
   actions.repos = {
     ...actions.repos,
     validateRepo: jest.fn().mockReturnValue(true),
-    fetchImagePullSecrets: jest.fn(),
   };
   const mockDispatch = jest.fn(r => r);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  Secret.getDockerConfigSecretNames = jest.fn(() => Promise.resolve([]));
 });
 
 afterEach(() => {
@@ -35,7 +36,10 @@ afterEach(() => {
 
 it("fetches repos and imagePullSecrets", () => {
   mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
-  expect(actions.repos.fetchImagePullSecrets).toHaveBeenCalledWith(defaultProps.namespace);
+  expect(Secret.getDockerConfigSecretNames).toHaveBeenCalledWith(
+    "default-cluster",
+    defaultProps.namespace,
+  );
 });
 
 it("disables the submit button while fetching", () => {
@@ -650,20 +654,17 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should pre-select the existing docker registry secret", async () => {
-      const secret = {
-        metadata: {
-          name: "foo",
-        },
-      } as ISecret;
-      const repo = { metadata: { name: "foo" }, spec: { dockerRegistrySecrets: ["foo"] } } as any;
-      const wrapper = mountWrapper(
-        getStore({
-          repos: { imagePullSecrets: [secret] },
-        }),
-        <AppRepoForm {...defaultProps} repo={repo} />,
+      const repo = {
+        metadata: { name: "foo" },
+        spec: { dockerRegistrySecrets: ["secret-2"] },
+      } as any;
+      Secret.getDockerConfigSecretNames = jest.fn(() =>
+        Promise.resolve(["secret-1", "secret-2", "secret-3"]),
       );
+      const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
       await waitFor(() => {
-        expect(wrapper.find("select").prop("value")).toBe("foo");
+        wrapper.update();
+        expect(wrapper.find("select").prop("value")).toBe("secret-2");
       });
     });
 

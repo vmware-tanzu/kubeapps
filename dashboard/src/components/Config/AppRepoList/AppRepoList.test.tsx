@@ -26,7 +26,6 @@ beforeEach(() => {
   actions.repos = {
     ...actions.repos,
     fetchRepos: jest.fn(),
-    fetchImagePullSecrets: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);

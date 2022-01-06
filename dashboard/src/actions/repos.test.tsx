@@ -51,9 +51,6 @@ beforeEach(() => {
   AppRepository.create = jest.fn().mockImplementationOnce(() => {
     return { appRepository: { metadata: { name: "repo-abc" } } };
   });
-  Secret.list = jest.fn().mockReturnValue({
-    items: [],
-  });
 });
 
 afterEach(jest.restoreAllMocks);
@@ -724,11 +721,9 @@ describe("updateRepo", () => {
       metadata: { name: "repo-abc" },
       spec: { auth: { header: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
-    const secret = { metadata: { name: "apprepo-repo-abc" } };
     AppRepository.update = jest.fn().mockReturnValue({
       appRepository: r,
     });
-    Secret.get = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoUpdate),
@@ -782,11 +777,9 @@ describe("updateRepo", () => {
       metadata: { name: "repo-abc" },
       spec: { auth: { customCA: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
-    const secret = { metadata: { name: "apprepo-repo-abc" } };
     AppRepository.update = jest.fn().mockReturnValue({
       appRepository: r,
     });
-    Secret.get = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoUpdate),
@@ -1110,50 +1103,6 @@ describe("validateRepo", () => {
       false,
       false,
     );
-  });
-});
-
-describe("fetchImagePullSecrets", () => {
-  it("fetches image pull secrets", async () => {
-    const secret1 = {
-      type: "kubernetes.io/dockerconfigjson",
-    };
-    Secret.list = jest.fn().mockReturnValue({
-      items: [secret1],
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.requestImagePullSecrets),
-        payload: "default",
-      },
-      {
-        type: getType(repoActions.receiveImagePullSecrets),
-        payload: [secret1],
-      },
-    ];
-    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("dispatches an error", async () => {
-    Secret.list = jest.fn(() => {
-      throw new Error("boom");
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.requestImagePullSecrets),
-        payload: "default",
-      },
-      {
-        type: getType(repoActions.errorRepos),
-        payload: {
-          err: new Error("boom"),
-          op: "fetch",
-        },
-      },
-    ];
-    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
-    expect(store.getActions()).toEqual(expectedActions);
   });
 });
 
