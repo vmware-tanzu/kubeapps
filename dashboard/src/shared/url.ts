@@ -108,6 +108,8 @@ export const backend = {
     list: (cluster: string, namespace: string) => backend.apprepositories.base(cluster, namespace),
     validate: (cluster: string, namespace: string) =>
       `${backend.apprepositories.base(cluster, namespace)}/validate`,
+    get: (cluster: string, namespace: string, name: string) =>
+      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
     delete: (cluster: string, namespace: string, name: string) =>
       `${backend.apprepositories.base(cluster, namespace)}/${name}`,
     refresh: (cluster: string, namespace: string, name: string) =>

@@ -75,6 +75,7 @@
   "devDependencies": {
     "@formatjs/cli": "^4.7.0",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
+    "@testing-library/react": "^12.1.2",
     "@types/enzyme": "^3.10.11",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/google-protobuf": "^3.15.5",

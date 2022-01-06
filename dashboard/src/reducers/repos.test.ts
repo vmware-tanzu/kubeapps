@@ -24,7 +24,6 @@ describe("reposReducer", () => {
       validating: false,
       repo: {} as IAppRepository,
       repos: [],
-      repoSecrets: [],
       imagePullSecrets: [],
     };
   });
@@ -37,7 +36,6 @@ describe("reposReducer", () => {
       repoUpdated: getType(actions.repos.repoUpdated),
       requestRepos: getType(actions.repos.requestRepos),
       receiveRepos: getType(actions.repos.receiveRepos),
-      receiveReposSecret: getType(actions.repos.receiveReposSecret),
       requestRepo: getType(actions.repos.requestRepo),
       receiveRepo: getType(actions.repos.receiveRepo),
       repoValidating: getType(actions.repos.repoValidating),
@@ -98,20 +96,6 @@ describe("reposReducer", () => {
           }),
         ).toEqual({ ...initialState, repo });
       });
-    });
-
-    it("receives a repo secret", () => {
-      const secret = { metadata: { name: "foo", namespace: "bar" } } as any;
-      const modifiedSecret = { ...secret, spec: { foo: "bar" } };
-      expect(
-        reposReducer(
-          { ...initialState, repoSecrets: [secret] },
-          {
-            type: actionTypes.receiveReposSecret as any,
-            payload: modifiedSecret,
-          },
-        ),
-      ).toEqual({ ...initialState, repoSecrets: [modifiedSecret] });
     });
 
     it("adds a repo", () => {
