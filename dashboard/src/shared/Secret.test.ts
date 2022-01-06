@@ -3,9 +3,40 @@ import Secret from "./Secret";
 import {
   CreateSecretRequest,
   CreateSecretResponse,
+  GetSecretNamesResponse,
   SecretType,
 } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+
+describe("getSecretNames", () => {
+  const expectedSecretNames = {
+    "secret-one": SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
+    "secret-two": SecretType.SECRET_TYPE_OPAQUE_UNSPECIFIED,
+    "secret-three": SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
+  }
+  // Create a real client, but we'll stub out the function we're interested in.
+  const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();
+  let mockClientGetSecretNames: jest.MockedFunction<typeof client.GetSecretNames>;
+  beforeEach(() => {
+    mockClientGetSecretNames = jest
+      .fn()
+      .mockImplementation(() => Promise.resolve({
+        secretNames: expectedSecretNames,
+      } as GetSecretNamesResponse));
+
+    jest.spyOn(client, "GetSecretNames").mockImplementation(mockClientGetSecretNames);
+    jest.spyOn(Secret, "resourcesClient").mockImplementation(() => client);
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("returns the map of secret names with types", async () => {
+    const result = await Secret.getDockerConfigSecretNames("default", "default");
+
+    expect(result).toEqual(["secret-one", "secret-three"]);
+  });
+});
 
 it("gets a secret", async () => {
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: "ok" });

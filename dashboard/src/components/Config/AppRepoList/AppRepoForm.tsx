@@ -16,6 +16,7 @@ import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shar
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import { AppRepository } from "shared/AppRepository";
 import "./AppRepoForm.css";
+import Secret from "shared/Secret";
 interface IAppRepoFormProps {
   onSubmit: (
     name: string,
@@ -71,15 +72,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [filterExclude, setFilterExclude] = useState(false);
   const [secret, setSecret] = useState<ISecret>();
   const [selectedImagePullSecret, setSelectedImagePullSecret] = useState("");
+  const [imagePullSecrets, setImagePullSecrets] = useState<string[]>([]);
   const [validated, setValidated] = useState(undefined as undefined | boolean);
-
-  useEffect(() => {
-    dispatch(actions.repos.fetchImagePullSecrets(namespace));
-  }, [dispatch, namespace]);
 
   const {
     repos: {
-      imagePullSecrets,
       errors: { create: createError, update: updateError, validate: validationError },
       validating,
     },
@@ -88,14 +85,22 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
+    fetchImagePullSecrets(currentCluster, namespace);
+  }, [dispatch, namespace]);
+
+  async function fetchImagePullSecrets(cluster: string, repoNamespace: string) {
+    setImagePullSecrets(await Secret.getDockerConfigSecretNames(cluster, repoNamespace));
+  }
+
+  useEffect(() => {
     // Select the pull secrets if they are already selected in the existing repo
-    imagePullSecrets.forEach(pullSecret => {
-      const secretName = pullSecret.metadata.name;
+    imagePullSecrets.forEach(secretName => {
       if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secretName)) {
+        console.log(`setting selectedImagePullSecret: ${secretName}`)
         setSelectedImagePullSecret(secretName);
       }
     });
-  }, [imagePullSecrets, repo, selectedImagePullSecret]);
+  }, [imagePullSecrets, repo]);
 
   useEffect(() => {
     if (repo) {
