@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
@@ -618,7 +617,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 		s.repoCache.ExpectAdd(key)
 		watcher.Modify(repo)
-		s.repoCache.WaitUntilForgotten(key)
+		s.repoCache.WaitUntilDone(key)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -737,9 +736,9 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			s.chartCache.ExpectAdd(k)
 		}
 		watcher.Delete(repo)
-		s.repoCache.WaitUntilForgotten(repoKey)
+		s.repoCache.WaitUntilDone(repoKey)
 		for _, k := range chartCacheKeys {
-			s.chartCache.WaitUntilForgotten(k)
+			s.chartCache.WaitUntilDone(k)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -846,11 +845,11 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 	})
 }
 
-// test that causes RetryWatcher to stop and the cache needs to resync
+// test that causes RetryWatcher to stop and the cache needs to resync when there are
+// lots of pending work items
 // this test is focused on the repo cache work queue
-// I have yet to write a similar test for the chart cache, which is proving very laborsome
-func TestGetAvailablePackageSummariesAfterCacheResync(t *testing.T) {
-	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
+func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) {
+	t.Run("test that causes RetryWatcher to stop and the repo cache needs to resync", func(t *testing.T) {
 		// start with an empty server that only has an empty repo cache
 		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, nil, nil)
 		if err != nil {
@@ -892,15 +891,16 @@ func TestGetAvailablePackageSummariesAfterCacheResync(t *testing.T) {
 			}
 		}
 
+		s.repoCache.ExpectAdd(keysInOrder[0])
 		for _, r := range repos {
 			watcher.Add(r)
 		}
-		lock := sync.Mutex{}
-		lock.Lock()
+
+		done := make(chan int, 1)
 
 		go func() {
 			// wait until the first of the added repos have been fully processed
-			s.repoCache.WaitUntilForgotten("helmrepositories:default:bitnami-0")
+			s.repoCache.WaitUntilDone(keysInOrder[0])
 
 			// pretty delicate dance between the server and the client below using
 			// bi-directional channels in order to make sure the right expectations
@@ -937,10 +937,10 @@ func TestGetAvailablePackageSummariesAfterCacheResync(t *testing.T) {
 				// right before resync() kicked in. We don't care about that
 				mock.ClearExpect()
 			}
-			lock.Unlock()
+			done <- 0
 		}()
 
-		lock.Lock()
+		<-done
 
 		// in case the side go-routine had failures
 		if t.Failed() {
@@ -970,6 +970,116 @@ func TestGetAvailablePackageSummariesAfterCacheResync(t *testing.T) {
 			repo := fmt.Sprintf("bitnami-%d", i)
 			expected.Insert(repo)
 		}
+		for _, s := range resp.AvailablePackageSummaries {
+			id := strings.Split(s.AvailablePackageRef.Identifier, "/")
+			expected.Delete(id[0])
+		}
+
+		if expected.Len() != 0 {
+			t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
+				expected.List())
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
+}
+
+// test that causes RetryWatcher to stop and the cache needs to resync when there are
+// lots of pending work items
+// this test is focused on the repo cache work queue
+func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
+	t.Run("test that causes RetryWatcher to stop and the repo cache needs to resync (idle queue)", func(t *testing.T) {
+		// start with an empty server that only has an empty repo cache
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, nil, nil)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		// first, I'd like to make sure there is a single item in the queue
+		repoName := "bitnami-0"
+		repoNamespace := "default"
+
+		ts, repo, err := newRepoWithIndex("testdata/valid-index.yaml", repoName, repoNamespace, nil, "")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		defer ts.Close()
+
+		// the GETs and SETs will be done by background worker upon processing of Add event in
+		// NamespaceResourceWatcherCache.onAddOrModify()
+		key, byteArray, err := s.redisKeyValueForRepo(repo)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		mock.ExpectGet(key).RedisNil()
+		redisMockSetValueForRepo(mock, key, byteArray)
+
+		if _, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
+			Create(context.Background(), repo, metav1.CreateOptions{}); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		s.repoCache.ExpectAdd(key)
+		watcher.Add(repo)
+
+		done := make(chan int, 1)
+
+		go func() {
+			// wait until the first of the added repos have been fully processed
+			s.repoCache.WaitUntilDone(key)
+
+			// pretty delicate dance between the server and the client below using
+			// bi-directional channels in order to make sure the right expectations
+			// are set at the right time.
+			resyncCh, err := s.repoCache.ExpectResync()
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			// now we will simulate a HTTP 410 Gone error in the watcher
+			watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+			// we need to wait until server can guarantee no more Redis SETs after
+			// this until resync() kicks in
+			len := <-resyncCh
+			if len != 0 {
+				t.Errorf("ERROR: Expected empty repo work queue!")
+			} else {
+				mock.ExpectFlushDB().SetVal("OK")
+				redisMockSetValueForRepo(mock, key, byteArray)
+				// now we can signal to the server it's ok to proceed
+				resyncCh <- 0
+				s.repoCache.WaitUntilResyncComplete()
+			}
+			done <- 0
+		}()
+
+		<-done
+
+		// in case the side go-routine had failures
+		if t.Failed() {
+			t.FailNow()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		// at this point I'd like to make sure that GetAvailablePackageSummaries returns
+		// packages from all repos
+		mock.ExpectGet(key).SetVal(string(byteArray))
+
+		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
+			&corev1.GetAvailablePackageSummariesRequest{})
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		// we need to make sure that response contains packages from all existing repositories
+		// regardless whether they're in the cache or not
+		expected := sets.String{}
+		expected.Insert(repoName)
 		for _, s := range resp.AvailablePackageSummaries {
 			id := strings.Split(s.AvailablePackageRef.Identifier, "/")
 			expected.Delete(id[0])

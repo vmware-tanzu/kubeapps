@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -32,6 +33,8 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -693,6 +696,179 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 		})
 	}
+}
+
+// test that causes RetryWatcher to stop and the chart cache needs to resync
+// this test is focused on the chart cache work queue
+func TestChartCacheResyncNotIdle(t *testing.T) {
+	t.Run("test that causes RetryWatcher to stop and the chart cache needs to resync", func(t *testing.T) {
+		// start with an empty server that only has an empty repo cache
+		// passing in []testSpecChartWithUrl{} instead of nil will add support for chart cache
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		// what I need is a single repo with a whole bunch of unique charts (packages)
+		tarGzBytes, err := ioutil.ReadFile("./testdata/redis-14.4.0.tgz")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		// stand up an http server just for the duration of this test
+		var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+			w.Write(tarGzBytes)
+		})
+		ts := httptest.NewServer(handler)
+		defer ts.Close()
+
+		const NUM_CHARTS = 20
+		// create a YAML index file that contains this many unique packages
+		tmpFile, err := ioutil.TempFile(os.TempDir(), "*.yaml")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		defer os.Remove(tmpFile.Name())
+
+		templateYAMLBytes, err := ioutil.ReadFile("testdata/single-package-template.yaml")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		text := []byte("apiVersion: v1\nentries:\n")
+		if _, err = tmpFile.Write(text); err != nil {
+			t.Fatalf("%+v", err)
+		}
+		for i := 0; i < NUM_CHARTS; i++ {
+			s := strings.ReplaceAll(string(templateYAMLBytes), "{{NUM}}", fmt.Sprintf("%d", i))
+			if _, err = tmpFile.Write([]byte(s)); err != nil {
+				t.Fatalf("%+v", err)
+			}
+		}
+
+		repoName := "multitude-of-charts"
+		repoNamespace := "default"
+		replaceUrls := make(map[string]string)
+		replaceUrls["{{testdata/redis-14.4.0.tgz}}"] = ts.URL
+		ts2, r, err := newRepoWithIndex(
+			tmpFile.Name(), repoName, repoNamespace, replaceUrls, "")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		defer ts2.Close()
+
+		if _, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
+			Create(context.Background(), r, metav1.CreateOptions{}); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		repoKey, repoBytes, err := s.redisKeyValueForRepo(r)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		mock.ExpectGet(repoKey).RedisNil()
+		redisMockSetValueForRepo(mock, repoKey, repoBytes)
+
+		opts := &common.ClientOptions{}
+
+		chartCacheKeys := []string{}
+		var chartBytes []byte
+		for i := 0; i < NUM_CHARTS; i++ {
+			chartID := fmt.Sprintf("%s/redis-%d", repoName, i)
+			chartVersion := "14.4.0"
+			chartCacheKey, err := s.chartCache.KeyFor(repoNamespace, chartID, chartVersion)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			mock.ExpectExists(chartCacheKey).SetVal(0)
+			if i == 0 {
+				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, opts)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+			}
+			mock.ExpectSet(chartCacheKey, chartBytes, 0).SetVal("OK")
+			mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
+			s.chartCache.ExpectAdd(chartCacheKey)
+			chartCacheKeys = append(chartCacheKeys, chartCacheKey)
+		}
+		s.repoCache.ExpectAdd(repoKey)
+
+		watcher.Add(r)
+
+		done := make(chan int, 1)
+
+		go func() {
+			// wait until the first of the added repos have been fully processed and
+			// just one of the charts has been sync'ed
+			s.repoCache.WaitUntilDone(repoKey)
+			s.chartCache.WaitUntilDone(chartCacheKeys[0])
+
+			// pretty delicate dance between the server and the client below using
+			// bi-directional channels in order to make sure the right expectations
+			// are set at the right time.
+			repoResyncCh, err := s.repoCache.ExpectResync()
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			chartResyncCh, err := s.chartCache.ExpectResync()
+			if err != nil {
+				t.Errorf("%v", err)
+			}
+
+			// now we will simulate a HTTP 410 Gone error in the watcher
+			watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+			// we need to wait until server can guarantee no more Redis SETs after
+			// this until resync() kicks in
+			len := <-repoResyncCh
+			if len != 0 {
+				t.Errorf("ERROR: Expected empty repo work queue!")
+			} else {
+				mock.ExpectFlushDB().SetVal("OK")
+				redisMockSetValueForRepo(mock, repoKey, repoBytes)
+				// now we can signal to the server it's ok to proceed
+				repoResyncCh <- 0
+
+				len = <-chartResyncCh
+				if len == 0 {
+					t.Errorf("ERROR: Expected non-empty chart work queue!")
+				} else {
+					for i := 0; i < NUM_CHARTS; i++ {
+						mock.ExpectExists(chartCacheKeys[i]).SetVal(0)
+						mock.ExpectSet(chartCacheKeys[i], chartBytes, 0).SetVal("OK")
+						mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
+						s.chartCache.ExpectAdd(chartCacheKeys[i])
+					}
+					// now we can signal to the server it's ok to proceed
+					chartResyncCh <- 0
+					s.repoCache.WaitUntilResyncComplete()
+					s.chartCache.WaitUntilResyncComplete()
+					for i := 0; i < NUM_CHARTS; i++ {
+						s.chartCache.WaitUntilDone(chartCacheKeys[i])
+					}
+					// we do ClearExpect() here to avoid things like
+					// "there is a remaining expectation which was not matched:
+					// [exists helmcharts:default:multitude-of-charts/redis-2:14.4.0]"
+					// which might happened because the for loop in the main goroutine may have done a GET
+					// right before resync() kicked in. We don't care about that
+					mock.ClearExpect()
+				}
+			}
+			done <- 0
+		}()
+
+		<-done
+
+		// in case the side go-routine had failures
+		if t.Failed() {
+			t.FailNow()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
 }
 
 func newChart(name, namespace string, spec, status map[string]interface{}) *unstructured.Unstructured {

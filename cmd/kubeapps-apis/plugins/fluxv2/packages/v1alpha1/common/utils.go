@@ -232,7 +232,7 @@ func clientGetterHelper(config *rest.Config) (kubernetes.Interface, dynamic.Inte
 }
 
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
-// I understand this is not really kosher in general for production usage,
+// I understand this is not really "kosher" in general for production usage,
 // but in one specific case (cache populateWith() func) it's okay as a sanity check
 // if it turns out not, I can always remove this check, it's not critical
 const mutexLocked = 1
@@ -241,6 +241,15 @@ func RWMutexWriteLocked(rw *sync.RWMutex) bool {
 	// RWMutex has a "w" sync.Mutex field for write lock
 	state := reflect.ValueOf(rw).Elem().FieldByName("w").FieldByName("state")
 	return state.Int()&mutexLocked == mutexLocked
+}
+
+// note this implementation not correct for all cases. Thank you @minelson.
+// When there are active readers, and there is a concurrent .Lock() request for writing,
+// the readerCount may become < 0.
+// see https://github.com/golang/go/blob/release-branch.go1.14/src/sync/rwmutex.go#L100
+// so this code definitely needs be used with caution or better avoided
+func RWMutexReadLocked(rw *sync.RWMutex) bool {
+	return reflect.ValueOf(rw).Elem().FieldByName("readerCount").Int() > 0
 }
 
 // https://github.com/kubeapps/kubeapps/pull/3044#discussion_r662733334

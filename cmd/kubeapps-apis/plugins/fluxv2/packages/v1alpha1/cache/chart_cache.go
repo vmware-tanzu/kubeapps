@@ -20,6 +20,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -65,6 +66,18 @@ type ChartCache struct {
 	// the corresponding item from the queue. Upon successful processing
 	// of the item, the corresponding store entry is deleted
 	processing k8scache.Store
+
+	// I am using a Read/Write Mutex to gate access to cache's resync() operation, which is
+	// significant in that it flushes the whole redis cache and re-populates the state from k8s.
+	// When that happens we don't really want any concurrent access to the cache until the resync()
+	// operation is complete. In other words, we want to:
+	//  - be able to have multiple concurrent readers (goroutines doing GetForOne()/GetForMultiple())
+	//  - only a single writer (goroutine doing a resync()) is allowed, and while its doing its job
+	//    no readers are allowed
+	resyncCond *sync.Cond
+
+	// bi-directional channel used exclusively by unit tests
+	resyncCh chan int
 }
 
 // chartCacheStoreEntry is what we'll be storing in the processing store
@@ -92,6 +105,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 		redisCli:   redisCli,
 		queue:      NewRateLimitingQueue(name, DebugChartCacheQueue),
 		processing: k8scache.NewStore(chartCacheKeyFunc),
+		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
 	// each loop iteration will launch a single worker that processes items on the work
@@ -169,8 +183,8 @@ func (c *ChartCache) runWorker(workerName string) {
 // ref: https://engineering.bitnami.com/articles/kubewatch-an-example-of-kubernetes-custom-controller.html
 // ref: https://github.com/bitnami-labs/kubewatch/blob/master/pkg/controller/controller.go
 func (c *ChartCache) processNextWorkItem(workerName string) bool {
-	log.V(4).Infof("+processNextWorkItem(%s)", workerName)
-	defer log.V(4).Infof("-processNextWorkItem(%s)", workerName)
+	log.Infof("+processNextWorkItem(%s)", workerName)
+	defer log.Infof("-processNextWorkItem(%s)", workerName)
 
 	obj, shutdown := c.queue.Get()
 	if shutdown {
@@ -178,15 +192,18 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 		return false
 	}
 
-	// We call Done here so the queue knows we have finished
+	c.resyncCond.L.(*sync.RWMutex).RLock()
+	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
+
+	// We must remember to call Done so the queue knows we have finished
 	// processing this item. We also must remember to call Forget if we
 	// do not want this work item being re-queued. For example, we do
 	// not call Forget if a transient error occurs, instead the item is
 	// put back on the queue and attempted again after a back-off
 	// period.
-	defer c.queue.Done(obj)
 	key, ok := obj.(string)
 	if !ok {
+		c.queue.Done(obj)
 		// As the item in the work queue is actually invalid, we call
 		// Forget() here else we'd go into a loop of attempting to
 		// process a work item that is invalid.
@@ -194,8 +211,13 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 		runtime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
 		return true
 	}
-	err := c.syncHandler(workerName, key)
-	if err == nil {
+	if !c.queue.IsProcessing(key) {
+		// This is the scenario where between the call to .Get() and
+		// here there was a resync event, so we can discard this item
+		return true
+	}
+	defer c.queue.Done(obj)
+	if err := c.syncHandler(workerName, key); err == nil {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
 		c.processing.Delete(key)
@@ -274,11 +296,30 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 }
 
 func (c *ChartCache) OnResync() error {
-	log.Infof("+OnResync(), queue size: [%d]", c.queue.Len())
-	defer log.Info("-OnResync()")
+	log.Infof("+OnResync(), queue: [%s], size: [%d]", c.queue.Name(), c.queue.Len())
+	c.resyncCond.L.Lock()
+	defer func() {
+		if c.resyncCh != nil {
+			close(c.resyncCh)
+			c.resyncCh = nil
+		}
+		c.resyncCond.L.Unlock()
+		c.resyncCond.Broadcast()
+		log.Info("-OnResync()")
+	}()
 
-	// TODO (gifchtenholt) do we want to reset c.queue and c.processing here?
-	// this requires some thought
+	if c.resyncCh != nil {
+		c.resyncCh <- c.queue.Len()
+		// now let's wait for the client (unit test code) that it's ok to proceed
+		// to re-build the whole cache. Presumably the client will have set up the
+		// right expectations for redis mock. Don't care what the client sends,
+		// just need an indication its ok to proceed
+		<-c.resyncCh
+	}
+
+	log.Infof("Resetting work queue [%s]...", c.queue.Name())
+	c.queue.Reset()
+
 	return nil
 }
 
@@ -422,7 +463,7 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *c
 			c.processing.Add(*entry)
 			c.queue.Add(key)
 			// now need to wait until this item has been processed by runWorker().
-			c.queue.WaitUntilForgotten(key)
+			c.queue.WaitUntilDone(key)
 			return c.FetchForOne(key)
 		}
 	}
@@ -434,7 +475,7 @@ func (c *ChartCache) KeyFor(namespace, chartID, chartVersion string) (string, er
 }
 
 func (c *ChartCache) String() string {
-	return fmt.Sprintf("ChartCache[queue size: [%d]", c.queue.Len())
+	return fmt.Sprintf("ChartCache[queue size: [%d]]", c.queue.Len())
 }
 
 // the opposite of keyFor
@@ -453,12 +494,47 @@ func (c *ChartCache) ExpectAdd(key string) {
 }
 
 // this func is used by unit tests only
-func (c *ChartCache) WaitUntilForgotten(key string) {
-	c.queue.WaitUntilForgotten(key)
+func (c *ChartCache) WaitUntilDone(key string) {
+	c.queue.WaitUntilDone(key)
 }
 
 func (c *ChartCache) Shutdown() {
 	c.queue.ShutDown()
+}
+
+// this func is used by unit tests only
+// returns birectional channel where the number of items in the work queue will be sent
+// at the time of the resync() call and guarantees no more work items will be processed
+// until resync() finishes
+func (c *ChartCache) ExpectResync() (chan int, error) {
+	log.Infof("+ExpectResync()")
+	c.resyncCond.L.Lock()
+	defer func() {
+		c.resyncCond.L.Unlock()
+		log.Infof("-ExpectResync()")
+	}()
+
+	if c.resyncCh != nil {
+		return nil, status.Errorf(codes.Internal, "ExpectSync() already called")
+	} else {
+		c.resyncCh = make(chan int, 1)
+		return c.resyncCh, nil
+	}
+}
+
+// this func is used by unit tests only
+// By the end of the call the work queue should be empty
+func (c *ChartCache) WaitUntilResyncComplete() {
+	log.Infof("+WaitUntilResyncComplete()")
+	c.resyncCond.L.Lock()
+	defer func() {
+		c.resyncCond.L.Unlock()
+		log.Infof("-WaitUntilResyncComplete()")
+	}()
+
+	for c.resyncCh != nil {
+		c.resyncCond.Wait()
+	}
 }
 
 func chartCacheKeyFunc(obj interface{}) (string, error) {

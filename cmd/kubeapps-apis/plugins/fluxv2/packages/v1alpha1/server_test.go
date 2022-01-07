@@ -319,10 +319,11 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 	if err != nil {
 		return nil, mock, err
 	}
+	t.Cleanup(func() { repoCache.Shutdown() })
 
 	// need to wait until ChartCache has finished syncing
 	for key := range cachedChartKeys {
-		chartCache.WaitUntilForgotten(key)
+		chartCache.WaitUntilDone(key)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

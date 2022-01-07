@@ -10,15 +10,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Inspired by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/queue.go and
+Inspired by https://github.com/kubernetes/client-go/blob/master/util/workqueue/queue.go and
          by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/rate_limiting_queue.go
-	but adds a couple of funcs: Expect() and WaitUntilGone()
+	but adds a few funcs, like ExpectAdd() and WaitUntilDone()
 */
 package cache
 
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -32,7 +33,9 @@ type RateLimitingInterface interface {
 	workqueue.RateLimitingInterface
 	Name() string
 	ExpectAdd(item string)
-	WaitUntilForgotten(item string)
+	IsProcessing(item string) bool
+	WaitUntilDone(item string)
+	Reset()
 }
 
 func NewRateLimitingQueue(name string, debugEnabled bool) RateLimitingInterface {
@@ -62,8 +65,12 @@ func (q *rateLimitingType) AddRateLimited(item interface{}) {
 	}
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
+			reflect.TypeOf(item)))
 	} else {
+		// TODO (gfichtenholt) .ExpectAdd() was added here for
+		// TestTransientHttpFailuresAreRetriedForChartCache scenario, but it doesn't belong here
+		// it should be moved someplace into the unit test itself
 		q.ExpectAdd(itemstr)
 		q.DelayingInterface.AddAfter(itemstr, duration)
 	}
@@ -85,9 +92,25 @@ func (q *rateLimitingType) ExpectAdd(item string) {
 	q.queue.expectAdd(item)
 }
 
-func (q *rateLimitingType) WaitUntilForgotten(item string) {
-	// this neeeds to take into account both the rateLimiter and the queue
-	q.queue.waitUntilForgotten(item, q.rateLimiter)
+func (q *rateLimitingType) WaitUntilDone(item string) {
+	q.queue.waitUntilDone(item)
+}
+
+func (q *rateLimitingType) IsProcessing(item string) bool {
+	return q.queue.isProcessing(item)
+}
+
+func (q *rateLimitingType) Reset() {
+	log.Infof("+Reset(), [%s], delayingInterface queue size: [%d]",
+		q.Name(), q.DelayingInterface.Len())
+
+	q.queue.reset()
+
+	// this way we "forget" about ratelimit failures
+	q.rateLimiter = workqueue.DefaultControllerRateLimiter()
+
+	// TODO (gfichtenholt) Also need to "forget" the items queued up via previous call(s)
+	// to .AddRateLimited() (i.e. via q.DelayingInterface.AddAfter)
 }
 
 func newQueue(name string, debugEnabled bool) *Type {
@@ -143,7 +166,8 @@ func (q *Type) Add(item interface{}) {
 	}
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
+			reflect.TypeOf(item)))
 	} else {
 		q.expected.Delete(itemstr)
 		if q.dirty.Has(itemstr) {
@@ -157,7 +181,9 @@ func (q *Type) Add(item interface{}) {
 
 		q.queue = append(q.queue, itemstr)
 		if q.debugEnabled {
-			log.Infof("[%s]: Add(%s) [expected: %s, dirty: %s, processing %s, queue: %s]", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+			if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
+				log.Infof("[%s]: Add(%s)%s", q.name, item, q.prettyPrintAll())
+			}
 		}
 		q.cond.Broadcast()
 	}
@@ -192,7 +218,9 @@ func (q *Type) Get() (item interface{}, shutdown bool) {
 			q.processing.Insert(itemstr)
 			q.dirty.Delete(itemstr)
 			if q.debugEnabled {
-				log.Infof("[%s]: Get() returning [%s], [expected: %s, dirty: %s, processing %s, queue: %s]", q.name, itemstr, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+				if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
+					log.Infof("[%s]: Get() returning [%s], %s", q.name, itemstr, q.prettyPrintAll())
+				}
 			}
 			return itemstr, false
 		}
@@ -212,14 +240,17 @@ func (q *Type) Done(item interface{}) {
 
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("unexpected item in queue: expected string, found: [%s]", reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
+			reflect.TypeOf(item)))
 	} else {
 		q.processing.Delete(itemstr)
 		if q.dirty.Has(itemstr) {
 			q.queue = append(q.queue, itemstr)
 		}
 		if q.debugEnabled {
-			log.Infof("[%s]: Done(%s) [expected: %s, dirty: %s, processing %s, queue: %s]", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+			if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
+				log.Infof("[%s]: Done(%s) %s", q.name, item, q.prettyPrintAll())
+			}
 		}
 		q.cond.Broadcast()
 	}
@@ -247,7 +278,7 @@ func (q *Type) ShuttingDown() bool {
 	return q.shuttingDown
 }
 
-// Add marks item as expected to be processed in the near future
+// expectAdd marks item as expected to be processed in the near future
 // Used in unit tests only
 func (q *Type) expectAdd(item string) {
 	q.cond.L.Lock()
@@ -259,28 +290,85 @@ func (q *Type) expectAdd(item string) {
 
 	q.expected.Insert(item)
 	if q.debugEnabled {
-		log.Infof("[%s]: expectAdd(%s) [expected: %s, dirty: %s, processing %s, queue: %s]", q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+		if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
+			log.Infof("[%s]: expectAdd(%s) %s",
+				q.name, item, q.prettyPrintAll())
+		}
 	}
 }
 
-// this func is the whole reason for the existence of this queue
-func (q *Type) waitUntilForgotten(item string, rateLimiter workqueue.RateLimiter) {
+func (q *Type) isProcessing(item string) bool {
+	q.cond.L.Lock()
+	defer q.cond.L.Unlock()
+
+	if q.shuttingDown {
+		return false
+	}
+
+	return q.processing.Has(item)
+}
+
+// this func is the added feature that was missing in k8s workqueue
+func (q *Type) waitUntilDone(item string) {
 	if q.debugEnabled {
-		log.Infof("[%s]: +waitUntilForgotten(%s)", q.name, item)
+		if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
+			log.Infof("[%s]: +waitUntilDone(%s)", q.name, item)
+		}
 	}
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
 	if q.debugEnabled {
-		defer log.Infof("[%s]: -waitUntilForgotten(%s)", q.name, item)
+		if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
+			defer log.Infof("[%s]: -waitUntilDone(%s)", q.name, item)
+		}
 	}
 
 	for q.expected.Has(item) || q.dirty.Has(item) || q.processing.Has(item) {
 		q.cond.Wait()
 
 		if q.debugEnabled {
-			log.Infof("[%s]: waitUntilForgotten(%s) [expected: %s, dirty: %s, processing %s, queue: %s]",
-				q.name, item, q.expected.List(), q.dirty.List(), q.processing.List(), q.queue)
+			if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
+				log.Infof("[%s]: waitUntilDone(%s) %s", q.name, item, q.prettyPrintAll())
+			}
 		}
+	}
+}
+
+// this func is the added feature that was missing in k8s workqueue
+func (q *Type) reset() {
+	if q.debugEnabled {
+		log.Infof("[%s]: +reset()", q.name)
+	}
+	q.cond.L.Lock()
+	defer q.cond.L.Unlock()
+
+	q.queue = []string{}
+	q.dirty = sets.String{}
+	q.processing = sets.String{}
+	// we are intentionally not resetting q.expected as we don't want to lose
+	// those accross resync's
+}
+
+// for easier reading of debug output
+func (q *Type) prettyPrintAll() string {
+	return fmt.Sprintf("\n\texpected: %s\n\tdirty: %s\n\tprocessing: %s\n\tqueue: %s",
+		printOneItemPerLine(q.expected.List()),
+		printOneItemPerLine(q.dirty.List()),
+		printOneItemPerLine(q.processing.List()),
+		printOneItemPerLine(q.queue))
+}
+
+func printOneItemPerLine(strs []string) string {
+	if len(strs) == 0 {
+		return "[]"
+	} else {
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf("[%d] [\n", len(strs)))
+		for _, s := range strs {
+			sb.WriteString("\t\t" + s + "\n")
+		}
+		sb.WriteString("\t]")
+		return sb.String()
 	}
 }
