@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
+import { IAppRepository, IAppRepositoryFilter, IStoreState } from "shared/types";
 import { AppRepoForm } from "./AppRepoForm";
 
 interface IAppRepoAddButtonProps {
@@ -15,7 +15,6 @@ interface IAppRepoAddButtonProps {
   text?: string;
   primary?: boolean;
   repo?: IAppRepository;
-  secret?: ISecret;
   disabled?: boolean;
   title?: string;
 }
@@ -25,7 +24,6 @@ export function AppRepoAddButton({
   namespace,
   kubeappsNamespace,
   repo,
-  secret,
   primary = true,
   title,
   disabled,
@@ -108,7 +106,6 @@ export function AppRepoAddButton({
               onSubmit={onSubmit}
               onAfterInstall={closeModal}
               repo={repo}
-              secret={secret}
               namespace={namespace}
               kubeappsNamespace={kubeappsNamespace}
             />

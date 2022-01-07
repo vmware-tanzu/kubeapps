@@ -24,7 +24,6 @@ describe("reposReducer", () => {
       validating: false,
       repo: {} as IAppRepository,
       repos: [],
-      repoSecrets: [],
       imagePullSecrets: [],
     };
   });
@@ -37,7 +36,6 @@ describe("reposReducer", () => {
       repoUpdated: getType(actions.repos.repoUpdated),
       requestRepos: getType(actions.repos.requestRepos),
       receiveRepos: getType(actions.repos.receiveRepos),
-      receiveReposSecret: getType(actions.repos.receiveReposSecret),
       requestRepo: getType(actions.repos.requestRepo),
       receiveRepo: getType(actions.repos.receiveRepo),
       repoValidating: getType(actions.repos.repoValidating),
@@ -45,8 +43,6 @@ describe("reposReducer", () => {
       redirect: getType(actions.repos.redirect),
       redirected: getType(actions.repos.redirected),
       errorRepos: getType(actions.repos.errorRepos),
-      requestImagePullSecrets: getType(actions.repos.requestImagePullSecrets),
-      receiveImagePullSecrets: getType(actions.repos.receiveImagePullSecrets),
       createImagePullSecret: getType(actions.repos.createImagePullSecret),
     };
 
@@ -100,20 +96,6 @@ describe("reposReducer", () => {
       });
     });
 
-    it("receives a repo secret", () => {
-      const secret = { metadata: { name: "foo", namespace: "bar" } } as any;
-      const modifiedSecret = { ...secret, spec: { foo: "bar" } };
-      expect(
-        reposReducer(
-          { ...initialState, repoSecrets: [secret] },
-          {
-            type: actionTypes.receiveReposSecret as any,
-            payload: modifiedSecret,
-          },
-        ),
-      ).toEqual({ ...initialState, repoSecrets: [modifiedSecret] });
-    });
-
     it("adds a repo", () => {
       const repo = { metadata: { name: "foo" } };
       const state = reposReducer(undefined, {
@@ -157,24 +139,6 @@ describe("reposReducer", () => {
           type: actionTypes.repoValidated as any,
         }),
       ).toEqual({ ...initialState });
-    });
-
-    it("receives image pull secrets", () => {
-      const pullSecret = { metadata: { name: "foo" } } as any;
-      const state = reposReducer(undefined, {
-        type: actionTypes.requestImagePullSecrets as any,
-      });
-      expect(state).toEqual({
-        ...initialState,
-        isFetching: true,
-        isFetchingElem: { repositories: false, secrets: true },
-      });
-      expect(
-        reposReducer(state, {
-          type: actionTypes.receiveImagePullSecrets as any,
-          payload: [pullSecret],
-        }),
-      ).toEqual({ ...initialState, imagePullSecrets: [pullSecret] });
     });
   });
 });
