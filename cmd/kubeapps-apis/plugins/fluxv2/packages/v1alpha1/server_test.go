@@ -287,10 +287,10 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 
 				repoKey, err := redisKeyForRepoNamespacedName(repoName)
 				if err == nil && okRepos.Has(repoKey) {
-					for i := 0; i < c.numRetries+1; i++ {
+					for i := 0; i < c.numRetries; i++ {
 						mock.ExpectExists(key).SetVal(0)
 					}
-					err = redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
+					err = cs.redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
 					if err != nil {
 						return nil, mock, err
 					}

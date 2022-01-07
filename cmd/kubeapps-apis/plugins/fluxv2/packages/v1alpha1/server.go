@@ -28,6 +28,7 @@ import (
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
@@ -542,4 +543,9 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		Context:      pkgRef.GetContext(),
 		ResourceRefs: refs,
 	}, nil
+}
+
+// GetPluginDetail returns a core.plugins.Plugin describing itself.
+func GetPluginDetail() *plugins.Plugin {
+	return common.GetPluginDetail()
 }

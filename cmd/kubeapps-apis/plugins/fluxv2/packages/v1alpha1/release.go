@@ -207,7 +207,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructure
 				Cluster:   s.kubeappsCluster,
 			},
 			Identifier: name.Name,
-			Plugin:     common.GetPluginDetail(),
+			Plugin:     GetPluginDetail(),
 		},
 		Name:                name.Name,
 		PkgVersionReference: pkgVersion,
@@ -302,7 +302,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 				Cluster:   s.kubeappsCluster,
 			},
 			Identifier: name.Name,
-			Plugin:     common.GetPluginDetail(),
+			Plugin:     GetPluginDetail(),
 		},
 		Name:                name.Name,
 		PkgVersionReference: pkgVersionRef,
@@ -406,7 +406,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 			Cluster:   s.kubeappsCluster,
 		},
 		Identifier: name.Name,
-		Plugin:     common.GetPluginDetail(),
+		Plugin:     GetPluginDetail(),
 	}, nil
 }
 
@@ -498,7 +498,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 			Cluster:   s.kubeappsCluster,
 		},
 		Identifier: packageRef.Identifier,
-		Plugin:     common.GetPluginDetail(),
+		Plugin:     GetPluginDetail(),
 	}, nil
 }
 
@@ -631,7 +631,7 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 	}
 	return &corev1.AvailablePackageReference{
 		Identifier: fmt.Sprintf("%s/%s", repoName, chartName),
-		Plugin:     common.GetPluginDetail(),
+		Plugin:     GetPluginDetail(),
 		Context:    &corev1.Context{Namespace: repoNamespace},
 	}, nil
 }

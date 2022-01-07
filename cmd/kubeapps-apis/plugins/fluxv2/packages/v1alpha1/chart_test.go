@@ -236,8 +236,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					}
 				}
 				// followed by a set and a hit
-				mock.ExpectExists(chartCacheKey).SetVal(0)
-				if err = redisMockSetValueForChart(mock, chartCacheKey, requestChartUrl, opts); err != nil {
+				if err = s.redisMockSetValueForChart(mock, chartCacheKey, requestChartUrl, opts); err != nil {
 					t.Fatalf("%+v", err)
 				}
 			}
@@ -780,15 +779,13 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
-			mock.ExpectExists(chartCacheKey).SetVal(0)
 			if i == 0 {
 				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, opts)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
 			}
-			mock.ExpectSet(chartCacheKey, chartBytes, 0).SetVal("OK")
-			mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
+			redisMockSetValueForChart(mock, chartCacheKey, chartBytes)
 			s.chartCache.ExpectAdd(chartCacheKey)
 			chartCacheKeys = append(chartCacheKeys, chartCacheKey)
 		}
@@ -835,9 +832,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 					t.Errorf("ERROR: Expected non-empty chart work queue!")
 				} else {
 					for i := 0; i < NUM_CHARTS; i++ {
-						mock.ExpectExists(chartCacheKeys[i]).SetVal(0)
-						mock.ExpectSet(chartCacheKeys[i], chartBytes, 0).SetVal("OK")
-						mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
+						redisMockSetValueForChart(mock, chartCacheKeys[i], chartBytes)
 						s.chartCache.ExpectAdd(chartCacheKeys[i])
 					}
 					// now we can signal to the server it's ok to proceed
@@ -912,7 +907,15 @@ func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 	}
 }
 
-func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+	cs := repoCacheCallSite{
+		clientGetter: s.clientGetter,
+		chartCache:   s.chartCache,
+	}
+	return cs.redisMockSetValueForChart(mock, key, url, opts)
+}
+
+func (cs *repoCacheCallSite) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
 	_, chartID, version, err := fromRedisKeyForChart(key)
 	if err != nil {
 		return err
@@ -921,9 +924,14 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts 
 	if err != nil {
 		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
 	}
+	redisMockSetValueForChart(mock, key, byteArray)
+	return nil
+}
+
+func redisMockSetValueForChart(mock redismock.ClientMock, key string, byteArray []byte) {
+	mock.ExpectExists(key).SetVal(0)
 	mock.ExpectSet(key, byteArray, 0).SetVal("OK")
 	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
-	return nil
 }
 
 // does a series of mock.ExpectGet(...)

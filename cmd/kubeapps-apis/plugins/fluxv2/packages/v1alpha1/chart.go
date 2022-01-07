@@ -23,7 +23,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
@@ -202,7 +201,7 @@ func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePac
 
 	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
 		Identifier: chart.ID,
-		Plugin:     common.GetPluginDetail(),
+		Plugin:     GetPluginDetail(),
 	}
 	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 
@@ -348,7 +347,7 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 		Maintainers:      maintainers,
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Identifier: chartID,
-			Plugin:     common.GetPluginDetail(),
+			Plugin:     GetPluginDetail(),
 			Context:    &corev1.Context{},
 		},
 	}
