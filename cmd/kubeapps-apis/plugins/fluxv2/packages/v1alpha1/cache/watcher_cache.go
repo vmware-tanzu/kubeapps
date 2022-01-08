@@ -43,14 +43,14 @@ import (
 
 const (
 	// max number of retries to process one cache entry due to transient errors
-	NamespacedResourceWatcherCacheMaxRetries = 5
+	namespacedResourceWatcherCacheMaxRetries = 5
 	// max number of attempts to resync before giving up
-	NamespacedResourceWatcherCacheMaxResyncBackoff = 2
+	namespacedResourceWatcherCacheMaxResyncBackoff = 2
 )
 
 var (
 	// pretty much a constant, init pattern similar to that of asset-syncer
-	DebugWatcherCacheQueue = os.Getenv("DEBUG_WATCHER_CACHE_QUEUE") == "true"
+	verboseWatcherCacheQueue = os.Getenv("DEBUG_WATCHER_CACHE_QUEUE") == "true"
 )
 
 // a type of cache that is based on watching for changes to specified kubernetes resources.
@@ -148,7 +148,7 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 	c := NamespacedResourceWatcherCache{
 		config:     config,
 		redisCli:   redisCli,
-		queue:      NewRateLimitingQueue(name, DebugWatcherCacheQueue),
+		queue:      NewRateLimitingQueue(name, verboseWatcherCacheQueue),
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
@@ -261,8 +261,8 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	if err == nil {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
-	} else if c.queue.NumRequeues(key) < NamespacedResourceWatcherCacheMaxRetries {
-		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, NamespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
+	} else if c.queue.NumRequeues(key) < namespacedResourceWatcherCacheMaxRetries {
+		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, namespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
 		c.queue.AddRateLimited(key)
 	} else {
 		// err != nil and too many retries
@@ -305,7 +305,7 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 
 			err = fmt.Errorf(
 				"[%s]: Watch loop has been stopped after [%d] retries were exhausted, last error: %v",
-				c.queue.Name(), NamespacedResourceWatcherCacheMaxRetries, err)
+				c.queue.Name(), namespacedResourceWatcherCacheMaxRetries, err)
 			// yes, I really want this to panic. Something is seriously wrong
 			// possibly restarting plugin/kubeapps-apis server is needed...
 			defer runtime.Must(err)
@@ -331,7 +331,7 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 	var resourceVersion string
 
 	// max backoff is 2^(NamespacedResourceWatcherCacheMaxResyncBackoff) seconds
-	for i := 0; i < NamespacedResourceWatcherCacheMaxResyncBackoff; i++ {
+	for i := 0; i < namespacedResourceWatcherCacheMaxResyncBackoff; i++ {
 		if resourceVersion, err = c.resync(bootstrap); err != nil {
 			runtime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
 		} else if watcher, err = watchutil.NewRetryWatcher(resourceVersion, c); err != nil {

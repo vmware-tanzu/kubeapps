@@ -39,14 +39,14 @@ import (
 
 const (
 	// max number of retries due to transient errors
-	MaxChartCacheRetries = 5
+	maxChartCacheRetries = 5
 	// number of background workers to process work queue items
-	MaxChartCacheWorkers = 2
+	maxChartCacheWorkers = 2
 )
 
 var (
 	// pretty much a constant, init pattern similar to that of asset-syncer
-	DebugChartCacheQueue = os.Getenv("DEBUG_CHART_CACHE_QUEUE") == "true"
+	verboseChartCacheQueue = os.Getenv("DEBUG_CHART_CACHE_QUEUE") == "true"
 )
 
 type ChartCache struct {
@@ -103,7 +103,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 
 	c := ChartCache{
 		redisCli:   redisCli,
-		queue:      NewRateLimitingQueue(name, DebugChartCacheQueue),
+		queue:      NewRateLimitingQueue(name, verboseChartCacheQueue),
 		processing: k8scache.NewStore(chartCacheKeyFunc),
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
@@ -111,7 +111,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 	// each loop iteration will launch a single worker that processes items on the work
 	//  queue as they come in. runWorker will loop until "something bad" happens.
 	// The .Until will then rekick the worker after one second
-	for i := 0; i < MaxChartCacheWorkers; i++ {
+	for i := 0; i < maxChartCacheWorkers; i++ {
 		// let's give each worker a unique name - easier to debug
 		name := fmt.Sprintf("%s-worker-%d", c.queue.Name(), i)
 		fn := func() {
@@ -221,9 +221,9 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
 		c.processing.Delete(key)
-	} else if c.queue.NumRequeues(key) < NamespacedResourceWatcherCacheMaxRetries {
+	} else if c.queue.NumRequeues(key) < maxChartCacheRetries {
 		log.Errorf("Error processing [%s] (will retry [%d] times): %v",
-			key, NamespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
+			key, maxChartCacheRetries-c.queue.NumRequeues(key), err)
 		c.queue.AddRateLimited(key)
 	} else {
 		// err != nil and too many retries
@@ -318,10 +318,9 @@ func (c *ChartCache) OnResync() error {
 		<-c.resyncCh
 	}
 
-	log.Infof("Resetting work queue [%s]...", c.queue.Name())
+	log.Infof("Resetting work queue [%s] and store...", c.queue.Name())
 	c.queue.Reset()
-
-	// TODO (gfichtenholt) reset processing store
+	c.processing = k8scache.NewStore(chartCacheKeyFunc)
 	return nil
 }
 

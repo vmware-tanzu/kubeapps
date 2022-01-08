@@ -861,7 +861,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		mapReposCached := make(map[string][]byte)
 		keysInOrder := []string{}
 
-		const MAX_REPOS = 10
+		const MAX_REPOS = 15
 		for i := 0; i < MAX_REPOS; i++ {
 			repoName := fmt.Sprintf("bitnami-%d", i)
 
