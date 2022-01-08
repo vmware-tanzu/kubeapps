@@ -222,7 +222,8 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 		c.queue.Forget(key)
 		c.processing.Delete(key)
 	} else if c.queue.NumRequeues(key) < NamespacedResourceWatcherCacheMaxRetries {
-		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, NamespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
+		log.Errorf("Error processing [%s] (will retry [%d] times): %v",
+			key, NamespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
 		c.queue.AddRateLimited(key)
 	} else {
 		// err != nil and too many retries
@@ -320,6 +321,7 @@ func (c *ChartCache) OnResync() error {
 	log.Infof("Resetting work queue [%s]...", c.queue.Name())
 	c.queue.Reset()
 
+	// TODO (gfichtenholt) reset processing store
 	return nil
 }
 
@@ -463,7 +465,7 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *c
 			c.processing.Add(*entry)
 			c.queue.Add(key)
 			// now need to wait until this item has been processed by runWorker().
-			c.queue.WaitUntilDone(key)
+			c.queue.WaitUntilForgotten(key)
 			return c.FetchForOne(key)
 		}
 	}
@@ -494,8 +496,8 @@ func (c *ChartCache) ExpectAdd(key string) {
 }
 
 // this func is used by unit tests only
-func (c *ChartCache) WaitUntilDone(key string) {
-	c.queue.WaitUntilDone(key)
+func (c *ChartCache) WaitUntilForgotten(key string) {
+	c.queue.WaitUntilForgotten(key)
 }
 
 func (c *ChartCache) Shutdown() {

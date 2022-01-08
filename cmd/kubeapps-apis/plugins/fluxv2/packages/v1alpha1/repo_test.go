@@ -617,7 +617,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 		s.repoCache.ExpectAdd(key)
 		watcher.Modify(repo)
-		s.repoCache.WaitUntilDone(key)
+		s.repoCache.WaitUntilForgotten(key)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -736,9 +736,9 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			s.chartCache.ExpectAdd(k)
 		}
 		watcher.Delete(repo)
-		s.repoCache.WaitUntilDone(repoKey)
+		s.repoCache.WaitUntilForgotten(repoKey)
 		for _, k := range chartCacheKeys {
-			s.chartCache.WaitUntilDone(k)
+			s.chartCache.WaitUntilForgotten(k)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -900,7 +900,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 
 		go func() {
 			// wait until the first of the added repos have been fully processed
-			s.repoCache.WaitUntilDone(keysInOrder[0])
+			s.repoCache.WaitUntilForgotten(keysInOrder[0])
 
 			// pretty delicate dance between the server and the client below using
 			// bi-directional channels in order to make sure the right expectations
@@ -1028,7 +1028,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 
 		go func() {
 			// wait until the first of the added repos have been fully processed
-			s.repoCache.WaitUntilDone(key)
+			s.repoCache.WaitUntilForgotten(key)
 
 			// pretty delicate dance between the server and the client below using
 			// bi-directional channels in order to make sure the right expectations

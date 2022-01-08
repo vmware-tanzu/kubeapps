@@ -798,8 +798,8 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		go func() {
 			// wait until the first of the added repos have been fully processed and
 			// just one of the charts has been sync'ed
-			s.repoCache.WaitUntilDone(repoKey)
-			s.chartCache.WaitUntilDone(chartCacheKeys[0])
+			s.repoCache.WaitUntilForgotten(repoKey)
+			s.chartCache.WaitUntilForgotten(chartCacheKeys[0])
 
 			// pretty delicate dance between the server and the client below using
 			// bi-directional channels in order to make sure the right expectations
@@ -840,7 +840,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 					s.repoCache.WaitUntilResyncComplete()
 					s.chartCache.WaitUntilResyncComplete()
 					for i := 0; i < NUM_CHARTS; i++ {
-						s.chartCache.WaitUntilDone(chartCacheKeys[i])
+						s.chartCache.WaitUntilForgotten(chartCacheKeys[i])
 					}
 					// we do ClearExpect() here to avoid things like
 					// "there is a remaining expectation which was not matched:

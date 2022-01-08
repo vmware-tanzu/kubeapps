@@ -315,7 +315,8 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		OnResyncFunc: cs.onResync,
 	}
 
-	repoCache, err := cache.NewNamespacedResourceWatcherCache("repoCacheTest", cacheConfig, redisCli, stopCh)
+	repoCache, err := cache.NewNamespacedResourceWatcherCache(
+		"repoCacheTest", cacheConfig, redisCli, stopCh)
 	if err != nil {
 		return nil, mock, err
 	}
@@ -323,7 +324,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 
 	// need to wait until ChartCache has finished syncing
 	for key := range cachedChartKeys {
-		chartCache.WaitUntilDone(key)
+		chartCache.WaitUntilForgotten(key)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

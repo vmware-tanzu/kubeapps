@@ -21,9 +21,11 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/workqueue"
 	log "k8s.io/klog/v2"
 )
@@ -34,15 +36,15 @@ type RateLimitingInterface interface {
 	Name() string
 	ExpectAdd(item string)
 	IsProcessing(item string) bool
-	WaitUntilDone(item string)
+	WaitUntilForgotten(item string)
 	Reset()
 }
 
-func NewRateLimitingQueue(name string, debugEnabled bool) RateLimitingInterface {
-	if debugEnabled {
+func NewRateLimitingQueue(name string, verbose bool) RateLimitingInterface {
+	if verbose {
 		log.Infof("+NewRateLimitingQueue(%s)", name)
 	}
-	queue := newQueue(name, debugEnabled)
+	queue := newQueue(name, verbose)
 	return &rateLimitingType{
 		queue:             queue,
 		DelayingInterface: workqueue.NewDelayingQueueWithCustomQueue(queue, name),
@@ -60,7 +62,7 @@ type rateLimitingType struct {
 // AddRateLimited AddAfter's the item based on the time when the rate limiter says it's ok
 func (q *rateLimitingType) AddRateLimited(item interface{}) {
 	duration := q.rateLimiter.When(item)
-	if q.queue.debugEnabled {
+	if q.queue.verbose {
 		log.Infof("[%s]: AddRateLimited(%s) - in %d ms", q.queue.name, item, duration.Milliseconds())
 	}
 	if itemstr, ok := item.(string); !ok {
@@ -68,10 +70,6 @@ func (q *rateLimitingType) AddRateLimited(item interface{}) {
 		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
 			reflect.TypeOf(item)))
 	} else {
-		// TODO (gfichtenholt) .ExpectAdd() was added here for
-		// TestTransientHttpFailuresAreRetriedForChartCache scenario, but it doesn't belong here
-		// it should be moved someplace into the unit test itself
-		q.ExpectAdd(itemstr)
 		q.DelayingInterface.AddAfter(itemstr, duration)
 	}
 }
@@ -88,14 +86,6 @@ func (q *rateLimitingType) Forget(item interface{}) {
 	q.rateLimiter.Forget(item)
 }
 
-func (q *rateLimitingType) ExpectAdd(item string) {
-	q.queue.expectAdd(item)
-}
-
-func (q *rateLimitingType) WaitUntilDone(item string) {
-	q.queue.waitUntilDone(item)
-}
-
 func (q *rateLimitingType) IsProcessing(item string) bool {
 	return q.queue.isProcessing(item)
 }
@@ -110,17 +100,35 @@ func (q *rateLimitingType) Reset() {
 	q.rateLimiter = workqueue.DefaultControllerRateLimiter()
 
 	// TODO (gfichtenholt) Also need to "forget" the items queued up via previous call(s)
-	// to .AddRateLimited() (i.e. via q.DelayingInterface.AddAfter)
+	// to .AddRateLimited() (i.e. via q.DelayingInterface.AddAfter) ?
 }
 
-func newQueue(name string, debugEnabled bool) *Type {
+// only used in unit tests
+func (q *rateLimitingType) ExpectAdd(item string) {
+	q.queue.expectAdd(item)
+}
+
+// only used in unit tests
+func (q *rateLimitingType) WaitUntilForgotten(item string) {
+	q.queue.waitUntilDone(item)
+	// q.queue might be done with the item, but it may have been
+	// re-added via AddRateLimited if there was an error processing the item
+	// in which case, NumRequeues will be > 0, and will only become 0 after
+	// a call to .Forget.
+	// doing a wait.PollInfinite is ok here, since this func only used by unit tests
+	wait.PollInfinite(10*time.Millisecond, func() (bool, error) {
+		return q.rateLimiter.NumRequeues(item) == 0, nil
+	})
+}
+
+func newQueue(name string, verbose bool) *Type {
 	return &Type{
-		name:         name,
-		debugEnabled: debugEnabled,
-		expected:     sets.String{},
-		dirty:        sets.String{},
-		processing:   sets.String{},
-		cond:         sync.NewCond(&sync.Mutex{}),
+		name:       name,
+		verbose:    verbose,
+		expected:   sets.String{},
+		dirty:      sets.String{},
+		processing: sets.String{},
+		cond:       sync.NewCond(&sync.Mutex{}),
 	}
 }
 
@@ -131,7 +139,7 @@ type Type struct {
 	name string
 
 	// just for debugging purposes
-	debugEnabled bool
+	verbose bool
 
 	// queue defines the order in which we will work on items. Every
 	// element of queue should be in the dirty set and not in the
@@ -180,10 +188,8 @@ func (q *Type) Add(item interface{}) {
 		}
 
 		q.queue = append(q.queue, itemstr)
-		if q.debugEnabled {
-			if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
-				log.Infof("[%s]: Add(%s)%s", q.name, item, q.prettyPrintAll())
-			}
+		if q.verbose {
+			log.Infof("[%s]: Add(%s)%s", q.name, item, q.prettyPrintAll())
 		}
 		q.cond.Broadcast()
 	}
@@ -217,10 +223,8 @@ func (q *Type) Get() (item interface{}, shutdown bool) {
 			itemstr, q.queue = q.queue[0], q.queue[1:]
 			q.processing.Insert(itemstr)
 			q.dirty.Delete(itemstr)
-			if q.debugEnabled {
-				if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
-					log.Infof("[%s]: Get() returning [%s], %s", q.name, itemstr, q.prettyPrintAll())
-				}
+			if q.verbose {
+				log.Infof("[%s]: Get() returning [%s], %s", q.name, itemstr, q.prettyPrintAll())
 			}
 			return itemstr, false
 		}
@@ -247,10 +251,8 @@ func (q *Type) Done(item interface{}) {
 		if q.dirty.Has(itemstr) {
 			q.queue = append(q.queue, itemstr)
 		}
-		if q.debugEnabled {
-			if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
-				log.Infof("[%s]: Done(%s) %s", q.name, item, q.prettyPrintAll())
-			}
+		if q.verbose {
+			log.Infof("[%s]: Done(%s) %s", q.name, item, q.prettyPrintAll())
 		}
 		q.cond.Broadcast()
 	}
@@ -264,7 +266,7 @@ func (q *Type) ShutDown() {
 	defer q.cond.L.Unlock()
 
 	q.shuttingDown = true
-	if q.debugEnabled {
+	if q.verbose {
 		log.Infof("[%s]: Queue shutdown, sizes [empty=%d, dirty=%d, processing=%d, queue=%d]",
 			q.name, q.expected.Len(), q.dirty.Len(), q.processing.Len(), len(q.queue))
 	}
@@ -289,11 +291,8 @@ func (q *Type) expectAdd(item string) {
 	}
 
 	q.expected.Insert(item)
-	if q.debugEnabled {
-		if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
-			log.Infof("[%s]: expectAdd(%s) %s",
-				q.name, item, q.prettyPrintAll())
-		}
+	if q.verbose {
+		log.Infof("[%s]: expectAdd(%s) %s", q.name, item, q.prettyPrintAll())
 	}
 }
 
@@ -308,36 +307,30 @@ func (q *Type) isProcessing(item string) bool {
 	return q.processing.Has(item)
 }
 
-// this func is the added feature that was missing in k8s workqueue
+// this func used in unit tests only
 func (q *Type) waitUntilDone(item string) {
-	if q.debugEnabled {
-		if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
-			log.Infof("[%s]: +waitUntilDone(%s)", q.name, item)
-		}
+	if q.verbose {
+		log.Infof("[%s]: +waitUntilDone(%s)", q.name, item)
 	}
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
-	if q.debugEnabled {
-		if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
-			defer log.Infof("[%s]: -waitUntilDone(%s)", q.name, item)
-		}
+	if q.verbose {
+		defer log.Infof("[%s]: -waitUntilDone(%s)", q.name, item)
 	}
 
 	for q.expected.Has(item) || q.dirty.Has(item) || q.processing.Has(item) {
 		q.cond.Wait()
 
-		if q.debugEnabled {
-			if item == "helmcharts:default:multitude-of-charts/redis-11:14.4.0" {
-				log.Infof("[%s]: waitUntilDone(%s) %s", q.name, item, q.prettyPrintAll())
-			}
+		if q.verbose {
+			log.Infof("[%s]: waitUntilDone(%s) %s", q.name, item, q.prettyPrintAll())
 		}
 	}
 }
 
 // this func is the added feature that was missing in k8s workqueue
 func (q *Type) reset() {
-	if q.debugEnabled {
+	if q.verbose {
 		log.Infof("[%s]: +reset()", q.name)
 	}
 	q.cond.L.Lock()
