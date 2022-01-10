@@ -27,7 +27,7 @@ function LoginForm(props: ILoginFormProps) {
   const intl = useIntl();
   const [token, setToken] = useState("");
   const [cookieChecked, setCookieChecked] = useState(false);
-  const { oauthLoginURI, checkCookieAuthentication } = props;
+  const { checkCookieAuthentication } = props;
 
   const {
     config: { authProxyEnabled },
@@ -39,7 +39,7 @@ function LoginForm(props: ILoginFormProps) {
     } else {
       setCookieChecked(true);
     }
-  }, [oauthLoginURI, checkCookieAuthentication, props.cluster]);
+  }, [authProxyEnabled, checkCookieAuthentication, props.cluster]);
 
   if (props.authenticating || !cookieChecked) {
     return (

@@ -90,7 +90,7 @@ describe("kubeapps grpc core plugin service", () => {
   // More details: https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-882944035
 });
 
-describe("kubeapps grpc core plugin service", () => {
+describe("kubeapps grpc resources plugin service", () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
