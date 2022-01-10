@@ -185,7 +185,7 @@ export default function Catalog() {
 
   useEffect(() => {
     // Ignore operators if specified
-    if (featureFlags.operators) {
+    if (featureFlags?.operators) {
       dispatch(actions.operators.getCSVs(cluster, namespace));
     }
   }, [dispatch, cluster, namespace, featureFlags]);

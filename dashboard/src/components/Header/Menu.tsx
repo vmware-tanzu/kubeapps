@@ -81,7 +81,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 </div>
               </Link>
               <div className="dropdown-divider" role="separator" />
-              {featureFlags.operators && (
+              {featureFlags?.operators && (
                 <Link
                   to={app.config.operators(clusters.currentCluster, namespaceSelected)}
                   className="dropdown-menu-link"
@@ -93,7 +93,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                   </div>
                 </Link>
               )}
-              {featureFlags.operators && <div className="dropdown-divider" role="separator" />}
+              {featureFlags?.operators && <div className="dropdown-divider" role="separator" />}
             </div>
             <div>
               <div className="dropdown-menu-subtext">

@@ -90,11 +90,11 @@ class Routes extends React.Component<IRoutesProps> {
         {Object.entries(privateRoutes).map(([route, component]) => (
           <PrivateRouteContainer key={route} exact={true} path={route} component={component} />
         ))}
-        {this.props.featureFlags.operators &&
+        {this.props.featureFlags?.operators &&
           Object.entries(operatorsRoutes).map(([route, component]) => (
             <PrivateRouteContainer key={route} exact={true} path={route} component={component} />
           ))}
-        {!this.props.featureFlags.operators &&
+        {!this.props.featureFlags?.operators &&
           Object.entries(unsupportedRoutes).map(([route]) => (
             <Route key={route} exact={true} path={route} render={this.unsupportedMessage} />
           ))}

@@ -67,6 +67,8 @@ data:
     {{- range .Values.clusters }}
       
     {{- if not $.Values.featureFlags.operators }}
+
+      # Operators support disabled
       location ~* /api/clusters/{{ .name }}/.*operators.coreos.com.* {
         access_log off;
         return 403;

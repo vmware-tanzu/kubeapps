@@ -1,8 +1,12 @@
+import { deepClone } from "@cds/core/internal/utils/identity";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import { mount } from "enzyme";
 import { createMemoryHistory } from "history";
+import { Provider } from "react-redux";
 import { StaticRouter } from "react-router";
 import { Redirect, RouteComponentProps } from "react-router-dom";
+import { defaultStore } from "shared/specs/mountWrapper";
 import { app } from "shared/url";
 import NotFound from "../../components/NotFound";
 import Routes from "./Routes";
@@ -99,4 +103,32 @@ it("should render a loading wrapper if authenticated but the cluster and ns info
   );
   expect(wrapper.find(NotFound)).not.toExist();
   expect(wrapper.find(LoadingWrapper)).toExist();
+});
+
+it("should render a warning message if operators are disabled", () => {
+  const componentProps = deepClone(emptyRouteComponentProps);
+  componentProps.featureFlags = { operators: false };
+  const operatorsUrl = app.config.operators("default", "default");
+
+  const wrapper = mount(
+    <StaticRouter location={operatorsUrl} context={{}}>
+      <Routes {...componentProps} cluster={""} currentNamespace={""} authenticated={true} />
+    </StaticRouter>,
+  );
+  expect(wrapper.find(AlertGroup)).toExist();
+  expect(wrapper.find(AlertGroup).text()).toBe("Operators support has been disabled for Kubeapps.");
+});
+
+it("should route to operators if enabled", () => {
+  const componentProps = deepClone(emptyRouteComponentProps);
+  componentProps.featureFlags = { operators: true };
+  const operatorsUrl = app.config.operators("default", "default");
+  const wrapper = mount(
+    <Provider store={defaultStore}>
+      <StaticRouter location={operatorsUrl} context={{}}>
+        <Routes {...componentProps} cluster={""} currentNamespace={""} authenticated={true} />
+      </StaticRouter>
+    </Provider>,
+  );
+  expect(wrapper.find(AlertGroup)).not.toExist();
 });

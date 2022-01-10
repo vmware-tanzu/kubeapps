@@ -70,7 +70,7 @@ function AppList() {
 
   useEffect(() => {
     dispatch(actions.apps.fetchApps(cluster, namespace));
-    if (featureFlags.operators) {
+    if (featureFlags?.operators) {
       dispatch(actions.operators.getResources(cluster, namespace));
     }
   }, [dispatch, cluster, namespace, featureFlags]);

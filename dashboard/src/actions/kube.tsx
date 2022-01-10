@@ -73,7 +73,8 @@ export function getResourceKinds(
     try {
       let groups = await Kube.getAPIGroups(cluster);
       // Ignore APIs for operators if specified
-      if (!getStore().config.featureFlags.operators) {
+      const operatorsEnabled = getStore().config.featureFlags?.operators === true;
+      if (!operatorsEnabled) {
         groups = groups.filter(
           (group: any) => !(group.name as string).includes(Config.OperatorsApi),
         );
