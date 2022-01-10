@@ -52,9 +52,6 @@ beforeEach(() => {
   AppRepository.create = jest.fn().mockImplementationOnce(() => {
     return { appRepository: { metadata: { name: "repo-abc" } } };
   });
-  Secret.list = jest.fn().mockReturnValue({
-    items: [],
-  });
 });
 
 afterEach(jest.restoreAllMocks);
@@ -313,53 +310,6 @@ describe("fetchRepos", () => {
     ];
 
     await store.dispatch(repoActions.fetchRepos(globalReposNamespace, true));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("fetchRepoSecret", () => {
-  const namespace = "default";
-  it("dispatches receiveReposSecret if no error", async () => {
-    const appRepoSecret = {
-      metadata: {
-        name: "foo",
-        ownerReferences: [{ kind: "AppRepository" }],
-      },
-    };
-    Secret.get = jest.fn().mockReturnValue({
-      appRepoSecret,
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.receiveReposSecret),
-        payload: {
-          appRepoSecret: {
-            metadata: {
-              name: "foo",
-              ownerReferences: [{ kind: "AppRepository" }],
-            },
-          },
-        },
-      },
-    ];
-
-    await store.dispatch(repoActions.fetchRepoSecret(namespace, "foo"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("dispatches errorRepos if error fetching secret", async () => {
-    Secret.get = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
-
-    const expectedActions = [
-      {
-        type: getType(repoActions.errorRepos),
-        payload: { err: new Error("Boom!"), op: "fetch" },
-      },
-    ];
-
-    await store.dispatch(repoActions.fetchRepoSecret(namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -772,11 +722,9 @@ describe("updateRepo", () => {
       metadata: { name: "repo-abc" },
       spec: { auth: { header: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
-    const secret = { metadata: { name: "apprepo-repo-abc" } };
     AppRepository.update = jest.fn().mockReturnValue({
       appRepository: r,
     });
-    Secret.get = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoUpdate),
@@ -784,10 +732,6 @@ describe("updateRepo", () => {
       {
         type: getType(repoActions.repoUpdated),
         payload: r,
-      },
-      {
-        type: getType(repoActions.receiveReposSecret),
-        payload: secret,
       },
     ];
 
@@ -834,11 +778,9 @@ describe("updateRepo", () => {
       metadata: { name: "repo-abc" },
       spec: { auth: { customCA: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
-    const secret = { metadata: { name: "apprepo-repo-abc" } };
     AppRepository.update = jest.fn().mockReturnValue({
       appRepository: r,
     });
-    Secret.get = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoUpdate),
@@ -846,10 +788,6 @@ describe("updateRepo", () => {
       {
         type: getType(repoActions.repoUpdated),
         payload: r,
-      },
-      {
-        type: getType(repoActions.receiveReposSecret),
-        payload: secret,
       },
     ];
 
@@ -1169,63 +1107,35 @@ describe("validateRepo", () => {
   });
 });
 
-describe("fetchImagePullSecrets", () => {
-  it("fetches image pull secrets", async () => {
-    const secret1 = {
-      type: "kubernetes.io/dockerconfigjson",
-    };
-    Secret.list = jest.fn().mockReturnValue({
-      items: [secret1],
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.requestImagePullSecrets),
-        payload: "default",
-      },
-      {
-        type: getType(repoActions.receiveImagePullSecrets),
-        payload: [secret1],
-      },
-    ];
-    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("dispatches an error", async () => {
-    Secret.list = jest.fn(() => {
-      throw new Error("boom");
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.requestImagePullSecrets),
-        payload: "default",
-      },
-      {
-        type: getType(repoActions.errorRepos),
-        payload: {
-          err: new Error("boom"),
-          op: "fetch",
-        },
-      },
-    ];
-    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
 describe("createDockerRegistrySecret", () => {
   it("creates a docker registry", async () => {
-    const secret = {
-      type: "kubernetes.io/dockerconfigjson",
-    };
-    Secret.createPullSecret = jest.fn().mockReturnValue(secret);
+    Secret.createPullSecret = jest.fn();
     const expectedActions = [
       {
         type: getType(repoActions.createImagePullSecret),
-        payload: secret,
+        payload: "secret-name",
       },
     ];
-    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
+
+    await store.dispatch(
+      repoActions.createDockerRegistrySecret(
+        "secret-name",
+        "user",
+        "password",
+        "email",
+        "server",
+        "namespace",
+      ),
+    );
+    expect(Secret.createPullSecret).toHaveBeenCalledWith(
+      "default",
+      "secret-name",
+      "user",
+      "password",
+      "email",
+      "server",
+      "namespace",
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 

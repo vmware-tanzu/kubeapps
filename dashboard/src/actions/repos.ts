@@ -12,7 +12,6 @@ import {
   IAppRepository,
   IAppRepositoryFilter,
   IAppRepositoryKey,
-  ISecret,
   IStoreState,
   NotFoundError,
 } from "shared/types";
@@ -41,10 +40,6 @@ export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: IAppRepository[]) => resolve(repos);
 });
 
-export const receiveReposSecret = createAction("RECEIVE_REPOS_SECRET", resolve => {
-  return (secret: ISecret) => resolve(secret);
-});
-
 export const requestRepo = createAction("REQUEST_REPO");
 export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
   return (repo: IAppRepository) => resolve(repo);
@@ -65,15 +60,8 @@ export const errorRepos = createAction("ERROR_REPOS", resolve => {
     resolve({ err, op });
 });
 
-export const requestImagePullSecrets = createAction("REQUEST_IMAGE_PULL_SECRETS", resolve => {
-  return (namespace: string) => resolve(namespace);
-});
-export const receiveImagePullSecrets = createAction("RECEIVE_IMAGE_PULL_SECRETS", resolve => {
-  return (secrets: ISecret[]) => resolve(secrets);
-});
-
 export const createImagePullSecret = createAction("CREATE_IMAGE_PULL_SECRET", resolve => {
-  return (secret: ISecret) => resolve(secret);
+  return (secretName: string) => resolve(secretName);
 });
 
 const allActions = [
@@ -87,13 +75,10 @@ const allActions = [
   requestRepos,
   receiveRepo,
   receiveRepos,
-  receiveReposSecret,
   createErrorPackage,
   requestRepo,
   redirect,
   redirected,
-  requestImagePullSecrets,
-  receiveImagePullSecrets,
   createImagePullSecret,
 ];
 export type AppReposAction = ActionType<typeof allActions[number]>;
@@ -139,23 +124,6 @@ export const resyncAllRepos = (
     repos.forEach(repo => {
       dispatch(resyncRepo(repo.name, repo.namespace));
     });
-  };
-};
-
-export const fetchRepoSecret = (
-  namespace: string,
-  name: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-    } = getState();
-    try {
-      const secret = await Secret.get(currentCluster, namespace, name);
-      dispatch(receiveReposSecret(secret));
-    } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
-    }
   };
 };
 
@@ -288,22 +256,6 @@ export const updateRepo = (
         filter,
       );
       dispatch(repoUpdated(data.appRepository));
-      // Re-fetch the helm repo secret that could have been modified with the updated headers
-      // so that if the user chooses to edit the app repo again, they will see the current value.
-      if (data.appRepository.spec?.auth) {
-        let secretName = "";
-        if (data.appRepository.spec.auth.header) {
-          secretName = data.appRepository.spec.auth.header.secretKeyRef.name;
-          dispatch(fetchRepoSecret(namespace, secretName));
-        }
-        if (
-          data.appRepository.spec.auth.customCA &&
-          secretName !== data.appRepository.spec.auth.customCA.secretKeyRef.name
-        ) {
-          secretName = data.appRepository.spec.auth.customCA.secretKeyRef.name;
-          dispatch(fetchRepoSecret(namespace, secretName));
-        }
-      }
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "update"));
@@ -397,30 +349,6 @@ export function findPackageInRepo(
   };
 }
 
-export function fetchImagePullSecrets(
-  namespace: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-    } = getState();
-    try {
-      dispatch(requestImagePullSecrets(namespace));
-      // TODO(andresmgot): Create an endpoint for returning just the list of secret names
-      // to avoid listing all the secrets with protected information
-      // https://github.com/kubeapps/kubeapps/issues/1686
-      const secrets = await Secret.list(
-        currentCluster,
-        namespace,
-        "type=kubernetes.io/dockerconfigjson",
-      );
-      dispatch(receiveImagePullSecrets(secrets.items));
-    } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
-    }
-  };
-}
-
 export function createDockerRegistrySecret(
   name: string,
   user: string,
@@ -434,16 +362,8 @@ export function createDockerRegistrySecret(
       clusters: { currentCluster },
     } = getState();
     try {
-      const secret = await Secret.createPullSecret(
-        currentCluster,
-        name,
-        user,
-        password,
-        email,
-        server,
-        namespace,
-      );
-      dispatch(createImagePullSecret(secret));
+      await Secret.createPullSecret(currentCluster, name, user, password, email, server, namespace);
+      dispatch(createImagePullSecret(name));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));

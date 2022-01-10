@@ -5,3 +5,9 @@ entries:
   chart-without-spaces:
     - appVersion: v2
       name: "chart-without-spaces"
+  chart-with-special-chars-1:
+    - appVersion: v3
+      name: "chart\x23with\x23hashes"
+  chart-with-special-chars-4:
+    - appVersion: v1
+      name: "chart\x24with\x24chars"

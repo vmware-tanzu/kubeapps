@@ -108,6 +108,8 @@ export const backend = {
     list: (cluster: string, namespace: string) => backend.apprepositories.base(cluster, namespace),
     validate: (cluster: string, namespace: string) =>
       `${backend.apprepositories.base(cluster, namespace)}/validate`,
+    get: (cluster: string, namespace: string, name: string) =>
+      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
     delete: (cluster: string, namespace: string, name: string) =>
       `${backend.apprepositories.base(cluster, namespace)}/${name}`,
     refresh: (cluster: string, namespace: string, name: string) =>
@@ -168,12 +170,6 @@ export const api = {
           cluster,
         )}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/${name}`,
     },
-    secrets: (cluster: string, namespace: string, fieldSelector?: string) =>
-      `${api.k8s.namespace(cluster, namespace)}/secrets${
-        fieldSelector ? `?fieldSelector=${encodeURIComponent(fieldSelector)}` : ""
-      }`,
-    secret: (cluster: string, namespace: string, name: string) =>
-      `${api.k8s.secrets(cluster, namespace)}/${name}`,
   },
 
   operators: {
