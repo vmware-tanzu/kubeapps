@@ -3,10 +3,15 @@ import * as jwt from "jsonwebtoken";
 import { get } from "lodash";
 import * as url from "shared/url";
 import { IConfig } from "./Config";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { grpc } from "@improbable-eng/grpc-web";
 const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 
 export class Auth {
+  public static resourcesClient = (token?: string) =>
+    new KubeappsGrpcClient().getResourcesServiceClientImpl(token);
+
   public static getAuthToken() {
     return localStorage.getItem(AuthTokenKey);
   }
@@ -60,21 +65,31 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(cluster: string, token: string) {
     try {
-      await Axios.get(url.api.k8s.base(cluster) + "/", {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await this.resourcesClient(token).CheckNamespaceExists({
+        context: { cluster, namespace: "default" },
       });
+      if (response.exists) {
+        return;
+      }
+      return;
     } catch (e: any) {
-      const res = e.response as AxiosResponse<any>;
-      if (res.status === 401) {
+      if (e.code === grpc.Code.Unauthenticated) {
         throw new Error("invalid token");
       }
-      // A 403 authorization error only occurs if the token resulted in
-      // successful authentication. We don't make any assumptions over RBAC
-      // for the root "/" nonResourceURL or other required authz permissions
-      // until operations on those resources are attempted (though we may
-      // want to revisit this in the future).
-      if (res.status !== 403) {
-        throw new Error(`${res.status}: ${res.data}`);
+      // https://kubernetes.io/docs/reference/access-authn-authz/authentication/#anonymous-requests
+      // Since we are always passing a token here, A 403 authorization error
+      // only occurs if the token resulted in successful authentication. We
+      // don't make any assumptions over RBAC for the requested namespace or
+      // other required authz permissions until operations on those resources
+      // are attempted (though we may want to revisit this in the future).
+      if (e.code !== grpc.Code.PermissionDenied) {
+        if (e.code === grpc.Code.NotFound) {
+          throw new Error("not found");
+        }
+        if (e.code === grpc.Code.Internal) {
+          throw new Error("internal error");
+        }
+        throw new Error(`${e.code}: ${e.message}`);
       }
     }
   }
@@ -117,6 +132,7 @@ export class Auth {
       // The only error response which can possibly mean we did authenticate is
       // a 403 from the k8s api server (ie. we got through to k8s api server
       // but RBAC doesn't authorize us).
+      // See note below about anonymous requests.
       if (response.status !== 403) {
         return false;
       }

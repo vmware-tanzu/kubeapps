@@ -7,6 +7,8 @@ import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.css";
 import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
+import { useSelector } from "react-redux";
+import { IStoreState } from "shared/types";
 
 export interface ILoginFormProps {
   cluster: string;
@@ -26,8 +28,13 @@ function LoginForm(props: ILoginFormProps) {
   const [token, setToken] = useState("");
   const [cookieChecked, setCookieChecked] = useState(false);
   const { oauthLoginURI, checkCookieAuthentication } = props;
+
+  const {
+    config: { authProxyEnabled },
+  } = useSelector((state: IStoreState) => state);
+
   useEffect(() => {
-    if (oauthLoginURI) {
+    if (authProxyEnabled) {
       checkCookieAuthentication(props.cluster).then(() => setCookieChecked(true));
     } else {
       setCookieChecked(true);
