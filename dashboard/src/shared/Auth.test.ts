@@ -1,5 +1,5 @@
 import { grpc } from "@improbable-eng/grpc-web";
-import Axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 import { CheckNamespaceExistsRequest } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import * as jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
@@ -12,7 +12,6 @@ describe("Auth", () => {
   let mockClientCheckNamespaceExists: jest.MockedFunction<typeof client.CheckNamespaceExists>;
 
   beforeEach(() => {
-    Axios.get = jest.fn();
     mockClientCheckNamespaceExists = jest
       .fn()
       .mockImplementation(() => Promise.resolve({ exists: true } as CheckNamespaceExistsRequest));
@@ -85,52 +84,86 @@ describe("Auth", () => {
 
   describe("isAuthenticatedWithCookie", () => {
     it("returns true if request to API root succeeds", async () => {
-      Axios.get = jest.fn().mockReturnValue(Promise.resolve({ headers: { status: 200 } }));
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
 
-      expect(Axios.get).toBeCalledWith("api/clusters/somecluster/");
+      expect(Auth.resourcesClient).toHaveBeenCalledWith();
+      expect(mockClientCheckNamespaceExists).toHaveBeenCalledWith({
+        context: {
+          cluster: "somecluster",
+          namespace: "default",
+        },
+      });
       expect(isAuthed).toBe(true);
     });
-    it("returns false if the request to api root results in a 403 for an anonymous request", async () => {
-      Axios.get = jest.fn(() => {
-        return Promise.reject({
-          response: {
-            status: 403,
-            data: { message: "Something with system:anonymous in there" },
+
+    it("returns false if the request results in a non-grpc-web response", async () => {
+      mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
+        Promise.reject({
+          code: grpc.Code.PermissionDenied,
+          metadata: {
+            headersMap: {
+              "content-type": ["not-grpc-content-type"],
+            },
           },
-        });
-      });
+        }),
+      );
+      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
+
       expect(isAuthed).toBe(false);
     });
-    it("returns false if the request to api root results in a non-json response (ie. without data.message)", async () => {
-      Axios.get = jest.fn(() => {
-        return Promise.reject({
-          response: {
-            status: 403,
+
+    it("returns true if the request to api root results in a 403", async () => {
+      mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
+        Promise.reject({
+          code: grpc.Code.PermissionDenied,
+          metadata: {
+            headersMap: {
+              "content-type": ["application/grpc-web+proto"],
+            },
           },
-        });
-      });
+        }),
+      );
+      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
-      expect(isAuthed).toBe(false);
-    });
-    it("returns true if the request to api root results in a 403 (but not anonymous)", async () => {
-      Axios.get = jest.fn(() => {
-        return Promise.reject({
-          response: {
-            status: 403,
-            data: { message: "some message for other-user" },
-          },
-        });
-      });
-      const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
+
       expect(isAuthed).toBe(true);
     });
-    it("should return false if the request results in a 401", async () => {
-      Axios.get = jest.fn(() => {
-        return Promise.reject({ response: { status: 401 } });
-      });
+
+    it("returns true if the request to api root results in a 403 with another grpc protocol", async () => {
+      mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
+        Promise.reject({
+          code: grpc.Code.PermissionDenied,
+          metadata: {
+            headersMap: {
+              "content-type": ["application/grpc-web+thrift"],
+            },
+          },
+        }),
+      );
+      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
+
+      expect(isAuthed).toBe(true);
+    });
+    it("returns false if the request results in a 401", async () => {
+      mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
+        Promise.reject({
+          code: grpc.Code.Unauthenticated,
+          metadata: {
+            headersMap: {
+              "content-type": ["not-grpc-content-type"],
+            },
+          },
+        }),
+      );
+      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+
+      const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
+
       expect(isAuthed).toBe(false);
     });
   });
