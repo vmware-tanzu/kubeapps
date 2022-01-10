@@ -14339,10 +14339,10 @@ ts-proto-descriptors@^1.2.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.98.0:
-  version "1.98.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.98.0.tgz#713372254b7d857201b7f68b85050f8f90a80302"
-  integrity sha512-I5VhfCyonzBiZI3qz/h74ver99I502mcBKLryI/SDhCpU+odamGLGoGBAi88OosN5mLCGkRmbyAhZDozy36DeA==
+ts-proto@^1.100.0:
+  version "1.100.0"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.100.0.tgz#c002a25c576061fbeaa2f2db0f1f94d80d832096"
+  integrity sha512-D3E9wbgzzRlMGgy0RfCdibce7P9XPqFSXat48fzKd0DceBYS0fdBDYfgirJmQzLG0G/4SZZm6Poj2RtkJz3uVw==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
