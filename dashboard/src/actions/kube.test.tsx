@@ -1,4 +1,4 @@
-import configureMockStore, { MockStoreEnhanced } from "redux-mock-store";
+import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { Kube } from "shared/Kube";
 import { IKubeState, IResource } from "shared/types";

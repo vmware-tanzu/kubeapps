@@ -6,6 +6,7 @@ import { createMemoryHistory } from "history";
 import { Provider } from "react-redux";
 import { StaticRouter } from "react-router";
 import { Redirect, RouteComponentProps } from "react-router-dom";
+import { IFeatureFlags } from "shared/Config";
 import { defaultStore } from "shared/specs/mountWrapper";
 import { app } from "shared/url";
 import NotFound from "../../components/NotFound";
@@ -28,6 +29,10 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
   },
 };
 
+const defaultFeatureFlags: IFeatureFlags = {
+  operators: false,
+};
+
 it("invalid path should show a 404 error", () => {
   const wrapper = mount(
     <StaticRouter location="/random" context={{}}>
@@ -36,6 +41,7 @@ it("invalid path should show a 404 error", () => {
         cluster={"default"}
         currentNamespace={"default"}
         authenticated={true}
+        featureFlags={defaultFeatureFlags}
       />
     </StaticRouter>,
   );
@@ -51,6 +57,7 @@ it("should render a redirect to the default cluster and namespace", () => {
         cluster={"default"}
         currentNamespace={"default"}
         authenticated={true}
+        featureFlags={defaultFeatureFlags}
       />
     </StaticRouter>,
   );
@@ -68,6 +75,7 @@ it("should render a redirect to the login page", () => {
         cluster={""}
         currentNamespace={""}
         authenticated={false}
+        featureFlags={defaultFeatureFlags}
       />
     </StaticRouter>,
   );
@@ -83,6 +91,7 @@ it("should render a redirect to the login page (even with cluster or ns info)", 
         cluster={"default"}
         currentNamespace={"default"}
         authenticated={false}
+        featureFlags={defaultFeatureFlags}
       />
     </StaticRouter>,
   );
@@ -98,6 +107,7 @@ it("should render a loading wrapper if authenticated but the cluster and ns info
         cluster={""}
         currentNamespace={""}
         authenticated={true}
+        featureFlags={defaultFeatureFlags}
       />
     </StaticRouter>,
   );
@@ -112,7 +122,13 @@ it("should render a warning message if operators are disabled", () => {
 
   const wrapper = mount(
     <StaticRouter location={operatorsUrl} context={{}}>
-      <Routes {...componentProps} cluster={""} currentNamespace={""} authenticated={true} />
+      <Routes
+        {...componentProps}
+        cluster={""}
+        currentNamespace={""}
+        authenticated={true}
+        featureFlags={defaultFeatureFlags}
+      />
     </StaticRouter>,
   );
   expect(wrapper.find(AlertGroup)).toExist();
@@ -126,7 +142,13 @@ it("should route to operators if enabled", () => {
   const wrapper = mount(
     <Provider store={defaultStore}>
       <StaticRouter location={operatorsUrl} context={{}}>
-        <Routes {...componentProps} cluster={""} currentNamespace={""} authenticated={true} />
+        <Routes
+          {...componentProps}
+          cluster={""}
+          currentNamespace={""}
+          authenticated={true}
+          featureFlags={{ operators: true }}
+        />
       </StaticRouter>
     </Provider>,
   );
