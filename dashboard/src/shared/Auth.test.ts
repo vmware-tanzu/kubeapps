@@ -23,7 +23,23 @@ describe("Auth", () => {
     jest.resetAllMocks();
   });
 
-  it("should get an URL with the given token", async () => {
+  it("should return without error when the endpoint succeeds with the given token", async () => {
+    await Auth.validateToken("othercluster", "foo");
+
+    expect(Auth.resourcesClient).toHaveBeenCalledWith("foo");
+    expect(mockClientCheckNamespaceExists).toHaveBeenCalledWith({
+      context: {
+        cluster: "othercluster",
+        namespace: "default",
+      },
+    });
+  });
+
+  it("should return without error when the endpoint returns PermissionDenied with the given token", async () => {
+    mockClientCheckNamespaceExists = jest
+      .fn()
+      .mockImplementation(() => Promise.reject({ code: grpc.Code.PermissionDenied }));
+    jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
     await Auth.validateToken("othercluster", "foo");
 
     expect(Auth.resourcesClient).toHaveBeenCalledWith("foo");
@@ -53,11 +69,6 @@ describe("Auth", () => {
         grpcCode: grpc.Code.Internal,
         expectedError: new Error("internal error"),
       },
-      {
-        name: "should succeed for a 403 response",
-        grpcCode: grpc.Code.PermissionDenied,
-        expectedError: null,
-      },
     ].forEach(testCase => {
       it(testCase.name, async () => {
         mockClientCheckNamespaceExists = jest
@@ -66,16 +77,8 @@ describe("Auth", () => {
         jest
           .spyOn(client, "CheckNamespaceExists")
           .mockImplementation(mockClientCheckNamespaceExists);
-        // TODO(absoludity): tried using `expect(fn()).rejects.toThrow()` but it seems we need
-        // to upgrade jest for `toThrow()` to work with async.
-        let err = null;
-        try {
-          await Auth.validateToken("default", "foo");
-        } catch (e: any) {
-          err = e;
-        } finally {
-          expect(err).toEqual(testCase.expectedError);
-        }
+
+        await expect(Auth.validateToken("default", "foo")).rejects.toThrow(testCase.expectedError);
       });
     });
   });
