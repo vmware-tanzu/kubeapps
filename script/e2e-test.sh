@@ -198,6 +198,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
+    --set globalReposNamespaceSuffix=-repos-global
     --wait)
 
   echo "${cmd[@]}"
@@ -276,7 +277,7 @@ fi
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
-GLOBAL_REPOS_NS=kubeapps-repos-global
+GLOBAL_REPOS_NS=kubeapps
 
 if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
