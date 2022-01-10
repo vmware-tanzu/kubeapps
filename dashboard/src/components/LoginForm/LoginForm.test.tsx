@@ -2,7 +2,7 @@ import LoadingWrapper from "components/LoadingWrapper";
 import { Location } from "history";
 import { act } from "react-dom/test-utils";
 import { Redirect } from "react-router";
-import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
@@ -145,21 +145,33 @@ describe("oauth login form", () => {
     expect(wrapper.find("input#token").exists()).toBe(false);
   });
 
-  it("displays the oauth login if oauthLoginURI provided", () => {
-    const wrapper = mountWrapper(defaultStore, <LoginForm {...props} />);
+  it("displays the oauth login if authProxyEnabled", () => {
+    const state = {
+      ...defaultStore,
+      config: {
+        authProxyEnabled: true,
+      },
+    };
+    const wrapper = mountWrapper(getStore({ ...state }), <LoginForm {...props} />);
     expect(props.checkCookieAuthentication).toHaveBeenCalled();
     expect(wrapper.find(OAuthLogin)).toExist();
     expect(wrapper.find("a").findWhere(a => a.prop("href") === props.oauthLoginURI)).toExist();
   });
 
   it("doesn't render the login form if the cookie has not been checked yet", () => {
+    const state = {
+      ...defaultStore,
+      config: {
+        authProxyEnabled: true,
+      },
+    };
     const props2 = {
       ...props,
       checkCookieAuthentication: jest.fn().mockReturnValue({
         then: jest.fn(() => false),
       }),
     };
-    const wrapper = mountWrapper(defaultStore, <LoginForm {...props2} />);
+    const wrapper = mountWrapper(getStore({ ...state }), <LoginForm {...props2} />);
     expect(wrapper.find(LoadingWrapper)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
   });

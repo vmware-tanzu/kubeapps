@@ -1,23 +1,54 @@
+import { grpc } from "@improbable-eng/grpc-web";
 import Axios, { AxiosResponse } from "axios";
+import { CheckNamespaceExistsRequest } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import * as jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
 import { SupportedThemes } from "./Config";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 describe("Auth", () => {
+  // Create a real client, but we'll stub out the function we're interested in.
+  const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();
+  let mockClientCheckNamespaceExists: jest.MockedFunction<typeof client.CheckNamespaceExists>;
+
   beforeEach(() => {
     Axios.get = jest.fn();
+    mockClientCheckNamespaceExists = jest
+      .fn()
+      .mockImplementation(() => Promise.resolve({ exists: true } as CheckNamespaceExistsRequest));
+    jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+    jest.spyOn(Auth, "resourcesClient").mockImplementation(() => client);
   });
   afterEach(() => {
     jest.resetAllMocks();
   });
-  it("should get an URL with the given token", async () => {
-    const mock = jest.fn();
-    Axios.get = mock;
+
+  it("should return without error when the endpoint succeeds with the given token", async () => {
     await Auth.validateToken("othercluster", "foo");
-    expect(mock.mock.calls[0]).toEqual([
-      "api/clusters/othercluster/",
-      { headers: { Authorization: "Bearer foo" } },
-    ]);
+
+    expect(Auth.resourcesClient).toHaveBeenCalledWith("foo");
+    expect(mockClientCheckNamespaceExists).toHaveBeenCalledWith({
+      context: {
+        cluster: "othercluster",
+        namespace: "default",
+      },
+    });
+  });
+
+  it("should return without error when the endpoint returns PermissionDenied with the given token", async () => {
+    mockClientCheckNamespaceExists = jest
+      .fn()
+      .mockImplementation(() => Promise.reject({ code: grpc.Code.PermissionDenied }));
+    jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+    await Auth.validateToken("othercluster", "foo");
+
+    expect(Auth.resourcesClient).toHaveBeenCalledWith("foo");
+    expect(mockClientCheckNamespaceExists).toHaveBeenCalledWith({
+      context: {
+        cluster: "othercluster",
+        namespace: "default",
+      },
+    });
   });
 
   describe("when there is an error", () => {
@@ -25,39 +56,29 @@ describe("Auth", () => {
       {
         name: "should throw an invalid token error for 401 responses",
         response: { status: 401, data: "ignored anyway" },
+        grpcCode: grpc.Code.Unauthenticated,
         expectedError: new Error("invalid token"),
       },
       {
         name: "should throw a standard error for a 404 response",
-        response: { status: 404, data: "Not found" },
-        expectedError: new Error("404: Not found"),
+        grpcCode: grpc.Code.NotFound,
+        expectedError: new Error("not found"),
       },
       {
         name: "should throw a standard error for a 500 response",
-        response: { status: 500, data: "Server exception" },
-        expectedError: new Error("500: Server exception"),
-      },
-      {
-        name: "should succeed for a 403 response",
-        response: { status: 403, data: "Not Allowed" },
-        expectedError: null,
+        grpcCode: grpc.Code.Internal,
+        expectedError: new Error("internal error"),
       },
     ].forEach(testCase => {
       it(testCase.name, async () => {
-        const mock = jest.fn(() => {
-          return Promise.reject({ response: testCase.response });
-        });
-        Axios.get = mock;
-        // TODO(absoludity): tried using `expect(fn()).rejects.toThrow()` but it seems we need
-        // to upgrade jest for `toThrow()` to work with async.
-        let err = null;
-        try {
-          await Auth.validateToken("default", "foo");
-        } catch (e: any) {
-          err = e;
-        } finally {
-          expect(err).toEqual(testCase.expectedError);
-        }
+        mockClientCheckNamespaceExists = jest
+          .fn()
+          .mockImplementation(() => Promise.reject({ code: testCase.grpcCode }));
+        jest
+          .spyOn(client, "CheckNamespaceExists")
+          .mockImplementation(mockClientCheckNamespaceExists);
+
+        await expect(Auth.validateToken("default", "foo")).rejects.toThrow(testCase.expectedError);
       });
     });
   });
