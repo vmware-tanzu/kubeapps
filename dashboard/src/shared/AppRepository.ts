@@ -1,5 +1,4 @@
 import { axiosWithAuth } from "./AxiosInstance";
-import { APIBase } from "./Kube";
 import { IAppRepositoryFilter, ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
@@ -12,10 +11,17 @@ export class AppRepository {
   }
 
   public static async get(cluster: string, namespace: string, name: string) {
-    const { data } = await axiosWithAuth.get<any>(
-      AppRepository.getSelfLink(cluster, namespace, name),
-    );
-    return data;
+    const {
+      data: { appRepository },
+    } = await axiosWithAuth.get<any>(url.backend.apprepositories.get(cluster, namespace, name));
+    return appRepository;
+  }
+
+  public static async getSecretForRepo(cluster: string, namespace: string, name: string) {
+    const {
+      data: { secret },
+    } = await axiosWithAuth.get<any>(url.backend.apprepositories.get(cluster, namespace, name));
+    return secret;
   }
 
   public static async resync(cluster: string, namespace: string, name: string) {
@@ -144,14 +150,5 @@ export class AppRepository {
       },
     );
     return data;
-  }
-
-  private static APIEndpoint(cluster: string): string {
-    return `${APIBase(cluster)}/apis/kubeapps.com/v1alpha1`;
-  }
-  private static getSelfLink(cluster: string, namespace: string, name?: string): string {
-    return `${AppRepository.APIEndpoint(cluster)}/namespaces/${namespace}/apprepositories${
-      name ? `/${name}` : ""
-    }`;
   }
 }

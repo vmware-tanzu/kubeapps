@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { IAppRepository, ISecret, IStoreState } from "shared/types";
+import { IAppRepository, IStoreState } from "shared/types";
 import actions from "../../../actions";
 import ConfirmDialog from "../../ConfirmDialog/ConfirmDialog";
 import { AppRepoAddButton } from "./AppRepoButton";
@@ -12,16 +12,10 @@ import "./AppRepoControl.css";
 interface IAppRepoListItemProps {
   repo: IAppRepository;
   kubeappsNamespace: string;
-  secret?: ISecret;
   refetchRepos: () => void;
 }
 
-export function AppRepoControl({
-  repo,
-  secret,
-  kubeappsNamespace,
-  refetchRepos,
-}: IAppRepoListItemProps) {
+export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const openModal = () => setModalOpen(true);
@@ -64,7 +58,6 @@ export function AppRepoControl({
         kubeappsNamespace={kubeappsNamespace}
         text="Edit"
         repo={repo}
-        secret={secret}
         primary={false}
       />
 

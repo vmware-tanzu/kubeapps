@@ -202,6 +202,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
               onSelect={selectVersion}
               currentVersion={installedAppAvailablePackageDetail?.version?.pkgVersion}
               selectedVersion={pkgVersion}
+              hideVersionsSelector={true}
             />
             <LoadingWrapper
               loaded={
