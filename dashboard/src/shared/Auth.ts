@@ -65,13 +65,9 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(cluster: string, token: string) {
     try {
-      const response = await this.resourcesClient(token).CheckNamespaceExists({
+      await this.resourcesClient(token).CheckNamespaceExists({
         context: { cluster, namespace: "default" },
       });
-      if (response.exists) {
-        return;
-      }
-      return;
     } catch (e: any) {
       if (e.code === grpc.Code.Unauthenticated) {
         throw new Error("invalid token");
