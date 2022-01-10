@@ -132,6 +132,23 @@ describe("Auth", () => {
       expect(isAuthed).toBe(true);
     });
 
+    it("returns true if the request to api root results in a 403 with another grpc protocol", async () => {
+      mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
+        Promise.reject({
+          code: grpc.Code.PermissionDenied,
+          metadata: {
+            headersMap: {
+              "content-type": ["application/grpc-web+thrift"],
+            },
+          },
+        }),
+      );
+      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+
+      const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
+
+      expect(isAuthed).toBe(true);
+    });
     it("returns false if the request results in a 401", async () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({

@@ -89,11 +89,11 @@ export class Auth {
     }
   }
 
-  // is403FromAPIsServer returns true if the response is a 403 determined to have originated
+  // isErrorFromAPIsServer returns true if the response is a 403 determined to have originated
   // from the grpc-web APIs server, rather than the auth proxy.
-  public static is403FromAPIsServer(e: any): boolean {
+  public static isErrorFromAPIsServer(e: any): boolean {
     const contentType = e.metadata?.headersMap["content-type"] as string[];
-    if (contentType.some(v => v === "application/grpc-web+proto")) {
+    if (contentType.some(v => v.startsWith("application/grpc-web"))) {
       return true;
     }
     return false;
@@ -156,7 +156,7 @@ export class Auth {
       // A 403 error response from our APIs server, rather than the
       // auth proxy, means we are authenticated and did get
       // through to the API server but were rejected by RBAC.
-      if (this.is403FromAPIsServer(e)) {
+      if (this.isErrorFromAPIsServer(e)) {
         return true;
       }
       return false;
