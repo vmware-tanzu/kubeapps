@@ -1338,13 +1338,13 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@formatjs/cli@^4.7.0":
-  version "4.7.0"
-  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-4.7.0.tgz#9f7f7b186e81cf5d7464a10a6e2ea830a649b8e5"
-  integrity sha512-XYy8rDLW64G4191rXdPjhxW8QrSc3vG3IfV6wfxJfWj5bwNEnsC1YixV4hnuiFs1OMT5I9MF9xQ0V7dauRqyUQ==
+"@formatjs/cli@^4.7.1":
+  version "4.7.1"
+  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-4.7.1.tgz#508cf964778379673ea7788b5c2cadb7e0ff2df5"
+  integrity sha512-wOv1W1UgKKDhIaYA9XbgB82BuO8+MsW7CSuUrLflZasvrO+M3e6oC9WdTLJvn8y/54Q0B62uWuDu5CxEohDMhQ==
   dependencies:
     "@formatjs/icu-messageformat-parser" "2.0.16"
-    "@formatjs/ts-transformer" "3.8.1"
+    "@formatjs/ts-transformer" "3.8.2"
     "@types/estree" "^0.0.50"
     "@types/fs-extra" "^9.0.1"
     "@types/json-stable-stringify" "^1.0.32"
@@ -1430,13 +1430,13 @@
     intl-messageformat "9.11.1"
     tslib "^2.1.0"
 
-"@formatjs/ts-transformer@3.8.1":
-  version "3.8.1"
-  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.8.1.tgz#f6a326d114d5585235f7cf5a37a38acb22098840"
-  integrity sha512-emndJkdURyan9i9KkZN1Oa+xWG0y5Y17PLFz76rE21mO4OOx02nEJ9wX12PWfxdlmzt9sjN0O7WlRUw10HUaFA==
+"@formatjs/ts-transformer@3.8.2":
+  version "3.8.2"
+  resolved "https://registry.yarnpkg.com/@formatjs/ts-transformer/-/ts-transformer-3.8.2.tgz#67c0ad9f0f10e9b9137f26933cca4f095bab31f7"
+  integrity sha512-XWMG4DoFDdLnDKEd0qKQO+/3Kppe6vuchvYvkE0VvLNfKFfEpvJL2IGEU4hEJSK27vC99x1TsfVhMU0ODgKFZw==
   dependencies:
     "@formatjs/icu-messageformat-parser" "2.0.16"
-    "@types/node" "14 || 16"
+    "@types/node" "14 || 16 || 17"
     chalk "^4.0.0"
     tslib "^2.1.0"
     typescript "^4.5"
@@ -2328,10 +2328,10 @@
   resolved "https://registry.yarnpkg.com/@types/ms/-/ms-0.7.31.tgz#31b7ca6407128a3d2bbc27fe2d21b345397f6197"
   integrity sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==
 
-"@types/node@*", "@types/node@14 || 16", "@types/node@>=13.7.0":
-  version "16.11.10"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.10.tgz#2e3ad0a680d96367103d3e670d41c2fed3da61ae"
-  integrity sha512-3aRnHa1KlOEEhJ6+CvyHKK5vE9BcLGjtUpwvqYLRvYNQKMfabu3BwfJaA/SLW8dxe28LsNDjtHwePTuzn3gmOA==
+"@types/node@*", "@types/node@14 || 16 || 17", "@types/node@>=13.7.0":
+  version "17.0.8"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.8.tgz#50d680c8a8a78fe30abe6906453b21ad8ab0ad7b"
+  integrity sha512-YofkM6fGv4gDJq78g4j0mMuGMkZVxZDgtU0JRdx6FgiJDG+0fY0GKVolOV8WqVmEhLCXkQRjwDdKyPxJp/uucg==
 
 "@types/node@14":
   version "14.17.34"
