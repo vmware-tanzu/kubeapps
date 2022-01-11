@@ -102,7 +102,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
   useEffect(() => {
     if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
       // Calculate modifications from the default values
-      const defaultValuesObj = yaml.load(installedAppAvailablePackageDetail?.defaultValues);
+      const defaultValuesObj = yaml.load(installedAppAvailablePackageDetail?.defaultValues) || {};
       const deployedValuesObj = yaml.load(installedAppInstalledPackageDetail?.valuesApplied || "");
       const newModifications = jsonpatch.compare(defaultValuesObj as any, deployedValuesObj as any);
       const values = applyModifications(
@@ -202,6 +202,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
               onSelect={selectVersion}
               currentVersion={installedAppAvailablePackageDetail?.version?.pkgVersion}
               selectedVersion={pkgVersion}
+              hideVersionsSelector={true}
             />
             <LoadingWrapper
               loaded={

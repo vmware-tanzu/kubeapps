@@ -23,10 +23,15 @@ export interface IConfig {
   authProxySkipLoginPage: boolean;
   error?: Error;
   clusters: string[];
+  featureFlags: IFeatureFlags;
   theme: string;
   remoteComponentsUrl: string;
   customAppViews: ICustomAppViewIdentifier[];
   skipAvailablePackageDetails: boolean;
+}
+
+export interface IFeatureFlags {
+  operators: boolean;
 }
 
 export default class Config {
@@ -76,4 +81,5 @@ export default class Config {
   }
 
   private static APIEndpoint = "config.json";
+  public static OperatorsApi = "operators.coreos.com";
 }

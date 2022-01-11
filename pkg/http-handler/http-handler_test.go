@@ -37,13 +37,12 @@ import (
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 )
 
-func checkAppResponse(t *testing.T, response *httptest.ResponseRecorder, expectedRepo *v1alpha1.AppRepository) {
+func checkAppResponse(t *testing.T, response *httptest.ResponseRecorder, expectedResponse appRepositoryResponse) {
 	var appRepoResponse appRepositoryResponse
 	err := json.NewDecoder(response.Body).Decode(&appRepoResponse)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	expectedResponse := appRepositoryResponse{AppRepository: *expectedRepo}
 	if got, want := appRepoResponse, expectedResponse; !cmp.Equal(want, got) {
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 	}
@@ -73,7 +72,7 @@ func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError
 	}
 }
 
-func TestCreateListAppRepositories(t *testing.T) {
+func TestListAppRepositories(t *testing.T) {
 	testCases := []struct {
 		name         string
 		appRepos     []*v1alpha1.AppRepository
@@ -112,6 +111,108 @@ func TestCreateListAppRepositories(t *testing.T) {
 	}
 }
 
+func TestGetAppRepository(t *testing.T) {
+	testCases := []struct {
+		name         string
+		appRepo      *v1alpha1.AppRepository
+		secret       *corev1.Secret
+		err          error
+		expectedCode int
+	}{
+		{
+			name:         "it should return a 200 if the repo is found",
+			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"}},
+			expectedCode: 200,
+		},
+		{
+			name: "it should return a corresponding secret if present",
+			appRepo: &v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"},
+				Spec: v1alpha1.AppRepositorySpec{
+					Auth: v1alpha1.AppRepositoryAuth{
+						Header: &v1alpha1.AppRepositoryAuthHeader{
+							SecretKeyRef: corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "repo-secret",
+								},
+								Key: "authorizationHeader",
+							},
+						},
+					},
+				},
+			},
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Name: "repo-secret", Namespace: "kubeapps"},
+				StringData: map[string]string{
+					"authorizationHeader": "someheader",
+				},
+			},
+			expectedCode: 200,
+		},
+		{
+			name:         "it should return a 404 if app repository not found",
+			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
+			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
+			expectedCode: 404,
+		},
+		{
+			name: "it should return a 404 if related secret is not found",
+			appRepo: &v1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"},
+				Spec: v1alpha1.AppRepositorySpec{
+					Auth: v1alpha1.AppRepositoryAuth{
+						Header: &v1alpha1.AppRepositoryAuthHeader{
+							SecretKeyRef: corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "repo-secret",
+								},
+								Key: "authorizationHeader",
+							},
+						},
+					},
+				},
+			},
+			secret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Name: "another-repo-secret", Namespace: "kubeapps"},
+				StringData: map[string]string{
+					"authorizationHeader": "someheader",
+				},
+			},
+			expectedCode: 404,
+		},
+		{
+			name:         "it should return a 403 when forbidden",
+			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
+			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
+			expectedCode: 403,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			getAppFunc := GetAppRepository(&kube.FakeHandler{
+				AppRepos: []*v1alpha1.AppRepository{tc.appRepo},
+				Secrets:  []*corev1.Secret{tc.secret},
+				Err:      tc.err,
+			})
+			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/foo", strings.NewReader(""))
+			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps", "name": "foo"})
+
+			response := httptest.NewRecorder()
+			getAppFunc(response, req)
+
+			if got, want := response.Code, tc.expectedCode; got != want {
+				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+			expectedResponse := appRepositoryResponse{AppRepository: *tc.appRepo}
+			if tc.secret != nil {
+				expectedResponse.Secret = *tc.secret
+			}
+			if response.Code == 200 {
+				checkAppResponse(t, response, expectedResponse)
+			}
+		})
+	}
+}
 func TestCreateAppRepository(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -154,7 +255,7 @@ func TestCreateAppRepository(t *testing.T) {
 			}
 
 			if response.Code == 201 {
-				checkAppResponse(t, response, tc.appRepo)
+				checkAppResponse(t, response, appRepositoryResponse{AppRepository: *tc.appRepo})
 			} else {
 				checkError(t, response, tc.err)
 			}
@@ -199,7 +300,7 @@ func TestUpdateAppRepository(t *testing.T) {
 			}
 
 			if response.Code == 200 {
-				checkAppResponse(t, response, tc.appRepo)
+				checkAppResponse(t, response, appRepositoryResponse{AppRepository: *tc.appRepo})
 			} else {
 				checkError(t, response, tc.err)
 			}

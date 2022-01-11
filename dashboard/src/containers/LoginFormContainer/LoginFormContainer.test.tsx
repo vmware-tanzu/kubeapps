@@ -35,6 +35,7 @@ const makeStore = (
     globalReposNamespace: "",
     appVersion: "",
     oauthLogoutURI: "",
+    featureFlags: { operators: false },
     clusters: [],
     authProxySkipLoginPage: false,
     theme: SupportedThemes.light,

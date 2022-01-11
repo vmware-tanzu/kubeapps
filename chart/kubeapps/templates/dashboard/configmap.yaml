@@ -20,7 +20,7 @@ data:
   {{- end }}
   {{- if .Values.enableIPv6 }}
       listen [::]:{{ .Values.dashboard.containerPort }};
-  {{- end}}
+  {{- end }}
       server_name _;
 
       gzip on;
@@ -69,7 +69,7 @@ data:
     {
       "kubeappsCluster": "{{ template "kubeapps.kubeappsCluster" . -}}",
       "kubeappsNamespace": "{{ .Release.Namespace }}",
-      "globalReposNamespace": "{{ .Release.Namespace }}-{{ .Values.apprepository.globalReposNamespaceSuffix }}",
+      "globalReposNamespace": "{{ .Release.Namespace }}{{ .Values.apprepository.globalReposNamespaceSuffix }}",
       "appVersion": "v{{ .Chart.AppVersion }}",
       "authProxyEnabled": {{ .Values.authProxy.enabled }},
       "oauthLoginURI": {{ .Values.authProxy.oauthLoginURI | quote }},

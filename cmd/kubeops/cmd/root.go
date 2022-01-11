@@ -78,7 +78,7 @@ func setFlags(c *cobra.Command) {
 	c.Flags().Float32Var(&serveOpts.Qps, "qps", 10, "internal QPS rate")
 	c.Flags().StringVar(&serveOpts.NamespaceHeaderName, "namespace-header-name", "", "name of the header field, e.g. namespace-header-name=X-Consumer-Groups")
 	c.Flags().StringVar(&serveOpts.NamespaceHeaderPattern, "namespace-header-pattern", "", "regular expression that matches only single group, e.g. namespace-header-pattern=^namespace:([\\w]+):\\w+$, to match namespace:ns:read")
-	c.Flags().StringVar(&serveOpts.GlobalReposNamespace, "global-repos-namespace", "kubeapps-repos-global", "Namespace of global repositories")
+	c.Flags().StringVar(&serveOpts.GlobalReposNamespace, "global-repos-namespace", "kubeapps", "Namespace of global repositories")
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -153,7 +153,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.21.4-debian-10-r26
+    tag: 1.21.5-debian-10-r3
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -719,9 +719,9 @@ apprepository:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
-  ## @param apprepository.globalReposNamespaceSuffix Suffix for the namespace of global repos
+  ## @param apprepository.globalReposNamespaceSuffix Suffix for the namespace of global repos. Defaults to empty for backwards compatibility.
   ##
-  globalReposNamespaceSuffix: repos-global
+  globalReposNamespaceSuffix: ""
   ## @param apprepository.initialRepos [array] Initial chart repositories to configure
   ## e.g:
   ## initialRepos:
@@ -1315,7 +1315,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.2.0-debian-10-r36
+    tag: 7.2.1-debian-10-r8
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1522,8 +1522,11 @@ clusters:
   - name: default
     domain: cluster.local
 ## @param featureFlags Feature flags (used to switch on development features)
+## @param featureFlags.operators Enable/Disable operators support
 ##
-featureFlags: {}
+featureFlags:
+  operators: false
+
 ## RBAC configuration
 ##
 rbac:
@@ -1542,7 +1545,7 @@ rbac:
 testImage:
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.21.4-debian-10-r26
+  tag: 1.21.5-debian-10-r3
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images

@@ -130,6 +130,11 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		foundPkgSemver.pkg.Spec.Licenses,
 		foundPkgSemver.pkg.Spec.ReleasedAt,
 	)
+	defaultValues, err := defaultValuesFromSchema(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw, true)
+	if err != nil {
+		log.Warningf("Failed to parse default values from schema: %v", err)
+		defaultValues = "# There is an error while parsing the schema."
+	}
 	availablePackageDetail := &corev1.AvailablePackageDetail{
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Context: &corev1.Context{
@@ -151,24 +156,15 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 			PkgVersion: requestedPkgVersion,
 			AppVersion: requestedPkgVersion,
 		},
-		Maintainers: maintainers,
-		Readme:      readme,
-
-		// TODO(agamez): we might need to have a default value (from the openapi schema?)
-		// and/or perform some changes in the UI
-		// DefaultValues: "",
-
-		// TODO(agamez): pkgs have an OpenAPI Schema object,
-		// but currently we aren't able to parse it from the UI
-		// ValuesSchema: foundPkgSemver.pkg.Spec.ValuesSchema.String(),
-
+		Maintainers:   maintainers,
+		Readme:        readme,
+		ValuesSchema:  string(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw),
+		DefaultValues: defaultValues,
 		// TODO(agamez): fields 'HomeUrl','RepoUrl' are not being populated right now,
 		// but some fields (eg, release notes) have URLs (but not sure if in every pkg also happens)
 		// HomeUrl: "",
 		// RepoUrl:  "",
-
 	}
-
 	return availablePackageDetail, nil
 }
 

@@ -14,7 +14,9 @@ import { ThunkDispatch } from "redux-thunk";
 import { toFilterRule, toParams } from "shared/jq";
 import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
+import { AppRepository } from "shared/AppRepository";
 import "./AppRepoForm.css";
+import Secret from "shared/Secret";
 interface IAppRepoFormProps {
   onSubmit: (
     name: string,
@@ -35,7 +37,6 @@ interface IAppRepoFormProps {
   namespace: string;
   kubeappsNamespace: string;
   repo?: IAppRepository;
-  secret?: ISecret;
 }
 
 const AUTH_METHOD_NONE = "none";
@@ -48,7 +49,7 @@ const TYPE_HELM = "helm";
 const TYPE_OCI = "oci";
 
 export function AppRepoForm(props: IAppRepoFormProps) {
-  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo, secret } = props;
+  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo } = props;
   const isInstallingRef = useRef(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
@@ -69,31 +70,36 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
   const [filterExclude, setFilterExclude] = useState(false);
+  const [secret, setSecret] = useState<ISecret>();
   const [selectedImagePullSecret, setSelectedImagePullSecret] = useState("");
+  const [imagePullSecrets, setImagePullSecrets] = useState<string[]>([]);
   const [validated, setValidated] = useState(undefined as undefined | boolean);
-
-  useEffect(() => {
-    dispatch(actions.repos.fetchImagePullSecrets(namespace));
-  }, [dispatch, namespace]);
 
   const {
     repos: {
-      imagePullSecrets,
       errors: { create: createError, update: updateError, validate: validationError },
       validating,
     },
     config: { appVersion },
+    clusters: { currentCluster },
   } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
+    fetchImagePullSecrets(currentCluster, namespace);
+  }, [dispatch, namespace, currentCluster]);
+
+  async function fetchImagePullSecrets(cluster: string, repoNamespace: string) {
+    setImagePullSecrets(await Secret.getDockerConfigSecretNames(cluster, repoNamespace));
+  }
+
+  useEffect(() => {
     // Select the pull secrets if they are already selected in the existing repo
-    imagePullSecrets.forEach(pullSecret => {
-      const secretName = pullSecret.metadata.name;
+    imagePullSecrets.forEach(secretName => {
       if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secretName)) {
         setSelectedImagePullSecret(secretName);
       }
     });
-  }, [imagePullSecrets, repo, selectedImagePullSecret]);
+  }, [imagePullSecrets, repo]);
 
   useEffect(() => {
     if (repo) {
@@ -113,18 +119,16 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         setFilterExclude(exclude);
         setFilterNames(names);
       }
+
       if (repo.spec?.auth?.customCA || repo.spec?.auth?.header) {
-        const secrets = [];
-        if (repo.spec?.auth?.customCA) {
-          secrets.push(repo.spec.auth.customCA.secretKeyRef.name);
-        }
-        if (repo.spec?.auth?.header && !secrets.includes(repo.spec.auth.header.secretKeyRef.name)) {
-          secrets.push(repo.spec.auth.header.secretKeyRef.name);
-        }
-        secrets.forEach(s => dispatch(actions.repos.fetchRepoSecret(namespace, s)));
+        fetchRepoSecret(currentCluster, repo.metadata.namespace, repo.metadata.name);
       }
     }
-  }, [repo, namespace, dispatch]);
+  }, [repo, namespace, currentCluster, dispatch]);
+
+  async function fetchRepoSecret(cluster: string, repoNamespace: string, repoName: string) {
+    setSecret(await AppRepository.getSecretForRepo(cluster, repoNamespace, repoName));
+  }
 
   useEffect(() => {
     if (secret) {

@@ -2,6 +2,8 @@ import actions from "actions";
 import DeploymentFormBody from "components/DeploymentFormBody/DeploymentFormBody";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
+import PackageHeader from "components/PackageHeader/PackageHeader";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -214,6 +216,30 @@ it("fetches the available versions", () => {
     identifier: defaultProps.packageId,
     plugin: defaultProps.plugin,
   } as AvailablePackageReference);
+});
+
+it("hides the PackageVersionSelector in the PackageHeader", () => {
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: installedPkgDetail,
+      selectedDetails: availablePkgDetail,
+      isFetching: false,
+    } as IAppState,
+    packages: {
+      selected: selectedPkg,
+    } as IPackageState,
+  };
+  const wrapper = mountWrapper(
+    getStore({ ...state }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
+  );
+  expect(wrapper.find(PackageVersionSelector)).toHaveLength(1);
+  expect(wrapper.find(PackageHeader)).toHaveProp("hideVersionsSelector", true);
 });
 
 it("does not fetch the current package version if there is already one in the state", () => {

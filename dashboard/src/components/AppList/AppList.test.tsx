@@ -53,13 +53,29 @@ afterEach(() => {
 
 context("when changing props", () => {
   it("should fetch apps in the new namespace", async () => {
+    const state = deepClone(initialState) as IStoreState;
+    state.config.featureFlags = { operators: true };
+    const store = getStore(state);
     const fetchApps = jest.fn();
     const getCustomResources = jest.fn();
     actions.apps.fetchApps = fetchApps;
     actions.operators.getResources = getCustomResources;
-    mountWrapper(defaultStore, <AppList />);
+    mountWrapper(store, <AppList />);
     expect(fetchApps).toHaveBeenCalledWith("default-cluster", "default");
     expect(getCustomResources).toHaveBeenCalledWith("default-cluster", "default");
+  });
+
+  it("should not fetch resources in the new namespace when operators is disabled", async () => {
+    const state = deepClone(initialState) as IStoreState;
+    state.config.featureFlags = { operators: false };
+    const store = getStore(state);
+    const fetchApps = jest.fn();
+    const getCustomResources = jest.fn();
+    actions.apps.fetchApps = fetchApps;
+    actions.operators.getResources = getCustomResources;
+    mountWrapper(store, <AppList />);
+    expect(fetchApps).toHaveBeenCalledWith("default-cluster", "default");
+    expect(getCustomResources).not.toHaveBeenCalled();
   });
 
   it("should update the search filter", () => {
@@ -89,11 +105,14 @@ context("when changing props", () => {
   });
 
   it("should fetch apps in all namespaces", async () => {
+    const state = deepClone(initialState) as IStoreState;
+    state.config.featureFlags = { operators: true };
+    const store = getStore(state);
     const fetchApps = jest.fn();
     const getCustomResources = jest.fn();
     actions.apps.fetchApps = fetchApps;
     actions.operators.getResources = getCustomResources;
-    const wrapper = mountWrapper(defaultStore, <AppList />);
+    const wrapper = mountWrapper(store, <AppList />);
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
     });

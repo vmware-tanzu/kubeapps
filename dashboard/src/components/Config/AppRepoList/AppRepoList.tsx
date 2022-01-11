@@ -25,7 +25,7 @@ function AppRepoList() {
   const dispatch = useDispatch();
   const location = useLocation();
   const {
-    repos: { errors, isFetchingElem, repos, repoSecrets },
+    repos: { errors, isFetchingElem, repos },
     clusters: { clusters, currentCluster },
     config: { kubeappsCluster, kubeappsNamespace, globalReposNamespace },
   } = useSelector((state: IStoreState) => state);
@@ -122,11 +122,6 @@ function AppRepoList() {
         ) : (
           <AppRepoControl
             repo={repo}
-            secret={repoSecrets.find(secret =>
-              secret.metadata.ownerReferences?.some(
-                ownerRef => ownerRef.name === repo.metadata.name,
-              ),
-            )}
             refetchRepos={refetchRepos}
             kubeappsNamespace={globalReposNamespace}
           />
