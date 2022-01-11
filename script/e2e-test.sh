@@ -275,6 +275,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   )
 fi
 
+operatorFlags=()
 if [ -n "${TEST_OPERATORS-}" ]; then
   operatorFlags=(
     "--set" "featureFlags.operators=true"
