@@ -31,10 +31,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
@@ -47,8 +50,11 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.AvailablePackageSummary{},
 	corev1.Context{},
 	corev1.CreateInstalledPackageResponse{},
+	corev1.CreateInstalledPackageResponse{},
 	corev1.DeleteInstalledPackageResponse{},
 	corev1.GetAvailablePackageVersionsResponse{},
+	corev1.GetAvailablePackageVersionsResponse{},
+	corev1.GetInstalledPackageResourceRefsResponse{},
 	corev1.InstalledPackageDetail{},
 	corev1.InstalledPackageReference{},
 	corev1.InstalledPackageStatus{},
@@ -56,8 +62,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.Maintainer{},
 	corev1.PackageAppVersion{},
 	corev1.ReconciliationOptions{},
-	corev1.GetAvailablePackageVersionsResponse{},
-	corev1.CreateInstalledPackageResponse{},
+	corev1.ResourceRef{},
 	corev1.UpdateInstalledPackageResponse{},
 	corev1.VersionReference{},
 	pluginv1.Plugin{},
@@ -71,13 +76,13 @@ var packagingAPIVersion = fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVers
 var kappctrlAPIVersion = fmt.Sprintf("%s/%s", kappctrlv1alpha1.SchemeGroupVersion.Group, kappctrlv1alpha1.SchemeGroupVersion.Version)
 
 func TestGetClient(t *testing.T) {
-	testClientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+	testClientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 			runtime.NewScheme(),
 			map[schema.GroupVersionResource]string{
 				{Group: "foo", Version: "bar", Resource: "baz"}: "fooList",
 			},
-		), nil
+		), nil, nil
 	}
 
 	testCases := []struct {
@@ -94,8 +99,8 @@ func TestGetClient(t *testing.T) {
 		},
 		{
 			name: "it returns failed-precondition when configGetter itself errors",
-			clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, nil, fmt.Errorf("Bang!")
+			clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
+				return nil, nil, nil, fmt.Errorf("Bang!")
 			},
 			statusCodeClient:  codes.FailedPrecondition,
 			statusCodeManager: codes.OK,
@@ -110,7 +115,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
-			typedClient, dynamicClient, errClient := s.GetClients(context.Background(), "")
+			typedClient, dynamicClient, _, errClient := s.GetClients(context.Background(), "")
 
 			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
@@ -466,7 +471,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
@@ -474,7 +479,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 						},
 						unstructuredObjects...,
-					), nil
+					), nil, nil
 				},
 			}
 
@@ -621,14 +626,14 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}: pkgResource + "List",
 						},
 						unstructuredObjects...,
-					), nil
+					), nil, nil
 				},
 			}
 
@@ -932,7 +937,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
@@ -940,7 +945,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 							{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 						},
 						unstructuredObjects...,
-					), nil
+					), nil, nil
 				},
 			}
 			availablePackageDetail, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
@@ -1391,7 +1396,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
@@ -1400,7 +1405,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 						},
 						unstructuredObjects...,
-					), nil
+					), nil, nil
 				},
 			}
 
@@ -1642,7 +1647,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return typfake.NewSimpleClientset(tc.existingTypedObjects...),
 						dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
@@ -1651,7 +1656,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 							},
 							unstructuredObjects...,
-						), nil
+						), nil, nil
 				},
 			}
 			installedPackageDetail, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
@@ -2324,7 +2329,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
@@ -2333,7 +2338,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 						},
 						unstructuredObjects...,
-					), nil
+					), nil, nil
 				},
 			}
 
@@ -2545,7 +2550,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return typfake.NewSimpleClientset(tc.existingTypedObjects...), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
@@ -2554,7 +2559,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 						},
 						unstructuredObjects...,
-					), nil
+					), nil, nil
 				},
 			}
 
@@ -2737,7 +2742,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return typfake.NewSimpleClientset(tc.existingTypedObjects...), dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
@@ -2746,7 +2751,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 						},
 						unstructuredObjects...,
-					), nil
+					), nil, nil
 				},
 			}
 
@@ -2760,6 +2765,176 @@ func TestDeleteInstalledPackage(t *testing.T) {
 				return
 			}
 			if got, want := deleteInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+func TestGetInstalledPackageResourceRefs(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		request              *corev1.GetInstalledPackageResourceRefsRequest
+		existingObjects      []runtime.Object
+		existingTypedObjects []runtime.Object
+		expectedStatusCode   codes.Code
+		expectedResponse     *corev1.GetInstalledPackageResourceRefsResponse
+	}{
+		{
+			name: "fetch the resources from an installed package",
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "foo",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+				&k8scorev1.Pod{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "Pod",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-pod",
+						Labels:    map[string]string{"kapp.k14s.io/app": "my-id"},
+					},
+					Spec: k8scorev1.PodSpec{
+						Containers: []k8scorev1.Container{{
+							Name: "my-installation-container",
+						}},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-values",
+					},
+					Type: "Opaque",
+					Data: map[string][]byte{
+						"values.yaml": []byte("foo: bar"),
+					},
+				},
+				&k8scorev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "v1",
+						Kind:       "Pod",
+						Name:       "my-installation-pod",
+						Namespace:  "default",
+					},
+				},
+				Context: defaultContext,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				// For testing, define a kindToResource converter that doesn't require
+				// a rest mapper.
+				kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error) {
+					gvr, _ := meta.UnsafeGuessKindToResource(gvk)
+					return gvr, meta.RESTScopeNameNamespace, nil
+				},
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
+					return typfake.NewSimpleClientset(tc.existingTypedObjects...), dynfake.NewSimpleDynamicClientWithCustomListKinds(
+							runtime.NewScheme(),
+							map[schema.GroupVersionResource]string{
+								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
+								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
+								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
+								{Group: "", Version: "v1", Resource: "pods"}: "Pod" + "List",
+							},
+							unstructuredObjects...,
+						), &myFakeDiscovery{
+							apiResourceList: []*metav1.APIResourceList{
+								{
+									GroupVersion: "v1",
+									APIResources: []metav1.APIResource{
+										{Name: "pods", Namespaced: true, Kind: "Pod", Verbs: []string{"list", "get"}},
+									},
+								},
+							},
+						}, nil
+				},
+			}
+
+			getInstalledPackageResourceRefsResponse, err := s.GetInstalledPackageResourceRefs(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+			// If we were expecting an error, continue to the next test.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+			if got, want := getInstalledPackageResourceRefsResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -2846,14 +3021,14 @@ func TestGetPackageRepositories(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 					return nil, dynfake.NewSimpleDynamicClientWithCustomListKinds(
 						runtime.NewScheme(),
 						map[schema.GroupVersionResource]string{
 							{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
 						},
 						unstructuredObjects...,
-					), nil
+					), nil, nil
 				},
 			}
 
@@ -2875,4 +3050,15 @@ func TestGetPackageRepositories(t *testing.T) {
 			}
 		})
 	}
+}
+
+type myFakeDiscovery struct {
+	fake.FakeDiscovery
+	apiResourceList []*metav1.APIResourceList
+}
+
+// override the Discovery.ServerPreferredResources() method to return a custom response,
+// since the default one is nil
+func (d *myFakeDiscovery) ServerPreferredResources() ([]*metav1.APIResourceList, error) {
+	return d.apiResourceList, nil
 }
