@@ -132,7 +132,7 @@ it("should render a warning message if operators are disabled", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(AlertGroup)).toExist();
-  expect(wrapper.find(AlertGroup).text()).toBe("Operators support has been disabled for Kubeapps.");
+  expect(wrapper.find(AlertGroup).text()).toBe("Operators support has been disabled by default for Kubeapps. It can be enabled in values configuration.");
 });
 
 it("should route to operators if enabled", () => {
