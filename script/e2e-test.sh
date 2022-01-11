@@ -182,6 +182,7 @@ installOrUpgradeKubeapps() {
   info "Installing Kubeapps from ${chartSource}..."
   kubectl -n kubeapps delete secret localhost-tls || true
 
+  # See https://stackoverflow.com/a/36296000 for "${arr[@]+"${arr[@]}"}" notation.
   cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}"
     "${img_flags[@]}"
     "${@:2}"
@@ -199,7 +200,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set globalReposNamespaceSuffix=-repos-global
-    "${operatorFlags[@]-}"
+    "${operatorFlags[@]+"${operatorFlags[@]}"}"
     --wait)
 
   echo "${cmd[@]}"
