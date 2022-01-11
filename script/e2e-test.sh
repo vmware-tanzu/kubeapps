@@ -396,7 +396,7 @@ testsToIgnore=()
 # Also skip the multicluster scenario
 if [[ -n "${GKE_BRANCH-}" ]]; then
   testsToIgnore=("operator-deployment.js" "add-multicluster-deployment.js" "${testsToIgnore[@]}")
-elif [[ -z "${TEST_OPERATORS}"  ]]; then
+elif [[ -z "${TEST_OPERATORS-}" ]]; then
   testsToIgnore=("operator-deployment.js" "${testsToIgnore[@]}")
 fi
 ignoreFlag=""
