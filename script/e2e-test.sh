@@ -198,6 +198,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
+    --set featureFlags.operators=true
     --wait)
 
   echo "${cmd[@]}"
