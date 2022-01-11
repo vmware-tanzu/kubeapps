@@ -449,6 +449,11 @@ func (s *Server) findMatchingK8sResources(ctx context.Context, cluster string, l
 		return nil, err
 	}
 
+	// create channel to collect the matching k8s resources thus avoid blocking the waitgroup
+	// ussing a buffered channel with size 100; assumption: 60% native k8s resources + 40 CRDs
+	ch := make(chan resourceAndGvk, 100)
+	wg := sync.WaitGroup{}
+
 	// for each kubernetes resource list, filter out those not being having the verb "list"
 	for _, apiResourceList := range apiResourceLists {
 		if len(apiResourceList.APIResources) == 0 {
@@ -458,11 +463,6 @@ func (s *Server) findMatchingK8sResources(ctx context.Context, cluster string, l
 		if err != nil {
 			continue
 		}
-
-		// create hannel to collect the matching k8s resources thus avoid blocking the waitgroup
-		ch := make(chan resourceAndGvk)
-
-		wg := sync.WaitGroup{}
 
 		// for each kubernetes resource, spwan a goroutine to check if it matches the listOptions
 		for _, resource := range apiResourceList.APIResources {
@@ -480,42 +480,43 @@ func (s *Server) findMatchingK8sResources(ctx context.Context, cluster string, l
 				gvk := gv.WithKind(resource.Kind)
 				gvr, _, err := s.kindToResource(s.restMapper, gvk)
 				if err != nil {
-					ch <- resourceAndGvk{nil, nil, err}
+					ch <- resourceAndGvk{nil, err}
 				}
 
 				// ignore the namespace as the resources may appear in different ns from which the PackageInstall is created
 				resources, err := dynamicClient.Resource(gvr).List(ctx, listOptions)
 				if err != nil {
-					ch <- resourceAndGvk{nil, nil, err}
+					ch <- resourceAndGvk{nil, err}
 				}
 
 				// for each found matching k8s resource, add it to the channel
 				for _, resource := range resources.Items {
-					ch <- resourceAndGvk{gvk: &gvk, resource: &resource}
+					ch <- resourceAndGvk{resourceRef: &corev1.ResourceRef{
+						ApiVersion: gvk.GroupVersion().String(),
+						Kind:       gvk.Kind,
+						Name:       resource.GetName(),
+						Namespace:  resource.GetNamespace(),
+					}}
 				}
 				wg.Done()
 			}(resource, ch, &wg)
 		}
 
-		// wait every goroutine to finish and close the channel
-		go func() {
-			wg.Wait()
-			close(ch)
-		}()
-
-		// once closed, iterate over the closed channel and push the objects to the response
-		for resourceAndGvk := range ch {
-			// skip failing resourceAndGvk
-			if resourceAndGvk.err != nil {
-				continue
-			}
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: resourceAndGvk.gvk.GroupVersion().String(),
-				Kind:       resourceAndGvk.gvk.Kind,
-				Name:       resourceAndGvk.resource.GetName(),
-				Namespace:  resourceAndGvk.resource.GetNamespace(),
-			})
-		}
 	}
+	// wait every goroutine to finish and close the channel
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	// once closed, iterate over the closed channel and push the objects to the response
+	for resourceAndGvk := range ch {
+		// skip failing resourceAndGvk
+		if resourceAndGvk.err != nil {
+			continue
+		}
+		refs = append(refs, resourceAndGvk.resourceRef)
+	}
+
 	return refs, nil
 }

@@ -31,9 +31,7 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type pkgSemver struct {
@@ -42,9 +40,8 @@ type pkgSemver struct {
 }
 
 type resourceAndGvk struct {
-	resource *unstructured.Unstructured
-	gvk      *schema.GroupVersionKind
-	err      error
+	resourceRef *corev1.ResourceRef
+	err         error
 }
 
 // pkgVersionsMap recturns a map of packages keyed by the packagemetadataName.
