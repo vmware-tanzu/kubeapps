@@ -127,7 +127,7 @@ func pageOffsetFromPageToken(pageToken string) (int, error) {
 // key - the key for which the value should be extracted
 // returns - the value for the given key
 // https://stackoverflow.com/questions/17452722/how-to-get-the-key-value-from-a-json-string-in-go/37332972
-func extractValue(body string, key string) string {
+func extractValueFromJson(body string, key string) string {
 	keystr := "\"" + key + "\":[^,;\\]}]*"
 	r, _ := regexp.Compile(keystr)
 	match := r.FindString(body)

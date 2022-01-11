@@ -201,7 +201,7 @@ func TestExtractValue(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			values := extractValue(tt.body, tt.key)
+			values := extractValueFromJson(tt.body, tt.key)
 			if !cmp.Equal(tt.expected, values) {
 				t.Errorf("mismatch in '%s': %s", tt.name, cmp.Diff(tt.expected, values))
 			}
