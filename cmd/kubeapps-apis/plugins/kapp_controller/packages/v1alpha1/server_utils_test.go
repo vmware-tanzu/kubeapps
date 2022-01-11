@@ -159,7 +159,7 @@ func TestUserReasonForKappStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			userReason := userReasonForKappStatus(tt.status)
+			userReason := simpleUserReasonForKappStatus(tt.status)
 			if want, got := tt.expectedUserReason, userReason; !cmp.Equal(want, got) {
 				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
 			}
