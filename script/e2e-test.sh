@@ -199,7 +199,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set globalReposNamespaceSuffix=-repos-global
-    "${operatorFlags[@]"
+    "${operatorFlags[@]}"
     --wait)
 
   echo "${cmd[@]}"
@@ -207,7 +207,7 @@ installOrUpgradeKubeapps() {
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
-if [[ -z "${GKE_BRANCH-}${TEST_OPERATORS-}" ]]; then
+if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   installOLM $OLM_VERSION
 fi
 
@@ -275,7 +275,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   )
 fi
 
-if [ -n "$TEST_OPERATORS" ]; then
+if [ -n "${TEST_OPERATORS-}" ]; then
   operatorFlags=(
     "--set" "featureFlags.operators=true"
   )
@@ -375,7 +375,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
 fi
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
-if [[ -z "${GKE_BRANCH-}${TEST_OPERATORS-}" ]]; then
+if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   ## Wait for the Operator catalog to be populated
   info "Waiting for the OperatorHub Catalog to be ready ..."
   retry_while isOperatorHubCatalogRunning 24
@@ -393,8 +393,10 @@ done
 testsToIgnore=()
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
 # Also skip the multicluster scenario
-if [[ -n "${GKE_BRANCH-}${TEST_OPERATORS-}" ]]; then
+if [[ -n "${GKE_BRANCH-}" ]]; then
   testsToIgnore=("operator-deployment.js" "add-multicluster-deployment.js" "${testsToIgnore[@]}")
+elif [[ -z "${TEST_OPERATORS}"  ]]; then
+  testsToIgnore=("operator-deployment.js" "${testsToIgnore[@]}")
 fi
 ignoreFlag=""
 if [[ "${#testsToIgnore[@]}" > "0" ]]; then
