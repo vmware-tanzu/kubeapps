@@ -14,15 +14,22 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
+	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
+	log "k8s.io/klog/v2"
 )
 
 const (
@@ -398,4 +405,120 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 		return nil, err
 	}
 	return &pkgInstall, nil
+}
+
+// appLabelIdentifier returns the app label identifier for the given Kapp app
+//
+// Apparently, App CRs not being created by a "kapp deploy" command don't have the proper annotations.
+// So, in order to retrieve the annotation value,
+// we have to get the ConfigMap <AppName>-ctrl and, then, fetch the value of the key "labelValue" in data.spec.
+// See https://kubernetes.slack.com/archives/CH8KCCKA5/p1637842398026700
+// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/430
+func (s *Server) appLabelIdentifier(ctx context.Context, cluster, namespace, installedPackageRefId string) (string, error) {
+	typedClient, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+	}
+
+	// the ConfigMap name is, by convention, "<appname>-ctrl", but it will change in the near future
+	cmName := fmt.Sprintf("%s-ctrl", installedPackageRefId)
+	cm, err := typedClient.CoreV1().ConfigMaps(namespace).Get(ctx, cmName, metav1.GetOptions{})
+
+	if err != nil || cm.Data["spec"] != "" {
+		log.Warning(errorByStatus("get", "ConfigMap", cmName, err))
+	}
+
+	appLabelValue := extractValueFromJson(cm.Data["spec"], "labelValue")
+
+	return appLabelValue, nil
+}
+
+// findMatchingK8sResources returns the list of k8s resources matching the given listOptions
+// Code inspired by https://github.com/kubernetes/kubectl/blob/release-1.22/pkg/cmd/apiresources/apiresources.go#L142
+func (s *Server) findMatchingK8sResources(ctx context.Context, cluster string, listOptions metav1.ListOptions) ([]*corev1.ResourceRef, error) {
+	typedClient, dynamicClient, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+	}
+
+	refs := []*corev1.ResourceRef{}
+
+	// fetch every possible kubernetes resource list that is available in the cluster
+	// TODO(agamez): this call may be expensive and subject to be cached;
+	// have a look at the CachedDiscoveryClient in k8s
+	// https://github.com/kubernetes/client-go/blob/release-1.22/discovery/cached/disk/cached_discovery.go
+	apiResourceLists, err := typedClient.Discovery().ServerPreferredResources()
+	if err != nil {
+		return nil, err
+	}
+
+	// for each kubernetes resource list, filter out those not being having the verb "list"
+	for _, apiResourceList := range apiResourceLists {
+		if len(apiResourceList.APIResources) == 0 {
+			continue
+		}
+		gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
+		if err != nil {
+			continue
+		}
+
+		// create hannel to collect the matching k8s resources thus avoid blocking the waitgroup
+		ch := make(chan resourceAndGvk)
+
+		wg := sync.WaitGroup{}
+
+		// for each kubernetes resource, spwan a goroutine to check if it matches the listOptions
+		for _, resource := range apiResourceList.APIResources {
+			if len(resource.Verbs) == 0 {
+				continue
+			}
+			// filter to resources that support the specified "List" verb
+			if !sets.NewString(resource.Verbs...).HasAll([]string{"list"}...) {
+				continue
+			}
+			wg.Add(1)
+			// spawn a goroutine to fetch the matching k8s resources
+			go func(resource metav1.APIResource, ch chan resourceAndGvk, wg *sync.WaitGroup) {
+				// convert the gvk to a gvr
+				gvk := gv.WithKind(resource.Kind)
+				gvr, _, err := s.kindToResource(s.restMapper, gvk)
+				if err != nil {
+					ch <- resourceAndGvk{nil, nil, err}
+				}
+
+				// ignore the namespace as the resources may appear in different ns from which the PackageInstall is created
+				resources, err := dynamicClient.Resource(gvr).List(ctx, listOptions)
+				if err != nil {
+					ch <- resourceAndGvk{nil, nil, err}
+				}
+
+				// for each found matching k8s resource, add it to the channel
+				for _, resource := range resources.Items {
+					ch <- resourceAndGvk{gvk: &gvk, resource: &resource}
+				}
+				wg.Done()
+			}(resource, ch, &wg)
+		}
+
+		// wait every goroutine to finish and close the channel
+		go func() {
+			wg.Wait()
+			close(ch)
+		}()
+
+		// once closed, iterate over the closed channel and push the objects to the response
+		for resourceAndGvk := range ch {
+			// skip failing resourceAndGvk
+			if resourceAndGvk.err != nil {
+				continue
+			}
+			refs = append(refs, &corev1.ResourceRef{
+				ApiVersion: resourceAndGvk.gvk.GroupVersion().String(),
+				Kind:       resourceAndGvk.gvk.Kind,
+				Name:       resourceAndGvk.resource.GetName(),
+				Namespace:  resourceAndGvk.resource.GetNamespace(),
+			})
+		}
+	}
+	return refs, nil
 }

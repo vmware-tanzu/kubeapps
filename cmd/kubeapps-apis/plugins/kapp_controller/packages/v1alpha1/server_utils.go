@@ -31,12 +31,20 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type pkgSemver struct {
 	pkg     *datapackagingv1alpha1.Package
 	version *semver.Version
+}
+
+type resourceAndGvk struct {
+	resource *unstructured.Unstructured
+	gvk      *schema.GroupVersionKind
+	err      error
 }
 
 // pkgVersionsMap recturns a map of packages keyed by the packagemetadataName.

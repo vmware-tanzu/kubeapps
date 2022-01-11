@@ -724,93 +724,23 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, _, err := s.GetClients(ctx, cluster)
+	// get the app id and build the label selector
+	appLabelValue, err := s.appLabelIdentifier(ctx, cluster, namespace, installedPackageRefId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, err
 	}
+	appLabelSelector := fmt.Sprintf("%s=%s", appLabelKey, appLabelValue)
+	listOptions := metav1.ListOptions{LabelSelector: appLabelSelector}
 
-	refs := []*corev1.ResourceRef{}
-
-	// TODO(agamez): apparently, App CRs not being created by a "kapp deploy"
-	// don't have the proper annotations. So, in order to retrieve the annotation value,
-	// we have to get the ConfigMap <AppName>-ctrl and, then, fetch the
-	// vaulue of the key "labelValue" in data.spec.
-	// See https://kubernetes.slack.com/archives/CH8KCCKA5/p1637842398026700
-
-	// the ConfigMap name is, by convention, "<appname>-ctrl", but it will change in the near future
-	cmName := fmt.Sprintf("%s-ctrl", installedPackageRefId)
-	cm, err := typedClient.CoreV1().ConfigMaps(namespace).Get(ctx, cmName, metav1.GetOptions{})
-	if err == nil && cm.Data["spec"] != "" {
-
-		appLabelValue := extractValue(cm.Data["spec"], "labelValue")
-		appLabelSelector := fmt.Sprintf("%s=%s", appLabelKey, appLabelValue)
-		listOptions := metav1.ListOptions{LabelSelector: appLabelSelector}
-
-		// TODO(agamez): perform an actual query over all the resources available in the cluster
-		// this is currently just a PoC getting the bare minimum: pods, deployments, services and secrets.
-		// Also, the xxx.Items[i] are not populating the Kind and APIVersion fields. Check why.
-
-		// Fetching all the matching pods
-		pods, err := typedClient.CoreV1().Pods(namespace).List(ctx, listOptions)
-		if err != nil {
-			return nil, errorByStatus("get", "Pods", "", err)
-		}
-		for _, resource := range pods.Items {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: "core/v1",
-				Kind:       "Pod",
-				Name:       resource.Name,
-				Namespace:  resource.Namespace,
-			})
-		}
-
-		// Fetching all the matching deployments
-		deployments, err := typedClient.AppsV1().Deployments(namespace).List(ctx, listOptions)
-		if err != nil {
-			return nil, errorByStatus("get", "Deployments", "", err)
-		}
-		for _, resource := range deployments.Items {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: "apps/v1",
-				Kind:       "Deployment",
-				Name:       resource.ObjectMeta.Name,
-				Namespace:  resource.ObjectMeta.Namespace,
-			})
-		}
-
-		// Fetching all the matching services
-		services, err := typedClient.CoreV1().Services(namespace).List(ctx, listOptions)
-		if err != nil {
-			return nil, errorByStatus("get", "services", "", err)
-		}
-		for _, resource := range services.Items {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: "core/v1",
-				Kind:       "Service",
-				Name:       resource.ObjectMeta.Name,
-				Namespace:  resource.ObjectMeta.Namespace,
-			})
-		}
-
-		// Fetching all the matching secrets
-		secrets, err := typedClient.CoreV1().Secrets(namespace).List(ctx, listOptions)
-		if err != nil {
-			return nil, errorByStatus("get", "Secrets", "", err)
-		}
-		for _, resource := range secrets.Items {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: "core/v1",
-				Kind:       "Secret",
-				Name:       resource.ObjectMeta.Name,
-				Namespace:  resource.ObjectMeta.Namespace,
-			})
-		}
-	} else {
-		log.Warning(errorByStatus("get", "ConfigMap", cmName, err))
+	// get the list of every k8s resource matching ResourceRef
+	refs, err := s.findMatchingK8sResources(ctx, cluster, listOptions)
+	if err != nil {
+		return nil, err
 	}
 
 	return &corev1.GetInstalledPackageResourceRefsResponse{
 		Context:      request.GetInstalledPackageRef().GetContext(),
 		ResourceRefs: refs,
 	}, nil
+
 }
