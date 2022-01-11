@@ -199,7 +199,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set globalReposNamespaceSuffix=-repos-global
-    "${operatorFlags[@]}"
+    "${operatorFlags[@]-}"
     --wait)
 
   echo "${cmd[@]}"
@@ -275,7 +275,6 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   )
 fi
 
-operatorFlags=()
 if [ -n "${TEST_OPERATORS-}" ]; then
   operatorFlags=(
     "--set" "featureFlags.operators=true"
