@@ -226,7 +226,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		}
 		var watcher watch.Interface
 		if scopeName == meta.RESTScopeNameNamespace {
-			watcher, err = dynamicClient.Resource(gvr).Namespace(namespace).Watch(stream.Context(), listOptions)
+			watcher, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Watch(stream.Context(), listOptions)
 		} else {
 			watcher, err = dynamicClient.Resource(gvr).Watch(stream.Context(), listOptions)
 		}

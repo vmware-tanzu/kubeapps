@@ -1519,8 +1519,11 @@ clusters:
   - name: default
     domain: cluster.local
 ## @param featureFlags Feature flags (used to switch on development features)
+## @param featureFlags.operators Enable/Disable operators support
 ##
-featureFlags: {}
+featureFlags:
+  operators: false
+
 ## RBAC configuration
 ##
 rbac:
