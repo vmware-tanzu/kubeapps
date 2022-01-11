@@ -199,7 +199,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set globalReposNamespaceSuffix=-repos-global
-    --set featureFlags.operators=true
+    "${operatorFlags[@]"
     --wait)
 
   echo "${cmd[@]}"
@@ -207,7 +207,7 @@ installOrUpgradeKubeapps() {
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
-if [[ -z "${GKE_BRANCH-}" ]]; then
+if [[ -z "${GKE_BRANCH-}${TEST_OPERATORS-}" ]]; then
   installOLM $OLM_VERSION
 fi
 
@@ -272,6 +272,12 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "clusters[1].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
     "--set" "clusters[1].insecure=true"
     "--set" "clusters[1].serviceToken=ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklsbHpiSEp5TlZwM1QwaG9WSE5PYkhVdE5GQkRablY2TW0wd05rUmtMVmxFWVV4MlZEazNaeTEyUmxFaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUprWldaaGRXeDBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpXTnlaWFF1Ym1GdFpTSTZJbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmt0ZEc5clpXNHRjV295Ym1naUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWEzVmlaV0Z3Y0hNdGJtRnRaWE53WVdObExXUnBjMk52ZG1WeWVTSXNJbXQxWW1WeWJtVjBaWE11YVc4dmMyVnlkbWxqWldGalkyOTFiblF2YzJWeWRtbGpaUzFoWTJOdmRXNTBMblZwWkNJNkltVXhaakE1WmpSakxUTTRNemt0TkRJME15MWhZbUptTFRKaU5HWm1OREZrWW1RMllTSXNJbk4xWWlJNkluTjVjM1JsYlRwelpYSjJhV05sWVdOamIzVnVkRHBrWldaaGRXeDBPbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmtpZlEuTnh6V2dsUGlrVWpROVQ1NkpWM2xJN1VWTUVSR3J2bklPSHJENkh4dUVwR0luLWFUUzV5Q0pDa3Z0cTF6S3Z3b05sc2MyX0YxaTdFOUxWRGFwbC1UQlhleUN5Rl92S1B1TDF4dTdqZFBMZ1dKT1pQX3JMcXppaDV4ZlkxalFoOHNhdTRZclFJLUtqb3U1UkRRZ0tOQS1BaS1lRlFOZVh2bmlUNlBKYWVkc184V0t3dHRMMC1wdHpYRnBnOFl5dkx6N0U1UWdTR2tjNWpDVXlsS0RvZVRUaVRSOEc2RHFHYkFQQUYwREt0b3MybU9Geno4SlJYNHhoQmdvaUcxVTVmR1g4Z3hnTU1SV0VHRE9kaGMyeXRvcFdRUkRpYmhvaldNS3VDZlNua09zMDRGYTBkYmEwQ0NTbld2a29LZ3Z4QVR5aVVrWm9wV3VpZ1JJNFd5dDkzbXhR"
+  )
+fi
+
+if [ -n "$TEST_OPERATORS" ]; then
+  operatorFlags=(
+    "--set" "featureFlags.operators=true"
   )
 fi
 
@@ -369,7 +375,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
 fi
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
-if [[ -z "${GKE_BRANCH-}" ]]; then
+if [[ -z "${GKE_BRANCH-}${TEST_OPERATORS-}" ]]; then
   ## Wait for the Operator catalog to be populated
   info "Waiting for the OperatorHub Catalog to be ready ..."
   retry_while isOperatorHubCatalogRunning 24
@@ -387,7 +393,7 @@ done
 testsToIgnore=()
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
 # Also skip the multicluster scenario
-if [[ -n "${GKE_BRANCH-}" ]]; then
+if [[ -n "${GKE_BRANCH-}${TEST_OPERATORS-}" ]]; then
   testsToIgnore=("operator-deployment.js" "add-multicluster-deployment.js" "${testsToIgnore[@]}")
 fi
 ignoreFlag=""
