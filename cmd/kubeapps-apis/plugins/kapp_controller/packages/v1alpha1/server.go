@@ -32,7 +32,7 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
+type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error)
 
 const (
 	globalPackagingNamespace = "kapp-controller-packaging-global"
@@ -93,23 +93,30 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		return nil
 	}
 	return &Server{
-		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
+		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 			if configGetter == nil {
-				return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+				return nil, nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
 			}
 			config, err := configGetter(ctx, cluster)
 			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
+				return nil, nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
 			}
 			dynamicClient, err := dynamic.NewForConfig(config)
 			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
+				return nil, nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
 			}
 			typedClient, err := kubernetes.NewForConfig(config)
 			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get typed client : %v", err))
+				return nil, nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get typed client : %v", err))
 			}
-			return typedClient, dynamicClient, nil
+			// TODO(agamez): this call may be expensive and subject to be cached;
+			// have a look at the CachedDiscoveryClient in k8s
+			// https://github.com/kubernetes/client-go/blob/release-1.22/discovery/cached/disk/cached_discovery.go
+			discoveryClient := typedClient.Discovery()
+			if discoveryClient == nil {
+				return nil, nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get discovery client : %v", err))
+			}
+			return typedClient, dynamicClient, discoveryClient, nil
 		},
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
@@ -125,13 +132,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 }
 
 // GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
+func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, discovery.DiscoveryInterface, error) {
 	if s.clientGetter == nil {
-		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	typedClient, dynamicClient, err := s.clientGetter(ctx, cluster)
+	typedClient, dynamicClient, discoveryClient, err := s.clientGetter(ctx, cluster)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
-	return typedClient, dynamicClient, nil
+	return typedClient, dynamicClient, discoveryClient, nil
 }

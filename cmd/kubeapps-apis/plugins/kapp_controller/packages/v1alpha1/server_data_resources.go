@@ -50,7 +50,7 @@ const (
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
 func (s *Server) getPkgResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	_, dynClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *Server) getPkgResource(ctx context.Context, cluster, namespace string) 
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata
 func (s *Server) getPkgMetadataResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	_, dynClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *Server) getPkgMetadataResource(ctx context.Context, cluster, namespace 
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-install
 func (s *Server) getPkgInstallResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	_, dynClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (s *Server) getPkgInstallResource(ctx context.Context, cluster, namespace s
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
 func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	_, dynClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespac
 
 // See https://carvel.dev/kapp-controller/docs/latest/app-spec/
 func (s *Server) getAppResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	_, dynClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -415,7 +415,7 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 // See https://kubernetes.slack.com/archives/CH8KCCKA5/p1637842398026700
 // https://github.com/vmware-tanzu/carvel-kapp-controller/issues/430
 func (s *Server) appLabelIdentifier(ctx context.Context, cluster, namespace, installedPackageRefId string) (string, error) {
-	typedClient, _, err := s.GetClients(ctx, cluster)
+	typedClient, _, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return "", status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -436,7 +436,7 @@ func (s *Server) appLabelIdentifier(ctx context.Context, cluster, namespace, ins
 // findMatchingK8sResources returns the list of k8s resources matching the given listOptions
 // Code inspired by https://github.com/kubernetes/kubectl/blob/release-1.22/pkg/cmd/apiresources/apiresources.go#L142
 func (s *Server) findMatchingK8sResources(ctx context.Context, cluster string, listOptions metav1.ListOptions) ([]*corev1.ResourceRef, error) {
-	typedClient, dynamicClient, err := s.GetClients(ctx, cluster)
+	_, dynamicClient, discoveryClient, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -444,10 +444,7 @@ func (s *Server) findMatchingK8sResources(ctx context.Context, cluster string, l
 	refs := []*corev1.ResourceRef{}
 
 	// fetch every possible kubernetes resource list that is available in the cluster
-	// TODO(agamez): this call may be expensive and subject to be cached;
-	// have a look at the CachedDiscoveryClient in k8s
-	// https://github.com/kubernetes/client-go/blob/release-1.22/discovery/cached/disk/cached_discovery.go
-	apiResourceLists, err := typedClient.Discovery().ServerPreferredResources()
+	apiResourceLists, err := discoveryClient.ServerPreferredResources()
 	if err != nil {
 		return nil, err
 	}
