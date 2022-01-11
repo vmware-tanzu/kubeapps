@@ -17,6 +17,7 @@ import (
 	"context"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	core "k8s.io/api/core/v1"
@@ -49,7 +50,7 @@ func (s *Server) CreateSecret(ctx context.Context, r *v1alpha1.CreateSecretReque
 		StringData: r.GetStringData(),
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return nil, errorByStatus("get", "Namespace", namespace, err)
+		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
 	return &v1alpha1.CreateSecretResponse{}, nil
@@ -113,7 +114,7 @@ func (s *Server) GetSecretNames(ctx context.Context, r *v1alpha1.GetSecretNamesR
 
 	secretList, err := typedClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, errorByStatus("list", "Secrets", "", err)
+		return nil, statuserror.FromK8sError("list", "Secrets", "", err)
 	}
 
 	secrets := map[string]v1alpha1.SecretType{}
