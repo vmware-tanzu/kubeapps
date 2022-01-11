@@ -1,3 +1,4 @@
+import { deepClone } from "@cds/core/internal/utils/identity";
 import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
@@ -133,12 +134,14 @@ const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/
 const routePath = "/c/:cluster/ns/:namespace/catalog";
 const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
-it("retrieves csvs in the namespace", () => {
+it("retrieves csvs in the namespace if operators enabled", () => {
   const getCSVs = jest.fn();
   actions.operators.getCSVs = getCSVs;
+  const state = deepClone(populatedState) as IStoreState;
+  state.config.featureFlags = { operators: true };
 
   mountWrapper(
-    getStore(populatedState),
+    getStore(state),
     <Router history={history}>
       <Route path={routePath}>
         <Catalog />
@@ -147,6 +150,24 @@ it("retrieves csvs in the namespace", () => {
   );
 
   expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, defaultProps.namespace);
+});
+
+it("not retrieveing csvs in the namespace if operators disabled", () => {
+  const getCSVs = jest.fn();
+  actions.operators.getCSVs = getCSVs;
+  const state = deepClone(populatedState) as IStoreState;
+  state.config.featureFlags = { operators: false };
+
+  mountWrapper(
+    getStore(state),
+    <Router history={history}>
+      <Route path={routePath}>
+        <Catalog />
+      </Route>
+    </Router>,
+  );
+
+  expect(getCSVs).not.toHaveBeenCalled();
 });
 
 it("shows all the elements", () => {

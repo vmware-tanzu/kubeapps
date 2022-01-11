@@ -14,7 +14,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -292,12 +291,31 @@ valueWithDefault: 80
 			`# missingDefaultObject: {}
 # valueWithDefault: 80
 `, nil},
-		{"bad schema", true, []byte(`properties:
-  fluent_bit:
-    description: fluent-bit Kubernetes configuration.
+		{"good schema (w/ additionalProperties: true, as per jsonschema draft 4)", true, []byte(`properties:
+  myAdditionalPropertiesProp:
+    type: object
+    additionalProperties: true
+`,
+		),
+			`# myAdditionalPropertiesProp: {}
+`, nil},
+		{"good schema (w/ additionalProperties: <schema>)", true, []byte(`properties:
+  myAdditionalPropertiesProp:
+    type: object
+    additionalProperties:
+      type: string
+`,
+		),
+			`# myAdditionalPropertiesProp: {}
+`, nil},
+		{"bad schema (w/ additionalProperties: string)", true, []byte(`properties:
+  myAdditionalPropertiesProp:
+    type: object
     additionalProperties: string
 `,
-		), "", fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go struct field JSONSchemaProps.Properties.AdditionalProperties of type apiextensions.JSONSchemaPropsOrBool")},
+		),
+			`# myAdditionalPropertiesProp: {}
+`, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

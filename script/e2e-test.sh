@@ -199,6 +199,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set globalReposNamespaceSuffix=-repos-global
+    --set featureFlags.operators=true
     --wait)
 
   echo "${cmd[@]}"

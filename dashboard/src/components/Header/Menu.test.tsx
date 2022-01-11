@@ -1,10 +1,13 @@
+import { deepClone } from "@cds/core/internal/utils/identity";
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import * as ReactRedux from "react-redux";
+import { app } from "shared/url";
 import { Link } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
 import { SupportedThemes } from "shared/Config";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import Menu from "./Menu";
 
 const defaultProps = {
@@ -35,15 +38,39 @@ afterEach(() => {
   actions.config = defaultActions;
 });
 
-it("opens the dropdown menu", () => {
-  const wrapper = mountWrapper(defaultStore, <Menu {...defaultProps} />);
+it("opens the dropdown full menu", () => {
+  const state = deepClone(initialState) as IStoreState;
+  state.config.featureFlags = { operators: true };
+  const store = getStore(state);
+  const wrapper = mountWrapper(store, <Menu {...defaultProps} />);
   expect(wrapper.find(".dropdown")).not.toHaveClassName("open");
   const menu = wrapper.find("button");
   menu.simulate("click");
   wrapper.update();
   expect(wrapper.find(".dropdown")).toHaveClassName("open");
   // It render links for AppRepositories and operators
-  expect(wrapper.find(Link)).toHaveLength(3);
+  const links = wrapper.find(Link);
+  expect(links).toHaveLength(3);
+  expect(links.get(0).props.to).toEqual(app.config.apprepositories("default", "default"));
+  expect(links.get(1).props.to).toEqual(app.config.operators("default", "default"));
+  expect(links.get(2).props.to).toEqual("/docs");
+});
+
+it("opens the dropdown menu without operators item", () => {
+  const state = deepClone(initialState) as IStoreState;
+  state.config.featureFlags = { operators: false };
+  const store = getStore(state);
+  const wrapper = mountWrapper(store, <Menu {...defaultProps} />);
+  expect(wrapper.find(".dropdown")).not.toHaveClassName("open");
+  const menu = wrapper.find("button");
+  menu.simulate("click");
+  wrapper.update();
+  expect(wrapper.find(".dropdown")).toHaveClassName("open");
+  // It render links for AppRepositories and operators
+  const links = wrapper.find(Link);
+  expect(links).toHaveLength(2);
+  expect(links.get(0).props.to).toEqual(app.config.apprepositories("default", "default"));
+  expect(links.get(1).props.to).toEqual("/docs");
 });
 
 it("logs out", () => {

@@ -8,6 +8,9 @@
   "oauthLoginURI": "/oauth2/start",
   "oauthLogoutURI": "/oauth2/sign_out",
   "clusters": ["default"],
+  "featureFlags": {
+    "operators": false
+  },
   "theme": "light",
   "remoteComponentsUrl": "",
   "customAppViews": [],
