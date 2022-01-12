@@ -149,7 +149,7 @@ func TestUserReasonForKappStatus(t *testing.T) {
 		status             kappctrlv1alpha1.AppConditionType
 		expectedUserReason string
 	}{
-		{"ReconcileSucceeded", kappctrlv1alpha1.AppConditionType("ReconcileSucceeded"), "Reconcile succeeded"},
+		{"ReconcileSucceeded", kappctrlv1alpha1.AppConditionType("ReconcileSucceeded"), "Deployed"},
 		{"ValuesSchemaCheckFailed", kappctrlv1alpha1.AppConditionType("ValuesSchemaCheckFailed"), "Reconcile failed"},
 		{"ReconcileFailed", kappctrlv1alpha1.AppConditionType("ReconcileFailed"), "Reconcile failed"},
 		{"Reconciling", kappctrlv1alpha1.AppConditionType("Reconciling"), "Reconciling"},
