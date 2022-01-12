@@ -33,6 +33,8 @@ type ServeOptions struct {
 	PinnipedProxyURL         string
 	GlobalReposNamespace     string
 	UnsafeLocalDevKubeconfig bool
+	QPS                      float32
+	Burst                    int
 }
 
 // GatewayHandlerArgs is a helper struct just encapsulating all the args
