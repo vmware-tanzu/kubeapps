@@ -1521,10 +1521,12 @@ allowNamespaceDiscovery: true
 clusters:
   - name: default
     domain: cluster.local
-## @param featureFlags Feature flags (used to switch on development features)
-## @param featureFlags.operators Enable/Disable operators support
+
+## @skip featureFlags Feature flags (used to switch on development features)
 ##
-featureFlags:
+featureFlags: 
+  ## @param featureFlags.operators Enable ingress record generation for Kubeapps
+  ##
   operators: false
 
 ## RBAC configuration
