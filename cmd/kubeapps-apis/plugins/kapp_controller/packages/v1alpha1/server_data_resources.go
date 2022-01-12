@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -425,7 +426,7 @@ func (s *Server) appLabelIdentifier(ctx context.Context, cluster, namespace, ins
 	cm, err := typedClient.CoreV1().ConfigMaps(namespace).Get(ctx, cmName, metav1.GetOptions{})
 
 	if err != nil || cm.Data["spec"] != "" {
-		log.Warning(errorByStatus("get", "ConfigMap", cmName, err))
+		log.Warning(statuserror.FromK8sError("get", "ConfigMap", cmName, err))
 	}
 
 	appLabelValue := extractValueFromJson(cm.Data["spec"], "labelValue")

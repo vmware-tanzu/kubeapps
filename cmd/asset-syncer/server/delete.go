@@ -30,8 +30,7 @@ func Delete(serveOpts Config, args []string) error {
 	}
 
 	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
-	kubeappsNamespace := serveOpts.KubeappsNamespace
-	manager, err := newManager(dbConfig, kubeappsNamespace)
+	manager, err := newManager(dbConfig, serveOpts.GlobalReposNamespace)
 	if err != nil {
 		return fmt.Errorf("Error file creating a mananger: %v", err)
 	}

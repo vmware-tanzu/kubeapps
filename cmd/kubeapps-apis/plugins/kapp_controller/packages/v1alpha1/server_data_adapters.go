@@ -224,14 +224,14 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 		Status: &corev1.InstalledPackageStatus{
 			Ready:      false,
 			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
-			UserReason: "no status information yet",
+			UserReason: simpleUserReasonForKappStatus(""),
 		},
 	}
 	if len(pkgInstall.Status.Conditions) > 0 {
 		installedPackageSummary.Status = &corev1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
 			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
-			UserReason: userReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
+			UserReason: simpleUserReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
 		}
 	}
 
@@ -355,11 +355,11 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 		installedPackageDetail.ReconciliationOptions.Interval = int32(app.Spec.SyncPeriod.Seconds())
 	}
 
-	if pkgInstall.Status.Conditions != nil && &pkgInstall.Status.Conditions[0].Type != nil {
+	if pkgInstall.Status.Conditions != nil && len(pkgInstall.Status.Conditions) > 0 {
 		installedPackageDetail.Status = &corev1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
 			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
-			UserReason: userReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
+			UserReason: pkgInstall.Status.UsefulErrorMessage, // long message, instead of the simpleUserReasonForKappStatus
 		}
 		installedPackageDetail.ReconciliationOptions.Suspend = pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.Reconciling
 	}

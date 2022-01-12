@@ -265,7 +265,7 @@ export default function AppView() {
             ) : (
               <Alert theme="danger">An error occurred: {error["message"]}</Alert>
             ))}
-          {!app || !app?.status?.userReason ? (
+          {!app || !app?.status ? (
             <LoadingWrapper loadingText={`Loading ${releaseName}...`} />
           ) : (
             <Row>

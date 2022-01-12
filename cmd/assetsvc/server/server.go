@@ -30,12 +30,13 @@ import (
 )
 
 type ServeOptions struct {
-	Manager           utils.AssetManager
-	DbURL             string
-	DbName            string
-	DbUsername        string
-	DbPassword        string
-	KubeappsNamespace string
+	Manager              utils.AssetManager
+	DbURL                string
+	DbName               string
+	DbUsername           string
+	DbPassword           string
+	KubeappsNamespace    string
+	GlobalReposNamespace string
 }
 
 // TODO(absoludity): Let's not use globals for storing state like this.
@@ -78,7 +79,7 @@ func Serve(serveOpts ServeOptions) error {
 	dbConfig := dbutils.Config{URL: *&serveOpts.DbURL, Database: *&serveOpts.DbName, Username: *&serveOpts.DbUsername, Password: serveOpts.DbPassword}
 
 	var err error
-	manager, err = utils.NewManager("postgresql", dbConfig, serveOpts.KubeappsNamespace)
+	manager, err = utils.NewManager("postgresql", dbConfig, serveOpts.GlobalReposNamespace)
 	if err != nil {
 		return fmt.Errorf("Error: %v", err)
 	}

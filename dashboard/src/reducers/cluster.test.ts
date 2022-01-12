@@ -435,6 +435,7 @@ describe("clusterReducer", () => {
     const config = {
       kubeappsCluster: "",
       kubeappsNamespace: "kubeapps",
+      globalReposNamespace: "kubeapps-global",
       appVersion: "dev",
       authProxyEnabled: false,
       oauthLoginURI: "",
