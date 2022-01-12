@@ -304,14 +304,14 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 					// fetch additional information from the package metadata
 					// TODO(agamez): if the repository where the package belongs to is not installed, it will throw an error;
 					// decide whether we should ignore it or it is ok with returning an error
-					pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, pkgInstall.Spec.PackageRef.RefName)
+					pkgMetadata, err := s.getPkgMetadata(ctx, cluster, pkgInstall.ObjectMeta.Namespace, pkgInstall.Spec.PackageRef.RefName)
 					if err != nil {
 						return statuserror.FromK8sError("get", "PackageMetadata", pkgInstall.Spec.PackageRef.RefName, err)
 					}
 
 					// Use the field selector to return only Package CRs that match on the spec.refName.
 					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgInstall.Spec.PackageRef.RefName)
-					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, pkgInstall.ObjectMeta.Namespace, fieldSelector)
 					if err != nil {
 						return statuserror.FromK8sError("get", "Package", "", err)
 					}
