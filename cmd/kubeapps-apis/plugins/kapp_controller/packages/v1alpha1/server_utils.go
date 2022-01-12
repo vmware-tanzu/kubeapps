@@ -60,6 +60,24 @@ func getPkgVersionsMap(packages []*datapackagingv1alpha1.Package) (map[string][]
 	return pkgVersionsMap, nil
 }
 
+// latestMatchingVersion returns the latest version of a package that matches the given version constraint.
+func latestMatchingVersion(versions []pkgSemver, constraints string) (*semver.Version, error) {
+	// constraints can be a single one (e.g., ">1.2.3") or a range (e.g., ">1.0.0 <2.0.0 || 3.0.0")
+	constraint, err := semver.NewConstraint(constraints)
+	if err != nil {
+		return nil, fmt.Errorf("the version in the constraint ('%s') is not semver-compatible: %v", constraints, err)
+	}
+
+	// assuming 'versions' is sorted,
+	// get the first version that satisfies the constraint
+	for _, v := range versions {
+		if constraint.Check(v.version) {
+			return v.version, nil
+		}
+	}
+	return nil, nil
+}
+
 // statusReasonForKappStatus returns the reason for a given status
 func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) corev1.InstalledPackageStatus_StatusReason {
 	switch status {
