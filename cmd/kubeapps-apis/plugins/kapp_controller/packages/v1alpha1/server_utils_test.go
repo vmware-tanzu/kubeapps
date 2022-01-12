@@ -149,7 +149,7 @@ func TestUserReasonForKappStatus(t *testing.T) {
 		status             kappctrlv1alpha1.AppConditionType
 		expectedUserReason string
 	}{
-		{"ReconcileSucceeded", kappctrlv1alpha1.AppConditionType("ReconcileSucceeded"), "Reconcile succeeded"},
+		{"ReconcileSucceeded", kappctrlv1alpha1.AppConditionType("ReconcileSucceeded"), "Deployed"},
 		{"ValuesSchemaCheckFailed", kappctrlv1alpha1.AppConditionType("ValuesSchemaCheckFailed"), "Reconcile failed"},
 		{"ReconcileFailed", kappctrlv1alpha1.AppConditionType("ReconcileFailed"), "Reconcile failed"},
 		{"Reconciling", kappctrlv1alpha1.AppConditionType("Reconciling"), "Reconciling"},
@@ -157,7 +157,7 @@ func TestUserReasonForKappStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			userReason := userReasonForKappStatus(tt.status)
+			userReason := simpleUserReasonForKappStatus(tt.status)
 			if want, got := tt.expectedUserReason, userReason; !cmp.Equal(want, got) {
 				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
 			}

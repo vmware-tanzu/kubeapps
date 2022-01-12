@@ -34,11 +34,13 @@ import (
 
 // GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	log.Infof("+kapp-controller GetAvailablePackageSummaries")
-
-	// Retrieve the proper parameters from the request
+	// Retrieve parameters from the request
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", cluster, namespace)
+	log.Infof("+kapp-controller GetAvailablePackageSummaries %s", contextMsg)
+
+	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
 	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
@@ -139,12 +141,12 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
-	log.Infof("+kapp-controller GetAvailablePackageVersions")
-
-	// Retrieve the proper parameters from the request
+	// Retrieve parameters from the request
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	identifier := request.GetAvailablePackageRef().GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, identifier)
+	log.Infof("+kapp-controller GetAvailablePackageVersions %s", contextMsg)
 
 	// Validate the request
 	if namespace == "" || identifier == "" {
@@ -186,18 +188,20 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'kapp_controller' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	log.Infof("+kapp-controller GetAvailablePackageDetail")
+	// Retrieve parameters from the request
+	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
+	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
+	identifier := request.GetAvailablePackageRef().GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, identifier)
+	log.Infof("+kapp-controller GetAvailablePackageDetail %s", contextMsg)
+
+	// Retrieve additional parameters from the request
+	requestedPkgVersion := request.GetPkgVersion()
 
 	// Validate the request
 	if request.GetAvailablePackageRef().GetContext() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef.Context provided")
 	}
-
-	// Retrieve the proper parameters from the request
-	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
-	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
-	identifier := request.GetAvailablePackageRef().GetIdentifier()
-	requestedPkgVersion := request.GetPkgVersion()
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
@@ -255,10 +259,13 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 // GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
-	log.Infof("+kapp-controller GetInstalledPackageSummaries")
-	// Retrieve the proper parameters from the request
+	// Retrieve parameters from the request
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", cluster, namespace)
+	log.Infof("+kapp-controller GetInstalledPackageSummaries %s", contextMsg)
+
+	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
 	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
@@ -362,12 +369,12 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 
 // GetInstalledPackageDetail returns the package metadata managed by the 'kapp_controller' plugin
 func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
-	log.Infof("+kapp-controller GetInstalledPackageDetail")
-
-	// Retrieve the proper parameters from the request
+	// Retrieve parameters from the request
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, installedPackageRefId)
+	log.Infof("+kapp-controller GetInstalledPackageDetail %s", contextMsg)
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
@@ -447,7 +454,12 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 // CreateInstalledPackage creates an installed package managed by the 'kapp_controller' plugin
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
-	log.Infof("+kapp-controller CreateInstalledPackage")
+	// Retrieve parameters from the request
+	targetCluster := request.GetTargetContext().GetCluster()
+	targetNamespace := request.GetTargetContext().GetNamespace()
+	installedPackageName := request.GetName()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", targetCluster, targetNamespace, installedPackageName)
+	log.Infof("+kapp-controller CreateInstalledPackage %s", contextMsg)
 
 	// Validate the request
 	if request.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
@@ -466,16 +478,13 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.InvalidArgument, "no request ReconciliationOptions serviceAccountName provided")
 	}
 
-	// Retrieve the proper parameters from the request
+	// Retrieve additional parameters from the request
 	packageRef := request.GetAvailablePackageRef()
 	packageCluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	packageNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	reconciliationOptions := request.GetReconciliationOptions()
 	pkgVersion := request.GetPkgVersionReference().GetVersion()
-	installedPackageName := request.GetName()
 	values := request.GetValues()
-	targetNamespace := request.GetTargetContext().GetNamespace()
-	targetCluster := request.GetTargetContext().GetCluster()
 
 	if targetCluster == "" {
 		targetCluster = s.globalPackagingCluster
@@ -564,7 +573,12 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 
 // UpdateInstalledPackage Updates an installed package managed by the 'kapp_controller' plugin
 func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
-	log.Infof("+kapp-controller UpdateInstalledPackage")
+	// Retrieve parameters from the request
+	packageCluster := request.GetInstalledPackageRef().GetContext().GetCluster()
+	packageNamespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
+	installedPackageName := request.GetInstalledPackageRef().GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", packageCluster, packageNamespace, installedPackageName)
+	log.Infof("+kapp-controller UpdateInstalledPackage %s", contextMsg)
 
 	// Validate the request
 	if request == nil || request.GetInstalledPackageRef() == nil {
@@ -577,12 +591,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
 
-	// Retrieve the proper parameters from the request
-	packageCluster := request.GetInstalledPackageRef().GetContext().GetCluster()
-	packageNamespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
+	// Retrieve additional parameters from the request
 	reconciliationOptions := request.GetReconciliationOptions()
 	pkgVersion := request.GetPkgVersionReference().GetVersion()
-	installedPackageName := request.GetInstalledPackageRef().GetIdentifier()
 	values := request.GetValues()
 
 	if packageCluster == "" {
@@ -659,7 +670,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 
 // DeleteInstalledPackage Deletes an installed package managed by the 'kapp_controller' plugin
 func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
-	log.Infof("+kapp-controller DeleteInstalledPackage")
+	// Retrieve parameters from the request
+	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
+	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
+	identifier := request.GetInstalledPackageRef().GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", namespace, cluster, identifier)
+	log.Infof("+kapp-controller DeleteInstalledPackage %s", contextMsg)
 
 	// Validate the request
 	if request == nil || request.GetInstalledPackageRef() == nil {
@@ -668,12 +684,6 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	if request.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.GetInstalledPackageRef().GetIdentifier() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
 	}
-
-	// Retrieve the proper parameters from the request
-	packageRef := request.GetInstalledPackageRef()
-	identifier := request.GetInstalledPackageRef().GetIdentifier()
-	namespace := packageRef.GetContext().GetNamespace()
-	cluster := packageRef.GetContext().GetCluster()
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
@@ -714,12 +724,12 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 
 // GetInstalledPackageResourceRefs returns the references for the k8s resources of an installed package managed by the 'kapp_controller' plugin
 func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
-	log.Infof("+kapp-controller GetInstalledPackageResourceRefs")
-
-	// Retrieve the proper parameters from the request
+	// Retrieve parameters from the request
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", namespace, cluster, installedPackageRefId)
+	log.Infof("+kapp-controller GetInstalledPackageResourceRefs %s", contextMsg)
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
@@ -737,6 +747,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	// we have to get the ConfigMap <AppName>-ctrl and, then, fetch the
 	// vaulue of the key "labelValue" in data.spec.
 	// See https://kubernetes.slack.com/archives/CH8KCCKA5/p1637842398026700
+	// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/430
 
 	// the ConfigMap name is, by convention, "<appname>-ctrl", but it will change in the near future
 	cmName := fmt.Sprintf("%s-ctrl", installedPackageRefId)
