@@ -23,8 +23,6 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/json"
@@ -161,28 +159,6 @@ func TestUserReasonForKappStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			userReason := simpleUserReasonForKappStatus(tt.status)
 			if want, got := tt.expectedUserReason, userReason; !cmp.Equal(want, got) {
-				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
-			}
-		})
-	}
-}
-
-func TestErrorByStatus(t *testing.T) {
-	tests := []struct {
-		name        string
-		verb        string
-		resource    string
-		identifier  string
-		err         error
-		expectedErr error
-	}{
-		{"error msg for all resources ", "get", "my-resource", "", status.Errorf(codes.InvalidArgument, "boom!"), status.Errorf(codes.Internal, "unable to get the my-resource 'all' due to 'rpc error: code = InvalidArgument desc = boom!'")},
-		{"error msg for a single resources ", "get", "my-resource", "my-id", status.Errorf(codes.InvalidArgument, "boom!"), status.Errorf(codes.Internal, "unable to get the my-resource 'my-id' due to 'rpc error: code = InvalidArgument desc = boom!'")},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := errorByStatus(tt.verb, tt.resource, tt.identifier, tt.err)
-			if got, want := err.Error(), tt.expectedErr.Error(); !cmp.Equal(want, got) {
 				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
 			}
 		})

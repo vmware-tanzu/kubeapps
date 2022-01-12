@@ -42,6 +42,6 @@ type ChartQuery struct {
 	Categories  []string
 }
 
-func NewManager(databaseType string, config dbutils.Config, kubeappsNamespace string) (AssetManager, error) {
-	return NewPGManager(config, kubeappsNamespace)
+func NewManager(databaseType string, config dbutils.Config, globalReposNamespace string) (AssetManager, error) {
+	return NewPGManager(config, globalReposNamespace)
 }

@@ -25,12 +25,9 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -91,19 +88,6 @@ func simpleUserReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) str
 	}
 	// Fall back to unknown/unspecified.
 	return "Unknown"
-}
-
-// errorByStatus generates a meaningful error message
-func errorByStatus(verb, resource, identifier string, err error) error {
-	if identifier == "" {
-		identifier = "all"
-	}
-	if errors.IsNotFound(err) {
-		return status.Errorf(codes.NotFound, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
-	} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-		return status.Errorf(codes.Unauthenticated, "Unauthorized to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
-	}
-	return status.Errorf(codes.Internal, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
 }
 
 // pageOffsetFromPageToken converts a page token to an integer offset representing the page of results.
