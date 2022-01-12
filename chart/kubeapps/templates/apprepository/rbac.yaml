@@ -216,7 +216,6 @@ rules:
     verbs:
       - get
       - update
-{{- end -}}
 ---
 apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
 kind: RoleBinding
@@ -230,3 +229,4 @@ roleRef:
 subjects:
   - kind: Group
     name: system:authenticated
+{{- end -}}
