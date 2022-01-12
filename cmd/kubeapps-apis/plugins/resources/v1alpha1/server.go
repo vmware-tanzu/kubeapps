@@ -23,7 +23,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -156,11 +155,11 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	if err != nil {
 		return err
 	}
-
 	var resourcesToReturn []*pkgsGRPCv1alpha1.ResourceRef
 	// If the request didn't specify a filter of resource refs,
 	// we return all those found for the installed package. Otherwise
 	// we only return the requested ones.
+	log.Infof("resourceRefs: %+v", r.GetResourceRefs())
 	if len(r.GetResourceRefs()) == 0 {
 		if r.GetWatch() {
 			return status.Errorf(codes.InvalidArgument, "resource refs must be specified in request when watching resources")
@@ -168,6 +167,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		resourcesToReturn = refsResponse.GetResourceRefs()
 	} else {
 		for _, requestedRef := range r.GetResourceRefs() {
+			log.Infof("checking requestedRef: %+v", requestedRef)
 			found := false
 			for _, pkgRef := range refsResponse.GetResourceRefs() {
 				if resourceRefsEqual(pkgRef, requestedRef) {
@@ -212,7 +212,6 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 			if err != nil {
 				return status.Errorf(codes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
 			}
-
 			err = sendResourceData(ref, resource, stream)
 			if err != nil {
 				return err
@@ -290,11 +289,12 @@ func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1al
 	if err != nil {
 		return status.Errorf(codes.Internal, "unable to marshal json for resource: %s", err.Error())
 	}
+
+	// Note, a string in Go is effectively a read-only slice of bytes.
+	// See https://stackoverflow.com/a/50880408 for interesting links.
 	s.Send(&v1alpha1.GetResourcesResponse{
 		ResourceRef: ref,
-		Manifest: &anypb.Any{
-			Value: resourceBytes,
-		},
+		Manifest:    string(resourceBytes),
 	})
 
 	return nil

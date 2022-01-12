@@ -82,12 +82,12 @@ message GetResourcesResponse {
 
     // Manifest
     //
-    // The current manifest of the requested resource.
-    // Initially the JSON manifest will be returned as an Any, enabling the
-    // existing Kubeapps UI to replace its current direct api-server getting and
-    // watching of resources, but we may in the future pull out further
-    // structured metadata into this message as needed.
-    google.protobuf.Any manifest = 2;
+    // The current manifest of the requested resource.  Initially the JSON
+    // manifest will be returned a json-encoded string, enabling the existing
+    // Kubeapps UI to replace its current direct api-server getting and watching
+    // of resources, but we may in the future pull out further structured
+    // metadata into this message as needed.
+    string manifest = 2;
 }
 
 // GetServiceAccountNamesRequest
