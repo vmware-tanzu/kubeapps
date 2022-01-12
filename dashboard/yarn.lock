@@ -6802,10 +6802,10 @@ globjoin@^0.1.4:
   resolved "https://registry.yarnpkg.com/globjoin/-/globjoin-0.1.4.tgz#2f4494ac8919e3767c5cbb691e9f463324285d43"
   integrity sha1-L0SUrIkZ43Z8XLtpHp9GMyQoXUM=
 
-google-protobuf@^3.19.2:
-  version "3.19.2"
-  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.19.2.tgz#b20043ca17d3bf108f686f82cade85185d658273"
-  integrity sha512-VVi7/U6WZ5aH11i7/z2kuGHENZXUSZ6VonAp20cnInF0mVaGk3T23eSTIgJ+OjUKEAB4+bHdszseQg29TL+wSg==
+google-protobuf@^3.19.3:
+  version "3.19.3"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.19.3.tgz#2d5fb0c77584d675fca509a1fbc80c64fff471c9"
+  integrity sha512-3GRDj8o9XjcALYjgxNKeD7Wm6w/V8r1Jo4sLYMic9+VaIMLBx8TQeHP9yaoRoDymNONhnkmmveDPyjw/Fpw8+A==
 
 graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2, graceful-fs@^4.1.6, graceful-fs@^4.2.0, graceful-fs@^4.2.4:
   version "4.2.8"
