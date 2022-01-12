@@ -14,7 +14,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -24,8 +23,6 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/json"
@@ -168,28 +165,6 @@ func TestUserReasonForKappStatus(t *testing.T) {
 	}
 }
 
-func TestErrorByStatus(t *testing.T) {
-	tests := []struct {
-		name        string
-		verb        string
-		resource    string
-		identifier  string
-		err         error
-		expectedErr error
-	}{
-		{"error msg for all resources ", "get", "my-resource", "", status.Errorf(codes.InvalidArgument, "boom!"), status.Errorf(codes.Internal, "unable to get the my-resource 'all' due to 'rpc error: code = InvalidArgument desc = boom!'")},
-		{"error msg for a single resources ", "get", "my-resource", "my-id", status.Errorf(codes.InvalidArgument, "boom!"), status.Errorf(codes.Internal, "unable to get the my-resource 'my-id' due to 'rpc error: code = InvalidArgument desc = boom!'")},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := errorByStatus(tt.verb, tt.resource, tt.identifier, tt.err)
-			if got, want := err.Error(), tt.expectedErr.Error(); !cmp.Equal(want, got) {
-				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
-			}
-		})
-	}
-}
-
 func TestExtractValue(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -292,12 +267,31 @@ valueWithDefault: 80
 			`# missingDefaultObject: {}
 # valueWithDefault: 80
 `, nil},
-		{"bad schema", true, []byte(`properties:
-  fluent_bit:
-    description: fluent-bit Kubernetes configuration.
+		{"good schema (w/ additionalProperties: true, as per jsonschema draft 4)", true, []byte(`properties:
+  myAdditionalPropertiesProp:
+    type: object
+    additionalProperties: true
+`,
+		),
+			`# myAdditionalPropertiesProp: {}
+`, nil},
+		{"good schema (w/ additionalProperties: <schema>)", true, []byte(`properties:
+  myAdditionalPropertiesProp:
+    type: object
+    additionalProperties:
+      type: string
+`,
+		),
+			`# myAdditionalPropertiesProp: {}
+`, nil},
+		{"bad schema (w/ additionalProperties: string)", true, []byte(`properties:
+  myAdditionalPropertiesProp:
+    type: object
     additionalProperties: string
 `,
-		), "", fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go struct field JSONSchemaProps.Properties.AdditionalProperties of type apiextensions.JSONSchemaPropsOrBool")},
+		),
+			`# myAdditionalPropertiesProp: {}
+`, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -12,16 +12,20 @@ import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha
 
 const mockStore = configureMockStore([thunk]);
 
+const makeStore = (operatorsEnabled: boolean) => {
+  const state: IKubeState = {
+    items: {},
+    subscriptions: {},
+    kinds: {},
+  };
+  const config = operatorsEnabled ? { featureFlags: { operators: true } } : {};
+  return mockStore({ kube: state, config: config });
+};
+
 let store: any;
 
 beforeEach(() => {
-  store = mockStore({
-    kube: {
-      items: {},
-      subscriptions: {},
-      kinds: {},
-    } as IKubeState,
-  });
+  store = makeStore(false);
 });
 
 const getResourceOrig = Kube.getResource;
@@ -44,7 +48,7 @@ describe("getResourceKinds", () => {
   });
 
   it("retrieves resource kinds", async () => {
-    const groups = ["foo"];
+    const groups = [{ name: "foo" }];
     const kinds = { test: "data" };
     Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
     Kube.getResourceKinds = jest.fn().mockResolvedValue(kinds);
@@ -65,8 +69,53 @@ describe("getResourceKinds", () => {
     expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", groups);
   });
 
+  it("retrieves filtered out resource kinds with operators disabled", async () => {
+    const groups = [{ name: "foo" }, { name: "operators.coreos.com" }];
+    const kinds = { testoperator: "data" };
+    Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
+    Kube.getResourceKinds = jest.fn().mockResolvedValue(kinds);
+    const expectedActions = [
+      {
+        type: getType(actions.kube.requestResourceKinds),
+      },
+      {
+        type: getType(actions.kube.receiveResourceKinds),
+        payload: kinds,
+      },
+    ];
+    await store.dispatch(actions.kube.getResourceKinds("cluster-1"));
+
+    const testActions = store.getActions();
+    expect(testActions).toEqual(expectedActions);
+    expect(Kube.getAPIGroups).toHaveBeenCalledWith("cluster-1");
+    expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", [{ name: "foo" }]);
+  });
+
+  it("retrieves operators resource kinds with operators enabled", async () => {
+    store = makeStore(true);
+    const groups = [{ name: "foo" }, { name: "operators.coreos.com" }];
+    const kinds = { testoperator: "data" };
+    Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
+    Kube.getResourceKinds = jest.fn().mockResolvedValue(kinds);
+    const expectedActions = [
+      {
+        type: getType(actions.kube.requestResourceKinds),
+      },
+      {
+        type: getType(actions.kube.receiveResourceKinds),
+        payload: kinds,
+      },
+    ];
+    await store.dispatch(actions.kube.getResourceKinds("cluster-1"));
+
+    const testActions = store.getActions();
+    expect(testActions).toEqual(expectedActions);
+    expect(Kube.getAPIGroups).toHaveBeenCalledWith("cluster-1");
+    expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", groups);
+  });
+
   it("returns an error if fails to retrieve kinds", async () => {
-    const groups = ["foo"];
+    const groups = [{ name: "foo" }];
     Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
     Kube.getResourceKinds = jest.fn().mockRejectedValue(new Error("boom!"));
     const expectedActions = [

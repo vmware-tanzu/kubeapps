@@ -17,6 +17,7 @@ import (
 	"fmt"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	log "k8s.io/klog/v2"
 )
 
@@ -33,7 +34,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	// retrieve the list of installed packages
 	pkgRepositories, err := s.getPkgRepositories(ctx, cluster, namespace)
 	if err != nil {
-		return nil, errorByStatus("get", "PackageRepository", "", err)
+		return nil, statuserror.FromK8sError("get", "PackageRepository", "", err)
 	}
 
 	// convert the Carvel PackageRepository to our API PackageRepository struct

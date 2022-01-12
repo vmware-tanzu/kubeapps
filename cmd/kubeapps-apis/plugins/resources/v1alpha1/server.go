@@ -24,7 +24,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,6 +40,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 )
 
 type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
@@ -226,7 +226,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		}
 		var watcher watch.Interface
 		if scopeName == meta.RESTScopeNameNamespace {
-			watcher, err = dynamicClient.Resource(gvr).Namespace(namespace).Watch(stream.Context(), listOptions)
+			watcher, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Watch(stream.Context(), listOptions)
 		} else {
 			watcher, err = dynamicClient.Resource(gvr).Watch(stream.Context(), listOptions)
 		}
@@ -268,7 +268,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServ
 
 	saList, err := typedClient.CoreV1().ServiceAccounts(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, errorByStatus("list", "ServiceAccounts", "", err)
+		return nil, statuserror.FromK8sError("list", "ServiceAccounts", "", err)
 	}
 
 	// We only need to send the list of SA names (ie, not sending secret names)
@@ -412,19 +412,4 @@ func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {
 		r1.Kind == r2.Kind &&
 		r1.Namespace == r2.Namespace &&
 		r1.Name == r2.Name
-}
-
-// errorByStatus generates a meaningful error message
-func errorByStatus(verb, resource, identifier string, err error) error {
-	if identifier == "" {
-		identifier = "all"
-	}
-	if errors.IsNotFound(err) {
-		return status.Errorf(codes.NotFound, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
-	} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-		return status.Errorf(codes.PermissionDenied, "Unauthorized to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
-	} else if errors.IsAlreadyExists(err) {
-		return status.Errorf(codes.AlreadyExists, "Cannot %s the %s '%s' due to '%v' as it already exists", verb, resource, identifier, err)
-	}
-	return status.Errorf(codes.Internal, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
 }

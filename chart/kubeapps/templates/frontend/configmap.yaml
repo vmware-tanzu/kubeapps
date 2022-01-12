@@ -65,6 +65,16 @@ data:
       # used with an auth-proxy where k8s credentials never leave
       # the cluster). See clusters option.
     {{- range .Values.clusters }}
+      
+    {{- if not $.Values.featureFlags.operators }}
+
+      # Operators support disabled
+      location ~* /api/clusters/{{ .name }}/.*operators.coreos.com.* {
+        access_log off;
+        return 403;
+      }
+    {{- end }}
+
       location ~* /api/clusters/{{ .name }} {
     {{/* We need to split the API service URL(s) into the base url and the path segment so
            those configurations using a path can be appropriately rewritten below while

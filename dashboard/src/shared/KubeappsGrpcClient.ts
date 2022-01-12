@@ -12,7 +12,6 @@ import { Auth } from "./Auth";
 import * as URL from "./url";
 
 export class KubeappsGrpcClient {
-  private grpcWebImpl!: GrpcWebImpl;
   private transport: grpc.TransportFactory;
 
   constructor(transport?: grpc.TransportFactory) {
@@ -21,22 +20,22 @@ export class KubeappsGrpcClient {
 
   // getClientMetadata, if using token authentication, creates grpc metadata
   // and the token in the 'authorization' field
-  public getClientMetadata() {
+  public getClientMetadata(token?: string) {
+    if (token) {
+      return new grpc.Metadata({ authorization: `Bearer ${token}` });
+    }
+
     return Auth.getAuthToken()
       ? new grpc.Metadata({ authorization: `Bearer ${Auth.getAuthToken()}` })
       : undefined;
   }
 
-  // getGrpcClient returns the already configured grpcWebImpl
-  // if uncreated, it is created and returned
-  public getGrpcClient = () => {
-    return (
-      this.grpcWebImpl ||
-      new GrpcWebImpl(URL.api.kubeappsapis, {
-        transport: this.transport,
-        metadata: this.getClientMetadata(),
-      })
-    );
+  // getGrpcClient returns a grpc client
+  public getGrpcClient = (token?: string) => {
+    return new GrpcWebImpl(URL.api.kubeappsapis, {
+      transport: this.transport,
+      metadata: this.getClientMetadata(token),
+    });
   };
 
   // Core APIs
@@ -49,8 +48,12 @@ export class KubeappsGrpcClient {
   }
 
   // Resources API
-  public getResourcesServiceClientImpl() {
-    return new ResourcesServiceClientImpl(this.getGrpcClient());
+  //
+  // The resources API client implementation takes an optional token
+  // only because it is used to validate token authentication before
+  // the token is stored.
+  public getResourcesServiceClientImpl(token?: string) {
+    return new ResourcesServiceClientImpl(this.getGrpcClient(token));
   }
 
   // Plugins (packages) APIs
@@ -68,4 +71,4 @@ export class KubeappsGrpcClient {
   }
 }
 
-export default new KubeappsGrpcClient();
+export default KubeappsGrpcClient;
