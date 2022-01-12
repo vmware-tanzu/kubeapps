@@ -756,13 +756,18 @@ apprepository:
   initialRepos:
     - name: bitnami
       url: https://charts.bitnami.com/bitnami
-  ## @param apprepository.customAnnotations [object] Custom annotations be added to each AppRepository-generated CronJob, Job and Pod
+  ## @param apprepository.customAnnotations Custom annotations be added to each AppRepository-generated CronJob, Job and Pod
   ##
   customAnnotations: {}
-  ## @param apprepository.customLabels [object] Custom labels be added to each AppRepository-generated CronJob, Job and Pod
+  ## @param apprepository.customLabels Custom labels be added to each AppRepository-generated CronJob, Job and Pod
   ##
   customLabels: {}
-  ## @param apprepository.initialReposProxy [object] Proxy configuration to access chart repositories
+  ## Proxy configuration to access chart repositories
+  ##
+  ## @param apprepository.initialReposProxy.enabled Enables the proxy
+  ## @param apprepository.initialReposProxy.httpProxy URL for the http proxy
+  ## @param apprepository.initialReposProxy.httpsProxy URL for the https proxy
+  ## @param apprepository.initialReposProxy.noProxy URL to exclude from using the proxy
   ##
   initialReposProxy:
     enabled: false
@@ -1605,6 +1610,7 @@ kubeappsapis:
   ##
   enabledPlugins:
     - helm
+    - resources
   pluginConfig:
     core:
       packages:
