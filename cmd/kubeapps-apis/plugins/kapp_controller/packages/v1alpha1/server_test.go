@@ -1327,7 +1327,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: &corev1.InstalledPackageStatus{
 						Ready:      true,
 						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-						UserReason: "Reconcile succeeded",
+						UserReason: "Deployed",
 					},
 				},
 				{
@@ -1356,7 +1356,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: &corev1.InstalledPackageStatus{
 						Ready:      true,
 						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-						UserReason: "Reconcile succeeded",
+						UserReason: "Deployed",
 					},
 				},
 			},
