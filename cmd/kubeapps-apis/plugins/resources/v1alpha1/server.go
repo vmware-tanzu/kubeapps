@@ -159,7 +159,6 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	// If the request didn't specify a filter of resource refs,
 	// we return all those found for the installed package. Otherwise
 	// we only return the requested ones.
-	log.Infof("resourceRefs: %+v", r.GetResourceRefs())
 	if len(r.GetResourceRefs()) == 0 {
 		if r.GetWatch() {
 			return status.Errorf(codes.InvalidArgument, "resource refs must be specified in request when watching resources")
@@ -167,7 +166,6 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		resourcesToReturn = refsResponse.GetResourceRefs()
 	} else {
 		for _, requestedRef := range r.GetResourceRefs() {
-			log.Infof("checking requestedRef: %+v", requestedRef)
 			found := false
 			for _, pkgRef := range refsResponse.GetResourceRefs() {
 				if resourceRefsEqual(pkgRef, requestedRef) {
