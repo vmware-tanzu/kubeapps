@@ -955,8 +955,6 @@ func (c *NamespacedResourceWatcherCache) ExpectAdd(key string) {
 }
 
 // this func is used by unit tests only
-// TODO (gfichtenholt) I think there maybe a problem here in resync() scenario
-//     when the value of c.queue changes
 func (c *NamespacedResourceWatcherCache) WaitUntilForgotten(key string) {
 	c.queue.WaitUntilForgotten(key)
 }

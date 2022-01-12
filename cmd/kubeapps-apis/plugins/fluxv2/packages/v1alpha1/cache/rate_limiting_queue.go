@@ -161,7 +161,7 @@ type Type struct {
 
 	cond *sync.Cond
 
-	shuttingDown bool
+	shuttingDown bool	
 }
 
 // Add marks item as needing processing.

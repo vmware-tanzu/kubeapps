@@ -238,7 +238,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		}
 	}
 
-	cs := repoCacheCallSite{
+	cs := repoEventSink{
 		clientGetter: clientGetter,
 		chartCache:   nil,
 	}
@@ -299,7 +299,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 				}
 			}
 		}
-		cs = repoCacheCallSite{
+		cs = repoEventSink{
 			clientGetter: clientGetter,
 			chartCache:   chartCache,
 		}

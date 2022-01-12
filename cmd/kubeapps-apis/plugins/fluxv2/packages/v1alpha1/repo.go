@@ -193,7 +193,7 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repo types.Namespaced
 	// settings are more permissive than that of the default RBAC for
 	// kubeapps-internal-kubeappsapis account. If we don't like that behavior,
 	// I can easily switch to using common.NewBackgroundClientGetter here
-	callSite := repoCacheCallSite{
+	callSite := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   s.chartCache,
 	}
@@ -203,7 +203,7 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repo types.Namespaced
 //
 // implements plug-in specific cache-related functionality
 //
-type repoCacheCallSite struct {
+type repoEventSink struct {
 	clientGetter common.ClientGetterFunc
 	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
 }
@@ -216,7 +216,7 @@ type repoCacheEntryValue struct {
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
-func (s *repoCacheCallSite) onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
+func (s *repoEventSink) onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
 	log.V(4).Info("+onAddRepo()")
 	defer log.V(4).Info("-onAddRepo()")
 
@@ -242,7 +242,7 @@ func (s *repoCacheCallSite) onAddRepo(key string, unstructuredRepo map[string]in
 	}
 }
 
-func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([]byte, bool, error) {
+func (s *repoEventSink) indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([]byte, bool, error) {
 	charts, err := s.indexOneRepo(unstructuredRepo)
 	if err != nil {
 		return nil, false, err
@@ -279,7 +279,7 @@ func (s *repoCacheCallSite) indexAndEncode(checksum string, unstructuredRepo map
 
 // it is assumed the caller has already checked that this repo is ready
 // At present, there is only one caller of indexOneRepo() and this check is already done by it
-func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
+func (s *repoEventSink) indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
 	startTime := time.Now()
 
 	repo, err := packageRepositoryFromUnstructured(unstructuredRepo)
@@ -339,7 +339,7 @@ func (s *repoCacheCallSite) indexOneRepo(unstructuredRepo map[string]interface{}
 }
 
 // onModifyRepo essentially tells the cache whether to and what to store for a given key
-func (s *repoCacheCallSite) onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue interface{}) (interface{}, bool, error) {
+func (s *repoEventSink) onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue interface{}) (interface{}, bool, error) {
 	// first check the repo is ready
 	if isRepoReady(unstructuredRepo) {
 		// We should to compare checksums on what's stored in the cache
@@ -381,7 +381,7 @@ func (s *repoCacheCallSite) onModifyRepo(key string, unstructuredRepo map[string
 	}
 }
 
-func (s *repoCacheCallSite) onGetRepo(key string, value interface{}) (interface{}, error) {
+func (s *repoEventSink) onGetRepo(key string, value interface{}) (interface{}, error) {
 	b, ok := value.([]byte)
 	if !ok {
 		return nil, status.Errorf(codes.Internal, "unexpected value found in cache for key [%s]: %v", key, value)
@@ -395,7 +395,7 @@ func (s *repoCacheCallSite) onGetRepo(key string, value interface{}) (interface{
 	return entryValue, nil
 }
 
-func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
+func (s *repoEventSink) onDeleteRepo(key string) (bool, error) {
 	if s.chartCache != nil {
 		if name, err := s.fromKey(key); err != nil {
 			return false, err
@@ -406,7 +406,7 @@ func (s *repoCacheCallSite) onDeleteRepo(key string) (bool, error) {
 	return true, nil
 }
 
-func (s *repoCacheCallSite) onResync() error {
+func (s *repoEventSink) onResync() error {
 	if s.chartCache != nil {
 		return s.chartCache.OnResync()
 	} else {
@@ -417,7 +417,7 @@ func (s *repoCacheCallSite) onResync() error {
 // TODO (gfichtenholt) low priority: don't really like the fact that these 4 lines of code
 // basically repeat same logic as NamespacedResourceWatcherCache.fromKey() but can't
 // quite come up with with a more elegant alternative right now
-func (c *repoCacheCallSite) fromKey(key string) (*types.NamespacedName, error) {
+func (c *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, ":")
 	if len(parts) != 3 || parts[0] != fluxHelmRepositories || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
@@ -431,7 +431,7 @@ func (c *repoCacheCallSite) fromKey(key string) (*types.NamespacedName, error) {
 // gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
 // The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
 // ChartCache
-func (s *repoCacheCallSite) clientOptionsForRepo(ctx context.Context, unstructuredRepo map[string]interface{}) (*common.ClientOptions, error) {
+func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, unstructuredRepo map[string]interface{}) (*common.ClientOptions, error) {
 	secretName, found, err := unstructured.NestedString(unstructuredRepo, "spec", "secretRef", "name")
 	if !found || err != nil || secretName == "" {
 		return nil, nil

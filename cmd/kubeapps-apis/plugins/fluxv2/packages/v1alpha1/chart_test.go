@@ -908,14 +908,14 @@ func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 }
 
 func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
-	cs := repoCacheCallSite{
+	cs := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   s.chartCache,
 	}
 	return cs.redisMockSetValueForChart(mock, key, url, opts)
 }
 
-func (cs *repoCacheCallSite) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
 	_, chartID, version, err := fromRedisKeyForChart(key)
 	if err != nil {
 		return err

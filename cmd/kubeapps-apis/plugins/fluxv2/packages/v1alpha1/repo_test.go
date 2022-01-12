@@ -1384,14 +1384,14 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 }
 
 func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
-	cs := repoCacheCallSite{
+	cs := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   nil,
 	}
 	return cs.redisMockSetValueForRepo(mock, repo)
 }
 
-func (cs *repoCacheCallSite) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, byteArray []byte, err error) {
+func (cs *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(repo); err != nil {
 		return key, nil, err
 	}
@@ -1410,14 +1410,14 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, byteArray [
 }
 
 func (s *Server) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
-	cs := repoCacheCallSite{
+	cs := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   nil,
 	}
 	return cs.redisKeyValueForRepo(r)
 }
 
-func (cs *repoCacheCallSite) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
+func (cs *repoEventSink) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {

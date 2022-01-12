@@ -71,7 +71,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err
 	} else {
-		s := repoCacheCallSite{
+		s := repoEventSink{
 			clientGetter: common.NewBackgroundClientGetter(),
 			chartCache:   chartCache,
 		}
