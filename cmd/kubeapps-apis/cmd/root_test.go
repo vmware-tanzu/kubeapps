@@ -38,6 +38,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--plugin-dir", "foo01",
 				"--clusters-config-path", "foo02",
 				"--pinniped-proxy-url", "foo03",
+				"--global-repos-namespace", "kubeapps-global",
 				"--unsafe-local-dev-kubeconfig", "true",
 			},
 			core.ServeOptions{
@@ -46,6 +47,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				ClustersConfigPath:       "foo02",
 				PinnipedProxyURL:         "foo03",
 				UnsafeLocalDevKubeconfig: true,
+				GlobalReposNamespace:     "kubeapps-global",
 			},
 		},
 	}

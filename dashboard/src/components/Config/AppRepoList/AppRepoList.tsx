@@ -27,7 +27,7 @@ function AppRepoList() {
   const {
     repos: { errors, isFetchingElem, repos },
     clusters: { clusters, currentCluster },
-    config: { kubeappsCluster, kubeappsNamespace },
+    config: { kubeappsCluster, kubeappsNamespace, globalReposNamespace },
   } = useSelector((state: IStoreState) => state);
   const cluster = currentCluster;
   const { currentNamespace } = clusters[cluster];
@@ -49,15 +49,15 @@ function AppRepoList() {
       dispatch(actions.repos.fetchRepos(""));
       return () => {};
     }
-    if (!supportedCluster || namespace === kubeappsNamespace) {
+    if (!supportedCluster || namespace === globalReposNamespace) {
       // Global namespace or other cluster, show global repos only
-      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+      dispatch(actions.repos.fetchRepos(globalReposNamespace));
       return () => {};
     }
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepos(namespace, true));
     return () => {};
-  }, [dispatch, supportedCluster, namespace, kubeappsNamespace]);
+  }, [dispatch, supportedCluster, namespace, globalReposNamespace]);
 
   useEffect(() => {
     refetchRepos();
@@ -86,15 +86,19 @@ function AppRepoList() {
     Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "").then(allowed =>
       setCanSetAllNS(allowed),
     );
-    Kube.canI(kubeappsCluster, "kubeapps.com", "apprepositories", "update", kubeappsNamespace).then(
-      allowed => setCanEditGlobalRepos(allowed),
-    );
-  }, [cluster, kubeappsCluster, kubeappsNamespace]);
+    Kube.canI(
+      kubeappsCluster,
+      "kubeapps.com",
+      "apprepositories",
+      "update",
+      globalReposNamespace,
+    ).then(allowed => setCanEditGlobalRepos(allowed));
+  }, [cluster, kubeappsCluster, kubeappsNamespace, globalReposNamespace]);
 
   const globalRepos: IAppRepository[] = [];
   const namespaceRepos: IAppRepository[] = [];
   repos.forEach(repo => {
-    repo.metadata.namespace === kubeappsNamespace
+    repo.metadata.namespace === globalReposNamespace
       ? globalRepos.push(repo)
       : namespaceRepos.push(repo);
   });
@@ -119,7 +123,7 @@ function AppRepoList() {
           <AppRepoControl
             repo={repo}
             refetchRepos={refetchRepos}
-            kubeappsNamespace={kubeappsNamespace}
+            kubeappsNamespace={globalReposNamespace}
           />
         ),
       };
@@ -136,7 +140,7 @@ function AppRepoList() {
             title="Add an App Repository"
             key="add-repo-button"
             namespace={currentNamespace}
-            kubeappsNamespace={kubeappsNamespace}
+            kubeappsNamespace={globalReposNamespace}
           />,
           <AppRepoRefreshAllButton key="refresh-all-button" />,
         ]}
@@ -198,7 +202,7 @@ function AppRepoList() {
                 ) : (
                   <p>No global repositories found.</p>
                 )}
-                {namespace !== kubeappsNamespace && (
+                {namespace !== globalReposNamespace && (
                   <>
                     <h3>Namespace Repositories: {namespace}</h3>
                     <p>

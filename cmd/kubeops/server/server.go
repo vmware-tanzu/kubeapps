@@ -52,6 +52,7 @@ type ServeOptions struct {
 	NamespaceHeaderName    string
 	NamespaceHeaderPattern string
 	UserAgent              string
+	GlobalReposNamespace   string
 }
 
 const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"

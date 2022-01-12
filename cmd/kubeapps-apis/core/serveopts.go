@@ -31,6 +31,7 @@ type ServeOptions struct {
 	ClustersConfigPath       string
 	PluginConfigPath         string
 	PinnipedProxyURL         string
+	GlobalReposNamespace     string
 	UnsafeLocalDevKubeconfig bool
 }
 

@@ -16,6 +16,7 @@ import (
 	"context"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	core "k8s.io/api/core/v1"
@@ -43,7 +44,7 @@ func (s *Server) CheckNamespaceExists(ctx context.Context, r *v1alpha1.CheckName
 				Exists: false,
 			}, nil
 		}
-		return nil, errorByStatus("get", "Namespace", namespace, err)
+		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
 	return &v1alpha1.CheckNamespaceExistsResponse{
@@ -73,7 +74,7 @@ func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespac
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return nil, errorByStatus("get", "Namespace", namespace, err)
+		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
 	return &v1alpha1.CreateNamespaceResponse{}, nil
@@ -96,7 +97,7 @@ func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespace
 
 	namespaceList, err := typedClient.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, errorByStatus("list", "Namespaces", "", err)
+		return nil, statuserror.FromK8sError("list", "Namespaces", "", err)
 	}
 
 	namespaces := make([]string, len(namespaceList.Items))

@@ -1,6 +1,7 @@
 {
   "kubeappsCluster": "default",
   "kubeappsNamespace": "kubeapps",
+  "globalReposNamespace": "kubeapps",
   "appVersion": "DEVEL",
   "authProxyEnabled": false,
   "authProxySkipLoginPage": false,
