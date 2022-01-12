@@ -435,7 +435,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			PackageRef: &packagingv1alpha1.PackageRef{
 				RefName: packageRefName,
 				VersionSelection: &vendirversions.VersionSelectionSemver{
-					Constraints: pkgVersion,
+					Constraints: fmt.Sprintf(">=%s", pkgVersion),
 					// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
 					// This is to allow prereleases to be also installed
 					Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
