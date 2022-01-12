@@ -217,3 +217,16 @@ rules:
       - get
       - update
 {{- end -}}
+---
+apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
+kind: RoleBinding
+metadata:
+  name: "kubeapps:{{ .Release.Namespace }}:global-repos-read"
+  namespace: "{{ .Release.Namespace }}{{ .Values.apprepository.globalReposNamespaceSuffix }}"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: "kubeapps:{{ .Release.Namespace }}:apprepositories-read"
+subjects:
+  - kind: Group
+    name: system:authenticated
