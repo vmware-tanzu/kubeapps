@@ -610,6 +610,7 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 		args = append(args, "--user-agent-comment="+config.UserAgentComment)
 	}
 
+	args = append(args, "--global-repos-namespace="+config.GlobalReposNamespace)
 	args = append(args, "--namespace="+apprepo.GetNamespace(), apprepo.GetName(), apprepo.Spec.URL, apprepo.Spec.Type)
 
 	if len(apprepo.Spec.OCIRepositories) > 0 {

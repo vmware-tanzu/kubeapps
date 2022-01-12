@@ -45,6 +45,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--qps", "904",
 				"--namespace-header-name", "foo06",
 				"--namespace-header-pattern", "foo07",
+				"--global-repos-namespace", "kubeapps-global",
 			},
 			server.ServeOptions{
 				AssetsvcURL:            "foo01",
@@ -59,6 +60,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				NamespaceHeaderName:    "foo06",
 				NamespaceHeaderPattern: "foo07",
 				UserAgent:              "kubeops/devel (foo03)",
+				GlobalReposNamespace:   "kubeapps-global",
 			},
 		},
 	}
