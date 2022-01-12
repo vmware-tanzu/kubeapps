@@ -145,7 +145,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 			request.Context.Cluster)
 	}
 
-	repos, err := s.listReposInCluster(ctx, request.Context.Namespace)
+	repos, err := s.listReposInNamespace(ctx, request.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}

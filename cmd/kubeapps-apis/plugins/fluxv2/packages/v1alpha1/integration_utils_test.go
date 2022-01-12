@@ -499,6 +499,7 @@ func kubeDeleteSecret(t *testing.T, namespace, name string) error {
 
 func kubePortForwardToRedis(t *testing.T) error {
 	t.Logf("+kubePortForwardToRedis")
+	defer t.Logf("-kubePortForwardToRedis")
 	stopChan, readyChan := make(chan struct{}, 1), make(chan struct{}, 1)
 	go func() {
 		if err := func() error {

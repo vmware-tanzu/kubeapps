@@ -326,7 +326,8 @@ type ClientOptions struct {
 	// for Basic Authentication
 	Username string
 	Password string
-	//
+	// User Agent String:
+	// "kubeapps-apis/plugins/fluxv2.packages/v1alpha1/devel"
 	UserAgent string
 }
 

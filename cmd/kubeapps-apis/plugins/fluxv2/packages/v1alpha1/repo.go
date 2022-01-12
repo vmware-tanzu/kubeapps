@@ -25,6 +25,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -66,20 +67,14 @@ func (s *Server) getRepoResourceInterface(ctx context.Context, namespace string)
 }
 
 // namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
-func (s *Server) listReposInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+func (s *Server) listReposInNamespace(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
 	resourceIfc, err := s.getRepoResourceInterface(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	if repos, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
-		if errors.IsNotFound(err) {
-			return nil, status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "unable to list repositories in namespace [%s] due to %v", namespace, err)
-		} else {
-			return nil, status.Errorf(codes.Internal, "unable to list repositories in namespace [%s] due to %v", namespace, err)
-		}
+		return nil, statuserror.FromK8sError("list", "HelmRepository", namespace+"/*", err)
 	} else {
 		return repos, nil
 	}
@@ -93,15 +88,9 @@ func (s *Server) getRepoInCluster(ctx context.Context, name types.NamespacedName
 
 	result, err := resourceIfc.Get(ctx, name.Name, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "unable to get repository [%s] due to %v", name, err)
-		} else {
-			return nil, status.Errorf(codes.Internal, "unable to get repository [%s] due to %v", name, err)
-		}
+		return nil, statuserror.FromK8sError("get", "HelmRepository", name.String(), err)
 	} else if result == nil {
-		return nil, status.Errorf(codes.NotFound, "unable to find repository [%s]", name)
+		return nil, status.Errorf(codes.NotFound, "unable to find HelmRepository [%s]", name)
 	}
 	return result, nil
 }
@@ -146,7 +135,7 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 	// 1. with flux an available package may be from a repo in any namespace
 	// 2. can't rely on cache as a real source of truth for key names
 	//    because redis may evict cache entries due to memory pressure to make room for new ones
-	repoList, err := s.listReposInCluster(ctx, apiv1.NamespaceAll)
+	repoList, err := s.listReposInNamespace(ctx, apiv1.NamespaceAll)
 	if err != nil {
 		return nil, err
 	}

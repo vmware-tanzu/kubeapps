@@ -23,12 +23,12 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -71,17 +71,11 @@ func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*un
 		return nil, err
 	}
 
-	chartList, err := resourceIfc.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "unable to list charts due to %v", err)
-		} else {
-			return nil, status.Errorf(codes.Internal, "unable to list charts due to %v", err)
-		}
+	if chartList, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
+		return nil, statuserror.FromK8sError("list", "HelmCharts", "", err)
+	} else {
+		return chartList, nil
 	}
-	return chartList, nil
 }
 
 func (s *Server) availableChartDetail(ctx context.Context, repoName types.NamespacedName, chartName, chartVersion string) (*corev1.AvailablePackageDetail, error) {

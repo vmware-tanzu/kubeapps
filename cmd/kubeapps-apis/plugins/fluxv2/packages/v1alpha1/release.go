@@ -23,6 +23,7 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
@@ -233,13 +234,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	}
 	unstructuredRelease, err := releasesIfc.Get(ctx, name.Name, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "unable to get release due to %v", err)
-		} else {
-			return nil, status.Errorf(codes.Internal, "unable to get release due to %v", err)
-		}
+		return nil, statuserror.FromK8sError("get", "HelmRelease", name.String(), err)
 	}
 
 	log.V(4).Infof("installedPackageDetail:\n[%s]", common.PrettyPrintMap(unstructuredRelease.Object))
@@ -418,13 +413,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 
 	unstructuredRel, err := ifc.Get(ctx, packageRef.Identifier, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "Unable to get release due to %v", err)
-		} else {
-			return nil, status.Errorf(codes.Internal, "Unable to get release due to %v", err)
-		}
+		return nil, statuserror.FromK8sError("get", "HelmRelease", packageRef.Identifier, err)
 	}
 
 	if versionRef.GetVersion() != "" {
@@ -511,13 +500,7 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 	log.V(4).Infof("Deleted release: [%s]", packageRef.Identifier)
 
 	if err = ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{}); err != nil {
-		if errors.IsNotFound(err) {
-			return status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return status.Errorf(codes.Unauthenticated, "Unable to delete release due to %v", err)
-		} else {
-			return status.Errorf(codes.Internal, "Unable to delete release due to %v", err)
-		}
+		return statuserror.FromK8sError("delete", "HelmRelease", packageRef.Identifier, err)
 	}
 	return nil
 }
