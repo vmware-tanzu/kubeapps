@@ -379,7 +379,6 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 			Namespace: targetNamespace,
 			Annotations: map[string]string{
 				kappctrlinstalled.KctrlPkgAnnotation: fmt.Sprintf("%s-%s", installedPackageName, targetNamespace),
-				kappctrlinstalled.TanzuPkgAnnotation: fmt.Sprintf("%s-%s", installedPackageName, targetNamespace),
 			},
 		},
 		Data: map[string][]byte{
@@ -437,12 +436,12 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 		if pkgInstall.ObjectMeta.Annotations == nil {
 			pkgInstall.ObjectMeta.Annotations = make(map[string]string)
 		}
-		pkgInstall.ObjectMeta.Annotations[kappctrlinstalled.KctrlPkgAnnotation+"-"+kappctrlinstalled.KindSecret.AsString()] = fmt.Sprintf(kappctrlinstalled.SecretName, secret.Name, secret.ObjectMeta.Namespace)
+		pkgInstall.ObjectMeta.Annotations[kappctrlinstalled.KctrlPkgAnnotation+"-"+kappctrlinstalled.KindSecret.AsString()] = secret.Name
 		pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
 			SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-				// String format as per:
+				// The secret name should have the format: <name>-<namespace> as per:
 				// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
-				Name: fmt.Sprintf(kappctrlinstalled.SecretName, secret.Name, secret.ObjectMeta.Namespace),
+				Name: secret.Name,
 				Key:  "values.yaml",
 			},
 		}}

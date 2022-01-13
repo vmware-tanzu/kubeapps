@@ -649,9 +649,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 			pkgInstall.ObjectMeta.Annotations[kappctrlinstalled.KctrlPkgAnnotation+"-"+kappctrlinstalled.KindSecret.AsString()] = fmt.Sprintf(kappctrlinstalled.SecretName, secret.Name, secret.ObjectMeta.Namespace)
 			pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
 				SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-					// String format as per:
+					// The secret name should have the format: <name>-<namespace> as per:
 					// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
-					Name: fmt.Sprintf(kappctrlinstalled.SecretName, updatedSecret.Name, updatedSecret.ObjectMeta.Namespace),
+					Name: updatedSecret.Name,
 					Key:  "values.yaml",
 				},
 			}}
