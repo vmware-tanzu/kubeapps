@@ -18,15 +18,19 @@ import (
 	"crypto/subtle"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -39,6 +43,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 const KubeappsCluster = "default"
@@ -206,6 +212,151 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 	}
 }
 
+func TestParsePluginConfig(t *testing.T) {
+	testCases := []struct {
+		name                    string
+		pluginYAMLConf          []byte
+		exp_versions_in_summary packageutils.VersionsInSummary
+		exp_error_str           string
+	}{
+		{
+			name:                    "non existing plugin-config file",
+			pluginYAMLConf:          nil,
+			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 0, Minor: 0, Patch: 0},
+			exp_error_str:           "no such file or directory",
+		},
+		{
+			name: "non-default plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1
+      `),
+			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 4, Minor: 2, Patch: 1},
+			exp_error_str:           "",
+		},
+		{
+			name: "partial params in plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 1
+        `),
+			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 1, Minor: 0, Patch: 0},
+			exp_error_str:           "",
+		},
+		{
+			name: "invalid plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      versionsInSummary:
+        major: 4
+        minor: 2
+        patch: 1-IFC-123
+      `),
+			exp_versions_in_summary: packageutils.VersionsInSummary{},
+			exp_error_str:           "json: cannot unmarshal",
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			versions_in_summary, _, goterr := parsePluginConfig(filename)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
+			}
+			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
+func TestParsePluginConfigTimeout(t *testing.T) {
+	testCases := []struct {
+		name           string
+		pluginYAMLConf []byte
+		exp_timeout    int32
+		exp_error_str  string
+	}{
+		{
+			name:           "no timeout specified in plugin config",
+			pluginYAMLConf: nil,
+			exp_timeout:    0,
+			exp_error_str:  "",
+		},
+		{
+			name: "specific timeout in plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      timeoutSeconds: 650
+      `),
+			exp_timeout:   650,
+			exp_error_str: "",
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			_, timeoutSeconds, goterr := parsePluginConfig(filename)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
+			}
+			if got, want := timeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
 //
 // utilities
 //
@@ -336,9 +487,10 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
-		repoCache:       repoCache,
-		chartCache:      chartCache,
-		kubeappsCluster: KubeappsCluster,
+		repoCache:         repoCache,
+		chartCache:        chartCache,
+		kubeappsCluster:   KubeappsCluster,
+		versionsInSummary: packageutils.GetDefaultVersionsInSummary(),
 	}
 	return s, mock, nil
 }

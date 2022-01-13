@@ -35,7 +35,7 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.Kubernete
 	// 'Shutdown' hook
 	stopCh := make(chan struct{})
 
-	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName, stopCh)
+	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName, stopCh, pluginConfigPath)
 	if err != nil {
 		return nil, err
 	}

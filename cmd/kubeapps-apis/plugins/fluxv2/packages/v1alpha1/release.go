@@ -369,7 +369,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		}
 	}
 
-	fluxHelmRelease, err := newFluxHelmRelease(chart, targetName, versionRef, reconcile, values)
+	fluxHelmRelease, err := s.newFluxHelmRelease(chart, targetName, versionRef, reconcile, values)
 	if err != nil {
 		return nil, err
 	}
@@ -505,6 +505,78 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 	return nil
 }
 
+// Potentially, there are 3 different namespaces that can be specified here
+// 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
+// 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
+//    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
+// 3. spec.targetNamespace, where flux will install any artifacts from the release
+func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
+	unstructuredRel := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
+			"kind":       fluxHelmRelease,
+			"metadata": map[string]interface{}{
+				"name":      targetName.Name,
+				"namespace": targetName.Namespace,
+			},
+			"spec": map[string]interface{}{
+				"chart": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"chart": chart.Name,
+						"sourceRef": map[string]interface{}{
+							"name":      chart.Repo.Name,
+							"kind":      fluxHelmRepository,
+							"namespace": chart.Repo.Namespace,
+						},
+					},
+				},
+				"targetNamespace": targetName.Namespace,
+			},
+		},
+	}
+	if versionRef.GetVersion() != "" {
+		if err := unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
+			return nil, err
+		}
+	}
+	reconcileInterval := defaultReconcileInterval // unless explictly specified
+	if reconcile != nil {
+		if reconcile.Interval > 0 {
+			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()
+		}
+		if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
+			return nil, err
+		}
+		if reconcile.ServiceAccountName != "" {
+			if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if values != nil {
+		if err := unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
+			return nil, err
+		}
+	}
+
+	// required fields, without which flux controller will fail to create the CRD
+	if err := unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
+		return nil, err
+	}
+
+	// ref https://fluxcd.io/docs/components/helm/helmreleases/
+	// TODO (gfichtenholt) in theory, flux allows a timeout per release. So far we just use one
+	// configured per server/installation, if specified, same as helm plug-in.
+	// Otherwise the default timeout is used.
+	if s.timeoutSeconds > 0 {
+		timeoutInterval := (time.Duration(s.timeoutSeconds) * time.Second).String()
+		if err := unstructured.SetNestedField(unstructuredRel.Object, timeoutInterval, "spec", "timeout"); err != nil {
+			return nil, err
+		}
+	}
+	return &unstructuredRel, nil
+}
+
 // returns 3 things:
 // - ready:  whether the HelmRelease object is in a ready state
 // - reason: one of SUCCESS/FAILURE/PENDING/UNSPECIFIED,
@@ -617,67 +689,6 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 		Plugin:     GetPluginDetail(),
 		Context:    &corev1.Context{Namespace: repoNamespace},
 	}, nil
-}
-
-// Potentially, there are 3 different namespaces that can be specified here
-// 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
-// 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
-//    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
-// 3. spec.targetNamespace, where flux will install any artifacts from the release
-func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
-	unstructuredRel := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
-			"kind":       fluxHelmRelease,
-			"metadata": map[string]interface{}{
-				"name":      targetName.Name,
-				"namespace": targetName.Namespace,
-			},
-			"spec": map[string]interface{}{
-				"chart": map[string]interface{}{
-					"spec": map[string]interface{}{
-						"chart": chart.Name,
-						"sourceRef": map[string]interface{}{
-							"name":      chart.Repo.Name,
-							"kind":      fluxHelmRepository,
-							"namespace": chart.Repo.Namespace,
-						},
-					},
-				},
-				"targetNamespace": targetName.Namespace,
-			},
-		},
-	}
-	if versionRef.GetVersion() != "" {
-		if err := unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
-			return nil, err
-		}
-	}
-	reconcileInterval := defaultReconcileInterval // unless explictly specified
-	if reconcile != nil {
-		if reconcile.Interval > 0 {
-			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()
-		}
-		if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
-			return nil, err
-		}
-		if reconcile.ServiceAccountName != "" {
-			if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
-				return nil, err
-			}
-		}
-	}
-	if values != nil {
-		if err := unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
-			return nil, err
-		}
-	}
-
-	// required fields, without which flux controller will fail to create the CRD
-	if err := unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
-		return nil, err
-	}
-	return &unstructuredRel, nil
 }
 
 // resourceRefsFromManifest returns the resource refs for a given yaml manifest.

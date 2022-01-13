@@ -14,7 +14,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -55,12 +57,16 @@ type Server struct {
 
 	repoCache  *cache.NamespacedResourceWatcherCache
 	chartCache *cache.ChartCache
+
+	versionsInSummary packageutils.VersionsInSummary
+	timeoutSeconds    int32
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}) (*Server, error) {
-	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v])", kubeappsCluster)
+func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}, pluginConfigPath string) (*Server, error) {
+	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v], pluginConfigPath: [%s]",
+		kubeappsCluster, pluginConfigPath)
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -72,6 +78,20 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err
 	} else {
+		// If no config is provided, we default to the existing values for backwards
+		// compatibility.
+		versionsInSummary := packageutils.GetDefaultVersionsInSummary()
+		timeoutSecs := int32(-1)
+		if pluginConfigPath != "" {
+			versionsInSummary, timeoutSecs, err = parsePluginConfig(pluginConfigPath)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			log.Infof("+fluxv2 using custom packages config with %v\n", versionsInSummary)
+		} else {
+			log.Infof("+fluxv2 using default config since pluginConfigPath is empty")
+		}
+
 		s := repoEventSink{
 			clientGetter: common.NewBackgroundClientGetter(),
 			chartCache:   chartCache,
@@ -95,6 +115,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 				repoCache:          repoCache,
 				chartCache:         chartCache,
 				kubeappsCluster:    kubeappsCluster,
+				versionsInSummary:  versionsInSummary,
+				timeoutSeconds:     timeoutSecs,
 			}, nil
 		}
 	}
@@ -312,7 +334,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return nil, err
 	}
 
-	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
+	log.Infof("Requesting chart [%s] in namespace [%s]", unescapedChartID, namespace)
 	packageIdParts := strings.Split(unescapedChartID, "/")
 	repo := types.NamespacedName{Namespace: namespace, Name: packageIdParts[0]}
 	chart, err := s.getChart(ctx, repo, packageIdParts[1])
@@ -322,7 +344,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		// found it
 		return &corev1.GetAvailablePackageVersionsResponse{
 			PackageAppVersions: packageutils.PackageAppVersionsSummary(
-				chart.ChartVersions, packageutils.GetDefaultVersionsInSummary()),
+				chart.ChartVersions,
+				s.versionsInSummary),
 		}, nil
 	} else {
 		return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
@@ -550,4 +573,38 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
 func GetPluginDetail() *plugins.Plugin {
 	return common.GetPluginDetail()
+}
+
+// parsePluginConfig parses the input plugin configuration json file and return the
+// configuration options.
+func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary, int32, error) {
+	// Note at present VersionsInSummary is the only configurable option for this plugin,
+	// and if required this func can be enhaned to return helmConfig struct
+
+	// In the flux plugin, for example, we are interested in config for the
+	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
+	type fluxConfig struct {
+		Core struct {
+			Packages struct {
+				V1alpha1 struct {
+					VersionsInSummary packageutils.VersionsInSummary
+					TimeoutSeconds    int32 `json:"timeoutSeconds"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"core"`
+	}
+	var config fluxConfig
+
+	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	if err != nil {
+		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+	}
+	err = json.Unmarshal([]byte(pluginConfig), &config)
+	if err != nil {
+		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+	}
+
+	// return configured value
+	return config.Core.Packages.V1alpha1.VersionsInSummary,
+		config.Core.Packages.V1alpha1.TimeoutSeconds, nil
 }
