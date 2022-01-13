@@ -113,7 +113,7 @@ test("Creates a private registry", async () => {
     // but gives us a string, not JSON, and may leave a blank line at the end.
     const response = JSON.parse(r);
     const resourceRef = response.result?.resourceRef;
-    if (resourceRef.kind === "Deployment" && resourceRef.name === "dex") {
+    if (resourceRef.kind === "Deployment" && resourceRef.name.match(appName)) {
       deployment = JSON.parse(response.result?.manifest)
     }
   });
