@@ -93,24 +93,32 @@ test("Creates a private registry", async () => {
   );
 
   // Now that the deployment has been created, we check that the imagePullSecret
-  // has been added. For doing so, we query the kubernetes API to get info of the
+  // has been added. For doing so, we query the resources API to get info of the
   // deployment
-  const URL = getUrl("/api/clusters/default/apis/apps/v1/namespaces/default/deployments");
+  const URL = getUrl(`/apis/plugins/resources/v1alpha1/helm.packages/v1alpha1/c/default/ns/default/${appName}`);
 
   const cookies = await page.cookies();
   const axiosConfig = {
     headers: {
-      Authorization: `${token}`,
+      Authorization: `Bearer ${token}`,
       Cookie: `${cookies[0] ? cookies[0].name : ""}=${cookies[0] ? cookies[0].value : ""}`,
     },
   };
   const response = await axios.get(URL, axiosConfig);
   expect(response.status).toEqual(200);
 
-  const deployment = response.data.items.find(deployment => {
-    return deployment.metadata.name.match(appName);
+  let deployment;
+  response.data.trim().split(/\r?\n/).forEach(r => {
+    // Axios doesn't provide streaming responses, so splitting on new line works
+    // but gives us a string, not JSON, and may leave a blank line at the end.
+    const response = JSON.parse(r);
+    const resourceRef = response.result?.resourceRef;
+    if (resourceRef.kind === "Deployment" && resourceRef.name.match(appName)) {
+      deployment = JSON.parse(response.result?.manifest)
+    }
   });
-  expect(deployment.spec.template.spec.imagePullSecrets).toEqual([{ name: secret }]);
+
+  expect(deployment?.spec?.template?.spec?.imagePullSecrets).toEqual([{ name: secret }]);
 
   // Upgrade apache and verify.
   await expect(page).toClick("cds-button", { text: "Upgrade" });
