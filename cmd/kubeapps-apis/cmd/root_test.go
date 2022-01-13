@@ -40,6 +40,9 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--pinniped-proxy-url", "foo03",
 				"--global-repos-namespace", "kubeapps-global",
 				"--unsafe-local-dev-kubeconfig", "true",
+				"--plugin-config-path", "foo05",
+				"--kube-api-qps", "1.0",
+				"--kube-api-burst", "1",
 			},
 			core.ServeOptions{
 				Port:                     901,
@@ -48,6 +51,9 @@ func TestParseFlagsCorrect(t *testing.T) {
 				PinnipedProxyURL:         "foo03",
 				UnsafeLocalDevKubeconfig: true,
 				GlobalReposNamespace:     "kubeapps-global",
+				PluginConfigPath:         "foo05",
+				QPS:                      1.0,
+				Burst:                    1,
 			},
 		},
 	}

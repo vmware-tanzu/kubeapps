@@ -1521,10 +1521,12 @@ allowNamespaceDiscovery: true
 clusters:
   - name: default
     domain: cluster.local
-## @param featureFlags Feature flags (used to switch on development features)
-## @param featureFlags.operators Enable/Disable operators support
+
+## @skip featureFlags Feature flags (used to switch on development features)
 ##
-featureFlags:
+featureFlags: 
+  ## @param featureFlags.operators Enable ingress record generation for Kubeapps
+  ##
   operators: false
 
 ## RBAC configuration
@@ -1658,6 +1660,12 @@ kubeappsapis:
   ## @param kubeappsapis.replicaCount Number of frontend replicas to deploy
   ##
   replicaCount: 2
+  ## @param kubeappsapis.qps KubeappsAPIs Kubernetes API client QPS limit
+  ##
+  qps: "10.0"
+  ## @param kubeappsapis.burst KubeappsAPIs Kubernetes API client Burst limit
+  ##
+  burst: "15"
   ## @param kubeappsapis.terminationGracePeriodSeconds The grace time period for sig term
   ## ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
   ##

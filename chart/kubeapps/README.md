@@ -244,6 +244,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `apprepository.syncImage.tag`                         | Kubeapps Asset Syncer image tag (immutable tags are recommended)                          | `latest`                            |
 | `apprepository.syncImage.pullPolicy`                  | Kubeapps Asset Syncer image pull policy                                                   | `IfNotPresent`                      |
 | `apprepository.syncImage.pullSecrets`                 | Kubeapps Asset Syncer image pull secrets                                                  | `[]`                                |
+| `apprepository.globalReposNamespaceSuffix`            | Suffix for the namespace of global repos. Defaults to empty for backwards compatibility.  | `""`                                |
 | `apprepository.initialRepos`                          | Initial chart repositories to configure                                                   | `[]`                                |
 | `apprepository.customAnnotations`                     | Custom annotations be added to each AppRepository-generated CronJob, Job and Pod          | `{}`                                |
 | `apprepository.customLabels`                          | Custom labels be added to each AppRepository-generated CronJob, Job and Pod               | `{}`                                |
@@ -456,7 +457,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------- | ----------------------------------------------------------------------------- | ---------------------- |
 | `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true`                 |
 | `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`                   |
-| `featureFlags`            | Feature flags (used to switch on development features)                        | `{}`                   |
+| `featureFlags.operators`  | Enable ingress record generation for Kubeapps                                 | `false`                |
 | `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`                 |
 | `testImage.registry`      | NGINX image registry                                                          | `docker.io`            |
 | `testImage.repository`    | NGINX image repository                                                        | `bitnami/nginx`        |
@@ -496,6 +497,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeappsapis.image.pullPolicy`                                            | Kubeapps-APIs image pull policy                                                           | `IfNotPresent`           |
 | `kubeappsapis.image.pullSecrets`                                           | Kubeapps-APIs image pull secrets                                                          | `[]`                     |
 | `kubeappsapis.replicaCount`                                                | Number of frontend replicas to deploy                                                     | `2`                      |
+| `kubeappsapis.qps`                                                         | KubeappsAPIs Kubernetes API client QPS limit                                              | `10.0`                   |
+| `kubeappsapis.burst`                                                       | KubeappsAPIs Kubernetes API client Burst limit                                            | `15`                     |
 | `kubeappsapis.terminationGracePeriodSeconds`                               | The grace time period for sig term                                                        | `300`                    |
 | `kubeappsapis.extraEnvVars`                                                | Array with extra environment variables to add to the KubeappsAPIs container               | `[]`                     |
 | `kubeappsapis.extraEnvVarsCM`                                              | Name of existing ConfigMap containing extra env vars for the KubeappsAPIs container       | `""`                     |
