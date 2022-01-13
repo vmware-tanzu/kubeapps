@@ -736,7 +736,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	}
 
 	// get the list of every k8s resource matching ResourceRef
-	refs, err := s.findKappK8sResources(ctx, cluster, namespace, installedPackageRefId)
+	refs, err := s.inspectKappK8sResources(ctx, cluster, namespace, installedPackageRefId)
 	if err != nil {
 		return nil, err
 	}

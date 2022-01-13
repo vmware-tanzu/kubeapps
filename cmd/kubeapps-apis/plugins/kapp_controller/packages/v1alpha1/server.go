@@ -20,7 +20,9 @@ import (
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	kappcmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	kappcmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	"github.com/k14s/kapp/pkg/kapp/logger"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
@@ -31,7 +33,7 @@ import (
 )
 
 type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
-type kappFactoryGetter func(ctx context.Context, cluster string, appFlags kappcmdapp.Flags) (ctlapp.App, kappcmdapp.FactorySupportObjs, error)
+type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
 	globalPackagingNamespace = "kapp-controller-packaging-global"
@@ -49,7 +51,7 @@ type Server struct {
 	clientGetter             clientGetter
 	globalPackagingNamespace string
 	globalPackagingCluster   string
-	kappFactoryGetter        kappFactoryGetter
+	kappClientsGetter        kappClientsGetter
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -76,29 +78,49 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		},
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
-		kappFactoryGetter: func(ctx context.Context, cluster string, appFlags kappcmdapp.Flags) (ctlapp.App, kappcmdapp.FactorySupportObjs, error) {
+		kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 			if configGetter == nil {
-				return nil, kappcmdapp.FactorySupportObjs{}, status.Errorf(codes.Internal, "configGetter arg required")
+				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "configGetter arg required")
 			}
+			// Retrieve the k8s REST client from the configGetter
 			config, err := configGetter(ctx, cluster)
 			if err != nil {
-				return nil, kappcmdapp.FactorySupportObjs{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
 			}
+			// Pass the REST client to the (custom) kapp factory
 			configFactory := NewConfigurableConfigFactoryImpl()
 			configFactory.ConfigureRESTConfig(config)
-
-			resourceTypesFlags := kappcmdapp.ResourceTypesFlags{
-				IgnoreFailingAPIServices:         true,
-				ScopeToFallbackAllowedNamespaces: true,
-			}
 			depsFactory := kappcmdcore.NewDepsFactoryImpl(configFactory, ui.NewNoopUI())
 
-			app, supportObjs, err := kappcmdapp.Factory(depsFactory, appFlags, resourceTypesFlags, logger.NewNoopLogger())
+			// Create an empty resource filter
+			resourceFilterFlags := kappcmdtools.ResourceFilterFlags{}
+			resourceFilter, err := resourceFilterFlags.ResourceFilter()
 			if err != nil {
-				return nil, kappcmdapp.FactorySupportObjs{}, err
+				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
 			}
 
-			return app, supportObjs, nil
+			// Create the preconfigured resource types flags and a failing policy
+			resourceTypesFlags := kappcmdapp.ResourceTypesFlags{
+				// Allow to ignore failing APIServices
+				IgnoreFailingAPIServices: true,
+				// Scope resource searching to fallback allowed namespaces
+				ScopeToFallbackAllowedNamespaces: true,
+			}
+			failingAPIServicesPolicy := resourceTypesFlags.FailingAPIServicePolicy()
+
+			// Getting namespaced clients (e.g., for fetching an App)
+			supportingNsObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: namespace}, resourceTypesFlags, logger.NewNoopLogger())
+			if err != nil {
+				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+			}
+
+			// Getting non-namespaced clients (e.g., for fetching every k8s object in the cluster)
+			supportingObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: ""}, resourceTypesFlags, logger.NewNoopLogger())
+			if err != nil {
+				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+			}
+
+			return supportingNsObjs.Apps, supportingObjs.IdentifiedResources, failingAPIServicesPolicy, resourceFilter, nil
 		},
 	}
 }
@@ -115,14 +137,14 @@ func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Int
 	return typedClient, dynamicClient, nil
 }
 
-// GetKappFactory ensures a client getter is available and uses it to return a Kapp Factory.
-func (s *Server) GetKappFactory(ctx context.Context, cluster string, appFlags kappcmdapp.Flags) (ctlapp.App, kappcmdapp.FactorySupportObjs, error) {
+// GetKappClients ensures a client getter is available and uses it to return a Kapp Factory.
+func (s *Server) GetKappClients(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 	if s.clientGetter == nil {
-		return nil, kappcmdapp.FactorySupportObjs{}, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	app, supportObjs, err := s.kappFactoryGetter(ctx, cluster, appFlags)
+	appsClient, resourcesClient, failingAPIServicesPolicy, resourceFilter, err := s.kappClientsGetter(ctx, cluster, namespace)
 	if err != nil {
-		return nil, kappcmdapp.FactorySupportObjs{}, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get Kapp Factory : %v", err))
+		return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get Kapp Factory : %v", err))
 	}
-	return app, supportObjs, nil
+	return appsClient, resourcesClient, failingAPIServicesPolicy, resourceFilter, nil
 }

@@ -14,10 +14,8 @@ package main
 
 import (
 	"context"
+	"fmt"
 
-	kappcmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
-	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	kappcmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -404,52 +402,47 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 	return &pkgInstall, nil
 }
 
-// findKappK8sResources returns the list of k8s resources matching the given listOptions
-func (s *Server) findKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
+// inspectKappK8sResources returns the list of k8s resources matching the given listOptions
+func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
+	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/pkg/deploy/kapp.go#L151
+	appName := fmt.Sprintf("%s-ctrl", packageId)
+
 	refs := []*corev1.ResourceRef{}
 
-	appFlags := kappcmdapp.Flags{
-		NamespaceFlags: kappcmdcore.NamespaceFlags{
-			Name: namespace,
-		},
-		Name: packageId + "-ctrl",
-	}
-
-	app, supportObjs, err := s.GetKappFactory(ctx, cluster, appFlags)
+	// Get the Kapp different clients
+	appsClient, resourcesClient, failingAPIServicesPolicy, _, err := s.GetKappClients(ctx, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
 
+	// Fetch the Kapp App
+	app, err := appsClient.Find(appName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the GroupVersions used by the app
 	usedGVs, err := app.UsedGVs()
 	if err != nil {
 		return nil, err
 	}
 
-	resourceTypesFlags := kappcmdapp.ResourceTypesFlags{
-		IgnoreFailingAPIServices:         true,
-		ScopeToFallbackAllowedNamespaces: true,
-	}
-	failingAPIServicesPolicy := resourceTypesFlags.FailingAPIServicePolicy()
+	// Mark those GVs as required
 	failingAPIServicesPolicy.MarkRequiredGVs(usedGVs)
 
+	// Create a k8s label selector for the app
 	labelSelector, err := app.LabelSelector()
 	if err != nil {
 		return nil, err
 	}
 
-	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil)
+	// List the k8s resources that match the label selector
+	resources, err := resourcesClient.List(labelSelector, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resourceFilterFlags := kappcmdtools.ResourceFilterFlags{}
-	resourceFilter, err := resourceFilterFlags.ResourceFilter()
-	if err != nil {
-		return nil, err
-	}
-
-	resources = resourceFilter.Apply(resources)
-
+	// For each resource, generate and append the ResourceRef
 	for _, resource := range resources {
 		refs = append(refs, &corev1.ResourceRef{
 			ApiVersion: resource.GroupVersion().String(),
