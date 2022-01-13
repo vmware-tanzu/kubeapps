@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	v1alpha1_0 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1_1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_FluxV2PackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -53,7 +53,7 @@ func request_FluxV2PackagesService_GetAvailablePackageSummaries_0(ctx context.Co
 }
 
 func local_request_FluxV2PackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -73,7 +73,7 @@ var (
 )
 
 func request_FluxV2PackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -126,7 +126,7 @@ func request_FluxV2PackagesService_GetAvailablePackageDetail_0(ctx context.Conte
 }
 
 func local_request_FluxV2PackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -183,7 +183,7 @@ var (
 )
 
 func request_FluxV2PackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -236,7 +236,7 @@ func request_FluxV2PackagesService_GetAvailablePackageVersions_0(ctx context.Con
 }
 
 func local_request_FluxV2PackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -329,7 +329,7 @@ var (
 )
 
 func request_FluxV2PackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -345,7 +345,7 @@ func request_FluxV2PackagesService_GetInstalledPackageSummaries_0(ctx context.Co
 }
 
 func local_request_FluxV2PackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -365,7 +365,7 @@ var (
 )
 
 func request_FluxV2PackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -418,7 +418,7 @@ func request_FluxV2PackagesService_GetInstalledPackageDetail_0(ctx context.Conte
 }
 
 func local_request_FluxV2PackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -471,7 +471,7 @@ func local_request_FluxV2PackagesService_GetInstalledPackageDetail_0(ctx context
 }
 
 func request_FluxV2PackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.CreateInstalledPackageRequest
+	var protoReq v1alpha1_1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -488,7 +488,7 @@ func request_FluxV2PackagesService_CreateInstalledPackage_0(ctx context.Context,
 }
 
 func local_request_FluxV2PackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.CreateInstalledPackageRequest
+	var protoReq v1alpha1_1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -505,7 +505,7 @@ func local_request_FluxV2PackagesService_CreateInstalledPackage_0(ctx context.Co
 }
 
 func request_FluxV2PackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.UpdateInstalledPackageRequest
+	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -559,7 +559,7 @@ func request_FluxV2PackagesService_UpdateInstalledPackage_0(ctx context.Context,
 }
 
 func local_request_FluxV2PackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.UpdateInstalledPackageRequest
+	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -617,7 +617,7 @@ var (
 )
 
 func request_FluxV2PackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
+	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -670,7 +670,7 @@ func request_FluxV2PackagesService_DeleteInstalledPackage_0(ctx context.Context,
 }
 
 func local_request_FluxV2PackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
+	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -727,7 +727,7 @@ var (
 )
 
 func request_FluxV2PackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client FluxV2PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -780,7 +780,7 @@ func request_FluxV2PackagesService_GetInstalledPackageResourceRefs_0(ctx context
 }
 
 func local_request_FluxV2PackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, server FluxV2PackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
