@@ -48,53 +48,8 @@ describe("getResourceKinds", () => {
   });
 
   it("retrieves resource kinds", async () => {
-    const groups = [{ name: "foo" }];
+    const groups = [{ name: "foo" }, { name: "operators.coreos.com" }];
     const kinds = { test: "data" };
-    Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
-    Kube.getResourceKinds = jest.fn().mockResolvedValue(kinds);
-    const expectedActions = [
-      {
-        type: getType(actions.kube.requestResourceKinds),
-      },
-      {
-        type: getType(actions.kube.receiveResourceKinds),
-        payload: kinds,
-      },
-    ];
-    await store.dispatch(actions.kube.getResourceKinds("cluster-1"));
-
-    const testActions = store.getActions();
-    expect(testActions).toEqual(expectedActions);
-    expect(Kube.getAPIGroups).toHaveBeenCalledWith("cluster-1");
-    expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", groups);
-  });
-
-  it("retrieves filtered out resource kinds with operators disabled", async () => {
-    const groups = [{ name: "foo" }, { name: "operators.coreos.com" }];
-    const kinds = { testoperator: "data" };
-    Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
-    Kube.getResourceKinds = jest.fn().mockResolvedValue(kinds);
-    const expectedActions = [
-      {
-        type: getType(actions.kube.requestResourceKinds),
-      },
-      {
-        type: getType(actions.kube.receiveResourceKinds),
-        payload: kinds,
-      },
-    ];
-    await store.dispatch(actions.kube.getResourceKinds("cluster-1"));
-
-    const testActions = store.getActions();
-    expect(testActions).toEqual(expectedActions);
-    expect(Kube.getAPIGroups).toHaveBeenCalledWith("cluster-1");
-    expect(Kube.getResourceKinds).toHaveBeenCalledWith("cluster-1", [{ name: "foo" }]);
-  });
-
-  it("retrieves operators resource kinds with operators enabled", async () => {
-    store = makeStore(true);
-    const groups = [{ name: "foo" }, { name: "operators.coreos.com" }];
-    const kinds = { testoperator: "data" };
     Kube.getAPIGroups = jest.fn().mockResolvedValue(groups);
     Kube.getResourceKinds = jest.fn().mockResolvedValue(kinds);
     const expectedActions = [
