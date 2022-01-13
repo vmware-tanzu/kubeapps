@@ -17,4 +17,4 @@ global.endpoint = endpoint;
 global.getUrl = path => `${global.endpoint}${path}`;
 
 // Timeout for a test
-jest.setTimeout(120000);
+jest.setTimeout(160000);
