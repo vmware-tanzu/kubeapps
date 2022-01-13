@@ -612,7 +612,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	}
 
 	// Update the rest of the fields
-	pkgInstall.Spec.PackageRef.VersionSelection = &vendirVersions.VersionSelectionSemver{Constraints: fmt.Sprintf(">=%s", pkgVersion)}
+	pkgInstall.Spec.PackageRef.VersionSelection = &vendirVersions.VersionSelectionSemver{Constraints: pkgVersion}
 	if reconciliationOptions != nil {
 		if reconciliationOptions.Interval > 0 {
 			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}

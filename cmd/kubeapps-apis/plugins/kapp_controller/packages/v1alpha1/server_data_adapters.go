@@ -189,7 +189,7 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 
 	latestMatchingVersion, err := latestMatchingVersion(versions, pkgInstall.Spec.PackageRef.VersionSelection.Constraints)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q", pkgMetadata.Name)
+		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
 	installedPackageSummary := &corev1.InstalledPackageSummary{
@@ -314,7 +314,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 
 	latestMatchingVersion, err := latestMatchingVersion(versions, pkgInstall.Spec.PackageRef.VersionSelection.Constraints)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q", pkgMetadata.Name)
+		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
 	installedPackageDetail := &corev1.InstalledPackageDetail{
@@ -435,7 +435,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			PackageRef: &packagingv1alpha1.PackageRef{
 				RefName: packageRefName,
 				VersionSelection: &vendirversions.VersionSelectionSemver{
-					Constraints: fmt.Sprintf(">=%s", pkgVersion),
+					Constraints: pkgVersion,
 					// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
 					// This is to allow prereleases to be also installed
 					Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
