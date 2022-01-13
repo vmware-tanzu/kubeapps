@@ -20,7 +20,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -44,10 +43,6 @@ const (
 	fluxHelmChart     = "HelmChart"
 	fluxHelmCharts    = "helmcharts"
 	fluxHelmChartList = "HelmChartList"
-
-	MajorVersionsInSummary = 3
-	MinorVersionsInSummary = 3
-	PatchVersionsInSummary = 3
 )
 
 func (s *Server) getChartsResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
@@ -350,50 +345,4 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 	// note, the caller will set pkg.AvailablePackageRef namespace as that information
 	// is not included in the tarball
 	return pkg, nil
-}
-
-// packageAppVersionsSummary converts the model chart versions into the required version summary.
-func packageAppVersionsSummary(versions []models.ChartVersion) []*corev1.PackageAppVersion {
-	pav := []*corev1.PackageAppVersion{}
-
-	// Use a version map to be able to count how many major, minor and patch versions
-	// we have included.
-	version_map := map[int64]map[int64][]int64{}
-	for _, v := range versions {
-		version, err := semver.NewVersion(v.Version)
-		if err != nil {
-			continue
-		}
-
-		if _, ok := version_map[version.Major()]; !ok {
-			// Don't add a new major version if we already have enough
-			if len(version_map) >= MajorVersionsInSummary {
-				continue
-			}
-		} else {
-			// If we don't yet have this minor version
-			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
-				// Don't add a new minor version if we already have enough for this major version
-				if len(version_map[version.Major()]) >= MinorVersionsInSummary {
-					continue
-				}
-			} else {
-				if len(version_map[version.Major()][version.Minor()]) >= PatchVersionsInSummary {
-					continue
-				}
-			}
-		}
-
-		// Include the version and update the version map.
-		pav = append(pav, &corev1.PackageAppVersion{
-			PkgVersion: v.Version,
-			AppVersion: v.AppVersion,
-		})
-
-		if _, ok := version_map[version.Major()]; !ok {
-			version_map[version.Major()] = map[int64][]int64{}
-		}
-		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
-	}
-	return pav
 }

@@ -32,6 +32,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -320,7 +321,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	} else if chart != nil {
 		// found it
 		return &corev1.GetAvailablePackageVersionsResponse{
-			PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+			PackageAppVersions: packageutils.PackageAppVersionsSummary(
+				chart.ChartVersions, packageutils.GetDefaultVersionsInSummary()),
 		}, nil
 	} else {
 		return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
