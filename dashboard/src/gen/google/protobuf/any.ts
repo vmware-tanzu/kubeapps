@@ -123,7 +123,9 @@ export interface Any {
   value: Uint8Array;
 }
 
-const baseAny: object = { typeUrl: "" };
+function createBaseAny(): Any {
+  return { typeUrl: "", value: new Uint8Array() };
+}
 
 export const Any = {
   encode(message: Any, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -139,8 +141,7 @@ export const Any = {
   decode(input: _m0.Reader | Uint8Array, length?: number): Any {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = { ...baseAny } as Any;
-    message.value = new Uint8Array();
+    const message = createBaseAny();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -159,14 +160,10 @@ export const Any = {
   },
 
   fromJSON(object: any): Any {
-    const message = { ...baseAny } as Any;
-    message.typeUrl =
-      object.typeUrl !== undefined && object.typeUrl !== null ? String(object.typeUrl) : "";
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? bytesFromBase64(object.value)
-        : new Uint8Array();
-    return message;
+    return {
+      typeUrl: isSet(object.typeUrl) ? String(object.typeUrl) : "",
+      value: isSet(object.value) ? bytesFromBase64(object.value) : new Uint8Array(),
+    };
   },
 
   toJSON(message: Any): unknown {
@@ -178,7 +175,7 @@ export const Any = {
   },
 
   fromPartial<I extends Exact<DeepPartial<Any>, I>>(object: I): Any {
-    const message = { ...baseAny } as Any;
+    const message = createBaseAny();
     message.typeUrl = object.typeUrl ?? "";
     message.value = object.value ?? new Uint8Array();
     return message;
@@ -237,4 +234,8 @@ export type Exact<P, I extends P> = P extends Builtin
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
+}
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
 }

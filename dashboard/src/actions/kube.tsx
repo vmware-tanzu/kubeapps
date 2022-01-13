@@ -129,7 +129,7 @@ export function processGetResourcesResponse(
     return;
   }
   const key = keyForResourceRef(r.resourceRef);
-  const manifest = new TextDecoder().decode(r.manifest!.value);
+  const manifest = r.manifest;
   const resource: IResource = JSON.parse(manifest);
   dispatch(receiveResource({ key, resource }));
 }

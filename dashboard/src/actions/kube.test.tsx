@@ -239,10 +239,7 @@ describe("processGetResourcesResponse", () => {
         name: "foo",
         namespace: "default",
       } as APIResourceRef,
-      manifest: {
-        value: new TextEncoder().encode(JSON.stringify(expectedResource)),
-        typeUrl: "",
-      },
+      manifest: JSON.stringify(expectedResource),
     } as GetResourcesResponse;
 
     const expectedKey = "v1/Service/default/foo";
@@ -273,10 +270,7 @@ describe("processGetResourcesResponse", () => {
     } as IResource;
 
     const getResourcesResponse = {
-      manifest: {
-        value: new TextEncoder().encode(JSON.stringify(expectedResource)),
-        typeUrl: "",
-      },
+      manifest: JSON.stringify(expectedResource),
     } as GetResourcesResponse;
 
     const expectedActions = [
