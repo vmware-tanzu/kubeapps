@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 )
 
 type pkgSemver struct {
@@ -255,4 +257,25 @@ func isNonNullableNull(x interface{}, s *structuralschema.Structural) bool {
 // isKindInt returns true if the item is an int
 func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
+}
+
+// implementing a custom ConfigFactory to allow for customizing the *rest.Config
+// https://kubernetes.slack.com/archives/CH8KCCKA5/p1642015047046200
+type ConfigurableConfigFactoryImpl struct {
+	kappcmdcore.ConfigFactoryImpl
+	config *rest.Config
+}
+
+var _ kappcmdcore.ConfigFactory = &ConfigurableConfigFactoryImpl{}
+
+func NewConfigurableConfigFactoryImpl() *ConfigurableConfigFactoryImpl {
+	return &ConfigurableConfigFactoryImpl{}
+}
+
+func (f *ConfigurableConfigFactoryImpl) ConfigureRESTConfig(config *rest.Config) {
+	f.config = config
+}
+
+func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
+	return f.config, nil
 }

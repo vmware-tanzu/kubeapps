@@ -16,6 +16,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cppforlife/go-cli-ui/ui"
+	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
+	kappcmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
+	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	"github.com/k14s/kapp/pkg/kapp/logger"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
@@ -26,6 +31,7 @@ import (
 )
 
 type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
+type kappFactoryGetter func(ctx context.Context, cluster string, appFlags kappcmdapp.Flags) (ctlapp.App, kappcmdapp.FactorySupportObjs, error)
 
 const (
 	globalPackagingNamespace = "kapp-controller-packaging-global"
@@ -43,6 +49,7 @@ type Server struct {
 	clientGetter             clientGetter
 	globalPackagingNamespace string
 	globalPackagingCluster   string
+	kappFactoryGetter        kappFactoryGetter
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -69,6 +76,30 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		},
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
+		kappFactoryGetter: func(ctx context.Context, cluster string, appFlags kappcmdapp.Flags) (ctlapp.App, kappcmdapp.FactorySupportObjs, error) {
+			if configGetter == nil {
+				return nil, kappcmdapp.FactorySupportObjs{}, status.Errorf(codes.Internal, "configGetter arg required")
+			}
+			config, err := configGetter(ctx, cluster)
+			if err != nil {
+				return nil, kappcmdapp.FactorySupportObjs{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+			}
+			configFactory := NewConfigurableConfigFactoryImpl()
+			configFactory.ConfigureRESTConfig(config)
+
+			resourceTypesFlags := kappcmdapp.ResourceTypesFlags{
+				IgnoreFailingAPIServices:         true,
+				ScopeToFallbackAllowedNamespaces: true,
+			}
+			depsFactory := kappcmdcore.NewDepsFactoryImpl(configFactory, ui.NewNoopUI())
+
+			app, supportObjs, err := kappcmdapp.Factory(depsFactory, appFlags, resourceTypesFlags, logger.NewNoopLogger())
+			if err != nil {
+				return nil, kappcmdapp.FactorySupportObjs{}, err
+			}
+
+			return app, supportObjs, nil
+		},
 	}
 }
 
@@ -82,4 +113,16 @@ func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Int
 		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
 	return typedClient, dynamicClient, nil
+}
+
+// GetKappFactory ensures a client getter is available and uses it to return a Kapp Factory.
+func (s *Server) GetKappFactory(ctx context.Context, cluster string, appFlags kappcmdapp.Flags) (ctlapp.App, kappcmdapp.FactorySupportObjs, error) {
+	if s.clientGetter == nil {
+		return nil, kappcmdapp.FactorySupportObjs{}, status.Errorf(codes.Internal, "server not configured with configGetter")
+	}
+	app, supportObjs, err := s.kappFactoryGetter(ctx, cluster, appFlags)
+	if err != nil {
+		return nil, kappcmdapp.FactorySupportObjs{}, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get Kapp Factory : %v", err))
+	}
+	return app, supportObjs, nil
 }

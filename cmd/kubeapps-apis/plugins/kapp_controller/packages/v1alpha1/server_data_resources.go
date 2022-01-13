@@ -15,6 +15,10 @@ package main
 import (
 	"context"
 
+	kappcmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
+	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	kappcmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
+	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -398,4 +402,61 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 		return nil, err
 	}
 	return &pkgInstall, nil
+}
+
+// findKappK8sResources returns the list of k8s resources matching the given listOptions
+func (s *Server) findKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
+	refs := []*corev1.ResourceRef{}
+
+	appFlags := kappcmdapp.Flags{
+		NamespaceFlags: kappcmdcore.NamespaceFlags{
+			Name: namespace,
+		},
+		Name: packageId + "-ctrl",
+	}
+
+	app, supportObjs, err := s.GetKappFactory(ctx, cluster, appFlags)
+	if err != nil {
+		return nil, err
+	}
+
+	usedGVs, err := app.UsedGVs()
+	if err != nil {
+		return nil, err
+	}
+
+	resourceTypesFlags := kappcmdapp.ResourceTypesFlags{
+		IgnoreFailingAPIServices:         true,
+		ScopeToFallbackAllowedNamespaces: true,
+	}
+	failingAPIServicesPolicy := resourceTypesFlags.FailingAPIServicePolicy()
+	failingAPIServicesPolicy.MarkRequiredGVs(usedGVs)
+
+	labelSelector, err := app.LabelSelector()
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err := supportObjs.IdentifiedResources.List(labelSelector, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resourceFilterFlags := kappcmdtools.ResourceFilterFlags{}
+	resourceFilter, err := resourceFilterFlags.ResourceFilter()
+	if err != nil {
+		return nil, err
+	}
+
+	resources = resourceFilter.Apply(resources)
+
+	for _, resource := range resources {
+		refs = append(refs, &corev1.ResourceRef{
+			ApiVersion: resource.GroupVersion().String(),
+			Kind:       resource.Kind(),
+			Name:       resource.Name(),
+			Namespace:  resource.Namespace(),
+		})
+	}
+	return refs, nil
 }
