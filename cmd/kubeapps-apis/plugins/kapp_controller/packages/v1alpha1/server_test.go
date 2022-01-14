@@ -43,6 +43,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	disfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
@@ -60,6 +61,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.GetAvailablePackageVersionsResponse{},
 	corev1.GetAvailablePackageVersionsResponse{},
 	corev1.GetInstalledPackageResourceRefsResponse{},
+	corev1.GetInstalledPackageResourceRefsResponse{},
 	corev1.InstalledPackageDetail{},
 	corev1.InstalledPackageReference{},
 	corev1.InstalledPackageStatus{},
@@ -67,6 +69,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.Maintainer{},
 	corev1.PackageAppVersion{},
 	corev1.ReconciliationOptions{},
+	corev1.ResourceRef{},
 	corev1.UpdateInstalledPackageResponse{},
 	corev1.VersionReference{},
 	pluginv1.Plugin{},
@@ -3007,7 +3010,6 @@ func TestDeleteInstalledPackage(t *testing.T) {
 }
 
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
-	t.Skip("TODO(agamez): fix this test")
 	testCases := []struct {
 		name                 string
 		request              *corev1.GetInstalledPackageResourceRefsRequest
@@ -3070,6 +3072,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						LastAttemptedVersion: "1.2.3",
 					},
 				},
+				// Although it's a typical k8s object, it is retrieved with the dynamic client
 				&k8scorev1.Pod{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: "v1",
@@ -3088,39 +3091,17 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				},
 			},
 			existingTypedObjects: []runtime.Object{
-				&k8scorev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "my-installation-values",
-					},
-					Type: "Opaque",
-					Data: map[string][]byte{
-						"values.yaml": []byte("foo: bar"),
-					},
-				},
 				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
 						Name:      "my-installation-ctrl",
 					},
 					Data: map[string]string{
 						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
-					},
-				},
-				&k8scorev1.Pod{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: "v1",
-						Kind:       "Pod",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "my-installation-pod",
-						Labels:    map[string]string{"kapp.k14s.io/app": "my-id"},
-					},
-					Spec: k8scorev1.PodSpec{
-						Containers: []k8scorev1.Container{{
-							Name: "my-installation-container",
-						}},
 					},
 				},
 			},
@@ -3146,14 +3127,29 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
+			// If more resources types are added, this will need to be updated accordingly
+			apiResources := []*metav1.APIResourceList{
+				{
+					GroupVersion: "v1",
+					APIResources: []metav1.APIResource{
+						{Name: "pods", Namespaced: true, Kind: "Pod", Verbs: []string{"list", "get"}},
+					},
+				},
+			}
 
 			typedClient := typfake.NewSimpleClientset(tc.existingTypedObjects...)
+
+			// We cast the dynamic client to a fake client, so we can set the response
+			fakeDiscovery, _ := typedClient.Discovery().(*disfake.FakeDiscovery)
+			fakeDiscovery.Fake.Resources = apiResources
+
 			dynClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
 				runtime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
+					// If more resources types are added, this will need to be updated accordingly
 					{Group: "", Version: "v1", Resource: "pods"}: "Pod" + "List",
 				},
 				unstructuredObjects...,
@@ -3164,7 +3160,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					return typedClient, dynClient, nil
 				},
 				kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
-					// Create a fake DepsFactory and pass it the fake k8s clients
+					// Create a fake Kapp DepsFactory and configure there the fake k8s clients the hereinbefore created
 					depsFactory := NewFakeDepsFactoryImpl()
 					depsFactory.SetCoreClient(typedClient)
 					depsFactory.SetDynamicClient(dynClient)
