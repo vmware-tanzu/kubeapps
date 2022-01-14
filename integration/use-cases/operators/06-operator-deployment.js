@@ -1,4 +1,4 @@
-const utils = require("./lib/utils");
+const utils = require("../lib/utils");
 
 const testName = "06-operator-deployment";
 
