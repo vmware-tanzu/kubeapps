@@ -491,6 +491,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.minor` | Number of minor versions to display in the summary                                        | `3`                      |
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.patch` | Number of patch versions to display in the summary                                        | `3`                      |
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.timeoutSeconds`          | Value to wait for Kubernetes commands to complete                                         | `300`                    |
+| `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.upgradePolicy` | Default upgrade policy generating version constraints ()                                  | `patch`                  |
 | `kubeappsapis.image.registry`                                              | Kubeapps-APIs image registry                                                              | `docker.io`              |
 | `kubeappsapis.image.repository`                                            | Kubeapps-APIs image repository                                                            | `kubeapps/kubeapps-apis` |
 | `kubeappsapis.image.tag`                                                   | Kubeapps-APIs image tag (immutable tags are recommended)                                  | `latest`                 |
