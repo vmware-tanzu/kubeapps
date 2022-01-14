@@ -5,7 +5,7 @@ import { CustomError } from "shared/types";
 import "./ErrorAlert.css";
 
 export interface IErrorAlert {
-  children: CustomError | string;
+  children: CustomError | Error | string;
 }
 
 function createWrap(message: any, index: number, indented: boolean): JSX.Element {
@@ -34,6 +34,8 @@ export default function ErrorAlert({ children }: IErrorAlert) {
     if (children.causes) {
       messages.push(buildMessages(children.causes));
     }
+  } else if (children instanceof Error) {
+    messages = [createWrap(children.message, 0, false)];
   } else {
     messages = [children];
   }
