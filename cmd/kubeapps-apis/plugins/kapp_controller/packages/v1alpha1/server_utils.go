@@ -256,3 +256,60 @@ func isNonNullableNull(x interface{}, s *structuralschema.Structural) bool {
 func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
 }
+
+// Create a versionPolicy enum-alike
+type versionPolicy int
+
+const (
+	none versionPolicy = iota
+	patch
+	minor
+	major
+)
+
+var versionPolicyMapping = map[string]versionPolicy{
+	"":      none,
+	"none":  none,
+	"major": major,
+	"minor": minor,
+	"patch": patch,
+}
+
+func (s versionPolicy) string() string {
+	switch s {
+	case major:
+		return "major"
+	case minor:
+		return "minor"
+	case patch:
+		return "patch"
+	case none:
+		return "none"
+	}
+	return "none"
+}
+
+func versionConstraintWithPolicy(pkgVersion string, policy versionPolicy) (string, error) {
+	version, err := semver.NewVersion(pkgVersion)
+	if err != nil {
+		return "", err
+	}
+
+	// Example: 1.2.3
+	switch policy {
+	case major:
+		// >= 1.2.3 (1.2.4 and 1.3.0 and 2.0.0 are valid)
+		return fmt.Sprintf(">=%s", version.String()), nil
+	case minor:
+		// >= 1.2.3 <2.0.0 (1.2.4 and 1.3.0 are valid, but 2.0.0 is not)
+		return fmt.Sprintf(">=%s <%s", version.String(), version.IncMajor().String()), nil
+	case patch:
+		// >= 1.2.3 <2.0.0 (1.2.4 is valid, but 1.3.0 and 2.0.0 are not)
+		return fmt.Sprintf(">=%s <%s", version.String(), version.IncMinor().String()), nil
+	case none:
+		// 1.2.3 (only 1.2.3 is valid)
+		return version.String(), nil
+	}
+	// Default: 1.2.3 (only 1.2.3 is valid)
+	return version.String(), nil
+}
