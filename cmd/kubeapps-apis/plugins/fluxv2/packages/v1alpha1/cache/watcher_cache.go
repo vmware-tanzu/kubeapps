@@ -46,6 +46,7 @@ const (
 	namespacedResourceWatcherCacheMaxRetries = 5
 	// max number of attempts to resync before giving up
 	namespacedResourceWatcherCacheMaxResyncBackoff = 2
+	keySegmentsSeparator                           = ":"
 )
 
 var (
@@ -513,7 +514,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 
 	// TODO: (gfichtenholt) Sanity check: I'd like to make sure the caller has the read lock,
 	// i.e. we are not in the middle of a cache resync() operation. To do that, I need to
-	// find a reliable alternative to common.RWMutexReadLocked which 	doesn't always work
+	// find a reliable alternative to common.RWMutexReadLocked which doesn't always work
 
 	// If an error occurs during Get/Create/Update/Delete, we'll requeue the item so we can
 	// attempt processing again later. This could have been caused by a temporary network
@@ -835,13 +836,18 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepositories:ns:repoName"
-	return fmt.Sprintf("%s:%s:%s", c.config.Gvr.Resource, name.Namespace, name.Name)
+	return fmt.Sprintf("%s%s%s%s%s",
+		c.config.Gvr.Resource,
+		keySegmentsSeparator,
+		name.Namespace,
+		keySegmentsSeparator,
+		name.Name)
 }
 
 // the opposite of keyFor()
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
-	parts := strings.Split(key, ":")
+	parts := strings.Split(key, keySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}

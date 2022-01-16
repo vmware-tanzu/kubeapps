@@ -15,9 +15,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	goerrs "errors"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
@@ -156,8 +154,9 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructure
 	chartName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
 
 	if repoName != "" && helmChartRef != "" && chartName != "" {
-		parts := strings.Split(helmChartRef, "/")
-		if ifc, err := s.getChartsResourceInterface(ctx, parts[0]); err != nil {
+		if parts := strings.Split(helmChartRef, "/"); len(parts) != 2 {
+			return nil, status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", helmChartRef)
+		} else if ifc, err := s.getChartsResourceInterface(ctx, parts[0]); err != nil {
 			log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
 		} else if unstructuredChart, err := ifc.Get(ctx, parts[1], metav1.GetOptions{}); err != nil {
 			log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
@@ -689,73 +688,4 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 		Plugin:     GetPluginDetail(),
 		Context:    &corev1.Context{Namespace: repoNamespace},
 	}, nil
-}
-
-// resourceRefsFromManifest returns the resource refs for a given yaml manifest.
-// TODO(minelson): share common functionality between plugins.
-func resourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, error) {
-	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
-	refs := []*corev1.ResourceRef{}
-	doc := yamlResource{}
-	for {
-		err := decoder.Decode(&doc)
-		if err != nil {
-			if goerrs.Is(err, io.EOF) {
-				break
-			}
-			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
-		}
-		if doc.Kind == "" {
-			continue
-		}
-		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
-			for _, i := range doc.Items {
-				namespace := i.Metadata.Namespace
-				if namespace == "" {
-					namespace = pkgNamespace
-				}
-				refs = append(refs, &corev1.ResourceRef{
-					ApiVersion: i.APIVersion,
-					Kind:       i.Kind,
-					Name:       i.Metadata.Name,
-					Namespace:  namespace,
-				})
-			}
-			continue
-		}
-		// Helm does not require that the rendered manifest specifies the
-		// resource namespace so some charts do not do so (ldap).  We explicitly
-		// set the namespace for the resource ref so that it can be used as part
-		// of the key for the resource ref.
-		// TODO(minelson): At the moment we do not distinguish between
-		// cluster-scoped and namespace-scoped resources for the refs.  This
-		// does not affect the resources plugin fetching them correctly, but
-		// would be better if we only set the namespace in the reference if (a)
-		// it was not set in the manifest, and (b) it is a namespace-scoped
-		// resource.
-		namespace := doc.Metadata.Namespace
-		if namespace == "" {
-			namespace = pkgNamespace
-		}
-		refs = append(refs, &corev1.ResourceRef{
-			ApiVersion: doc.APIVersion,
-			Kind:       doc.Kind,
-			Name:       doc.Metadata.Name,
-			Namespace:  namespace,
-		})
-	}
-
-	return refs, nil
-}
-
-type yamlMetadata struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-type yamlResource struct {
-	APIVersion string         `json:"apiVersion"`
-	Kind       string         `json:"kind"`
-	Metadata   yamlMetadata   `json:"metadata"`
-	Items      []yamlResource `json:"items"`
 }

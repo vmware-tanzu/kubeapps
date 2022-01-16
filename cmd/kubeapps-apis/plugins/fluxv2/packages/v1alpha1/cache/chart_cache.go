@@ -246,7 +246,12 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 	// this loop should take care of (a)
 	// glob-style pattern, you can use https://www.digitalocean.com/community/tools/glob to test
 	// also ref. https://stackoverflow.com/questions/4006324/how-to-atomically-delete-keys-matching-a-pattern-using-redis
-	match := fmt.Sprintf("helmcharts:%s:%s/*:*", repo.Namespace, repo.Name)
+	match := fmt.Sprintf("helmcharts%s%s%s%s/*%s*",
+		keySegmentsSeparator,
+		repo.Namespace,
+		keySegmentsSeparator,
+		repo.Name,
+		keySegmentsSeparator)
 	redisKeysToDelete := sets.String{}
 	// https://redis.io/commands/scan An iteration starts when the cursor is set to 0,
 	// and terminates when the cursor returned by the server is 0
@@ -482,7 +487,7 @@ func (c *ChartCache) String() string {
 // the opposite of keyFor
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c *ChartCache) fromKey(key string) (namespace, chartID, chartVersion string, err error) {
-	parts := strings.Split(key, ":")
+	parts := strings.Split(key, keySegmentsSeparator)
 	if len(parts) != 4 || parts[0] != "helmcharts" || len(parts[1]) == 0 || len(parts[2]) == 0 || len(parts[3]) == 0 {
 		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
@@ -561,7 +566,13 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmcharts:ns:chartID:chartVersion"
 	// notice that chartID is of the form "repoName/id", so it includes the repo name
-	return fmt.Sprintf("helmcharts:%s:%s:%s", namespace, chartID, chartVersion), nil
+	return fmt.Sprintf("helmcharts%s%s%s%s%s%s",
+		keySegmentsSeparator,
+		namespace,
+		keySegmentsSeparator,
+		chartID,
+		keySegmentsSeparator,
+		chartVersion), nil
 }
 
 // FYI: The work queue is able to retry transient HTTP errors

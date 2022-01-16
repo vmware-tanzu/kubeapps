@@ -108,14 +108,15 @@ func (q *rateLimitingType) ExpectAdd(item string) {
 	q.queue.expectAdd(item)
 }
 
-// only used in unit tests
+// used in unit test and production code, when a repo/chart needs to be loaded on demand
 func (q *rateLimitingType) WaitUntilForgotten(item string) {
 	q.queue.waitUntilDone(item)
 	// q.queue might be done with the item, but it may have been
 	// re-added via AddRateLimited if there was an error processing the item
 	// in which case, NumRequeues will be > 0, and will only become 0 after
-	// a call to .Forget.
-	// doing a wait.PollInfinite is ok here, since this func only used by unit tests
+	// a call to .Forget(item).
+	// TODO: (gfichtenholt) don't do wait.PollInfinite() here, use some sensible
+	// timeout instead, and then this func will need to return an error
 	wait.PollInfinite(10*time.Millisecond, func() (bool, error) {
 		return q.rateLimiter.NumRequeues(item) == 0, nil
 	})
@@ -161,7 +162,7 @@ type Type struct {
 
 	cond *sync.Cond
 
-	shuttingDown bool	
+	shuttingDown bool
 }
 
 // Add marks item as needing processing.

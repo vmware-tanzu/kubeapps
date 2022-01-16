@@ -35,6 +35,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -559,7 +560,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
 	}
 
-	refs, err := resourceRefsFromManifest(release.Manifest, namespace)
+	refs, err := resourcerefs.ResourceRefsFromManifest(release.Manifest, namespace)
 	if err != nil {
 		return nil, err
 	}
