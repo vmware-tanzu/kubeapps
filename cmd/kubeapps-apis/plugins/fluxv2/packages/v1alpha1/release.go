@@ -15,15 +15,16 @@ package main
 import (
 	"context"
 	"encoding/json"
-	goerrs "errors"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -52,7 +53,7 @@ const (
 )
 
 func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := s.getDynamicClient(ctx)
+	_, client, _, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +131,9 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructure
 		return nil, err
 	}
 
+	var latestPkgVersion *corev1.PackageAppVersion
 	var pkgVersion *corev1.VersionReference
+
 	version, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "version")
 	if found && err == nil && version != "" {
 		pkgVersion = &corev1.VersionReference{
@@ -138,45 +141,62 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructure
 		}
 	}
 
+	var pkgDetail *corev1.AvailablePackageDetail
+
 	// see https://fluxcd.io/docs/components/helm/helmreleases/
+	helmChartRef, found, err := unstructured.NestedString(unstructuredRelease, "status", "helmChart")
+	if err != nil || !found || helmChartRef == "" {
+		log.Warningf("Missing element status.helmChart on HelmRelease [%s]", name)
+	}
+
 	repoName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
 	repoNamespace, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	chartName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
-	chartVersion, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "version")
 
-	var latestPkgVersion *corev1.PackageAppVersion
-	var pkgDetail *corev1.AvailablePackageDetail
-	// according to docs chartVersion is optional (defaults to '*' i.e. latest when omitted)
-	if repoName != "" && chartName != "" && chartVersion != "" {
-		// chartName here refers to a chart template, e.g. "nginx", rather than a specific chart instance
-		// e.g. "default-my-nginx". The spec somewhat vaguely states "The name of the chart as made available
-		// by the HelmRepository (without any aliases), for example: podinfo". So, we can't exactly do a "get"
-		// on the name, but have to iterate the complete list of available charts for a match
-		tarUrl, err := findUrlForChartInList(chartsFromCluster, repoName, chartName, chartVersion)
-		if err != nil {
-			return nil, err
-		} else if tarUrl == "" {
-			return nil, status.Errorf(codes.Internal, "Failed to find find tar file url for chart [%s], version: [%s]", chartName, chartVersion)
-		}
-		chartID := fmt.Sprintf("%s/%s", repoName, chartName)
-		if pkgDetail, err = availablePackageDetailFromTarball(chartID, tarUrl); err != nil {
-			return nil, err
-		}
-
-		// according to flux docs repoNamespace is optional
-		if repoNamespace == "" {
-			repoNamespace = name.Namespace
-		}
-		repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
-		chartFromCache, err := s.getChart(ctx, repo, chartName)
-		if err != nil {
-			return nil, err
-		} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
-			// charts in cache are already sorted with the latest being at position 0
-			latestPkgVersion = &corev1.PackageAppVersion{
-				PkgVersion: chartFromCache.ChartVersions[0].Version,
-				AppVersion: chartFromCache.ChartVersions[0].AppVersion,
+	if repoName != "" && helmChartRef != "" && chartName != "" {
+		if parts := strings.Split(helmChartRef, "/"); len(parts) != 2 {
+			return nil, status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", helmChartRef)
+		} else if ifc, err := s.getChartsResourceInterface(ctx, parts[0]); err != nil {
+			log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
+		} else if unstructuredChart, err := ifc.Get(ctx, parts[1], metav1.GetOptions{}); err != nil {
+			log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
+		} else {
+			tarUrl, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
+			if err != nil || !found || tarUrl == "" {
+				log.Warningf("Missing element status.url on HelmRelease [%s]", name)
+			} else {
+				chartID := fmt.Sprintf("%s/%s", repoName, chartName)
+				// fetch, unzip and untar .tgz file
+				// no need to provide authz, userAgent or any of the TLS details, as we are pulling .tgz file from
+				// local cluster, not remote repo.
+				// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
+				// Flux does the hard work of pulling the bits from remote repo
+				// based on secretRef associated with HelmRepository, if applicable
+				chartDetail, err := tarutil.FetchChartDetailFromTarballUrl(chartID, tarUrl, "", "", httpclient.New())
+				if err != nil {
+					return nil, err
+				}
+				pkgDetail, err = availablePackageDetailFromChartDetail(chartID, chartDetail)
+				if err != nil {
+					return nil, err
+				}
 			}
+		}
+	}
+
+	// according to flux docs repoNamespace is optional
+	if repoNamespace == "" {
+		repoNamespace = name.Namespace
+	}
+	repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
+	chartFromCache, err := s.getChart(ctx, repo, chartName)
+	if err != nil {
+		return nil, err
+	} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
+		// charts in cache are already sorted with the latest being at position 0
+		latestPkgVersion = &corev1.PackageAppVersion{
+			PkgVersion: chartFromCache.ChartVersions[0].Version,
+			AppVersion: chartFromCache.ChartVersions[0].AppVersion,
 		}
 	}
 
@@ -213,13 +233,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	}
 	unstructuredRelease, err := releasesIfc.Get(ctx, name.Name, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "unable to get release due to %v", err)
-		} else {
-			return nil, status.Errorf(codes.Internal, "unable to get release due to %v", err)
-		}
+		return nil, statuserror.FromK8sError("get", "HelmRelease", name.String(), err)
 	}
 
 	log.V(4).Infof("installedPackageDetail:\n[%s]", common.PrettyPrintMap(unstructuredRelease.Object))
@@ -333,13 +347,6 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 }
 
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
-	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
-	// the helm release CR to also be created in the target namespace (where the helm release itself is currently created)
-	resourceIfc, err := s.getReleasesResourceInterface(ctx, targetName.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
 	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
 	if err != nil {
 		return nil, err
@@ -361,7 +368,14 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		}
 	}
 
-	fluxHelmRelease, err := newFluxHelmRelease(chart, targetName, versionRef, reconcile, values)
+	fluxHelmRelease, err := s.newFluxHelmRelease(chart, targetName, versionRef, reconcile, values)
+	if err != nil {
+		return nil, err
+	}
+
+	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
+	// the helm release CR to also be created in the target namespace (where the helm release itself is currently created)
+	resourceIfc, err := s.getReleasesResourceInterface(ctx, targetName.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -398,13 +412,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 
 	unstructuredRel, err := ifc.Get(ctx, packageRef.Identifier, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "Unable to get release due to %v", err)
-		} else {
-			return nil, status.Errorf(codes.Internal, "Unable to get release due to %v", err)
-		}
+		return nil, statuserror.FromK8sError("get", "HelmRelease", packageRef.Identifier, err)
 	}
 
 	if versionRef.GetVersion() != "" {
@@ -491,15 +499,81 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 	log.V(4).Infof("Deleted release: [%s]", packageRef.Identifier)
 
 	if err = ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{}); err != nil {
-		if errors.IsNotFound(err) {
-			return status.Errorf(codes.NotFound, "%q", err)
-		} else if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return status.Errorf(codes.Unauthenticated, "Unable to delete release due to %v", err)
-		} else {
-			return status.Errorf(codes.Internal, "Unable to delete release due to %v", err)
-		}
+		return statuserror.FromK8sError("delete", "HelmRelease", packageRef.Identifier, err)
 	}
 	return nil
+}
+
+// Potentially, there are 3 different namespaces that can be specified here
+// 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
+// 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
+//    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
+// 3. spec.targetNamespace, where flux will install any artifacts from the release
+func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
+	unstructuredRel := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
+			"kind":       fluxHelmRelease,
+			"metadata": map[string]interface{}{
+				"name":      targetName.Name,
+				"namespace": targetName.Namespace,
+			},
+			"spec": map[string]interface{}{
+				"chart": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"chart": chart.Name,
+						"sourceRef": map[string]interface{}{
+							"name":      chart.Repo.Name,
+							"kind":      fluxHelmRepository,
+							"namespace": chart.Repo.Namespace,
+						},
+					},
+				},
+				"targetNamespace": targetName.Namespace,
+			},
+		},
+	}
+	if versionRef.GetVersion() != "" {
+		if err := unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
+			return nil, err
+		}
+	}
+	reconcileInterval := defaultReconcileInterval // unless explictly specified
+	if reconcile != nil {
+		if reconcile.Interval > 0 {
+			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()
+		}
+		if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
+			return nil, err
+		}
+		if reconcile.ServiceAccountName != "" {
+			if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if values != nil {
+		if err := unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
+			return nil, err
+		}
+	}
+
+	// required fields, without which flux controller will fail to create the CRD
+	if err := unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
+		return nil, err
+	}
+
+	// ref https://fluxcd.io/docs/components/helm/helmreleases/
+	// TODO (gfichtenholt) in theory, flux allows a timeout per release. So far we just use one
+	// configured per server/installation, if specified, same as helm plug-in.
+	// Otherwise the default timeout is used.
+	if s.timeoutSeconds > 0 {
+		timeoutInterval := (time.Duration(s.timeoutSeconds) * time.Second).String()
+		if err := unstructured.SetNestedField(unstructuredRel.Object, timeoutInterval, "spec", "timeout"); err != nil {
+			return nil, err
+		}
+	}
+	return &unstructuredRel, nil
 }
 
 // returns 3 things:
@@ -614,134 +688,4 @@ func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map
 		Plugin:     GetPluginDetail(),
 		Context:    &corev1.Context{Namespace: repoNamespace},
 	}, nil
-}
-
-// Potentially, there are 3 different namespaces that can be specified here
-// 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
-// 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
-//    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
-// 3. spec.targetNamespace, where flux will install any artifacts from the release
-func newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
-	unstructuredRel := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
-			"kind":       fluxHelmRelease,
-			"metadata": map[string]interface{}{
-				"name":      targetName.Name,
-				"namespace": targetName.Namespace,
-			},
-			"spec": map[string]interface{}{
-				"chart": map[string]interface{}{
-					"spec": map[string]interface{}{
-						"chart": chart.Name,
-						"sourceRef": map[string]interface{}{
-							"name":      chart.Repo.Name,
-							"kind":      fluxHelmRepository,
-							"namespace": chart.Repo.Namespace,
-						},
-					},
-				},
-				"targetNamespace": targetName.Namespace,
-			},
-		},
-	}
-	if versionRef.GetVersion() != "" {
-		if err := unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
-			return nil, err
-		}
-	}
-	reconcileInterval := defaultReconcileInterval // unless explictly specified
-	if reconcile != nil {
-		if reconcile.Interval > 0 {
-			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()
-		}
-		if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
-			return nil, err
-		}
-		if reconcile.ServiceAccountName != "" {
-			if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
-				return nil, err
-			}
-		}
-	}
-	if values != nil {
-		if err := unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
-			return nil, err
-		}
-	}
-
-	// required fields, without which flux controller will fail to create the CRD
-	if err := unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
-		return nil, err
-	}
-	return &unstructuredRel, nil
-}
-
-// resourceRefsFromManifest returns the resource refs for a given yaml manifest.
-// TODO(minelson): share common functionality between plugins.
-func resourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, error) {
-	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
-	refs := []*corev1.ResourceRef{}
-	doc := yamlResource{}
-	for {
-		err := decoder.Decode(&doc)
-		if err != nil {
-			if goerrs.Is(err, io.EOF) {
-				break
-			}
-			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
-		}
-		if doc.Kind == "" {
-			continue
-		}
-		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
-			for _, i := range doc.Items {
-				namespace := i.Metadata.Namespace
-				if namespace == "" {
-					namespace = pkgNamespace
-				}
-				refs = append(refs, &corev1.ResourceRef{
-					ApiVersion: i.APIVersion,
-					Kind:       i.Kind,
-					Name:       i.Metadata.Name,
-					Namespace:  namespace,
-				})
-			}
-			continue
-		}
-		// Helm does not require that the rendered manifest specifies the
-		// resource namespace so some charts do not do so (ldap).  We explicitly
-		// set the namespace for the resource ref so that it can be used as part
-		// of the key for the resource ref.
-		// TODO(minelson): At the moment we do not distinguish between
-		// cluster-scoped and namespace-scoped resources for the refs.  This
-		// does not affect the resources plugin fetching them correctly, but
-		// would be better if we only set the namespace in the reference if (a)
-		// it was not set in the manifest, and (b) it is a namespace-scoped
-		// resource.
-		namespace := doc.Metadata.Namespace
-		if namespace == "" {
-			namespace = pkgNamespace
-		}
-		refs = append(refs, &corev1.ResourceRef{
-			ApiVersion: doc.APIVersion,
-			Kind:       doc.Kind,
-			Name:       doc.Metadata.Name,
-			Namespace:  namespace,
-		})
-	}
-
-	return refs, nil
-}
-
-type yamlMetadata struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-type yamlResource struct {
-	APIVersion string         `json:"apiVersion"`
-	Kind       string         `json:"kind"`
-	Metadata   yamlMetadata   `json:"metadata"`
-	Items      []yamlResource `json:"items"`
 }

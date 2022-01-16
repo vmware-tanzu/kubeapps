@@ -17,7 +17,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -25,13 +24,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Masterminds/semver"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -50,7 +49,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
@@ -63,25 +61,15 @@ type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
 const (
-	MajorVersionsInSummary       = 3
-	MinorVersionsInSummary       = 3
-	PatchVersionsInSummary       = 3
-	UserAgentPrefix              = "kubeapps-apis/plugins"
-	DefaultTimeoutSeconds  int32 = 300
+	UserAgentPrefix             = "kubeapps-apis/plugins"
+	DefaultTimeoutSeconds int32 = 300
 )
-
-// Wapper struct to include three version constants
-type VersionsInSummary struct {
-	Major int `json:"major"`
-	Minor int `json:"minor"`
-	Patch int `json:"patch"`
-}
 
 type createRelease func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
 
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
-	v1alpha1.UnimplementedHelmPackagesServiceServer
+	helmv1.UnimplementedHelmPackagesServiceServer
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
@@ -91,13 +79,13 @@ type Server struct {
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
 	chartClientFactory       chartutils.ChartClientFactoryInterface
-	versionsInSummary        VersionsInSummary
+	versionsInSummary        packageutils.VersionsInSummary
 	timeoutSeconds           int32
 	createReleaseFunc        createRelease
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, int32, error) {
+func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary, int32, error) {
 
 	// Note at present VersionsInSummary is the only configurable option for this plugin,
 	// and if required this func can be enhaned to return helmConfig struct
@@ -108,7 +96,7 @@ func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, int32, error
 		Core struct {
 			Packages struct {
 				V1alpha1 struct {
-					VersionsInSummary VersionsInSummary
+					VersionsInSummary packageutils.VersionsInSummary
 					TimeoutSeconds    int32 `json:"timeoutSeconds"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
@@ -118,11 +106,11 @@ func parsePluginConfig(pluginConfigPath string) (VersionsInSummary, int32, error
 
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		return VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		return VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
 	}
 
 	// return configured value
@@ -150,11 +138,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
-	versionsInSummary := VersionsInSummary{
-		Major: MajorVersionsInSummary,
-		Minor: MinorVersionsInSummary,
-		Patch: PatchVersionsInSummary,
-	}
+	versionsInSummary := packageutils.GetDefaultVersionsInSummary()
 	timeoutSeconds := DefaultTimeoutSeconds
 	if pluginConfigPath != "" {
 		versionsInSummary, timeoutSeconds, err = parsePluginConfig(pluginConfigPath)
@@ -502,55 +486,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	}
 
 	return &corev1.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions, s.versionsInSummary),
+		PackageAppVersions: packageutils.PackageAppVersionsSummary(chart.ChartVersions, s.versionsInSummary),
 	}, nil
-}
-
-// packageAppVersionsSummary converts the model chart versions into the required version summary.
-func packageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
-	pav := []*corev1.PackageAppVersion{}
-
-	// Use a version map to be able to count how many major, minor and patch versions
-	// we have included.
-	version_map := map[int64]map[int64][]int64{}
-	for _, v := range versions {
-		version, err := semver.NewVersion(v.Version)
-		if err != nil {
-			continue
-		}
-
-		if _, ok := version_map[version.Major()]; !ok {
-			// Don't add a new major version if we already have enough
-			if len(version_map) >= versionInSummary.Major {
-				continue
-			}
-		} else {
-			// If we don't yet have this minor version
-			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
-				// Don't add a new minor version if we already have enough for this major version
-				if len(version_map[version.Major()]) >= versionInSummary.Minor {
-					continue
-				}
-			} else {
-				if len(version_map[version.Major()][version.Minor()]) >= versionInSummary.Patch {
-					continue
-				}
-			}
-		}
-
-		// Include the version and update the version map.
-		pav = append(pav, &corev1.PackageAppVersion{
-			PkgVersion: v.Version,
-			AppVersion: v.AppVersion,
-		})
-
-		if _, ok := version_map[version.Major()]; !ok {
-			version_map[version.Major()] = map[int64][]int64{}
-		}
-		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
-	}
-
-	return pav
 }
 
 // AvailablePackageDetailFromChart builds an AvailablePackageDetail from a Chart
@@ -1228,7 +1165,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
 	}
 
-	refs, err := resourceRefsFromManifest(release.Manifest, namespace)
+	refs, err := resourcerefs.ResourceRefsFromManifest(release.Manifest, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -1237,73 +1174,4 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		Context:      pkgRef.GetContext(),
 		ResourceRefs: refs,
 	}, nil
-}
-
-type YAMLMetadata struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-type YAMLResource struct {
-	APIVersion string         `json:"apiVersion"`
-	Kind       string         `json:"kind"`
-	Metadata   YAMLMetadata   `json:"metadata"`
-	Items      []YAMLResource `json:"items"`
-}
-
-// resourceRefsFromManifest returns the resource refs for a given yaml manifest.
-// TODO(minelson): share common functionality between plugins.
-func resourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, error) {
-	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
-	refs := []*corev1.ResourceRef{}
-	doc := YAMLResource{}
-	for {
-		err := decoder.Decode(&doc)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
-		}
-		if doc.Kind == "" {
-			continue
-		}
-		if doc.Kind == "List" || doc.Kind == "RoleList" || doc.Kind == "ClusterRoleList" {
-			for _, i := range doc.Items {
-				namespace := i.Metadata.Namespace
-				if namespace == "" {
-					namespace = pkgNamespace
-				}
-				refs = append(refs, &corev1.ResourceRef{
-					ApiVersion: i.APIVersion,
-					Kind:       i.Kind,
-					Name:       i.Metadata.Name,
-					Namespace:  namespace,
-				})
-			}
-			continue
-		}
-		// Helm does not require that the rendered manifest specifies the
-		// resource namespace so some charts do not do so (ldap).  We explicitly
-		// set the namespace for the resource ref so that it can be used as part
-		// of the key for the resource ref.
-		// TODO(minelson): At the moment we do not distinguish between
-		// cluster-scoped and namespace-scoped resources for the refs.  This
-		// does not affect the resources plugin fetching them correctly, but
-		// would be better if we only set the namespace in the reference if (a)
-		// it was not set in the manifest, and (b) it is a namespace-scoped
-		// resource.
-		namespace := doc.Metadata.Namespace
-		if namespace == "" {
-			namespace = pkgNamespace
-		}
-		refs = append(refs, &corev1.ResourceRef{
-			ApiVersion: doc.APIVersion,
-			Kind:       doc.Kind,
-			Name:       doc.Metadata.Name,
-			Namespace:  namespace,
-		})
-	}
-
-	return refs, nil
 }

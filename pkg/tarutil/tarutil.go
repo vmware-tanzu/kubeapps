@@ -30,7 +30,7 @@ import (
 //
 // name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
 //
-func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
+func FetchChartDetailFromTarballUrl(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
 	reqHeaders := make(map[string]string)
 	if len(userAgent) > 0 {
 		reqHeaders["User-Agent"] = userAgent
@@ -49,6 +49,15 @@ func FetchChartDetailFromTarball(name string, chartTarballURL string, userAgent 
 		return nil, err
 	}
 
+	return FetchChartDetailFromTarball(reader, name)
+}
+
+//
+// Fetches helm chart details from a gzipped tarball
+//
+// name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
+//
+func FetchChartDetailFromTarball(reader io.Reader, name string) (map[string]string, error) {
 	// We read the whole chart into memory, this should be okay since the chart
 	// tarball needs to be small enough to fit into a GRPC call (Tiller
 	// requirement)
