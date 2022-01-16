@@ -12,7 +12,7 @@ limitations under the License.
 
 Inspired by https://github.com/kubernetes/client-go/blob/master/util/workqueue/queue.go and
          by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/rate_limiting_queue.go
-	but adds a few funcs, like ExpectAdd() and WaitUntilDone()
+	but adds a few funcs, like Name(), ExpectAdd(), WaitUntilForgotten() and Reset()
 */
 package cache
 
@@ -297,6 +297,7 @@ func (q *Type) expectAdd(item string) {
 	}
 }
 
+// this func is the added feature that was missing in k8s workqueue
 func (q *Type) isProcessing(item string) bool {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
@@ -308,7 +309,7 @@ func (q *Type) isProcessing(item string) bool {
 	return q.processing.Has(item)
 }
 
-// this func used in unit tests only
+// this func is the added feature that was missing in k8s workqueue
 func (q *Type) waitUntilDone(item string) {
 	if q.verbose {
 		log.Infof("[%s]: +waitUntilDone(%s)", q.name, item)
