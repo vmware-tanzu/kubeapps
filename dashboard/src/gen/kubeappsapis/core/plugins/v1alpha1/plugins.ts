@@ -47,7 +47,9 @@ export interface Plugin {
   version: string;
 }
 
-const baseGetConfiguredPluginsRequest: object = {};
+function createBaseGetConfiguredPluginsRequest(): GetConfiguredPluginsRequest {
+  return {};
+}
 
 export const GetConfiguredPluginsRequest = {
   encode(_: GetConfiguredPluginsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -57,9 +59,7 @@ export const GetConfiguredPluginsRequest = {
   decode(input: _m0.Reader | Uint8Array, length?: number): GetConfiguredPluginsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseGetConfiguredPluginsRequest,
-    } as GetConfiguredPluginsRequest;
+    const message = createBaseGetConfiguredPluginsRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -72,10 +72,7 @@ export const GetConfiguredPluginsRequest = {
   },
 
   fromJSON(_: any): GetConfiguredPluginsRequest {
-    const message = {
-      ...baseGetConfiguredPluginsRequest,
-    } as GetConfiguredPluginsRequest;
-    return message;
+    return {};
   },
 
   toJSON(_: GetConfiguredPluginsRequest): unknown {
@@ -86,14 +83,14 @@ export const GetConfiguredPluginsRequest = {
   fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsRequest>, I>>(
     _: I,
   ): GetConfiguredPluginsRequest {
-    const message = {
-      ...baseGetConfiguredPluginsRequest,
-    } as GetConfiguredPluginsRequest;
+    const message = createBaseGetConfiguredPluginsRequest();
     return message;
   },
 };
 
-const baseGetConfiguredPluginsResponse: object = {};
+function createBaseGetConfiguredPluginsResponse(): GetConfiguredPluginsResponse {
+  return { plugins: [] };
+}
 
 export const GetConfiguredPluginsResponse = {
   encode(
@@ -109,10 +106,7 @@ export const GetConfiguredPluginsResponse = {
   decode(input: _m0.Reader | Uint8Array, length?: number): GetConfiguredPluginsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseGetConfiguredPluginsResponse,
-    } as GetConfiguredPluginsResponse;
-    message.plugins = [];
+    const message = createBaseGetConfiguredPluginsResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -128,11 +122,11 @@ export const GetConfiguredPluginsResponse = {
   },
 
   fromJSON(object: any): GetConfiguredPluginsResponse {
-    const message = {
-      ...baseGetConfiguredPluginsResponse,
-    } as GetConfiguredPluginsResponse;
-    message.plugins = (object.plugins ?? []).map((e: any) => Plugin.fromJSON(e));
-    return message;
+    return {
+      plugins: Array.isArray(object?.plugins)
+        ? object.plugins.map((e: any) => Plugin.fromJSON(e))
+        : [],
+    };
   },
 
   toJSON(message: GetConfiguredPluginsResponse): unknown {
@@ -148,15 +142,15 @@ export const GetConfiguredPluginsResponse = {
   fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsResponse>, I>>(
     object: I,
   ): GetConfiguredPluginsResponse {
-    const message = {
-      ...baseGetConfiguredPluginsResponse,
-    } as GetConfiguredPluginsResponse;
+    const message = createBaseGetConfiguredPluginsResponse();
     message.plugins = object.plugins?.map(e => Plugin.fromPartial(e)) || [];
     return message;
   },
 };
 
-const basePlugin: object = { name: "", version: "" };
+function createBasePlugin(): Plugin {
+  return { name: "", version: "" };
+}
 
 export const Plugin = {
   encode(message: Plugin, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -172,7 +166,7 @@ export const Plugin = {
   decode(input: _m0.Reader | Uint8Array, length?: number): Plugin {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = { ...basePlugin } as Plugin;
+    const message = createBasePlugin();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -191,11 +185,10 @@ export const Plugin = {
   },
 
   fromJSON(object: any): Plugin {
-    const message = { ...basePlugin } as Plugin;
-    message.name = object.name !== undefined && object.name !== null ? String(object.name) : "";
-    message.version =
-      object.version !== undefined && object.version !== null ? String(object.version) : "";
-    return message;
+    return {
+      name: isSet(object.name) ? String(object.name) : "",
+      version: isSet(object.version) ? String(object.version) : "",
+    };
   },
 
   toJSON(message: Plugin): unknown {
@@ -206,7 +199,7 @@ export const Plugin = {
   },
 
   fromPartial<I extends Exact<DeepPartial<Plugin>, I>>(object: I): Plugin {
-    const message = { ...basePlugin } as Plugin;
+    const message = createBasePlugin();
     message.name = object.name ?? "";
     message.version = object.version ?? "";
     return message;
@@ -359,4 +352,8 @@ export type Exact<P, I extends P> = P extends Builtin
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
+}
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
 }

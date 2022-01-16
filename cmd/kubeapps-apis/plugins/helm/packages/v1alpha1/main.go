@@ -44,7 +44,7 @@ func init() {
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.KubernetesConfigGetter,
 	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
-	svr := NewServer(configGetter, clustersConfig.KubeappsClusterName, pluginConfigPath)
+	svr := NewServer(configGetter, clustersConfig.KubeappsClusterName, clustersConfig.GlobalReposNamespace, pluginConfigPath)
 	v1alpha1.RegisterHelmPackagesServiceServer(s, svr)
 	return svr, nil
 }

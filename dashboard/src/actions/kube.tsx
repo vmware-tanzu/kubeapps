@@ -8,7 +8,6 @@ import {
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
-import Config from "shared/Config";
 
 const { createAction } = deprecated;
 
@@ -68,17 +67,10 @@ export type KubeAction = ActionType<typeof allActions[number]>;
 export function getResourceKinds(
   cluster: string,
 ): ThunkAction<Promise<void>, IStoreState, null, KubeAction> {
-  return async (dispatch, getStore) => {
+  return async dispatch => {
     dispatch(requestResourceKinds());
     try {
-      let groups = await Kube.getAPIGroups(cluster);
-      // Ignore APIs for operators if specified
-      const operatorsEnabled = getStore().config.featureFlags?.operators === true;
-      if (!operatorsEnabled) {
-        groups = groups.filter(
-          (group: any) => !(group.name as string).includes(Config.OperatorsApi),
-        );
-      }
+      const groups = await Kube.getAPIGroups(cluster);
       const kinds = await Kube.getResourceKinds(cluster, groups);
       dispatch(receiveResourceKinds(kinds));
     } catch (e: any) {
@@ -129,7 +121,7 @@ export function processGetResourcesResponse(
     return;
   }
   const key = keyForResourceRef(r.resourceRef);
-  const manifest = new TextDecoder().decode(r.manifest!.value);
+  const manifest = r.manifest;
   const resource: IResource = JSON.parse(manifest);
   dispatch(receiveResource({ key, resource }));
 }

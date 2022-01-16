@@ -91,7 +91,7 @@ func Test_GetCharts(t *testing.T) {
 				rows.AddRow(string(chartJSON))
 			}
 			mock.ExpectQuery("SELECT info FROM charts WHERE *").
-				WithArgs("my-namespace", kubeappsNamespace).
+				WithArgs("my-namespace", globalReposNamespace).
 				WillReturnRows(rows)
 
 			mock.ExpectQuery("^SELECT count(.+) FROM").
@@ -149,7 +149,7 @@ func Test_GetChartCategories(t *testing.T) {
 				rows.AddRow(chartCategories.Name, chartCategories.Count)
 			}
 			mock.ExpectQuery("SELECT (info ->> 'category')*").
-				WithArgs("my-namespace", kubeappsNamespace).
+				WithArgs("my-namespace", globalReposNamespace).
 				WillReturnRows(rows)
 
 			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/categories")
@@ -211,7 +211,7 @@ func Test_GetChartCategoriesRepo(t *testing.T) {
 				rows.AddRow(chartCategories.Name, chartCategories.Count)
 			}
 			mock.ExpectQuery("SELECT (info ->> 'category')*").
-				WithArgs("my-namespace", kubeappsNamespace, tt.repo).
+				WithArgs("my-namespace", globalReposNamespace, tt.repo).
 				WillReturnRows(rows)
 
 			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/" + tt.repo + "/categories")
@@ -263,7 +263,7 @@ func Test_GetChartsInRepo(t *testing.T) {
 				rows.AddRow(string(chartJSON))
 			}
 			mock.ExpectQuery("SELECT info FROM charts WHERE *").
-				WithArgs("my-namespace", kubeappsNamespace, tt.repo).
+				WithArgs("my-namespace", globalReposNamespace, tt.repo).
 				WillReturnRows(rows)
 
 			mock.ExpectQuery("^SELECT count(.+) FROM").

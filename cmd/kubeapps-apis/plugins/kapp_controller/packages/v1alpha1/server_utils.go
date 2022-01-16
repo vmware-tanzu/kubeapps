@@ -74,15 +74,17 @@ func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) corev1.
 	return corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED
 }
 
-// userReasonForKappStatus returns the reason for a given status
-func userReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) string {
+// simpleUserReasonForKappStatus returns the simplified reason for a given status
+func simpleUserReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) string {
 	switch status {
 	case kappctrlv1alpha1.ReconcileSucceeded:
-		return "Reconcile succeeded"
+		return "Deployed"
 	case "ValuesSchemaCheckFailed", kappctrlv1alpha1.ReconcileFailed:
 		return "Reconcile failed"
 	case kappctrlv1alpha1.Reconciling:
 		return "Reconciling"
+	case "":
+		return "No status information yet"
 	}
 	// Fall back to unknown/unspecified.
 	return "Unknown"

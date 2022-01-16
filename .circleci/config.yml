@@ -686,6 +686,7 @@ jobs:
       DEFAULT_DEX_IP: "172.18.0.2"
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
+      TEST_OPERATORS: "1"
       <<: *common_envars
     parameters:
       number:

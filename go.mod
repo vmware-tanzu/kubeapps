@@ -70,7 +70,7 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/negroni v1.0.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.30.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.31.0
 	github.com/vmware-tanzu/carvel-vendir v0.24.0
 	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -79,6 +79,7 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	helm.sh/helm/v3 v3.7.2
 	k8s.io/api v0.22.4
 	k8s.io/apiextensions-apiserver v0.22.4
@@ -200,7 +201,6 @@ require (
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/apiserver v0.22.4 // indirect
 	k8s.io/component-base v0.22.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect

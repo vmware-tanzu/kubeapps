@@ -322,6 +322,15 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 		if err != nil {
 			return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 		}
+
+		if serveOpts.QPS > 0.0 {
+			config.QPS = serveOpts.QPS
+		}
+
+		if serveOpts.Burst > 0 {
+			config.Burst = serveOpts.Burst
+		}
+
 		return config, nil
 	}, nil
 }
@@ -368,6 +377,7 @@ func getClustersConfigFromServeOpts(serveOpts core.ServeOptions) (kube.ClustersC
 	if err != nil {
 		return kube.ClustersConfig{}, fmt.Errorf("unable to parse additional clusters config: %+v", err)
 	}
+	config.GlobalReposNamespace = serveOpts.GlobalReposNamespace
 	defer cleanupCAFiles()
 	return config, nil
 }

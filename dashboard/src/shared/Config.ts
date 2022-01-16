@@ -15,6 +15,7 @@ export interface ICustomAppViewIdentifier {
 export interface IConfig {
   kubeappsCluster: string;
   kubeappsNamespace: string;
+  globalReposNamespace: string;
   appVersion: string;
   authProxyEnabled: boolean;
   oauthLoginURI: string;

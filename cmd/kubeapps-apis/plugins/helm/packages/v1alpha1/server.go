@@ -119,8 +119,7 @@ func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary,
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, pluginConfigPath string) *Server {
-	var kubeappsNamespace = os.Getenv("POD_NAMESPACE")
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalReposNamespace string, pluginConfigPath string) *Server {
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
@@ -128,7 +127,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	var dbConfig = dbutils.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
-	manager, err := utils.NewPGManager(dbConfig, kubeappsNamespace)
+	manager, err := utils.NewPGManager(dbConfig, globalReposNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -200,7 +199,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			}, nil
 		},
 		manager:                  manager,
-		globalPackagingNamespace: kubeappsNamespace,
+		globalPackagingNamespace: globalReposNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
 		versionsInSummary:        versionsInSummary,

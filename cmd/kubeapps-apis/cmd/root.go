@@ -71,7 +71,7 @@ func init() {
 	rootCmd = newRootCmd()
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
-        //set initial value of verbosity
+	//set initial value of verbosity
 	goflag.Set("v", "3")
 	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 }
@@ -83,8 +83,10 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.ClustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	c.Flags().StringVar(&serveOpts.PluginConfigPath, "plugin-config-path", "", "Configuration for plugins")
 	c.Flags().StringVar(&serveOpts.PinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
+	c.Flags().StringVar(&serveOpts.GlobalReposNamespace, "global-repos-namespace", "kubeapps", "Namespace of global repositories")
 	c.Flags().BoolVar(&serveOpts.UnsafeLocalDevKubeconfig, "unsafe-local-dev-kubeconfig", false, "if true, it will use the local kubeconfig at the KUBECONFIG env var instead of using the inCluster configuration.")
-
+	c.Flags().Float32Var(&serveOpts.QPS, "kube-api-qps", 10.0, "set Kubernetes API client QPS limit")
+	c.Flags().IntVar(&serveOpts.Burst, "kube-api-burst", 15, "set Kubernetes API client Burst limit")
 }
 
 // initConfig reads in config file and ENV variables if set.

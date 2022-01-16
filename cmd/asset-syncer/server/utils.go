@@ -69,6 +69,7 @@ type Config struct {
 	FilterRules           string
 	PassCredentials       bool
 	UserAgent             string
+	GlobalReposNamespace  string
 	KubeappsNamespace     string
 	AuthorizationHeader   string
 	DockerConfigJson      string
@@ -119,8 +120,8 @@ type assetManager interface {
 	insertFiles(chartID string, files models.ChartFiles) error
 }
 
-func newManager(config dbutils.Config, kubeappsNamespace string) (assetManager, error) {
-	return newPGManager(config, kubeappsNamespace)
+func newManager(config dbutils.Config, globalReposNamespace string) (assetManager, error) {
+	return newPGManager(config, globalReposNamespace)
 }
 
 func getSha256(src []byte) (string, error) {

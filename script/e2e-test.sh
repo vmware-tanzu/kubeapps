@@ -182,6 +182,7 @@ installOrUpgradeKubeapps() {
   info "Installing Kubeapps from ${chartSource}..."
   kubectl -n kubeapps delete secret localhost-tls || true
 
+  # See https://stackoverflow.com/a/36296000 for "${arr[@]+"${arr[@]}"}" notation.
   cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}"
     "${img_flags[@]}"
     "${@:2}"
@@ -198,7 +199,8 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
-    --set featureFlags.operators=true
+    --set globalReposNamespaceSuffix=-repos-global
+    "${operatorFlags[@]+"${operatorFlags[@]}"}"
     --wait)
 
   echo "${cmd[@]}"
@@ -206,7 +208,7 @@ installOrUpgradeKubeapps() {
 }
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
-if [[ -z "${GKE_BRANCH-}" ]]; then
+if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   installOLM $OLM_VERSION
 fi
 
@@ -274,9 +276,16 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   )
 fi
 
+if [ -n "${TEST_OPERATORS-}" ]; then
+  operatorFlags=(
+    "--set" "featureFlags.operators=true"
+  )
+fi
+
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
+GLOBAL_REPOS_NS=kubeapps
 
 if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
@@ -320,7 +329,7 @@ done
 # Clean up existing jobs
 kubectl delete jobs -n kubeapps --all
 # Trigger update of the bitnami repository
-kubectl patch apprepositories.kubeapps.com -n kubeapps bitnami -p='[{"op": "replace", "path": "/spec/resyncRequests", "value":1}]' --type=json
+kubectl patch apprepositories.kubeapps.com -n ${GLOBAL_REPOS_NS} bitnami -p='[{"op": "replace", "path": "/spec/resyncRequests", "value":1}]' --type=json
 k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=bitnami
 info "Job apprepositories.kubeapps.com/repo-name=bitnami ready"
 
@@ -367,7 +376,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
 fi
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
-if [[ -z "${GKE_BRANCH-}" ]]; then
+if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   ## Wait for the Operator catalog to be populated
   info "Waiting for the OperatorHub Catalog to be ready ..."
   retry_while isOperatorHubCatalogRunning 24
@@ -386,7 +395,9 @@ testsToIgnore=()
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
 # Also skip the multicluster scenario
 if [[ -n "${GKE_BRANCH-}" ]]; then
-  testsToIgnore=("operator-deployment.js" "add-multicluster-deployment.js" "${testsToIgnore[@]}")
+  testsToIgnore=("operator-deployment.js" "add-multicluster-deployment.js")
+elif [[ -z "${TEST_OPERATORS-}" ]]; then
+  testsToIgnore=("operator-deployment.js")
 fi
 ignoreFlag=""
 if [[ "${#testsToIgnore[@]}" > "0" ]]; then
