@@ -14,7 +14,7 @@ import * as ReactRouter from "react-router";
 import { Link } from "react-router-dom";
 import { IClusterServiceVersion, IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { escapeRegExp } from "shared/utils";
+import { escapeRegExp, getPluginPackageName } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import PageHeader from "../PageHeader/PageHeader";
 import SearchFilter from "../SearchFilter/SearchFilter";
@@ -37,6 +37,7 @@ export const filterNames = {
   REPO: "Repository",
   CATEGORY: "Category",
   OPERATOR_PROVIDER: "Provider",
+  PKG_TYPE: "Plugin",
 };
 
 export function initialFilterState() {
@@ -84,7 +85,7 @@ export default function Catalog() {
     },
     operators,
     repos: { repos },
-    config: { kubeappsCluster, kubeappsNamespace, featureFlags },
+    config: { kubeappsCluster, kubeappsNamespace, featureFlags, enabledPlugins },
   } = useSelector((state: IStoreState) => state);
   const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
   const location = ReactRouter.useLocation();
@@ -169,6 +170,9 @@ export default function Catalog() {
       .map(c => categoryToReadable(c))
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
+  const allPlugins = uniq(enabledPlugins.map(p => getPluginPackageName(p)))
+    .filter(p => !p.startsWith("unknown"))
+    .sort();
 
   // We do not currently support app repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
@@ -218,6 +222,11 @@ export default function Catalog() {
         // TODO(agamez): get the repo name once available
         // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
         filters[filterNames.REPO].includes(c.availablePackageRef?.identifier.split("/")[0]),
+    )
+    .filter(
+      c =>
+        filters[filterNames.PKG_TYPE].length === 0 ||
+        filters[filterNames.PKG_TYPE].includes(getPluginPackageName(c.availablePackageRef?.plugin)),
     )
     .filter(
       c =>
@@ -394,6 +403,18 @@ export default function Catalog() {
                     name={filterNames.REPO}
                     options={allRepos}
                     currentFilters={filters[filterNames.REPO]}
+                    onAddFilter={addFilter}
+                    onRemoveFilter={removeFilter}
+                  />
+                </div>
+              )}
+              {allPlugins.length > 0 && (
+                <div className="filter-section">
+                  <label className="filter-label">Package type</label>
+                  <FilterGroup
+                    name={filterNames.PKG_TYPE}
+                    options={allPlugins}
+                    currentFilters={filters[filterNames.PKG_TYPE]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
                   />

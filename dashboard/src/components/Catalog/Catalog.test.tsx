@@ -16,6 +16,7 @@ import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IAppRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { PluginNames } from "shared/utils";
 import {
   IAppRepository,
   IPackageState,
@@ -54,7 +55,7 @@ const availablePkgSummary1: AvailablePackageSummary = {
   availablePackageRef: {
     identifier: "foo/foo",
     context: { cluster: "", namespace: "package-namespace" } as Context,
-    plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
   },
 };
 const availablePkgSummary2: AvailablePackageSummary = {
@@ -66,6 +67,14 @@ const availablePkgSummary2: AvailablePackageSummary = {
   shortDescription: "",
   availablePackageRef: {
     identifier: "bar/bar",
+    context: { cluster: "", namespace: "package-namespace" } as Context,
+    plugin: { name: PluginNames.PACKAGES_KAPP, version: "0.0.1" } as Plugin,
+  },
+};
+const availablePkgSummary3: AvailablePackageSummary = {
+  ...availablePkgSummary2,
+  availablePackageRef: {
+    identifier: "bar/bar2",
     context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
@@ -860,6 +869,22 @@ describe("filters by category", () => {
       </MemoryRouter>,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
+  });
+
+  it("filters a package type", () => {
+    const packages = {
+      ...defaultPackageState,
+      items: [availablePkgSummary1, availablePkgSummary2, availablePkgSummary3],
+    };
+    const wrapper = mountWrapper(
+      getStore({ ...populatedState, packages: packages } as IStoreState),
+      <MemoryRouter initialEntries={[routePathParam + "?Plugin=Carvel%20Package"]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+    expect(wrapper.find(InfoCard)).toHaveLength(2);
   });
 
   it("filters an operator category", () => {

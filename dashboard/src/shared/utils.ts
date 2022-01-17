@@ -50,7 +50,6 @@ export function getPluginIcon(plugin?: Plugin | string) {
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
-        return helmIcon;
       case "helm":
         return helmIcon;
       case "operator":
@@ -77,9 +76,10 @@ export function getPluginName(plugin?: Plugin | string) {
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
-        return "Helm";
       case "helm":
         return "Helm";
+      case "kapp-controller":
+        return "Carvel";
       case "operator":
         return "Operator";
       default:
@@ -93,6 +93,8 @@ export function getPluginName(plugin?: Plugin | string) {
         return "Flux";
       case PluginNames.PACKAGES_KAPP:
         return "Carvel";
+      case undefined:
+        return "unknown plugin";
       default:
         return plugin?.name;
     }
@@ -104,9 +106,10 @@ export function getPluginPackageName(plugin?: Plugin | string) {
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
-        return "Helm Chart";
       case "helm":
         return "Helm Chart";
+      case "kapp-controller":
+        return "Carvel Package";
       case "operator":
         return "Operator";
       default:
