@@ -261,6 +261,7 @@ describe("Auth", () => {
         remoteComponentsUrl: "",
         customAppViews: [],
         skipAvailablePackageDetails: false,
+        enabledPlugins: [],
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");
