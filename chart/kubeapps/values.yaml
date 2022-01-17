@@ -1524,7 +1524,7 @@ clusters:
 
 ## @skip featureFlags Feature flags (used to switch on development features)
 ##
-featureFlags: 
+featureFlags:
   ## @param featureFlags.operators Enable ingress record generation for Kubeapps
   ##
   operators: false
