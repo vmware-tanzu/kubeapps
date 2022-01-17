@@ -2,7 +2,7 @@ Signed-off-by: <USER> <EMAIL>
 
 **Description of the change**
 
-This is an automatic PR for synchronizing the changes performed externally at the [kubeapps development chart](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps) to the official Bitnami chart.
+This is an automatic PR for synchronizing the changes performed externally at the [kubeapps development chart](https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps) to the official Bitnami chart.
 
 **Benefits**
 
