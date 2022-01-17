@@ -13,7 +13,7 @@ export interface IStatusAwareButtonProps {
 
 export default function StatusAwareButton<T extends IStatusAwareButtonProps>(props: T) {
   const { id, releaseStatus, disabled, ...otherProps } = props;
-  // Disable the button if: the status code is undefined or null OR the status code is (uninstalled or pending)
+  // Deactivate the button if: the status code is undefined or null OR the status code is (uninstalled or pending)
   const isDisabled =
     disabled || releaseStatus?.reason == null
       ? true

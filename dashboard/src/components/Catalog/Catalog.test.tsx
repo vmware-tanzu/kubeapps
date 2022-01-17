@@ -152,7 +152,7 @@ it("retrieves csvs in the namespace if operators enabled", () => {
   expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, defaultProps.namespace);
 });
 
-it("not retrieveing csvs in the namespace if operators disabled", () => {
+it("not retrieveing csvs in the namespace if operators deactivated", () => {
   const getCSVs = jest.fn();
   actions.operators.getCSVs = getCSVs;
   const state = deepClone(populatedState) as IStoreState;

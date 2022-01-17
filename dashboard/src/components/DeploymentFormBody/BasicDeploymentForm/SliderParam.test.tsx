@@ -252,7 +252,7 @@ describe("when changing the value in the input", () => {
     });
   });
 
-  it("modifies the max value of the slider if the input is bigger than 100", () => {
+  it("modifies the max value of the slider if the input is greater than 100", () => {
     params.forEach(param => {
       const valueChange = jest.fn();
       const handleBasicFormParamChange = jest.fn(() => valueChange);

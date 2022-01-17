@@ -87,7 +87,7 @@ describe("getOperators", () => {
 });
 
 describe("getOperator", () => {
-  it("returns an an operator", async () => {
+  it("returns an operator", async () => {
     const op = { metadata: { name: "foo" } };
     Operators.getOperator = jest.fn().mockReturnValue(op);
     const expectedActions = [
@@ -159,7 +159,7 @@ describe("getCSVs", () => {
 });
 
 describe("getCSV", () => {
-  it("returns an an ClusterServiceVersion", async () => {
+  it("returns a ClusterServiceVersion", async () => {
     const csv = { metadata: { name: "foo" } };
     Operators.getCSV = jest.fn().mockReturnValue(csv);
     const expectedActions = [

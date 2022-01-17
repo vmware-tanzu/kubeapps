@@ -52,13 +52,13 @@ function SliderParam({
     } as React.FormEvent<HTMLInputElement>);
   };
 
-  // onChangeSlider is executed when the slider is dropped at one point
+  // onChangeSlider is run when the slider is dropped at one point
   // at that point we update the parameter
   const onChangeSlider = (values: readonly number[]) => {
     handleParamChange(values[0]);
   };
 
-  // onUpdateSlider is executed when dragging the slider
+  // onUpdateSlider is run when dragging the slider
   // we just update the state here for a faster response
   const onUpdateSlider = (values: readonly number[]) => {
     setValue(values[0]);
