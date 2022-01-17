@@ -233,7 +233,7 @@ func clientGetterHelper(config *rest.Config) (kubernetes.Interface, dynamic.Inte
 
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
 // I understand this is not really "kosher" in general for production usage,
-// but in one specific case (cache populateWith() func) it's okay as a sanity check
+// but in one specific case (cache populateWith() func) it's okay as a confidence test
 // if it turns out not, I can always remove this check, it's not critical
 const mutexLocked = 1
 
@@ -281,7 +281,7 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 		DB:       REDIS_DB_NUM,
 	})
 
-	// sanity check that the redis client is connected
+	// confidence test that the redis client is connected
 	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
 		return nil, err
 	} else {

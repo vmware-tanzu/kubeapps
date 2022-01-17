@@ -153,7 +153,7 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
-	// sanity check that the specified GVR is a valid registered CRD
+	// confidence test that the specified GVR is a valid registered CRD
 	if err := c.isGvrValid(); err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	if c.config.Gvr.Empty() {
 		return fmt.Errorf("server configured with empty GVR")
 	}
-	// sanity check that CRD for GVR has been registered
+	// confidence test that CRD for GVR has been registered
 	ctx := context.Background()
 	_, _, apiExt, err := c.config.ClientGetter(ctx)
 	if err != nil {
@@ -372,7 +372,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	log.Infof("+resync(bootstrap=%t), queue: [%s], size: [%d]", bootstrap, c.queue.Name(), c.queue.Len())
 	defer log.Info("-resync()")
 
-	// Sanity check: I'd like to make sure this is called within the context
+	// confidence test: I'd like to make sure this is called within the context
 	// of resync, i.e. resync.Cond.L is locked by this goroutine.
 	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
 		return "", status.Errorf(codes.Internal, "Invalid state of the cache in resync()")
@@ -512,7 +512,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
-	// TODO: (gfichtenholt) Sanity check: I'd like to make sure the caller has the read lock,
+	// TODO: (gfichtenholt) confidence test: I'd like to make sure the caller has the read lock,
 	// i.e. we are not in the middle of a cache resync() operation. To do that, I need to
 	// find a reliable alternative to common.RWMutexReadLocked which doesn't always work
 
@@ -861,7 +861,7 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
 func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) error {
-	// sanity check: I'd like to make sure this is called within the context
+	// confidence test: I'd like to make sure this is called within the context
 	// of resync, i.e. resync.Cond.L is locked by this goroutine.
 	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
 		return status.Errorf(codes.Internal, "Invalid state of the cache in populateWith()")

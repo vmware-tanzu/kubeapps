@@ -1233,7 +1233,7 @@ func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecC
 		repos...)
 
 	// here we are essentially adding on to how List() works for HelmRepository objects
-	// this is done so that the the item list returned by List() command with fake client contains
+	// this is done so that the item list returned by List() command with fake client contains
 	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
 	// is critical
 	reactor := dynamicClient.Fake.ReactionChain[0]
