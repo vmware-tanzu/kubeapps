@@ -23,6 +23,7 @@ export const initialState: IConfigState = {
   remoteComponentsUrl: "",
   customAppViews: [],
   skipAvailablePackageDetails: false,
+  enabledPlugins: [],
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

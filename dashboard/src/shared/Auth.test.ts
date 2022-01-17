@@ -238,6 +238,7 @@ describe("Auth", () => {
         remoteComponentsUrl: "",
         customAppViews: [],
         skipAvailablePackageDetails: false,
+        enabledPlugins: [],
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);

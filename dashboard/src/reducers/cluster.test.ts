@@ -450,6 +450,7 @@ describe("clusterReducer", () => {
       remoteComponentsUrl: "",
       customAppViews: [],
       skipAvailablePackageDetails: false,
+      enabledPlugins: [],
     } as IConfig;
     it("re-writes the clusters to match the config.clusters state", () => {
       expect(

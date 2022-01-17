@@ -28,6 +28,7 @@ export interface IConfig {
   remoteComponentsUrl: string;
   customAppViews: ICustomAppViewIdentifier[];
   skipAvailablePackageDetails: boolean;
+  enabledPlugins: string[];
 }
 
 export interface IFeatureFlags {
