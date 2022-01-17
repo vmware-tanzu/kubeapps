@@ -818,7 +818,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 
 	if tc.expectedDetail != nil {
 		// set some of the expected fields here to values we already know to expect,
-		// the rest should be specified explictly
+		// the rest should be specified explicitly
 		tc.expectedDetail.InstalledPackageRef = installedRef(tc.request.Name, tc.request.TargetContext.Namespace)
 		tc.expectedDetail.AvailablePackageRef = tc.request.AvailablePackageRef
 		tc.expectedDetail.Name = tc.request.Name

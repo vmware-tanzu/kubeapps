@@ -1375,7 +1375,7 @@ func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actu
 		plugins.Plugin{},
 		corev1.ReconciliationOptions{},
 		corev1.AvailablePackageReference{})
-	// see comment in release_intergration_test.go. Intermittently we get an inconsistent error message from flux
+	// see comment in release_integration_test.go. Intermittently we get an inconsistent error message from flux
 	opts2 := cmpopts.IgnoreFields(corev1.InstalledPackageStatus{}, "UserReason")
 	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts, opts2) {
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
