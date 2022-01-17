@@ -824,8 +824,8 @@ func newTestCase(tc int, response bool, code codes.Code) TestCase {
 
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	// sanity check
-	if len(resourcerefstest.TestCases2) < 4 {
-		t.Fatalf("Expected array [resourcerefstest.TestCases2] size of at least 1")
+	if len(resourcerefstest.TestCases2) < 11 {
+		t.Fatalf("Expected array [resourcerefstest.TestCases2] size of at least 11")
 		return
 	}
 
