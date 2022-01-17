@@ -782,51 +782,51 @@ func TestDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
-type TestCase struct {
-	baseTestCase       resourcerefstest.TestCase
-	request            *corev1.GetInstalledPackageResourceRefsRequest
-	expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
-	expectedStatusCode codes.Code
-}
-
-func newTestCase(tc int, response bool, code codes.Code) TestCase {
-	// Using the redis_existing_stub_completed data with
-	// different manifests for each test.
-	var (
-		releaseNamespace = redis_existing_stub_completed.namespace
-		releaseName      = redis_existing_stub_completed.name
-	)
-
-	newCase := TestCase{
-		baseTestCase: resourcerefstest.TestCases2[tc],
-		request: &corev1.GetInstalledPackageResourceRefsRequest{
-			InstalledPackageRef: &corev1.InstalledPackageReference{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: releaseNamespace,
-				},
-				Identifier: releaseName,
-			},
-		},
-	}
-	if response {
-		newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
-			Context: &corev1.Context{
-				Cluster:   "default",
-				Namespace: releaseNamespace,
-			},
-			ResourceRefs: resourcerefstest.TestCases2[tc].ExpectedResourceRefs,
-		}
-	}
-	newCase.expectedStatusCode = code
-	return newCase
-}
-
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	// sanity check
 	if len(resourcerefstest.TestCases2) < 11 {
 		t.Fatalf("Expected array [resourcerefstest.TestCases2] size of at least 11")
 		return
+	}
+
+	type TestCase struct {
+		baseTestCase       resourcerefstest.TestCase
+		request            *corev1.GetInstalledPackageResourceRefsRequest
+		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
+		expectedStatusCode codes.Code
+	}
+
+	newTestCase := func(tc int, response bool, code codes.Code) TestCase {
+		// Using the redis_existing_stub_completed data with
+		// different manifests for each test.
+		var (
+			releaseNamespace = redis_existing_stub_completed.namespace
+			releaseName      = redis_existing_stub_completed.name
+		)
+
+		newCase := TestCase{
+			baseTestCase: resourcerefstest.TestCases2[tc],
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: releaseNamespace,
+					},
+					Identifier: releaseName,
+				},
+			},
+		}
+		if response {
+			newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: releaseNamespace,
+				},
+				ResourceRefs: resourcerefstest.TestCases2[tc].ExpectedResourceRefs,
+			}
+		}
+		newCase.expectedStatusCode = code
+		return newCase
 	}
 
 	testCases := []TestCase{
@@ -850,6 +850,14 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		corev1.ResourceRef{},
 		corev1.Context{},
 	)
+
+	toHelmReleaseStubs := func(in []resourcerefstest.TestReleaseStub) []helmReleaseStub {
+		out := []helmReleaseStub{}
+		for _, r := range in {
+			out = append(out, helmReleaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
+		}
+		return out
+	}
 
 	for _, tc := range testCases {
 		t.Run(tc.baseTestCase.Name, func(t *testing.T) {
@@ -880,14 +888,6 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			}
 		})
 	}
-}
-
-func toHelmReleaseStubs(in []resourcerefstest.TestReleaseStub) []helmReleaseStub {
-	out := []helmReleaseStub{}
-	for _, r := range in {
-		out = append(out, helmReleaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
-	}
-	return out
 }
 
 func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (runtimeObjs []runtime.Object, cleanup func()) {

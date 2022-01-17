@@ -27,44 +27,44 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type TestCase struct {
-	baseTestCase       resourcerefstest.TestCase
-	request            *corev1.GetInstalledPackageResourceRefsRequest
-	expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
-	expectedStatusCode codes.Code
-}
-
-func newTestCase(tc int, identifier string, response bool, code codes.Code) TestCase {
-	newCase := TestCase{
-		baseTestCase: resourcerefstest.TestCases1[tc],
-		request: &corev1.GetInstalledPackageResourceRefsRequest{
-			InstalledPackageRef: &corev1.InstalledPackageReference{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				Identifier: identifier,
-			},
-		},
-	}
-	if response {
-		newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
-			Context: &corev1.Context{
-				Cluster:   "default",
-				Namespace: "default",
-			},
-			ResourceRefs: resourcerefstest.TestCases1[tc].ExpectedResourceRefs,
-		}
-	}
-	newCase.expectedStatusCode = code
-	return newCase
-}
-
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
 
 	// sanity check
 	if len(resourcerefstest.TestCases1) < 11 {
 		t.Fatalf("Expected array [resourcerefstest.TestCases1] size of at least 11")
+	}
+
+	type TestCase struct {
+		baseTestCase       resourcerefstest.TestCase
+		request            *corev1.GetInstalledPackageResourceRefsRequest
+		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
+		expectedStatusCode codes.Code
+	}
+
+	newTestCase := func(tc int, identifier string, response bool, code codes.Code) TestCase {
+		newCase := TestCase{
+			baseTestCase: resourcerefstest.TestCases1[tc],
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "default",
+					},
+					Identifier: identifier,
+				},
+			},
+		}
+		if response {
+			newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				ResourceRefs: resourcerefstest.TestCases1[tc].ExpectedResourceRefs,
+			}
+		}
+		newCase.expectedStatusCode = code
+		return newCase
 	}
 
 	testCases := []TestCase{
@@ -89,6 +89,14 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		corev1.ResourceRef{},
 		corev1.Context{},
 	)
+
+	toHelmReleaseStubs := func(in []resourcerefstest.TestReleaseStub) []releaseStub {
+		out := []releaseStub{}
+		for _, r := range in {
+			out = append(out, releaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
+		}
+		return out
+	}
 
 	for _, tc := range testCases {
 		t.Run(tc.baseTestCase.Name, func(t *testing.T) {
@@ -118,12 +126,4 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			}
 		})
 	}
-}
-
-func toHelmReleaseStubs(in []resourcerefstest.TestReleaseStub) []releaseStub {
-	out := []releaseStub{}
-	for _, r := range in {
-		out = append(out, releaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
-	}
-	return out
 }
