@@ -1,3 +1,6 @@
+// Copyright 20XX-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 use std::env;
 
 fn main() {
