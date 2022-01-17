@@ -28,8 +28,8 @@ The process is as follows:
 
 1. Select a base file in the `/dashboard/lang` folder. For instance, `en.json`.
 2. Translate the strings into your language and save the document as `XX.json`, where `XX` is a two-letter [ISO 639-1 code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
-3. Execute `yarn compile-lang` to generate the AST-compiled strings, this will improve the application's performance.
+3. Run `yarn compile-lang` to generate the AST-compiled strings, this will improve the application's performance.
 4. Add your language to the list of supported ones in the code.
 5. Feel free to contribute with a new language and send a PR :)
 
-> Developers should note that when adding a new literal, `yarn extract-lang` must be executed.
+> Developers should note that when adding a new literal, `yarn extract-lang` must be run.

@@ -100,7 +100,7 @@ helm dep update --skip-refresh ./chart/kubeapps
 
 As per the introduction of the new Kubeapps APIs service, it is based upon automatic code generation for both the frontend code and backend code. Given that generation rules can evolve to improve or reduce possible bugs, it is important to perform a periodic update.
 
-- To upgrade the `buf`-related dependencies, just execute:
+- To upgrade the `buf`-related dependencies, just run:
 
 ```bash
 # You need to have the buf binary installed, if not, go to https://docs.buf.build/installation/
@@ -203,7 +203,7 @@ Even though we have a thorough test suite in our repository, we still _must_ per
 
 Next, create a tag for the aforementioned commit and push it to the main branch. Please note that the tag name will be used as the release name.
 
-For doing so, execute the following commands:
+For doing so, run the following commands:
 
 ```bash
 export VERSION_NAME="v1.0.0-beta.1" # edit it accordingly

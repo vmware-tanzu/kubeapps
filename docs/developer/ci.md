@@ -6,9 +6,9 @@ Kubeapps leverages CircleCI for running the tests (both unit and integration tes
 
 The main configuration is located at this [CircleCI config file](../../.circleci/config.yml). At a glance, it contains:
 
-- **Build conditions**: `build_always`, `build_on_main`, `build_on_tag` and `build_on_tag_or_prerelease`. They will be added to each job to determine whether or not it should be executed. Whereas some should always be run, others only make sense when pushing to the main branch or when a new tag has been created.
+- **Build conditions**: `build_always`, `build_on_main`, `build_on_tag` and `build_on_tag_or_prerelease`. They will be added to each job to determine whether or not it should be run. Whereas some should always be run, others only make sense when pushing to the main branch or when a new tag has been created.
 - **Workflows**: we only use a single workflow named `kubeapps` with multiple jobs.
-- **Jobs**: the actual commands that are executed depending on the build conditions.
+- **Jobs**: the actual commands that are run depending on the build conditions.
   - `test_go` (always): it runs every unit test for those projects written in Golang (that is, it runs `make test`) as well as it runs some DB-dependent tests.
   - `test_dashboard` (always): it runs the dashboard linter and unit tests (`yarn lint` and `yarn test`)
   - `test_pinniped_proxy` (always): it runs the Rust unit tests of the pinniped-proxy project (`cargo test`).
@@ -22,7 +22,7 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Load the CI images into the cluster.
     - Run the integration tests.
   - `sync_chart_from_bitnami` (on main): each time a new commit is pushed to the main branch, it brings the current changes in the upstream [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merges the changes. This step involves:
-    - Checking if the Bitnami chart version is greater than the Kubeapps development chart version. If not, abort.
+    - Checking if the Bitnami chart version is greater than the Kubeapps development chart version. If not, stop.
     - Deleting the local `chart/kubeapps` folder (note that the changes are already committed in git).
     - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/master/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
     - Retrieving the latest version of the chart provided by Bitnami.
@@ -33,7 +33,7 @@ The main configuration is located at this [CircleCI config file](../../.circleci
   - `GKE_STABLE_VERSION_MAIN` and `GKE_STABLE_VERSION_LATEST_RELEASE` (on tag or prerelease): there is a job for each [Kubernetes version (stable and regular) supported by Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/release-notes) (GKE). It will run the e2e tests in a GKE cluster (version X.XX) using either the code in `prerelease` or in the latest released version. If a change affecting the UI is pushed to the main branch, the e2e test might fail here. Use a try/catch block to temporarily work around this.
   - `GKE_REGULAR_VERSION_MAIN` and `GKE_REGULAR_VERSION_LATEST_RELEASE` (on tag or prerelease): the same as above, but using the Kubernetes regular version in GKE.
   - `sync_chart_to_bitnami` (on tag): when releasing, it will synchronize our development chart with the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merge the changes. This step involves:
-    - Checking if the Kubeapps development chart version is greater than the Bitnami chart version. If not, abort.
+    - Checking if the Kubeapps development chart version is greater than the Bitnami chart version. If not, stop.
     - Deleting the local `bitnami/kubeapps` folder (note that the changes are already committed in git).
     - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/master/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
     - Retrieving the latest version of the chart provided by Kubeapps.
