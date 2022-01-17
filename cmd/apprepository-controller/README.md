@@ -13,7 +13,7 @@ kind: AppRepository
 metadata:
   name: bitnami
 spec:
-  url: https://charts.bitnami.com/incubator
+  url: https://charts.bitnami.com/bitnami
   type: helm
 ```
 
