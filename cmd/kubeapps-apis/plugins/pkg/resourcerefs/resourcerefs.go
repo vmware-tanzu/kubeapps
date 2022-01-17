@@ -90,23 +90,3 @@ func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 
 	return refs, nil
 }
-
-// this is done so that test scenarios can be re-used in another package (helm and flux plug-ins)
-// ref: https://stackoverflow.com/questions/28476307/how-to-get-test-environment-at-run-time
-type TestReleaseStub struct {
-	Name      string
-	Namespace string
-	Manifest  string
-}
-
-type TestCase struct {
-	Name                  string
-	ExistingReleases      []TestReleaseStub
-	ExpectedResourceRefs  []*corev1.ResourceRef
-	ExpectedErrStatusCode codes.Code
-}
-
-var (
-	// will be properly initialized in resourcerefs_test.go init()
-	TestCases1, TestCases2 = []TestCase(nil), []TestCase(nil)
-)
