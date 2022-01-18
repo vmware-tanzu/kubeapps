@@ -16,7 +16,7 @@
     "jest": "^27.4.7",
     "jest-circus": "^27.4.6",
     "jest-puppeteer": "^6.0.3",
-    "puppeteer": "^13.0.1",
+    "puppeteer": "^13.1.0",
     "wait-on": "^6.0.0"
   },
   "devDependencies": {
