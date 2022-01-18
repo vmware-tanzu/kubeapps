@@ -1,5 +1,6 @@
 {
   "name": "kubeapps-integration",
+  "proxy": "https://localhost",
   "version": "1.0.0",
   "description": "Kubeapps integration tests",
   "main": "index.js",
