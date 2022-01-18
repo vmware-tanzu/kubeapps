@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { IHTTPIngressPath, IIngressRule, IResource } from "shared/types";
 import { GetURLItemFromIngress, ShouldGenerateLink } from "./AccessURLIngressHelper";
 

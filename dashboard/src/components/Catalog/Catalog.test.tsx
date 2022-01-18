@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { deepClone } from "@cds/core/internal/utils/identity";
 import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";

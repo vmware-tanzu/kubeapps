@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { shallow } from "enzyme";
 import { IBasicFormParam } from "shared/types";
 import Subsection, { ISubsectionProps } from "./Subsection";

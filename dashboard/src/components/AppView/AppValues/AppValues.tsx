@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Import ace first
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ext-searchbox";
