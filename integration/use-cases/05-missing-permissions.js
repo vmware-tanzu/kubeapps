@@ -34,6 +34,6 @@ test("Fails to deploy an application due to missing permissions", async () => {
   await expect(page).toClick("cds-button", { text: "Deploy" });
   console.log("05 -> Clicked deploy");
 
-  await expect(page).toMatch("unable to read secret", { timeout: 60000 });
+  await expect(page).toMatch("secrets is forbidden", { timeout: 60000 });
   console.log("05 ->All checks done");
 });
