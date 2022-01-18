@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 // CODE FROM: https://sghall.github.io/react-compound-slider/#/slider-demos/horizontal
 import { GetHandleProps, GetTrackProps, SliderItem } from "react-compound-slider";
 
