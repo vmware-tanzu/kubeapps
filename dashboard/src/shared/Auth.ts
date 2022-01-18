@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
 import { get } from "lodash";
