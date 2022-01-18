@@ -34,7 +34,7 @@ test("Fails to deploy an application due to missing permissions", async () => {
     page,
     3,
     async () => {
-      await expect(page).toMatch("Missing permissions", { timeout: 60000 });
+      await expect(page).toMatch("unable to read secret", { timeout: 60000 });
     },
     testName,
   );
