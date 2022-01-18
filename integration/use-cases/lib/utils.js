@@ -40,6 +40,7 @@ module.exports = {
     }
   },
   doAction: async (name, action) => {
+    console.log(name);
     await Promise.all([
       action,
       page.waitForNavigation({ waitUntil: WAIT_EVENT_NETWORK }),
@@ -54,7 +55,7 @@ module.exports = {
     let doAction = module.exports.doAction;
     await doAction("Go to Home", page.goto(getUrl(uri)));
     if (isOIDC === "true") {
-      console.log("Loggin in ")
+      console.log("Log in using OIDC")
       await doAction("Click to start login", page.click(".login-submit-button"));
 
       // DEX: Choose email as login method
