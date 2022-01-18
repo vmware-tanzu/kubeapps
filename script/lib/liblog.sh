@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-#
-# Logging Library
 
 # Copyright 2018-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
+
+# Logging Library
 
 # Color palette
 RESET='\033[0m'

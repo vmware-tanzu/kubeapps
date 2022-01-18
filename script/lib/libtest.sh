@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-#
-# Test functions Library
 
 # Copyright 2018-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
+
+# Test functions Library
 
 # Load Generic Libraries
 # shellcheck disable=SC1090

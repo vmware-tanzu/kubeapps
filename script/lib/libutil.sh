@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-#
-# Util functions Library
 
 # Copyright 2018-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
+
+# Util functions Library
 
 ########################
 # Retries a command a given number of times
