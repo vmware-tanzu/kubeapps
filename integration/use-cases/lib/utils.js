@@ -39,18 +39,23 @@ module.exports = {
       }
     }
   },
-  doAction: async (action) => {
+  doAction: async (name, action) => {
     await Promise.all([
       action,
       page.waitForNavigation({ waitUntil: WAIT_EVENT_NETWORK }),
       page.waitForNavigation({ waitUntil: WAIT_EVENT_DOM })
-    ]);
+    ]).catch(function(err) {
+      console.log(`ERROR (${name}): ${err.message}`);
+      module.exports.takeScreenShot(name.replace(/\s/g, ''));
+      throw e;
+    });
   },
   login: async (page, isOIDC, uri, token, username, password) => {
     let doAction = module.exports.doAction;
-    await doAction(page.goto(getUrl(uri)));
+    await doAction("Go to Home", page.goto(getUrl(uri)));
     if (isOIDC === "true") {
-      await doAction(page.click(".login-submit-button"));
+      console.log("Loggin in ")
+      await doAction("Click to start login", page.click(".login-submit-button"));
 
       // DEX: Choose email as login method
       page.waitForSelector('.dex-container button');
@@ -68,7 +73,7 @@ module.exports = {
       });
       await page.type('input[id="login"]', username);
       await page.type('input[id="password"]', password);
-      await doAction(page.click("#submit-login"));
+      await doAction("Click submit user and password", page.click("#submit-login"));
 
       // DEX: click on the new "Grant Access" confirmation.
       await page.waitForSelector('.dex-container button[type="submit"]', {
@@ -79,7 +84,7 @@ module.exports = {
       await expect(page).toMatchElement('.dex-container button[type="submit"]', {
         text: "Grant Access",
       });
-      await doAction(page.click('.dex-container button[type="submit"]'));
+      await doAction("Click submit Grant Access in DEX", page.click('.dex-container button[type="submit"]'));
 
       // Navigation back in Kubeapps
       await page.waitForSelector(".kubeapps-header-content", {
@@ -87,7 +92,7 @@ module.exports = {
         timeout: 10000,
       });
       if (uri !== "/") {
-        await doAction(page.goto(getUrl(uri)));
+        await doAction("Go back to Home", page.goto(getUrl(uri)));
       }
     } else {
       await expect(page).toFillForm("form", {

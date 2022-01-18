@@ -2,6 +2,7 @@ const utils = require("./lib/utils");
 const testName = "05-missing-permissions";
 
 test("Fails to deploy an application due to missing permissions", async () => {
+  console.log("05 -> Before log in");
   await utils.login(
     page,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -12,38 +13,27 @@ test("Fails to deploy an application due to missing permissions", async () => {
   );
   console.log("05 -> Logged in");
 
-  await expect(page).toClick("a", { text: "Catalog" });
+  await utils.doAction("Click on Catalog", expect(page).toClick("a", { text: "Catalog" }));
   console.log("05 -> Catalog link clicked");
-  await utils.retryAndRefresh(
-    page,
-    3,
-    async () => {
-      await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
-      console.log("05 -> Apache card existing");
-    },
-    testName,
-  );
 
-  await expect(page).toClick("a", { text: "apache" });
+  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
+  console.log("05 -> Apache card exists");
+
+  await utils.doAction("Click on Apache card", expect(page).toClick("a", { text: "apache" }));
   console.log("05 -> Apache card clicked");
 
-  await expect(page).toClick("cds-button", { text: "Deploy" });
-  console.log("05 -> Deploy button clicked");
+  await utils.doAction("Select Deploy the selection button", expect(page).toClick("cds-button", { text: "Deploy" }));
+  console.log("05 -> Select and deploy button clicked");
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
-  await page.type("#releaseName", utils.getRandomName("my-app-for-05-perms"));
-  console.log("05 -> Input release name");
+  const releaseName = utils.getRandomName("my-app-for-05-perms");
+  await page.type("#releaseName", releaseName);
+  console.log("05 -> Input release name = " + releaseName);
 
+  page.waitForTimeout(3000);
   await expect(page).toClick("cds-button", { text: "Deploy" });
   console.log("05 -> Clicked deploy");
 
-  await utils.retryAndRefresh(
-    page,
-    3,
-    async () => {
-      console.log("05 -> Final check");
-      await expect(page).toMatch("unable to read secret", { timeout: 60000 });
-    },
-    testName,
-  );
+  await expect(page).toMatch("unable to read secret", { timeout: 60000 });
+  console.log("05 ->All checks done");
 });
