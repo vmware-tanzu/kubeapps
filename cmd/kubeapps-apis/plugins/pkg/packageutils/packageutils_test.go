@@ -19,6 +19,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"helm.sh/helm/v3/pkg/chart"
 )
 
 const (
@@ -347,6 +348,138 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got, want := PackageAppVersionsSummary(tc.chart_versions, tc.input_versions_in_summary), tc.version_summary; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
+func TestIsValidChart(t *testing.T) {
+	testCases := []struct {
+		name     string
+		in       *models.Chart
+		expected bool
+	}{
+		{
+			name: "it returns true if the chart name, ID, repo and versions are specified",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "it returns false if the chart name is missing",
+			in: &models.Chart{
+				ID: "foo/bar",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "it returns false if the chart ID is missing",
+			in: &models.Chart{
+				Name: "foo",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "it returns false if the chart repo is missing",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "it returns false if the ChartVersions are missing",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+			},
+			expected: false,
+		},
+		{
+			name: "it returns false if a ChartVersions.Version is missing",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+				ChartVersions: []models.ChartVersion{
+					{Version: "3.0.0"},
+					{AppVersion: DefaultAppVersion},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "it returns true if the minimum (+maintainer) chart is correct",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+				Maintainers: []chart.Maintainer{{Name: "me"}},
+			},
+			expected: true,
+		},
+		{
+			name: "it returns false if a Maintainer.Name is missing",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+				ChartVersions: []models.ChartVersion{
+					{
+						Version: "3.0.0",
+					},
+				},
+				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := IsValidChart(tc.in)
+			if got, want := res, tc.expected; got != want {
+				t.Fatalf("got: %+v, want: %+v, res: %+v (%+v)", got, want, res, err)
 			}
 		})
 	}

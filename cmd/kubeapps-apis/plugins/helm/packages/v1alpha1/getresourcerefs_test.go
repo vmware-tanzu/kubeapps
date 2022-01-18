@@ -34,15 +34,15 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		t.Fatalf("Expected array [resourcerefstest.TestCases1] size of at least 11")
 	}
 
-	type TestCase struct {
+	type testCase struct {
 		baseTestCase       resourcerefstest.TestCase
 		request            *corev1.GetInstalledPackageResourceRefsRequest
 		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
 		expectedStatusCode codes.Code
 	}
 
-	newTestCase := func(tc int, identifier string, response bool, code codes.Code) TestCase {
-		newCase := TestCase{
+	newTestCase := func(tc int, identifier string, response bool, code codes.Code) testCase {
+		newCase := testCase{
 			baseTestCase: resourcerefstest.TestCases1[tc],
 			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -67,7 +67,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		return newCase
 	}
 
-	testCases := []TestCase{
+	testCases := []testCase{
 		newTestCase(0, "my-apache", true, codes.OK),
 		newTestCase(1, "my-apache", true, codes.OK),
 		newTestCase(2, "my-apache", true, codes.OK),

@@ -789,14 +789,14 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		return
 	}
 
-	type TestCase struct {
+	type testCase struct {
 		baseTestCase       resourcerefstest.TestCase
 		request            *corev1.GetInstalledPackageResourceRefsRequest
 		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
 		expectedStatusCode codes.Code
 	}
 
-	newTestCase := func(tc int, response bool, code codes.Code) TestCase {
+	newTestCase := func(tc int, response bool, code codes.Code) testCase {
 		// Using the redis_existing_stub_completed data with
 		// different manifests for each test.
 		var (
@@ -804,7 +804,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			releaseName      = redis_existing_stub_completed.name
 		)
 
-		newCase := TestCase{
+		newCase := testCase{
 			baseTestCase: resourcerefstest.TestCases2[tc],
 			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -829,7 +829,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		return newCase
 	}
 
-	testCases := []TestCase{
+	testCases := []testCase{
 		newTestCase(0, true, codes.OK),
 		newTestCase(1, true, codes.OK),
 		newTestCase(2, true, codes.OK),

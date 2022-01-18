@@ -16,6 +16,8 @@ import (
 	"github.com/Masterminds/semver"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Contains miscellaneous package-utilities used by multiple plug-ins
@@ -89,4 +91,35 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 	}
 
 	return pav
+}
+
+// isValidChart returns true if the chart model passed defines a value
+// for each required field described at the Helm website:
+// https://helm.sh/docs/topics/charts/#the-chartyaml-file
+// together with required fields for our model.
+func IsValidChart(chart *models.Chart) (bool, error) {
+	if chart.Name == "" {
+		return false, status.Errorf(codes.Internal, "required field .Name not found on helm chart: %v", chart)
+	}
+	if chart.ID == "" {
+		return false, status.Errorf(codes.Internal, "required field .ID not found on helm chart: %v", chart)
+	}
+	if chart.Repo == nil {
+		return false, status.Errorf(codes.Internal, "required field .Repo not found on helm chart: %v", chart)
+	}
+	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
+		return false, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0] not found on helm chart: %v", chart)
+	} else {
+		for _, chartVersion := range chart.ChartVersions {
+			if chartVersion.Version == "" {
+				return false, status.Errorf(codes.Internal, "required field .ChartVersions[i].Version not found on helm chart: %v", chart)
+			}
+		}
+	}
+	for _, maintainer := range chart.Maintainers {
+		if maintainer.Name == "" {
+			return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
+		}
+	}
+	return true, nil
 }
