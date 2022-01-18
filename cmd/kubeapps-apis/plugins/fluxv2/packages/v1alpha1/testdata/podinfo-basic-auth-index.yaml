@@ -30,12 +30,12 @@ entries:
       digest: 6c3cc3b955bce1686036ae6822ee2ca0ef6ecb994e3f2d19eaf3ec03dcba84b3
       home: https://github.com/stefanprodan/podinfo
       maintainers:
-      - email: stefanprodan@users.noreply.github.com
-        name: stefanprodan
+        - email: stefanprodan@users.noreply.github.com
+          name: stefanprodan
       name: podinfo
       sources:
-      - https://github.com/stefanprodan/podinfo
+        - https://github.com/stefanprodan/podinfo
       urls:
-      - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/podinfo-5.2.1.tgz
+        - http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/podinfo-5.2.1.tgz
       version: 5.2.1
 generated: "2021-06-16T12:51:07.135685319Z"

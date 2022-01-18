@@ -39,9 +39,12 @@ test("Upgrades an application", async () => {
       latestPackageVersion = latestPackageVersionValue.split(" ")[0];
 
       // get an older version to be installed (the second one)
-      const initialPackageVersionElements = await page.$$('select[name="package-versions"] option', {
-        delay: 2000,
-      });
+      const initialPackageVersionElements = await page.$$(
+        'select[name="package-versions"] option',
+        {
+          delay: 2000,
+        },
+      );
       const initialPackageVersionElementContent =
         await initialPackageVersionElements[1].getProperty("textContent");
       const initialPackageVersionValue = await initialPackageVersionElementContent.jsonValue();
@@ -52,7 +55,9 @@ test("Upgrades an application", async () => {
     testName,
   );
 
-  console.log(`apache initialPackageVersion: ${initialPackageVersion}, latestPackageVersion: ${latestPackageVersion}`);
+  console.log(
+    `apache initialPackageVersion: ${initialPackageVersion}, latestPackageVersion: ${latestPackageVersion}`,
+  );
 
   // select the initialPackageVersion
   await expect(page).toSelect('select[name="package-versions"]', initialPackageVersion);

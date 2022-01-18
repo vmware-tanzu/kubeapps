@@ -908,7 +908,7 @@ paths:
             text/plain:
               schema:
                 type: string
-  
+
   # Temporarily manually extracted from /cmd/kubeapps-apis/docs/kubeapps-apis.swagger.json
   /apis/core/packages/v1alpha1/availablepackages:
     get:

@@ -573,7 +573,7 @@ local_e2e_steps: &local_e2e_steps
     - run:
         name: Print k8s KubeappsAPIs logs if the tests fail
         command: |
-            kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
+          kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
         when: on_fail
     - store_artifacts:
         path: integration/reports

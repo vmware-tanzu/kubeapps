@@ -98,7 +98,9 @@ test("Creates a private registry", async () => {
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the resources API to get info of the
   // deployment
-  const URL = getUrl(`/apis/plugins/resources/v1alpha1/helm.packages/v1alpha1/c/default/ns/default/${appName}`);
+  const URL = getUrl(
+    `/apis/plugins/resources/v1alpha1/helm.packages/v1alpha1/c/default/ns/default/${appName}`,
+  );
 
   const cookies = await page.cookies();
   const axiosConfig = {
@@ -111,15 +113,18 @@ test("Creates a private registry", async () => {
   expect(response.status).toEqual(200);
 
   let deployment;
-  response.data.trim().split(/\r?\n/).forEach(r => {
-    // Axios doesn't provide streaming responses, so splitting on new line works
-    // but gives us a string, not JSON, and may leave a blank line at the end.
-    const response = JSON.parse(r);
-    const resourceRef = response.result?.resourceRef;
-    if (resourceRef.kind === "Deployment" && resourceRef.name.match(appName)) {
-      deployment = JSON.parse(response.result?.manifest)
-    }
-  });
+  response.data
+    .trim()
+    .split(/\r?\n/)
+    .forEach(r => {
+      // Axios doesn't provide streaming responses, so splitting on new line works
+      // but gives us a string, not JSON, and may leave a blank line at the end.
+      const response = JSON.parse(r);
+      const resourceRef = response.result?.resourceRef;
+      if (resourceRef.kind === "Deployment" && resourceRef.name.match(appName)) {
+        deployment = JSON.parse(response.result?.manifest);
+      }
+    });
 
   expect(deployment?.spec?.template?.spec?.imagePullSecrets).toEqual([{ name: secret }]);
 
@@ -147,17 +152,12 @@ test("Creates a private registry", async () => {
   // but going back to the previous version
   await new Promise(r => setTimeout(r, 1000));
 
-  await expect(page).toSelect(
-    'select[name="package-versions"]',
-    "8.6.3",
-  );
+  await expect(page).toSelect('select[name="package-versions"]', "8.6.3");
 
   await new Promise(r => setTimeout(r, 1000));
 
   // Ensure that the new value is selected
-  packageVersionElement = await expect(page).toMatchElement(
-    'select[name="package-versions"]',
-  );
+  packageVersionElement = await expect(page).toMatchElement('select[name="package-versions"]');
   packageVersionElementContent = await packageVersionElement.getProperty("value");
   packageVersionValue = await packageVersionElementContent.jsonValue();
   expect(packageVersionValue).toEqual("8.6.3");

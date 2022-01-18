@@ -111,7 +111,7 @@ kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 and then curling or grpcurling in another:
 
 ```bash
-# TOKEN value comes from the k8s secret associated with the service account of the user on behalf of which the call below is made 
+# TOKEN value comes from the k8s secret associated with the service account of the user on behalf of which the call below is made
 $ export TOKEN="Bearer eyJhbGciO..."
 $ curl -s http://localhost:8080/plugins/fluxv2/packages/v1alpha1/packagerepositories?context.cluster=default -H "Authorization: $TOKEN" | jq .
 {
@@ -136,6 +136,7 @@ $ curl -s http://localhost:8080/plugins/kapp_controller/packages/v1alpha1/packag
 ```
 
 Here is an example that shows how to use grpcurl to get the details on package "bitnami/apache" from helm plugin
+
 ```bash
 $ export token="Bearer eyJhbGciO..."
 $ grpcurl -plaintext -d '{"available_package_ref": {"context": {"cluster": "default", "namespace": "kubeapps"}, "plugin": {"name": "helm.packages", "version": "v1alpha1"}, "identifier": "bitnami/apache"}}' -H "Authorization: $token" localhost:8080 kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageDetail
