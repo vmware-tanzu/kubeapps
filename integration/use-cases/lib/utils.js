@@ -42,8 +42,8 @@ module.exports = {
   doAction: async (action) => {
     await Promise.all([
       action,
-      page.waitForNavigation({waitUntil: WAIT_EVENT_NETWORK}),
-      page.waitForNavigation({waitUntil: WAIT_EVENT_DOM})
+      page.waitForNavigation({ waitUntil: WAIT_EVENT_NETWORK }),
+      page.waitForNavigation({ waitUntil: WAIT_EVENT_DOM })
     ]);
   },
   login: async (page, isOIDC, uri, token, username, password) => {
@@ -61,7 +61,7 @@ module.exports = {
         text: "Log in with Email",
       });
 
-      await page.waitForNavigation({waitUntil: WAIT_EVENT_NETWORK});
+      await page.waitForNavigation({ waitUntil: WAIT_EVENT_NETWORK });
       await page.waitForSelector("#submit-login", {
         visible: true,
         timeout: 10000,
@@ -80,14 +80,14 @@ module.exports = {
         text: "Grant Access",
       });
       await doAction(page.click('.dex-container button[type="submit"]'));
-      
+
       // Navigation back in Kubeapps
       await page.waitForSelector(".kubeapps-header-content", {
         visible: true,
         timeout: 10000,
       });
       if (uri !== "/") {
-        await doAction(page.goto(getUrl(uri)));   
+        await doAction(page.goto(getUrl(uri)));
       }
     } else {
       await expect(page).toFillForm("form", {
