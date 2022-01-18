@@ -1,2 +1,2 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright XXXX-YYYY the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
