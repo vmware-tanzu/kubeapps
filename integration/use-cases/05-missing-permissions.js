@@ -26,5 +26,5 @@ test("Fails to deploy an application due to missing permissions", async () => {
   page.waitForTimeout(3000);
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await expect(page).toMatch("unable to read secret", { timeout: 60000 });
+  await expect(page).toMatch("Missing permissions", { timeout: 60000 });
 });
