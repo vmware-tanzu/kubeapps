@@ -63,8 +63,6 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("a", { text: repoName });
 
-  await page.waitForNavigation({ waitUntil: "networkidle0" });
-
   await utils.retryAndRefresh(
     page,
     3,
