@@ -2,37 +2,37 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.17.3"
+    default: "1.17.6"
   NODE_VERSION:
     type: string
     default: "16"
   RUST_VERSION:
     type: string
-    default: "1.56.1"
+    default: "1.58.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.7"
   HELM_VERSION_MIN:
     type: "string"
-    default: "v3.1.0"
+    default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.7.1"
+    default: "v3.7.2"
   OLM_VERSION:
     type: "string"
-    default: "v0.19.1"
+    default: "v0.20.0"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.3"
+    default: "v1.22.5"
   GITHUB_VERSION:
     type: "string"
-    default: "2.2.0"
+    default: "2.4.0"
   SEMVER_VERSION:
     type: "string"
-    default: "3.2.0"
+    default: "3.3.0"
   KIND_VERSION:
     type: "string"
     default: "v0.11.1"
