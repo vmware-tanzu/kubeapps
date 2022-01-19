@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@jest/test-sequencer": "^27.4.6",
-    "axios": "^0.24.0",
+    "axios": "^0.25.0",
     "expect-puppeteer": "^6.0.2",
     "jest": "^27.4.7",
     "jest-circus": "^27.4.6",
