@@ -682,7 +682,6 @@ jobs:
             ./script/create_release.sh ${CIRCLE_TAG} << pipeline.parameters.KUBEAPPS_REPO >>
   local_e2e_tests:
     machine: true
-    resource_class: medium+
     environment:
       DEFAULT_DEX_IP: "172.18.0.2"
       TEST_UPGRADE: "1"

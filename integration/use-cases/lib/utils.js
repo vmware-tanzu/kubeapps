@@ -40,13 +40,12 @@ module.exports = {
     }
   },
   doAction: async (name, action) => {
-    console.log(name);
     await Promise.all([
       action,
       page.waitForNavigation({ waitUntil: WAIT_EVENT_NETWORK }),
       page.waitForNavigation({ waitUntil: WAIT_EVENT_DOM })
-    ]).catch(function(err) {
-      console.log(`ERROR (${name}): ${err.message}`);
+    ]).catch(function(e) {
+      console.log(`ERROR (${name}): ${e.message}`);
       module.exports.takeScreenShot(name.replace(/\s/g, ''));
       throw e;
     });
