@@ -43,10 +43,10 @@ import (
 
 const (
 	// max number of retries to process one cache entry due to transient errors
-	namespacedResourceWatcherCacheMaxRetries = 5
+	maxWatcherCacheRetries = 5
 	// max number of attempts to resync before giving up
-	namespacedResourceWatcherCacheMaxResyncBackoff = 2
-	keySegmentsSeparator                           = ":"
+	maxWatcherCacheResyncBackoff = 2
+	KeySegmentsSeparator         = ":"
 )
 
 var (
@@ -262,8 +262,8 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	if err == nil {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
-	} else if c.queue.NumRequeues(key) < namespacedResourceWatcherCacheMaxRetries {
-		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, namespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
+	} else if c.queue.NumRequeues(key) < maxWatcherCacheRetries {
+		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, maxWatcherCacheRetries-c.queue.NumRequeues(key), err)
 		c.queue.AddRateLimited(key)
 	} else {
 		// err != nil and too many retries
@@ -306,7 +306,7 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 
 			err = fmt.Errorf(
 				"[%s]: Watch loop has been stopped after [%d] retries were exhausted, last error: %v",
-				c.queue.Name(), namespacedResourceWatcherCacheMaxRetries, err)
+				c.queue.Name(), maxWatcherCacheRetries, err)
 			// yes, I really want this to panic. Something is seriously wrong
 			// possibly restarting plugin/kubeapps-apis server is needed...
 			defer runtime.Must(err)
@@ -332,7 +332,7 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 	var resourceVersion string
 
 	// max backoff is 2^(NamespacedResourceWatcherCacheMaxResyncBackoff) seconds
-	for i := 0; i < namespacedResourceWatcherCacheMaxResyncBackoff; i++ {
+	for i := 0; i < maxWatcherCacheResyncBackoff; i++ {
 		if resourceVersion, err = c.resync(bootstrap); err != nil {
 			runtime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
 		} else if watcher, err = watchutil.NewRetryWatcher(resourceVersion, c); err != nil {
@@ -838,16 +838,16 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 	// We will use "helmrepositories:ns:repoName"
 	return fmt.Sprintf("%s%s%s%s%s",
 		c.config.Gvr.Resource,
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		name.Namespace,
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		name.Name)
 }
 
 // the opposite of keyFor()
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
-	parts := strings.Split(key, keySegmentsSeparator)
+	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}

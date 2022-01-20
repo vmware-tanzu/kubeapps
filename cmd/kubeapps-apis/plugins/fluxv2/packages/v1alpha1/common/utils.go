@@ -90,7 +90,7 @@ func PrettyPrintMap(m map[string]interface{}) string {
 // representing the page of results.
 // TODO(gfichtenholt): it'd be better if we ensure that the page_token
 // contains an offset to the item, not the page so we can
-// aggregate paginated results. Same as helm hlug-in.
+// aggregate paginated results. Same as helm plug-in.
 // Update this when helm plug-in does so
 func PageOffsetFromPageToken(pageToken string) (int, error) {
 	if pageToken == "" {
@@ -101,21 +101,6 @@ func PageOffsetFromPageToken(pageToken string) (int, error) {
 		return 0, err
 	}
 	return int(offset), nil
-}
-
-// GetUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
-// also checks that the chart ID is in the expected format, namely "repoName/chartName"
-func GetUnescapedChartID(chartID string) (string, error) {
-	unescapedChartID, err := url.QueryUnescape(chartID)
-	if err != nil {
-		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
-	}
-	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	if len(chartIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
-	}
-	return unescapedChartID, nil
 }
 
 // Confirm the state we are observing is for the current generation

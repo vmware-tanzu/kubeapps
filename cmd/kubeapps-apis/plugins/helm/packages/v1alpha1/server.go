@@ -29,7 +29,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
@@ -79,13 +79,13 @@ type Server struct {
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
 	chartClientFactory       chartutils.ChartClientFactoryInterface
-	versionsInSummary        packageutils.VersionsInSummary
+	versionsInSummary        pkgutils.VersionsInSummary
 	timeoutSeconds           int32
 	createReleaseFunc        createRelease
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary, int32, error) {
+func parsePluginConfig(pluginConfigPath string) (pkgutils.VersionsInSummary, int32, error) {
 
 	// Note at present VersionsInSummary is the only configurable option for this plugin,
 	// and if required this func can be enhaned to return helmConfig struct
@@ -96,7 +96,7 @@ func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary,
 		Core struct {
 			Packages struct {
 				V1alpha1 struct {
-					VersionsInSummary packageutils.VersionsInSummary
+					VersionsInSummary pkgutils.VersionsInSummary
 					TimeoutSeconds    int32 `json:"timeoutSeconds"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
@@ -106,11 +106,11 @@ func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary,
 
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
 	}
 
 	// return configured value
@@ -138,7 +138,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
-	versionsInSummary := packageutils.GetDefaultVersionsInSummary()
+	versionsInSummary := pkgutils.GetDefaultVersionsInSummary()
 	timeoutSeconds := DefaultTimeoutSeconds
 	if pluginConfigPath != "" {
 		versionsInSummary, timeoutSeconds, err = parsePluginConfig(pluginConfigPath)
@@ -297,7 +297,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// Convert the charts response into a GetAvailablePackageSummariesResponse
 	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, chart := range charts {
-		pkg, err := packageutils.AvailablePackageSummaryFromChart(chart, GetPluginDetail())
+		pkg, err := pkgutils.AvailablePackageSummaryFromChart(chart, GetPluginDetail())
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
 		}
@@ -337,20 +337,6 @@ func pageOffsetFromPageToken(pageToken string) (int, error) {
 	return int(offset), nil
 }
 
-// getUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
-func getUnescapedChartID(chartID string) (string, error) {
-	unescapedChartID, err := url.QueryUnescape(chartID)
-	if err != nil {
-		return "", status.Errorf(codes.InvalidArgument, "Unable to decode chart ID chart: %v", chartID)
-	}
-	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	if len(chartIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect request.AvailablePackageRef.Identifier, currently just 'foo/bar' patters are supported: %s", chartID)
-	}
-	return unescapedChartID, nil
-}
-
 // GetAvailablePackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
@@ -375,7 +361,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	unescapedChartID, err := getUnescapedChartID(request.AvailablePackageRef.Identifier)
+	unescapedChartID, err := pkgutils.GetUnescapedChartID(request.AvailablePackageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -441,7 +427,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return nil, err
 	}
 
-	unescapedChartID, err := getUnescapedChartID(request.GetAvailablePackageRef().GetIdentifier())
+	unescapedChartID, err := pkgutils.GetUnescapedChartID(request.GetAvailablePackageRef().GetIdentifier())
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +439,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	}
 
 	return &corev1.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: packageutils.PackageAppVersionsSummary(chart.ChartVersions, s.versionsInSummary),
+		PackageAppVersions: pkgutils.PackageAppVersionsSummary(chart.ChartVersions, s.versionsInSummary),
 	}, nil
 }
 
@@ -461,7 +447,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.ChartFiles) (*corev1.AvailablePackageDetail, error) {
 	pkg := &corev1.AvailablePackageDetail{}
 
-	isValid, err := packageutils.IsValidChart(chart)
+	isValid, err := pkgutils.IsValidChart(chart)
 	if !isValid || err != nil {
 		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
 	}
@@ -756,16 +742,6 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 	}, nil
 }
 
-func splitChartIdentifier(chartID string) (repoName, chartName string, err error) {
-	// getUnescapedChartID also ensures that there are two parts (ie. repo/chart-name only)
-	unescapedChartID, err := getUnescapedChartID(chartID)
-	if err != nil {
-		return "", "", err
-	}
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	return chartIDParts[0], chartIDParts[1], nil
-}
-
 // CreateInstalledPackage creates an installed package.
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
@@ -777,7 +753,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 	chartID := request.GetAvailablePackageRef().GetIdentifier()
 	repoNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
-	repoName, chartName, err := splitChartIdentifier(chartID)
+	repoName, chartName, err := pkgutils.SplitChartIdentifier(chartID)
 	if err != nil {
 		return nil, err
 	}
@@ -849,7 +825,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
 	chartID := availablePkgRef.GetIdentifier()
-	repoName, chartName, err := splitChartIdentifier(chartID)
+	repoName, chartName, err := pkgutils.SplitChartIdentifier(chartID)
 	if err != nil {
 		return nil, err
 	}

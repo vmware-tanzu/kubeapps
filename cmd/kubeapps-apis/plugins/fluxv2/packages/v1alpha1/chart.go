@@ -22,7 +22,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
@@ -217,7 +217,7 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 			if passesFilter(chart, filters) {
 				i++
 				if startAt < i {
-					pkg, err := packageutils.AvailablePackageSummaryFromChart(&chart, GetPluginDetail())
+					pkg, err := pkgutils.AvailablePackageSummaryFromChart(&chart, GetPluginDetail())
 					if err != nil {
 						return nil, status.Errorf(
 							codes.Internal,

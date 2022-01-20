@@ -33,7 +33,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeapps/kubeapps/pkg/agent"
@@ -272,7 +272,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
-		versionsInSummary:  packageutils.GetDefaultVersionsInSummary(),
+		versionsInSummary:  pkgutils.GetDefaultVersionsInSummary(),
 		createReleaseFunc:  agent.CreateRelease,
 	}, mock, cleanup
 }
@@ -1142,13 +1142,13 @@ func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		pluginYAMLConf          []byte
-		exp_versions_in_summary packageutils.VersionsInSummary
+		exp_versions_in_summary pkgutils.VersionsInSummary
 		exp_error_str           string
 	}{
 		{
 			name:                    "non existing plugin-config file",
 			pluginYAMLConf:          nil,
-			exp_versions_in_summary: packageutils.VersionsInSummary{0, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{0, 0, 0},
 			exp_error_str:           "no such file or directory",
 		},
 		{
@@ -1162,7 +1162,7 @@ core:
         minor: 2
         patch: 1
       `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{4, 2, 1},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{4, 2, 1},
 			exp_error_str:           "",
 		},
 		{
@@ -1174,7 +1174,7 @@ core:
       versionsInSummary:
         major: 1
         `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{1, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{1, 0, 0},
 			exp_error_str:           "",
 		},
 		{
@@ -1188,11 +1188,11 @@ core:
         minor: 2
         patch: 1-IFC-123
       `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{},
 			exp_error_str:           "json: cannot unmarshal",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
@@ -1249,7 +1249,7 @@ core:
 			exp_error_str: "",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""

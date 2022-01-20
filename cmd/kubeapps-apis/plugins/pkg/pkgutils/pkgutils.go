@@ -10,9 +10,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package packageutils
+/*
+ Utility functions that apply to "packages", e.g. helm charts or carvel packages
+*/
+package pkgutils
 
 import (
+	"net/url"
+	"strings"
+
 	"github.com/Masterminds/semver"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -174,3 +180,28 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 //   parsed chart YAML file, which this implementation chooses to ignore.
 // I did consider using flux's implementation of AvailablePackageDetailFromChart but did not feel comfortable
 // chaning helm plugin to use it before talking to @minelson
+
+// GetUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
+// also checks that the chart ID is in the expected format, namely "repoName/chartName"
+func GetUnescapedChartID(chartID string) (string, error) {
+	unescapedChartID, err := url.QueryUnescape(chartID)
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
+	}
+	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
+	chartIDParts := strings.Split(unescapedChartID, "/")
+	if len(chartIDParts) != 2 {
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
+	}
+	return unescapedChartID, nil
+}
+
+func SplitChartIdentifier(chartID string) (repoName, chartName string, err error) {
+	// getUnescapedChartID also ensures that there are two parts (ie. repo/chart-name only)
+	unescapedChartID, err := GetUnescapedChartID(chartID)
+	if err != nil {
+		return "", "", err
+	}
+	chartIDParts := strings.Split(unescapedChartID, "/")
+	return chartIDParts[0], chartIDParts[1], nil
+}

@@ -30,7 +30,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -216,13 +216,13 @@ func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		pluginYAMLConf          []byte
-		exp_versions_in_summary packageutils.VersionsInSummary
+		exp_versions_in_summary pkgutils.VersionsInSummary
 		exp_error_str           string
 	}{
 		{
 			name:                    "non existing plugin-config file",
 			pluginYAMLConf:          nil,
-			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 0, Minor: 0, Patch: 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 0, Minor: 0, Patch: 0},
 			exp_error_str:           "no such file or directory",
 		},
 		{
@@ -236,7 +236,7 @@ core:
         minor: 2
         patch: 1
       `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 4, Minor: 2, Patch: 1},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 4, Minor: 2, Patch: 1},
 			exp_error_str:           "",
 		},
 		{
@@ -248,7 +248,7 @@ core:
       versionsInSummary:
         major: 1
         `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 1, Minor: 0, Patch: 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 1, Minor: 0, Patch: 0},
 			exp_error_str:           "",
 		},
 		{
@@ -262,11 +262,11 @@ core:
         minor: 2
         patch: 1-IFC-123
       `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{},
 			exp_error_str:           "json: cannot unmarshal",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
@@ -324,7 +324,7 @@ core:
 			exp_error_str: "",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
@@ -490,7 +490,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		repoCache:         repoCache,
 		chartCache:        chartCache,
 		kubeappsCluster:   KubeappsCluster,
-		versionsInSummary: packageutils.GetDefaultVersionsInSummary(),
+		versionsInSummary: pkgutils.GetDefaultVersionsInSummary(),
 	}
 	return s, mock, nil
 }

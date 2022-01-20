@@ -17,7 +17,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -34,7 +33,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -59,7 +58,7 @@ type Server struct {
 	repoCache  *cache.NamespacedResourceWatcherCache
 	chartCache *cache.ChartCache
 
-	versionsInSummary packageutils.VersionsInSummary
+	versionsInSummary pkgutils.VersionsInSummary
 	timeoutSeconds    int32
 }
 
@@ -81,7 +80,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 	} else {
 		// If no config is provided, we default to the existing values for backwards
 		// compatibility.
-		versionsInSummary := packageutils.GetDefaultVersionsInSummary()
+		versionsInSummary := pkgutils.GetDefaultVersionsInSummary()
 		timeoutSecs := int32(-1)
 		if pluginConfigPath != "" {
 			versionsInSummary, timeoutSecs, err = parsePluginConfig(pluginConfigPath)
@@ -269,14 +268,13 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
+	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
-	packageIdParts := strings.Split(unescapedChartID, "/")
 
 	// check specified repo exists and is in ready state
-	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
+	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
 
 	// this verifies that the repo exists
 	repoUnstructured, err := s.getRepoInCluster(ctx, repo)
@@ -284,7 +282,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	pkgDetail, err := s.availableChartDetail(ctx, repo, packageIdParts[1], request.GetPkgVersion())
+	pkgDetail, err := s.availableChartDetail(ctx, repo, chartName, request.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -330,21 +328,20 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 			cluster)
 	}
 
-	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
+	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("Requesting chart [%s] in namespace [%s]", unescapedChartID, namespace)
-	packageIdParts := strings.Split(unescapedChartID, "/")
-	repo := types.NamespacedName{Namespace: namespace, Name: packageIdParts[0]}
-	chart, err := s.getChart(ctx, repo, packageIdParts[1])
+	log.Infof("Requesting chart [%s] in namespace [%s]", chartName, namespace)
+	repo := types.NamespacedName{Namespace: namespace, Name: repoName}
+	chart, err := s.getChart(ctx, repo, chartName)
 	if err != nil {
 		return nil, err
 	} else if chart != nil {
 		// found it
 		return &corev1.GetAvailablePackageVersionsResponse{
-			PackageAppVersions: packageutils.PackageAppVersionsSummary(
+			PackageAppVersions: pkgutils.PackageAppVersionsSummary(
 				chart.ChartVersions,
 				s.versionsInSummary),
 		}, nil
@@ -578,7 +575,7 @@ func GetPluginDetail() *plugins.Plugin {
 
 // parsePluginConfig parses the input plugin configuration json file and return the
 // configuration options.
-func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary, int32, error) {
+func parsePluginConfig(pluginConfigPath string) (pkgutils.VersionsInSummary, int32, error) {
 	// Note at present VersionsInSummary is the only configurable option for this plugin,
 	// and if required this func can be enhaned to return helmConfig struct
 
@@ -588,7 +585,7 @@ func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary,
 		Core struct {
 			Packages struct {
 				V1alpha1 struct {
-					VersionsInSummary packageutils.VersionsInSummary
+					VersionsInSummary pkgutils.VersionsInSummary
 					TimeoutSeconds    int32 `json:"timeoutSeconds"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
@@ -598,11 +595,11 @@ func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary,
 
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
 	}
 
 	// return configured value

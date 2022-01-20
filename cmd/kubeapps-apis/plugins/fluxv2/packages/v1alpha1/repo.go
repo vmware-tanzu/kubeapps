@@ -407,7 +407,7 @@ func (s *repoEventSink) onResync() error {
 // basically repeat same logic as NamespacedResourceWatcherCache.fromKey() but can't
 // quite come up with with a more elegant alternative right now
 func (c *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
-	parts := strings.Split(key, ":")
+	parts := strings.Split(key, cache.KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != fluxHelmRepositories || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
