@@ -50,13 +50,13 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-redis/redismock/v8 v8.0.6
-	github.com/google/go-cmp v0.5.6
+	github.com/google/go-cmp v0.5.7
 	github.com/gorilla/mux v1.8.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.2
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.3
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.6
-	github.com/jinzhu/copier v0.3.4
+	github.com/jinzhu/copier v0.3.5
 	github.com/lib/pq v1.10.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.2
