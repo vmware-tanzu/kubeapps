@@ -15,7 +15,7 @@ import { createMemoryHistory } from "history";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { MemoryRouter, Route, Router } from "react-router";
+import { MemoryRouter, Route, Router } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";

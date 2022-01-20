@@ -8,7 +8,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import * as ReactRouter from "react-router";
+import * as ReactRouter from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
