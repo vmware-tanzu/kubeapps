@@ -13,10 +13,14 @@ redis:
   master: 
     extraFlags:
       ## Intentionally a small number to test scenarios where cache eviction policies kick in
-      - "--maxmemory 15mb"
-      - "--maxmemory-policy allkeys-lru"
+      - "--maxmemory 30mb"
+      # It doesn't matter which policy is used in production, but for integration testing I've 
+      # found that allkeys-lfu behaves more predicably than allkeys-lru in the sense that 
+      # it is more likely to evict entries in FIFO order
+      # ref: http://antirez.com/news/109
+      - "--maxmemory-policy allkeys-lfu"
   replica:
     extraFlags:
       ## Intentionally a small number to test scenarios where cache eviction policies kick in
-      - "--maxmemory 15mb"
-      - "--maxmemory-policy allkeys-lru"
+      - "--maxmemory 30mb"
+      - "--maxmemory-policy allkeys-lfu"

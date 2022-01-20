@@ -33,7 +33,23 @@ const defaultState = {
   auth: { authenticated: true },
 };
 
-it("fetch resource kinds", () => {
-  mountWrapper(getStore(defaultState), <Layout />);
+it("fetches resource kinds when operators enabled", () => {
+  const state = {
+    ...defaultState,
+    config: {
+      featureFlags: {
+        operators: true,
+      },
+    },
+  };
+
+  mountWrapper(getStore(state), <Layout />);
+
   expect(actions.kube.getResourceKinds).toHaveBeenCalled();
+});
+
+it("does not fetch resource kinds when operators disaabled", () => {
+  mountWrapper(getStore(defaultState), <Layout />);
+
+  expect(actions.kube.getResourceKinds).not.toHaveBeenCalled();
 });
