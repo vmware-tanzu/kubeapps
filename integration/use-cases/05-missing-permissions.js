@@ -1,7 +1,8 @@
 const utils = require("./lib/utils");
 const testName = "05-missing-permissions";
 
-/* test("Fails to deploy an application due to missing permissions", async () => {
+test("Fails to deploy an application due to missing permissions", async () => {
+  /* 
   await utils.login(
     page,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -27,4 +28,5 @@ const testName = "05-missing-permissions";
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
   await expect(page).toMatch("Missing permissions", { timeout: 60000 });
-}); */
+  */
+});
