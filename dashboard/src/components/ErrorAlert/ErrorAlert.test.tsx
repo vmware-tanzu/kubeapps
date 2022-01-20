@@ -9,6 +9,24 @@ describe("Error Alert", () => {
     expect(wrapper.text()).toContain("foo");
   });
 
+  it("should handle empty strings", () => {
+    const error = "";
+    const wrapper = mount(<ErrorAlert>{error}</ErrorAlert>);
+    expect(wrapper.text()).toContain("");
+  });
+
+  it("should handle empty string Error", () => {
+    const error = new Error("");
+    const wrapper = mount(<ErrorAlert>{error}</ErrorAlert>);
+    expect(wrapper.text()).toContain("");
+  });
+
+  it("should handle empty Error", () => {
+    const error = new Error();
+    const wrapper = mount(<ErrorAlert>{error}</ErrorAlert>);
+    expect(wrapper.text()).toContain("");
+  });
+
   it("should render string messages without breaklines", () => {
     const wrapper = mount(
       <ErrorAlert>Error ocurred: Another error message. Yet another msg.</ErrorAlert>,

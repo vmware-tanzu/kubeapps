@@ -18,4 +18,18 @@ describe("RpcError", () => {
     expect(rpcError.code).toBe("");
     expect(rpcError.desc).toBe("");
   });
+
+  it("handles correctly an empty string as param", () => {
+    const rpcError = new RpcError(new Error(""));
+    expect(rpcError.message).toBe("");
+    expect(rpcError.code).toBe("");
+    expect(rpcError.desc).toBe("");
+  });
+
+  it("handles correctly undefined param", () => {
+    const rpcError = new RpcError(new Error(undefined));
+    expect(rpcError.message).toBe("");
+    expect(rpcError.code).toBe("");
+    expect(rpcError.desc).toBe("");
+  });
 });
