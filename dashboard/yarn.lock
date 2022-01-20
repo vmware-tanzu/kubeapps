@@ -1828,17 +1828,17 @@
     mkdirp "^1.0.4"
     rimraf "^3.0.2"
 
-"@paciolan/remote-component@^2.12.0":
-  version "2.12.0"
-  resolved "https://registry.yarnpkg.com/@paciolan/remote-component/-/remote-component-2.12.0.tgz#6072f0a953d74323362bc9a8bc17d91a354be061"
-  integrity sha512-0KX6ftbdCRWoP288QBvRh3iT42aKU5aOXVe2HR4YwZQnEYuePZ/ge4orSKouvUnTEBxiQjT9Xk+jCep9kmS5NQ==
+"@paciolan/remote-component@^2.12.1":
+  version "2.12.1"
+  resolved "https://registry.yarnpkg.com/@paciolan/remote-component/-/remote-component-2.12.1.tgz#5d286349f3796cc10e0d4ee54de19e410643749b"
+  integrity sha512-UPU2ApOo2nYaFE9+uPJQXLzQizMGPcwP559c7iK5tJaaI5SHKtfBqh45bFWsQzJB8mOKxUv+REZe8qxa4eqcYw==
   dependencies:
-    "@paciolan/remote-module-loader" "^3.0.1"
+    "@paciolan/remote-module-loader" "^3.0.2"
 
-"@paciolan/remote-module-loader@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@paciolan/remote-module-loader/-/remote-module-loader-3.0.1.tgz#2c0ff79763991e81cbb39556c12bc7319979592f"
-  integrity sha512-zruys/MHu+nNa6nbxmPJo9GYkS1LtXBHc76tD70GbMdZebOwePoFsetFCh8nmhD0T0fiiY9YHyoSyohTNvXx1A==
+"@paciolan/remote-module-loader@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@paciolan/remote-module-loader/-/remote-module-loader-3.0.2.tgz#e07a24d5c8e80b6e02f978f9dc3290d5382aa559"
+  integrity sha512-1mL9xTkdp/M1TlRBYWsK5k8Lo7ErpWGkxTlMg1oqEnEn/lSNLqRR7Ah2QK9dGjQnxiKlQ+TkJk9gg21A7Y1W0w==
 
 "@pmmmwh/react-refresh-webpack-plugin@0.4.3":
   version "0.4.3"
