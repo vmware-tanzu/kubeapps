@@ -18,12 +18,19 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
 )
 
 const (
-	DefaultAppVersion = "1.2.6"
+	DefaultAppVersion       = "1.2.6"
+	DefaultChartDescription = "default chart description"
+	DefaultChartIconURL     = "https://example.com/chart.svg"
+	DefaultChartHomeURL     = "https://helm.sh/helm"
+	DefaultChartCategory    = "cat1"
 )
 
 func TestPackageAppVersionsSummary(t *testing.T) {
@@ -480,6 +487,119 @@ func TestIsValidChart(t *testing.T) {
 			res, err := IsValidChart(tc.in)
 			if got, want := res, tc.expected; got != want {
 				t.Fatalf("got: %+v, want: %+v, res: %+v (%+v)", got, want, res, err)
+			}
+		})
+	}
+}
+
+func TestAvailablePackageSummaryFromChart(t *testing.T) {
+	invalidChart := &models.Chart{Name: "foo"}
+
+	testCases := []struct {
+		name       string
+		in         *models.Chart
+		expected   *corev1.AvailablePackageSummary
+		statusCode codes.Code
+	}{
+		{
+			name: "it returns a complete AvailablePackageSummary for a complete chart",
+			in: &models.Chart{
+				Name:        "foo",
+				ID:          "foo/bar",
+				Category:    DefaultChartCategory,
+				Description: "best chart",
+				Icon:        "foo.bar/icon.svg",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
+				ChartVersions: []models.ChartVersion{
+					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+					{Version: "1.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
+				},
+			},
+			expected: &corev1.AvailablePackageSummary{
+				Name:        "foo",
+				DisplayName: "foo",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				IconUrl:          "foo.bar/icon.svg",
+				ShortDescription: "best chart",
+				Categories:       []string{DefaultChartCategory},
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it returns a valid AvailablePackageSummary if the minimal chart is correct",
+			in: &models.Chart{
+				Name: "foo",
+				ID:   "foo/bar",
+				Repo: &models.Repo{
+					Name:      "bar",
+					Namespace: "my-ns",
+				},
+				ChartVersions: []models.ChartVersion{
+					{
+						Version:    "3.0.0",
+						AppVersion: DefaultAppVersion,
+					},
+				},
+			},
+			expected: &corev1.AvailablePackageSummary{
+				Name:        "foo",
+				DisplayName: "foo",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Categories: []string{""},
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "foo/bar",
+					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it returns internal error if empty chart",
+			in:         &models.Chart{},
+			statusCode: codes.Internal,
+		},
+		{
+			name:       "it returns internal error if chart is invalid",
+			in:         invalidChart,
+			statusCode: codes.Internal,
+		},
+	}
+
+	pluginDetail := plugins.Plugin{
+		Name:    "helm.packages",
+		Version: "v1alpha1",
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			availablePackageSummary, err := AvailablePackageSummaryFromChart(tc.in, &pluginDetail)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
+				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				}
 			}
 		})
 	}

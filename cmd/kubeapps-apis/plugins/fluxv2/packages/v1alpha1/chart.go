@@ -145,34 +145,6 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 	return nil, nil
 }
 
-// availablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
-func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
-	pkg := &corev1.AvailablePackageSummary{}
-
-	isValid, err := packageutils.IsValidChart(chart)
-	if !isValid || err != nil {
-		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
-	}
-
-	pkg.DisplayName = chart.Name
-	pkg.IconUrl = chart.Icon
-	pkg.ShortDescription = chart.Description
-
-	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
-		Identifier: chart.ID,
-		Plugin:     GetPluginDetail(),
-	}
-	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
-
-	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.LatestVersion = &corev1.PackageAppVersion{
-			PkgVersion: chart.ChartVersions[0].Version,
-			AppVersion: chart.ChartVersions[0].AppVersion,
-		}
-	}
-	return pkg, nil
-}
-
 func passesFilter(chart models.Chart, filters *corev1.FilterOptions) bool {
 	if filters == nil {
 		return true
@@ -245,7 +217,7 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 			if passesFilter(chart, filters) {
 				i++
 				if startAt < i {
-					pkg, err := availablePackageSummaryFromChart(&chart)
+					pkg, err := packageutils.AvailablePackageSummaryFromChart(&chart, GetPluginDetail())
 					if err != nil {
 						return nil, status.Errorf(
 							codes.Internal,

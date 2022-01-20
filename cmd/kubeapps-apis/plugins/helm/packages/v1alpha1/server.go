@@ -297,7 +297,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// Convert the charts response into a GetAvailablePackageSummariesResponse
 	responsePackages := []*corev1.AvailablePackageSummary{}
 	for _, chart := range charts {
-		pkg, err := AvailablePackageSummaryFromChart(chart)
+		pkg, err := packageutils.AvailablePackageSummaryFromChart(chart, GetPluginDetail())
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
 		}
@@ -335,39 +335,6 @@ func pageOffsetFromPageToken(pageToken string) (int, error) {
 	}
 
 	return int(offset), nil
-}
-
-// AvailablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
-func AvailablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
-	pkg := &corev1.AvailablePackageSummary{}
-
-	isValid, err := packageutils.IsValidChart(chart)
-	if !isValid || err != nil {
-		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
-	}
-
-	pkg.Name = chart.Name
-	// Helm's Chart.yaml (and hence our model) does not include a separate
-	// display name, so the chart name is also used here.
-	pkg.DisplayName = chart.Name
-	pkg.IconUrl = chart.Icon
-	pkg.ShortDescription = chart.Description
-	pkg.Categories = []string{chart.Category}
-
-	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
-		Identifier: chart.ID,
-		Plugin:     GetPluginDetail(),
-	}
-	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
-
-	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.LatestVersion = &corev1.PackageAppVersion{
-			PkgVersion: chart.ChartVersions[0].Version,
-			AppVersion: chart.ChartVersions[0].AppVersion,
-		}
-	}
-
-	return pkg, nil
 }
 
 // getUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
