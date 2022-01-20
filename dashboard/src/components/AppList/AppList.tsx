@@ -5,7 +5,7 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import ErrorAlert from "components/ErrorAlert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { push } from "connected-react-router";
 import qs from "qs";
@@ -134,7 +134,7 @@ function AppList() {
         className="margin-t-xl"
       >
         {error ? (
-          <Alert theme="danger">Unable to list apps: {error.message}</Alert>
+          <ErrorAlert>{error}</ErrorAlert>
         ) : (
           <AppListGrid
             appList={listOverview}
