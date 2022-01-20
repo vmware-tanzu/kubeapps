@@ -14,21 +14,28 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -50,13 +57,17 @@ type Server struct {
 	actionConfigGetter common.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
-	chartCache *ChartCache
+	chartCache *cache.ChartCache
+
+	versionsInSummary packageutils.VersionsInSummary
+	timeoutSeconds    int32
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string) (*Server, error) {
-	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v])", kubeappsCluster)
+func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}, pluginConfigPath string) (*Server, error) {
+	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v], pluginConfigPath: [%s]",
+		kubeappsCluster, pluginConfigPath)
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -65,18 +76,38 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 
 	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
 		return nil, err
-	} else if chartCache, err := NewChartCache(redisCli); err != nil {
+	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err
 	} else {
+		// If no config is provided, we default to the existing values for backwards
+		// compatibility.
+		versionsInSummary := packageutils.GetDefaultVersionsInSummary()
+		timeoutSecs := int32(-1)
+		if pluginConfigPath != "" {
+			versionsInSummary, timeoutSecs, err = parsePluginConfig(pluginConfigPath)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			log.Infof("+fluxv2 using custom packages config with %v\n", versionsInSummary)
+		} else {
+			log.Infof("+fluxv2 using default config since pluginConfigPath is empty")
+		}
+
+		s := repoEventSink{
+			clientGetter: common.NewBackgroundClientGetter(),
+			chartCache:   chartCache,
+		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 			Gvr:          repositoriesGvr,
-			ClientGetter: common.NewBackgroundClientGetter(),
-			OnAddFunc:    chartCache.wrapOnAddFunc(onAddRepo, onGetRepo),
-			OnModifyFunc: onModifyRepo,
-			OnGetFunc:    onGetRepo,
-			OnDeleteFunc: onDeleteRepo,
+			ClientGetter: s.clientGetter,
+			OnAddFunc:    s.onAddRepo,
+			OnModifyFunc: s.onModifyRepo,
+			OnGetFunc:    s.onGetRepo,
+			OnDeleteFunc: s.onDeleteRepo,
+			OnResyncFunc: s.onResync,
 		}
-		if repoCache, err := cache.NewNamespacedResourceWatcherCache(repoCacheConfig, redisCli); err != nil {
+		if repoCache, err := cache.NewNamespacedResourceWatcherCache(
+			"repoCache", repoCacheConfig, redisCli, stopCh); err != nil {
 			return nil, err
 		} else {
 			return &Server{
@@ -85,21 +116,28 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string)
 				repoCache:          repoCache,
 				chartCache:         chartCache,
 				kubeappsCluster:    kubeappsCluster,
+				versionsInSummary:  versionsInSummary,
+				timeoutSeconds:     timeoutSecs,
 			}, nil
 		}
 	}
 }
 
-// getDynamicClient returns a dynamic k8s client.
-func (s *Server) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
+// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
+func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
 	if s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with configGetter")
+		return nil, nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	dynamicClient, _, err := s.clientGetter(ctx)
+	typedClient, dynamicClient, apiExtClient, err := s.clientGetter(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		if status.Code(err) == codes.Unknown {
+			return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		} else {
+			// this could be codes.Unauthorized which we want to pass through
+			return nil, nil, nil, err
+		}
 	}
-	return dynamicClient, nil
+	return typedClient, dynamicClient, apiExtClient, nil
 }
 
 // ===== general note on error handling ========
@@ -131,7 +169,7 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 			request.Context.Cluster)
 	}
 
-	repos, err := s.listReposInCluster(ctx, request.Context.Namespace)
+	repos, err := s.listReposInNamespace(ctx, request.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +249,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageDetail(request: [%v])", request)
+	defer log.Infof("-fluxv2 GetAvailablePackageDetail")
 
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
@@ -245,16 +284,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	tarUrl, cleanUp, err := s.getChartTarballUrl(ctx, repoUnstructured, packageIdParts[1], request.PkgVersion)
-	if cleanUp != nil {
-		defer cleanUp()
-	}
-	if err != nil {
-		return nil, err
-	}
-	log.V(4).Infof("Found chart url: [%s] for chart [%s]", tarUrl, packageRef.Identifier)
-
-	pkgDetail, err := availablePackageDetailFromTarball(packageRef.Identifier, tarUrl)
+	pkgDetail, err := s.availableChartDetail(ctx, repo, packageIdParts[1], request.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +335,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return nil, err
 	}
 
-	log.Infof("Requesting chart [%s] (latest version) in ns [%s]", unescapedChartID, namespace)
+	log.Infof("Requesting chart [%s] in namespace [%s]", unescapedChartID, namespace)
 	packageIdParts := strings.Split(unescapedChartID, "/")
 	repo := types.NamespacedName{Namespace: namespace, Name: packageIdParts[0]}
 	chart, err := s.getChart(ctx, repo, packageIdParts[1])
@@ -314,7 +344,9 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	} else if chart != nil {
 		// found it
 		return &corev1.GetAvailablePackageVersionsResponse{
-			PackageAppVersions: packageAppVersionsSummary(chart.ChartVersions),
+			PackageAppVersions: packageutils.PackageAppVersionsSummary(
+				chart.ChartVersions,
+				s.versionsInSummary),
 		}, nil
 	} else {
 		return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
@@ -528,7 +560,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
 	}
 
-	refs, err := resourceRefsFromManifest(release.Manifest, namespace)
+	refs, err := resourcerefs.ResourceRefsFromManifest(release.Manifest, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -537,4 +569,43 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		Context:      pkgRef.GetContext(),
 		ResourceRefs: refs,
 	}, nil
+}
+
+// GetPluginDetail returns a core.plugins.Plugin describing itself.
+func GetPluginDetail() *plugins.Plugin {
+	return common.GetPluginDetail()
+}
+
+// parsePluginConfig parses the input plugin configuration json file and return the
+// configuration options.
+func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary, int32, error) {
+	// Note at present VersionsInSummary is the only configurable option for this plugin,
+	// and if required this func can be enhaned to return helmConfig struct
+
+	// In the flux plugin, for example, we are interested in config for the
+	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
+	type fluxConfig struct {
+		Core struct {
+			Packages struct {
+				V1alpha1 struct {
+					VersionsInSummary packageutils.VersionsInSummary
+					TimeoutSeconds    int32 `json:"timeoutSeconds"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"core"`
+	}
+	var config fluxConfig
+
+	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	if err != nil {
+		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+	}
+	err = json.Unmarshal([]byte(pluginConfig), &config)
+	if err != nil {
+		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+	}
+
+	// return configured value
+	return config.Core.Packages.V1alpha1.VersionsInSummary,
+		config.Core.Packages.V1alpha1.TimeoutSeconds, nil
 }

@@ -1,3 +1,6 @@
+# Turns out we don't actually need the .tgz files for the unit tests that use this file. 
+# If/when we do, you should be able to get them from 
+# https://raw.githubusercontent.com/BurdenBear/kube-charts-mirror/master/docs/
 entries:
   acs-engine-autoscaler:
     - apiVersion: v1
@@ -15,7 +18,8 @@ entries:
       sources:
         - https://github.com/wbuchwalter/Kubernetes-acs-engine-autoscaler
       urls:
-        - https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz
+        #- https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz
+        - "{{testdata/acs-engine-autoscaler-2.1.1.tgz}}"
       version: 2.1.1
   wordpress:
     - appVersion: 4.9.1
@@ -40,7 +44,8 @@ entries:
       sources:
         - https://github.com/bitnami/bitnami-docker-wordpress
       urls:
-        - https://kubernetes-charts.storage.googleapis.com/wordpress-0.7.5.tgz
+        #- https://kubernetes-charts.storage.googleapis.com/wordpress-0.7.5.tgz
+        - "{{testdata/wordpress-0.7.5.tgz}}"
       version: 0.7.5
     - appVersion: 4.9.0
       created: 2017-12-01T11:49:00.136950565Z
@@ -65,5 +70,6 @@ entries:
       sources:
         - https://github.com/bitnami/bitnami-docker-wordpress
       urls:
-        - https://kubernetes-charts.storage.googleapis.com/wordpress-0.7.4.tgz
+      #  - https://kubernetes-charts.storage.googleapis.com/wordpress-0.7.4.tgz
+        - "{{testdata/wordpress-0.7.4.tgz}}"
       version: 0.7.4

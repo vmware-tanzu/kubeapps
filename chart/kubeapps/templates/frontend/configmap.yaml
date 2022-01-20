@@ -61,19 +61,13 @@ data:
         return 200 "healthy\n";
       }
 
+      # Only proxy to k8s API endpoints if operators are enabled.
+    {{- if $.Values.featureFlags.operators }}
+
       # Ensure each cluster can be reached (should only be
       # used with an auth-proxy where k8s credentials never leave
       # the cluster). See clusters option.
     {{- range .Values.clusters }}
-      
-    {{- if not $.Values.featureFlags.operators }}
-
-      # Operators support disabled
-      location ~* /api/clusters/{{ .name }}/.*operators.coreos.com.* {
-        access_log off;
-        return 403;
-      }
-    {{- end }}
 
       location ~* /api/clusters/{{ .name }} {
     {{/* We need to split the API service URL(s) into the base url and the path segment so
@@ -111,6 +105,7 @@ data:
     {{- end }}
         include "./server_blocks/k8s-api-proxy.conf";
       }
+    {{- end }}
     {{- end }}
 
       location ~* /apis {

@@ -19,29 +19,23 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "k8s.io/klog/v2"
 )
-
-// Set the pluginDetail once during a module init function so the single struct
-// can be used throughout the plugin.
-var pluginDetail plugins.Plugin
-
-func init() {
-	pluginDetail = plugins.Plugin{
-		Name:    "fluxv2.packages",
-		Version: "v1alpha1",
-	}
-}
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
 func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.KubernetesConfigGetter,
 	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
-	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName)
+
+	// TODO (gfichtenholt) dummy channel for now. Ideally, the caller (kubeappsapis-server)
+	// passes that in and closes when is being gracefully shut down. That, or provide a
+	// 'Shutdown' hook
+	stopCh := make(chan struct{})
+
+	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName, stopCh, pluginConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +48,4 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.Kubernete
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	log.Infof("+fluxv2 RegisterHTTPHandlerFromEndpoint")
 	return v1alpha1.RegisterFluxV2PackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-}
-
-// GetPluginDetail returns a core.plugins.Plugin describing itself.
-func GetPluginDetail() *plugins.Plugin {
-	return &pluginDetail
 }
