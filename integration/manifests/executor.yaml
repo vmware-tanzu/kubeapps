@@ -18,8 +18,8 @@ spec:
             - tail
             - -f
             - /dev/null
-          image: kubeapps/integration-tests:v1.0.3
+          image: rcastelblanq/kubeapps-integration:v1.0.0-PW
           name: integration
           resources:
             requests:
-              memory: 100Mi
+              memory: 300Mi
