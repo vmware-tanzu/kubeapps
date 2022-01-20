@@ -186,7 +186,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 func GetUnescapedChartID(chartID string) (string, error) {
 	unescapedChartID, err := url.QueryUnescape(chartID)
 	if err != nil {
-		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
+		return "", status.Errorf(codes.InvalidArgument, "Unable to decode chart ID chart: %v", chartID)
 	}
 	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
 	chartIDParts := strings.Split(unescapedChartID, "/")

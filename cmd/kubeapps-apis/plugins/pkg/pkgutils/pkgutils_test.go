@@ -604,3 +604,91 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 		})
 	}
 }
+
+func TestGetUnescapedChartID(t *testing.T) {
+	testCases := []struct {
+		name       string
+		in         string
+		out        string
+		statusCode codes.Code
+	}{
+		{
+			name:       "it returns a chartID for a valid input",
+			in:         "foo/bar",
+			out:        "foo/bar",
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it returns a chartID for a valid input (2)",
+			in:         "foo%2Fbar",
+			out:        "foo/bar",
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it fails for an invalid chartID",
+			in:         "foo%ZZbar",
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			name:       "it fails for an invalid chartID (2)",
+			in:         "foo/bar/zot",
+			statusCode: codes.InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualOut, err := GetUnescapedChartID(tc.in)
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				if got, want := actualOut, tc.out; !cmp.Equal(got, want) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+				}
+			}
+		})
+	}
+}
+
+func TestSplitChartIdentifier(t *testing.T) {
+	testCases := []struct {
+		name       string
+		in         string
+		repoName   string
+		chartName  string
+		statusCode codes.Code
+	}{
+		{
+			name:       "it returns a repoName and chartName for a valid input",
+			in:         "foo/bar",
+			repoName:   "foo",
+			chartName:  "bar",
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it fails for invalid input",
+			in:         "foo/bar/zot",
+			statusCode: codes.InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repoName, chartName, err := SplitChartIdentifier(tc.in)
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				if got, want := repoName, tc.repoName; !cmp.Equal(got, want) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+				}
+				if got, want := chartName, tc.chartName; !cmp.Equal(got, want) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+				}
+			}
+		})
+	}
+}
