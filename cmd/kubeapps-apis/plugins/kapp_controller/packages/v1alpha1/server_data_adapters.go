@@ -249,8 +249,6 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 	deployStderr := ""
 	fetchStdout := ""
 	fetchStderr := ""
-	inspectStdout := ""
-	inspectStderr := ""
 
 	if app.Status.Deploy != nil {
 		deployStdout = app.Status.Deploy.Stdout
@@ -259,10 +257,6 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 	if app.Status.Fetch != nil {
 		fetchStdout = app.Status.Fetch.Stdout
 		fetchStderr = app.Status.Fetch.Stderr
-	}
-	if app.Status.Inspect != nil {
-		inspectStdout = app.Status.Inspect.Stdout
-		inspectStderr = app.Status.Inspect.Stderr
 	}
 
 	// Build some custom installation notes based on the available stdout + stderr
@@ -279,10 +273,6 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 %s
 
 
-### Inspect:
-%s
-
-
 ## Errors
 
 
@@ -294,10 +284,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 %s
 
 
-### Inspect:
-%s
-
-`, deployStdout, fetchStdout, inspectStdout, deployStderr, fetchStderr, inspectStderr)
+`, deployStdout, fetchStdout, deployStderr, fetchStderr)
 
 	if len(pkgInstall.Status.Conditions) > 1 {
 		log.Warningf("The package install %s has more than one status conditions. Using the first one: %s", pkgInstall.Name, pkgInstall.Status.Conditions[0])
