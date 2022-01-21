@@ -145,7 +145,7 @@
   }
 }
 
-.application-readme {
+@mixin default-markdown-style {
   pre {
     overflow: auto;
     padding: 0.6rem;
@@ -190,6 +190,21 @@
   img {
     max-width: 100%;
   }
+}
+
+.application-readme {
+  @include default-markdown-style;
+}
+
+.application-notes {
+  @include default-markdown-style;
+
+  display: grid;
+  padding: 0.6rem;
+  border: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
+  margin: 0.625em 0;
+  font-family: monospace;
+  white-space: pre-wrap;
 }
 
 .after-readme-button {
