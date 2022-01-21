@@ -141,6 +141,43 @@ func buildReadme(pkgMetadata *datapackagingv1alpha1.PackageMetadata, foundPkgSem
 	return readmeSB.String()
 }
 
+// buildPostInstallationNotes generates the installation notes based on the application status
+func buildPostInstallationNotes(app *kappctrlv1alpha1.App) string {
+	var postInstallNotesSB strings.Builder
+	deployStdout := ""
+	deployStderr := ""
+	fetchStdout := ""
+	fetchStderr := ""
+
+	if app.Status.Deploy != nil {
+		deployStdout = app.Status.Deploy.Stdout
+		deployStderr = app.Status.Deploy.Stderr
+	}
+	if app.Status.Fetch != nil {
+		fetchStdout = app.Status.Fetch.Stdout
+		fetchStderr = app.Status.Fetch.Stderr
+	}
+
+	if deployStdout != "" || fetchStdout != "" {
+		if deployStdout != "" {
+			postInstallNotesSB.WriteString(fmt.Sprintf("#### Deploy\n\n```\n%s\n```\n\n", deployStdout))
+		}
+		if fetchStdout != "" {
+			postInstallNotesSB.WriteString(fmt.Sprintf("#### Fetch\n\n```\n%s\n```\n\n", fetchStdout))
+		}
+	}
+	if deployStderr != "" || fetchStderr != "" {
+		postInstallNotesSB.WriteString("### Errors\n\n")
+		if deployStderr != "" {
+			postInstallNotesSB.WriteString(fmt.Sprintf("#### Deploy\n\n```\n%s\n```\n\n", deployStderr))
+		}
+		if fetchStderr != "" {
+			postInstallNotesSB.WriteString(fmt.Sprintf("#### Fetch\n\n```\n%s\n```\n\n", fetchStderr))
+		}
+	}
+	return postInstallNotesSB.String()
+}
+
 // defaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
 func defaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error) {
 	if len(schema) == 0 {
