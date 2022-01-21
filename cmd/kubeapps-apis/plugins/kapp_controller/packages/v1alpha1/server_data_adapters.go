@@ -88,7 +88,6 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
-	// build maintainers information
 	maintainers := []*corev1.Maintainer{}
 	for _, maintainer := range pkgMetadata.Spec.Maintainers {
 		maintainers = append(maintainers, &corev1.Maintainer{
@@ -96,16 +95,46 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		})
 	}
 
-	// build readme
-	readme := buildReadme(pkgMetadata, foundPkgSemver)
+	readme := fmt.Sprintf(`## Details
 
-	// build default values
+
+### Description:
+%s
+
+
+### Capactiy requirements:
+%s
+
+
+### Release Notes:
+%s
+
+
+### Support:
+%s
+
+
+### Licenses:
+%s
+
+
+### ReleasedAt:
+%s
+
+
+`,
+		pkgMetadata.Spec.LongDescription,
+		foundPkgSemver.pkg.Spec.CapactiyRequirementsDescription,
+		foundPkgSemver.pkg.Spec.ReleaseNotes,
+		pkgMetadata.Spec.SupportDescription,
+		foundPkgSemver.pkg.Spec.Licenses,
+		foundPkgSemver.pkg.Spec.ReleasedAt,
+	)
 	defaultValues, err := defaultValuesFromSchema(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw, true)
 	if err != nil {
 		log.Warningf("Failed to parse default values from schema: %v", err)
 		defaultValues = "# There is an error while parsing the schema."
 	}
-
 	availablePackageDetail := &corev1.AvailablePackageDetail{
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Context: &corev1.Context{
