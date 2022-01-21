@@ -36,9 +36,9 @@ function AppValues(props: IAppValuesProps) {
   }
   return (
     <section aria-labelledby="installation-values">
-      <h5 className="section-title" id="installation-values">
+      <h3 className="section-title" id="installation-values">
         Installation Values
-      </h5>
+      </h3>
       {values}
     </section>
   );

@@ -7,7 +7,7 @@ function AppNotes(props: IAppNotesProps) {
   const { title, notes } = props;
   return notes ? (
     <>
-      <h5 className="section-title">{title ? title : "Installation Notes"}</h5>
+      <h3 className="section-title">{title ? title : "Installation Notes"}</h3>
       <section className="terminal-wrapper">
         <pre className="terminal-code">{notes}</pre>
       </section>

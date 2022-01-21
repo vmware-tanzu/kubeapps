@@ -49,9 +49,9 @@ export default function ResourceTabs({
   }
   return (
     <section aria-labelledby="resources-table">
-      <h5 className="section-title" id="resources-table">
+      <h3 className="section-title" id="resources-table">
         Application Resources
-      </h5>
+      </h3>
       <Tabs id="resource-table-tabs" columns={columns} data={data} />
     </section>
   );
