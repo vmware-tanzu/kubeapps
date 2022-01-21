@@ -21,7 +21,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -30,6 +29,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"github.com/kubeapps/kubeapps/pkg/agent"
@@ -232,9 +232,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 
 	// This plugin will include, as part of the GetAvailablePackageSummariesResponse,
@@ -280,24 +280,6 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		NextPageToken:             nextPageToken,
 		Categories:                categories,
 	}, nil
-}
-
-// pageOffsetFromPageToken converts a page token to an integer offset
-// representing the page of results.
-// TODO(mnelson): When aggregating results from different plugins, we'll
-// need to update the actual query in GetPaginatedChartListWithFilters to
-// use a row offset rather than a page offset (as not all rows may be consumed
-// for a specific plugin when combining).
-func pageOffsetFromPageToken(pageToken string) (int, error) {
-	if pageToken == "" {
-		return 0, nil
-	}
-	offset, err := strconv.ParseUint(pageToken, 10, 0)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(offset), nil
 }
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'helm' plugin
@@ -497,9 +479,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	cmd.Limit = int(request.GetPaginationOptions().GetPageSize())
-	cmd.Offset, err = pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	cmd.Offset, err = paginate.PageOffsetFromInstalledRequest(request)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 
 	// TODO(mnelson): Check whether we need to support ListAll (status == "all" in existing helm support)
@@ -1023,30 +1005,12 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	identifier := pkgRef.GetIdentifier()
 	log.Infof("+helm GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
 
-	namespace := pkgRef.GetContext().GetNamespace()
-
-	actionConfig, err := s.actionConfigGetter(ctx, request.GetInstalledPackageRef().GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
-	}
-
-	// Grab the released manifest from the release.
-	getcmd := action.NewGet(actionConfig)
-	release, err := getcmd.Run(identifier)
-	if err != nil {
-		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+	fn := func(ctx context.Context, namespace string) (*action.Configuration, error) {
+		actionGetter, err := s.actionConfigGetter(ctx, pkgRef.GetContext())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
+		return actionGetter, nil
 	}
-
-	refs, err := resourcerefs.ResourceRefsFromManifest(release.Manifest, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return &corev1.GetInstalledPackageResourceRefsResponse{
-		Context:      pkgRef.GetContext(),
-		ResourceRefs: refs,
-	}, nil
+	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, fn)
 }

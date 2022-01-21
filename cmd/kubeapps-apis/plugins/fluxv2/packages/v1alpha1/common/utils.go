@@ -77,23 +77,6 @@ func PrettyPrintMap(m map[string]interface{}) string {
 	return string(prettyBytes)
 }
 
-// pageOffsetFromPageToken converts a page token to an integer offset
-// representing the page of results.
-// TODO(gfichtenholt): it'd be better if we ensure that the page_token
-// contains an offset to the item, not the page so we can
-// aggregate paginated results. Same as helm plug-in.
-// Update this when helm plug-in does so
-func PageOffsetFromPageToken(pageToken string) (int, error) {
-	if pageToken == "" {
-		return 1, nil
-	}
-	offset, err := strconv.ParseUint(pageToken, 10, 0)
-	if err != nil {
-		return 0, err
-	}
-	return int(offset), nil
-}
-
 // Confirm the state we are observing is for the current generation
 // returns true if object's status.observedGeneration == metadata.generation
 // false otherwise

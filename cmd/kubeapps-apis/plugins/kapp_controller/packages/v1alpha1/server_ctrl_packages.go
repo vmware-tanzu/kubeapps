@@ -20,6 +20,7 @@ import (
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -42,9 +43,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 	// Assume the default cluster if none is specified
 	if cluster == "" {
@@ -267,9 +268,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromInstalledRequest(request)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 
 	// Assume the default cluster if none is specified

@@ -18,7 +18,6 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -88,24 +87,6 @@ func simpleUserReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) str
 	}
 	// Fall back to unknown/unspecified.
 	return "Unknown"
-}
-
-// pageOffsetFromPageToken converts a page token to an integer offset representing the page of results.
-//
-// TODO(mnelson): When aggregating results from different plugins, we'll
-// need to update the actual query in GetPaginatedChartListWithFilters to
-// use a row offset rather than a page offset (as not all rows may be consumed
-// for a specific plugin when combining).
-func pageOffsetFromPageToken(pageToken string) (int, error) {
-	if pageToken == "" {
-		return 0, nil
-	}
-	offset, err := strconv.ParseUint(pageToken, 10, 0)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(offset), nil
 }
 
 // extracts the value for a key from a JSON-formatted string

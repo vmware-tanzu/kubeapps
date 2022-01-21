@@ -18,8 +18,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/storage/driver"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,6 +32,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"google.golang.org/grpc/codes"
@@ -68,6 +67,7 @@ type Server struct {
 func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}, pluginConfigPath string) (*Server, error) {
 	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v], pluginConfigPath: [%s]",
 		kubeappsCluster, pluginConfigPath)
+
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -205,13 +205,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			request.Context.Cluster)
 	}
 
-	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := common.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"unable to intepret page token %q: %v",
-			request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 
 	charts, err := s.getChartsForRepos(ctx, request.GetFilterOptions().GetRepositories())
@@ -219,7 +215,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), pageSize, pageOffset, charts)
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	packageSummaries, err := filterAndPaginateCharts(
+		request.GetFilterOptions(), pageSize, pageOffset, charts)
 	if err != nil {
 		return nil, err
 	}
@@ -354,13 +352,9 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 // GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetInstalledPackageSummaries [%v]", request)
-	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := common.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromInstalledRequest(request)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"unable to intepret page token %q: %v",
-			request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 
 	cluster := request.GetContext().GetCluster()
@@ -371,7 +365,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			cluster)
 	}
 
-	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(
+		ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -533,39 +529,9 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	pkgRef := request.GetInstalledPackageRef()
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
-	log.Infof("+fluxv2 GetResourceRefs %s %s", contextMsg, identifier)
+	log.Infof("+fluxv2 GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
 
-	namespace := pkgRef.GetContext().GetNamespace()
-	actionConfig, err := s.actionConfigGetter(ctx, namespace)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
-	}
-
-	// Grab the released manifest from the release.
-	// TODO(minelson): We're currently getting the resource refs for a package
-	// install by checking the helm manifest, as we do for the helm plugin. With
-	// certain assumptions about the RBAC of the Kubeapps user, we may be able
-	// to instead query for labelled resources. See the discussion following for
-	// more details:
-	// https://github.com/kubeapps/kubeapps/pull/3811#issuecomment-977689570
-	getcmd := action.NewGet(actionConfig)
-	release, err := getcmd.Run(identifier)
-	if err != nil {
-		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
-		}
-		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
-	}
-
-	refs, err := resourcerefs.ResourceRefsFromManifest(release.Manifest, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return &corev1.GetInstalledPackageResourceRefsResponse{
-		Context:      pkgRef.GetContext(),
-		ResourceRefs: refs,
-	}, nil
+	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, s.actionConfigGetter)
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
@@ -577,7 +543,7 @@ func GetPluginDetail() *plugins.Plugin {
 // configuration options.
 func parsePluginConfig(pluginConfigPath string) (pkgutils.VersionsInSummary, int32, error) {
 	// Note at present VersionsInSummary is the only configurable option for this plugin,
-	// and if required this func can be enhaned to return helmConfig struct
+	// and if required this func can be enhanced to return fluxConfig struct
 
 	// In the flux plugin, for example, we are interested in config for the
 	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.

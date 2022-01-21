@@ -34,6 +34,7 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"sigs.k8s.io/yaml"
 
@@ -219,7 +220,7 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 	}
 
 	if pageToken != "" {
-		pageOffset, err := pageOffsetFromPageToken(pageToken)
+		pageOffset, err := paginate.PageOffsetFromPageToken(pageToken)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
