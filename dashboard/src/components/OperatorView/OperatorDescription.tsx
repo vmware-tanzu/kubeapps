@@ -1,8 +1,8 @@
-import TableRenderer from "components/PackageHeader/TableRenderer";
+import TableRenderer from "components/MarkdownRenderer/TableRenderer";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import HeadingRenderer from "../PackageHeader/HeadingRenderer";
-import LinkRenderer from "../PackageHeader/LinkRenderer";
+import HeadingRenderer from "../MarkdownRenderer/HeadingRenderer";
+import LinkRenderer from "../MarkdownRenderer/LinkRenderer";
 
 interface IOperatorDescriptionProps {
   description: string;
