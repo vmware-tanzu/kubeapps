@@ -16,11 +16,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
+	kappcmdapp "github.com/k14s/kapp/pkg/kapp/cmd/app"
+	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	kappcmdtools "github.com/k14s/kapp/pkg/kapp/cmd/tools"
+	"github.com/k14s/kapp/pkg/kapp/logger"
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
@@ -36,6 +44,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	disfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
@@ -48,8 +57,12 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.AvailablePackageSummary{},
 	corev1.Context{},
 	corev1.CreateInstalledPackageResponse{},
+	corev1.CreateInstalledPackageResponse{},
 	corev1.DeleteInstalledPackageResponse{},
 	corev1.GetAvailablePackageVersionsResponse{},
+	corev1.GetAvailablePackageVersionsResponse{},
+	corev1.GetInstalledPackageResourceRefsResponse{},
+	corev1.GetInstalledPackageResourceRefsResponse{},
 	corev1.InstalledPackageDetail{},
 	corev1.InstalledPackageReference{},
 	corev1.InstalledPackageStatus{},
@@ -57,8 +70,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.Maintainer{},
 	corev1.PackageAppVersion{},
 	corev1.ReconciliationOptions{},
-	corev1.GetAvailablePackageVersionsResponse{},
-	corev1.CreateInstalledPackageResponse{},
+	corev1.ResourceRef{},
 	corev1.UpdateInstalledPackageResponse{},
 	corev1.VersionReference{},
 	pluginv1.Plugin{},
@@ -1841,10 +1853,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 %s
 
 
-### Inspect:
-%s
-
-
 ## Errors
 
 
@@ -1856,10 +1864,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 %s
 
 
-### Inspect:
-%s
-
-`, "deployStdout", "fetchStdout", "inspectStdout", "deployStderr", "fetchStderr", "inspectStderr"),
+`, "deployStdout", "fetchStdout", "deployStderr", "fetchStderr"),
 				LatestMatchingVersion: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
 					AppVersion: "1.2.3",
@@ -3005,6 +3010,200 @@ func TestDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
+func TestGetInstalledPackageResourceRefs(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		request              *corev1.GetInstalledPackageResourceRefsRequest
+		existingObjects      []runtime.Object
+		existingTypedObjects []runtime.Object
+		expectedStatusCode   codes.Code
+		expectedResponse     *corev1.GetInstalledPackageResourceRefsResponse
+	}{
+		{
+			name: "fetch the resources from an installed package",
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "foo",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+				// Although it's a typical k8s object, it is retrieved with the dynamic client
+				&k8scorev1.Pod{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "Pod",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-pod",
+						Labels:    map[string]string{"kapp.k14s.io/app": "my-id"},
+					},
+					Spec: k8scorev1.PodSpec{
+						Containers: []k8scorev1.Container{{
+							Name: "my-installation-container",
+						}},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "v1",
+						Kind:       "Pod",
+						Name:       "my-installation-pod",
+						Namespace:  "default",
+					},
+				},
+				Context: defaultContext,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []runtime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+			// If more resources types are added, this will need to be updated accordingly
+			apiResources := []*metav1.APIResourceList{
+				{
+					GroupVersion: "v1",
+					APIResources: []metav1.APIResource{
+						{Name: "pods", Namespaced: true, Kind: "Pod", Verbs: []string{"list", "get"}},
+					},
+				},
+			}
+
+			typedClient := typfake.NewSimpleClientset(tc.existingTypedObjects...)
+
+			// We cast the dynamic client to a fake client, so we can set the response
+			fakeDiscovery, _ := typedClient.Discovery().(*disfake.FakeDiscovery)
+			fakeDiscovery.Fake.Resources = apiResources
+
+			dynClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				runtime.NewScheme(),
+				map[schema.GroupVersionResource]string{
+					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
+					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
+					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
+					// If more resources types are added, this will need to be updated accordingly
+					{Group: "", Version: "v1", Resource: "pods"}: "Pod" + "List",
+				},
+				unstructuredObjects...,
+			)
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return typedClient, dynClient, nil
+				},
+				kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
+					// Create a fake Kapp DepsFactory and configure there the fake k8s clients the hereinbefore created
+					depsFactory := NewFakeDepsFactoryImpl()
+					depsFactory.SetCoreClient(typedClient)
+					depsFactory.SetDynamicClient(dynClient)
+					// The rest of the logic remain unchanged as in the real server.go file (DRY it up?)
+					resourceFilterFlags := kappcmdtools.ResourceFilterFlags{}
+					resourceFilter, err := resourceFilterFlags.ResourceFilter()
+					if err != nil {
+						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+					}
+					resourceTypesFlags := kappcmdapp.ResourceTypesFlags{
+						IgnoreFailingAPIServices:         true,
+						ScopeToFallbackAllowedNamespaces: true,
+					}
+					failingAPIServicesPolicy := resourceTypesFlags.FailingAPIServicePolicy()
+					supportingNsObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: namespace}, resourceTypesFlags, logger.NewNoopLogger())
+					if err != nil {
+						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+					}
+					supportingObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: ""}, resourceTypesFlags, logger.NewNoopLogger())
+					if err != nil {
+						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+					}
+					return supportingNsObjs.Apps, supportingObjs.IdentifiedResources, failingAPIServicesPolicy, resourceFilter, nil
+				},
+			}
+
+			getInstalledPackageResourceRefsResponse, err := s.GetInstalledPackageResourceRefs(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+			// If we were expecting an error, continue to the next test.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+			if got, want := getInstalledPackageResourceRefsResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name               string
@@ -3114,4 +3313,42 @@ func TestGetPackageRepositories(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Implementing a FakeDepsFactoryImpl for injecting the typed and dynamic k8s clients
+type FakeDepsFactoryImpl struct {
+	kappcmdcore.DepsFactoryImpl
+	coreClient    kubernetes.Interface
+	dynamicClient dynamic.Interface
+
+	configFactory   kappcmdcore.ConfigFactory
+	ui              ui.UI
+	printTargetOnce *sync.Once
+	Warnings        bool
+}
+
+var _ kappcmdcore.DepsFactory = &FakeDepsFactoryImpl{}
+
+func NewFakeDepsFactoryImpl() *FakeDepsFactoryImpl {
+	return &FakeDepsFactoryImpl{
+		configFactory:   &ConfigurableConfigFactoryImpl{},
+		ui:              ui.NewNoopUI(),
+		printTargetOnce: &sync.Once{},
+	}
+}
+
+func (f *FakeDepsFactoryImpl) SetCoreClient(coreClient kubernetes.Interface) {
+	f.coreClient = coreClient
+}
+
+func (f *FakeDepsFactoryImpl) SetDynamicClient(dynamicClient dynamic.Interface) {
+	f.dynamicClient = dynamicClient
+}
+
+func (f *FakeDepsFactoryImpl) CoreClient() (kubernetes.Interface, error) {
+	return f.coreClient, nil
+}
+
+func (f *FakeDepsFactoryImpl) DynamicClient(opts kappcmdcore.DynamicClientOpts) (dynamic.Interface, error) {
+	return f.dynamicClient, nil
 }
