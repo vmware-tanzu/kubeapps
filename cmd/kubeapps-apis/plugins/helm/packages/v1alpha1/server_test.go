@@ -33,6 +33,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"sigs.k8s.io/yaml"
 
@@ -101,7 +102,7 @@ func TestGetClient(t *testing.T) {
 	testCases := []struct {
 		name              string
 		manager           utils.AssetManager
-		clientGetter      clientGetter
+		clientGetter      clientgetter.ClientGetterFunc
 		statusCodeClient  codes.Code
 		statusCodeManager codes.Code
 	}{

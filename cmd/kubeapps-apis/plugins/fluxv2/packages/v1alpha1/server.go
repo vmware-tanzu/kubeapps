@@ -33,6 +33,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"google.golang.org/grpc/codes"
@@ -52,8 +53,8 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter       common.ClientGetterFunc
-	actionConfigGetter common.HelmActionConfigGetterFunc
+	clientGetter       clientgetter.ClientGetterWithApiExtFunc
+	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
 	chartCache *cache.ChartCache
@@ -93,7 +94,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 		}
 
 		s := repoEventSink{
-			clientGetter: common.NewBackgroundClientGetter(),
+			clientGetter: clientgetter.NewBackgroundClientGetter(),
 			chartCache:   chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
@@ -110,8 +111,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return nil, err
 		} else {
 			return &Server{
-				clientGetter:       common.NewClientGetter(configGetter, kubeappsCluster),
-				actionConfigGetter: common.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
+				clientGetter:       clientgetter.NewClientGetterWithApiExt(configGetter, kubeappsCluster),
+				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
 				repoCache:          repoCache,
 				chartCache:         chartCache,
 				kubeappsCluster:    kubeappsCluster,
@@ -535,8 +536,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	log.Infof("+fluxv2 GetResourceRefs %s %s", contextMsg, identifier)
 
 	namespace := pkgRef.GetContext().GetNamespace()
-
-	actionConfig, err := s.actionConfigGetter(ctx, request.GetInstalledPackageRef().GetContext().GetNamespace())
+	actionConfig, err := s.actionConfigGetter(ctx, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}

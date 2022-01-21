@@ -30,6 +30,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -52,7 +53,7 @@ const KubeappsCluster = "default"
 func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter common.ClientGetterFunc
+		clientGetter clientgetter.ClientGetterWithApiExtFunc
 		statusCode   codes.Code
 	}{
 		{
@@ -374,7 +375,12 @@ type testSpecChartWithUrl struct {
 // a call to fake.NewSimpleDynamicClientWithCustomListKinds. The reason for argument repos
 // (unlike charts or releases) is that repos are treated special because
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
-func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig *action.Configuration, repos []runtime.Object, charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
+func newServer(t *testing.T,
+	clientGetter clientgetter.ClientGetterWithApiExtFunc,
+	actionConfig *action.Configuration,
+	repos []runtime.Object,
+	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
+
 	stopCh := make(chan struct{})
 	t.Cleanup(func() { close(stopCh) })
 

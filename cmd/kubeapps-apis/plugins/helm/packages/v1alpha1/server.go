@@ -29,6 +29,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"github.com/kubeapps/kubeapps/pkg/agent"
@@ -41,7 +42,6 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	authorizationv1 "k8s.io/api/authorization/v1"
@@ -54,7 +54,6 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
 type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error)
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -73,7 +72,7 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             clientGetter
+	clientGetter             clientgetter.ClientGetterFunc
 	globalPackagingNamespace string
 	globalPackagingCluster   string
 	manager                  utils.AssetManager
@@ -151,52 +150,16 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	}
 
 	return &Server{
-		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
-			if configGetter == nil {
-				return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
-			}
-			config, err := configGetter(ctx, cluster)
-			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
-			}
-			dynamicClient, err := dynamic.NewForConfig(config)
-			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get dynamic client : %v", err))
-			}
-			typedClient, err := kubernetes.NewForConfig(config)
-			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get typed client : %v", err))
-			}
-			return typedClient, dynamicClient, nil
-		},
+		clientGetter: clientgetter.NewClientGetter(configGetter),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
-			if configGetter == nil {
-				return nil, status.Errorf(codes.Internal, "configGetter arg required")
-			}
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases
 			// of kubeapps-api are multicluster.
 			if cluster == "" {
 				cluster = globalPackagingCluster
 			}
-			config, err := configGetter(ctx, cluster)
-			if err != nil {
-				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get config : %v", err))
-			}
-
-			restClientGetter := agent.NewConfigFlagsFromCluster(pkgContext.GetNamespace(), config)
-			clientSet, err := kubernetes.NewForConfig(config)
-			if err != nil {
-				return nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to create kubernetes client : %v", err))
-			}
-			// TODO(mnelson): Update to allow different helm storage options.
-			storage := agent.StorageForSecrets(pkgContext.GetNamespace(), clientSet)
-			return &action.Configuration{
-				RESTClientGetter: restClientGetter,
-				KubeClient:       kube.New(restClientGetter),
-				Releases:         storage,
-				Log:              log.Infof,
-			}, nil
+			fn := clientgetter.NewHelmActionConfigGetter(configGetter, cluster)
+			return fn(ctx, pkgContext.GetNamespace())
 		},
 		manager:                  manager,
 		globalPackagingNamespace: globalReposNamespace,
