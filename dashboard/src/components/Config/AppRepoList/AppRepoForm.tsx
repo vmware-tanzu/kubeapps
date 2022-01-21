@@ -11,12 +11,12 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { AppRepository } from "shared/AppRepository";
 import { toFilterRule, toParams } from "shared/jq";
+import Secret from "shared/Secret";
 import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
-import { AppRepository } from "shared/AppRepository";
 import "./AppRepoForm.css";
-import Secret from "shared/Secret";
 interface IAppRepoFormProps {
   onSubmit: (
     name: string,
@@ -133,11 +133,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   useEffect(() => {
     if (secret) {
       if (secret.data["ca.crt"]) {
-        setCustomCA(atob(secret.data["ca.crt"]));
+        setCustomCA(Buffer.from(secret.data["ca.crt"], "base64").toString());
       }
       if (secret.data.authorizationHeader) {
         if (authHeader.startsWith("Basic")) {
-          const userPass = atob(authHeader.split(" ")[1]).split(":");
+          const userPass = Buffer.from(authHeader.split(" ")[1], "base64").toString().split(":");
           setUser(userPass[0]);
           setPassword(userPass[1]);
           setAuthMethod(AUTH_METHOD_BASIC);
@@ -146,7 +146,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           setAuthMethod(AUTH_METHOD_BEARER);
         } else {
           setAuthMethod(AUTH_METHOD_CUSTOM);
-          setAuthHeader(atob(secret.data.authorizationHeader));
+          setAuthHeader(Buffer.from(secret.data.authorizationHeader, "base64").toString());
         }
       }
       if (secret.data[".dockerconfigjson"]) {
@@ -173,7 +173,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         finalHeader = authHeader;
         break;
       case AUTH_METHOD_BASIC:
-        finalHeader = `Basic ${btoa(`${user}:${password}`)}`;
+        finalHeader = `Basic ${Buffer.from(`${user}:${password}`).toString("base64")}`;
         break;
       case AUTH_METHOD_BEARER:
         finalHeader = `Bearer ${token}`;
