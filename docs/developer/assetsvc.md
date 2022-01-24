@@ -55,7 +55,7 @@ kubectl patch deployment kubeapps-internal-assetsvc -n kubeapps --type=json -p='
 kubectl set image -n kubeapps deployment kubeapps-internal-assetsvc assetsvc=kubeapps/assetsvc:latest
 ```
 
-For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod executing:
+For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod running:
 
 ```bash
 kubectl delete pod -n kubeapps -l app=kubeapps-internal-assetsvc

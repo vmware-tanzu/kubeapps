@@ -1,9 +1,12 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { useCallback, useEffect } from "react";
 
 /**
  * Detects when there's a click event outside the given element
  *
- * @param {function} callback Method to execute when users click outside the element
+ * @param {function} callback Method to run when users click outside the element
  * @param {Array[object]} list of ref React objects that references an element in the DOM
  * @param {boolean} enabled controls when the even listener should be added or not
  */

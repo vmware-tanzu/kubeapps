@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import actions from "actions";
 import { getType } from "typesafe-actions";
 import Alert from "components/js/Alert";
@@ -16,7 +19,7 @@ import {
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { MemoryRouter, Route } from "react-router";
+import { MemoryRouter, Route } from "react-router-dom";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError } from "shared/types";
 import { PluginNames } from "shared/utils";

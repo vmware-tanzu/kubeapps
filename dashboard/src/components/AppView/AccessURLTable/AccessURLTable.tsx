@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
 import { get } from "lodash";

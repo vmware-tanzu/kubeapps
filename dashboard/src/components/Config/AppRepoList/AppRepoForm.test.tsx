@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
@@ -383,7 +386,7 @@ describe("when using a description", () => {
   });
 });
 
-it("should disable the docker registry credentials section if the namespace is the global one", () => {
+it("should deactivate the docker registry credentials section if the namespace is the global one", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <AppRepoForm {...defaultProps} kubeappsNamespace={defaultProps.namespace} />,
@@ -509,7 +512,7 @@ describe("when the repository info is already populated", () => {
     const repo = { metadata: { name: "foo" } } as any;
     const wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
     expect(wrapper.find("#kubeapps-repo-name").prop("value")).toBe("foo");
-    // It should also disable the name input if it's already been set
+    // It should also deactivate the name input if it's already been set
     expect(wrapper.find("#kubeapps-repo-name").prop("disabled")).toBe(true);
   });
 

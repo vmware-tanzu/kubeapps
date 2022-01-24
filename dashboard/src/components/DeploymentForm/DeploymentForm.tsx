@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsSelect } from "@cds/react/select";
@@ -15,7 +18,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import * as ReactRouter from "react-router";
+import * as ReactRouter from "react-router-dom";
 import "react-tabs/style/react-tabs.css";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";

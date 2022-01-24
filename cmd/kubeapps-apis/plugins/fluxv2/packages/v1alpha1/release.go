@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -21,6 +12,7 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -347,14 +339,13 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 }
 
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
-	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
+	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
-	packageIdParts := strings.Split(unescapedChartID, "/")
-	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
-	chart, err := s.getChart(ctx, repo, packageIdParts[1])
+	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
+	chart, err := s.getChart(ctx, repo, chartName)
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +374,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	if err != nil {
 		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
 			// TODO (gfichtenholt) I think in some cases we should be returning codes.PermissionDenied instead,
-			// but that has to be done consistently accross all plug-in operations, not just here
+			// but that has to be done consistently across all plug-in operations, not just here
 			return nil, status.Errorf(codes.Unauthenticated, "Unable to create release due to %v", err)
 		} else {
 			return nil, status.Errorf(codes.Internal, "Unable to create release due to %v", err)
@@ -538,7 +529,7 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 			return nil, err
 		}
 	}
-	reconcileInterval := defaultReconcileInterval // unless explictly specified
+	reconcileInterval := defaultReconcileInterval // unless explicitly specified
 	if reconcile != nil {
 		if reconcile.Interval > 0 {
 			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()

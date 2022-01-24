@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { deepClone } from "@cds/core/internal/utils/identity";
 import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";
@@ -11,7 +14,7 @@ import React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { MemoryRouter, Route, Router } from "react-router";
+import { MemoryRouter, Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IAppRepositoryState } from "reducers/repos";
@@ -152,7 +155,7 @@ it("retrieves csvs in the namespace if operators enabled", () => {
   expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, defaultProps.namespace);
 });
 
-it("not retrieveing csvs in the namespace if operators disabled", () => {
+it("not retrieveing csvs in the namespace if operators deactivated", () => {
   const getCSVs = jest.fn();
   actions.operators.getCSVs = getCSVs;
   const state = deepClone(populatedState) as IStoreState;

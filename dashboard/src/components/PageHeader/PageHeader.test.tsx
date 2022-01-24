@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { mount } from "enzyme";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import PageHeader from "./PageHeader";

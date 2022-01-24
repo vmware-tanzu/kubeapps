@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
@@ -9,8 +12,7 @@ import { push } from "connected-react-router";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router";
-import { Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { IAppRepository, IStoreState } from "shared/types";
 import { app } from "shared/url";
@@ -41,7 +43,7 @@ function AppRepoList() {
   // We do not currently support app repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
   // useCallback stores the reference to the function, not the function execution
-  // so calling several times to refetchRepos would execute the code inside, even
+  // so calling several times to refetchRepos would run the code inside, even
   // if the dependencies do not change.
   const refetchRepos: () => void = useCallback(() => {
     if (!namespace) {

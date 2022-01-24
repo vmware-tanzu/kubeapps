@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 use anyhow::Result;
 use hyper::{client::connect::HttpConnector, header::HeaderValue, Client, HeaderMap, Request};
 use hyper_tls::HttpsConnector;

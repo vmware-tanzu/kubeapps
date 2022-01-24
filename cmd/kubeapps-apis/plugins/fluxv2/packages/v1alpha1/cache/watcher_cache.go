@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package cache
 
 import (
@@ -24,6 +15,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -43,10 +35,10 @@ import (
 
 const (
 	// max number of retries to process one cache entry due to transient errors
-	namespacedResourceWatcherCacheMaxRetries = 5
+	maxWatcherCacheRetries = 5
 	// max number of attempts to resync before giving up
-	namespacedResourceWatcherCacheMaxResyncBackoff = 2
-	keySegmentsSeparator                           = ":"
+	maxWatcherCacheResyncBackoff = 2
+	KeySegmentsSeparator         = ":"
 )
 
 var (
@@ -104,7 +96,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
 	// this ClientGetter is for running out-of-request interactions with the Kubernetes API server,
 	// such as watching for resource changes
-	ClientGetter common.ClientGetterFunc
+	ClientGetter clientgetter.ClientGetterWithApiExtFunc
 	// 'OnAddFunc' hook is called when an object comes about and the cache does not have a
 	// corresponding entry. Note this maybe happen as a result of a newly created k8s object
 	// or a modified object for which there was no entry in the cache
@@ -153,7 +145,7 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
-	// sanity check that the specified GVR is a valid registered CRD
+	// confidence test that the specified GVR is a valid registered CRD
 	if err := c.isGvrValid(); err != nil {
 		return nil, err
 	}
@@ -185,7 +177,7 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	if c.config.Gvr.Empty() {
 		return fmt.Errorf("server configured with empty GVR")
 	}
-	// sanity check that CRD for GVR has been registered
+	// confidence test that CRD for GVR has been registered
 	ctx := context.Background()
 	_, _, apiExt, err := c.config.ClientGetter(ctx)
 	if err != nil {
@@ -262,8 +254,8 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	if err == nil {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
-	} else if c.queue.NumRequeues(key) < namespacedResourceWatcherCacheMaxRetries {
-		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, namespacedResourceWatcherCacheMaxRetries-c.queue.NumRequeues(key), err)
+	} else if c.queue.NumRequeues(key) < maxWatcherCacheRetries {
+		log.Errorf("Error processing [%s] (will retry [%d] times): %v", key, maxWatcherCacheRetries-c.queue.NumRequeues(key), err)
 		c.queue.AddRateLimited(key)
 	} else {
 		// err != nil and too many retries
@@ -306,7 +298,7 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 
 			err = fmt.Errorf(
 				"[%s]: Watch loop has been stopped after [%d] retries were exhausted, last error: %v",
-				c.queue.Name(), namespacedResourceWatcherCacheMaxRetries, err)
+				c.queue.Name(), maxWatcherCacheRetries, err)
 			// yes, I really want this to panic. Something is seriously wrong
 			// possibly restarting plugin/kubeapps-apis server is needed...
 			defer runtime.Must(err)
@@ -332,7 +324,7 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 	var resourceVersion string
 
 	// max backoff is 2^(NamespacedResourceWatcherCacheMaxResyncBackoff) seconds
-	for i := 0; i < namespacedResourceWatcherCacheMaxResyncBackoff; i++ {
+	for i := 0; i < maxWatcherCacheResyncBackoff; i++ {
 		if resourceVersion, err = c.resync(bootstrap); err != nil {
 			runtime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
 		} else if watcher, err = watchutil.NewRetryWatcher(resourceVersion, c); err != nil {
@@ -372,7 +364,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	log.Infof("+resync(bootstrap=%t), queue: [%s], size: [%d]", bootstrap, c.queue.Name(), c.queue.Len())
 	defer log.Info("-resync()")
 
-	// Sanity check: I'd like to make sure this is called within the context
+	// confidence test: I'd like to make sure this is called within the context
 	// of resync, i.e. resync.Cond.L is locked by this goroutine.
 	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
 		return "", status.Errorf(codes.Internal, "Invalid state of the cache in resync()")
@@ -512,7 +504,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
-	// TODO: (gfichtenholt) Sanity check: I'd like to make sure the caller has the read lock,
+	// TODO: (gfichtenholt) confidence test: I'd like to make sure the caller has the read lock,
 	// i.e. we are not in the middle of a cache resync() operation. To do that, I need to
 	// find a reliable alternative to common.RWMutexReadLocked which doesn't always work
 
@@ -838,16 +830,16 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 	// We will use "helmrepositories:ns:repoName"
 	return fmt.Sprintf("%s%s%s%s%s",
 		c.config.Gvr.Resource,
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		name.Namespace,
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		name.Name)
 }
 
 // the opposite of keyFor()
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
-	parts := strings.Split(key, keySegmentsSeparator)
+	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
@@ -861,7 +853,7 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
 func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) error {
-	// sanity check: I'd like to make sure this is called within the context
+	// confidence test: I'd like to make sure this is called within the context
 	// of resync, i.e. resync.Cond.L is locked by this goroutine.
 	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
 		return status.Errorf(codes.Internal, "Invalid state of the cache in populateWith()")
