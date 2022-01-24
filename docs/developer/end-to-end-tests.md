@@ -1,12 +1,12 @@
 # End-to-end tests in the project
 
 In every CI build, a set of end-to-end tests are run to verify, as much as possible, that the changes don't include regressions from a user point of view. Please refer to the [CI documentation](./ci.md) for further information.
-The current end-to-end tests are executed in two steps (or categories):
+The current end-to-end tests are run in two steps (or categories):
 
 - Chart tests
 - Browser tests
 
-These tests are executed by the script [script/e2e-test.sh](../../script/e2e-test.sh). Particularly, this script:
+These tests are run by the script [script/e2e-test.sh](../../script/e2e-test.sh). Particularly, this script:
 
 1. Installs Kubeapps using the images built during the CI process (c.f., [CI config file](../../.circleci/config.yml)) by setting the proper args to the Helm command.
    1. If the `USE_MULTICLUSTER_OIDC_ENV` is enabled, a set of flags will be passed to configure the Kubeapps installation in a multicluster environment.
@@ -16,8 +16,8 @@ These tests are executed by the script [script/e2e-test.sh](../../script/e2e-tes
 3. Installs some dependencies:
    1. Chart Museum.
    2. Operator framework (not in GKE).
-4. Executes the [Helm tests](#chart-tests).
-5. Executes the [web browser tests](#web-browser-tests).
+4. Runs the [Helm tests](#chart-tests).
+5. Runs the [web browser tests](#web-browser-tests).
 
 If all of the above succeeded, the control is returned to the CI with the proper exit code.
 
@@ -33,7 +33,7 @@ Apart from the basic functionality tests run by the chart tests, this project co
 
 These tests are based on [Puppeteer](https://github.com/GoogleChrome/puppeteer). Puppeteer is a NodeJS library that provides a high-level API to control Chrome or Chromium (in headless mode by default).
 
-On top of Puppeteer, we are using the `jest-puppeteer` module that allows us to execute these tests using the same syntax as in the rest of the unit tests that we have in the project.
+On top of Puppeteer, we are using the `jest-puppeteer` module that allows us to run these tests using the same syntax as in the rest of the unit tests that we have in the project.
 
 The aforementioned [integration](../../integration) folder is self-contained, that is, it contains every required dependency to run the browser tests in a separate [package.json](../../integration/package.json). Furthermore, a [Dockerfile](../../integration/Dockerfile) is used to generate an image with [all the dependencies](https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#chrome-headless-doesnt-launch-on-unix) needed to run the browser tests.
 
@@ -52,14 +52,14 @@ INTEGRATION_ENTRYPOINT=http://kubeapps.local USE_MULTICLUSTER_OIDC_ENV=false ADM
 
 ```
 
-If a test happens to fail, apart from test execution logs a screenshot will be generated and saved in the `reports/screenshots]` folder.
+If a test happens to fail, besides the test logs, a screenshot will be generated and saved in the `reports/screenshots]` folder.
 
 ### Running browser tests in a pod
 
 Since the CI environment doesn't have the required dependencies and to provide a reproducible environment, it's possible to run the browser tests in a Kubernetes pod.
 
 To do so, you can spin up an instance running the image [kubeapps/integration-tests](https://hub.docker.com/r/kubeapps/integration-tests).
-This image contains all the required dependencies and it waits forever so you can execute commands within it.
+This image contains all the required dependencies and it waits forever so you can run commands within it.
 We also provide a simple [Kubernetes Deployment manifest](../../integration/manifests/executor.yaml) for launching this container.
 
 The goal of this setup is that you can copy the latest tests to the image, run the tests and extract the screenshots in case of failure:
@@ -109,5 +109,5 @@ To sum up, whenever a change triggers a new `kubeapps/integration-tests` version
 - Checking if the [integration Dockerfile](../../integration/Dockerfile) is using the proper base version.
 - Ensuring we are not using any deprecated dependency in the [package.json](../../integration/package.json).
 - Updating the [Makefile](../../integration/Makefile) with the new version tag.
-- Executing `make build && make push` to release a new image version.
+- running `make build && make push` to release a new image version.
 - Modifying the [Kubernetes Deployment manifest](../../integration/manifests/executor.yaml) with the new version.

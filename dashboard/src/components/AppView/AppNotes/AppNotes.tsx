@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import HeadingRenderer from "../../MarkdownRenderer/HeadingRenderer";

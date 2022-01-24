@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import { InstalledPackageDetailCustomDataHelm } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { IAppState } from "shared/types";

@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { setValue } from "shared/schema";
 import { DeploymentEvent, IBasicFormParam } from "shared/types";
 import { getValueFromEvent } from "shared/utils";

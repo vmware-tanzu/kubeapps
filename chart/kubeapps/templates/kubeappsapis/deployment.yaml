@@ -32,7 +32,7 @@ spec:
       {{- if .Values.kubeappsapis.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.hostAliases "context" $) | nindent 8 }}
       {{- end }}
-      # Increase termination timeout to let remaining operations to finish before killing the pods
+      # Increase termination timeout to let remaining operations to finish before ending the pods
       # This is because new releases/upgrades/deletions are synchronous operations
       {{- if .Values.kubeappsapis.affinity }}
       affinity: {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.affinity "context" $) | nindent 8 }}

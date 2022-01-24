@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { keyForResourceRef } from "shared/ResourceRef";

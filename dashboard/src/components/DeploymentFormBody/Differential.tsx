@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import ReactDiffViewer, { DiffMethod } from "react-diff-viewer";
 import { useSelector } from "react-redux";
 import { SupportedThemes } from "shared/Config";

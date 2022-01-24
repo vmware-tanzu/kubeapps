@@ -86,7 +86,7 @@ But, what if this `kube-controller-manager` is not a normal pod on a schedulable
 
 In managed clusters, such as AKS, Pinniped cannot read the cluster's certificate and key. In this case, Pinniped will have a fallback mechanism: the [impersonation proxy](https://pinniped.dev/docs/background/architecture/). It simply creates a LoadBalancer service that proxies the actual Kubernetes API. For this reason, when using Kubeapps in managed clusters using Pinniped, you'll need to use the Impersonation Proxy URL (and CA certificate) instead of the usual k8s API server URL.
 
-Assuming you have successfully [installed Pinniped](#installing-pinniped) and configured the [JWTAuthenticator](#configure-pinniped-to-trust-your-oidc-identity-provider), you have to retrieve the Impersonation Proxy URL and CA by inspecting the `CredentialIssuer` object. To do so, you can execute the following commands:
+Assuming you have successfully [installed Pinniped](#installing-pinniped) and configured the [JWTAuthenticator](#configure-pinniped-to-trust-your-oidc-identity-provider), you have to retrieve the Impersonation Proxy URL and CA by inspecting the `CredentialIssuer` object. To do so, you can run the following commands:
 
 Retrieving the Impersonation Proxy URL:
 
@@ -171,7 +171,7 @@ Next, go to `https://gaz.csp-vidm-prod.com` to check the CA certificate using yo
 
 ![Checking the CA certificate using Chrome](../img/ca-certificate-chrome.png "Checking the CA certificate using Chrome")
 
-The CA used is `DigiCert SHA2 High Assurance Server CA`, so you will need to look up this certificate in the [DigiCert repository](https://www.digicert.com/kb/digicert-root-certificates.htm). Download the proper `.pem` file (in this case, [this one](https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem)) and convert the content to base64. For simplicity, we perform this step by executing:
+The CA used is `DigiCert SHA2 High Assurance Server CA`, so you will need to look up this certificate in the [DigiCert repository](https://www.digicert.com/kb/digicert-root-certificates.htm). Download the proper `.pem` file (in this case, [this one](https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem)) and convert the content to base64. For simplicity, we perform this step by running:
 
 ```bash
 curl -s https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem | base64

@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { keyForResourceRef } from "shared/ResourceRef";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IKubeState } from "shared/types";

@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 package kubeappsapis.core.packages.v1alpha1;
 option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1";
@@ -169,7 +172,7 @@ message CreateInstalledPackageRequest {
 // Request for UpdateInstalledPackage. The intent is to reach the desired state specified
 // by the fields in the request, while leaving other fields intact. This is a whole
 // object "Update" semantics rather than "Patch" semantics. The caller will provide the
-// values for the fields fields below, which will replace, or be overlayed onto, the
+// values for the fields below, which will replace, or be overlayed onto, the
 // corresponding fields in the existing resource. For example, with the
 // UpdateInstalledPackageRequest, it is not possible to change just the 'package version
 // reference' without also specifying 'values' field. As a side effect, not specifying the

@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Row from "components/js/Row";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Link } from "react-router-dom";

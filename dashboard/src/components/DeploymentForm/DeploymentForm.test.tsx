@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
 import { JSONSchemaType } from "ajv";
@@ -15,7 +18,7 @@ import { createMemoryHistory } from "history";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { MemoryRouter, Route, Router } from "react-router";
+import { MemoryRouter, Route, Router } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";

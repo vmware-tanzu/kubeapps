@@ -161,7 +161,7 @@ Based on the above parameters, this may be an example of a JSON Schema for WordP
 }
 ```
 
-This `values.schema.json` is a valid JSON schema for the `values.yaml` of WordPress. It can be more complete since it's possible to include every single parameter of the values.yaml file.
+This `values.schema.json` is a valid JSON schema for the `values.yaml` of WordPress. It can be more detailed since it's possible to include every single parameter of the values.yaml file.
 
 Note that in order to be able to provide a richer presentation of the form we are including the tags `form={}` with the set of well-known parameters. This allows us to know which parameters we need to represent in the form and how to map them to valid values. In case there is a parameter that is not known we should be able to parse it as a generic input.
 
@@ -170,7 +170,7 @@ Note that in order to be able to provide a richer presentation of the form we ar
 This section defines how the deployment logic will work based on the JSON Schema definition above.
 
 1. The deployment component loads the details of the Chart. If the chart doesn't contain the file `values.schema.json` or any key for `form`, continue as today; Only the advanced deployment is allowed. In other case, go to the next step.
-2. Load the `values.schema.json`. From this point, two different tabs will be shown to the user. If the user changes tab from `basic` to `advanced` the new form will be shown. We will port changes from one one form to the other using the YAML library: https://github.com/eemeli/yaml/.
+2. Load the `values.schema.json`. From this point, two different tabs will be shown to the user. If the user changes tab from `basic` to `advanced` the new form will be shown. We will port changes from one form to the other using the YAML library: https://github.com/eemeli/yaml/.
 3. Kubeapps will support certain types of parameters (like `username` or `resources`). If those parameters are present, we will render the rich view of the parameter, for example a card-choice instead of a text-box. For parameters not supported, we should be able to fallback to the automatic generation. This may not be possible, so in that case, the parameter will be ignored (with an error for the developer console). If a parameter has a `title` or a `description`, those should be used in the form.
 4. Once the user clicks on "submit", we will also use the JSON schema to validate that the processed object complies with the definition.
 
@@ -178,14 +178,14 @@ This section defines how the deployment logic will work based on the JSON Schema
 
 The upgrade workflow will be similar to the deployment with some caveats:
 
-1. If the application to be upgraded doesn't contain a `values.schema.json` or or any `form` key, behave as today. In case the current version contains that, we assume it will be included in new versions. If that's the case, go to the next step.
+1. If the application to be upgraded doesn't contain a `values.schema.json` or any `form` key, behave as today. In case the current version contains that, we assume it will be included in new versions. If that's the case, go to the next step.
 2. Use the current `values` (from the old version) to pre-populate the information of the form.
 3. Once the user selects a new version, the new `schema` gets loaded. For parameters existing in the previous version, re-fill the form with the previous values. In case there is a new parameter in the form, leave it empty (or use its default value). If a parameter is no longer used, ignore it.
 4. The logic to generate the final object and validate it is the same than for the deployment.
 
 ## Development
 
-The amount of code/time required to implement this feature is considerably high. To avoid large PRs or temporary branches, we suggest to incrementaly implement this feature, merging changes on `master` but protecting the current status using a feature flag. If the feature flag is disabled (default behavior), the current deployment and upgrade form will be shown. For developers (or anyone that wants to test the feature), we will enable this flag to activate the new form. We can store this flag in the Kubeapps ConfigMap. Once the feature is finished, this flag will be removed from the configuration, enabling the feature for everyone.
+The amount of code/time required to implement this feature is considerably high. To avoid large PRs or temporary branches, we suggest to incrementaly implement this feature, merging changes on `main` but protecting the current status using a feature flag. If the feature flag is deactivated (default behavior), the current deployment and upgrade form will be shown. For developers (or anyone that wants to test the feature), we will enable this flag to activate the new form. We can store this flag in the Kubeapps ConfigMap. Once the feature is finished, this flag will be removed from the configuration, enabling the feature for everyone.
 
 ## Task definition
 

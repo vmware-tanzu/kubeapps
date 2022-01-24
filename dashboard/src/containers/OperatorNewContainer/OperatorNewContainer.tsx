@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { IOperatorNewProps } from "components/OperatorNew/OperatorNew";
 import { push } from "connected-react-router";
 import { connect } from "react-redux";

@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package cache
 
 import (
@@ -25,6 +16,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
@@ -247,11 +239,11 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 	// glob-style pattern, you can use https://www.digitalocean.com/community/tools/glob to test
 	// also ref. https://stackoverflow.com/questions/4006324/how-to-atomically-delete-keys-matching-a-pattern-using-redis
 	match := fmt.Sprintf("helmcharts%s%s%s%s/*%s*",
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		repo.Namespace,
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		repo.Name,
-		keySegmentsSeparator)
+		KeySegmentsSeparator)
 	redisKeysToDelete := sets.String{}
 	// https://redis.io/commands/scan An iteration starts when the cursor is set to 0,
 	// and terminates when the cursor returned by the server is 0
@@ -276,8 +268,9 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 		if namespace, chartID, _, err := c.fromKey(k); err != nil {
 			log.Errorf("%+v", err)
 		} else {
-			parts := strings.Split(chartID, "/")
-			if repo.Namespace == namespace && repo.Name == parts[0] {
+			if parts := strings.Split(chartID, "/"); len(parts) != 2 {
+				log.Errorf("unexpected chartID format: [%s]", chartID)
+			} else if repo.Namespace == namespace && repo.Name == parts[0] {
 				redisKeysToDelete.Insert(k)
 			}
 		}
@@ -487,7 +480,7 @@ func (c *ChartCache) String() string {
 // the opposite of keyFor
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
 func (c *ChartCache) fromKey(key string) (namespace, chartID, chartVersion string, err error) {
-	parts := strings.Split(key, keySegmentsSeparator)
+	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 4 || parts[0] != "helmcharts" || len(parts[1]) == 0 || len(parts[2]) == 0 || len(parts[3]) == 0 {
 		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
@@ -557,7 +550,7 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 	}
 
 	var err error
-	if chartID, err = common.GetUnescapedChartID(chartID); err != nil {
+	if chartID, err = pkgutils.GetUnescapedChartID(chartID); err != nil {
 		return "", fmt.Errorf("invalid chart ID in chartCacheKeyFor: [%s]: %v", chartID, err)
 	}
 
@@ -567,11 +560,11 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 	// We will use "helmcharts:ns:chartID:chartVersion"
 	// notice that chartID is of the form "repoName/id", so it includes the repo name
 	return fmt.Sprintf("helmcharts%s%s%s%s%s%s",
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		namespace,
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		chartID,
-		keySegmentsSeparator,
+		KeySegmentsSeparator,
 		chartVersion), nil
 }
 

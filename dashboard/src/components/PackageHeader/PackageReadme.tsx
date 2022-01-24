@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
 import ReactMarkdown from "react-markdown";

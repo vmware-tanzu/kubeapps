@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package helm
 
 import (
@@ -24,7 +27,7 @@ import (
 //
 // https://github.com/helm/helm/blob/v3.7.1/internal/experimental/registry/util.go
 // ctx retrieves a fresh context.
-// disable verbose logging coming from ORAS (unless debug is enabled)
+// deactivate verbose logging coming from ORAS (unless debug is enabled)
 func ctx(out io.Writer, debug bool) context.Context {
 	if !debug {
 		return orascontext.Background()

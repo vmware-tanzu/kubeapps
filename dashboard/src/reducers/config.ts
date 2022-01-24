@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { IConfig, SupportedThemes } from "shared/Config";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
