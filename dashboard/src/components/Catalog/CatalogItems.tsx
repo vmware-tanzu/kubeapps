@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useMemo } from "react";
 import { getIcon } from "shared/Operators";

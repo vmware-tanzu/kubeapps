@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 const axios = require("axios");
 const utils = require("./lib/utils");
 const testName = "02-create-private-registry";

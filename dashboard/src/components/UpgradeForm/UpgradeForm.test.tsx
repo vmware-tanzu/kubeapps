@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import actions from "actions";
 import DeploymentFormBody from "components/DeploymentFormBody/DeploymentFormBody";
 import Alert from "components/js/Alert";

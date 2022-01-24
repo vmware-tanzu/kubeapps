@@ -179,7 +179,7 @@ One of the CI flows we have defined is the `prerelease` one. It is being trigger
 # assuming you are in the main branch, with the latest changes pulled locally
 # and you already have a `prerelease` local branch
 git checkout prerelease
-git merge master
+git merge main
 git push origin prerelease # replace `origin` by your remote name
 ```
 
