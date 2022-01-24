@@ -16,7 +16,7 @@ The main configuration is located at this [CircleCI config file](../../.circleci
   - `build_go_images` (always): it builds the CI golang images for `kubeops`, `apprepository-controller`, `asset-syncer` and `assetsvc`.
   - `build_dashboard` (always): it builds the CI node image for `dashboard`.
   - `build_pinniped_proxy` (always): it builds the CI rust image for `pinniped-proxy`.
-  - `local_e2e_tests` (always): it runs locally (i.e., inside the CircleCI environment) the e2e tests. Please refer to the [e2e tests documentation](./end-to-end-tests.md) for further information. In this job, before executing the script [`script/e2e-test.sh](../../script/e2e-test.sh), the proper environment is created. Namely:
+  - `local_e2e_tests` (always): it runs locally (i.e., inside the CircleCI environment) the e2e tests. Please refer to the [e2e tests documentation](./end-to-end-tests.md) for further information. In this job, before running the script [`script/e2e-test.sh](../../script/e2e-test.sh), the proper environment is created. Namely:
     - Install the required binaries (kind, kubectl, mkcert, helm).
     - Spin up two Kind clusters.
     - Load the CI images into the cluster.
@@ -40,7 +40,7 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Renaming the development images (`kubeapps/xxx`) by the production ones (`bitnami/kubeapps-xxx`) with the `vX.X.X` tag.
     - Using `vX.X.X` as the `appVersion`.
     - Sending a draft PR to the Bitnami Charts repository with these changes (from the robot account's personal fork)
-  - `release` (on tag): it creates a GitHub release based on the current tag by executing the script [script/create_release.sh](../../script/create_release.sh).
+  - `release` (on tag): it creates a GitHub release based on the current tag by running the script [script/create_release.sh](../../script/create_release.sh).
 
 Note that this process is independent of the release of the official Bitnami images and chart. These Bitnami images will be created according to their internal process (so the Golang, Node or Rust versions we define here are not used by them. Manual coordination is expected here if a major version bump happens to occur).
 

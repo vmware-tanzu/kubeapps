@@ -29,7 +29,7 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
 
 ### 0.2 - CI configuration and images
 
-In order to be in sync with the container images during the execution of the different CI jobs, it is necessary to also update the CI image versions.
+In order to be in sync with the container images while running the different CI jobs, it is necessary to also update the CI image versions.
 Find further information in the [CI configuration](./ci.md) and the [e2e tests documentation](./end-to-end-tests.md).
 
 #### 0.2.1 - CI configuration

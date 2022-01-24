@@ -64,7 +64,7 @@ This will generate an image `kubeapps/kubeops:dev` that you can use in the curre
 kubectl set image -n kubeapps deployment kubeapps-internal-kubeops kubeops=kubeapps/kubeops:dev
 ```
 
-For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod executing:
+For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod running:
 
 ```bash
 kubectl delete pod -n kubeapps -l app=kubeapps-internal-kubeops

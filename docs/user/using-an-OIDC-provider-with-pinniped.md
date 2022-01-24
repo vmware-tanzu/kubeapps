@@ -171,7 +171,7 @@ Next, go to `https://gaz.csp-vidm-prod.com` to check the CA certificate using yo
 
 ![Checking the CA certificate using Chrome](../img/ca-certificate-chrome.png "Checking the CA certificate using Chrome")
 
-The CA used is `DigiCert SHA2 High Assurance Server CA`, so you will need to look up this certificate in the [DigiCert repository](https://www.digicert.com/kb/digicert-root-certificates.htm). Download the proper `.pem` file (in this case, [this one](https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem)) and convert the content to base64. For simplicity, we perform this step by executing:
+The CA used is `DigiCert SHA2 High Assurance Server CA`, so you will need to look up this certificate in the [DigiCert repository](https://www.digicert.com/kb/digicert-root-certificates.htm). Download the proper `.pem` file (in this case, [this one](https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem)) and convert the content to base64. For simplicity, we perform this step by running:
 
 ```bash
 curl -s https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem | base64

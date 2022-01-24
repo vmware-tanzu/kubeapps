@@ -111,7 +111,7 @@ Also, please verify that you have modified the Kind node IP accordingly and the 
 Find below some typical problems with a possible workaround:
 
 - Missing permissions to access any namespace:
-  - Add RBAC config by executing `kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml`
+  - Add RBAC config by running `kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml`
 - Not logging in even if everything is correct:
   - Delete and create the jwt authenticator: `make delete-pinniped-jwt-authenticator add-pinniped-jwt-authenticator`
   - If still not working, remove Pinniped and create it again: `make delete-pinniped make deploy-pinniped deploy-pinniped-additional`.

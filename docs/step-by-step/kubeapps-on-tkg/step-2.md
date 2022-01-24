@@ -174,7 +174,7 @@ In case Kubeapps is to be installed in an air-gapped environment, please follow 
 >     type: LoadBalancer
 > ```
 
-Use the commands below to install Kubeapps. The final command assumes that the Kubeapps chart configuration parameters are defined in a file named `custom-values.yaml`, so ensure this file exists before executing that command.
+Use the commands below to install Kubeapps. The final command assumes that the Kubeapps chart configuration parameters are defined in a file named `custom-values.yaml`, so ensure this file exists before running that command.
 
 ```bash
 # Install the Bitnami helm repository
@@ -221,7 +221,7 @@ subjects:
     name: EMAIL-ADDRESS
 ```
 
-Apply this configuration by executing the following command:
+Apply this configuration by running the following command:
 
 ```bash
 kubectl apply -f kubeapps-rbac.yaml

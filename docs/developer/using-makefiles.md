@@ -38,7 +38,7 @@ make kubeapps/asset-syncer
     You can get this IP by inspecting the kind network (`docker network inspect kind`) and setting the value as **the next available IP on that network**
     (if you don't already have any kind clusters launched, this will be the first address after the gateway, ie. something like 172.x.0.2).
 
-        * Another way to do so is to start the environment with `make cluster-kind` and manually verify the IP address by executing `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`, but you will need to re-create the cluster after you've updated the config files (below) by executing `make delete-cluster-kind`, as some of these files (the apiserver-config ones) are config for the cluster apiserver itself, which has to know where to find dex.
+        * Another way to do so is to start the environment with `make cluster-kind` and manually verify the IP address by running `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`, but you will need to re-create the cluster after you've updated the config files (below) by running `make delete-cluster-kind`, as some of these files (the apiserver-config ones) are config for the cluster apiserver itself, which has to know where to find dex.
 
   - Then, replace `172.18.0.2` with the previous IP the following files:
     - [script/makefiles/deploy-dev.mk](../../script/makefiles/deploy-dev.mk)

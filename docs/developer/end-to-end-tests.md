@@ -16,8 +16,8 @@ These tests are run by the script [script/e2e-test.sh](../../script/e2e-test.sh)
 3. Installs some dependencies:
    1. Chart Museum.
    2. Operator framework (not in GKE).
-4. Executes the [Helm tests](#chart-tests).
-5. Executes the [web browser tests](#web-browser-tests).
+4. Runs the [Helm tests](#chart-tests).
+5. Runs the [web browser tests](#web-browser-tests).
 
 If all of the above succeeded, the control is returned to the CI with the proper exit code.
 
@@ -52,7 +52,7 @@ INTEGRATION_ENTRYPOINT=http://kubeapps.local USE_MULTICLUSTER_OIDC_ENV=false ADM
 
 ```
 
-If a test happens to fail, apart from test execution logs a screenshot will be generated and saved in the `reports/screenshots]` folder.
+If a test happens to fail, besides the test logs, a screenshot will be generated and saved in the `reports/screenshots]` folder.
 
 ### Running browser tests in a pod
 
@@ -109,5 +109,5 @@ To sum up, whenever a change triggers a new `kubeapps/integration-tests` version
 - Checking if the [integration Dockerfile](../../integration/Dockerfile) is using the proper base version.
 - Ensuring we are not using any deprecated dependency in the [package.json](../../integration/package.json).
 - Updating the [Makefile](../../integration/Makefile) with the new version tag.
-- Executing `make build && make push` to release a new image version.
+- running `make build && make push` to release a new image version.
 - Modifying the [Kubernetes Deployment manifest](../../integration/manifests/executor.yaml) with the new version.
