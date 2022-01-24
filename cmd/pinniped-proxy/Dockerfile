@@ -1,3 +1,6 @@
+# Copyright 2020-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 # syntax = docker/dockerfile:1
 
 FROM rust:1.58.0 as builder

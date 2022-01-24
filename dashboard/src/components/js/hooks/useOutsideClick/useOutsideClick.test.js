@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { mount } from "enzyme";
 import PropTypes from "prop-types";
 import React, { useRef } from "react";
@@ -66,7 +69,7 @@ describe(useOutsideClick, () => {
 
   /* eslint-disable jest/no-commented-out-tests */
   // TODO: Find a way to test real events
-  // it('should execute the callback when users click outside the element', () => {
+  // it('should run the callback when users click outside the element', () => {
   //   // This test is not implemented for now because we need to investigate
   //   // how to test global events. Most of the tooling about testing in React is
   //   // focused in Synthetic events, which are not enough to test this feature.

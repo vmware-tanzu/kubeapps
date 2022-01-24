@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { ThunkAction } from "redux-thunk";
 import Config, { IConfig, SupportedThemes } from "shared/Config";
 import { IStoreState } from "shared/types";
@@ -46,7 +49,7 @@ export function getTheme(): ThunkAction<Promise<void>, IStoreState, null, Config
   };
 }
 
-// setUserTheme receives a theme and and stores it
+// setUserTheme receives a theme and stores it
 // in both the redux state and the user's localstorage
 export function setUserTheme(
   theme: SupportedThemes,

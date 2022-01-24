@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal } from "@cds/react/modal";
@@ -108,7 +111,7 @@ it("calls updateRepo when submitting and there is a repo available", () => {
   expect(updateRepo).toHaveBeenCalled();
 });
 
-it("should disable the button if given", () => {
+it("should deactivate the button if given", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <AppRepoAddButton {...defaultProps} disabled={true} />,

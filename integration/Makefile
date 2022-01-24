@@ -1,3 +1,6 @@
+# Copyright 2019-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 IMAGE_TAG ?= dev
 
 # Retrieve the latest version pushed upstream at

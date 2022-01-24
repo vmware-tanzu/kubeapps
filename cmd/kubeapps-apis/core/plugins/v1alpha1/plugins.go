@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package v1alpha1
 
 import (
@@ -164,10 +155,10 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var dummyFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, core.KubernetesConfigGetter, kube.ClustersConfig, string) (interface{}, error) {
+		var stubFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, core.KubernetesConfigGetter, kube.ClustersConfig, string) (interface{}, error) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, dummyFn, grpcRegFn)
+		return nil, fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, stubFn, grpcRegFn)
 	}
 
 	server, err := grpcFn(registrar, clientGetter, s.clustersConfig, pluginConfigPath)
@@ -209,8 +200,8 @@ func getPluginDetail(p *plugin.Plugin, pluginPath string) (*plugins.Plugin, erro
 
 	fn, ok := pluginDetailFn.(pluginDetailFunctionType)
 	if !ok {
-		var dummyFn pluginDetailFunctionType = func() *plugins.Plugin { return &plugins.Plugin{} }
-		return nil, fmt.Errorf("unable to use %q in plugin %q due to a mismatched signature. \nwant: %T\ngot: %T", pluginDetailFunction, pluginPath, dummyFn, pluginDetailFn)
+		var stubFn pluginDetailFunctionType = func() *plugins.Plugin { return &plugins.Plugin{} }
+		return nil, fmt.Errorf("unable to use %q in plugin %q due to a mismatched signature. \nwant: %T\ngot: %T", pluginDetailFunction, pluginPath, stubFn, pluginDetailFn)
 	}
 
 	return fn(), nil
@@ -225,10 +216,10 @@ func registerHTTP(p *plugin.Plugin, pluginDetail *plugins.Plugin, gwArgs core.Ga
 	type gatewayRegisterFunctionType = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error
 	gwfn, ok := gwRegFn.(gatewayRegisterFunctionType)
 	if !ok {
-		// Create a dummyFn only so we can ensure the correct type is shown in case
+		// Create a stubFn only so we can ensure the correct type is shown in case
 		// of an error.
-		var dummyFn gatewayRegisterFunctionType = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error { return nil }
-		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", gatewayRegisterFunction, pluginDetail, dummyFn, gwRegFn)
+		var stubFn gatewayRegisterFunctionType = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error { return nil }
+		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", gatewayRegisterFunction, pluginDetail, stubFn, gwRegFn)
 	}
 	return gwfn(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
 }

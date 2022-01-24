@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 .color-icon-info {
   cds-icon {
     --color: var(--cds-alias-status-info, #0072a3);
@@ -265,7 +268,7 @@
   }
 }
 
-// TODO(andresmgot): workaround to avoid styling issue for a disabled CdsButton
+// TODO(andresmgot): workaround to avoid styling issue for a deactivated CdsButton
 // https://github.com/vmware/clarity/issues/5315
 // We need to apply the target classes manually
 .flat-btn[disabled] {

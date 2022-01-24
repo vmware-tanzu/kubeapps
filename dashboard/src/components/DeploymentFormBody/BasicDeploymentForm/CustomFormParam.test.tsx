@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IBasicFormParam } from "shared/types";
 import { CustomComponent } from "../../../RemoteComponent";

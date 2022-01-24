@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import axios from "axios";
 import * as moxios from "moxios";
 import Config, { IConfig, SupportedThemes } from "./Config";

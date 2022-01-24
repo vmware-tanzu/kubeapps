@@ -4,7 +4,7 @@ The goal of this document is to define the possible implementation for including
 
 This document will describe the UX and some implementation details for a PoC for serving Operators. The goal of the PoC is to kick off the feature, detect possible issues and gather user feedback.
 
-After the PoC, we should be able to have enough information to iterate over the solution and provide a more complete experience.
+After the PoC, we should be able to have enough information to iterate over the solution and provide a more extensive experience.
 
 ## Operators Source of Truth
 

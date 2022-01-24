@@ -13,7 +13,7 @@ metadata:
   {{- end }}
 data:
   k8s-api-proxy.conf: |-
-    # Disable buffering for log streaming
+    # Deactivate buffering for log streaming
     proxy_buffering off;
     # Hide Www-Authenticate to prevent it triggering a basic auth prompt in
     # the browser with some clusters

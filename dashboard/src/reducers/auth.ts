@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { Auth } from "shared/Auth";
 import { getType } from "typesafe-actions";
 import actions from "../actions";

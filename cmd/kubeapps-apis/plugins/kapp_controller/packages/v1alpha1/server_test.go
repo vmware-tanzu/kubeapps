@@ -1,15 +1,5 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
 
 package main
 
@@ -238,7 +228,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
 						ShortDescription:   "An awesome game from the 90's",
 						LongDescription:    "Tombi! is an open world platform-adventure game with RPG elements.",
-						Categories:         []string{"platfroms", "rpg"},
+						Categories:         []string{"platforms", "rpg"},
 						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
 						SupportDescription: "Some support information",
 						ProviderName:       "Tombi!",
@@ -310,7 +300,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					},
 					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 					ShortDescription: "An awesome game from the 90's",
-					Categories:       []string{"platfroms", "rpg"},
+					Categories:       []string{"platforms", "rpg"},
 				},
 			},
 		},

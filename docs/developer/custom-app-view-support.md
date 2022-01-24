@@ -1,6 +1,6 @@
 # Custom App View Support
 
-In addition to our [custom form component support](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/custom-form-component-support.md) we now support the ability for developers to inject custom app views for specific deployments.
+In addition to our [custom form component support](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/custom-form-component-support.md) we now support the ability for developers to inject custom app views for specific deployments.
 
 ## Step-by-step integration process
 
@@ -28,4 +28,4 @@ In addition to our [custom form component support](https://github.com/kubeapps/k
 
 ## Example Code
 
-In an effort to make getting antiquated with the feature easier we provide some demo code for you to play around with and explore the props that the dashboard supplies. The examples can be found in the [developer documentation examples](https://github.com/kubeapps/kubeapps/tree/master/docs/developer/examples). [CustomAppView.jsx](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/examples/CustomAppView.jsx) is a demo Application View that will get you familiar w/ the props and handlers that we pass as props. The props are displayed in plain text and the buttons are wired up to use the handlers that mirror the buttons in the normal Application View. We also provide a complied bundle version [CustomAppView.min.js](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/examples/CustomAppView.min.js) which you can load into the configmap and render.
+In an effort to make getting antiquated with the feature easier we provide some demo code for you to play around with and explore the props that the dashboard supplies. The examples can be found in the [developer documentation examples](https://github.com/kubeapps/kubeapps/tree/main/docs/developer/examples). [CustomAppView.jsx](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/examples/CustomAppView.jsx) is a demo Application View that will get you familiar w/ the props and handlers that we pass as props. The props are displayed in plain text and the buttons are wired up to use the handlers that mirror the buttons in the normal Application View. We also provide a complied bundle version [CustomAppView.min.js](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/examples/CustomAppView.min.js) which you can load into the configmap and render.

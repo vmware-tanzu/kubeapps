@@ -29,7 +29,7 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
 
 ### 0.2 - CI configuration and images
 
-In order to be in sync with the container images during the execution of the different CI jobs, it is necessary to also update the CI image versions.
+In order to be in sync with the container images while running the different CI jobs, it is necessary to also update the CI image versions.
 Find further information in the [CI configuration](./ci.md) and the [e2e tests documentation](./end-to-end-tests.md).
 
 #### 0.2.1 - CI configuration
@@ -100,7 +100,7 @@ helm dep update --skip-refresh ./chart/kubeapps
 
 As per the introduction of the new Kubeapps APIs service, it is based upon automatic code generation for both the frontend code and backend code. Given that generation rules can evolve to improve or reduce possible bugs, it is important to perform a periodic update.
 
-- To upgrade the `buf`-related dependencies, just execute:
+- To upgrade the `buf`-related dependencies, just run:
 
 ```bash
 # You need to have the buf binary installed, if not, go to https://docs.buf.build/installation/
@@ -179,7 +179,7 @@ One of the CI flows we have defined is the `prerelease` one. It is being trigger
 # assuming you are in the main branch, with the latest changes pulled locally
 # and you already have a `prerelease` local branch
 git checkout prerelease
-git merge master
+git merge main
 git push origin prerelease # replace `origin` by your remote name
 ```
 
@@ -203,7 +203,7 @@ Even though we have a thorough test suite in our repository, we still _must_ per
 
 Next, create a tag for the aforementioned commit and push it to the main branch. Please note that the tag name will be used as the release name.
 
-For doing so, execute the following commands:
+For doing so, run the following commands:
 
 ```bash
 export VERSION_NAME="v1.0.0-beta.1" # edit it accordingly
