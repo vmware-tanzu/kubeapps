@@ -33,7 +33,7 @@ info:
   title: Kubeapps API
   termsOfService: "https://github.com/kubeapps/kubeapps/blob/master/LICENSE"
   license:
-    name: Apache 2.0
+    name: Apache-2.0
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 tags:
   - name: kubeops
