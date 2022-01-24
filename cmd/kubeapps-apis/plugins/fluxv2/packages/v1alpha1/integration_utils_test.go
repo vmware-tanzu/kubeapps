@@ -30,6 +30,10 @@ import (
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/helm"
+	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	kubecorev1 "k8s.io/api/core/v1"
@@ -37,6 +41,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -64,7 +69,7 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 	}
 
 	if !runTests {
-		t.Skipf("skipping flux plugin integration tests as %q not set to be true", envVarFluxIntegrationTests)
+		t.Skipf("skipping flux plugin integration tests because environment variable %q not set to be true", envVarFluxIntegrationTests)
 	} else {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
 			t.Fatalf("Failed to find local kind cluster due to: [%v]", err)
@@ -163,7 +168,7 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 
 // This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
 // the design
-func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
+func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
 	unstructuredRepo := unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -180,6 +185,10 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
 		},
 	}
 
+	if secretName != "" {
+		unstructured.SetNestedField(unstructuredRepo.Object, secretName, "spec", "secretRef", "name")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
@@ -193,6 +202,7 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace string) error {
 
 func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
+
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
 	} else {
@@ -285,10 +295,8 @@ func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error)
 	}
 }
 
-// will create a service account with cluster-admin privs and return the associated
-// Bearer token (base64-encoded)
-func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
-	t.Logf("+kubeCreateAdminServiceAccount(%s,%s)", name, namespace)
+func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return "", err
@@ -355,7 +363,7 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 			},
 			RoleRef: kuberbacv1.RoleRef{
 				Kind: "ClusterRole",
-				Name: "cluster-admin",
+				Name: role,
 			},
 		},
 		metav1.CreateOptions{})
@@ -363,6 +371,17 @@ func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string
 		return "", err
 	}
 	return string(token), nil
+}
+
+// ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
+// will create a service account with cluster-admin privs and return the associated
+// Bearer token (base64-encoded)
+func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
+	return kubeCreateServiceAccountWithClusterRole(t, name, namespace, "cluster-admin")
+}
+
+func kubeCreateFluxPluginServiceAccount(t *testing.T, name, namespace string) (string, error) {
+	return kubeCreateServiceAccountWithClusterRole(t, name, namespace, "kubeapps:controller:kubeapps-apis-fluxv2-plugin")
 }
 
 func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
@@ -449,8 +468,38 @@ func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error
 	}
 }
 
+func kubeCreateBasicAuthSecret(t *testing.T, namespace, name, user, password string) error {
+	t.Logf("+kubeCreateBasicAuthSecret(%s, %s, %s)", namespace, name, user)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.CoreV1().Secrets(namespace).Create(
+		ctx,
+		newBasicAuthSecret(name, namespace, user, password),
+		metav1.CreateOptions{})
+	return err
+}
+
+func kubeDeleteSecret(t *testing.T, namespace, name string) error {
+	t.Logf("+kubeDeleteSecret(%s, %s)", namespace, name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	return typedClient.CoreV1().Secrets(namespace).Delete(
+		ctx,
+		name,
+		metav1.DeleteOptions{})
+}
+
 func kubePortForwardToRedis(t *testing.T) error {
 	t.Logf("+kubePortForwardToRedis")
+	defer t.Logf("-kubePortForwardToRedis")
 	stopChan, readyChan := make(chan struct{}, 1), make(chan struct{}, 1)
 	go func() {
 		if err := func() error {
@@ -564,7 +613,13 @@ func randSeq(n int) string {
 	return string(b)
 }
 
-func newGrpcContext(t *testing.T, name string) context.Context {
+func newGrpcContext(t *testing.T, token string) context.Context {
+	return metadata.NewOutgoingContext(
+		context.TODO(),
+		metadata.Pairs("Authorization", "Bearer "+token))
+}
+
+func newGrpcAdminContext(t *testing.T, name string) context.Context {
 	token, err := kubeCreateAdminServiceAccount(t, name, "default")
 	if err != nil {
 		t.Fatalf("Failed to create service account due to: %+v", err)
@@ -574,9 +629,20 @@ func newGrpcContext(t *testing.T, name string) context.Context {
 			t.Logf("Failed to delete service account due to: %+v", err)
 		}
 	})
-	return metadata.NewOutgoingContext(
-		context.TODO(),
-		metadata.Pairs("Authorization", "Bearer "+token))
+	return newGrpcContext(t, token)
+}
+
+func newGrpcFluxPluginContext(t *testing.T, name string) context.Context {
+	token, err := kubeCreateFluxPluginServiceAccount(t, name, "default")
+	if err != nil {
+		t.Fatalf("Failed to create service account due to: %+v", err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
+			t.Logf("Failed to delete service account due to: %+v", err)
+		}
+	})
+	return newGrpcContext(t, token)
 }
 
 func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMemory string) error {
@@ -596,10 +662,139 @@ func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMe
 	} else {
 		currentMaxMemoryPolicy := fmt.Sprintf("%v", maxmemoryPolicy[1])
 		t.Logf("Current maxmemory policy = [%s]", currentMaxMemoryPolicy)
-		if currentMaxMemoryPolicy != "allkeys-lru" {
-			t.Fatalf("This test requires redis config maxmemory-policy to be set to allkeys-lru")
+		if currentMaxMemoryPolicy != "allkeys-lfu" {
+			t.Fatalf("This test requires redis config maxmemory-policy to be set to allkeys-lfu")
 		}
 	}
+	return nil
+}
+
+func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
+	if err := kubePortForwardToRedis(t); err != nil {
+		return nil, fmt.Errorf("kubePortForwardToRedis failed due to %+v", err)
+	}
+	redisPwd, err := kubeGetSecret(t, "kubeapps", "kubeapps-redis", "redis-password")
+	if err != nil {
+		return nil, fmt.Errorf("%v", err)
+	}
+	redisCli := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: redisPwd,
+		DB:       0,
+	})
+	t.Cleanup(func() {
+		// we want to make sure at the end of the test the cache is empty just as it was when
+		// we started
+		const maxWait = 60
+		for i := 0; ; i++ {
+			if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+				t.Errorf("redisCli.Keys() failed due to: %+v", err)
+			} else {
+				if len(keys) == 0 {
+					break
+				}
+				if i < maxWait {
+					t.Logf("Waiting 2s until cache is empty. Current number of keys: [%d]", len(keys))
+					time.Sleep(2 * time.Second)
+				} else {
+					t.Errorf("Failed because there are still [%d] keys left in the cache", len(keys))
+					break
+				}
+			}
+		}
+		redisCli.Close()
+	})
+	t.Logf("redisCli: %s", redisCli)
+
+	// sanity check, we expect the cache to be empty at this point
+	// if it's not, it's likely that some cleanup didn't happen due to earlier an aborted test
+	// and you should be able to clean up manually
+	// $ kubectl delete helmrepositories --all
+	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
+		return nil, fmt.Errorf("%v", err)
+	} else {
+		if len(keys) != 0 {
+			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
+		}
+	}
+	return redisCli, nil
+}
+
+func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *sets.String) {
+	if totalBitnamiCharts == -1 {
+		t.Errorf("Error: unexpected state: number of charts in bitnami catalog is not initialized")
+		return
+	}
+
+	// this for loop running in the background will signal to the main goroutine
+	// when it is okay to proceed to load the next repo
+	t.Logf("Listening for events from redis in the background...")
+	reposAdded := sets.String{}
+	var chartsLeftToSync = 0
+	for {
+		event, ok := <-ch
+		if !ok {
+			t.Logf("Redis publish channel was closed")
+			break
+		}
+		t.Logf("Redis event: [%v]: [%v]", event.Channel, event.Payload)
+		if event.Channel == "__keyevent@0__:set" {
+			if strings.HasPrefix(event.Payload, "helmrepositories:default:bitnami-") {
+				reposAdded.Insert(event.Payload)
+				// I am keeping track of charts being synced in the cache so that I only
+				// start to load repository N+1 after completely done with N, meaning waiting until
+				// the model for the repo and all its (latest) charts are in the cache. Thinking
+				// about it now, I am not sure it's actually critical for this test to enforce
+				// that a repo AND its charts are completely synced before proceeding. To be
+				// continued...
+				chartsLeftToSync += totalBitnamiCharts
+			} else if strings.HasPrefix(event.Payload, "helmcharts:default:bitnami-") {
+				chartID := strings.Split(event.Payload, ":")[2]
+				repoKey := "helmrepositories:default:" + strings.Split(chartID, "/")[0]
+				if reposAdded.Has(repoKey) {
+					chartsLeftToSync--
+				}
+				t.Logf("Charts left to sync: [%d]", chartsLeftToSync)
+			}
+			if reposAdded.Len() > 0 && chartsLeftToSync == 0 && sem != nil {
+				// signal to the main goroutine it's okay to proceed to load the next copy
+				sem.Release(1)
+			}
+		} else if event.Channel == "__keyevent@0__:evicted" &&
+			strings.HasPrefix(event.Payload, "helmrepositories:default:bitnami-") {
+			evictedRepos.Insert(event.Payload)
+			if reposAdded.Len() > 0 && sem != nil {
+				// signal to the main goroutine it's okay to proceed to load the next copy
+				sem.Release(1)
+			}
+		}
+	}
+}
+
+func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
+	t.Logf("+initNumberOfChartsInBitnamiCatalog")
+
+	bitnamiUrl := "https://charts.bitnami.com/bitnami"
+
+	byteArray, err := httpclient.Get(bitnamiUrl+"/index.yaml", httpclient.New(), nil)
+	if err != nil {
+		return err
+	}
+
+	modelRepo := &models.Repo{
+		Namespace: "default",
+		Name:      "bitnami",
+		URL:       bitnamiUrl,
+		Type:      "helm",
+	}
+
+	charts, err := helm.ChartsFromIndex(byteArray, modelRepo, true)
+	if err != nil {
+		return err
+	}
+
+	totalBitnamiCharts = len(charts)
+	t.Logf("+initNumberOfChartsInBitnamiCatalog: total [%d] charts", totalBitnamiCharts)
 	return nil
 }
 
@@ -608,4 +803,7 @@ var (
 	dynamicClient dynamic.Interface
 	typedClient   kubernetes.Interface
 	letters       = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	// total number of unique packages in bitnami repo,
+	// initialized during running of the integration test
+	totalBitnamiCharts = -1
 )

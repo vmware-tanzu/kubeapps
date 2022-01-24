@@ -21,503 +21,71 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
-	testCases := []struct {
-		name               string
-		existingReleases   []releaseStub
+
+	// sanity check
+	if len(resourcerefstest.TestCases1) < 11 {
+		t.Fatalf("Expected array [resourcerefstest.TestCases1] size of at least 11")
+	}
+
+	type testCase struct {
+		baseTestCase       resourcerefstest.TestCase
 		request            *corev1.GetInstalledPackageResourceRefsRequest
 		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
 		expectedStatusCode codes.Code
-	}{
-		{
-			name: "returns resource references for helm installation",
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-# Source: apache/templates/svc.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: apache-test
-  namespace: default
----
-# Source: apache/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: apache-test
-  namespace: default
-`,
-				},
-			},
+	}
+
+	// newTestCase is a function to take an existing test-case
+	// (a so-called baseTestCase in pkg/resourcerefs module, which contains a LOT of useful data)
+	// and "enrich" it with some new fields to create a different kind of test case
+	// that tests server.GetInstalledPackageResourceRefs() func
+	newTestCase := func(tc int, identifier string, response bool, code codes.Code) testCase {
+		newCase := testCase{
+			baseTestCase: resourcerefstest.TestCases1[tc],
 			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Cluster:   "default",
 						Namespace: "default",
 					},
-					Identifier: "my-apache",
+					Identifier: identifier,
 				},
 			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+		}
+		if response {
+			newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
 				Context: &corev1.Context{
 					Cluster:   "default",
 					Namespace: "default",
 				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "v1",
-						Name:       "apache-test",
-						Namespace:  "default",
-						Kind:       "Service",
-					},
-					{
-						ApiVersion: "apps/v1",
-						Name:       "apache-test",
-						Namespace:  "default",
-						Kind:       "Deployment",
-					},
-				},
-			},
-		},
-		{
-			name: "returns resource references with explicit namespace when not present in helm manifest",
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-# Source: apache/templates/svc.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: apache-test
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "v1",
-						Name:       "apache-test",
-						Namespace:  "default",
-						Kind:       "Service",
-					},
-				},
-			},
-		},
-		{
-			name: "returns resource references for resources in other namespaces",
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-apiVersion: v1
-kind: ClusterRole
-metadata:
-  name: test-cluster-role
----
-# Source: apache/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: test-other-namespace
-  namespace: some-other-namespace
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "v1",
-						Name:       "test-cluster-role",
-						Kind:       "ClusterRole",
-						Namespace:  "default",
-					},
-					{
-						ApiVersion: "apps/v1",
-						Name:       "test-other-namespace",
-						Namespace:  "some-other-namespace",
-						Kind:       "Deployment",
-					},
-				},
-			},
-		},
-		{
-			name: "skips resources that do not have a kind",
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-# Source: apache/templates/svc.yaml
-apiVersion: v1
-otherstuff: ignored
-metadata:
-  name: apache-test
----
-# Source: apache/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: apache-test
-  namespace: default
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "apps/v1",
-						Name:       "apache-test",
-						Namespace:  "default",
-						Kind:       "Deployment",
-					},
-				},
-			},
-		},
-		{
-			name: "returns a not found error if the release is not found",
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-iis",
-				},
-			},
-			expectedStatusCode: codes.NotFound,
-		},
-		{
-			name: "returns internal error if the yaml manifest cannot be parsed",
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-apiVersion: v1
-should not be :! parsed as yaml$
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedStatusCode: codes.Internal,
-		},
-		{
-			name: "handles duplicate labels as helm does",
-			// See https://github.com/kubeapps/kubeapps/issues/632
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-# Source: apache/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: apache-test
-  namespace: default
-  label:
-    chart: "gitea-0.2.0"
-    chart: "gitea-0.2.0"
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "apps/v1",
-						Name:       "apache-test",
-						Namespace:  "default",
-						Kind:       "Deployment",
-					},
-				},
-			},
-		},
-		{
-			name: "supports manifests with YAML type casting",
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-# Source: apache/templates/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: !!string apache-test
-  namespace: default
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "apps/v1",
-						Name:       "apache-test",
-						Namespace:  "default",
-						Kind:       "Deployment",
-					},
-				},
-			},
-		},
-		{
-			name: "renders a list of items",
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-apiVersion: v1
-kind: List
-items:
-- apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    name: apache-test
-    namespace: default
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: apache-test
-    namespace: default
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "apps/v1",
-						Name:       "apache-test",
-						Namespace:  "default",
-						Kind:       "Deployment",
-					},
-					{
-						ApiVersion: "v1",
-						Name:       "apache-test",
-						Namespace:  "default",
-						Kind:       "Service",
-					},
-				},
-			},
-		},
-		{
-			name: "renders a rolelist of items",
-			// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-apiVersion: v1
-kind: RoleList
-items:
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    name: role-1
-    namespace: default
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    name: role-2
-    namespace: default
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "rbac.authorization.k8s.io/v1",
-						Name:       "role-1",
-						Namespace:  "default",
-						Kind:       "Role",
-					},
-					{
-						ApiVersion: "rbac.authorization.k8s.io/v1",
-						Name:       "role-2",
-						Namespace:  "default",
-						Kind:       "Role",
-					},
-				},
-			},
-		},
-		{
-			name: "renders a ClusterRoleList of items",
-			// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-v1/#ClusterRoleList
-			existingReleases: []releaseStub{
-				{
-					name:      "my-apache",
-					namespace: "default",
-					manifest: `
----
-apiVersion: v1
-kind: ClusterRoleList
-items:
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRole
-  metadata:
-    name: clusterrole-1
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRole
-  metadata:
-    name: clusterrole-2
-`,
-				},
-			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: "default",
-					},
-					Identifier: "my-apache",
-				},
-			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
-				},
-				ResourceRefs: []*corev1.ResourceRef{
-					{
-						ApiVersion: "rbac.authorization.k8s.io/v1",
-						Name:       "clusterrole-1",
-						Namespace:  "default",
-						Kind:       "ClusterRole",
-					},
-					{
-						ApiVersion: "rbac.authorization.k8s.io/v1",
-						Name:       "clusterrole-2",
-						Namespace:  "default",
-						Kind:       "ClusterRole",
-					},
-				},
-			},
-		},
+				ResourceRefs: resourcerefstest.TestCases1[tc].ExpectedResourceRefs,
+			}
+		}
+		newCase.expectedStatusCode = code
+		return newCase
+	}
+
+	testCases := []testCase{
+		newTestCase(0, "my-apache", true, codes.OK),
+		newTestCase(1, "my-apache", true, codes.OK),
+		newTestCase(2, "my-apache", true, codes.OK),
+		newTestCase(3, "my-apache", true, codes.OK),
+		newTestCase(4, "my-iis", false, codes.NotFound),
+		newTestCase(5, "my-apache", false, codes.Internal),
+		// See https://github.com/kubeapps/kubeapps/issues/632
+		newTestCase(6, "my-apache", true, codes.OK),
+		newTestCase(7, "my-apache", true, codes.OK),
+		newTestCase(8, "my-apache", true, codes.OK),
+		// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
+		newTestCase(9, "my-apache", true, codes.OK),
+		// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-v1/#ClusterRoleList
+		newTestCase(10, "my-apache", true, codes.OK),
 	}
 
 	ignoredFields := cmpopts.IgnoreUnexported(
@@ -526,10 +94,22 @@ items:
 		corev1.Context{},
 	)
 
+	toHelmReleaseStubs := func(in []resourcerefstest.TestReleaseStub) []releaseStub {
+		out := []releaseStub{}
+		for _, r := range in {
+			out = append(out, releaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
+		}
+		return out
+	}
+
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.baseTestCase.Name, func(t *testing.T) {
 			authorized := true
-			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases, nil)
+			actionConfig := newActionConfigFixture(
+				t,
+				tc.request.GetInstalledPackageRef().GetContext().GetNamespace(),
+				toHelmReleaseStubs(tc.baseTestCase.ExistingReleases),
+				nil)
 
 			server, _, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{

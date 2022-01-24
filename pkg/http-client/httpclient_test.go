@@ -100,7 +100,7 @@ func TestSetClientTls(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		SetClientTLS(client, systemCertPool, true)
+		SetClientTLS(client, systemCertPool, nil, true)
 
 		if transport.TLSClientConfig == nil {
 			t.Fatal("expected TLS config to have been set but it is nil")

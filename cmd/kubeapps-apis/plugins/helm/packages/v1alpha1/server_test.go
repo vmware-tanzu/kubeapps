@@ -33,6 +33,9 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeapps/kubeapps/pkg/agent"
@@ -100,7 +103,7 @@ func TestGetClient(t *testing.T) {
 	testCases := []struct {
 		name              string
 		manager           utils.AssetManager
-		clientGetter      clientGetter
+		clientGetter      clientgetter.ClientGetterFunc
 		statusCodeClient  codes.Code
 		statusCodeManager codes.Code
 	}{
@@ -170,246 +173,6 @@ func TestGetClient(t *testing.T) {
 	}
 }
 
-func TestIsValidChart(t *testing.T) {
-	testCases := []struct {
-		name     string
-		in       *models.Chart
-		expected bool
-	}{
-		{
-			name: "it returns true if the chart name, ID, repo and versions are specified",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-			},
-			expected: true,
-		},
-		{
-			name: "it returns false if the chart name is missing",
-			in: &models.Chart{
-				ID: "foo/bar",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "it returns false if the chart ID is missing",
-			in: &models.Chart{
-				Name: "foo",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "it returns false if the chart repo is missing",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "it returns false if the ChartVersions are missing",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-			},
-			expected: false,
-		},
-		{
-			name: "it returns false if a ChartVersions.Version is missing",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
-					{Version: "3.0.0"},
-					{AppVersion: DefaultAppVersion},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "it returns true if the minimum (+maintainer) chart is correct",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-				Maintainers: []chart.Maintainer{{Name: "me"}},
-			},
-			expected: true,
-		},
-		{
-			name: "it returns false if a Maintainer.Name is missing",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
-			},
-			expected: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res, err := isValidChart(tc.in)
-			if got, want := res, tc.expected; got != want {
-				t.Fatalf("got: %+v, want: %+v, res: %+v (%+v)", got, want, res, err)
-			}
-		})
-	}
-}
-
-func TestAvailablePackageSummaryFromChart(t *testing.T) {
-	invalidChart := &models.Chart{Name: "foo"}
-
-	testCases := []struct {
-		name       string
-		in         *models.Chart
-		expected   *corev1.AvailablePackageSummary
-		statusCode codes.Code
-	}{
-		{
-			name: "it returns a complete AvailablePackageSummary for a complete chart",
-			in: &models.Chart{
-				Name:        "foo",
-				ID:          "foo/bar",
-				Category:    DefaultChartCategory,
-				Description: "best chart",
-				Icon:        "foo.bar/icon.svg",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
-				ChartVersions: []models.ChartVersion{
-					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-					{Version: "1.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-				},
-			},
-			expected: &corev1.AvailablePackageSummary{
-				Name:        "foo",
-				DisplayName: "foo",
-				LatestVersion: &corev1.PackageAppVersion{
-					PkgVersion: "3.0.0",
-					AppVersion: DefaultAppVersion,
-				},
-				IconUrl:          "foo.bar/icon.svg",
-				ShortDescription: "best chart",
-				Categories:       []string{DefaultChartCategory},
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{Namespace: "my-ns"},
-					Identifier: "foo/bar",
-					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
-				},
-			},
-			statusCode: codes.OK,
-		},
-		{
-			name: "it returns a valid AvailablePackageSummary if the minimal chart is correct",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version:    "3.0.0",
-						AppVersion: DefaultAppVersion,
-					},
-				},
-			},
-			expected: &corev1.AvailablePackageSummary{
-				Name:        "foo",
-				DisplayName: "foo",
-				LatestVersion: &corev1.PackageAppVersion{
-					PkgVersion: "3.0.0",
-					AppVersion: DefaultAppVersion,
-				},
-				Categories: []string{""},
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{Namespace: "my-ns"},
-					Identifier: "foo/bar",
-					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
-				},
-			},
-			statusCode: codes.OK,
-		},
-		{
-			name:       "it returns internal error if empty chart",
-			in:         &models.Chart{},
-			statusCode: codes.Internal,
-		},
-		{
-			name:       "it returns internal error if chart is invalid",
-			in:         invalidChart,
-			statusCode: codes.Internal,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			availablePackageSummary, err := AvailablePackageSummaryFromChart(tc.in)
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
-			}
-
-			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
-				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-				}
-			}
-		})
-	}
-}
-
 // makeChart makes a chart with specific input used in the test and default constants for other relevant data.
 func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions []string, category string) *models.Chart {
 	ch := &models.Chart{
@@ -457,7 +220,7 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 	}
 
 	if pageToken != "" {
-		pageOffset, err := pageOffsetFromPageToken(pageToken)
+		pageOffset, err := paginate.PageOffsetFromPageToken(pageToken)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -511,9 +274,8 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
-		versionsInSummary: VersionsInSummary{MajorVersionsInSummary,
-			MinorVersionsInSummary, PatchVersionsInSummary},
-		createReleaseFunc: agent.CreateRelease,
+		versionsInSummary:  pkgutils.GetDefaultVersionsInSummary(),
+		createReleaseFunc:  agent.CreateRelease,
 	}, mock, cleanup
 }
 
@@ -1378,343 +1140,17 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 	}
 }
 
-func TestPackageAppVersionsSummary(t *testing.T) {
-	testCases := []struct {
-		name                      string
-		chart_versions            []models.ChartVersion
-		version_summary           []*corev1.PackageAppVersion
-		input_versions_in_summary VersionsInSummary
-	}{
-		{
-			name: "it includes the latest three major versions only",
-			chart_versions: []models.ChartVersion{
-				{Version: "8.5.6", AppVersion: DefaultAppVersion},
-				{Version: "7.5.6", AppVersion: DefaultAppVersion},
-				{Version: "6.5.6", AppVersion: DefaultAppVersion},
-				{Version: "5.5.6", AppVersion: DefaultAppVersion},
-			},
-			version_summary: []*corev1.PackageAppVersion{
-				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "7.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
-			},
-			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
-		},
-		{
-			name: "it includes the latest three minor versions for each major version only",
-			chart_versions: []models.ChartVersion{
-				{Version: "8.5.6", AppVersion: DefaultAppVersion},
-				{Version: "8.4.6", AppVersion: DefaultAppVersion},
-				{Version: "8.3.6", AppVersion: DefaultAppVersion},
-				{Version: "8.2.6", AppVersion: DefaultAppVersion},
-			},
-			version_summary: []*corev1.PackageAppVersion{
-				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.4.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.3.6", AppVersion: DefaultAppVersion},
-			},
-			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
-		},
-		{
-			name: "it includes the latest three patch versions for each minor version only",
-			chart_versions: []models.ChartVersion{
-				{Version: "8.5.6", AppVersion: DefaultAppVersion},
-				{Version: "8.5.5", AppVersion: DefaultAppVersion},
-				{Version: "8.5.4", AppVersion: DefaultAppVersion},
-				{Version: "8.5.3", AppVersion: DefaultAppVersion},
-			},
-			version_summary: []*corev1.PackageAppVersion{
-				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
-			},
-			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
-		},
-		{
-			name: "it includes the latest three patch versions of the latest three minor versions of the latest three major versions only",
-			chart_versions: []models.ChartVersion{
-				{Version: "8.5.6", AppVersion: DefaultAppVersion},
-				{Version: "8.5.5", AppVersion: DefaultAppVersion},
-				{Version: "8.5.4", AppVersion: DefaultAppVersion},
-				{Version: "8.5.3", AppVersion: DefaultAppVersion},
-				{Version: "8.4.6", AppVersion: DefaultAppVersion},
-				{Version: "8.4.5", AppVersion: DefaultAppVersion},
-				{Version: "8.4.4", AppVersion: DefaultAppVersion},
-				{Version: "8.4.3", AppVersion: DefaultAppVersion},
-				{Version: "8.3.6", AppVersion: DefaultAppVersion},
-				{Version: "8.3.5", AppVersion: DefaultAppVersion},
-				{Version: "8.3.4", AppVersion: DefaultAppVersion},
-				{Version: "8.3.3", AppVersion: DefaultAppVersion},
-				{Version: "8.2.6", AppVersion: DefaultAppVersion},
-				{Version: "8.2.5", AppVersion: DefaultAppVersion},
-				{Version: "8.2.4", AppVersion: DefaultAppVersion},
-				{Version: "8.2.3", AppVersion: DefaultAppVersion},
-				{Version: "6.5.6", AppVersion: DefaultAppVersion},
-				{Version: "6.5.5", AppVersion: DefaultAppVersion},
-				{Version: "6.5.4", AppVersion: DefaultAppVersion},
-				{Version: "6.5.3", AppVersion: DefaultAppVersion},
-				{Version: "6.4.6", AppVersion: DefaultAppVersion},
-				{Version: "6.4.5", AppVersion: DefaultAppVersion},
-				{Version: "6.4.4", AppVersion: DefaultAppVersion},
-				{Version: "6.4.3", AppVersion: DefaultAppVersion},
-				{Version: "6.3.6", AppVersion: DefaultAppVersion},
-				{Version: "6.3.5", AppVersion: DefaultAppVersion},
-				{Version: "6.3.4", AppVersion: DefaultAppVersion},
-				{Version: "6.3.3", AppVersion: DefaultAppVersion},
-				{Version: "6.2.6", AppVersion: DefaultAppVersion},
-				{Version: "6.2.5", AppVersion: DefaultAppVersion},
-				{Version: "6.2.4", AppVersion: DefaultAppVersion},
-				{Version: "6.2.3", AppVersion: DefaultAppVersion},
-				{Version: "4.5.6", AppVersion: DefaultAppVersion},
-				{Version: "4.5.5", AppVersion: DefaultAppVersion},
-				{Version: "4.5.4", AppVersion: DefaultAppVersion},
-				{Version: "4.5.3", AppVersion: DefaultAppVersion},
-				{Version: "4.4.6", AppVersion: DefaultAppVersion},
-				{Version: "4.4.5", AppVersion: DefaultAppVersion},
-				{Version: "4.4.4", AppVersion: DefaultAppVersion},
-				{Version: "4.4.3", AppVersion: DefaultAppVersion},
-				{Version: "4.3.6", AppVersion: DefaultAppVersion},
-				{Version: "4.3.5", AppVersion: DefaultAppVersion},
-				{Version: "4.3.4", AppVersion: DefaultAppVersion},
-				{Version: "4.3.3", AppVersion: DefaultAppVersion},
-				{Version: "4.2.6", AppVersion: DefaultAppVersion},
-				{Version: "4.2.5", AppVersion: DefaultAppVersion},
-				{Version: "4.2.4", AppVersion: DefaultAppVersion},
-				{Version: "4.2.3", AppVersion: DefaultAppVersion},
-				{Version: "2.5.6", AppVersion: DefaultAppVersion},
-				{Version: "2.5.5", AppVersion: DefaultAppVersion},
-				{Version: "2.5.4", AppVersion: DefaultAppVersion},
-				{Version: "2.5.3", AppVersion: DefaultAppVersion},
-				{Version: "2.4.6", AppVersion: DefaultAppVersion},
-				{Version: "2.4.5", AppVersion: DefaultAppVersion},
-				{Version: "2.4.4", AppVersion: DefaultAppVersion},
-				{Version: "2.4.3", AppVersion: DefaultAppVersion},
-				{Version: "2.3.6", AppVersion: DefaultAppVersion},
-				{Version: "2.3.5", AppVersion: DefaultAppVersion},
-				{Version: "2.3.4", AppVersion: DefaultAppVersion},
-				{Version: "2.3.3", AppVersion: DefaultAppVersion},
-				{Version: "2.2.6", AppVersion: DefaultAppVersion},
-				{Version: "2.2.5", AppVersion: DefaultAppVersion},
-				{Version: "2.2.4", AppVersion: DefaultAppVersion},
-				{Version: "2.2.3", AppVersion: DefaultAppVersion},
-			},
-			version_summary: []*corev1.PackageAppVersion{
-				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.4.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.4.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.4.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.3.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.3.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.3.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.4.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.4.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.4.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.3.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.3.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.3.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.5.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.5.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.4.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.4.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.4.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.3.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.3.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.3.4", AppVersion: DefaultAppVersion},
-			},
-			input_versions_in_summary: VersionsInSummary{MajorVersionsInSummary, MinorVersionsInSummary, PatchVersionsInSummary},
-		},
-		{
-			name: "it includes the latest four patch versions of the latest one minor versions of the latest two major versions only",
-			chart_versions: []models.ChartVersion{
-				{Version: "8.5.6", AppVersion: DefaultAppVersion},
-				{Version: "8.5.5", AppVersion: DefaultAppVersion},
-				{Version: "8.5.4", AppVersion: DefaultAppVersion},
-				{Version: "8.5.3", AppVersion: DefaultAppVersion},
-				{Version: "8.4.6", AppVersion: DefaultAppVersion},
-				{Version: "8.4.5", AppVersion: DefaultAppVersion},
-				{Version: "8.4.4", AppVersion: DefaultAppVersion},
-				{Version: "8.4.3", AppVersion: DefaultAppVersion},
-				{Version: "8.3.6", AppVersion: DefaultAppVersion},
-				{Version: "8.3.5", AppVersion: DefaultAppVersion},
-				{Version: "8.3.4", AppVersion: DefaultAppVersion},
-				{Version: "8.3.3", AppVersion: DefaultAppVersion},
-				{Version: "8.2.6", AppVersion: DefaultAppVersion},
-				{Version: "8.2.5", AppVersion: DefaultAppVersion},
-				{Version: "8.2.4", AppVersion: DefaultAppVersion},
-				{Version: "8.2.3", AppVersion: DefaultAppVersion},
-				{Version: "6.5.6", AppVersion: DefaultAppVersion},
-				{Version: "6.5.5", AppVersion: DefaultAppVersion},
-				{Version: "6.5.4", AppVersion: DefaultAppVersion},
-				{Version: "6.5.3", AppVersion: DefaultAppVersion},
-				{Version: "6.5.2", AppVersion: DefaultAppVersion},
-				{Version: "6.5.1", AppVersion: DefaultAppVersion},
-				{Version: "6.4.6", AppVersion: DefaultAppVersion},
-				{Version: "6.4.5", AppVersion: DefaultAppVersion},
-				{Version: "6.4.4", AppVersion: DefaultAppVersion},
-				{Version: "6.4.3", AppVersion: DefaultAppVersion},
-				{Version: "6.3.6", AppVersion: DefaultAppVersion},
-				{Version: "6.3.5", AppVersion: DefaultAppVersion},
-				{Version: "6.3.4", AppVersion: DefaultAppVersion},
-				{Version: "6.3.3", AppVersion: DefaultAppVersion},
-				{Version: "6.2.6", AppVersion: DefaultAppVersion},
-				{Version: "6.2.5", AppVersion: DefaultAppVersion},
-				{Version: "6.2.4", AppVersion: DefaultAppVersion},
-				{Version: "6.2.3", AppVersion: DefaultAppVersion},
-				{Version: "4.5.6", AppVersion: DefaultAppVersion},
-				{Version: "4.5.5", AppVersion: DefaultAppVersion},
-				{Version: "4.5.4", AppVersion: DefaultAppVersion},
-				{Version: "4.5.3", AppVersion: DefaultAppVersion},
-				{Version: "4.4.6", AppVersion: DefaultAppVersion},
-				{Version: "4.4.5", AppVersion: DefaultAppVersion},
-				{Version: "4.4.4", AppVersion: DefaultAppVersion},
-				{Version: "4.4.3", AppVersion: DefaultAppVersion},
-				{Version: "4.3.6", AppVersion: DefaultAppVersion},
-				{Version: "4.3.5", AppVersion: DefaultAppVersion},
-				{Version: "4.3.4", AppVersion: DefaultAppVersion},
-				{Version: "4.3.3", AppVersion: DefaultAppVersion},
-				{Version: "4.2.6", AppVersion: DefaultAppVersion},
-				{Version: "4.2.5", AppVersion: DefaultAppVersion},
-				{Version: "4.2.4", AppVersion: DefaultAppVersion},
-				{Version: "4.2.3", AppVersion: DefaultAppVersion},
-				{Version: "2.5.6", AppVersion: DefaultAppVersion},
-				{Version: "2.5.5", AppVersion: DefaultAppVersion},
-				{Version: "2.5.4", AppVersion: DefaultAppVersion},
-				{Version: "2.5.3", AppVersion: DefaultAppVersion},
-				{Version: "2.4.6", AppVersion: DefaultAppVersion},
-				{Version: "2.4.5", AppVersion: DefaultAppVersion},
-				{Version: "2.4.4", AppVersion: DefaultAppVersion},
-				{Version: "2.4.3", AppVersion: DefaultAppVersion},
-				{Version: "2.3.6", AppVersion: DefaultAppVersion},
-				{Version: "2.3.5", AppVersion: DefaultAppVersion},
-				{Version: "2.3.4", AppVersion: DefaultAppVersion},
-				{Version: "2.3.3", AppVersion: DefaultAppVersion},
-				{Version: "2.2.6", AppVersion: DefaultAppVersion},
-				{Version: "2.2.5", AppVersion: DefaultAppVersion},
-				{Version: "2.2.4", AppVersion: DefaultAppVersion},
-				{Version: "2.2.3", AppVersion: DefaultAppVersion},
-			},
-			version_summary: []*corev1.PackageAppVersion{
-				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "8.5.3", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.5", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.4", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.3", AppVersion: DefaultAppVersion},
-			},
-			input_versions_in_summary: VersionsInSummary{Major: 2,
-				Minor: 1,
-				Patch: 4},
-		},
-		{
-			name: "it includes the latest zero patch versions of the latest zero minor versions of the latest six major versions only",
-			chart_versions: []models.ChartVersion{
-				{Version: "8.5.6", AppVersion: DefaultAppVersion},
-				{Version: "8.5.5", AppVersion: DefaultAppVersion},
-				{Version: "8.5.4", AppVersion: DefaultAppVersion},
-				{Version: "8.5.3", AppVersion: DefaultAppVersion},
-				{Version: "8.4.6", AppVersion: DefaultAppVersion},
-				{Version: "8.4.5", AppVersion: DefaultAppVersion},
-				{Version: "8.4.4", AppVersion: DefaultAppVersion},
-				{Version: "8.4.3", AppVersion: DefaultAppVersion},
-				{Version: "8.3.6", AppVersion: DefaultAppVersion},
-				{Version: "8.3.5", AppVersion: DefaultAppVersion},
-				{Version: "8.3.4", AppVersion: DefaultAppVersion},
-				{Version: "8.3.3", AppVersion: DefaultAppVersion},
-				{Version: "8.2.6", AppVersion: DefaultAppVersion},
-				{Version: "8.2.5", AppVersion: DefaultAppVersion},
-				{Version: "8.2.4", AppVersion: DefaultAppVersion},
-				{Version: "8.2.3", AppVersion: DefaultAppVersion},
-				{Version: "6.5.6", AppVersion: DefaultAppVersion},
-				{Version: "6.5.5", AppVersion: DefaultAppVersion},
-				{Version: "6.5.4", AppVersion: DefaultAppVersion},
-				{Version: "6.5.3", AppVersion: DefaultAppVersion},
-				{Version: "6.5.2", AppVersion: DefaultAppVersion},
-				{Version: "6.5.1", AppVersion: DefaultAppVersion},
-				{Version: "6.4.6", AppVersion: DefaultAppVersion},
-				{Version: "6.4.5", AppVersion: DefaultAppVersion},
-				{Version: "6.4.4", AppVersion: DefaultAppVersion},
-				{Version: "6.4.3", AppVersion: DefaultAppVersion},
-				{Version: "6.3.6", AppVersion: DefaultAppVersion},
-				{Version: "6.3.5", AppVersion: DefaultAppVersion},
-				{Version: "6.3.4", AppVersion: DefaultAppVersion},
-				{Version: "6.3.3", AppVersion: DefaultAppVersion},
-				{Version: "6.2.6", AppVersion: DefaultAppVersion},
-				{Version: "6.2.5", AppVersion: DefaultAppVersion},
-				{Version: "6.2.4", AppVersion: DefaultAppVersion},
-				{Version: "6.2.3", AppVersion: DefaultAppVersion},
-				{Version: "4.5.6", AppVersion: DefaultAppVersion},
-				{Version: "4.5.5", AppVersion: DefaultAppVersion},
-				{Version: "4.5.4", AppVersion: DefaultAppVersion},
-				{Version: "4.5.3", AppVersion: DefaultAppVersion},
-				{Version: "4.4.6", AppVersion: DefaultAppVersion},
-				{Version: "4.4.5", AppVersion: DefaultAppVersion},
-				{Version: "4.4.4", AppVersion: DefaultAppVersion},
-				{Version: "4.4.3", AppVersion: DefaultAppVersion},
-				{Version: "4.3.6", AppVersion: DefaultAppVersion},
-				{Version: "4.3.5", AppVersion: DefaultAppVersion},
-				{Version: "4.3.4", AppVersion: DefaultAppVersion},
-				{Version: "4.3.3", AppVersion: DefaultAppVersion},
-				{Version: "4.2.6", AppVersion: DefaultAppVersion},
-				{Version: "4.2.5", AppVersion: DefaultAppVersion},
-				{Version: "4.2.4", AppVersion: DefaultAppVersion},
-				{Version: "4.2.3", AppVersion: DefaultAppVersion},
-				{Version: "3.4.6", AppVersion: DefaultAppVersion},
-				{Version: "3.4.5", AppVersion: DefaultAppVersion},
-				{Version: "3.4.4", AppVersion: DefaultAppVersion},
-				{Version: "2.4.3", AppVersion: DefaultAppVersion},
-				{Version: "2.3.6", AppVersion: DefaultAppVersion},
-				{Version: "2.3.5", AppVersion: DefaultAppVersion},
-				{Version: "2.3.4", AppVersion: DefaultAppVersion},
-				{Version: "2.3.3", AppVersion: DefaultAppVersion},
-				{Version: "1.2.6", AppVersion: DefaultAppVersion},
-				{Version: "1.2.5", AppVersion: DefaultAppVersion},
-				{Version: "1.2.4", AppVersion: DefaultAppVersion},
-				{Version: "1.2.3", AppVersion: DefaultAppVersion},
-			},
-			version_summary: []*corev1.PackageAppVersion{
-				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "4.5.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "3.4.6", AppVersion: DefaultAppVersion},
-				{PkgVersion: "2.4.3", AppVersion: DefaultAppVersion},
-				{PkgVersion: "1.2.6", AppVersion: DefaultAppVersion},
-			},
-			input_versions_in_summary: VersionsInSummary{Major: 6,
-				Minor: 0,
-				Patch: 0},
-		},
-	}
-
-	opts := cmpopts.IgnoreUnexported(corev1.PackageAppVersion{})
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got, want := packageAppVersionsSummary(tc.chart_versions, tc.input_versions_in_summary), tc.version_summary; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
-		})
-	}
-}
-
 func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		pluginYAMLConf          []byte
-		exp_versions_in_summary VersionsInSummary
+		exp_versions_in_summary pkgutils.VersionsInSummary
 		exp_error_str           string
 	}{
 		{
 			name:                    "non existing plugin-config file",
 			pluginYAMLConf:          nil,
-			exp_versions_in_summary: VersionsInSummary{0, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{0, 0, 0},
 			exp_error_str:           "no such file or directory",
 		},
 		{
@@ -1728,7 +1164,7 @@ core:
         minor: 2
         patch: 1
       `),
-			exp_versions_in_summary: VersionsInSummary{4, 2, 1},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{4, 2, 1},
 			exp_error_str:           "",
 		},
 		{
@@ -1740,7 +1176,7 @@ core:
       versionsInSummary:
         major: 1
         `),
-			exp_versions_in_summary: VersionsInSummary{1, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{1, 0, 0},
 			exp_error_str:           "",
 		},
 		{
@@ -1754,11 +1190,11 @@ core:
         minor: 2
         patch: 1-IFC-123
       `),
-			exp_versions_in_summary: VersionsInSummary{},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{},
 			exp_error_str:           "json: cannot unmarshal",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
@@ -1815,7 +1251,7 @@ core:
 			exp_error_str: "",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""

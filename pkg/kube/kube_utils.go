@@ -106,7 +106,7 @@ func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret
 
 	// create client
 	client := httpclient.New()
-	if err := httpclient.SetClientTLS(client, caCertPool, appRepo.Spec.TLSInsecureSkipVerify); err != nil {
+	if err := httpclient.SetClientTLS(client, caCertPool, nil, appRepo.Spec.TLSInsecureSkipVerify); err != nil {
 		return nil, err
 	}
 	if err := httpclient.SetClientProxy(client, proxyFunc); err != nil {
