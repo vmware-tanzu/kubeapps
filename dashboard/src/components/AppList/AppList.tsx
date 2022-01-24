@@ -8,7 +8,7 @@ import { push } from "connected-react-router";
 import qs from "qs";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import * as ReactRouter from "react-router";
+import * as ReactRouter from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { IStoreState } from "shared/types";
