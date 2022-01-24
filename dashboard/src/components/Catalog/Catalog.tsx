@@ -10,7 +10,7 @@ import { flatten, get, intersection, isEqual, trimStart, uniq, without } from "l
 import qs from "qs";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import * as ReactRouter from "react-router";
+import * as ReactRouter from "react-router-dom";
 import { Link } from "react-router-dom";
 import { IClusterServiceVersion, IStoreState } from "shared/types";
 import { app } from "shared/url";

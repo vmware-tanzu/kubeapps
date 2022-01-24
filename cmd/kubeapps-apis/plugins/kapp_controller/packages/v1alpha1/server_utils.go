@@ -18,10 +18,10 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -29,6 +29,7 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 )
 
 type pkgSemver struct {
@@ -60,6 +61,24 @@ func getPkgVersionsMap(packages []*datapackagingv1alpha1.Package) (map[string][]
 	return pkgVersionsMap, nil
 }
 
+// latestMatchingVersion returns the latest version of a package that matches the given version constraint.
+func latestMatchingVersion(versions []pkgSemver, constraints string) (*semver.Version, error) {
+	// constraints can be a single one (e.g., ">1.2.3") or a range (e.g., ">1.0.0 <2.0.0 || 3.0.0")
+	constraint, err := semver.NewConstraint(constraints)
+	if err != nil {
+		return nil, fmt.Errorf("the version in the constraint ('%s') is not semver-compatible: %v", constraints, err)
+	}
+
+	// assuming 'versions' is sorted,
+	// get the first version that satisfies the constraint
+	for _, v := range versions {
+		if constraint.Check(v.version) {
+			return v.version, nil
+		}
+	}
+	return nil, nil
+}
+
 // statusReasonForKappStatus returns the reason for a given status
 func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) corev1.InstalledPackageStatus_StatusReason {
 	switch status {
@@ -88,24 +107,6 @@ func simpleUserReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) str
 	}
 	// Fall back to unknown/unspecified.
 	return "Unknown"
-}
-
-// pageOffsetFromPageToken converts a page token to an integer offset representing the page of results.
-//
-// TODO(mnelson): When aggregating results from different plugins, we'll
-// need to update the actual query in GetPaginatedChartListWithFilters to
-// use a row offset rather than a page offset (as not all rows may be consumed
-// for a specific plugin when combining).
-func pageOffsetFromPageToken(pageToken string) (int, error) {
-	if pageToken == "" {
-		return 0, nil
-	}
-	offset, err := strconv.ParseUint(pageToken, 10, 0)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(offset), nil
 }
 
 // extracts the value for a key from a JSON-formatted string
@@ -255,4 +256,25 @@ func isNonNullableNull(x interface{}, s *structuralschema.Structural) bool {
 // isKindInt returns true if the item is an int
 func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
+}
+
+// implementing a custom ConfigFactory to allow for customizing the *rest.Config
+// https://kubernetes.slack.com/archives/CH8KCCKA5/p1642015047046200
+type ConfigurableConfigFactoryImpl struct {
+	kappcmdcore.ConfigFactoryImpl
+	config *rest.Config
+}
+
+var _ kappcmdcore.ConfigFactory = &ConfigurableConfigFactoryImpl{}
+
+func NewConfigurableConfigFactoryImpl() *ConfigurableConfigFactoryImpl {
+	return &ConfigurableConfigFactoryImpl{}
+}
+
+func (f *ConfigurableConfigFactoryImpl) ConfigureRESTConfig(config *rest.Config) {
+	f.config = config
+}
+
+func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
+	return f.config, nil
 }

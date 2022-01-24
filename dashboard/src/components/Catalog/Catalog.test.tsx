@@ -11,7 +11,7 @@ import React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { MemoryRouter, Route, Router } from "react-router";
+import { MemoryRouter, Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IAppRepositoryState } from "reducers/repos";

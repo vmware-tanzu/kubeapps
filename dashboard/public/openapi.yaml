@@ -37,10 +37,6 @@ tags:
     externalDocs:
       url: "https://github.com/kubeapps/kubeapps/tree/master/cmd/kubeops"
     description: "The kubeops component is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources."
-  - name: kubernetes
-    externalDocs:
-      url: "https://kubernetes.io/docs/concepts/overview/kubernetes-api/"
-    description: "Kubernetes API"
   - name: PluginsService
   - name: PackagesService
   - name: FluxV2PackagesService
@@ -48,77 +44,9 @@ tags:
   - name: KappControllerPackagesService
   - name: ResourcesService
 externalDocs:
-  description: Kuebapps GitHub repository
+  description: Kubeapps GitHub repository
   url: "https://github.com/kubeapps/kubeapps"
 paths:
-  # Proxied Kubernetes API
-  "/api/clusters/{cluster}/apis":
-    get:
-      tags:
-        - kubernetes
-      summary: Proxied Kubernetes API
-      description: "The whole Kubernetes API is exposed through this endpoint"
-      parameters:
-        - name: cluster
-          in: path
-          required: true
-          schema:
-            type: string
-            default: default
-          description: Cluster name
-      responses:
-        default:
-          description: Default code/message response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "200":
-          description: Successful Kubernetes response
-          content:
-            application/json:
-              schema:
-                type: object
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  "/api/clusters/{cluster}/openapi/v2":
-    get:
-      tags:
-        - kubernetes
-      summary: Kubernetes OpenAPI documentation
-      description: "Current documentation for the Kubernetes API"
-      parameters:
-        - name: cluster
-          in: path
-          required: true
-          schema:
-            type: string
-            default: default
-          description: Cluster name
-      responses:
-        default:
-          description: Default code/message response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "200":
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
   # Endpoints defined at pkg/http-handler/http-handler.go
   "/api/v1/clusters/{cluster}/can-i":
     post:
@@ -905,7 +833,7 @@ paths:
             text/plain:
               schema:
                 type: string
-  
+
   # Temporarily manually extracted from /cmd/kubeapps-apis/docs/kubeapps-apis.swagger.json
   /apis/core/packages/v1alpha1/availablepackages:
     get:
@@ -4996,7 +4924,7 @@ components:
             {
               "@type": "type.googleapis.com/google.profile.Person",
               "firstName": ,
-              "lastName": 
+              "lastName":
             }
 
         If the embedded message type is well-known and has a custom JSON

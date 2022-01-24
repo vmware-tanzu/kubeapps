@@ -25,6 +25,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
@@ -193,7 +194,7 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repo types.Namespaced
 // implements plug-in specific cache-related functionality
 //
 type repoEventSink struct {
-	clientGetter common.ClientGetterFunc
+	clientGetter clientgetter.ClientGetterWithApiExtFunc
 	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
 }
 
@@ -407,7 +408,7 @@ func (s *repoEventSink) onResync() error {
 // basically repeat same logic as NamespacedResourceWatcherCache.fromKey() but can't
 // quite come up with with a more elegant alternative right now
 func (c *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
-	parts := strings.Split(key, ":")
+	parts := strings.Split(key, cache.KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != fluxHelmRepositories || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
