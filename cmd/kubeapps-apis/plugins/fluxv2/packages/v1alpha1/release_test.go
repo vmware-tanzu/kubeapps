@@ -17,8 +17,8 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -249,7 +249,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			for i, existing := range tc.existingObjs {
 				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
-					pageOffset, err := common.PageOffsetFromPageToken(tc.request.GetPaginationOptions().GetPageToken())
+					pageOffset, err := paginate.PageOffsetFromInstalledRequest(tc.request)
 					if err != nil {
 						t.Fatalf("%+v", err)
 					}
@@ -772,458 +772,72 @@ func TestDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
-type TestCase struct {
-	name               string
-	existingReleases   []resourcerefs.TestReleaseStub
-	request            *corev1.GetInstalledPackageResourceRefsRequest
-	expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
-	expectedStatusCode codes.Code
-}
-
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
-	// Using the redis_existing_stub_completed data with
-	// different manifests for each test.
-	//var (
-	//	releaseNamespace = redis_existing_stub_completed.namespace
-	//	releaseName      = redis_existing_stub_completed.name
-	//)
-
-	// TODO (gfichtenholt) what's missing here is a call to
-	// resourcerefs_test.go init() fuction. I spent quite some time but have not yet
-	// figured out how to make that happen. So I am commenting this test out until I do
-
-	if len(resourcerefs.TestCases2) == 0 {
-		t.Logf("Expected non-empty array [resourcerefs.TestCases2]")
+	// sanity check
+	if len(resourcerefstest.TestCases2) < 11 {
+		t.Fatalf("Expected array [resourcerefstest.TestCases2] size of at least 11")
 		return
 	}
 
-	testCases := []TestCase{}
+	type testCase struct {
+		baseTestCase       resourcerefstest.TestCase
+		request            *corev1.GetInstalledPackageResourceRefsRequest
+		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
+		expectedStatusCode codes.Code
+	}
 
-	/*
-		for _, tc := range resourcerefs.TestCases2 {
-			testCases = append(testCases, TestCase{
-				name:             tc.Name,
-				existingReleases: tc.ExistingReleases,
-				request: &corev1.GetInstalledPackageResourceRefsRequest{
-					InstalledPackageRef: &corev1.InstalledPackageReference{
-						Context: &corev1.Context{
-							Cluster:   "default",
-							Namespace: releaseNamespace,
-						},
-						Identifier: releaseName,
-					},
-				},
-				expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+	// newTestCase is a function to take an existing test-case
+	// (a so-called baseTestCase in pkg/resourcerefs module, which contains a LOT of useful data)
+	// and "enrich" it with some new fields to create a different kind of test case
+	// that tests server.GetInstalledPackageResourceRefs() func
+	newTestCase := func(tc int, response bool, code codes.Code) testCase {
+		// Using the redis_existing_stub_completed data with
+		// different manifests for each test.
+		var (
+			releaseNamespace = redis_existing_stub_completed.namespace
+			releaseName      = redis_existing_stub_completed.name
+		)
+
+		newCase := testCase{
+			baseTestCase: resourcerefstest.TestCases2[tc],
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Cluster:   "default",
 						Namespace: releaseNamespace,
 					},
-					ResourceRefs: tc.ExpectedResourceRefs,
-				},
-			}, TestCase{
-				name:             tc.Name,
-				existingReleases: tc.ExistingReleases,
-				request: &corev1.GetInstalledPackageResourceRefsRequest{
-					InstalledPackageRef: &corev1.InstalledPackageReference{
-						Context: &corev1.Context{
-							Cluster:   "default",
-							Namespace: releaseNamespace,
-						},
-						Identifier: releaseName,
-					},
-				},
-				expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-					Context: &corev1.Context{
-						Cluster:   "default",
-						Namespace: releaseNamespace,
-					},
-					ResourceRefs: tc.ExpectedResourceRefs,
+					Identifier: releaseName,
 				},
 			},
-			)
 		}
+		if response {
+			newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster:   "default",
+					Namespace: releaseNamespace,
+				},
+				ResourceRefs: resourcerefstest.TestCases2[tc].ExpectedResourceRefs,
+			}
+		}
+		newCase.expectedStatusCode = code
+		return newCase
+	}
 
-		   		{
-		   		{
-		   			name: "returns resource references for resources in other namespaces",
-		   			existingHelmStubs: []helmReleaseStub{
-		   				{
-		   					name:      releaseName,
-		   					namespace: releaseNamespace,
-		   					manifest: `
-		   ---
-		   apiVersion: v1
-		   kind: ClusterRole
-		   metadata:
-		     name: test-cluster-role
-		   ---
-		   apiVersion: apps/v1
-		   kind: Deployment
-		   metadata:
-		     name: test-other-namespace
-		     namespace: some-other-namespace
-		   `,
-		   				},
-		   			},
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-		   				Context: &corev1.Context{
-		   					Cluster:   "default",
-		   					Namespace: releaseNamespace,
-		   				},
-		   				ResourceRefs: []*corev1.ResourceRef{
-		   					{
-		   						ApiVersion: "v1",
-		   						Name:       "test-cluster-role",
-		   						Namespace:  "test",
-		   						Kind:       "ClusterRole",
-		   					},
-		   					{
-		   						ApiVersion: "apps/v1",
-		   						Name:       "test-other-namespace",
-		   						Namespace:  "some-other-namespace",
-		   						Kind:       "Deployment",
-		   					},
-		   				},
-		   			},
-		   		},
-		   		{
-		   			name: "skips resources that do not have a kind",
-		   			existingHelmStubs: []helmReleaseStub{
-		   				{
-		   					name:      releaseName,
-		   					namespace: releaseNamespace,
-		   					manifest: `
-		   ---
-		   apiVersion: v1
-		   otherstuff: ignored
-		   metadata:
-		     name: redis-test
-		   ---
-		   apiVersion: apps/v1
-		   kind: Deployment
-		   metadata:
-		     name: redis-test
-		   `,
-		   				},
-		   			},
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-		   				Context: &corev1.Context{
-		   					Cluster:   "default",
-		   					Namespace: releaseNamespace,
-		   				},
-		   				ResourceRefs: []*corev1.ResourceRef{
-		   					{
-		   						ApiVersion: "apps/v1",
-		   						Name:       "redis-test",
-		   						Namespace:  "test",
-		   						Kind:       "Deployment",
-		   					},
-		   				},
-		   			},
-		   		},
-		   		{
-		   			name: "returns a not found error if the helm release is not found",
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedStatusCode: codes.NotFound,
-		   		},
-		   		{
-		   			name: "returns internal error if the yaml manifest cannot be parsed",
-		   			existingHelmStubs: []helmReleaseStub{
-		   				{
-		   					name:      releaseName,
-		   					namespace: releaseNamespace,
-		   					manifest: `
-		   ---
-		   apiVersion: v1
-		   should not be :! parsed as yaml$
-		   `,
-		   				},
-		   			},
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedStatusCode: codes.Internal,
-		   		},
-		   		{
-		   			name: "handles duplicate labels in the manifest as helm does",
-		   			// See https://github.com/kubeapps/kubeapps/issues/632
-		   			existingHelmStubs: []helmReleaseStub{
-		   				{
-		   					name:      releaseName,
-		   					namespace: releaseNamespace,
-		   					manifest: `
-		   ---
-		   # Source: apache/templates/deployment.yaml
-		   apiVersion: apps/v1
-		   kind: Deployment
-		   metadata:
-		     name: redis-test
-		     label:
-		       chart: "redis-0.2.0"
-		       chart: "redis-0.2.0"
-		   `,
-		   				},
-		   			},
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-		   				Context: &corev1.Context{
-		   					Cluster:   "default",
-		   					Namespace: releaseNamespace,
-		   				},
-		   				ResourceRefs: []*corev1.ResourceRef{
-		   					{
-		   						ApiVersion: "apps/v1",
-		   						Name:       "redis-test",
-		   						Namespace:  "test",
-		   						Kind:       "Deployment",
-		   					},
-		   				},
-		   			},
-		   		},
-		   		{
-		   			name: "supports manifests with YAML type casting",
-		   			existingHelmStubs: []helmReleaseStub{
-		   				{
-		   					name:      releaseName,
-		   					namespace: releaseNamespace,
-		   					manifest: `
-		   ---
-		   # Source: redis/templates/deployment.yaml
-		   apiVersion: apps/v1
-		   kind: Deployment
-		   metadata:
-		     name: !!string redis-test
-		   `,
-		   				},
-		   			},
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-		   				Context: &corev1.Context{
-		   					Cluster:   "default",
-		   					Namespace: releaseNamespace,
-		   				},
-		   				ResourceRefs: []*corev1.ResourceRef{
-		   					{
-		   						ApiVersion: "apps/v1",
-		   						Name:       "redis-test",
-		   						Namespace:  "test",
-		   						Kind:       "Deployment",
-		   					},
-		   				},
-		   			},
-		   		},
-		   		{
-		   			name: "renders a list of items",
-		   			existingHelmStubs: []helmReleaseStub{
-		   				{
-		   					name:      releaseName,
-		   					namespace: releaseNamespace,
-		   					manifest: `
-		   ---
-		   apiVersion: v1
-		   kind: List
-		   items:
-		   - apiVersion: apps/v1
-		     kind: Deployment
-		     metadata:
-		       name: redis-test
-		       namespace: default
-		   - apiVersion: v1
-		     kind: Service
-		     metadata:
-		       name: redis-test
-		       namespace: default
-		   `,
-		   				},
-		   			},
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-		   				Context: &corev1.Context{
-		   					Cluster:   "default",
-		   					Namespace: releaseNamespace,
-		   				},
-		   				ResourceRefs: []*corev1.ResourceRef{
-		   					{
-		   						ApiVersion: "apps/v1",
-		   						Name:       "redis-test",
-		   						Namespace:  "default",
-		   						Kind:       "Deployment",
-		   					},
-		   					{
-		   						ApiVersion: "v1",
-		   						Name:       "redis-test",
-		   						Namespace:  "default",
-		   						Kind:       "Service",
-		   					},
-		   				},
-		   			},
-		   		},
-		   		{
-		   			name: "renders a rolelist of items",
-		   			// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
-		   			existingHelmStubs: []helmReleaseStub{
-		   				{
-		   					name:      releaseName,
-		   					namespace: releaseNamespace,
-		   					manifest: `
-		   ---
-		   apiVersion: v1
-		   kind: RoleList
-		   items:
-		   - apiVersion: rbac.authorization.k8s.io/v1
-		     kind: Role
-		     metadata:
-		       name: role-1
-		       namespace: default
-		   - apiVersion: rbac.authorization.k8s.io/v1
-		     kind: Role
-		     metadata:
-		       name: role-2
-		       namespace: default
-		   `,
-		   				},
-		   			},
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-		   				Context: &corev1.Context{
-		   					Cluster:   "default",
-		   					Namespace: releaseNamespace,
-		   				},
-		   				ResourceRefs: []*corev1.ResourceRef{
-		   					{
-		   						ApiVersion: "rbac.authorization.k8s.io/v1",
-		   						Name:       "role-1",
-		   						Namespace:  "default",
-		   						Kind:       "Role",
-		   					},
-		   					{
-		   						ApiVersion: "rbac.authorization.k8s.io/v1",
-		   						Name:       "role-2",
-		   						Namespace:  "default",
-		   						Kind:       "Role",
-		   					},
-		   				},
-		   			},
-		   		},
-		   		{
-		   			name: "renders a ClusterRoleList of items",
-		   			// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-v1/#ClusterRoleList
-		   			existingHelmStubs: []helmReleaseStub{
-		   				{
-		   					name:      releaseName,
-		   					namespace: releaseNamespace,
-		   					manifest: `
-		   ---
-		   apiVersion: v1
-		   kind: ClusterRoleList
-		   items:
-		   - apiVersion: rbac.authorization.k8s.io/v1
-		     kind: ClusterRole
-		     metadata:
-		       name: clusterrole-1
-		   - apiVersion: rbac.authorization.k8s.io/v1
-		     kind: ClusterRole
-		     metadata:
-		       name: clusterrole-2
-		   `,
-		   				},
-		   			},
-		   			request: &corev1.GetInstalledPackageResourceRefsRequest{
-		   				InstalledPackageRef: &corev1.InstalledPackageReference{
-		   					Context: &corev1.Context{
-		   						Cluster:   "default",
-		   						Namespace: releaseNamespace,
-		   					},
-		   					Identifier: releaseName,
-		   				},
-		   			},
-		   			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-		   				Context: &corev1.Context{
-		   					Cluster:   "default",
-		   					Namespace: releaseNamespace,
-		   				},
-		   				ResourceRefs: []*corev1.ResourceRef{
-		   					{
-		   						ApiVersion: "rbac.authorization.k8s.io/v1",
-		   						Name:       "clusterrole-1",
-		   						Namespace:  "test",
-		   						Kind:       "ClusterRole",
-		   					},
-		   					{
-		   						ApiVersion: "rbac.authorization.k8s.io/v1",
-		   						Name:       "clusterrole-2",
-		   						Namespace:  "test",
-		   						Kind:       "ClusterRole",
-		   					},
-		   				},
-		   			},
-		   		},
-		   	}
-	*/
+	testCases := []testCase{
+		newTestCase(0, true, codes.OK),
+		newTestCase(1, true, codes.OK),
+		newTestCase(2, true, codes.OK),
+		newTestCase(3, true, codes.OK),
+		newTestCase(4, false, codes.NotFound),
+		newTestCase(5, false, codes.Internal),
+		// See https://github.com/kubeapps/kubeapps/issues/632
+		newTestCase(6, true, codes.OK),
+		newTestCase(7, true, codes.OK),
+		newTestCase(8, true, codes.OK),
+		// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
+		newTestCase(9, true, codes.OK),
+		newTestCase(10, true, codes.OK),
+	}
 
 	ignoredFields := cmpopts.IgnoreUnexported(
 		corev1.GetInstalledPackageResourceRefsResponse{},
@@ -1231,14 +845,22 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		corev1.Context{},
 	)
 
+	toHelmReleaseStubs := func(in []resourcerefstest.TestReleaseStub) []helmReleaseStub {
+		out := []helmReleaseStub{}
+		for _, r := range in {
+			out = append(out, helmReleaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
+		}
+		return out
+	}
+
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.baseTestCase.Name, func(t *testing.T) {
 			runtimeObjs, cleanup := newRuntimeObjects(t, []testSpecGetInstalledPackages{redis_existing_spec_completed})
 			defer cleanup()
 			actionConfig := newHelmActionConfig(
 				t,
 				tc.request.InstalledPackageRef.GetContext().GetNamespace(),
-				toHelmReleaseStubs(tc.existingReleases))
+				toHelmReleaseStubs(tc.baseTestCase.ExistingReleases))
 			server, mock, _, err := newServerWithChartsAndReleases(t, actionConfig, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -1260,14 +882,6 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			}
 		})
 	}
-}
-
-func toHelmReleaseStubs(in []resourcerefs.TestReleaseStub) []helmReleaseStub {
-	out := []helmReleaseStub{}
-	for _, r := range in {
-		out = append(out, helmReleaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
-	}
-	return out
 }
 
 func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (runtimeObjs []runtime.Object, cleanup func()) {

@@ -4,13 +4,17 @@
 package resourcerefs
 
 import (
+	"context"
 	goerrs "errors"
 	"io"
 	"strings"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -82,22 +86,42 @@ func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 	return refs, nil
 }
 
-// this is done so that test scenarios can be re-used in another package (helm and flux plug-ins)
-// ref: https://stackoverflow.com/questions/28476307/how-to-get-test-environment-at-run-time
-type TestReleaseStub struct {
-	Name      string
-	Namespace string
-	Manifest  string
-}
+func GetInstalledPackageResourceRefs(
+	ctx context.Context,
+	request *corev1.GetInstalledPackageResourceRefsRequest,
+	actionConfigGetter clientgetter.HelmActionConfigGetterFunc) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
+	pkgRef := request.GetInstalledPackageRef()
+	identifier := pkgRef.GetIdentifier()
+	namespace := pkgRef.GetContext().GetNamespace()
 
-type TestCase struct {
-	Name                  string
-	ExistingReleases      []TestReleaseStub
-	ExpectedResourceRefs  []*corev1.ResourceRef
-	ExpectedErrStatusCode codes.Code
-}
+	actionConfig, err := actionConfigGetter(ctx, namespace)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+	}
 
-var (
-	// will be properly initialized in resourcerefs_test.go init()
-	TestCases1, TestCases2 = []TestCase(nil), []TestCase(nil)
-)
+	// Grab the released manifest from the release.
+	// TODO(minelson): We're currently getting the resource refs for a package
+	// install by checking the helm manifest, as we do for the helm plugin. With
+	// certain assumptions about the RBAC of the Kubeapps user, we may be able
+	// to instead query for labelled resources. See the discussion following for
+	// more details:
+	// https://github.com/kubeapps/kubeapps/pull/3811#issuecomment-977689570
+	getcmd := action.NewGet(actionConfig)
+	release, err := getcmd.Run(identifier)
+	if err != nil {
+		if err == driver.ErrReleaseNotFound {
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+		}
+		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
+	}
+
+	refs, err := ResourceRefsFromManifest(release.Manifest, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetInstalledPackageResourceRefsResponse{
+		Context:      pkgRef.GetContext(),
+		ResourceRefs: refs,
+	}, nil
+}

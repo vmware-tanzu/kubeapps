@@ -7,7 +7,7 @@ import { InstalledPackageReference } from "gen/kubeappsapis/core/packages/v1alph
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import * as ReactRouter from "react-router";
+import * as ReactRouter from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { FetchError, IStoreState } from "shared/types";

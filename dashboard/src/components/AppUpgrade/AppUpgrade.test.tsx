@@ -17,7 +17,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { MemoryRouter, Route } from "react-router";
+import { MemoryRouter, Route } from "react-router-dom";
 import { IAppRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import {

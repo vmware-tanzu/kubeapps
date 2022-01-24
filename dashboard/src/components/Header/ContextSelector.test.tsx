@@ -10,7 +10,7 @@ import { cloneDeep } from "lodash";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { Router } from "react-router";
+import { Router } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import ContextSelector from "./ContextSelector";

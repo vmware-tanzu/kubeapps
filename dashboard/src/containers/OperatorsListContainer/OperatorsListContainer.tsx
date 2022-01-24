@@ -3,7 +3,7 @@
 
 import qs from "qs";
 import { connect } from "react-redux";
-import { RouteComponentProps } from "react-router";
+import { RouteComponentProps } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";

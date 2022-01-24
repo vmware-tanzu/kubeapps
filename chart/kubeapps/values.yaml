@@ -1662,10 +1662,10 @@ kubeappsapis:
   replicaCount: 2
   ## @param kubeappsapis.qps KubeappsAPIs Kubernetes API client QPS limit
   ##
-  qps: "10.0"
+  qps: "50.0"
   ## @param kubeappsapis.burst KubeappsAPIs Kubernetes API client Burst limit
   ##
-  burst: "15"
+  burst: "100"
   ## @param kubeappsapis.terminationGracePeriodSeconds The grace time period for sig term
   ## ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
   ##

@@ -13,7 +13,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
-import { Route, Router } from "react-router";
+import { Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageState, IStoreState } from "../../shared/types";

@@ -17,7 +17,7 @@ import {
   RouteComponentProps,
   RouteProps,
   Switch,
-} from "react-router";
+} from "react-router-dom";
 import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";

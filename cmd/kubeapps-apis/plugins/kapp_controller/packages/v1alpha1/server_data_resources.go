@@ -5,7 +5,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 
+	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -389,4 +391,56 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 		return nil, err
 	}
 	return &pkgInstall, nil
+}
+
+// inspectKappK8sResources returns the list of k8s resources matching the given listOptions
+func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
+	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/pkg/deploy/kapp.go#L151
+	appName := fmt.Sprintf("%s-ctrl", packageId)
+
+	refs := []*corev1.ResourceRef{}
+
+	// Get the Kapp different clients
+	appsClient, resourcesClient, failingAPIServicesPolicy, _, err := s.GetKappClients(ctx, cluster, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the Kapp App
+	app, err := appsClient.Find(appName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the GroupVersions used by the app
+	usedGVs, err := app.UsedGVs()
+	if err != nil {
+		return nil, err
+	}
+
+	// Mark those GVs as required
+	failingAPIServicesPolicy.MarkRequiredGVs(usedGVs)
+
+	// Create a k8s label selector for the app
+	labelSelector, err := app.LabelSelector()
+	if err != nil {
+		return nil, err
+	}
+
+	// List the k8s resources that match the label selector
+	resources, err := resourcesClient.List(labelSelector, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// For each resource, generate and append the ResourceRef
+	for _, resource := range resources {
+		refs = append(refs, &corev1.ResourceRef{
+			ApiVersion: resource.GroupVersion().String(),
+			Kind:       resource.Kind(),
+			Name:       resource.Name(),
+			Namespace:  resource.Namespace(),
+		})
+	}
+	return refs, nil
 }

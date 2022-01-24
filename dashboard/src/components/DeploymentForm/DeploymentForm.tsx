@@ -18,7 +18,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import * as ReactRouter from "react-router";
+import * as ReactRouter from "react-router-dom";
 import "react-tabs/style/react-tabs.css";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";

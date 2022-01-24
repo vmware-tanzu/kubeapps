@@ -178,6 +178,11 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
+	latestMatchingVersion, err := latestMatchingVersion(versions, pkgInstall.Spec.PackageRef.VersionSelection.Constraints)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
+	}
+
 	installedPackageSummary := &corev1.InstalledPackageSummary{
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
@@ -193,12 +198,6 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 			},
 			Plugin:     &pluginDetail,
 			Identifier: pkgInstall.Name,
-		},
-		// TODO(agamez): this field should be populated with the proper version,
-		// that is, considering the versionSelection.constraint
-		LatestMatchingVersion: &corev1.PackageAppVersion{
-			PkgVersion: versions[0].version.String(),
-			AppVersion: versions[0].version.String(),
 		},
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
@@ -218,6 +217,16 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 			UserReason: simpleUserReasonForKappStatus(""),
 		},
 	}
+
+	if latestMatchingVersion != nil {
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
+		installedPackageSummary.LatestMatchingVersion = &corev1.PackageAppVersion{
+			PkgVersion: latestMatchingVersion.String(),
+			AppVersion: latestMatchingVersion.String(),
+		}
+	}
+
 	if len(pkgInstall.Status.Conditions) > 0 {
 		installedPackageSummary.Status = &corev1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
@@ -240,8 +249,6 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 	deployStderr := ""
 	fetchStdout := ""
 	fetchStderr := ""
-	inspectStdout := ""
-	inspectStderr := ""
 
 	if app.Status.Deploy != nil {
 		deployStdout = app.Status.Deploy.Stdout
@@ -250,10 +257,6 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 	if app.Status.Fetch != nil {
 		fetchStdout = app.Status.Fetch.Stdout
 		fetchStderr = app.Status.Fetch.Stderr
-	}
-	if app.Status.Inspect != nil {
-		inspectStdout = app.Status.Inspect.Stdout
-		inspectStderr = app.Status.Inspect.Stderr
 	}
 
 	// Build some custom installation notes based on the available stdout + stderr
@@ -270,10 +273,6 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 %s
 
 
-### Inspect:
-%s
-
-
 ## Errors
 
 
@@ -285,13 +284,15 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 %s
 
 
-### Inspect:
-%s
-
-`, deployStdout, fetchStdout, inspectStdout, deployStderr, fetchStderr, inspectStderr)
+`, deployStdout, fetchStdout, deployStderr, fetchStderr)
 
 	if len(pkgInstall.Status.Conditions) > 1 {
 		log.Warningf("The package install %s has more than one status conditions. Using the first one: %s", pkgInstall.Name, pkgInstall.Status.Conditions[0])
+	}
+
+	latestMatchingVersion, err := latestMatchingVersion(versions, pkgInstall.Spec.PackageRef.VersionSelection.Constraints)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
 	installedPackageDetail := &corev1.InstalledPackageDetail{
@@ -327,18 +328,21 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 			Identifier: pkgInstall.Spec.PackageRef.RefName,
 			Plugin:     &pluginDetail,
 		},
-		// TODO(agamez): this field should be populated with the proper version,
-		// that is, considering the versionSelection.constraint
-		LatestMatchingVersion: &corev1.PackageAppVersion{
-			PkgVersion: versions[0].version.String(),
-			AppVersion: versions[0].version.String(),
-		},
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),
 		},
+	}
+
+	if latestMatchingVersion != nil {
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
+		installedPackageDetail.LatestMatchingVersion = &corev1.PackageAppVersion{
+			PkgVersion: latestMatchingVersion.String(),
+			AppVersion: latestMatchingVersion.String(),
+		}
 	}
 
 	// Some fields would require an extra nil check before being populated

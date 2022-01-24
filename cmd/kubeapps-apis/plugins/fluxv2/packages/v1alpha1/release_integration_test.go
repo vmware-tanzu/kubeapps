@@ -671,7 +671,13 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 				},
 			})
 		if err == nil {
-			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+			opt1 := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageSummariesResponse{},
+				corev1.AvailablePackageSummary{},
+				corev1.AvailablePackageReference{},
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.PackageAppVersion{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if got, want := resp, available_package_summaries_podinfo_basic_auth; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -1387,10 +1393,12 @@ var (
 	available_package_summaries_podinfo_basic_auth = &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 			{
+				Name:                "podinfo",
 				AvailablePackageRef: availableRef("podinfo-basic-auth/podinfo", "default"),
 				LatestVersion:       &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
 				DisplayName:         "podinfo",
 				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				Categories:          []string{""},
 			},
 		},
 	}

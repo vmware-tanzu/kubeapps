@@ -23,7 +23,9 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeapps/kubeapps/pkg/agent"
@@ -91,7 +93,7 @@ func TestGetClient(t *testing.T) {
 	testCases := []struct {
 		name              string
 		manager           utils.AssetManager
-		clientGetter      clientGetter
+		clientGetter      clientgetter.ClientGetterFunc
 		statusCodeClient  codes.Code
 		statusCodeManager codes.Code
 	}{
@@ -161,246 +163,6 @@ func TestGetClient(t *testing.T) {
 	}
 }
 
-func TestIsValidChart(t *testing.T) {
-	testCases := []struct {
-		name     string
-		in       *models.Chart
-		expected bool
-	}{
-		{
-			name: "it returns true if the chart name, ID, repo and versions are specified",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-			},
-			expected: true,
-		},
-		{
-			name: "it returns false if the chart name is missing",
-			in: &models.Chart{
-				ID: "foo/bar",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "it returns false if the chart ID is missing",
-			in: &models.Chart{
-				Name: "foo",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "it returns false if the chart repo is missing",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "it returns false if the ChartVersions are missing",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-			},
-			expected: false,
-		},
-		{
-			name: "it returns false if a ChartVersions.Version is missing",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
-					{Version: "3.0.0"},
-					{AppVersion: DefaultAppVersion},
-				},
-			},
-			expected: false,
-		},
-		{
-			name: "it returns true if the minimum (+maintainer) chart is correct",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-				Maintainers: []chart.Maintainer{{Name: "me"}},
-			},
-			expected: true,
-		},
-		{
-			name: "it returns false if a Maintainer.Name is missing",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
-					{
-						Version: "3.0.0",
-					},
-				},
-				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
-			},
-			expected: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res, err := isValidChart(tc.in)
-			if got, want := res, tc.expected; got != want {
-				t.Fatalf("got: %+v, want: %+v, res: %+v (%+v)", got, want, res, err)
-			}
-		})
-	}
-}
-
-func TestAvailablePackageSummaryFromChart(t *testing.T) {
-	invalidChart := &models.Chart{Name: "foo"}
-
-	testCases := []struct {
-		name       string
-		in         *models.Chart
-		expected   *corev1.AvailablePackageSummary
-		statusCode codes.Code
-	}{
-		{
-			name: "it returns a complete AvailablePackageSummary for a complete chart",
-			in: &models.Chart{
-				Name:        "foo",
-				ID:          "foo/bar",
-				Category:    DefaultChartCategory,
-				Description: "best chart",
-				Icon:        "foo.bar/icon.svg",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
-				ChartVersions: []models.ChartVersion{
-					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-					{Version: "1.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
-				},
-			},
-			expected: &corev1.AvailablePackageSummary{
-				Name:        "foo",
-				DisplayName: "foo",
-				LatestVersion: &corev1.PackageAppVersion{
-					PkgVersion: "3.0.0",
-					AppVersion: DefaultAppVersion,
-				},
-				IconUrl:          "foo.bar/icon.svg",
-				ShortDescription: "best chart",
-				Categories:       []string{DefaultChartCategory},
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{Namespace: "my-ns"},
-					Identifier: "foo/bar",
-					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
-				},
-			},
-			statusCode: codes.OK,
-		},
-		{
-			name: "it returns a valid AvailablePackageSummary if the minimal chart is correct",
-			in: &models.Chart{
-				Name: "foo",
-				ID:   "foo/bar",
-				Repo: &models.Repo{
-					Name:      "bar",
-					Namespace: "my-ns",
-				},
-				ChartVersions: []models.ChartVersion{
-					{
-						Version:    "3.0.0",
-						AppVersion: DefaultAppVersion,
-					},
-				},
-			},
-			expected: &corev1.AvailablePackageSummary{
-				Name:        "foo",
-				DisplayName: "foo",
-				LatestVersion: &corev1.PackageAppVersion{
-					PkgVersion: "3.0.0",
-					AppVersion: DefaultAppVersion,
-				},
-				Categories: []string{""},
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{Namespace: "my-ns"},
-					Identifier: "foo/bar",
-					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
-				},
-			},
-			statusCode: codes.OK,
-		},
-		{
-			name:       "it returns internal error if empty chart",
-			in:         &models.Chart{},
-			statusCode: codes.Internal,
-		},
-		{
-			name:       "it returns internal error if chart is invalid",
-			in:         invalidChart,
-			statusCode: codes.Internal,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			availablePackageSummary, err := AvailablePackageSummaryFromChart(tc.in)
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
-			}
-
-			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
-				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-				}
-			}
-		})
-	}
-}
-
 // makeChart makes a chart with specific input used in the test and default constants for other relevant data.
 func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions []string, category string) *models.Chart {
 	ch := &models.Chart{
@@ -448,7 +210,7 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 	}
 
 	if pageToken != "" {
-		pageOffset, err := pageOffsetFromPageToken(pageToken)
+		pageOffset, err := paginate.PageOffsetFromPageToken(pageToken)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -502,7 +264,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
-		versionsInSummary:  packageutils.GetDefaultVersionsInSummary(),
+		versionsInSummary:  pkgutils.GetDefaultVersionsInSummary(),
 		createReleaseFunc:  agent.CreateRelease,
 	}, mock, cleanup
 }
@@ -1372,13 +1134,13 @@ func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		pluginYAMLConf          []byte
-		exp_versions_in_summary packageutils.VersionsInSummary
+		exp_versions_in_summary pkgutils.VersionsInSummary
 		exp_error_str           string
 	}{
 		{
 			name:                    "non existing plugin-config file",
 			pluginYAMLConf:          nil,
-			exp_versions_in_summary: packageutils.VersionsInSummary{0, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{0, 0, 0},
 			exp_error_str:           "no such file or directory",
 		},
 		{
@@ -1392,7 +1154,7 @@ core:
         minor: 2
         patch: 1
       `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{4, 2, 1},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{4, 2, 1},
 			exp_error_str:           "",
 		},
 		{
@@ -1404,7 +1166,7 @@ core:
       versionsInSummary:
         major: 1
         `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{1, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{1, 0, 0},
 			exp_error_str:           "",
 		},
 		{
@@ -1418,11 +1180,11 @@ core:
         minor: 2
         patch: 1-IFC-123
       `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{},
 			exp_error_str:           "json: cannot unmarshal",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
@@ -1479,7 +1241,7 @@ core:
 			exp_error_str: "",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
