@@ -49,7 +49,7 @@ import (
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
 	"helm.sh/helm/v3/pkg/chart"
-	h3chart "helm.sh/helm/v3/pkg/chart"
+	helmregistry "helm.sh/helm/v3/pkg/registry"
 )
 
 const (
@@ -373,7 +373,7 @@ func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return manifest.Config.MediaType == helm.HelmChartConfigMediaType, nil
+	return manifest.Config.MediaType == helmregistry.ConfigMediaType, nil
 }
 
 func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
@@ -486,7 +486,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 	if err != nil {
 		return nil, err
 	}
-	chartMetadata := h3chart.Metadata{}
+	chartMetadata := chart.Metadata{}
 	err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
 	if err != nil {
 		return nil, err
