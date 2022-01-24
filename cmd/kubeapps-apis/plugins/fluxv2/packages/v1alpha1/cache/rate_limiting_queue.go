@@ -342,7 +342,7 @@ func (q *Type) reset() {
 	q.dirty = sets.String{}
 	q.processing = sets.String{}
 	// we are intentionally not resetting q.expected as we don't want to lose
-	// those accross resync's
+	// those across resync's
 }
 
 // for easier reading of debug output

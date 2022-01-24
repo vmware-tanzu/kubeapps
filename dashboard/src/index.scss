@@ -16,7 +16,7 @@ svg.icon {
   font-size: var(--cds-global-typography-font-size-6, 0.55rem);
 }
 
-// CSS tweaks the dark mode theme theme
+// CSS tweaks the dark mode theme
 [cds-theme~="dark"] {
   %convert-to-white {
     filter: invert(1) brightness(100%) saturate(0%); /* stylelint-disable-line scss/no-global-function-names */

@@ -642,7 +642,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		}
 	} else {
 		// Delete all the associated secrets
-		// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+		// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
 		// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
@@ -707,7 +707,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	}
 
 	// Delete all the associated secrets
-	// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+	// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
 	// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 	for _, packageInstallValue := range pkgInstall.Spec.Values {
 		secretId := packageInstallValue.SecretRef.Name

@@ -25,7 +25,7 @@ PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
 CHART_REPO_PATH="bitnami/kubeapps"
 
 # Path of the Kubeapps chart in the Kubeapps repo.
-# For instance, given "https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps", it should be "chart/kubeapps"
+# For instance, given "https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps", it should be "chart/kubeapps"
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
 
 # Paths of the templates files, note they are also used elsewhere
@@ -86,7 +86,7 @@ replaceImage_latestToProduction() {
     local tag=$(curl "${curl_opts[@]}" "https://api.github.com/repos/bitnami/${repoName}/tags" | jq -r '.[0].name')
 
     if [[ $tag == "" ]]; then
-        echo "ERROR: Unable to obtain latest tag for ${repoName}. Aborting"
+        echo "ERROR: Unable to obtain latest tag for ${repoName}. Stopping..."
         exit 1
     fi
 

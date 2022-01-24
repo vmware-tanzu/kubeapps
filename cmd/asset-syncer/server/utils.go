@@ -291,7 +291,7 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion, userAgent str
 }
 
 // TagList represents a list of tags as specified at
-// https://github.com/opencontainers/distribution-spec/blob/master/spec.md#content-discovery
+// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#content-discovery
 type TagList struct {
 	Name string   `json:"name"`
 	Tags []string `json:"tags"`

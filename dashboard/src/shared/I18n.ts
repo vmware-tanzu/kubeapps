@@ -6,7 +6,7 @@ export interface II18nConfig {
   messages: Record<string, string>;
 }
 
-// Add here new new supported languages literals
+// Add here new supported languages literals
 export enum ISupportedLangs {
   en = "en",
 }

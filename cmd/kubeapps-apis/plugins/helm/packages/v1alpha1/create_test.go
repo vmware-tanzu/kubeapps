@@ -203,7 +203,7 @@ func TestTimeoutCreateInstalledPackage(t *testing.T) {
 			var effectiveConfig *action.Configuration
 			var effectiveName string
 			var effectiveNs string
-			// Dummy createRelease function
+			// stub createRelease function
 			server.createReleaseFunc = func(config *action.Configuration, name string, namespace string, valueString string, ch *chart.Chart,
 				registrySecrets map[string]string, timeout int32) (*release.Release, error) {
 				effectiveConfig = config

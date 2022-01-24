@@ -89,7 +89,7 @@ parameters:
     default: "kubeapps/kubeapps"
   BRANCH_KUBEAPPS_REPO:
     type: "string"
-    default: "master"
+    default: "main"
 
 ## Build conditions
 # Build on any branch or tag
@@ -103,7 +103,7 @@ build_on_main: &build_on_main
     tags:
       only: /^v.*/
     branches:
-      only: master
+      only: main
 # Build only on tags (release)
 build_on_tag: &build_on_tag
   filters:
@@ -504,14 +504,14 @@ gke_test: &gke_test
           # In the case of GKE we will only want to build if it is
           # a build of a branch in the kubeapps repository
           if [[ -z "$GKE_ADMIN" ]]; then
-            echo "Step aborted, we are not in the Kubeapps repository"
+            echo "Step cancelled, we are not in the Kubeapps repository"
             circleci step halt
           fi
 
           # Cancel job if this is a test stable release job but
           # the chart version has not been bumped
           if [[ -n "${TEST_LATEST_RELEASE:-}" ]] && ! changedVersion; then
-            echo "Step aborted, we are not releasing a new version of the chart"
+            echo "Step cancelled, we are not releasing a new version of the chart"
             circleci step halt
           fi
     - <<: *exports
@@ -570,7 +570,7 @@ local_e2e_steps: &local_e2e_steps
     - run:
         name: Print k8s KubeappsAPIs logs if the tests fail
         command: |
-            kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
+          kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
         when: on_fail
     - store_artifacts:
         path: integration/reports
@@ -677,7 +677,7 @@ jobs:
           # Assuming there is a personal access token created in GitHub granted with the scopes
           # "repo:status", "public_repo" and "read:org"
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Execute the create_release script
+          name: Run the create_release script
           command: |
             ./script/create_release.sh ${CIRCLE_TAG} << pipeline.parameters.KUBEAPPS_REPO >>
   local_e2e_tests:
@@ -747,7 +747,7 @@ jobs:
           # Assuming there is a personal access token created in GitHub granted with the scopes
           # "repo:status", "public_repo" and "read:org"
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Execute the chart_sync script
+          name: Run the chart_sync script
           command: |
             ./script/chart_sync.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >>
   sync_chart_from_bitnami:
@@ -782,7 +782,7 @@ jobs:
           # Assuming there is a personal access token created in GitHub granted with the scopes
           # "repo:status", "public_repo" and "read:org"
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Execute the check_upstream_chart script
+          name: Run the check_upstream_chart script
           command: |
             ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >>
   push_images:

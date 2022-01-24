@@ -29,17 +29,17 @@ describe("Error Alert", () => {
 
   it("should render string messages without breaklines", () => {
     const wrapper = mount(
-      <ErrorAlert>Error ocurred: Another error message. Yet another msg.</ErrorAlert>,
+      <ErrorAlert>Error occurred: Another error message. Yet another msg.</ErrorAlert>,
     );
     expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.text()).toContain("Error ocurred: Another error message. Yet another msg.");
+    expect(wrapper.text()).toContain("Error occurred: Another error message. Yet another msg.");
   });
 
   it("should render regular errors", () => {
-    const error = new Error("Error ocurred");
+    const error = new Error("Error occurred");
     const wrapper = mount(<ErrorAlert>{error}</ErrorAlert>);
     expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.text()).toContain("Error ocurred");
+    expect(wrapper.text()).toContain("Error occurred");
   });
 
   it("should render custom errors with plain messages", () => {

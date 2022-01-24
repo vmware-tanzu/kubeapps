@@ -129,11 +129,11 @@ In the deployment form we should change the parameter below:
 
 <img src="../img/harbor-deploy-form.png" alt="Harbor Deploy Form" width="600px">
 
-Deploy the chart and wait for it te be ready.
+Deploy the chart and wait for it to be ready.
 
 <img src="../img/harbor-ready.png" alt="Harbor Chart Ready" width="600px">
 
-**Note**: By default, Harbor deploys ChartMuseum to store charts. If you disable it, you can still use the Harbor OCI registry to upload charts. Checkout the [OCI](#oci-registry) section for more information.
+**Note**: By default, Harbor deploys ChartMuseum to store charts. If you deactivate it, you can still use the Harbor OCI registry to upload charts. Check out the [OCI](#oci-registry) section for more information.
 
 ### Harbor: Upload a Chart
 
@@ -234,7 +234,7 @@ curl -u{USER}:{PASSWORD} -T /path/to/chart.tgz "http://{REPO_URL}/artifactory/he
 
 ### Artifactory: Configure the repository in Kubeapps
 
-To be able able to access private charts with Kubeapps first you need to generate a token. You can do that with the Artifactory API:
+To be able to access private charts with Kubeapps first you need to generate a token. You can do that with the Artifactory API:
 
 ```bash
 curl -u{USER}:{PASSWORD} -XPOST "http://{REPO_URL}/artifactory/api/security/token?expires_in=0" -d "username=kubeapps" -d "scope=member-of-groups:readers"

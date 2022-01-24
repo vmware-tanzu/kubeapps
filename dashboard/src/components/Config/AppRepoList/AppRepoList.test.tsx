@@ -154,7 +154,7 @@ describe("global and namespaced repositories", () => {
     ).toExist();
   });
 
-  it("shows the global repositories with the buttons disabled if the current user is not allowed to modify them", () => {
+  it("shows the global repositories with the buttons deactivated if the current user is not allowed to modify them", () => {
     Kube.canI = jest.fn().mockReturnValue({
       then: jest.fn((f: any) => f(false)),
     });
@@ -176,7 +176,7 @@ describe("global and namespaced repositories", () => {
       <AppRepoList />,
     );
     expect(wrapper.find(Table)).toHaveLength(1);
-    // The control buttons should be disabled
+    // The control buttons should be deactivated
     expect(wrapper.find(AppRepoDisabledControl)).toExist();
     expect(wrapper.find(AppRepoControl)).not.toExist();
     // The content related to namespaced repositories should exist

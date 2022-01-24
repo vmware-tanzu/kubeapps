@@ -20,7 +20,7 @@ it("should render a Card", () => {
   expect(wrapper).toMatchSnapshot();
 });
 
-it("should generate a dummy link if it's not provided", () => {
+it("should generate a stub link if it's not provided", () => {
   const wrapper = shallow(
     <InfoCard
       title="foo"
