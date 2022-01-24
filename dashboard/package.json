@@ -119,7 +119,7 @@
     "stylelint-scss": "^4.1.0",
     "ts-jest": "^27.1.3",
     "ts-proto": "^1.103.0",
-    "typescript": "^4.5.4"
+    "typescript": "^4.5.5"
   },
   "resolutions": {
     "@babel/parser": "^7.15.3"
