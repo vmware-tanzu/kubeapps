@@ -16,8 +16,8 @@ import (
 	"bufio"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -91,22 +91,21 @@ func simpleUserReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) str
 	return "Unknown"
 }
 
-// pageOffsetFromPageToken converts a page token to an integer offset representing the page of results.
-//
-// TODO(mnelson): When aggregating results from different plugins, we'll
-// need to update the actual query in GetPaginatedChartListWithFilters to
-// use a row offset rather than a page offset (as not all rows may be consumed
-// for a specific plugin when combining).
-func pageOffsetFromPageToken(pageToken string) (int, error) {
-	if pageToken == "" {
-		return 0, nil
+// extracts the value for a key from a JSON-formatted string
+// body - the JSON-response as a string. Usually retrieved via the request body
+// key - the key for which the value should be extracted
+// returns - the value for the given key
+// https://stackoverflow.com/questions/17452722/how-to-get-the-key-value-from-a-json-string-in-go/37332972
+func extractValue(body string, key string) string {
+	keystr := "\"" + key + "\":[^,;\\]}]*"
+	r, _ := regexp.Compile(keystr)
+	match := r.FindString(body)
+	keyValMatch := strings.Split(match, ":")
+	value := ""
+	if len(keyValMatch) > 1 {
+		value = strings.ReplaceAll(keyValMatch[1], "\"", "")
 	}
-	offset, err := strconv.ParseUint(pageToken, 10, 0)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(offset), nil
+	return value
 }
 
 // defaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
