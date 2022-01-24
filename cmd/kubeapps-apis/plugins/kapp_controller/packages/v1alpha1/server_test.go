@@ -2212,10 +2212,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 %s
 
 
-### Inspect:
-%s
-
-
 ## Errors
 
 
@@ -2227,10 +2223,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 %s
 
 
-### Inspect:
-%s
-
-`, "deployStdout", "fetchStdout", "inspectStdout", "deployStderr", "fetchStderr", "inspectStderr"),
+`, "deployStdout", "fetchStdout", "deployStderr", "fetchStderr"),
 				LatestVersion: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
 					AppVersion: "1.2.3",
