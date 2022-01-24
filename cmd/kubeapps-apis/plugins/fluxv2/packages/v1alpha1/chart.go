@@ -22,6 +22,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
@@ -144,65 +145,6 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 	return nil, nil
 }
 
-// isValidChart returns true if the chart model passed defines a value
-// for each required field described at the Helm website:
-// https://helm.sh/docs/topics/charts/#the-chartyaml-file
-// together with required fields for our model.
-func isValidChart(chart *models.Chart) (bool, error) {
-	if chart.Name == "" {
-		return false, status.Errorf(codes.Internal, "required field .Name not found on helm chart: %v", chart)
-	}
-	if chart.ID == "" {
-		return false, status.Errorf(codes.Internal, "required field .ID not found on helm chart: %v", chart)
-	}
-	if chart.Repo == nil {
-		return false, status.Errorf(codes.Internal, "required field .Repo not found on helm chart: %v", chart)
-	}
-	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
-		return false, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0] not found on helm chart: %v", chart)
-	} else {
-		for _, chartVersion := range chart.ChartVersions {
-			if chartVersion.Version == "" {
-				return false, status.Errorf(codes.Internal, "required field .ChartVersions[i].Version not found on helm chart: %v", chart)
-			}
-		}
-	}
-	for _, maintainer := range chart.Maintainers {
-		if maintainer.Name == "" {
-			return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
-		}
-	}
-	return true, nil
-}
-
-// availablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
-func availablePackageSummaryFromChart(chart *models.Chart) (*corev1.AvailablePackageSummary, error) {
-	pkg := &corev1.AvailablePackageSummary{}
-
-	isValid, err := isValidChart(chart)
-	if !isValid || err != nil {
-		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
-	}
-
-	pkg.DisplayName = chart.Name
-	pkg.IconUrl = chart.Icon
-	pkg.ShortDescription = chart.Description
-
-	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
-		Identifier: chart.ID,
-		Plugin:     GetPluginDetail(),
-	}
-	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
-
-	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.LatestVersion = &corev1.PackageAppVersion{
-			PkgVersion: chart.ChartVersions[0].Version,
-			AppVersion: chart.ChartVersions[0].AppVersion,
-		}
-	}
-	return pkg, nil
-}
-
 func passesFilter(chart models.Chart, filters *corev1.FilterOptions) bool {
 	if filters == nil {
 		return true
@@ -275,7 +217,7 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 			if passesFilter(chart, filters) {
 				i++
 				if startAt < i {
-					pkg, err := availablePackageSummaryFromChart(&chart)
+					pkg, err := pkgutils.AvailablePackageSummaryFromChart(&chart, GetPluginDetail())
 					if err != nil {
 						return nil, status.Errorf(
 							codes.Internal,

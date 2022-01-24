@@ -1,7 +1,7 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsModal, CdsModalActions, CdsModalContent } from "@cds/react/modal";
 import React from "react";
-import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
+import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router-dom";
 import "./PrivateRoute.css";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;

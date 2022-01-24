@@ -13,7 +13,6 @@ limitations under the License.
 package common
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -26,23 +25,15 @@ import (
 	"sync"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/agent"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/kube"
 	apiv1 "k8s.io/api/core/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	log "k8s.io/klog/v2"
 )
 
@@ -86,38 +77,6 @@ func PrettyPrintMap(m map[string]interface{}) string {
 	return string(prettyBytes)
 }
 
-// pageOffsetFromPageToken converts a page token to an integer offset
-// representing the page of results.
-// TODO(gfichtenholt): it'd be better if we ensure that the page_token
-// contains an offset to the item, not the page so we can
-// aggregate paginated results. Same as helm hlug-in.
-// Update this when helm plug-in does so
-func PageOffsetFromPageToken(pageToken string) (int, error) {
-	if pageToken == "" {
-		return 1, nil
-	}
-	offset, err := strconv.ParseUint(pageToken, 10, 0)
-	if err != nil {
-		return 0, err
-	}
-	return int(offset), nil
-}
-
-// GetUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
-// also checks that the chart ID is in the expected format, namely "repoName/chartName"
-func GetUnescapedChartID(chartID string) (string, error) {
-	unescapedChartID, err := url.QueryUnescape(chartID)
-	if err != nil {
-		return "", status.Errorf(codes.Internal, "Unable to decode chart ID chart: %v", chartID)
-	}
-	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	if len(chartIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
-	}
-	return unescapedChartID, nil
-}
-
 // Confirm the state we are observing is for the current generation
 // returns true if object's status.observedGeneration == metadata.generation
 // false otherwise
@@ -150,85 +109,6 @@ func NamespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedNa
 				PrettyPrintMap(unstructuredObj))
 	}
 	return &types.NamespacedName{Name: name, Namespace: namespace}, nil
-}
-
-func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster string) HelmActionConfigGetterFunc {
-	return func(ctx context.Context, namespace string) (*action.Configuration, error) {
-		if configGetter == nil {
-			return nil, status.Errorf(codes.Internal, "configGetter arg required")
-		}
-		// The Flux plugin currently supports interactions with the default (kubeapps)
-		// cluster only:
-		config, err := configGetter(ctx, cluster)
-		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
-		}
-
-		restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
-		clientSet, err := kubernetes.NewForConfig(config)
-		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to create kubernetes client due to: %v", err)
-		}
-		// TODO(mnelson): Update to allow different helm storage options.
-		storage := agent.StorageForSecrets(namespace, clientSet)
-		return &action.Configuration{
-			RESTClientGetter: restClientGetter,
-			KubeClient:       kube.New(restClientGetter),
-			Releases:         storage,
-			Log:              log.Infof,
-		}, nil
-	}
-}
-
-func NewClientGetter(configGetter core.KubernetesConfigGetter, cluster string) ClientGetterFunc {
-	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-		if configGetter == nil {
-			return nil, nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
-		}
-		// The Flux plugin currently supports interactions with the default (kubeapps)
-		// cluster only:
-		if config, err := configGetter(ctx, cluster); err != nil {
-			if status.Code(err) == codes.Unauthenticated {
-				// want to make sure we return same status in this case
-				return nil, nil, nil, status.Errorf(codes.Unauthenticated, "unable to get config due to: %v", err)
-			} else {
-				return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
-			}
-		} else {
-			return clientGetterHelper(config)
-		}
-	}
-}
-
-// https://github.com/kubeapps/kubeapps/issues/3560
-// flux plug-in runs out-of-request interactions with the Kubernetes API server.
-// Although we've already ensured that if the flux plugin is selected, that the service account
-// will be granted additional read privileges, we also need to ensure that the plugin can get a
-// config based on the service account rather than the request context
-func NewBackgroundClientGetter() ClientGetterFunc {
-	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-		if config, err := rest.InClusterConfig(); err != nil {
-			return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get in cluster config due to: %v", err)
-		} else {
-			return clientGetterHelper(config)
-		}
-	}
-}
-
-func clientGetterHelper(config *rest.Config) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-	typedClient, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get typed client : %v", err))
-	}
-	dynamicClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
-	}
-	apiExtensions, err := apiext.NewForConfig(config)
-	if err != nil {
-		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
-	}
-	return typedClient, dynamicClient, apiExtensions, nil
 }
 
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
