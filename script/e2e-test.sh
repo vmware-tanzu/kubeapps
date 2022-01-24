@@ -338,7 +338,7 @@ for svc in "${svcs[@]}"; do
   info "Endpoints for ${svc} available"
 done
 
-# Disable helm tests unless we are testing the latest release until
+# Deactivate helm tests unless we are testing the latest release until
 # we have released the code with per-namespace tests (since the helm
 # tests for assetsvc needs to test the namespaced repo).
 if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
@@ -361,7 +361,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
     kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
     exit 1
   fi
-  info "Helm tests succeeded!!"
+  info "Helm tests succeeded!"
 fi
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
@@ -429,4 +429,4 @@ if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRA
   kubectl cp "${pod}:/app/reports" ./reports
   exit 1
 fi
-info "Integration tests succeeded!!"
+info "Integration tests succeeded!"

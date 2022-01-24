@@ -33,7 +33,7 @@ retry_while() {
 # Globals:
 #   DEBUG_MODE
 # Arguments:
-#   $@ - Command to execute
+#   $@ - Command to run
 # Returns:
 #   None
 #########################

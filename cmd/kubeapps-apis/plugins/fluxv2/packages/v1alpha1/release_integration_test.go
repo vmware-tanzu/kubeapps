@@ -337,7 +337,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				}
 			}
 
-			// sanity check
+			// confidence test
 			exists, err := kubeExistsHelmRelease(t, installedRef.Identifier, installedRef.Context.Namespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -754,7 +754,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 
 	// generate a unique target namespace for each test to avoid situations when tests are
 	// run multiple times in a row and they fail due to the fact that the specified namespace
-	// in in 'Terminating' state
+	// in 'Terminating' state
 	if tc.request.TargetContext.Namespace != "" {
 		tc.request.TargetContext.Namespace += "-" + randSeq(4)
 
@@ -815,7 +815,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 
 	if tc.expectedDetail != nil {
 		// set some of the expected fields here to values we already know to expect,
-		// the rest should be specified explictly
+		// the rest should be specified explicitly
 		tc.expectedDetail.InstalledPackageRef = installedRef(tc.request.Name, tc.request.TargetContext.Namespace)
 		tc.expectedDetail.AvailablePackageRef = tc.request.AvailablePackageRef
 		tc.expectedDetail.Name = tc.request.Name

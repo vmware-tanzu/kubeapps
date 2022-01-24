@@ -979,7 +979,7 @@ func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actu
 		plugins.Plugin{},
 		corev1.ReconciliationOptions{},
 		corev1.AvailablePackageReference{})
-	// see comment in release_intergration_test.go. Intermittently we get an inconsistent error message from flux
+	// see comment in release_integration_test.go. Intermittently we get an inconsistent error message from flux
 	opts2 := cmpopts.IgnoreFields(corev1.InstalledPackageStatus{}, "UserReason")
 	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts, opts2) {
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
@@ -1101,7 +1101,7 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 			t.Fatal(err)
 		}
 	}
-	// It is the namespace of the the driver which determines the results. In the prod code,
+	// It is the namespace of the driver which determines the results. In the prod code,
 	// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
 	memDriver.SetNamespace(namespace)
 

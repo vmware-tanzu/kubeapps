@@ -1942,7 +1942,7 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub, 
 			t.Fatal(err)
 		}
 	}
-	// It is the namespace of the the driver which determines the results. In the prod code,
+	// It is the namespace of the driver which determines the results. In the prod code,
 	// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
 	memDriver.SetNamespace(namespace)
 

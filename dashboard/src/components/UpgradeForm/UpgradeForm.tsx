@@ -67,7 +67,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
   const [valuesModified, setValuesModified] = useState(false);
 
   useEffect(() => {
-    // This block just will be executed once, given that populating
+    // This block just will be run once, given that populating
     // the list of versions does not depend on anything else
     if (selectedPackage.versions.length === 0) {
       dispatch(

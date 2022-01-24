@@ -120,7 +120,7 @@ describe(Button, () => {
     expect(wrapper.find("button").prop("title")).toBe(title);
   });
 
-  it("add the disabled status to the button", () => {
+  it("add the deactivated status to the button", () => {
     const wrapper = shallow(
       <Button onClick={() => {}} disabled>
         Test

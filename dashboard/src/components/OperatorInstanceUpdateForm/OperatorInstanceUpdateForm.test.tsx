@@ -105,7 +105,7 @@ it("renders an error if the resource is not populated", () => {
   expect(wrapper.find(Alert)).toIncludeText("Resource my-foo not found");
 });
 
-it("renders only an error error if the resource is not found", () => {
+it("renders only an error if the resource is not found", () => {
   const wrapper = mountWrapper(
     getStore({
       operators: {

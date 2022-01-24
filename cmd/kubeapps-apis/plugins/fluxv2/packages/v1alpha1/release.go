@@ -374,7 +374,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	if err != nil {
 		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
 			// TODO (gfichtenholt) I think in some cases we should be returning codes.PermissionDenied instead,
-			// but that has to be done consistently accross all plug-in operations, not just here
+			// but that has to be done consistently across all plug-in operations, not just here
 			return nil, status.Errorf(codes.Unauthenticated, "Unable to create release due to %v", err)
 		} else {
 			return nil, status.Errorf(codes.Internal, "Unable to create release due to %v", err)
@@ -529,7 +529,7 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 			return nil, err
 		}
 	}
-	reconcileInterval := defaultReconcileInterval // unless explictly specified
+	reconcileInterval := defaultReconcileInterval // unless explicitly specified
 	if reconcile != nil {
 		if reconcile.Interval > 0 {
 			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Kubeapps's default configuration schedules the syncing process of the App Repositories every _ten minutes_. However, this behavior can be easily changed globally by editing the [values.yaml file](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/values.yaml#L215) (`crontab: "*/10 * * * *"`).
+Kubeapps's default configuration schedules the syncing process of the App Repositories every _ten minutes_. However, this behavior can be easily changed globally by editing the [values.yaml file](https://github.com/kubeapps/kubeapps/blob/main/chart/kubeapps/values.yaml#L215) (`crontab: "*/10 * * * *"`).
 
 Nevertheless, this default approach might not be useful for environments with highly frequent changes. Moreover, if there are a few App Repositories with numerous changes while others hardly are modified, therefore, increasing the default global syncing periodicity is not a good approach.
 

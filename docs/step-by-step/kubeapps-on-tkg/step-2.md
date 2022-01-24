@@ -56,7 +56,7 @@ Key user interface parameters are:
 
 The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` parameters to reflect the work done in [Step 1](./step-1.md). These parameters are discussed below:
 
-1. Declare that the target cluster is using Pinniped by setting the parameter `pinnipedConfig.enabled=true`. If using multiple target clusters, please refer to the [Deploying to Multiple Clusters](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) guide. Here is an example:
+1. Declare that the target cluster is using Pinniped by setting the parameter `pinnipedConfig.enabled=true`. If using multiple target clusters, please refer to the [Deploying to Multiple Clusters](https://github.com/kubeapps/kubeapps/blob/main/docs/user/deploying-to-multiple-clusters.md) guide. Here is an example:
 
    > **TIP**: Since the target cluster is the same as the cluster on which Kubeapps is installed, there is no need to set a URL. Note that the `name` field is used only to configure a display name in the Kubeapps dashboard.
 
@@ -131,7 +131,7 @@ The next step is to provide a rich user experience, aligned with corporate brand
        login-oidc: Login via VMware Cloud Services
    ```
 
-   > **TIP**: See the [complete list of customizable strings](https://github.com/kubeapps/kubeapps/blob/master/dashboard/lang/en.json).
+   > **TIP**: See the [complete list of customizable strings](https://github.com/kubeapps/kubeapps/blob/main/dashboard/lang/en.json).
 
    In a similar manner, add custom style rules using custom CSS selectors. For example, to change the Kubeapps logo, set the selector `.kubeapps-logo` to the property `background-image: url('data:image/png;base64...')` as shown in the example below. The long string shown is the Base64-encoded data for the new logo image.
 
@@ -164,9 +164,9 @@ At this point, Kubeapps is configured to use a custom interface.
 
 With the configuration out of the way, it's time to install Kubeapps. Since Kubeapps is currently officially delivered as a [Helm chart packaged by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm.
 
-In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) instead.
+In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/kubeapps/kubeapps/blob/main/docs/user/offline-installation.md) instead.
 
-> **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally) for additional information.
+> **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps#exposing-externally) for additional information.
 >
 > ```yaml
 > frontend:
@@ -174,7 +174,7 @@ In case Kubeapps is to be installed in an air-gapped environment, please follow 
 >     type: LoadBalancer
 > ```
 
-Use the commands below to install Kubeapps. The final command assumes that the Kubeapps chart configuration parameters are defined in a file named `custom-values.yaml`, so ensure this file exists before executing that command.
+Use the commands below to install Kubeapps. The final command assumes that the Kubeapps chart configuration parameters are defined in a file named `custom-values.yaml`, so ensure this file exists before running that command.
 
 ```bash
 # Install the Bitnami helm repository
@@ -191,7 +191,7 @@ Finally, remember to replace the placeholder _Redirect URIs_ you entered when [c
 
 For instance, assuming Kubeapps is accessible at `https://kubeapps.example.com` replace `https://localhost/oauth2/callback` with `https://kubeapps.example.com/oauth2/callback`.
 
-> **TIP**: If you are serving Kubeapps from a subpath, for instance, `https://example.com/kubeapps`, you will need to slightly modify the `authProxy` configuration. Please follow [these instructions](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md#serving-kubeapps-in-a-subpath) for further details.
+> **TIP**: If you are serving Kubeapps from a subpath, for instance, `https://example.com/kubeapps`, you will need to slightly modify the `authProxy` configuration. Please follow [these instructions](https://github.com/kubeapps/kubeapps/blob/main/chart/kubeapps/README.md#serving-kubeapps-in-a-subpath) for further details.
 
 ![Add name and description](./img/csp-oauth-redirect.png)
 
@@ -199,7 +199,7 @@ At this point, Kubeapps is installed in the cluster and the OIDC provider is ful
 
 ### Step 2.4: Configure Role-Based Access
 
-Once Kubeapps is installed, the next step is to configure access. Since Kubeapps delegates authorization to the existing Role-Based Access Control (RBAC) configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation about [Kubeapps access control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) for more information.
+Once Kubeapps is installed, the next step is to configure access. Since Kubeapps delegates authorization to the existing Role-Based Access Control (RBAC) configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation about [Kubeapps access control](https://github.com/kubeapps/kubeapps/blob/main/docs/user/access-control.md) for more information.
 
 > **NOTE**: RBAC configuration depends on your custom business requirements. The configuration shown below is only an example and not meant for production use. Please refer to the official [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for more details.
 
@@ -221,7 +221,7 @@ subjects:
     name: EMAIL-ADDRESS
 ```
 
-Apply this configuration by executing the following command:
+Apply this configuration by running the following command:
 
 ```bash
 kubectl apply -f kubeapps-rbac.yaml
@@ -233,7 +233,7 @@ At this point, the user having `EMAIL-ADDRESS` email account will have `cluster-
 
 Once Kubeapps is installed and configured, the next step is to log in and access the Kubeapps Web dashboard. The procedure to do this depends on how Kubeapps was configured.
 
-1. If [the service was exposed externally](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps#exposing-externally), it may be accessed using a public IP address; if not, it can be accessed locally by forwarding the cluster port using the command below:
+1. If [the service was exposed externally](https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps#exposing-externally), it may be accessed using a public IP address; if not, it can be accessed locally by forwarding the cluster port using the command below:
 
    ```bash
    kubectl port-forward -n kubeapps svc/kubeapps 8080:80

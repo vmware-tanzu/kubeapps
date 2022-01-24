@@ -268,7 +268,7 @@
   }
 }
 
-// TODO(andresmgot): workaround to avoid styling issue for a disabled CdsButton
+// TODO(andresmgot): workaround to avoid styling issue for a deactivated CdsButton
 // https://github.com/vmware/clarity/issues/5315
 // We need to apply the target classes manually
 .flat-btn[disabled] {

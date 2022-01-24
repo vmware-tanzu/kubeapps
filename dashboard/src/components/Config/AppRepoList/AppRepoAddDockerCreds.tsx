@@ -102,7 +102,7 @@ export function AppRepoAddDockerCreds({
               <a
                 target="_blank"
                 rel="noreferrer"
-                href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#associating-docker-image-pull-secrets-to-an-apprepository"
+                href="https://github.com/kubeapps/kubeapps/blob/main/docs/user/private-app-repository.md#associating-docker-image-pull-secrets-to-an-apprepository"
               >
                 here
               </a>

@@ -68,7 +68,7 @@ const operatorsRoutes = {
 
 const unsupportedRoutes = {
   "/c/:cluster/ns/:namespace/operators*":
-    "Operators support has been disabled by default for Kubeapps. It can be enabled in values configuration.",
+    "Operators support has been deactivated by default for Kubeapps. It can be enabled in values configuration.",
 } as const;
 
 // Public routes that don't require authentication

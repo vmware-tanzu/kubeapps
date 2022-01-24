@@ -1,8 +1,8 @@
 # Experimental Kubeapps APIs service
 
-This is an experimental service that we are not yet including in our released Kubeapps chart, providing an extensible protobuf-based API service enabling Kubeapps (or other packaging UIs) to interact with various Kubernetes packaging formats in a consistent way.
+This is an experimental service that we are not yet including in our released Kubeapps chart, providing an extendable protobuf-based API service enabling Kubeapps (or other packaging UIs) to interact with various Kubernetes packaging formats in a consistent way.
 
-## Extensible
+## Extendable
 
 The API definitions are using Google protocol buffers - an Interface Definition Language that was created to ensure that API messages and API services can be defined, extended and maintained with the least friction, in a language-neutral way (though we are exclusively using go here).
 
@@ -12,7 +12,7 @@ If you are unfamiliar with protocol buffers and gRPC, it's worthwhile to at leas
 
 Though it is possible to use a JS/TypeScript client, it is also possible to use a protocol buffer extensions provided by Google that enables optionally exposing the RPCs as http requests, demo'd here. This is made possible via the [grpc-gateway project](https://github.com/grpc-ecosystem/grpc-gateway) which proxies JSON http requests through to the relevant gRPC call. As shown in the demo (and by many others examples online), both http and grpc can be served on the same port without issue.
 
-Together, this enables the best of both worlds: a well known and used Interface Definition Language for defining extensible APIs that can also be exposed via a rest-like http interface.
+Together, this enables the best of both worlds: a well known and used Interface Definition Language for defining extendable APIs that can also be exposed via a rest-like http interface.
 
 Finally, we've also chosen to use the [buf](https://buf.build/) tool for generating the code from the proto files. In the past we've used `protoc` (proto buffer compiler) and its extensions directly, but `buf` allows you to specify a simple yaml config instead, and also provides a `lint` command to ensure that your choice of API structure follows best practise, as well as ensuring you're aware when you break backwards compatibility.
 
@@ -246,4 +246,4 @@ make run
 
 and then verify that the RegisteredPlugins RPC call is exposed via HTTP at the new URL path that you specified.
 
-You can also use `buf lint` to ensure that the proto IDLs are sane (ie. extensible, no backwards incompatible changes etc.)
+You can also use `buf lint` to ensure that the proto IDLs are valid (ie. extendable, no backwards incompatible changes etc.)

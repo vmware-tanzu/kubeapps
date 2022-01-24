@@ -68,7 +68,7 @@ context("when changing props", () => {
     expect(getCustomResources).toHaveBeenCalledWith("default-cluster", "default");
   });
 
-  it("should not fetch resources in the new namespace when operators is disabled", async () => {
+  it("should not fetch resources in the new namespace when operators is deactivated", async () => {
     const state = deepClone(initialState) as IStoreState;
     state.config.featureFlags = { operators: false };
     const store = getStore(state);

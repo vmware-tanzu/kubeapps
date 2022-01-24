@@ -23,7 +23,7 @@
 # client.go library that your project uses.
 # Note that the generated client is generally stored in the repo so that other (external) projects
 # can import your client directly. You can see examples of generated clients in the sample-controller
-# for the the K8s org at:
+# for the K8s org at:
 #  https://github.com/kubernetes/sample-controller/blob/master/pkg/generated/clientset/versioned/typed/samplecontroller/v1alpha1/samplecontroller_client.go
 # or any other controllers in the k8s project
 #

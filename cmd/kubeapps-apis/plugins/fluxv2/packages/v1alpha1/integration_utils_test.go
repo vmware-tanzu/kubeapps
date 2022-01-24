@@ -697,8 +697,8 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	})
 	t.Logf("redisCli: %s", redisCli)
 
-	// sanity check, we expect the cache to be empty at this point
-	// if it's not, it's likely that some cleanup didn't happen due to earlier an aborted test
+	// confidence test, we expect the cache to be empty at this point
+	// if it's not, it's likely that some cleanup didn't happen due to earlier an stopped test
 	// and you should be able to clean up manually
 	// $ kubectl delete helmrepositories --all
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {

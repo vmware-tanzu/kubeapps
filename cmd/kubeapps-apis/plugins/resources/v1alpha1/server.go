@@ -52,7 +52,7 @@ type Server struct {
 
 	// kindToResource is a function to convert a GVK to GVR with
 	// namespace/cluster scope information. Can be replaced in tests with a
-	// dummy version using the unsafe helpers while the real implementation
+	// stub version using the unsafe helpers while the real implementation
 	// queries the k8s API for a REST mapper.
 	kindToResource func(meta.RESTMapper, schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error)
 }
