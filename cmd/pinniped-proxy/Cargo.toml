@@ -4,6 +4,7 @@
 [package]
 name = "pinniped-proxy"
 version = "0.0.0-devel"
+license = "Apache-2.0"
 authors = ["Kubeapps team <tanzu-kubeapps-team@vmware.com>"]
 edition = "2021"
 build = "build.rs"
