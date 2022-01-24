@@ -34,9 +34,6 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.22.4
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.4
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.22.4
-
-	// required by helm, new versions have breaking changes
-	oras.land/oras-go => oras.land/oras-go v0.4.0
 )
 
 require (
@@ -74,7 +71,7 @@ require (
 	github.com/urfave/negroni v1.0.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.31.0
 	github.com/vmware-tanzu/carvel-vendir v0.24.0
-	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
+	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/genproto v0.0.0-20220118154757-00ab72f36ad5
 	google.golang.org/grpc v1.43.0
@@ -201,7 +198,7 @@ require (
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
@@ -217,7 +214,6 @@ require (
 	k8s.io/kubectl v0.23.1 // indirect
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
-	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/kustomize/api v0.10.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.0 // indirect
