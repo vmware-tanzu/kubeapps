@@ -2,7 +2,7 @@ import { CdsIcon } from "@cds/react/icon";
 import { Location } from "history";
 import { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
-import { Redirect } from "react-router";
+import { Redirect } from "react-router-dom";
 import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.css";
 import OAuthLogin from "./OauthLogin";
