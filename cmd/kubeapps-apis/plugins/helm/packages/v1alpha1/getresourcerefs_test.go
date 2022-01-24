@@ -41,6 +41,10 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		expectedStatusCode codes.Code
 	}
 
+	// newTestCase is a function to take an existing test-case
+	// (a so-called baseTestCase in pkg/resourcerefs module, which contains a LOT of useful data)
+	// and enhance it with some new fields to create a different kind of test case
+	// that tests server.GetInstalledPackageResourceRefs
 	newTestCase := func(tc int, identifier string, response bool, code codes.Code) testCase {
 		newCase := testCase{
 			baseTestCase: resourcerefstest.TestCases1[tc],

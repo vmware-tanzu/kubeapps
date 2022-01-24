@@ -796,6 +796,10 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		expectedStatusCode codes.Code
 	}
 
+	// newTestCase is a function to take an existing test-case
+	// (a so-called baseTestCase in pkg/resourcerefs module, which contains a LOT of useful data)
+	// and enhance it with some new fields to create a different kind of test case
+	// that tests server.GetInstalledPackageResourceRefs
 	newTestCase := func(tc int, response bool, code codes.Code) testCase {
 		// Using the redis_existing_stub_completed data with
 		// different manifests for each test.

@@ -167,19 +167,22 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 	return pkg, nil
 }
 
-// @gfichtenholt: I really wanted to put helm plugin's implementation of AvailablePackageDetailFromChart()
+// TODO @gfichtenholt: I really wanted to put helm plugin's implementation of AvailablePackageDetailFromChart()
 // here, and use it in flux plugin as well. But I found out a couple of flaws in the implementation and decided
 // against it. Namely:
 // 1. This assumption:
 //    // We assume that chart.ChartVersions[0] will always contain either: the latest version or
 //    // the specified version
 //  This is a hack and forces the caller to prepate the input argument in a certain way such that
-//  chart.ChartVersions[0] will be the desired version. I other words the abstraction between the caller and
+//  chart.ChartVersions[0] will be the desired version. I other words, the abstraction between the caller and
 //  the call site is completely broken here. Yuck.
 // 2. IMHO, it would have been better to get most of the detail info, including the current version out of
 //   parsed chart YAML file, which this implementation chooses to ignore.
 // I did consider using flux's implementation of AvailablePackageDetailFromChart but did not feel comfortable
 // chaning helm plugin to use it before talking to @minelson
+// Update Michael replied he is okay with my proposal:
+// https://github.com/kubeapps/kubeapps/pull/4094#discussion_r790349962.
+// Will come back to this
 
 // GetUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
 // also checks that the chart ID is in the expected format, namely "repoName/chartName"
