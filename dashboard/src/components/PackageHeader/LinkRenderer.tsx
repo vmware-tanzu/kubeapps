@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { HashLink as Link } from "react-router-hash-link";
 
 const LinkRenderer: React.FunctionComponent<{}> = (props: any) => {

@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { deepClone } from "@cds/core/internal";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
@@ -17,7 +20,7 @@ import qs from "qs";
 import React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
@@ -65,7 +68,7 @@ context("when changing props", () => {
     expect(getCustomResources).toHaveBeenCalledWith("default-cluster", "default");
   });
 
-  it("should not fetch resources in the new namespace when operators is disabled", async () => {
+  it("should not fetch resources in the new namespace when operators is deactivated", async () => {
     const state = deepClone(initialState) as IStoreState;
     state.config.featureFlags = { operators: false };
     const store = getStore(state);

@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 @import "~modern-normalize/modern-normalize.css";
 @import "~@cds/core/global.css"; // clarity core global styles
 @import "~@cds/core/styles/theme.dark.css"; // clarity core dark theme
@@ -16,7 +19,7 @@ svg.icon {
   font-size: var(--cds-global-typography-font-size-6, 0.55rem);
 }
 
-// CSS tweaks the dark mode theme theme
+// CSS tweaks the dark mode theme
 [cds-theme~="dark"] {
   %convert-to-white {
     filter: invert(1) brightness(100%) saturate(0%); /* stylelint-disable-line scss/no-global-function-names */

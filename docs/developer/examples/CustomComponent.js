@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import React, { useEffect, useState } from "react"; //This is a super simple react component to demo how a custom component could look
 
 export default function Test(props) {

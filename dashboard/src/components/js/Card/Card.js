@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import cs from "classnames";
 import PropTypes from "prop-types";
 import React from "react";
@@ -19,7 +22,7 @@ const Card = ({ children, clickable, htmlTag, onClick }) => {
   if (typeof onClick === "function") {
     innerProps["tabIndex"] = "0";
 
-    // Executes onClick when the user types `enter`
+    // Runs onClick when the user types `enter`
     innerProps["onKeyPress"] = e => {
       // Enter
       if (e.key === "Enter") {
@@ -27,7 +30,7 @@ const Card = ({ children, clickable, htmlTag, onClick }) => {
       }
     };
 
-    // Executes onClick when the user types `space`
+    // Runs onClick when the user types `space`
     innerProps["onKeyUp"] = e => {
       // Space
       if (e.key === " ") {

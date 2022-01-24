@@ -1,3 +1,6 @@
+# Copyright 2019-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 # syntax = docker/dockerfile:1
 
 FROM bitnami/golang:1.17.3 as builder

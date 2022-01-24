@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Card from "./Card";
 import CardBlock from "./components/CardBlock";
 import CardFooter from "./components/CardFooter";

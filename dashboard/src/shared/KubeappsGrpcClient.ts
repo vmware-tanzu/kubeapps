@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { grpc } from "@improbable-eng/grpc-web";
 import { PackagesServiceClientImpl } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { PluginsServiceClientImpl } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";

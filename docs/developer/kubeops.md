@@ -47,7 +47,7 @@ Note: By default, Kubeapps will try to fetch the latest version of the image so 
 kubectl patch deployment kubeapps-internal-kubeops -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}]'
 ```
 
-The easiest way to create the `kubeops` image is to execute the Makefile task to do so:
+The easiest way to create the `kubeops` image is to run the Makefile task to do so:
 
 > Since Kubeops depends on certain information only available within the cluster, a deployment with Telepresence becomes much more difficult to set up.
 
@@ -58,13 +58,13 @@ IMAGE_TAG=dev make kubeapps/kubeops
 This will generate an image `kubeapps/kubeops:dev` that you can use in the current deployment:
 
 > If you are using Kind, remember to manually add the image to your cluster; otherwhise, your k8s cluster will not be able to pull the image.
-> To do so, execute: `kind load docker-image kubeapps/kubeops:dev`
+> To do so, run: `kind load docker-image kubeapps/kubeops:dev`
 
 ```bash
 kubectl set image -n kubeapps deployment kubeapps-internal-kubeops kubeops=kubeapps/kubeops:dev
 ```
 
-For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod executing:
+For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod running:
 
 ```bash
 kubectl delete pod -n kubeapps -l app=kubeapps-internal-kubeops

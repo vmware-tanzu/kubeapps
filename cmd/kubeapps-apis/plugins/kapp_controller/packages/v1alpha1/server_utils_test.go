@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -116,6 +107,101 @@ func TestGetPkgVersionsMap(t *testing.T) {
 			opts := cmpopts.IgnoreUnexported(pkgSemver{})
 			if want, got := tt.expectedPkgVersionsMap, pkgVersionsMap; !cmp.Equal(want, got, opts) {
 				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
+func TestLatestMatchingVersion(t *testing.T) {
+	version123, _ := semver.NewVersion("1.2.3")
+	version124, _ := semver.NewVersion("1.2.4")
+	version127, _ := semver.NewVersion("1.2.7")
+	version200, _ := semver.NewVersion("2.0.0")
+	tests := []struct {
+		name                    string
+		versions                []pkgSemver
+		constraints             string
+		expectedMatchingVersion *semver.Version
+	}{
+		{"simple constaint", []pkgSemver{
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version200,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version127,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version124,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version123,
+			},
+		},
+			">1.0.0",
+			version200,
+		},
+		{"complex constaint", []pkgSemver{
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version200,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version127,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version124,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version123,
+			},
+		},
+			"1.2.3 || >1.0.0 <=1.2.4 || <2.0.0",
+			version127,
+		},
+		{"unsatisfiable constaint", []pkgSemver{
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version200,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version127,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version124,
+			},
+			{
+				pkg:     &datapackagingv1alpha1.Package{},
+				version: version123,
+			},
+		},
+			"9.9.9",
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			matchingVersion, err := latestMatchingVersion(tt.versions, tt.constraints)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.expectedMatchingVersion != nil {
+				opts := cmpopts.IgnoreUnexported(pkgSemver{})
+				if want, got := tt.expectedMatchingVersion, matchingVersion; !cmp.Equal(want, got, opts) {
+					t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got, opts))
+				}
+			} else {
+				if matchingVersion != nil {
+					t.Errorf("in %s: mismatch expecting nil got %v", tt.name, matchingVersion)
+				}
 			}
 		})
 	}

@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import ReactDOM from "react-dom";
 import { addAuthHeaders, addErrorHandling, axios, axiosWithAuth } from "shared/AxiosInstance";
 import Root from "./containers/Root";

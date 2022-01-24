@@ -1,3 +1,6 @@
+// Copyright 2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 export class RpcError extends Error {
   // Following https://github.com/grpc/grpc-go/blob/master/internal/status/status.go#L140
   static RPC_ERROR_REGEX = /rpc error: code = (\w+) desc = (.*)/;

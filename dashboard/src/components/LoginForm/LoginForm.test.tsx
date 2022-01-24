@@ -1,7 +1,10 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import LoadingWrapper from "components/LoadingWrapper";
 import { Location } from "history";
 import { act } from "react-dom/test-utils";
-import { Redirect } from "react-router";
+import { Redirect } from "react-router-dom";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
