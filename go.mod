@@ -71,7 +71,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20211120171407-1837d6608d8c
 	github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780
 	github.com/stretchr/testify v1.7.0
-	github.com/urfave/negroni v1.0.0
+	github.com/urfave/negroni/v2 v2.0.2
 	github.com/vmware-tanzu/carvel-kapp-controller v0.31.0
 	github.com/vmware-tanzu/carvel-vendir v0.24.0
 	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
