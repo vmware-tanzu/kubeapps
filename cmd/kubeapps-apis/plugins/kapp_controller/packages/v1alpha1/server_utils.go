@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
@@ -115,6 +116,37 @@ func extractValue(body string, key string) string {
 		value = strings.ReplaceAll(keyValMatch[1], "\"", "")
 	}
 	return value
+}
+
+// buildReadme generates a readme based on the information there is available
+func buildReadme(pkgMetadata *datapackagingv1alpha1.PackageMetadata, foundPkgSemver *pkgSemver) string {
+	var readmeSB strings.Builder
+	if txt := pkgMetadata.Spec.LongDescription; txt != "" {
+		readmeSB.WriteString(fmt.Sprintf("## Description\n\n%s\n\n", txt))
+	}
+	if txt := foundPkgSemver.pkg.Spec.CapactiyRequirementsDescription; txt != "" {
+		readmeSB.WriteString(fmt.Sprintf("## Capactiy requirements\n\n%s\n\n", txt))
+	}
+	if txt := foundPkgSemver.pkg.Spec.ReleaseNotes; txt != "" {
+		readmeSB.WriteString(fmt.Sprintf("## Release notes\n\n%s\n\n", txt))
+		if date := foundPkgSemver.pkg.Spec.ReleasedAt.Time; date != (time.Time{}) {
+			txt := date.UTC().Format("January, 1 2006")
+			readmeSB.WriteString(fmt.Sprintf("Released at: %s\n\n", txt))
+		}
+	}
+	if txt := pkgMetadata.Spec.SupportDescription; txt != "" {
+		readmeSB.WriteString(fmt.Sprintf("## Support\n\n%s\n\n", txt))
+	}
+	if len(foundPkgSemver.pkg.Spec.Licenses) > 0 {
+		readmeSB.WriteString("## Licenses\n\n")
+		for _, license := range foundPkgSemver.pkg.Spec.Licenses {
+			if license != "" {
+				readmeSB.WriteString(fmt.Sprintf("- %s\n", license))
+			}
+		}
+		readmeSB.WriteString("\n")
+	}
+	return readmeSB.String()
 }
 
 // defaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
