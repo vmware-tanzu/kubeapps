@@ -462,7 +462,6 @@ fetchStdout
 			// when using `` we cannot escape the ` char itself, so let's replace it later
 			expected := strings.ReplaceAll(tt.expected, "<x60>", "`")
 			if want, got := expected, readme; !cmp.Equal(want, got) {
-				t.Logf(got)
 				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
 			}
 		})
