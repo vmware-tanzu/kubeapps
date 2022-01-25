@@ -20,7 +20,7 @@ parameters:
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.7.2"
+    default: "v3.8.0"
   OLM_VERSION:
     type: "string"
     default: "v0.20.0"
@@ -29,7 +29,7 @@ parameters:
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.5"
+    default: "v1.22.6"
   GITHUB_VERSION:
     type: "string"
     default: "2.4.0"
