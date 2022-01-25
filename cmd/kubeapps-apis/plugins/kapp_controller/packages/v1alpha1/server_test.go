@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -40,6 +42,7 @@ import (
 	dynfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
+	"sigs.k8s.io/yaml"
 )
 
 var ignoreUnexported = cmpopts.IgnoreUnexported(
@@ -2782,7 +2785,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: ">1",
+					Version: "1",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -3667,6 +3670,128 @@ func TestGetPackageRepositories(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestParsePluginConfig(t *testing.T) {
+	testCases := []struct {
+		name                         string
+		pluginYAMLConf               []byte
+		expectedDefaultUpgradePolicy upgradePolicy
+		expectedErrorStr             string
+	}{
+		{
+			name:                         "non existing plugin-config file",
+			pluginYAMLConf:               nil,
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "no such file or directory",
+		},
+		{
+			name: "defaultUpgradePolicy not set",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      `),
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "",
+		},
+		{
+			name: "defaultUpgradePolicy: major",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultUpgradePolicy: major
+        `),
+			expectedDefaultUpgradePolicy: major,
+			expectedErrorStr:             "",
+		},
+		{
+			name: "defaultUpgradePolicy: minor",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultUpgradePolicy: minor
+        `),
+			expectedDefaultUpgradePolicy: minor,
+			expectedErrorStr:             "",
+		},
+		{
+			name: "defaultUpgradePolicy: patch",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultUpgradePolicy: patch
+        `),
+			expectedDefaultUpgradePolicy: patch,
+			expectedErrorStr:             "",
+		},
+		{
+			name: "defaultUpgradePolicy: none",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultUpgradePolicy: none
+        `),
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "",
+		},
+		{
+			name: "invalid defaultUpgradePolicy",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultUpgradePolicy: foo
+      `),
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "json: cannot unmarshal",
+		},
+		{
+			name: "invalid defaultUpgradePolicy",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultUpgradePolicy: 10.09
+      `),
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "json: cannot unmarshal",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			defaultUpgradePolicy, goterr := parsePluginConfig(filename)
+			if goterr != nil && !strings.Contains(goterr.Error(), tc.expectedErrorStr) {
+				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.expectedErrorStr)
+			}
+			if got, want := defaultUpgradePolicy, tc.expectedDefaultUpgradePolicy; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}

@@ -77,9 +77,32 @@ In the [values.yaml](../../chart/kubeapps/values.yaml) file, under `kubeappsapis
 
 ```yaml
 kubeappsapis:
+  ...
+  enabledPlugins:
+    - helm
+    - resources
   - resources
   - helm
   - kapp-controller # add this one
+```
+
+Additionally, you can pass the following configuration values to the `kapp-controller` plugin:
+
+- `defaultUpgradePolicy`: represents the default upgrade policy for the packages. If other than `none` is selected, the kapp-controller will automatically upgrade the packages to the latest matching semantic version. For instance, assuming we installed the version `1.2.3`:
+  - With `major` selected, the package will be upgraded to `>=1.2.3`, for example, `2.0.0`, for
+  - With `minor` selected, the package will be upgraded to `>=1.2.3 <2.0.0`, for example, `1.3.0`,
+  - With `patch` selected, the package will be upgraded to `>=1.2.3 <1.3.0`, for example, `1.2.4`,
+
+An example of the configuration values that can be passed to the `kapp-controller` plugin is:
+
+```yaml
+kubeappsapis:
+  ...
+  pluginConfig:
+    kappController:
+      packages:
+        v1alpha1:
+          defaultUpgradePolicy: none # [ "major", "minor", "patch", "none" ]
 ```
 
 ### Installing a Package Repository
