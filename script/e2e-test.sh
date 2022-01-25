@@ -361,10 +361,11 @@ pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
-testsToIgnore=()
+# Ignore operator tests on main run.
+testsToIgnore=("operators")
 # Skip the multicluster scenario for GKE
 if [[ -n "${GKE_BRANCH-}" ]]; then
-  testsToIgnore=("add-multicluster-deployment.js")
+  testsToIgnore=("operators" "add-multicluster-deployment.js")
 fi
 ignoreFlag=""
 if [[ "${#testsToIgnore[@]}" > "0" ]]; then
@@ -426,8 +427,12 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   info "Waiting for the OperatorHub Catalog to be ready ..."
   retry_while isOperatorHubCatalogRunning 24
 
+  # Ignore all the main tests on this run, so only operator
+  # test is used.
+  ignoreFlag="--testPathIgnorePatterns 'use-cases/*.js'"
+
   info "Running operator integration test with k8s API access..."
-  if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start /app/use-cases/operators/*.js"; then
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports
