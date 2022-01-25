@@ -11,7 +11,7 @@ const defaultProps = {
   title: "",
 } as IAppNotesProps;
 
-it("renders the ReactMarkdown content is readme is present", () => {
+it("renders the ReactMarkdown content in readme if present", () => {
   const props = {
     ...defaultProps,
     notes: "# Markdown Readme",
