@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -30,8 +31,9 @@ import (
 type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
-	globalPackagingNamespace                   = "kapp-controller-packaging-global"
-	fallbackDefaultUpgradePolicy upgradePolicy = none
+	globalPackagingNamespace                        = "kapp-controller-packaging-global"
+	fallbackDefaultUpgradePolicy      upgradePolicy = none
+	fallbackDefaultIncludePrereleases               = false
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -47,48 +49,50 @@ type Server struct {
 	globalPackagingNamespace string
 	globalPackagingCluster   string
 	kappClientsGetter        kappClientsGetter
-	defaultUpgradePolicy     upgradePolicy
+	pluginConfig             *kappControllerPluginParsedConfig
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) (upgradePolicy, error) {
-	type kappControllerPluginConfig struct {
-		KappController struct {
-			Packages struct {
-				V1alpha1 struct {
-					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
-				} `json:"v1alpha1"`
-			} `json:"packages"`
-		} `json:"kappController"`
-	}
-	var config kappControllerPluginConfig
+func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConfig, error) {
+	// default configuration
+	config := defaultPluginConfig
 
-	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	// load the configuration file and unmarshall the values
+	pluginConfigFile, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		return none, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+		return config, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
-	err = json.Unmarshal([]byte(pluginConfig), &config)
+	var pluginConfig kappControllerPluginConfig
+	err = json.Unmarshal([]byte(pluginConfigFile), &pluginConfig)
 	if err != nil {
-		return none, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+		return config, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfigFile), err)
 	}
 
-	defaultUpgradePolicy := upgradePolicyMapping[config.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
+	// parse the configuration options
+	defaultUpgradePolicy := upgradePolicyMapping[pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
+	defaultIncludePrereleases, err := strconv.ParseBool(pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy)
+	if err != nil {
+		return config, fmt.Errorf("unable to parse DefaultUpgradePolicy: %q error: %w", string(pluginConfigFile), err)
+	}
 
-	// return configured value
-	return defaultUpgradePolicy, nil
+	// override the defaults with the loaded configuration
+	config.defaultUpgradePolicy = defaultUpgradePolicy
+	config.defaultIncludePrereleases = defaultIncludePrereleases
+
+	return config, nil
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster, pluginConfigPath string) *Server {
 	var err error
-	defaultUpgradePolicy := fallbackDefaultUpgradePolicy
+	pluginConfig := defaultPluginConfig
 	if pluginConfigPath != "" {
-		defaultUpgradePolicy, err = parsePluginConfig(pluginConfigPath)
+		pluginConfig, err = parsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
-		log.Infof("+kapp-controller using custom packages config with defaultUpgradePolicy: %v\n", defaultUpgradePolicy.string())
+		log.Infof("+kapp-controller using custom config: %v\n", pluginConfig)
 	} else {
 		log.Infof("+kapp-controller using default config since pluginConfigPath is empty")
 	}
@@ -96,6 +100,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 		clientGetter:             clientgetter.NewClientGetter(configGetter),
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
+		pluginConfig:             pluginConfig,
 		kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 			if configGetter == nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "configGetter arg required")

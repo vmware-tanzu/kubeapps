@@ -318,6 +318,28 @@ func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
 }
 
+type (
+	kappControllerPluginConfig struct {
+		KappController struct {
+			Packages struct {
+				V1alpha1 struct {
+					DefaultUpgradePolicy      string `json:"defaultUpgradePolicy"`
+					DefaultIncludePrereleases bool   `json:"defaultIncludePrereleases"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"kappController"`
+	}
+	kappControllerPluginParsedConfig struct {
+		defaultUpgradePolicy      upgradePolicy
+		defaultIncludePrereleases bool
+	}
+)
+
+var defaultPluginConfig = &kappControllerPluginParsedConfig{
+	defaultUpgradePolicy:      fallbackDefaultUpgradePolicy,
+	defaultIncludePrereleases: fallbackDefaultIncludePrereleases,
+}
+
 // Create a upgradePolicy enum-alike
 type upgradePolicy int
 

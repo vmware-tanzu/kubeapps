@@ -1638,6 +1638,8 @@ kubeappsapis:
           ## @param kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultUpgradePolicy Default upgrade policy generating version constraints
           ## enum: [ "major", "minor", "patch", "none" ]
           defaultUpgradePolicy: none
+          ## @param kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultIncludePrereleases Default policy for allowing pre-releases to be installed
+          defaultIncludePrereleases: false
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
