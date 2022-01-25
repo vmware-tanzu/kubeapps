@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsFormGroup } from "@cds/react/forms";
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";

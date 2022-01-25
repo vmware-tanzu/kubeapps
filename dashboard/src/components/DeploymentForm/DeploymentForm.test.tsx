@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
 import { JSONSchemaType } from "ajv";

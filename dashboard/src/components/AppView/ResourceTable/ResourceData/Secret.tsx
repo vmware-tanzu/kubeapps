@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { get, isEmpty } from "lodash";
 import { IResource, ISecret } from "shared/types";
 import SecretItemDatum from "../ResourceItem/SecretItem/SecretItemDatum";

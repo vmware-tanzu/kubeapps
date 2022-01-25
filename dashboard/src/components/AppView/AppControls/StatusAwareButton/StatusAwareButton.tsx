@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import {
   InstalledPackageStatus,

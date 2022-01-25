@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
 import Enzyme from "enzyme";
 import "jest-enzyme";

@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsIcon } from "@cds/react/icon";
 import { Location } from "history";
 import { useEffect, useState } from "react";

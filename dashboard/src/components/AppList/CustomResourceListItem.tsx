@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { findOwnedKind, getIcon } from "shared/Operators";
 import { IClusterServiceVersion, IResource } from "shared/types";
 import { app } from "shared/url";

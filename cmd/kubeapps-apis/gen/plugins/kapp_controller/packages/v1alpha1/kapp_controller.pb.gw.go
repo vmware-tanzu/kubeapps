@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1_0 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -53,7 +53,7 @@ func request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx co
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -73,7 +73,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -126,7 +126,7 @@ func request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx conte
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -219,7 +219,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -272,7 +272,7 @@ func request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx con
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -329,7 +329,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1_0.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -345,7 +345,7 @@ func request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx co
 }
 
 func local_request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1_0.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -365,7 +365,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -418,7 +418,7 @@ func request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx conte
 }
 
 func local_request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -471,7 +471,7 @@ func local_request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx
 }
 
 func request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.CreateInstalledPackageRequest
+	var protoReq v1alpha1_0.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -488,7 +488,7 @@ func request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.CreateInstalledPackageRequest
+	var protoReq v1alpha1_0.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -505,7 +505,7 @@ func local_request_KappControllerPackagesService_CreateInstalledPackage_0(ctx co
 }
 
 func request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.UpdateInstalledPackageRequest
+	var protoReq v1alpha1_0.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -559,7 +559,7 @@ func request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.UpdateInstalledPackageRequest
+	var protoReq v1alpha1_0.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -617,7 +617,7 @@ var (
 )
 
 func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.DeleteInstalledPackageRequest
+	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -670,7 +670,7 @@ func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.DeleteInstalledPackageRequest
+	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -727,7 +727,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1_0.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -780,7 +780,7 @@ func request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx
 }
 
 func local_request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1_0.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (

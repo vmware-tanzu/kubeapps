@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Icon from "components/Icon/Icon";
 import { Link } from "react-router-dom";
 import placeholder from "../../placeholder.png";

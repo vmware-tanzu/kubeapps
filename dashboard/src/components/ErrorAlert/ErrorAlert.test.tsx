@@ -1,3 +1,6 @@
+// Copyright 2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Alert from "components/js/Alert";
 import { mount } from "enzyme";
 import ErrorAlert from "./ErrorAlert";

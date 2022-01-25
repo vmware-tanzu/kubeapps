@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";

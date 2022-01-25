@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import Config, { SupportedThemes } from "shared/Config";
