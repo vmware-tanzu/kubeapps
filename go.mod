@@ -90,7 +90,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.22.6
 	k8s.io/apimachinery v0.22.6
 	k8s.io/cli-runtime v0.22.6
-	k8s.io/client-go v1.5.2
+	k8s.io/client-go v0.22.6
 	k8s.io/klog/v2 v2.40.1
 	k8s.io/kubernetes v1.22.6
 	oras.land/oras-go v1.1.0
@@ -157,7 +157,7 @@ require (
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57 // indirect
 	github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 // indirect
 	github.com/k14s/ytt v0.38.0 // indirect
-	github.com/klauspost/compress v1.14.1 // indirect
+	github.com/klauspost/compress v1.14.2 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
@@ -216,7 +216,7 @@ require (
 	gopkg.in/ini.v1 v1.66.3 // indirect
 	k8s.io/apiserver v0.22.6 // indirect
 	k8s.io/component-base v0.22.6 // indirect
-	k8s.io/kube-openapi v0.0.0-20220114203427-a0453230fd26 // indirect
+	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
 	k8s.io/kubectl v0.22.6 // indirect
 	k8s.io/utils v0.0.0-20211208161948-7d6a63dca704 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
