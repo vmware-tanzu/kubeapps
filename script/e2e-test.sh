@@ -417,7 +417,7 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   # Update Kubeapps settings to enable operators and hence proxying
   # to k8s API server.
   info "Installing latest Kubeapps chart available"
-  installOrUpgradeKubeapps bitnami/kubeapps \
+  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
     "--set" "featureFlags.operators=true"
 
   info "Waiting for Kubeapps components to be ready (bitnami chart)..."
