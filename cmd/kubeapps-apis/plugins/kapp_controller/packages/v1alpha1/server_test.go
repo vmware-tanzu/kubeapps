@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -1994,29 +1995,33 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 					UserReason: "Deployed",
 				},
-				PostInstallationNotes: fmt.Sprintf(`## Installation output
+				PostInstallationNotes: strings.ReplaceAll(`#### Deploy
 
+<x60><x60><x60>
+deployStdout
+<x60><x60><x60>
 
-### Deploy:
-%s
+#### Fetch
 
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
 
-### Fetch:
-%s
+### Errors
 
+#### Deploy
 
-## Errors
+<x60><x60><x60>
+deployStderr
+<x60><x60><x60>
 
+#### Fetch
 
-### Deploy:
-%s
+<x60><x60><x60>
+fetchStderr
+<x60><x60><x60>
 
-
-### Fetch:
-%s
-
-
-`, "deployStdout", "fetchStdout", "deployStderr", "fetchStderr"),
+`, "<x60>", "`"),
 				LatestMatchingVersion: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.7",
 					AppVersion: "1.2.7",
@@ -2188,29 +2193,33 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 					UserReason: "Deployed",
 				},
-				PostInstallationNotes: fmt.Sprintf(`## Installation output
+				PostInstallationNotes: strings.ReplaceAll(`#### Deploy
 
+<x60><x60><x60>
+deployStdout
+<x60><x60><x60>
 
-### Deploy:
-%s
+#### Fetch
 
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
 
-### Fetch:
-%s
+### Errors
 
+#### Deploy
 
-## Errors
+<x60><x60><x60>
+deployStderr
+<x60><x60><x60>
 
+#### Fetch
 
-### Deploy:
-%s
+<x60><x60><x60>
+fetchStderr
+<x60><x60><x60>
 
-
-### Fetch:
-%s
-
-
-`, "deployStdout", "fetchStdout", "deployStderr", "fetchStderr"),
+`, "<x60>", "`"),
 				LatestVersion: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
 					AppVersion: "1.2.3",

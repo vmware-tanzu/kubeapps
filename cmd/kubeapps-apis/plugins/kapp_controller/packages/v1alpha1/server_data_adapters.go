@@ -216,46 +216,8 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 		return nil, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name)
 	}
 
-	deployStdout := ""
-	deployStderr := ""
-	fetchStdout := ""
-	fetchStderr := ""
-
-	if app.Status.Deploy != nil {
-		deployStdout = app.Status.Deploy.Stdout
-		deployStderr = app.Status.Deploy.Stderr
-	}
-	if app.Status.Fetch != nil {
-		fetchStdout = app.Status.Fetch.Stdout
-		fetchStderr = app.Status.Fetch.Stderr
-	}
-
-	// Build some custom installation notes based on the available stdout + stderr
-	// TODO(agamez): this is just a temporary solution until come up with a better UX solution
-	// short-term improvement is to just display those values != ""
-	postInstallationNotes := fmt.Sprintf(`## Installation output
-
-
-### Deploy:
-%s
-
-
-### Fetch:
-%s
-
-
-## Errors
-
-
-### Deploy:
-%s
-
-
-### Fetch:
-%s
-
-
-`, deployStdout, fetchStdout, deployStderr, fetchStderr)
+	// build postInstallationNotes
+	postInstallationNotes := buildPostInstallationNotes(app)
 
 	if len(pkgInstall.Status.Conditions) > 1 {
 		log.Warningf("The package install %s has more than one status conditions. Using the first one: %s", pkgInstall.Name, pkgInstall.Status.Conditions[0])

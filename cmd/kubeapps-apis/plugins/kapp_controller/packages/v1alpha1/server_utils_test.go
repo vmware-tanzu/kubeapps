@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -246,6 +247,180 @@ func TestUserReasonForKappStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			userReason := simpleUserReasonForKappStatus(tt.status)
 			if want, got := tt.expectedUserReason, userReason; !cmp.Equal(want, got) {
+				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestBuildPostInstallationNotes(t *testing.T) {
+	tests := []struct {
+		name     string
+		app      *kappctrlv1alpha1.App
+		expected string
+	}{
+		{"renders the expected notes (full)", &kappctrlv1alpha1.App{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       appResource,
+				APIVersion: kappctrlAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "my-installation",
+			},
+			Spec: kappctrlv1alpha1.AppSpec{
+				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+			},
+			Status: kappctrlv1alpha1.AppStatus{
+				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+					Stdout: "deployStdout",
+					Stderr: "deployStderr",
+				},
+				Fetch: &kappctrlv1alpha1.AppStatusFetch{
+					Stdout: "fetchStdout",
+					Stderr: "fetchStderr",
+				},
+				Inspect: &kappctrlv1alpha1.AppStatusInspect{
+					Stdout: "inspectStdout",
+					Stderr: "inspectStderr",
+				},
+			},
+		}, `#### Deploy
+
+<x60><x60><x60>
+deployStdout
+<x60><x60><x60>
+
+#### Fetch
+
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
+
+### Errors
+
+#### Deploy
+
+<x60><x60><x60>
+deployStderr
+<x60><x60><x60>
+
+#### Fetch
+
+<x60><x60><x60>
+fetchStderr
+<x60><x60><x60>
+
+`},
+		{"renders the expected notes (no stderr)", &kappctrlv1alpha1.App{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       appResource,
+				APIVersion: kappctrlAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "my-installation",
+			},
+			Spec: kappctrlv1alpha1.AppSpec{
+				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+			},
+			Status: kappctrlv1alpha1.AppStatus{
+				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+					Stdout: "deployStdout",
+				},
+				Fetch: &kappctrlv1alpha1.AppStatusFetch{
+					Stdout: "fetchStdout",
+				},
+				Inspect: &kappctrlv1alpha1.AppStatusInspect{
+					Stdout: "inspectStdout",
+				},
+			},
+		}, `#### Deploy
+
+<x60><x60><x60>
+deployStdout
+<x60><x60><x60>
+
+#### Fetch
+
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
+
+`},
+		{"renders the expected notes (no stdout)", &kappctrlv1alpha1.App{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       appResource,
+				APIVersion: kappctrlAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "my-installation",
+			},
+			Spec: kappctrlv1alpha1.AppSpec{
+				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+			},
+			Status: kappctrlv1alpha1.AppStatus{
+				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+					Stderr: "deployStderr",
+				},
+				Fetch: &kappctrlv1alpha1.AppStatusFetch{
+					Stderr: "fetchStderr",
+				},
+				Inspect: &kappctrlv1alpha1.AppStatusInspect{
+					Stderr: "inspectStderr",
+				},
+			},
+		}, `### Errors
+
+#### Deploy
+
+<x60><x60><x60>
+deployStderr
+<x60><x60><x60>
+
+#### Fetch
+
+<x60><x60><x60>
+fetchStderr
+<x60><x60><x60>
+
+`},
+		{"renders the expected notes (missing field)", &kappctrlv1alpha1.App{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       appResource,
+				APIVersion: kappctrlAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "my-installation",
+			},
+			Spec: kappctrlv1alpha1.AppSpec{
+				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+			},
+			Status: kappctrlv1alpha1.AppStatus{
+				Fetch: &kappctrlv1alpha1.AppStatusFetch{
+					Stdout: "fetchStdout",
+				},
+				Inspect: &kappctrlv1alpha1.AppStatusInspect{
+					Stdout: "inspectStdout",
+				},
+			},
+		}, `#### Fetch
+
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
+
+`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			readme := buildPostInstallationNotes(tt.app)
+			// when using `` we cannot escape the ` char itself, so let's replace it later
+			expected := strings.ReplaceAll(tt.expected, "<x60>", "`")
+			if want, got := expected, readme; !cmp.Equal(want, got) {
 				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
 			}
 		})
