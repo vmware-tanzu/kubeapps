@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -249,6 +250,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -266,6 +268,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -342,6 +345,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -402,6 +406,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -419,6 +424,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -436,6 +442,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -550,6 +557,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -567,6 +575,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -584,6 +593,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -705,6 +715,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -720,41 +731,29 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 				ShortDescription: "A great game for arcade gamers",
 				Categories:       []string{"logging", "daemon-set"},
-				Readme: fmt.Sprintf(`## Details
+				Readme: `## Description
 
+A few sentences but not really a readme
 
-### Description:
-%s
+## Capactiy requirements
 
+capacity description
 
-### Capactiy requirements:
-%s
+## Release notes
 
+release notes
 
-### Release Notes:
-%s
+Released at: June, 6 1984
 
+## Support
 
-### Support:
-%s
+Some support information
 
+## Licenses
 
-### Licenses:
-%s
-
-
-### ReleasedAt:
-%s
-
+- my-license
 
 `,
-					"A few sentences but not really a readme",
-					"capacity description",
-					"release notes",
-					"Some support information",
-					[]string{"my-license"},
-					&metav1.Time{},
-				),
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
 					Identifier: "tetris.foo.example.com",
@@ -807,6 +806,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -822,41 +822,29 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 				ShortDescription: "A great game for arcade gamers",
 				Categories:       []string{"logging", "daemon-set"},
-				Readme: fmt.Sprintf(`## Details
+				Readme: `## Description
 
+A few sentences but not really a readme
 
-### Description:
-%s
+## Capactiy requirements
 
+capacity description
 
-### Capactiy requirements:
-%s
+## Release notes
 
+release notes
 
-### Release Notes:
-%s
+Released at: June, 6 1984
 
+## Support
 
-### Support:
-%s
+Some support information
 
+## Licenses
 
-### Licenses:
-%s
-
-
-### ReleasedAt:
-%s
-
+- my-license
 
 `,
-					"A few sentences but not really a readme",
-					"capacity description",
-					"release notes",
-					"Some support information",
-					[]string{"my-license"},
-					&metav1.Time{},
-				),
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
 					Identifier: "tetris.foo.example.com",
@@ -919,6 +907,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1008,6 +997,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1052,6 +1042,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -1195,6 +1186,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -1212,6 +1204,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -1403,6 +1396,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -1508,6 +1502,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -1525,6 +1520,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -1542,6 +1538,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -1846,6 +1843,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -1997,29 +1995,33 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 					UserReason: "Deployed",
 				},
-				PostInstallationNotes: fmt.Sprintf(`## Installation output
+				PostInstallationNotes: strings.ReplaceAll(`#### Deploy
 
+<x60><x60><x60>
+deployStdout
+<x60><x60><x60>
 
-### Deploy:
-%s
+#### Fetch
 
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
 
-### Fetch:
-%s
+### Errors
 
+#### Deploy
 
-## Errors
+<x60><x60><x60>
+deployStderr
+<x60><x60><x60>
 
+#### Fetch
 
-### Deploy:
-%s
+<x60><x60><x60>
+fetchStderr
+<x60><x60><x60>
 
-
-### Fetch:
-%s
-
-
-`, "deployStdout", "fetchStdout", "deployStderr", "fetchStderr"),
+`, "<x60>", "`"),
 				LatestMatchingVersion: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.7",
 					AppVersion: "1.2.7",
@@ -2191,29 +2193,33 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 					UserReason: "Deployed",
 				},
-				PostInstallationNotes: fmt.Sprintf(`## Installation output
+				PostInstallationNotes: strings.ReplaceAll(`#### Deploy
 
+<x60><x60><x60>
+deployStdout
+<x60><x60><x60>
 
-### Deploy:
-%s
+#### Fetch
 
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
 
-### Fetch:
-%s
+### Errors
 
+#### Deploy
 
-## Errors
+<x60><x60><x60>
+deployStderr
+<x60><x60><x60>
 
+#### Fetch
 
-### Deploy:
-%s
+<x60><x60><x60>
+fetchStderr
+<x60><x60><x60>
 
-
-### Fetch:
-%s
-
-
-`, "deployStdout", "fetchStdout", "deployStderr", "fetchStderr"),
+`, "<x60>", "`"),
 				LatestVersion: &corev1.PackageAppVersion{
 					PkgVersion: "1.2.3",
 					AppVersion: "1.2.3",
@@ -2326,6 +2332,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -2468,6 +2475,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -2533,6 +2541,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -2677,6 +2686,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -2819,6 +2829,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -3011,6 +3022,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{

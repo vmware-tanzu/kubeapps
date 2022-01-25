@@ -16,7 +16,7 @@ import (
 )
 
 type Config struct {
-	MasterURL                string
+	APIServerURL             string
 	Kubeconfig               string
 	RepoSyncImage            string
 	RepoSyncImagePullSecrets []string
@@ -40,7 +40,7 @@ type Config struct {
 }
 
 func Serve(serveOpts Config) error {
-	cfg, err := clientcmd.BuildConfigFromFlags(serveOpts.MasterURL, serveOpts.Kubeconfig)
+	cfg, err := clientcmd.BuildConfigFromFlags(serveOpts.APIServerURL, serveOpts.Kubeconfig)
 	if err != nil {
 		return fmt.Errorf("Error building kubeconfig: %s", err.Error())
 	}

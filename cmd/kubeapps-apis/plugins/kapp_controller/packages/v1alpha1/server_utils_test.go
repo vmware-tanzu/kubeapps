@@ -6,7 +6,9 @@ package main
 import (
 	"bytes"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-cmp/cmp"
@@ -251,6 +253,180 @@ func TestUserReasonForKappStatus(t *testing.T) {
 	}
 }
 
+func TestBuildPostInstallationNotes(t *testing.T) {
+	tests := []struct {
+		name     string
+		app      *kappctrlv1alpha1.App
+		expected string
+	}{
+		{"renders the expected notes (full)", &kappctrlv1alpha1.App{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       appResource,
+				APIVersion: kappctrlAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "my-installation",
+			},
+			Spec: kappctrlv1alpha1.AppSpec{
+				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+			},
+			Status: kappctrlv1alpha1.AppStatus{
+				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+					Stdout: "deployStdout",
+					Stderr: "deployStderr",
+				},
+				Fetch: &kappctrlv1alpha1.AppStatusFetch{
+					Stdout: "fetchStdout",
+					Stderr: "fetchStderr",
+				},
+				Inspect: &kappctrlv1alpha1.AppStatusInspect{
+					Stdout: "inspectStdout",
+					Stderr: "inspectStderr",
+				},
+			},
+		}, `#### Deploy
+
+<x60><x60><x60>
+deployStdout
+<x60><x60><x60>
+
+#### Fetch
+
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
+
+### Errors
+
+#### Deploy
+
+<x60><x60><x60>
+deployStderr
+<x60><x60><x60>
+
+#### Fetch
+
+<x60><x60><x60>
+fetchStderr
+<x60><x60><x60>
+
+`},
+		{"renders the expected notes (no stderr)", &kappctrlv1alpha1.App{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       appResource,
+				APIVersion: kappctrlAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "my-installation",
+			},
+			Spec: kappctrlv1alpha1.AppSpec{
+				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+			},
+			Status: kappctrlv1alpha1.AppStatus{
+				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+					Stdout: "deployStdout",
+				},
+				Fetch: &kappctrlv1alpha1.AppStatusFetch{
+					Stdout: "fetchStdout",
+				},
+				Inspect: &kappctrlv1alpha1.AppStatusInspect{
+					Stdout: "inspectStdout",
+				},
+			},
+		}, `#### Deploy
+
+<x60><x60><x60>
+deployStdout
+<x60><x60><x60>
+
+#### Fetch
+
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
+
+`},
+		{"renders the expected notes (no stdout)", &kappctrlv1alpha1.App{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       appResource,
+				APIVersion: kappctrlAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "my-installation",
+			},
+			Spec: kappctrlv1alpha1.AppSpec{
+				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+			},
+			Status: kappctrlv1alpha1.AppStatus{
+				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+					Stderr: "deployStderr",
+				},
+				Fetch: &kappctrlv1alpha1.AppStatusFetch{
+					Stderr: "fetchStderr",
+				},
+				Inspect: &kappctrlv1alpha1.AppStatusInspect{
+					Stderr: "inspectStderr",
+				},
+			},
+		}, `### Errors
+
+#### Deploy
+
+<x60><x60><x60>
+deployStderr
+<x60><x60><x60>
+
+#### Fetch
+
+<x60><x60><x60>
+fetchStderr
+<x60><x60><x60>
+
+`},
+		{"renders the expected notes (missing field)", &kappctrlv1alpha1.App{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       appResource,
+				APIVersion: kappctrlAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "my-installation",
+			},
+			Spec: kappctrlv1alpha1.AppSpec{
+				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+			},
+			Status: kappctrlv1alpha1.AppStatus{
+				Fetch: &kappctrlv1alpha1.AppStatusFetch{
+					Stdout: "fetchStdout",
+				},
+				Inspect: &kappctrlv1alpha1.AppStatusInspect{
+					Stdout: "inspectStdout",
+				},
+			},
+		}, `#### Fetch
+
+<x60><x60><x60>
+fetchStdout
+<x60><x60><x60>
+
+`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			readme := buildPostInstallationNotes(tt.app)
+			// when using `` we cannot escape the ` char itself, so let's replace it later
+			expected := strings.ReplaceAll(tt.expected, "<x60>", "`")
+			if want, got := expected, readme; !cmp.Equal(want, got) {
+				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
 func TestDefaultValuesFromSchema(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -373,6 +549,86 @@ valueWithDefault: 80
 				if want, got := tt.expected, values; !cmp.Equal(want, got) {
 					t.Errorf("mismatch in '%s': %s", tt.name, cmp.Diff(tt.expected, values))
 				}
+			}
+		})
+	}
+}
+
+func TestBuildReadme(t *testing.T) {
+	tests := []struct {
+		name           string
+		pkgMetadata    *datapackagingv1alpha1.PackageMetadata
+		foundPkgSemver *pkgSemver
+		expected       string
+	}{
+		{"empty", &datapackagingv1alpha1.PackageMetadata{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       pkgMetadataResource,
+				APIVersion: datapackagingAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "tetris.foo.example.com",
+			},
+			Spec: datapackagingv1alpha1.PackageMetadataSpec{
+				DisplayName:        "Classic Tetris",
+				IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+				ShortDescription:   "A great game for arcade gamers",
+				LongDescription:    "A few sentences but not really a readme",
+				Categories:         []string{"logging", "daemon-set"},
+				Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+				SupportDescription: "Some support information",
+				ProviderName:       "Tetris inc.",
+			},
+		}, &pkgSemver{
+			pkg: &datapackagingv1alpha1.Package{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgResource,
+					APIVersion: datapackagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "tetris.foo.example.com.1.2.3",
+				},
+				Spec: datapackagingv1alpha1.PackageSpec{
+					RefName:                         "tetris.foo.example.com",
+					Version:                         "1.2.3",
+					Licenses:                        []string{"my-license"},
+					ReleaseNotes:                    "release notes",
+					CapactiyRequirementsDescription: "capacity description",
+					ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+				},
+			},
+			version: &semver.Version{},
+		}, `## Description
+
+A few sentences but not really a readme
+
+## Capactiy requirements
+
+capacity description
+
+## Release notes
+
+release notes
+
+Released at: June, 6 1984
+
+## Support
+
+Some support information
+
+## Licenses
+
+- my-license
+
+`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			readme := buildReadme(tt.pkgMetadata, tt.foundPkgSemver)
+			if want, got := tt.expected, readme; !cmp.Equal(want, got) {
+				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
 			}
 		})
 	}

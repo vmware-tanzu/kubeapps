@@ -1470,7 +1470,7 @@ func TestObjectBelongsTo(t *testing.T) {
 func makeDefaultConfig() Config {
 	return Config{
 		Kubeconfig:               "",
-		MasterURL:                "",
+		APIServerURL:             "",
 		RepoSyncImage:            repoSyncImage,
 		RepoSyncImagePullSecrets: []string{},
 		RepoSyncCommand:          "/chart-repo",

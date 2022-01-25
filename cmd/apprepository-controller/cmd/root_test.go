@@ -25,7 +25,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			[]string{},
 			server.Config{
 				Kubeconfig:               "",
-				MasterURL:                "",
+				APIServerURL:             "",
 				RepoSyncImage:            "docker.io/kubeapps/asset-syncer:latest",
 				RepoSyncImagePullSecrets: nil,
 				RepoSyncCommand:          "/chart-repo",
@@ -54,7 +54,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			},
 			server.Config{
 				Kubeconfig:               "",
-				MasterURL:                "",
+				APIServerURL:             "",
 				RepoSyncImage:            "docker.io/kubeapps/asset-syncer:latest",
 				RepoSyncImagePullSecrets: []string{"s1", " s2", " s3"},
 				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: " s2"}, {Name: " s3"}},
@@ -80,7 +80,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			"all arguments are captured",
 			[]string{
 				"--kubeconfig", "foo01",
-				"--master", "foo02",
+				"--apiserver", "foo02",
 				"--repo-sync-image", "foo03",
 				"--repo-sync-image-pullsecrets", "s1,s2",
 				"--repo-sync-image-pullsecrets", "s3",
@@ -101,7 +101,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			},
 			server.Config{
 				Kubeconfig:               "foo01",
-				MasterURL:                "foo02",
+				APIServerURL:             "foo02",
 				RepoSyncImage:            "foo03",
 				RepoSyncImagePullSecrets: []string{"s1", "s2", "s3"},
 				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: "s2"}, {Name: "s3"}},
