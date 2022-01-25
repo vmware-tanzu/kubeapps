@@ -45,7 +45,7 @@ Right now we only show a "Ready" or "Not Ready" status message depending on the 
 
 ### Highlight Application Credentials
 
-In the current view, application credentials can be found either reading and executing the commands that the Notes suggest, or clicking on the icon to reveal the secrets below. Those secrets usually are of the type "Opaque" (rather than `kubernetes.io/tls` or `kubernetes.io/service-account-token`). We can extract those credentials and show them in a more prominent place. That way the user can easily discover and copy the application credentials without the need of a terminal:
+In the current view, application credentials can be found either reading and running the commands that the Notes suggest, or clicking on the icon to reveal the secrets below. Those secrets usually are of the type "Opaque" (rather than `kubernetes.io/tls` or `kubernetes.io/service-account-token`). We can extract those credentials and show them in a more prominent place. That way the user can easily discover and copy the application credentials without the need of a terminal:
 
 <img src="./img/credentials-box.png" width="400px">
 

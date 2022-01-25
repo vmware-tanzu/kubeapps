@@ -1,20 +1,13 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -31,12 +24,14 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	log "k8s.io/klog/v2"
 )
 
 type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
-	globalPackagingNamespace = "kapp-controller-packaging-global"
+	globalPackagingNamespace                   = "kapp-controller-packaging-global"
+	fallbackDefaultUpgradePolicy upgradePolicy = none
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -52,11 +47,51 @@ type Server struct {
 	globalPackagingNamespace string
 	globalPackagingCluster   string
 	kappClientsGetter        kappClientsGetter
+	defaultUpgradePolicy     upgradePolicy
+}
+
+// parsePluginConfig parses the input plugin configuration json file and return the configuration options.
+func parsePluginConfig(pluginConfigPath string) (upgradePolicy, error) {
+	type kappControllerPluginConfig struct {
+		KappController struct {
+			Packages struct {
+				V1alpha1 struct {
+					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"kappController"`
+	}
+	var config kappControllerPluginConfig
+
+	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	if err != nil {
+		return none, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+	}
+	err = json.Unmarshal([]byte(pluginConfig), &config)
+	if err != nil {
+		return none, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+	}
+
+	defaultUpgradePolicy := upgradePolicyMapping[config.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
+
+	// return configured value
+	return defaultUpgradePolicy, nil
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster, pluginConfigPath string) *Server {
+	var err error
+	defaultUpgradePolicy := fallbackDefaultUpgradePolicy
+	if pluginConfigPath != "" {
+		defaultUpgradePolicy, err = parsePluginConfig(pluginConfigPath)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		log.Infof("+kapp-controller using custom packages config with defaultUpgradePolicy: %v\n", defaultUpgradePolicy.string())
+	} else {
+		log.Infof("+kapp-controller using default config since pluginConfigPath is empty")
+	}
 	return &Server{
 		clientGetter:             clientgetter.NewClientGetter(configGetter),
 		globalPackagingNamespace: globalPackagingNamespace,

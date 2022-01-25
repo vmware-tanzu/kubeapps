@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -67,7 +70,7 @@
         }
       }
     ],
-    "@typescript-eslint/explicit-module-boundary-types": "off", // disable warning when missing return type
+    "@typescript-eslint/explicit-module-boundary-types": "off", // deactivate warning when missing return type
     "@typescript-eslint/no-empty-function": [
       "error",
       {
@@ -86,7 +89,7 @@
     ],
     "jest/no-conditional-expect": "off", // allow 'expect' in 'if' and 'try-catch'
     "jest/valid-title": "off", // allow dynamic test names (e.g., 't.name')
-    "jsx-a11y/no-onchange": "off", // disable since it is deprecated, new browsers do support onChange
+    "jsx-a11y/no-onchange": "off", // deactivate since it is deprecated, new browsers do support onChange
     "react/no-unescaped-entities": [
       "error",
       {

@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import actions from "actions";
 import * as ReactRedux from "react-redux";
 import { NavLink } from "react-router-dom";

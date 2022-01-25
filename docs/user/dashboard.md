@@ -1,6 +1,6 @@
 # Using the Dashboard
 
-Once you have [installed Kubeapps in your cluster](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps) you can use the Dashboard to start managing and deploying applications in your cluster. Checkout the [Getting Started](./getting-started.md) guide to learn how to access the Dashboard and deploy your first application.
+Once you have [installed Kubeapps in your cluster](https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps) you can use the Dashboard to start managing and deploying applications in your cluster. Checkout the [Getting Started](./getting-started.md) guide to learn how to access the Dashboard and deploy your first application.
 
 The following sections walk you through some common tasks with the Kubeapps Dashboard.
 

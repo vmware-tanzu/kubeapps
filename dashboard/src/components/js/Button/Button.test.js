@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { shallow } from "enzyme";
 import React from "react";
 import Button, { ButtonThemes, ButtonTypes } from ".";
@@ -117,7 +120,7 @@ describe(Button, () => {
     expect(wrapper.find("button").prop("title")).toBe(title);
   });
 
-  it("add the disabled status to the button", () => {
+  it("add the deactivated status to the button", () => {
     const wrapper = shallow(
       <Button onClick={() => {}} disabled>
         Test

@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { axiosWithAuth } from "./AxiosInstance";
 import { findOwnedKind, getIcon, Operators } from "./Operators";
 import { IClusterServiceVersion, IPackageManifest, IResource } from "./types";

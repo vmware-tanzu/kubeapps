@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
@@ -286,10 +289,10 @@ export default function Catalog() {
             entries.forEach(entry => {
               if (
                 entry.isIntersecting &&
-                // Disable scrolling when only operators are selected
+                // Deactivate scrolling when only operators are selected
                 (!filters[filterNames.TYPE].length ||
                   filters[filterNames.TYPE].find((type: string) => type === "Packages")) &&
-                // Disable scrolling if all the packages have been fetched
+                // Deactivate scrolling if all the packages have been fetched
                 !isFetching &&
                 !hasFinishedFetching &&
                 hasLoadedFirstPage
