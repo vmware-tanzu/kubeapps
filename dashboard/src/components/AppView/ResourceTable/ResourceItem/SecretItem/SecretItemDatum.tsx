@@ -34,7 +34,7 @@ function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
       }
     };
   }, [copied]);
-  const decodedValue = atob(value);
+  const decodedValue = Buffer.from(value, "base64").toString();
 
   return (
     <Row>
