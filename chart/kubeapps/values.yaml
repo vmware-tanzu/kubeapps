@@ -443,7 +443,7 @@ dashboard:
   ##
   customStyle: ""
   ## @param dashboard.customAppViews Package names to signal a custom app view
-  ## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/developer/custom-app-view-support.md
+  ## ref: https://github.com/kubeapps/kubeapps/blob/main/docs/developer/custom-app-view-support.md
   ## e.g:
   ##  customAppViews:
   ##    - plugin: helm
@@ -451,7 +451,7 @@ dashboard:
   ##      repository: bitnami
   customAppViews: []
   ## @param dashboard.customComponents Custom Form components injected into the BasicDeploymentForm
-  ## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/developer/custom-form-component-support.md
+  ## ref: https://github.com/kubeapps/kubeapps/blob/main/docs/developer/custom-form-component-support.md
   ##
   customComponents: ""
   ## @param dashboard.remoteComponentsUrl Remote URL that can be used to load custom components vs loading from the local filesystem
@@ -461,7 +461,7 @@ dashboard:
   ##
   skipAvailablePackageDetails: false
   ## @param dashboard.customLocale Custom translations injected to the Dashboard to customize the strings used in Kubeapps
-  ## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/developer/translate-kubeapps.md
+  ## ref: https://github.com/kubeapps/kubeapps/blob/main/docs/developer/translate-kubeapps.md
   ## e.g:
   ## customLocale:
   ##   "Kubeapps": "My Dashboard"
@@ -1298,7 +1298,7 @@ assetsvc:
 ## @section Auth Proxy parameters
 
 ## Auth Proxy configuration for OIDC support
-## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md
+## ref: https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md
 ##
 authProxy:
   ## @param authProxy.enabled Specifies whether Kubeapps should configure OAuth login/logout
@@ -1524,7 +1524,7 @@ clusters:
 
 ## @skip featureFlags Feature flags (used to switch on development features)
 ##
-featureFlags: 
+featureFlags:
   ## @param featureFlags.operators Enable ingress record generation for Kubeapps
   ##
   operators: false
@@ -1865,7 +1865,7 @@ redis:
       - "--maxmemory-policy allkeys-lru"
       ## ref https://stackoverflow.com/questions/22815364/flushall-and-flushdb-commands-on-redis-return-unk-command
       ## Redis official Helm chart by default disables FLUSHDB and FLUSHALL commands
-    ## @param redis.master.disableCommands Array with commands to disable on Redis&trade
+    ## @param redis.master.disableCommands Array with commands to deactivate on Redis&trade
     disableCommands: []
   replica:
     ## @param redis.replica.replicaCount Number of Redis&trade; replicas to deploy
@@ -1882,5 +1882,5 @@ redis:
       - "--maxmemory-policy allkeys-lru"
     ## ref https://stackoverflow.com/questions/22815364/flushall-and-flushdb-commands-on-redis-return-unk-command
     ## Redis official Helm chart by default disables FLUSHDB and FLUSHALL commands
-    ## @param redis.replica.disableCommands Array with commands to disable on Redis&trade
+    ## @param redis.replica.disableCommands Array with commands to deactivate on Redis&trade
     disableCommands: []

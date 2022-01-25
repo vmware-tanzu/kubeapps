@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { Kube } from "./Kube";
 import ResourceRef, { fromCRD } from "./ResourceRef";
 import { IClusterServiceVersionCRDResource } from "./types";

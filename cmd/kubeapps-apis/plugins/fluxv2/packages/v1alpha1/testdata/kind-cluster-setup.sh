@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Copyright 2021-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 # this is used to build an image that can be used to stand-up a pod that serves static test-data in 
 # local kind cluster. Used by the integration tests. This script needs to be run once before the running
 # the test(s) 
@@ -55,5 +59,3 @@ logs) logs
 *) echo "Invalid command: $1"
    ;;
 esac
-
-

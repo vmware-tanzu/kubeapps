@@ -18,9 +18,9 @@ kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps).
+For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps).
 
-The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster. It may take a few minutes to execute. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
+The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster. It may take a few minutes to run. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
 
 ## Step 2: Create a demo credential with which to access Kubeapps and Kubernetes
 
@@ -78,7 +78,7 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 ![Dashboard main page](../img/dashboard-home.png)
 
-**_Note:_** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/master/chart/kubeapps)
+**_Note:_** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps)
 
 ## Step 4: Deploy WordPress
 
@@ -120,7 +120,7 @@ If you want to uninstall/delete your WordPress application, you can do so by cli
 
 Learn more about Kubeapps with the links below:
 
-- [Detailed installation instructions](https://github.com/kubeapps/kubeapps/blob/master/chart/kubeapps/README.md)
+- [Detailed installation instructions](https://github.com/kubeapps/kubeapps/blob/main/chart/kubeapps/README.md)
 - [Deploying Operators](./operators.md)
 - [Kubeapps Dashboard documentation](./dashboard.md)
 - [Project board](https://github.com/kubeapps/kubeapps/projects/11)

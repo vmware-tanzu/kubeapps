@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { IResource, IServiceSpec, IServiceStatus } from "shared/types";
 import { IURLItem } from "./IURLItem";
 

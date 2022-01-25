@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -383,7 +374,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	if err != nil {
 		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
 			// TODO (gfichtenholt) I think in some cases we should be returning codes.PermissionDenied instead,
-			// but that has to be done consistently accross all plug-in operations, not just here
+			// but that has to be done consistently across all plug-in operations, not just here
 			return nil, status.Errorf(codes.Unauthenticated, "Unable to create release due to %v", err)
 		} else {
 			return nil, status.Errorf(codes.Internal, "Unable to create release due to %v", err)
@@ -538,7 +529,7 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 			return nil, err
 		}
 	}
-	reconcileInterval := defaultReconcileInterval // unless explictly specified
+	reconcileInterval := defaultReconcileInterval // unless explicitly specified
 	if reconcile != nil {
 		if reconcile.Interval > 0 {
 			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()

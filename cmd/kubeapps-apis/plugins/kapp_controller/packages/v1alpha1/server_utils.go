@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -19,6 +10,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
@@ -124,6 +116,74 @@ func extractValue(body string, key string) string {
 		value = strings.ReplaceAll(keyValMatch[1], "\"", "")
 	}
 	return value
+}
+
+// buildReadme generates a readme based on the information there is available
+func buildReadme(pkgMetadata *datapackagingv1alpha1.PackageMetadata, foundPkgSemver *pkgSemver) string {
+	var readmeSB strings.Builder
+	if txt := pkgMetadata.Spec.LongDescription; txt != "" {
+		readmeSB.WriteString(fmt.Sprintf("## Description\n\n%s\n\n", txt))
+	}
+	if txt := foundPkgSemver.pkg.Spec.CapactiyRequirementsDescription; txt != "" {
+		readmeSB.WriteString(fmt.Sprintf("## Capactiy requirements\n\n%s\n\n", txt))
+	}
+	if txt := foundPkgSemver.pkg.Spec.ReleaseNotes; txt != "" {
+		readmeSB.WriteString(fmt.Sprintf("## Release notes\n\n%s\n\n", txt))
+		if date := foundPkgSemver.pkg.Spec.ReleasedAt.Time; date != (time.Time{}) {
+			txt := date.UTC().Format("January, 1 2006")
+			readmeSB.WriteString(fmt.Sprintf("Released at: %s\n\n", txt))
+		}
+	}
+	if txt := pkgMetadata.Spec.SupportDescription; txt != "" {
+		readmeSB.WriteString(fmt.Sprintf("## Support\n\n%s\n\n", txt))
+	}
+	if len(foundPkgSemver.pkg.Spec.Licenses) > 0 {
+		readmeSB.WriteString("## Licenses\n\n")
+		for _, license := range foundPkgSemver.pkg.Spec.Licenses {
+			if license != "" {
+				readmeSB.WriteString(fmt.Sprintf("- %s\n", license))
+			}
+		}
+		readmeSB.WriteString("\n")
+	}
+	return readmeSB.String()
+}
+
+// buildPostInstallationNotes generates the installation notes based on the application status
+func buildPostInstallationNotes(app *kappctrlv1alpha1.App) string {
+	var postInstallNotesSB strings.Builder
+	deployStdout := ""
+	deployStderr := ""
+	fetchStdout := ""
+	fetchStderr := ""
+
+	if app.Status.Deploy != nil {
+		deployStdout = app.Status.Deploy.Stdout
+		deployStderr = app.Status.Deploy.Stderr
+	}
+	if app.Status.Fetch != nil {
+		fetchStdout = app.Status.Fetch.Stdout
+		fetchStderr = app.Status.Fetch.Stderr
+	}
+
+	if deployStdout != "" || fetchStdout != "" {
+		if deployStdout != "" {
+			postInstallNotesSB.WriteString(fmt.Sprintf("#### Deploy\n\n```\n%s\n```\n\n", deployStdout))
+		}
+		if fetchStdout != "" {
+			postInstallNotesSB.WriteString(fmt.Sprintf("#### Fetch\n\n```\n%s\n```\n\n", fetchStdout))
+		}
+	}
+	if deployStderr != "" || fetchStderr != "" {
+		postInstallNotesSB.WriteString("### Errors\n\n")
+		if deployStderr != "" {
+			postInstallNotesSB.WriteString(fmt.Sprintf("#### Deploy\n\n```\n%s\n```\n\n", deployStderr))
+		}
+		if fetchStderr != "" {
+			postInstallNotesSB.WriteString(fmt.Sprintf("#### Fetch\n\n```\n%s\n```\n\n", fetchStderr))
+		}
+	}
+	return postInstallNotesSB.String()
 }
 
 // defaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema

@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { filter, matches } from "lodash";
 import { Kube } from "./Kube";
 import { IClusterServiceVersionCRDResource, IK8sList, IKind, IResource } from "./types";

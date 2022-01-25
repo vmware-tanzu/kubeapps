@@ -9,7 +9,7 @@ The two items above, require a re-design of two micro-services: `chartsvc` and `
 - High Availability. Avoid single point of failure.
 - Open Source license. BSD, Apache2 or MIT are fine.
 - Good performance. Even though the amount of data is not big, performance should be taken into account.
-- Extensibility. The solution should be extensible to other kind of assets like operators.
+- Extensibility. The solution should be extendable to other kind of assets like operators.
 - [_Good to have_] Backwards compatibility.
 
 ## Current usage
@@ -60,7 +60,7 @@ Pros:
 
 Cons:
 
-- etcd limit. No entry can be larger than 1.5MB. We cannot ensure that a chartVersion (or a logo) will eventually grow bigger than that.
+- etcd limit. No entry can be larger than 1.5MB. We cannot ensure that a chartVersion (or a logo) will eventually grow greater than that.
 - Completely different approach. Backward compatibility cannot be ensured.
 - We would still need a database for hub.kubeapps.com
 

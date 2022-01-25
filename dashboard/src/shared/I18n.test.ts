@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import messages_en from "../locales/en.json";
 import { axiosWithAuth } from "./AxiosInstance";
 import I18n, { II18nConfig, ISupportedLangs } from "./I18n";

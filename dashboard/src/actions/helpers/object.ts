@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { isEmpty } from "lodash";
 
 // Check if all the keys of an object are empty. If any value of the

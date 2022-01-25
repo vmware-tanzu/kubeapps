@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { isArray } from "lodash";
 import React from "react";
 import { getValue } from "shared/schema";

@@ -21,7 +21,7 @@ dependencies:
     condition: redis.enabled
 description: Kubeapps is a dashboard for your Kubernetes cluster that makes it easy to deploy and manage applications in your cluster using Helm
 home: https://kubeapps.com
-icon: https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/img/logo.png
+icon: https://raw.githubusercontent.com/kubeapps/kubeapps/main/docs/img/logo.png
 keywords:
   - helm
   - dashboard
