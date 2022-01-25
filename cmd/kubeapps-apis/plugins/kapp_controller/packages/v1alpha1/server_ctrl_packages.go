@@ -603,7 +603,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
 	}
 
-	versionConstraints, err := versionConstraintWithPolicy(pkgVersion, s.upgradePolicy)
+	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.defaultUpgradePolicy)
 	if err != nil {
 		return nil, err
 	}

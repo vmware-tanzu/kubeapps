@@ -317,7 +317,7 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 }
 
 func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
-	versionConstraints, err := versionConstraintWithPolicy(pkgVersion, s.upgradePolicy)
+	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.defaultUpgradePolicy)
 	if err != nil {
 		return nil, err
 	}

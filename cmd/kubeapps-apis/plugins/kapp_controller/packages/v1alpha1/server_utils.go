@@ -318,17 +318,17 @@ func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
 }
 
-// Create a versionPolicy enum-alike
-type versionPolicy int
+// Create a upgradePolicy enum-alike
+type upgradePolicy int
 
 const (
-	none versionPolicy = iota
+	none upgradePolicy = iota
 	patch
 	minor
 	major
 )
 
-var versionPolicyMapping = map[string]versionPolicy{
+var upgradePolicyMapping = map[string]upgradePolicy{
 	"":      none,
 	"none":  none,
 	"major": major,
@@ -336,7 +336,7 @@ var versionPolicyMapping = map[string]versionPolicy{
 	"patch": patch,
 }
 
-func (s versionPolicy) string() string {
+func (s upgradePolicy) string() string {
 	switch s {
 	case major:
 		return "major"
@@ -350,7 +350,7 @@ func (s versionPolicy) string() string {
 	return "none"
 }
 
-func versionConstraintWithPolicy(pkgVersion string, policy versionPolicy) (string, error) {
+func versionConstraintWithUpgradePolicy(pkgVersion string, policy upgradePolicy) (string, error) {
 	version, err := semver.NewVersion(pkgVersion)
 	if err != nil {
 		return "", err

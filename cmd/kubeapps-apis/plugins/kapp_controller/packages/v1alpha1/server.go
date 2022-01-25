@@ -30,8 +30,8 @@ import (
 type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
-	globalPackagingNamespace               = "kapp-controller-packaging-global"
-	DefaulltUpgradePolicy    versionPolicy = none
+	globalPackagingNamespace                   = "kapp-controller-packaging-global"
+	fallbackDefaultUpgradePolicy upgradePolicy = none
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -47,16 +47,16 @@ type Server struct {
 	globalPackagingNamespace string
 	globalPackagingCluster   string
 	kappClientsGetter        kappClientsGetter
-	upgradePolicy            versionPolicy
+	defaultUpgradePolicy     upgradePolicy
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) (versionPolicy, error) {
+func parsePluginConfig(pluginConfigPath string) (upgradePolicy, error) {
 	type kappControllerPluginConfig struct {
 		KappController struct {
 			Packages struct {
 				V1alpha1 struct {
-					UpgradePolicy string `json:"upgradePolicy"`
+					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"kappController"`
@@ -72,23 +72,23 @@ func parsePluginConfig(pluginConfigPath string) (versionPolicy, error) {
 		return none, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
 	}
 
-	versionPolicy := versionPolicyMapping[config.KappController.Packages.V1alpha1.UpgradePolicy]
+	defaultUpgradePolicy := upgradePolicyMapping[config.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
 
 	// return configured value
-	return versionPolicy, nil
+	return defaultUpgradePolicy, nil
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster, pluginConfigPath string) *Server {
 	var err error
-	upgradePolicy := DefaulltUpgradePolicy
+	defaultUpgradePolicy := fallbackDefaultUpgradePolicy
 	if pluginConfigPath != "" {
-		upgradePolicy, err = parsePluginConfig(pluginConfigPath)
+		defaultUpgradePolicy, err = parsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
-		log.Infof("+kapp-controller using custom packages config with upgradePolicy: %v\n", upgradePolicy.string())
+		log.Infof("+kapp-controller using custom packages config with defaultUpgradePolicy: %v\n", defaultUpgradePolicy.string())
 	} else {
 		log.Infof("+kapp-controller using default config since pluginConfigPath is empty")
 	}

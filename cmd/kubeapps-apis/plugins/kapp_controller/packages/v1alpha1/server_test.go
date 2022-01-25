@@ -3677,92 +3677,92 @@ func TestGetPackageRepositories(t *testing.T) {
 
 func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {
-		name                  string
-		pluginYAMLConf        []byte
-		expectedVersionPolicy versionPolicy
-		expectedErrorStr      string
+		name                         string
+		pluginYAMLConf               []byte
+		expectedDefaultUpgradePolicy upgradePolicy
+		expectedErrorStr             string
 	}{
 		{
-			name:                  "non existing plugin-config file",
-			pluginYAMLConf:        nil,
-			expectedVersionPolicy: none,
-			expectedErrorStr:      "no such file or directory",
+			name:                         "non existing plugin-config file",
+			pluginYAMLConf:               nil,
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "no such file or directory",
 		},
 		{
-			name: "upgradePolicy not set",
+			name: "defaultUpgradePolicy not set",
 			pluginYAMLConf: []byte(`
 kappController:
   packages:
     v1alpha1:
       `),
-			expectedVersionPolicy: none,
-			expectedErrorStr:      "",
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "",
 		},
 		{
-			name: "upgradePolicy: major",
+			name: "defaultUpgradePolicy: major",
 			pluginYAMLConf: []byte(`
 kappController:
   packages:
     v1alpha1:
-      upgradePolicy: major
+      defaultUpgradePolicy: major
         `),
-			expectedVersionPolicy: major,
-			expectedErrorStr:      "",
+			expectedDefaultUpgradePolicy: major,
+			expectedErrorStr:             "",
 		},
 		{
-			name: "upgradePolicy: minor",
+			name: "defaultUpgradePolicy: minor",
 			pluginYAMLConf: []byte(`
 kappController:
   packages:
     v1alpha1:
-      upgradePolicy: minor
+      defaultUpgradePolicy: minor
         `),
-			expectedVersionPolicy: minor,
-			expectedErrorStr:      "",
+			expectedDefaultUpgradePolicy: minor,
+			expectedErrorStr:             "",
 		},
 		{
-			name: "upgradePolicy: patch",
+			name: "defaultUpgradePolicy: patch",
 			pluginYAMLConf: []byte(`
 kappController:
   packages:
     v1alpha1:
-      upgradePolicy: patch
+      defaultUpgradePolicy: patch
         `),
-			expectedVersionPolicy: patch,
-			expectedErrorStr:      "",
+			expectedDefaultUpgradePolicy: patch,
+			expectedErrorStr:             "",
 		},
 		{
-			name: "upgradePolicy: none",
+			name: "defaultUpgradePolicy: none",
 			pluginYAMLConf: []byte(`
 kappController:
   packages:
     v1alpha1:
-      upgradePolicy: none
+      defaultUpgradePolicy: none
         `),
-			expectedVersionPolicy: none,
-			expectedErrorStr:      "",
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "",
 		},
 		{
-			name: "invalid upgradePolicy",
+			name: "invalid defaultUpgradePolicy",
 			pluginYAMLConf: []byte(`
 kappController:
   packages:
     v1alpha1:
-      upgradePolicy: foo
+      defaultUpgradePolicy: foo
       `),
-			expectedVersionPolicy: none,
-			expectedErrorStr:      "json: cannot unmarshal",
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "json: cannot unmarshal",
 		},
 		{
-			name: "invalid upgradePolicy",
+			name: "invalid defaultUpgradePolicy",
 			pluginYAMLConf: []byte(`
 kappController:
   packages:
     v1alpha1:
-      upgradePolicy: 10.09
+      defaultUpgradePolicy: 10.09
       `),
-			expectedVersionPolicy: none,
-			expectedErrorStr:      "json: cannot unmarshal",
+			expectedDefaultUpgradePolicy: none,
+			expectedErrorStr:             "json: cannot unmarshal",
 		},
 	}
 	for _, tc := range testCases {
@@ -3786,11 +3786,11 @@ kappController:
 				}
 				filename = f.Name()
 			}
-			versionPolicy, goterr := parsePluginConfig(filename)
+			defaultUpgradePolicy, goterr := parsePluginConfig(filename)
 			if goterr != nil && !strings.Contains(goterr.Error(), tc.expectedErrorStr) {
 				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.expectedErrorStr)
 			}
-			if got, want := versionPolicy, tc.expectedVersionPolicy; !cmp.Equal(want, got) {
+			if got, want := defaultUpgradePolicy, tc.expectedDefaultUpgradePolicy; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
