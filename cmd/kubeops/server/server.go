@@ -21,7 +21,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	backendHandlers "github.com/kubeapps/kubeapps/pkg/http-handler"
 	"github.com/kubeapps/kubeapps/pkg/kube"
-	"github.com/urfave/negroni"
+	negroni "github.com/urfave/negroni/v2"
 
 	log "k8s.io/klog/v2"
 )

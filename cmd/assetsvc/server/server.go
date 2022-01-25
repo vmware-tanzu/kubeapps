@@ -12,7 +12,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/urfave/negroni"
+	negroni "github.com/urfave/negroni/v2"
 	log "k8s.io/klog/v2"
 )
 

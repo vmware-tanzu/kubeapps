@@ -12,7 +12,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	"github.com/kubeapps/kubeapps/pkg/response"
-	"github.com/urfave/negroni"
+	negroni "github.com/urfave/negroni/v2"
 )
 
 // tokenPrefix is the string preceding the token in the Authorization header.

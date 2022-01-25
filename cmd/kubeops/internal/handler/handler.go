@@ -18,7 +18,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	"github.com/kubeapps/kubeapps/pkg/response"
 	log "github.com/sirupsen/logrus"
-	"github.com/urfave/negroni"
+	negroni "github.com/urfave/negroni/v2"
 	"helm.sh/helm/v3/pkg/action"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
