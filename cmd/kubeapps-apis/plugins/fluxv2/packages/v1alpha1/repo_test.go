@@ -1,15 +1,5 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
 
 package main
 
@@ -1233,7 +1223,7 @@ func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecC
 		repos...)
 
 	// here we are essentially adding on to how List() works for HelmRepository objects
-	// this is done so that the the item list returned by List() command with fake client contains
+	// this is done so that the item list returned by List() command with fake client contains
 	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
 	// is critical
 	reactor := dynamicClient.Fake.ReactionChain[0]
@@ -1531,6 +1521,7 @@ var valid_index_charts_spec = []testSpecChartWithFile{
 
 var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 	{
+		Name:        "acs-engine-autoscaler",
 		DisplayName: "acs-engine-autoscaler",
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: "2.1.1",
@@ -1543,8 +1534,10 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
+		Categories: []string{""},
 	},
 	{
+		Name:        "wordpress",
 		DisplayName: "wordpress",
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: "0.7.5",
@@ -1557,10 +1550,12 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
+		Categories: []string{""},
 	},
 }
 
 var cert_manager_summary = &corev1.AvailablePackageSummary{
+	Name:        "cert-manager",
 	DisplayName: "cert-manager",
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "v1.4.0",
@@ -1573,9 +1568,11 @@ var cert_manager_summary = &corev1.AvailablePackageSummary{
 		Context:    &corev1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
+	Categories: []string{""},
 }
 
 var elasticsearch_summary = &corev1.AvailablePackageSummary{
+	Name:        "elasticsearch",
 	DisplayName: "elasticsearch",
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "15.5.0",
@@ -1588,9 +1585,11 @@ var elasticsearch_summary = &corev1.AvailablePackageSummary{
 		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
+	Categories: []string{"Analytics"},
 }
 
 var ghost_summary = &corev1.AvailablePackageSummary{
+	Name:        "ghost",
 	DisplayName: "ghost",
 	LatestVersion: &corev1.PackageAppVersion{
 		PkgVersion: "13.0.14",
@@ -1603,6 +1602,7 @@ var ghost_summary = &corev1.AvailablePackageSummary{
 		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
+	Categories: []string{"CMS"},
 }
 
 var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
@@ -1612,6 +1612,7 @@ var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
 
 var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 	{
+		Name:        "alpine",
 		DisplayName: "alpine",
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: "0.2.0",
@@ -1623,8 +1624,10 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
+		Categories: []string{""},
 	},
 	{
+		Name:        "nginx",
 		DisplayName: "nginx",
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: "1.1.0",
@@ -1636,11 +1639,13 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
+		Categories: []string{""},
 	},
 }
 
 var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 	{
+		Name:        "alpine",
 		DisplayName: "alpine",
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: "0.3.0",
@@ -1652,8 +1657,10 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
+		Categories: []string{""},
 	},
 	{
+		Name:        "nginx",
 		DisplayName: "nginx",
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: "1.1.0",
@@ -1665,4 +1672,5 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
+		Categories: []string{""},
 	}}

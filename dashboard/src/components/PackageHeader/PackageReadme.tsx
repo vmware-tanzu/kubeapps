@@ -1,11 +1,14 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
-import HeadingRenderer from "./HeadingRenderer";
-import LinkRenderer from "./LinkRenderer";
-import TableRenderer from "./TableRenderer";
+import HeadingRenderer from "../MarkdownRenderer/HeadingRenderer";
+import LinkRenderer from "../MarkdownRenderer/LinkRenderer";
+import TableRenderer from "../MarkdownRenderer/TableRenderer";
 
 interface IPackageReadmeProps {
   error?: string;

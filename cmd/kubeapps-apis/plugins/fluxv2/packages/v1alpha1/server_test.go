@@ -1,15 +1,5 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
 
 package main
 
@@ -30,7 +20,8 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -52,7 +43,7 @@ const KubeappsCluster = "default"
 func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
-		clientGetter common.ClientGetterFunc
+		clientGetter clientgetter.ClientGetterWithApiExtFunc
 		statusCode   codes.Code
 	}{
 		{
@@ -216,13 +207,13 @@ func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		pluginYAMLConf          []byte
-		exp_versions_in_summary packageutils.VersionsInSummary
+		exp_versions_in_summary pkgutils.VersionsInSummary
 		exp_error_str           string
 	}{
 		{
 			name:                    "non existing plugin-config file",
 			pluginYAMLConf:          nil,
-			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 0, Minor: 0, Patch: 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 0, Minor: 0, Patch: 0},
 			exp_error_str:           "no such file or directory",
 		},
 		{
@@ -236,7 +227,7 @@ core:
         minor: 2
         patch: 1
       `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 4, Minor: 2, Patch: 1},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 4, Minor: 2, Patch: 1},
 			exp_error_str:           "",
 		},
 		{
@@ -248,7 +239,7 @@ core:
       versionsInSummary:
         major: 1
         `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{Major: 1, Minor: 0, Patch: 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 1, Minor: 0, Patch: 0},
 			exp_error_str:           "",
 		},
 		{
@@ -262,11 +253,11 @@ core:
         minor: 2
         patch: 1-IFC-123
       `),
-			exp_versions_in_summary: packageutils.VersionsInSummary{},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{},
 			exp_error_str:           "json: cannot unmarshal",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
@@ -324,7 +315,7 @@ core:
 			exp_error_str: "",
 		},
 	}
-	opts := cmpopts.IgnoreUnexported(packageutils.VersionsInSummary{})
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
@@ -374,7 +365,12 @@ type testSpecChartWithUrl struct {
 // a call to fake.NewSimpleDynamicClientWithCustomListKinds. The reason for argument repos
 // (unlike charts or releases) is that repos are treated special because
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
-func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig *action.Configuration, repos []runtime.Object, charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
+func newServer(t *testing.T,
+	clientGetter clientgetter.ClientGetterWithApiExtFunc,
+	actionConfig *action.Configuration,
+	repos []runtime.Object,
+	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
+
 	stopCh := make(chan struct{})
 	t.Cleanup(func() { close(stopCh) })
 
@@ -490,7 +486,7 @@ func newServer(t *testing.T, clientGetter common.ClientGetterFunc, actionConfig 
 		repoCache:         repoCache,
 		chartCache:        chartCache,
 		kubeappsCluster:   KubeappsCluster,
-		versionsInSummary: packageutils.GetDefaultVersionsInSummary(),
+		versionsInSummary: pkgutils.GetDefaultVersionsInSummary(),
 	}
 	return s, mock, nil
 }

@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -88,6 +79,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
+	// build maintainers information
 	maintainers := []*corev1.Maintainer{}
 	for _, maintainer := range pkgMetadata.Spec.Maintainers {
 		maintainers = append(maintainers, &corev1.Maintainer{
@@ -95,46 +87,16 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		})
 	}
 
-	readme := fmt.Sprintf(`## Details
+	// build readme
+	readme := buildReadme(pkgMetadata, foundPkgSemver)
 
-
-### Description:
-%s
-
-
-### Capactiy requirements:
-%s
-
-
-### Release Notes:
-%s
-
-
-### Support:
-%s
-
-
-### Licenses:
-%s
-
-
-### ReleasedAt:
-%s
-
-
-`,
-		pkgMetadata.Spec.LongDescription,
-		foundPkgSemver.pkg.Spec.CapactiyRequirementsDescription,
-		foundPkgSemver.pkg.Spec.ReleaseNotes,
-		pkgMetadata.Spec.SupportDescription,
-		foundPkgSemver.pkg.Spec.Licenses,
-		foundPkgSemver.pkg.Spec.ReleasedAt,
-	)
+	// build default values
 	defaultValues, err := defaultValuesFromSchema(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw, true)
 	if err != nil {
 		log.Warningf("Failed to parse default values from schema: %v", err)
 		defaultValues = "# There is an error while parsing the schema."
 	}
+
 	availablePackageDetail := &corev1.AvailablePackageDetail{
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Context: &corev1.Context{
@@ -187,6 +149,11 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
+	latestMatchingVersion, err := latestMatchingVersion(versions, pkgInstall.Spec.PackageRef.VersionSelection.Constraints)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
+	}
+
 	installedPackageSummary := &corev1.InstalledPackageSummary{
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
@@ -202,12 +169,6 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 			},
 			Plugin:     &pluginDetail,
 			Identifier: pkgInstall.Name,
-		},
-		// TODO(agamez): this field should be populated with the proper version,
-		// that is, considering the versionSelection.constraint
-		LatestMatchingVersion: &corev1.PackageAppVersion{
-			PkgVersion: versions[0].version.String(),
-			AppVersion: versions[0].version.String(),
 		},
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
@@ -227,6 +188,16 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 			UserReason: simpleUserReasonForKappStatus(""),
 		},
 	}
+
+	if latestMatchingVersion != nil {
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
+		installedPackageSummary.LatestMatchingVersion = &corev1.PackageAppVersion{
+			PkgVersion: latestMatchingVersion.String(),
+			AppVersion: latestMatchingVersion.String(),
+		}
+	}
+
 	if len(pkgInstall.Status.Conditions) > 0 {
 		installedPackageSummary.Status = &corev1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
@@ -250,6 +221,11 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 
 	if len(pkgInstall.Status.Conditions) > 1 {
 		log.Warningf("The package install %s has more than one status conditions. Using the first one: %s", pkgInstall.Name, pkgInstall.Status.Conditions[0])
+	}
+
+	latestMatchingVersion, err := latestMatchingVersion(versions, pkgInstall.Spec.PackageRef.VersionSelection.Constraints)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
 	installedPackageDetail := &corev1.InstalledPackageDetail{
@@ -285,18 +261,21 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 			Identifier: pkgInstall.Spec.PackageRef.RefName,
 			Plugin:     &pluginDetail,
 		},
-		// TODO(agamez): this field should be populated with the proper version,
-		// that is, considering the versionSelection.constraint
-		LatestMatchingVersion: &corev1.PackageAppVersion{
-			PkgVersion: versions[0].version.String(),
-			AppVersion: versions[0].version.String(),
-		},
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),
 		},
+	}
+
+	if latestMatchingVersion != nil {
+		// Currently, PkgVersion and AppVersion are the same
+		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
+		installedPackageDetail.LatestMatchingVersion = &corev1.PackageAppVersion{
+			PkgVersion: latestMatchingVersion.String(),
+			AppVersion: latestMatchingVersion.String(),
+		}
 	}
 
 	// Some fields would require an extra nil check before being populated

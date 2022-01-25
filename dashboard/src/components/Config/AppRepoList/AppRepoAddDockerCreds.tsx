@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsSelect } from "@cds/react/select";
@@ -99,7 +102,7 @@ export function AppRepoAddDockerCreds({
               <a
                 target="_blank"
                 rel="noreferrer"
-                href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#associating-docker-image-pull-secrets-to-an-apprepository"
+                href="https://github.com/kubeapps/kubeapps/blob/main/docs/user/private-app-repository.md#associating-docker-image-pull-secrets-to-an-apprepository"
               >
                 here
               </a>

@@ -1,3 +1,6 @@
+# Copyright 2021-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 # this Dockerfile is for building a docker image for a pod that can be deployed into a k8s cluster
 # that serves some of the content of test-data (index.yaml, charts .tgz)
 FROM nginx:1.21.3

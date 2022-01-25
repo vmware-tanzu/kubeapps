@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { routerMiddleware } from "connected-react-router";
 import { createHashHistory } from "history";
 import { applyMiddleware, createStore } from "redux";

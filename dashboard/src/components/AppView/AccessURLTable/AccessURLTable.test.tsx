@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import context from "jest-plugin-context";
 import { keyForResourceRef } from "shared/ResourceRef";

@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import InfoCard from "components/InfoCard/InfoCard";
 import { Operators } from "shared/Operators";
 import { IResource } from "shared/types";
