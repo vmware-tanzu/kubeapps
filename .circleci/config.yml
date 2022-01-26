@@ -54,6 +54,9 @@ parameters:
   DEFAULT_RESOURCE_CLASS:
     type: "string"
     default: "medium"
+  DEFAULT_MACHINE_IMG:
+    type: "string"
+    default: "ubuntu-2004:202111-02"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -696,7 +699,9 @@ jobs:
           command: |
             ./script/create_release.sh ${CIRCLE_TAG} << pipeline.parameters.KUBEAPPS_REPO >>
   local_e2e_tests:
-    machine: true
+    machine:
+      image: << pipeline.parameters.DEFAULT_MACHINE_IMG >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     environment:
       DEFAULT_DEX_IP: "172.18.0.2"
       TEST_UPGRADE: "1"

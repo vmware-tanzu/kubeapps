@@ -41,6 +41,7 @@ The versions used there _must_ match the ones used for building the container im
 - `NODE_VERSION` _must_ match the **major** version used by the [dashboard](../../dashboard/Dockerfile).
 - `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](../../dashboard/Dockerfile).
 - `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml).
+- `DEFAULT_MACHINE_IMG` _should_ be up to date according to the [list of available machines in CircleCI](https://circleci.com/docs/2.0/configuration-reference/#available-machine-images).
 
 Besides, the `GKE_STABLE_VERSION_XX` and the `GKE_REGULAR_VERSION_XX` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 
