@@ -27,9 +27,9 @@ test("Deploys package with default values in the second cluster", async ({ page 
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Assertions
+  await page.screenshot({ path: "reports/screenshots/01-multicluster-deploy-pre-assertion.png" });
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1");
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");
-  await page.screenshot({ path: "screenshots/01-multicluster-deploy.png" });
 
   // Clean up
   await page.locator('cds-button:has-text("Delete")').click();
