@@ -3,8 +3,10 @@
 
 package main
 
-import "github.com/kubeapps/kubeapps/cmd/assetsvc/cmd"
+import (
+	assetsvccmd "github.com/kubeapps/kubeapps/cmd/assetsvc/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	assetsvccmd.Execute()
 }

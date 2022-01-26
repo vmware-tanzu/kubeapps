@@ -6,18 +6,18 @@ package cmd
 import (
 	"flag"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	apiscore "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	apisserver "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	cobra "github.com/spf13/cobra"
+	pflag "github.com/spf13/pflag"
+	viper "github.com/spf13/viper"
 	log "k8s.io/klog/v2"
 )
 
 var (
 	cfgFile   string
-	serveOpts core.ServeOptions
+	serveOpts apiscore.ServeOptions
 	// This version var is updated during the build
 	// see the -ldflags option in the Dockerfile
 	version = "devel"
@@ -38,7 +38,7 @@ The api service serves both gRPC and HTTP requests for the configured APIs.`,
 			log.Infof("kubeapps-apis has been configured with: %#v", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return server.Serve(serveOpts)
+			return apisserver.Serve(serveOpts)
 		},
 		Version: "devel",
 	}
@@ -66,7 +66,7 @@ func init() {
 
 func setFlags(c *cobra.Command) {
 	c.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kubeapps-apis.yaml)")
-	c.Flags().IntVar(&serveOpts.Port, "port", 50051, "The port on which to run this api server. Both gRPC and HTTP requests will be served on this port.")
+	c.Flags().IntVar(&serveOpts.Port, "port", 50051, "The port on which to run this api apisserver. Both gRPC and HTTP requests will be served on this port.")
 	c.Flags().StringSliceVar(&serveOpts.PluginDirs, "plugin-dir", []string{"."}, "A directory to be scanned for .so plugins. May be specified multiple times.")
 	c.Flags().StringVar(&serveOpts.ClustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	c.Flags().StringVar(&serveOpts.PluginConfigPath, "plugin-config-path", "", "Configuration for plugins")

@@ -7,14 +7,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugin_test"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	plugintest "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugin_test"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 const (
@@ -23,52 +22,52 @@ const (
 
 var mockedPackagingPlugin1 = makeDefaultTestPackagingPlugin("mock1")
 var mockedPackagingPlugin2 = makeDefaultTestPackagingPlugin("mock2")
-var mockedNotFoundPackagingPlugin = makeOnlyStatusTestPackagingPlugin("bad-plugin", codes.NotFound)
+var mockedNotFoundPackagingPlugin = makeOnlyStatusTestPackagingPlugin("bad-plugin", grpccodes.NotFound)
 
 var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
-	corev1.AvailablePackageDetail{},
-	corev1.AvailablePackageReference{},
-	corev1.AvailablePackageSummary{},
-	corev1.Context{},
-	corev1.GetAvailablePackageDetailResponse{},
-	corev1.GetAvailablePackageSummariesResponse{},
-	corev1.GetAvailablePackageVersionsResponse{},
-	corev1.GetInstalledPackageResourceRefsResponse{},
-	corev1.GetInstalledPackageDetailResponse{},
-	corev1.GetInstalledPackageSummariesResponse{},
-	corev1.CreateInstalledPackageResponse{},
-	corev1.UpdateInstalledPackageResponse{},
-	corev1.InstalledPackageDetail{},
-	corev1.InstalledPackageReference{},
-	corev1.InstalledPackageStatus{},
-	corev1.InstalledPackageSummary{},
-	corev1.Maintainer{},
-	corev1.PackageAppVersion{},
-	corev1.VersionReference{},
-	corev1.ResourceRef{},
-	plugins.Plugin{},
+	pkgsGRPCv1alpha1.AvailablePackageDetail{},
+	pkgsGRPCv1alpha1.AvailablePackageReference{},
+	pkgsGRPCv1alpha1.AvailablePackageSummary{},
+	pkgsGRPCv1alpha1.Context{},
+	pkgsGRPCv1alpha1.GetAvailablePackageDetailResponse{},
+	pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{},
+	pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse{},
+	pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse{},
+	pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse{},
+	pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{},
+	pkgsGRPCv1alpha1.CreateInstalledPackageResponse{},
+	pkgsGRPCv1alpha1.UpdateInstalledPackageResponse{},
+	pkgsGRPCv1alpha1.InstalledPackageDetail{},
+	pkgsGRPCv1alpha1.InstalledPackageReference{},
+	pkgsGRPCv1alpha1.InstalledPackageStatus{},
+	pkgsGRPCv1alpha1.InstalledPackageSummary{},
+	pkgsGRPCv1alpha1.Maintainer{},
+	pkgsGRPCv1alpha1.PackageAppVersion{},
+	pkgsGRPCv1alpha1.VersionReference{},
+	pkgsGRPCv1alpha1.ResourceRef{},
+	pluginsGRPCv1alpha1.Plugin{},
 )
 
 func makeDefaultTestPackagingPlugin(pluginName string) pkgPluginsWithServer {
-	pluginDetails := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
-	packagingPluginServer := &plugin_test.TestPackagingPluginServer{Plugin: pluginDetails}
+	pluginDetails := &pluginsGRPCv1alpha1.Plugin{Name: pluginName, Version: "v1alpha1"}
+	packagingPluginServer := &plugintest.TestPackagingPluginServer{Plugin: pluginDetails}
 
-	packagingPluginServer.AvailablePackageSummaries = []*corev1.AvailablePackageSummary{
-		plugin_test.MakeAvailablePackageSummary("pkg-2", pluginDetails),
-		plugin_test.MakeAvailablePackageSummary("pkg-1", pluginDetails),
+	packagingPluginServer.AvailablePackageSummaries = []*pkgsGRPCv1alpha1.AvailablePackageSummary{
+		plugintest.MakeAvailablePackageSummary("pkg-2", pluginDetails),
+		plugintest.MakeAvailablePackageSummary("pkg-1", pluginDetails),
 	}
-	packagingPluginServer.AvailablePackageDetail = plugin_test.MakeAvailablePackageDetail("pkg-1", pluginDetails)
-	packagingPluginServer.InstalledPackageSummaries = []*corev1.InstalledPackageSummary{
-		plugin_test.MakeInstalledPackageSummary("pkg-2", pluginDetails),
-		plugin_test.MakeInstalledPackageSummary("pkg-1", pluginDetails),
+	packagingPluginServer.AvailablePackageDetail = plugintest.MakeAvailablePackageDetail("pkg-1", pluginDetails)
+	packagingPluginServer.InstalledPackageSummaries = []*pkgsGRPCv1alpha1.InstalledPackageSummary{
+		plugintest.MakeInstalledPackageSummary("pkg-2", pluginDetails),
+		plugintest.MakeInstalledPackageSummary("pkg-1", pluginDetails),
 	}
-	packagingPluginServer.InstalledPackageDetail = plugin_test.MakeInstalledPackageDetail("pkg-1", pluginDetails)
-	packagingPluginServer.PackageAppVersions = []*corev1.PackageAppVersion{
-		plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgUpdateVersion),
-		plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgVersion),
+	packagingPluginServer.InstalledPackageDetail = plugintest.MakeInstalledPackageDetail("pkg-1", pluginDetails)
+	packagingPluginServer.PackageAppVersions = []*pkgsGRPCv1alpha1.PackageAppVersion{
+		plugintest.MakePackageAppVersion(plugintest.DefaultAppVersion, plugintest.DefaultPkgUpdateVersion),
+		plugintest.MakePackageAppVersion(plugintest.DefaultAppVersion, plugintest.DefaultPkgVersion),
 	}
 	packagingPluginServer.NextPageToken = "1"
-	packagingPluginServer.Categories = []string{plugin_test.DefaultCategory}
+	packagingPluginServer.Categories = []string{plugintest.DefaultCategory}
 
 	return pkgPluginsWithServer{
 		plugin: pluginDetails,
@@ -76,9 +75,9 @@ func makeDefaultTestPackagingPlugin(pluginName string) pkgPluginsWithServer {
 	}
 }
 
-func makeOnlyStatusTestPackagingPlugin(pluginName string, statusCode codes.Code) pkgPluginsWithServer {
-	pluginDetails := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
-	packagingPluginServer := &plugin_test.TestPackagingPluginServer{Plugin: pluginDetails}
+func makeOnlyStatusTestPackagingPlugin(pluginName string, statusCode grpccodes.Code) pkgPluginsWithServer {
+	pluginDetails := &pluginsGRPCv1alpha1.Plugin{Name: pluginName, Version: "v1alpha1"}
+	packagingPluginServer := &plugintest.TestPackagingPluginServer{Plugin: pluginDetails}
 
 	packagingPluginServer.Status = statusCode
 
@@ -92,9 +91,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
 		configuredPlugins []pkgPluginsWithServer
-		statusCode        codes.Code
-		request           *corev1.GetAvailablePackageSummariesRequest
-		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
+		statusCode        grpccodes.Code
+		request           *pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest
+		expectedResponse  *pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageSummaries operation",
@@ -102,23 +101,23 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
+					plugintest.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					plugintest.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					plugintest.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					plugintest.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories: []string{"cat-1"},
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should successfully call and paginate (first page) the core GetAvailablePackageSummaries operation",
@@ -126,22 +125,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				PaginationOptions: &corev1.PaginationOptions{PageToken: "0", PageSize: 1},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{PageToken: "0", PageSize: 1},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
+					plugintest.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "1",
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should successfully call and paginate (proper PageSize) the core GetAvailablePackageSummaries operation",
@@ -149,25 +148,25 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				PaginationOptions: &corev1.PaginationOptions{PageToken: "0", PageSize: 4},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{PageToken: "0", PageSize: 4},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
+					plugintest.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					plugintest.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					plugintest.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					plugintest.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "1",
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should successfully call and paginate (last page - 1) the core GetAvailablePackageSummaries operation",
@@ -175,22 +174,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				PaginationOptions: &corev1.PaginationOptions{PageToken: "3", PageSize: 1},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{PageToken: "3", PageSize: 1},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
+					plugintest.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "4",
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should successfully call and paginate (last page) the core GetAvailablePackageSummaries operation",
@@ -198,22 +197,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				PaginationOptions: &corev1.PaginationOptions{PageToken: "3", PageSize: 1},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{PageToken: "3", PageSize: 1},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
+					plugintest.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 				Categories:    []string{"cat-1"},
 				NextPageToken: "4",
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should successfully call and paginate (last page + 1) the core GetAvailablePackageSummaries operation",
@@ -221,20 +220,20 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
-				PaginationOptions: &corev1.PaginationOptions{PageToken: "4", PageSize: 1},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{PageToken: "4", PageSize: 1},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{},
 				Categories:                []string{"cat-1"},
 				NextPageToken:             "",
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should fail when calling the core GetAvailablePackageSummaries operation when the package is not present in a plugin",
@@ -242,18 +241,18 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{},
 				Categories:                []string{""},
 			},
-			statusCode: codes.NotFound,
+			statusCode: grpccodes.NotFound,
 		},
 	}
 
@@ -264,11 +263,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
@@ -281,9 +280,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
 		name              string
 		configuredPlugins []pkgPluginsWithServer
-		statusCode        codes.Code
-		request           *corev1.GetAvailablePackageDetailRequest
-		expectedResponse  *corev1.GetAvailablePackageDetailResponse
+		statusCode        grpccodes.Code
+		request           *pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest
+		expectedResponse  *pkgsGRPCv1alpha1.GetAvailablePackageDetailResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageDetail operation",
@@ -291,9 +290,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "",
 						Namespace: globalPackagingNamespace,
 					},
@@ -303,10 +302,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				PkgVersion: "",
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageDetailResponse{
-				AvailablePackageDetail: plugin_test.MakeAvailablePackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageDetailResponse{
+				AvailablePackageDetail: plugintest.MakeAvailablePackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should fail when calling the core GetAvailablePackageDetail operation when the package is not present in a plugin",
@@ -314,9 +313,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
-			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "",
 						Namespace: globalPackagingNamespace,
 					},
@@ -326,8 +325,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				PkgVersion: "",
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageDetailResponse{},
-			statusCode:       codes.NotFound,
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageDetailResponse{},
+			statusCode:       grpccodes.NotFound,
 		},
 	}
 
@@ -338,11 +337,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			availablePackageDetail, err := server.GetAvailablePackageDetail(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := availablePackageDetail, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
@@ -355,9 +354,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
 		configuredPlugins []pkgPluginsWithServer
-		statusCode        codes.Code
-		request           *corev1.GetInstalledPackageSummariesRequest
-		expectedResponse  *corev1.GetInstalledPackageSummariesResponse
+		statusCode        grpccodes.Code
+		request           *pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest
+		expectedResponse  *pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse
 	}{
 		{
 			name: "it should successfully call the core GetInstalledPackageSummaries operation",
@@ -365,22 +364,22 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
 			},
 
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					plugin_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
-					plugin_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
-					plugin_test.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
+					plugintest.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+					plugintest.MakeInstalledPackageSummary("pkg-1", mockedPackagingPlugin2.plugin),
+					plugintest.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					plugintest.MakeInstalledPackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
 				},
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should fail when calling the core GetInstalledPackageSummaries operation when the package is not present in a plugin",
@@ -388,17 +387,17 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "",
 					Namespace: globalPackagingNamespace,
 				},
 			},
 
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{},
 			},
-			statusCode: codes.NotFound,
+			statusCode: grpccodes.NotFound,
 		},
 	}
 
@@ -409,11 +408,11 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 			installedPackageSummaries, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := installedPackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
@@ -426,9 +425,9 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	testCases := []struct {
 		name              string
 		configuredPlugins []pkgPluginsWithServer
-		statusCode        codes.Code
-		request           *corev1.GetInstalledPackageDetailRequest
-		expectedResponse  *corev1.GetInstalledPackageDetailResponse
+		statusCode        grpccodes.Code
+		request           *pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest
+		expectedResponse  *pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse
 	}{
 		{
 			name: "it should successfully call the core GetInstalledPackageDetail operation",
@@ -436,9 +435,9 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "",
 						Namespace: globalPackagingNamespace,
 					},
@@ -447,10 +446,10 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				},
 			},
 
-			expectedResponse: &corev1.GetInstalledPackageDetailResponse{
-				InstalledPackageDetail: plugin_test.MakeInstalledPackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse{
+				InstalledPackageDetail: plugintest.MakeInstalledPackageDetail("pkg-1", mockedPackagingPlugin1.plugin),
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should fail when calling the core GetInstalledPackageDetail operation when the package is not present in a plugin",
@@ -458,9 +457,9 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
-			request: &corev1.GetInstalledPackageDetailRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "",
 						Namespace: globalPackagingNamespace,
 					},
@@ -469,8 +468,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				},
 			},
 
-			expectedResponse: &corev1.GetInstalledPackageDetailResponse{},
-			statusCode:       codes.NotFound,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse{},
+			statusCode:       grpccodes.NotFound,
 		},
 	}
 
@@ -481,11 +480,11 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			}
 			installedPackageDetail, err := server.GetInstalledPackageDetail(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := installedPackageDetail, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
@@ -498,9 +497,9 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
 		name              string
 		configuredPlugins []pkgPluginsWithServer
-		statusCode        codes.Code
-		request           *corev1.GetAvailablePackageVersionsRequest
-		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
+		statusCode        grpccodes.Code
+		request           *pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest
+		expectedResponse  *pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse
 	}{
 		{
 			name: "it should successfully call the core GetAvailablePackageVersions operation",
@@ -508,9 +507,9 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedPackagingPlugin2,
 			},
-			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "",
 						Namespace: globalPackagingNamespace,
 					},
@@ -519,13 +518,13 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.PackageAppVersion{
-					plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgUpdateVersion),
-					plugin_test.MakePackageAppVersion(plugin_test.DefaultAppVersion, plugin_test.DefaultPkgVersion),
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse{
+				PackageAppVersions: []*pkgsGRPCv1alpha1.PackageAppVersion{
+					plugintest.MakePackageAppVersion(plugintest.DefaultAppVersion, plugintest.DefaultPkgUpdateVersion),
+					plugintest.MakePackageAppVersion(plugintest.DefaultAppVersion, plugintest.DefaultPkgVersion),
 				},
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should fail when calling the core GetAvailablePackageVersions operation when the package is not present in a plugin",
@@ -533,9 +532,9 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				mockedPackagingPlugin1,
 				mockedNotFoundPackagingPlugin,
 			},
-			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "",
 						Namespace: globalPackagingNamespace,
 					},
@@ -544,10 +543,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				},
 			},
 
-			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
-				PackageAppVersions: []*corev1.PackageAppVersion{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse{
+				PackageAppVersions: []*pkgsGRPCv1alpha1.PackageAppVersion{},
 			},
-			statusCode: codes.NotFound,
+			statusCode: grpccodes.NotFound,
 		},
 	}
 
@@ -558,11 +557,11 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			AvailablePackageVersions, err := server.GetAvailablePackageVersions(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := AvailablePackageVersions, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
@@ -575,45 +574,45 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		configuredPlugins []*plugins.Plugin
-		statusCode        codes.Code
-		request           *corev1.CreateInstalledPackageRequest
-		expectedResponse  *corev1.CreateInstalledPackageResponse
+		configuredPlugins []*pluginsGRPCv1alpha1.Plugin
+		statusCode        grpccodes.Code
+		request           *pkgsGRPCv1alpha1.CreateInstalledPackageRequest
+		expectedResponse  *pkgsGRPCv1alpha1.CreateInstalledPackageResponse
 	}{
 		{
 			name: "installs the package using the correct plugin",
-			configuredPlugins: []*plugins.Plugin{
+			configuredPlugins: []*pluginsGRPCv1alpha1.Plugin{
 				{Name: "plugin-1", Version: "v1alpha1"},
 				{Name: "plugin-1", Version: "v1alpha2"},
 			},
-			statusCode: codes.OK,
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
+			statusCode: grpccodes.OK,
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 					Identifier: "available-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"},
 				},
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "default",
 					Namespace: "my-ns",
 				},
 				Name: "installed-pkg-1",
 			},
-			expectedResponse: &corev1.CreateInstalledPackageResponse{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+			expectedResponse: &pkgsGRPCv1alpha1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Cluster: "default", Namespace: "my-ns"},
 					Identifier: "installed-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"},
 				},
 			},
 		},
 		{
 			name:       "returns invalid argument if plugin not specified in request",
-			statusCode: codes.InvalidArgument,
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
+			statusCode: grpccodes.InvalidArgument,
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 					Identifier: "available-pkg-1",
 				},
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "default",
 					Namespace: "my-ns",
 				},
@@ -622,13 +621,13 @@ func TestCreateInstalledPackage(t *testing.T) {
 		},
 		{
 			name:       "returns internal error if unable to find the plugin",
-			statusCode: codes.Internal,
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
+			statusCode: grpccodes.Internal,
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 					Identifier: "available-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"},
 				},
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "default",
 					Namespace: "my-ns",
 				},
@@ -643,7 +642,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			for _, p := range tc.configuredPlugins {
 				configuredPluginServers = append(configuredPluginServers, pkgPluginsWithServer{
 					plugin: p,
-					server: plugin_test.TestPackagingPluginServer{Plugin: p},
+					server: plugintest.TestPackagingPluginServer{Plugin: p},
 				})
 			}
 
@@ -653,11 +652,11 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 			installedPkgResponse, err := server.CreateInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := installedPkgResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
@@ -670,49 +669,49 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		configuredPlugins []*plugins.Plugin
-		statusCode        codes.Code
-		request           *corev1.UpdateInstalledPackageRequest
-		expectedResponse  *corev1.UpdateInstalledPackageResponse
+		configuredPlugins []*pluginsGRPCv1alpha1.Plugin
+		statusCode        grpccodes.Code
+		request           *pkgsGRPCv1alpha1.UpdateInstalledPackageRequest
+		expectedResponse  *pkgsGRPCv1alpha1.UpdateInstalledPackageResponse
 	}{
 		{
 			name: "updates the package using the correct plugin",
-			configuredPlugins: []*plugins.Plugin{
+			configuredPlugins: []*pluginsGRPCv1alpha1.Plugin{
 				{Name: "plugin-1", Version: "v1alpha1"},
 				{Name: "plugin-1", Version: "v1alpha2"},
 			},
-			statusCode: codes.OK,
-			request: &corev1.UpdateInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+			statusCode: grpccodes.OK,
+			request: &pkgsGRPCv1alpha1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Cluster: "default", Namespace: "my-ns"},
 					Identifier: "installed-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"},
 				},
 			},
-			expectedResponse: &corev1.UpdateInstalledPackageResponse{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+			expectedResponse: &pkgsGRPCv1alpha1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Cluster: "default", Namespace: "my-ns"},
 					Identifier: "installed-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"},
 				},
 			},
 		},
 		{
 			name:       "returns invalid argument if plugin not specified in request",
-			statusCode: codes.InvalidArgument,
-			request: &corev1.UpdateInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
+			statusCode: grpccodes.InvalidArgument,
+			request: &pkgsGRPCv1alpha1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Identifier: "available-pkg-1",
 				},
 			},
 		},
 		{
 			name:       "returns internal error if unable to find the plugin",
-			statusCode: codes.Internal,
-			request: &corev1.UpdateInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
+			statusCode: grpccodes.Internal,
+			request: &pkgsGRPCv1alpha1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Identifier: "available-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"},
 				},
 			},
 		},
@@ -724,7 +723,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			for _, p := range tc.configuredPlugins {
 				configuredPluginServers = append(configuredPluginServers, pkgPluginsWithServer{
 					plugin: p,
-					server: plugin_test.TestPackagingPluginServer{Plugin: p},
+					server: plugintest.TestPackagingPluginServer{Plugin: p},
 				})
 			}
 
@@ -734,11 +733,11 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 			updatedPkgResponse, err := server.UpdateInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := updatedPkgResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
@@ -751,41 +750,41 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 	testCases := []struct {
 		name              string
-		configuredPlugins []*plugins.Plugin
-		statusCode        codes.Code
-		request           *corev1.DeleteInstalledPackageRequest
+		configuredPlugins []*pluginsGRPCv1alpha1.Plugin
+		statusCode        grpccodes.Code
+		request           *pkgsGRPCv1alpha1.DeleteInstalledPackageRequest
 	}{
 		{
 			name: "deletes the package",
-			configuredPlugins: []*plugins.Plugin{
+			configuredPlugins: []*pluginsGRPCv1alpha1.Plugin{
 				{Name: "plugin-1", Version: "v1alpha1"},
 				{Name: "plugin-1", Version: "v1alpha2"},
 			},
-			statusCode: codes.OK,
-			request: &corev1.DeleteInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+			statusCode: grpccodes.OK,
+			request: &pkgsGRPCv1alpha1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Cluster: "default", Namespace: "my-ns"},
 					Identifier: "installed-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"},
 				},
 			},
 		},
 		{
 			name:       "returns invalid argument if plugin not specified in request",
-			statusCode: codes.InvalidArgument,
-			request: &corev1.DeleteInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
+			statusCode: grpccodes.InvalidArgument,
+			request: &pkgsGRPCv1alpha1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Identifier: "available-pkg-1",
 				},
 			},
 		},
 		{
 			name:       "returns internal error if unable to find the plugin",
-			statusCode: codes.Internal,
-			request: &corev1.DeleteInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
+			statusCode: grpccodes.Internal,
+			request: &pkgsGRPCv1alpha1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Identifier: "available-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"},
 				},
 			},
 		},
@@ -797,7 +796,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			for _, p := range tc.configuredPlugins {
 				configuredPluginServers = append(configuredPluginServers, pkgPluginsWithServer{
 					plugin: p,
-					server: plugin_test.TestPackagingPluginServer{Plugin: p},
+					server: plugintest.TestPackagingPluginServer{Plugin: p},
 				})
 			}
 
@@ -807,7 +806,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 			_, err := server.DeleteInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 		})
@@ -815,34 +814,34 @@ func TestDeleteInstalledPackage(t *testing.T) {
 }
 
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
-	installedPlugin := &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"}
+	installedPlugin := &pluginsGRPCv1alpha1.Plugin{Name: "plugin-1", Version: "v1alpha1"}
 
 	testCases := []struct {
 		name               string
-		statusCode         codes.Code
-		pluginResourceRefs []*corev1.ResourceRef
-		request            *corev1.GetInstalledPackageResourceRefsRequest
-		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
+		statusCode         grpccodes.Code
+		pluginResourceRefs []*pkgsGRPCv1alpha1.ResourceRef
+		request            *pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest
+		expectedResponse   *pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse
 	}{
 		{
 			name: "it should successfully call the plugins GetInstalledPackageResourceRefs endpoint",
-			pluginResourceRefs: []*corev1.ResourceRef{
+			pluginResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Kind:       "Deployment",
 					Name:       "some-deployment",
 				},
 			},
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Cluster: "default", Namespace: "my-ns"},
 					Identifier: "installed-pkg-1",
 					Plugin:     installedPlugin,
 				},
 			},
-			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{Cluster: "default", Namespace: "my-ns"},
-				ResourceRefs: []*corev1.ResourceRef{
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse{
+				Context: &pkgsGRPCv1alpha1.Context{Cluster: "default", Namespace: "my-ns"},
+				ResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 					{
 						ApiVersion: "apps/v1",
 						Kind:       "Deployment",
@@ -850,28 +849,28 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 				},
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it should return an invalid argument if the plugin is not specified",
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Cluster: "default", Namespace: "my-ns"},
 					Identifier: "installed-pkg-1",
 				},
 			},
-			statusCode: codes.InvalidArgument,
+			statusCode: grpccodes.InvalidArgument,
 		},
 		{
 			name: "it should return an invalid argument if the plugin cannot be found",
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Cluster: "default", Namespace: "my-ns"},
 					Identifier: "installed-pkg-1",
-					Plugin:     &plugins.Plugin{Name: "other-plugin.packages", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "other-plugin.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.InvalidArgument,
+			statusCode: grpccodes.InvalidArgument,
 		},
 	}
 
@@ -881,7 +880,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				pluginsWithServers: []pkgPluginsWithServer{
 					{
 						plugin: installedPlugin,
-						server: &plugin_test.TestPackagingPluginServer{
+						server: &plugintest.TestPackagingPluginServer{
 							Plugin:       installedPlugin,
 							ResourceRefs: tc.pluginResourceRefs,
 						},
@@ -891,11 +890,11 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 
 			resourceRefs, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := resourceRefs, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}

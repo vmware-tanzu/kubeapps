@@ -17,20 +17,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
+	cmp "github.com/google/go-cmp/cmp"
 
-	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	"github.com/stretchr/testify/assert"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/repo"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/fake"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
+	assert "github.com/stretchr/testify/assert"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	helmrepo "helm.sh/helm/v3/pkg/repo"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8stypedclientfake "k8s.io/client-go/kubernetes/fake"
 )
 
 const testChartArchive = "./testdata/nginx-apiVersion-v1-5.1.1.tgz"
@@ -83,13 +83,13 @@ func TestFindChartInRepoIndex(t *testing.T) {
 	repoURL := "http://charts.example.com/repo/"
 	expectedURL := fmt.Sprintf("%s%s", repoURL, chartURL)
 
-	chartMeta := chart.Metadata{Name: name, Version: version}
-	chartVersion := repo.ChartVersion{URLs: []string{chartURL}}
+	chartMeta := helmchart.Metadata{Name: name, Version: version}
+	chartVersion := helmrepo.ChartVersion{URLs: []string{chartURL}}
 	chartVersion.Metadata = &chartMeta
-	chartVersions := []*repo.ChartVersion{&chartVersion}
-	entries := map[string]repo.ChartVersions{}
+	chartVersions := []*helmrepo.ChartVersion{&chartVersion}
+	entries := map[string]helmrepo.ChartVersions{}
 	entries[name] = chartVersions
-	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
+	index := &helmrepo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
 
 	res, err := findChartInRepoIndex(index, repoURL, name, version)
 	if err != nil {
@@ -204,7 +204,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 	testCases := []struct {
 		name              string
 		details           *Details
-		appRepoSpec       appRepov1.AppRepositorySpec
+		appRepoSpec       apprepov1alpha1.AppRepositorySpec
 		errorExpected     bool
 		numCertsExpected  int
 		cluster           string
@@ -250,11 +250,11 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
-			appRepoSpec: appRepov1.AppRepositorySpec{
-				Auth: appRepov1.AppRepositoryAuth{
-					CustomCA: &appRepov1.AppRepositoryCustomCA{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: customCASecretName},
 							Key:                  "custom-secret-key",
 						},
 					},
@@ -271,11 +271,11 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
-			appRepoSpec: appRepov1.AppRepositorySpec{
-				Auth: appRepov1.AppRepositoryAuth{
-					CustomCA: &appRepov1.AppRepositoryCustomCA{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: "other-secret-name"},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: "other-secret-name"},
 							Key:                  "custom-secret-key",
 						},
 					},
@@ -292,11 +292,11 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
-			appRepoSpec: appRepov1.AppRepositorySpec{
-				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepositoryAuthHeader{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: authHeaderSecretName},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: authHeaderSecretName},
 							Key:                  "custom-secret-key",
 						},
 					},
@@ -313,11 +313,11 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
-			appRepoSpec: appRepov1.AppRepositorySpec{
-				Auth: appRepov1.AppRepositoryAuth{
-					CustomCA: &appRepov1.AppRepositoryCustomCA{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: "other-secret-name"},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: "other-secret-name"},
 							Key:                  "custom-secret-key",
 						},
 					},
@@ -334,11 +334,11 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
-			appRepoSpec: appRepov1.AppRepositorySpec{
-				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepositoryAuthHeader{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: regCredsSecretName},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: regCredsSecretName},
 							Key:                  ".dockerconfigjson",
 						},
 					},
@@ -353,8 +353,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		// The fake k8s client will contain secret for the CA, header and registry credentials respectively.
-		secrets := []*corev1.Secret{{
-			ObjectMeta: metav1.ObjectMeta{
+		secrets := []*k8scorev1.Secret{{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name:      customCASecretName,
 				Namespace: appRepoNamespace,
 			},
@@ -362,7 +362,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				"custom-secret-key": []byte(customCASecretName),
 			},
 		}, {
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name:      authHeaderSecretName,
 				Namespace: appRepoNamespace,
 			},
@@ -370,7 +370,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				"custom-secret-key": []byte(authHeaderSecretData),
 			},
 		}, {
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name:      regCredsSecretName,
 				Namespace: appRepoNamespace,
 			},
@@ -379,8 +379,8 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 			},
 		}}
 
-		apprepos := []*appRepov1.AppRepository{{
-			ObjectMeta: metav1.ObjectMeta{
+		apprepos := []*apprepov1alpha1.AppRepository{{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name:      tc.details.AppRepositoryResourceName,
 				Namespace: appRepoNamespace,
 			},
@@ -388,7 +388,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 		}}
 
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, caCertSecret, authSecret, err := GetAppRepoAndRelatedSecrets(tc.details.AppRepositoryResourceName, appRepoNamespace, &kube.FakeHandler{Secrets: secrets, AppRepos: apprepos}, "", tc.cluster, tc.kubeappsNamespace, tc.kubeappsCluster)
+			appRepo, caCertSecret, authSecret, err := GetAppRepoAndRelatedSecrets(tc.details.AppRepositoryResourceName, appRepoNamespace, &kubeutils.FakeHandler{Secrets: secrets, AppRepos: apprepos}, "", tc.cluster, tc.kubeappsNamespace, tc.kubeappsCluster)
 			if err != nil {
 				if tc.errorExpected {
 					return
@@ -419,7 +419,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 type fakeHTTPClient struct {
 	repoURL   string
 	chartURLs []string
-	index     *repo.IndexFile
+	index     *helmrepo.IndexFile
 	userAgent string
 	// TODO(absoludity): perhaps switch to use httptest instead of our own fake?
 	requests       []*http.Request
@@ -465,17 +465,17 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 
 func newHTTPClient(repoURL string, charts []Details, userAgent string) httpclient.Client {
 	var chartURLs []string
-	entries := map[string]repo.ChartVersions{}
+	entries := map[string]helmrepo.ChartVersions{}
 	// Populate Chart registry with content of the given helmReleases
 	for _, ch := range charts {
-		chartMeta := chart.Metadata{Name: ch.ChartName, Version: ch.Version}
+		chartMeta := helmchart.Metadata{Name: ch.ChartName, Version: ch.Version}
 		chartURL := fmt.Sprintf("%s%s-%s.tgz", repoURL, ch.ChartName, ch.Version)
 		chartURLs = append(chartURLs, chartURL)
-		chartVersion := repo.ChartVersion{Metadata: &chartMeta, URLs: []string{chartURL}}
-		chartVersions := []*repo.ChartVersion{&chartVersion}
+		chartVersion := helmrepo.ChartVersion{Metadata: &chartMeta, URLs: []string{chartURL}}
+		chartVersions := []*helmrepo.ChartVersion{&chartVersion}
 		entries[ch.ChartName] = chartVersions
 	}
-	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
+	index := &helmrepo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
 	return &fakeHTTPClient{
 		repoURL:        repoURL,
 		chartURLs:      chartURLs,
@@ -601,7 +601,7 @@ func TestGetIndexFromCache(t *testing.T) {
 	if index != nil {
 		t.Error("Index should be empty since it's not in the cache yet")
 	}
-	fakeIndex := &repo.IndexFile{}
+	fakeIndex := &helmrepo.IndexFile{}
 	storeIndexInCache(repoURL, fakeIndex, sha)
 	index, _ = getIndexFromCache(repoURL, data)
 	if index != fakeIndex {
@@ -707,7 +707,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 	testCases := []struct {
 		name             string
 		secretNames      []string
-		existingSecrets  []runtime.Object
+		existingSecrets  []k8sruntime.Object
 		secretsPerDomain map[string]string
 		expectError      bool
 	}{
@@ -724,9 +724,9 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret is not a dockerConfigJSON type",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []runtime.Object{
-				&corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
+			existingSecrets: []k8sruntime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
 					},
@@ -741,9 +741,9 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret data does not have .dockerconfigjson key",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []runtime.Object{
-				&corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
+			existingSecrets: []k8sruntime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
 					},
@@ -758,9 +758,9 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns an error if the secret .dockerconfigjson value is not json decodable",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []runtime.Object{
-				&corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
+			existingSecrets: []k8sruntime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
 					},
@@ -775,9 +775,9 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it returns the registry secrets per domain",
 			secretNames: []string{"bitnami-repo"},
-			existingSecrets: []runtime.Object{
-				&corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
+			existingSecrets: []k8sruntime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "bitnami-repo",
 						Namespace: namespace,
 					},
@@ -794,9 +794,9 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 		{
 			name:        "it includes secrets for multiple servers",
 			secretNames: []string{"bitnami-repo1", "bitnami-repo2"},
-			existingSecrets: []runtime.Object{
-				&corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
+			existingSecrets: []k8sruntime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "bitnami-repo1",
 						Namespace: namespace,
 					},
@@ -805,8 +805,8 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 						dockerConfigJSONKey: []byte(indexDockerIOCred),
 					},
 				},
-				&corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
+				&k8scorev1.Secret{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "bitnami-repo2",
 						Namespace: namespace,
 					},
@@ -825,7 +825,7 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			client := fake.NewSimpleClientset(tc.existingSecrets...)
+			client := k8stypedclientfake.NewSimpleClientset(tc.existingSecrets...)
 
 			secretsPerDomain, err := RegistrySecretsPerDomain(context.Background(), tc.secretNames, namespace, client)
 			if got, want := err != nil, tc.expectError; !cmp.Equal(got, want) {
@@ -845,53 +845,53 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 func TestOCIClient(t *testing.T) {
 	t.Run("InitClient - Creates puller with User-Agent header", func(t *testing.T) {
 		cli := NewOCIClient("foo")
-		cli.Init(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		cli.Init(&apprepov1alpha1.AppRepository{}, &k8scorev1.Secret{}, &k8scorev1.Secret{})
 		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "User-Agent", "foo")
 	})
 
 	t.Run("InitClient - Creates puller with Authorization", func(t *testing.T) {
 		cli := NewOCIClient("")
-		appRepo := &appRepov1.AppRepository{
-			Spec: appRepov1.AppRepositorySpec{
-				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepositoryAuthHeader{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{},
+		appRepo := &apprepov1alpha1.AppRepository{
+			Spec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{},
 							Key:                  "custom-secret-key",
 						},
 					},
 				},
 			},
 		}
-		authSecret := &corev1.Secret{
+		authSecret := &k8scorev1.Secret{
 			Data: map[string][]byte{
 				"custom-secret-key": []byte("Basic Auth"),
 			},
 		}
-		cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		cli.Init(appRepo, &k8scorev1.Secret{}, authSecret)
 		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "Authorization", "Basic Auth")
 	})
 
 	t.Run("InitClient - Creates puller with Docker Creds Authorization", func(t *testing.T) {
 		cli := NewOCIClient("")
-		appRepo := &appRepov1.AppRepository{
-			Spec: appRepov1.AppRepositorySpec{
-				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepositoryAuthHeader{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{},
+		appRepo := &apprepov1alpha1.AppRepository{
+			Spec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{},
 							Key:                  ".dockerconfigjson",
 						},
 					},
 				},
 			},
 		}
-		authSecret := &corev1.Secret{
+		authSecret := &k8scorev1.Secret{
 			Data: map[string][]byte{
 				".dockerconfigjson": []byte(`{"auths":{"foo":{"username":"foo","password":"bar"}}}`),
 			},
 		}
-		err := cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		err := cli.Init(appRepo, &k8scorev1.Secret{}, authSecret)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}

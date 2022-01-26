@@ -11,12 +11,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containerd/containerd/remotes"
+	containerdremotes "github.com/containerd/containerd/remotes"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	"oras.land/oras-go/pkg/content"
+	orascontent "oras.land/oras-go/pkg/content"
 	orascontext "oras.land/oras-go/pkg/context"
 	"oras.land/oras-go/pkg/oras"
 )
@@ -33,7 +31,7 @@ func ctx(out io.Writer, debug bool) context.Context {
 		return orascontext.Background()
 	}
 	ctx := orascontext.WithLoggerFromWriter(context.Background(), out)
-	orascontext.GetLogger(ctx).Logger.SetLevel(logrus.DebugLevel)
+	orascontext.GetLogger(ctx).Logger.SetLevel(log.DebugLevel)
 	return ctx
 }
 
@@ -75,7 +73,7 @@ type ChartPuller interface {
 
 // OCIPuller implements ChartPuller
 type OCIPuller struct {
-	Resolver remotes.Resolver
+	Resolver containerdremotes.Resolver
 }
 
 // Code from Helm Registry Client. Copied here since it belongs to a internal package.
@@ -86,7 +84,7 @@ type OCIPuller struct {
 // https://github.com/helm/helm/blob/v3.7.1/internal/experimental/registry/client.go#L209
 func (p *OCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
 	ociFullName = strings.TrimPrefix(ociFullName, fmt.Sprintf("%s://", OCIScheme))
-	store := content.NewMemoryStore()
+	store := orascontent.NewMemoryStore()
 	allowedMediaTypes := []string{
 		ConfigMediaType,
 	}
@@ -102,9 +100,7 @@ func (p *OCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, err
 	}
 	numDescriptors := len(descriptors)
 	if numDescriptors < minNumDescriptors {
-		return nil, manifest.Digest.String(), errors.New(
-			fmt.Sprintf("manifest does not contain minimum number of descriptors (%d), descriptors found: %d",
-				minNumDescriptors, numDescriptors))
+		return nil, manifest.Digest.String(), fmt.Errorf("manifest does not contain minimum number of descriptors (%d), descriptors found: %d", minNumDescriptors, numDescriptors)
 	}
 	var chartDescriptor *ocispec.Descriptor
 	for _, descriptor := range descriptors {
@@ -118,13 +114,12 @@ func (p *OCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, err
 		}
 	}
 	if chartDescriptor == nil {
-		return nil, manifest.Digest.String(), errors.New(
-			fmt.Sprintf("manifest does not contain a layer with mediatype %s or %s",
-				ChartLayerMediaType, LegacyChartLayerMediaType))
+		return nil, manifest.Digest.String(), fmt.Errorf("manifest does not contain a layer with mediatype %s or %s",
+			ChartLayerMediaType, LegacyChartLayerMediaType)
 	}
 	_, chartData, ok := store.Get(*chartDescriptor)
 	if !ok {
-		return nil, manifest.Digest.String(), errors.Errorf("Unable to retrieve blob with digest %s", chartDescriptor.Digest)
+		return nil, manifest.Digest.String(), fmt.Errorf("Unable to retrieve blob with digest %s", chartDescriptor.Digest)
 	}
 
 	return bytes.NewBuffer(chartData), manifest.Digest.String(), nil

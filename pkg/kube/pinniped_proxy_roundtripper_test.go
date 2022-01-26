@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	cmp "github.com/google/go-cmp/cmp"
 )
 
 type fakeRoundTripper struct{}

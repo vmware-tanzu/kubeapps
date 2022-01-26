@@ -10,12 +10,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	cmp "github.com/google/go-cmp/cmp"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"golang.org/x/net/http/httpproxy"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	httpproxy "golang.org/x/net/http/httpproxy"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const pemCert = `
@@ -58,7 +58,7 @@ func TestInitNetClient(t *testing.T) {
 	testCases := []struct {
 		name             string
 		customCAData     string
-		appRepoSpec      v1alpha1.AppRepositorySpec
+		appRepoSpec      apprepov1alpha1.AppRepositorySpec
 		errorExpected    bool
 		numCertsExpected int
 		expectedHeaders  http.Header
@@ -71,11 +71,11 @@ func TestInitNetClient(t *testing.T) {
 		},
 		{
 			name: "custom CA added when passed an AppRepository CRD",
-			appRepoSpec: v1alpha1.AppRepositorySpec{
-				Auth: v1alpha1.AppRepositoryAuth{
-					CustomCA: &v1alpha1.AppRepositoryCustomCA{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: customCASecretName},
 							Key:                  "custom-secret-key",
 						},
 					},
@@ -86,11 +86,11 @@ func TestInitNetClient(t *testing.T) {
 		},
 		{
 			name: "errors if custom CA key cannot be found in secret",
-			appRepoSpec: v1alpha1.AppRepositorySpec{
-				Auth: v1alpha1.AppRepositoryAuth{
-					CustomCA: &v1alpha1.AppRepositoryCustomCA{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: customCASecretName},
 							Key:                  "some-other-secret-key",
 						},
 					},
@@ -101,11 +101,11 @@ func TestInitNetClient(t *testing.T) {
 		},
 		{
 			name: "errors if custom CA cannot be parsed",
-			appRepoSpec: v1alpha1.AppRepositorySpec{
-				Auth: v1alpha1.AppRepositoryAuth{
-					CustomCA: &v1alpha1.AppRepositoryCustomCA{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: customCASecretName},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: customCASecretName},
 							Key:                  "custom-secret-key",
 						},
 					},
@@ -116,11 +116,11 @@ func TestInitNetClient(t *testing.T) {
 		},
 		{
 			name: "authorization header added when passed an AppRepository CRD",
-			appRepoSpec: v1alpha1.AppRepositorySpec{
-				Auth: v1alpha1.AppRepositoryAuth{
-					Header: &v1alpha1.AppRepositoryAuthHeader{
-						SecretKeyRef: corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: authHeaderSecretName},
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				Auth: apprepov1alpha1.AppRepositoryAuth{
+					Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+						SecretKeyRef: k8scorev1.SecretKeySelector{
+							LocalObjectReference: k8scorev1.LocalObjectReference{Name: authHeaderSecretName},
 							Key:                  "custom-secret-key",
 						},
 					},
@@ -131,12 +131,12 @@ func TestInitNetClient(t *testing.T) {
 		},
 		{
 			name: "http proxy added when passed an AppRepository CRD with an http_proxy env var",
-			appRepoSpec: v1alpha1.AppRepositorySpec{
-				SyncJobPodTemplate: corev1.PodTemplateSpec{
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
+				SyncJobPodTemplate: k8scorev1.PodTemplateSpec{
+					Spec: k8scorev1.PodSpec{
+						Containers: []k8scorev1.Container{
 							{
-								Env: []corev1.EnvVar{
+								Env: []k8scorev1.EnvVar{
 									{
 										Name:  "https_proxy",
 										Value: proxyURL,
@@ -152,7 +152,7 @@ func TestInitNetClient(t *testing.T) {
 		},
 		{
 			name: "skip tls config",
-			appRepoSpec: v1alpha1.AppRepositorySpec{
+			appRepoSpec: apprepov1alpha1.AppRepositorySpec{
 				TLSInsecureSkipVerify: true,
 			},
 			expectSkipTLS:    true,
@@ -162,39 +162,39 @@ func TestInitNetClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		// The fake k8s client will contain secret for the CA and header respectively.
-		caCertSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
+		caCertSecret := &k8scorev1.Secret{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name:      customCASecretName,
-				Namespace: metav1.NamespaceSystem,
+				Namespace: k8smetav1.NamespaceSystem,
 			},
 			StringData: map[string]string{
 				"custom-secret-key": tc.customCAData,
 			},
 		}
-		authSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
+		authSecret := &k8scorev1.Secret{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name:      authHeaderSecretName,
-				Namespace: metav1.NamespaceSystem,
+				Namespace: k8smetav1.NamespaceSystem,
 			},
 			Data: map[string][]byte{
 				"custom-secret-key": []byte(authHeaderSecretData),
 			},
 		}
 
-		appRepo := &v1alpha1.AppRepository{
-			ObjectMeta: metav1.ObjectMeta{
+		appRepo := &apprepov1alpha1.AppRepository{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name:      "foo",
-				Namespace: metav1.NamespaceSystem,
+				Namespace: k8smetav1.NamespaceSystem,
 			},
 			Spec: tc.appRepoSpec,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			var testCASecret *corev1.Secret
+			var testCASecret *k8scorev1.Secret
 			if tc.appRepoSpec.Auth.CustomCA != nil {
 				testCASecret = caCertSecret
 			}
-			var testAuthSecret *corev1.Secret
+			var testAuthSecret *k8scorev1.Secret
 			if tc.appRepoSpec.Auth.Header != nil {
 				testAuthSecret = authSecret
 			}
@@ -277,13 +277,13 @@ func TestGetProxyConfig(t *testing.T) {
 	proxyVars := []string{"http_proxy", "https_proxy", "no_proxy", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"}
 	testCases := []struct {
 		name             string
-		appRepoEnvVars   []corev1.EnvVar
+		appRepoEnvVars   []k8scorev1.EnvVar
 		containerEnvVars map[string]string
 		expectedConfig   *httpproxy.Config
 	}{
 		{
 			name: "configures when http_proxy specified",
-			appRepoEnvVars: []corev1.EnvVar{
+			appRepoEnvVars: []k8scorev1.EnvVar{
 				{
 					Name:  "http_proxy",
 					Value: "http://proxied.example.com:8888",
@@ -295,7 +295,7 @@ func TestGetProxyConfig(t *testing.T) {
 		},
 		{
 			name: "configures when https_proxy specified",
-			appRepoEnvVars: []corev1.EnvVar{
+			appRepoEnvVars: []k8scorev1.EnvVar{
 				{
 					Name:  "https_proxy",
 					Value: "https://proxied.example.com:8888",
@@ -307,7 +307,7 @@ func TestGetProxyConfig(t *testing.T) {
 		},
 		{
 			name: "configures all three when specified",
-			appRepoEnvVars: []corev1.EnvVar{
+			appRepoEnvVars: []k8scorev1.EnvVar{
 				{
 					Name:  "http_proxy",
 					Value: "http://proxied.example.com:8888",
@@ -365,15 +365,15 @@ func TestGetProxyConfig(t *testing.T) {
 				}
 			}()
 
-			appRepo := &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo := &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "foo",
-					Namespace: metav1.NamespaceSystem,
+					Namespace: k8smetav1.NamespaceSystem,
 				},
-				Spec: v1alpha1.AppRepositorySpec{
-					SyncJobPodTemplate: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					SyncJobPodTemplate: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							Containers: []k8scorev1.Container{
 								{
 									Env: tc.appRepoEnvVars,
 								},
@@ -392,12 +392,12 @@ func TestGetProxyConfig(t *testing.T) {
 func Test_getDataFromRegistrySecret(t *testing.T) {
 	testCases := []struct {
 		name     string
-		secret   *corev1.Secret
+		secret   *k8scorev1.Secret
 		expected string
 	}{
 		{
 			name: "retrieves username and password from a dockerconfigjson",
-			secret: &corev1.Secret{
+			secret: &k8scorev1.Secret{
 				Data: map[string][]byte{
 					".dockerconfigjson": []byte(`{"auths":{"foo":{"username":"foo","password":"bar"}}}`),
 				},

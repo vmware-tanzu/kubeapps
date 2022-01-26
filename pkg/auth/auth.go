@@ -9,15 +9,15 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
-	authorizationapi "k8s.io/api/authorization/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	discovery "k8s.io/client-go/discovery"
-	"k8s.io/client-go/kubernetes"
-	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
-	"k8s.io/client-go/rest"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
+	yamlutil "github.com/kubeapps/kubeapps/pkg/yamlutil"
+	k8sauthorizationv1 "k8s.io/api/authorization/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8discoveryclient "k8s.io/client-go/discovery"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8typedsauthorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
+	k8srest "k8s.io/client-go/rest"
 )
 
 type resource struct {
@@ -27,31 +27,31 @@ type resource struct {
 }
 
 type k8sAuthInterface interface {
-	GetResourceList(groupVersion string) (*metav1.APIResourceList, error)
+	GetResourceList(groupVersion string) (*k8smetav1.APIResourceList, error)
 	CanI(verb, group, resource, namespace string) (bool, error)
 }
 
 type k8sAuth struct {
-	AuthCli      authorizationv1.AuthorizationV1Interface
-	DiscoveryCli discovery.DiscoveryInterface
+	AuthCli      k8typedsauthorizationv1.AuthorizationV1Interface
+	DiscoveryCli k8discoveryclient.DiscoveryInterface
 }
 
-func (u k8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceList, error) {
+func (u k8sAuth) GetResourceList(groupVersion string) (*k8smetav1.APIResourceList, error) {
 	return u.DiscoveryCli.ServerResourcesForGroupVersion(groupVersion)
 }
 
 func (u k8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
-	attr := &authorizationapi.ResourceAttributes{
+	attr := &k8sauthorizationv1.ResourceAttributes{
 		Group:     group,
 		Resource:  resource,
 		Verb:      verb,
 		Namespace: namespace,
 	}
-	res, err := u.AuthCli.SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+	res, err := u.AuthCli.SelfSubjectAccessReviews().Create(context.TODO(), &k8sauthorizationv1.SelfSubjectAccessReview{
+		Spec: k8sauthorizationv1.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: attr,
 		},
-	}, metav1.CreateOptions{})
+	}, k8smetav1.CreateOptions{})
 	if err != nil {
 		return false, err
 	}
@@ -79,16 +79,16 @@ type Checker interface {
 }
 
 // NewAuth creates an auth agent
-func NewAuth(token, clusterName string, clustersConfig kube.ClustersConfig) (*UserAuth, error) {
-	config, err := rest.InClusterConfig()
+func NewAuth(token, clusterName string, clustersConfig kubeutils.ClustersConfig) (*UserAuth, error) {
+	config, err := k8srest.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}
-	config, err = kube.NewClusterConfig(config, token, clusterName, clustersConfig)
+	config, err = kubeutils.NewClusterConfig(config, token, clusterName, clustersConfig)
 	if err != nil {
 		return nil, err
 	}
-	kubeClient, err := kubernetes.NewForConfig(config)
+	kubeClient, err := k8stypedclient.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (u *UserAuth) resolve(groupVersion, kind string) (resourceInfo, error) {
 }
 
 func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, error) {
-	objs, err := yamlUtils.ParseObjects(manifest)
+	objs, err := yamlutil.ParseObjects(manifest)
 	if err != nil {
 		return []resource{}, err
 	}
@@ -154,7 +154,7 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 	for _, i := range itemsToCheck {
 		rInfo, err := u.resolve(i.APIVersion, i.Kind)
 		if err != nil {
-			if k8sErrors.IsNotFound(err) {
+			if k8serrors.IsNotFound(err) {
 				// The resource version/kind is not registered in the k8s API so
 				// we assume it's a CRD that is going to be created with the chart
 				// In any case, if a chart tries to install a resource that doesn't

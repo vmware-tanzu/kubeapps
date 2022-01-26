@@ -19,20 +19,20 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/disintegration/imaging"
-	"github.com/google/go-cmp/cmp"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	imaging "github.com/disintegration/imaging"
+	cmp "github.com/google/go-cmp/cmp"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/kubeapps/kubeapps/pkg/helm"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
+	helmutils "github.com/kubeapps/kubeapps/pkg/helm"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	tartest "github.com/kubeapps/kubeapps/pkg/tarutil/test"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"helm.sh/helm/v3/pkg/chart"
+	assert "github.com/stretchr/testify/assert"
+	helmchart "helm.sh/helm/v3/pkg/chart"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
@@ -137,7 +137,7 @@ func (h *svgIconClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 type goodTarballClient struct {
-	c          models.Chart
+	c          chartmodels.Chart
 	skipReadme bool
 	skipValues bool
 	skipSchema bool
@@ -150,7 +150,7 @@ var testChartSchema = `{"properties": {}}`
 func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 	gzw := gzip.NewWriter(w)
-	files := []tartest.TarballFile{{Name: h.c.Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
+	files := []tartest.TarballFile{{Name: h.c.Name + "/chart.yaml", Body: "should be a chart.yaml here..."}}
 	if !h.skipValues {
 		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.yaml", Body: testChartValues})
 	}
@@ -166,7 +166,7 @@ func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 type authenticatedTarballClient struct {
-	c models.Chart
+	c chartmodels.Chart
 }
 
 func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, error) {
@@ -177,7 +177,7 @@ func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, erro
 		w.WriteHeader(500)
 	} else {
 		gzw := gzip.NewWriter(w)
-		files := []tartest.TarballFile{{Name: h.c.Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
+		files := []tartest.TarballFile{{Name: h.c.Name + "/chart.yaml", Body: "should be a chart.yaml here..."}}
 		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.yaml", Body: testChartValues})
 		files = append(files, tartest.TarballFile{Name: h.c.Name + "/README.md", Body: testChartReadme})
 		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.schema.json", Body: testChartSchema})
@@ -289,14 +289,14 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 }
 
 func Test_chartTarballURL(t *testing.T) {
-	r := &models.RepoInternal{Name: "test", URL: "http://testrepo.com"}
+	r := &chartmodels.RepoInternal{Name: "test", URL: "http://testrepo.com"}
 	tests := []struct {
 		name   string
-		cv     models.ChartVersion
+		cv     chartmodels.ChartVersion
 		wanted string
 	}{
-		{"absolute url", models.ChartVersion{URLs: []string{"http://testrepo.com/wordpress-0.1.0.tgz"}}, "http://testrepo.com/wordpress-0.1.0.tgz"},
-		{"relative url", models.ChartVersion{URLs: []string{"wordpress-0.1.0.tgz"}}, "http://testrepo.com/wordpress-0.1.0.tgz"},
+		{"absolute url", chartmodels.ChartVersion{URLs: []string{"http://testrepo.com/wordpress-0.1.0.tgz"}}, "http://testrepo.com/wordpress-0.1.0.tgz"},
+		{"relative url", chartmodels.ChartVersion{URLs: []string{"wordpress-0.1.0.tgz"}}, "http://testrepo.com/wordpress-0.1.0.tgz"},
 	}
 
 	for _, tt := range tests {
@@ -373,18 +373,18 @@ func Test_newManager(t *testing.T) {
 }
 
 func Test_fetchAndImportIcon(t *testing.T) {
-	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace"}
-	repoWithAuthorization := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient", URL: "https://github.com/"}
+	repo := &chartmodels.RepoInternal{Name: "test", Namespace: "repo-namespace"}
+	repoWithAuthorization := &chartmodels.RepoInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient", URL: "https://github.com/"}
 
 	t.Run("no icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		c := models.Chart{ID: "test/acs-engine-autoscaler"}
+		c := chartmodels.Chart{ID: "test/acs-engine-autoscaler"}
 		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
 		assert.NoError(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
-	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
+	charts, _ := helmutils.ChartsFromIndex([]byte(validRepoIndexYAML), &chartmodels.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
 
 	t.Run("failed download", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
@@ -420,10 +420,10 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
 		netClient := &svgIconClient{}
-		c := models.Chart{
+		c := chartmodels.Chart{
 			ID:   "foo",
 			Icon: "https://foo/bar/logo.svg",
-			Repo: &models.Repo{Name: repo.Name, Namespace: repo.Namespace},
+			Repo: &chartmodels.Repo{Name: repo.Name, Namespace: repo.Namespace},
 		}
 
 		mock.ExpectQuery("UPDATE charts SET info *").
@@ -480,16 +480,16 @@ func Test_fetchAndImportIcon(t *testing.T) {
 }
 
 type fakeRepo struct {
-	*models.RepoInternal
-	charts     []models.Chart
-	chartFiles models.ChartFiles
+	*chartmodels.RepoInternal
+	charts     []chartmodels.Chart
+	chartFiles chartmodels.ChartFiles
 }
 
 func (r *fakeRepo) Checksum() (string, error) {
 	return "checksum", nil
 }
 
-func (r *fakeRepo) Repo() *models.RepoInternal {
+func (r *fakeRepo) Repo() *chartmodels.RepoInternal {
 	return r.RepoInternal
 }
 
@@ -497,25 +497,25 @@ func (r *fakeRepo) FilterIndex() {
 	// no-op
 }
 
-func (r *fakeRepo) Charts(shallow bool) ([]models.Chart, error) {
+func (r *fakeRepo) Charts(shallow bool) ([]chartmodels.Chart, error) {
 	return r.charts, nil
 }
 
-func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
+func (r *fakeRepo) FetchFiles(name string, cv chartmodels.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
-		models.ValuesKey: r.chartFiles.Values,
-		models.ReadmeKey: r.chartFiles.Readme,
-		models.SchemaKey: r.chartFiles.Schema,
+		chartmodels.ValuesKey: r.chartFiles.Values,
+		chartmodels.ReadmeKey: r.chartFiles.Readme,
+		chartmodels.SchemaKey: r.chartFiles.Schema,
 	}, nil
 }
 
 func Test_fetchAndImportFiles(t *testing.T) {
-	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
-	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
+	repo := &chartmodels.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
+	charts, _ := helmutils.ChartsFromIndex([]byte(validRepoIndexYAML), &chartmodels.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
 	chartVersion := charts[0].ChartVersions[0]
 	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
-	chartFiles := models.ChartFiles{
+	chartFiles := chartmodels.ChartFiles{
 		ID:     chartFilesID,
 		Readme: testChartReadme,
 		Values: testChartValues,
@@ -550,7 +550,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
 
-		files := models.ChartFiles{
+		files := chartmodels.ChartFiles{
 			ID:     chartFilesID,
 			Readme: "",
 			Values: "",
@@ -595,7 +595,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 
 		fImporter := fileImporter{pgManager, netClient}
 
-		r := &models.RepoInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
+		r := &chartmodels.RepoInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
 		repo := &HelmRepo{
 			RepoInternal: r,
 			content:      []byte{},
@@ -776,7 +776,7 @@ func (o *fakeOCIAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error
 func Test_OCIRegistry(t *testing.T) {
 	repo := OCIRegistry{
 		repositories: []string{"apache", "jenkins"},
-		RepoInternal: &models.RepoInternal{
+		RepoInternal: &chartmodels.RepoInternal{
 			URL: "http://oci-test",
 		},
 	}
@@ -799,7 +799,7 @@ func Test_OCIRegistry(t *testing.T) {
 	t.Run("Checksum - stores the list of tags", func(t *testing.T) {
 		emptyRepo := OCIRegistry{
 			repositories: []string{"apache"},
-			RepoInternal: &models.RepoInternal{
+			RepoInternal: &chartmodels.RepoInternal{
 				URL: "http://oci-test",
 			},
 			ociCli: &fakeOCIAPICli{
@@ -816,7 +816,7 @@ func Test_OCIRegistry(t *testing.T) {
 	t.Run("FilterIndex - order tags by semver", func(t *testing.T) {
 		repo := OCIRegistry{
 			repositories: []string{"apache"},
-			RepoInternal: &models.RepoInternal{
+			RepoInternal: &chartmodels.RepoInternal{
 				URL: "http://oci-test",
 			},
 			tags: map[string]TagList{
@@ -853,29 +853,29 @@ version: 1.0.0
 		chartName        string
 		ociArtifactFiles []tartest.TarballFile
 		tags             []string
-		expected         []models.Chart
+		expected         []chartmodels.Chart
 		shallow          bool
 	}{
 		{
 			"Retrieve chart metadata",
 			"kubeapps",
 			[]tartest.TarballFile{
-				{Name: "Chart.yaml", Body: chartYAML},
+				{Name: "chart.yaml", Body: chartYAML},
 			},
 			[]string{"1.0.0"},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
+					Repo:        &chartmodels.Repo{Name: "test", URL: "http://oci-test/test"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
-					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Maintainers: []helmchart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
 					Sources:     []string{"https://github.com/kubeapps/kubeapps"},
 					Icon:        "https://logo.png",
 					Category:    "Infrastructure",
-					ChartVersions: []models.ChartVersion{
+					ChartVersions: []chartmodels.ChartVersion{
 						{
 							Version:    "1.0.0",
 							AppVersion: "2.0.0",
@@ -896,13 +896,13 @@ version: 1.0.0
 				{Name: "values.schema.json", Body: "chart schema"},
 			},
 			[]string{"1.0.0"},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
-					Maintainers: []chart.Maintainer{},
-					ChartVersions: []models.ChartVersion{
+					Repo:        &chartmodels.Repo{Name: "test", URL: "http://oci-test/test"},
+					Maintainers: []helmchart.Maintainer{},
+					ChartVersions: []chartmodels.ChartVersion{
 						{
 							Digest: "123",
 							Readme: "chart readme",
@@ -923,13 +923,13 @@ version: 1.0.0
 				{Name: "values.schema.json", Body: "chart schema"},
 			},
 			[]string{"1.0.0"},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
 					Name:        "repo%2Fkubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
-					ChartVersions: []models.ChartVersion{
+					Repo:        &chartmodels.Repo{Name: "test", URL: "http://oci-test/"},
+					Maintainers: []helmchart.Maintainer{},
+					ChartVersions: []chartmodels.ChartVersion{
 						{
 							Digest: "123",
 							Readme: "chart readme",
@@ -950,13 +950,13 @@ version: 1.0.0
 				{Name: "values.schema.json", Body: "chart schema"},
 			},
 			[]string{"1.0.0", "1.1.0"},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
 					Name:        "repo%2Fkubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
-					ChartVersions: []models.ChartVersion{
+					Repo:        &chartmodels.Repo{Name: "test", URL: "http://oci-test/"},
+					Maintainers: []helmchart.Maintainer{},
+					ChartVersions: []chartmodels.ChartVersion{
 						{
 							Digest: "123",
 							Readme: "chart readme",
@@ -983,13 +983,13 @@ version: 1.0.0
 				{Name: "values.schema.json", Body: "chart schema"},
 			},
 			[]string{"1.1.0", "1.0.0"},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
 					Name:        "repo%2Fkubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
-					ChartVersions: []models.ChartVersion{
+					Repo:        &chartmodels.Repo{Name: "test", URL: "http://oci-test/"},
+					Maintainers: []helmchart.Maintainer{},
+					ChartVersions: []chartmodels.ChartVersion{
 						{
 							Digest: "123",
 							Readme: "chart readme",
@@ -1019,11 +1019,11 @@ version: 1.0.0
 
 			tags := map[string]string{}
 			for _, tag := range tt.tags {
-				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`
+				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helmutils.config.v1+json","digest":"sha256:123","size":665}}`
 			}
 			chartsRepo := OCIRegistry{
 				repositories: []string{tt.chartName},
-				RepoInternal: &models.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
+				RepoInternal: &chartmodels.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
 				tags: map[string]TagList{
 					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: tt.tags},
 				},
@@ -1048,12 +1048,12 @@ version: 1.0.0
 
 	t.Run("FetchFiles - It returns the stored files", func(t *testing.T) {
 		files := map[string]string{
-			models.ValuesKey: "values text",
-			models.ReadmeKey: "readme text",
-			models.SchemaKey: "schema text",
+			chartmodels.ValuesKey: "values text",
+			chartmodels.ReadmeKey: "readme text",
+			chartmodels.SchemaKey: "schema text",
 		}
 		repo := OCIRegistry{}
-		result, err := repo.FetchFiles("", models.ChartVersion{
+		result, err := repo.FetchFiles("", chartmodels.ChartVersion{
 			Values: files["values"],
 			Readme: files["readme"],
 			Schema: files["schema"],
@@ -1143,28 +1143,28 @@ func Test_extractFilesFromBuffer(t *testing.T) {
 func Test_filterCharts(t *testing.T) {
 	tests := []struct {
 		description string
-		input       []models.Chart
+		input       []chartmodels.Chart
 		rule        apprepov1alpha1.FilterRuleSpec
-		expected    []models.Chart
+		expected    []chartmodels.Chart
 		expectedErr error
 	}{
 		{
 			"should filter a chart",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: ".name == $var1", Variables: map[string]string{"$var1": "foo"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 			},
 			nil,
 		},
 		{
 			"an invalid rule cause to return an empty set",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
@@ -1176,7 +1176,7 @@ func Test_filterCharts(t *testing.T) {
 		},
 		{
 			"an invalid number of vars cause to return an empty set",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
@@ -1188,7 +1188,7 @@ func Test_filterCharts(t *testing.T) {
 		},
 		{
 			"the query doesn't return a boolean",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
@@ -1200,68 +1200,68 @@ func Test_filterCharts(t *testing.T) {
 		},
 		{
 			"matches without vars",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: `.name == "foo"`,
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 			},
 			nil,
 		},
 		{
 			"filters a maintainer name",
-			[]models.Chart{
-				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
-				{Name: "bar", Maintainers: []chart.Maintainer{{Name: "Hackers"}}},
+			[]chartmodels.Chart{
+				{Name: "foo", Maintainers: []helmchart.Maintainer{{Name: "Bitnami"}}},
+				{Name: "bar", Maintainers: []helmchart.Maintainer{{Name: "Hackers"}}},
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: ".maintainers | any(.name == $var1)", Variables: map[string]string{"$var1": "Bitnami"},
 			},
-			[]models.Chart{
-				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
+			[]chartmodels.Chart{
+				{Name: "foo", Maintainers: []helmchart.Maintainer{{Name: "Bitnami"}}},
 			},
 			nil,
 		},
 		{
 			"excludes a value",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: ".name == $var1 | not", Variables: map[string]string{"$var1": "foo"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "bar"},
 			},
 			nil,
 		},
 		{
 			"matches against a regex",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: `.name | test($var1)`, Variables: map[string]string{"$var1": ".*oo.*"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 			},
 			nil,
 		},
 		{
 			"ignores an empty rule",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
 			apprepov1alpha1.FilterRuleSpec{},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo"},
 				{Name: "bar"},
 			},
@@ -1286,60 +1286,60 @@ func Test_filterCharts(t *testing.T) {
 func TestUnescapeChartsData(t *testing.T) {
 	tests := []struct {
 		description string
-		input       []models.Chart
-		expected    []models.Chart
+		input       []chartmodels.Chart
+		expected    []chartmodels.Chart
 	}{
 		{
 			"chart with encoded spaces in id",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{ID: "foo%20bar"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{ID: "foo bar"},
 			},
 		},
 		{
 			"chart with encoded spaces in name",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo%20bar"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo bar"},
 			},
 		},
 		{
 			"chart with mixed encoding in name",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "test/foo%20bar"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "test/foo bar"},
 			},
 		},
 		{
 			"chart with no encoding nor spaces",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "test/foobar"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "test/foobar"},
 			},
 		},
 		{
 			"chart with unencoded spaces",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "test/foo bar"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "test/foo bar"},
 			},
 		},
 		{
 			"chart with encoded chars in name",
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo%23bar%2ebar"},
 			},
-			[]models.Chart{
+			[]chartmodels.Chart{
 				{Name: "foo#bar.bar"},
 			},
 		},
@@ -1355,38 +1355,38 @@ func TestUnescapeChartsData(t *testing.T) {
 }
 
 func TestHelmRepoAppliesUnescape(t *testing.T) {
-	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
-	expectedRepo := &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}
+	repo := &chartmodels.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
+	expectedRepo := &chartmodels.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}
 	repoIndexYAMLBytes, _ := ioutil.ReadFile("testdata/helm-index-spaces.yaml")
 	repoIndexYAML := string(repoIndexYAMLBytes)
-	expectedCharts := []models.Chart{
+	expectedCharts := []chartmodels.Chart{
 		{
 			ID:            "test/chart$with$chars",
 			Name:          "chart$with$chars",
 			Repo:          expectedRepo,
-			Maintainers:   []chart.Maintainer{},
-			ChartVersions: []models.ChartVersion{{AppVersion: "v1"}},
+			Maintainers:   []helmchart.Maintainer{},
+			ChartVersions: []chartmodels.ChartVersion{{AppVersion: "v1"}},
 		},
 		{
 			ID:            "test/chart with spaces",
 			Name:          "chart with spaces",
 			Repo:          expectedRepo,
-			Maintainers:   []chart.Maintainer{},
-			ChartVersions: []models.ChartVersion{{AppVersion: "v1"}},
+			Maintainers:   []helmchart.Maintainer{},
+			ChartVersions: []chartmodels.ChartVersion{{AppVersion: "v1"}},
 		},
 		{
 			ID:            "test/chart#with#hashes",
 			Name:          "chart#with#hashes",
 			Repo:          expectedRepo,
-			Maintainers:   []chart.Maintainer{},
-			ChartVersions: []models.ChartVersion{{AppVersion: "v3"}},
+			Maintainers:   []helmchart.Maintainer{},
+			ChartVersions: []chartmodels.ChartVersion{{AppVersion: "v3"}},
 		},
 		{
 			ID:            "test/chart-without-spaces",
 			Name:          "chart-without-spaces",
 			Repo:          expectedRepo,
-			Maintainers:   []chart.Maintainer{},
-			ChartVersions: []models.ChartVersion{{AppVersion: "v2"}},
+			Maintainers:   []helmchart.Maintainer{},
+			ChartVersions: []chartmodels.ChartVersion{{AppVersion: "v2"}},
 		},
 	}
 	helmRepo := &HelmRepo{

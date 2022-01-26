@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/stretchr/testify/assert"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	assert "github.com/stretchr/testify/assert"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
@@ -37,7 +37,7 @@ func Test_parseRepoIndex(t *testing.T) {
 }
 
 func Test_chartsFromIndex(t *testing.T) {
-	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
+	r := &chartmodels.Repo{Name: "test", URL: "http://testrepo.com"}
 	charts, err := ChartsFromIndex([]byte(validRepoIndexYAML), r, false)
 	assert.NoError(t, err)
 	assert.Equal(t, len(charts), 2, "number of charts")
@@ -53,7 +53,7 @@ func Test_chartsFromIndex(t *testing.T) {
 }
 
 func Test_shallowChartsFromIndex(t *testing.T) {
-	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
+	r := &chartmodels.Repo{Name: "test", URL: "http://testrepo.com"}
 	charts, err := ChartsFromIndex([]byte(validRepoIndexYAML), r, true)
 	assert.NoError(t, err)
 	assert.Equal(t, len(charts), 2, "number of charts")
@@ -61,7 +61,7 @@ func Test_shallowChartsFromIndex(t *testing.T) {
 }
 
 func Test_newChart(t *testing.T) {
-	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
+	r := &chartmodels.Repo{Name: "test", URL: "http://testrepo.com"}
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	c := newChart(index.Entries["wordpress"], r, false)
 	assert.Equal(t, c.Name, "wordpress", "correctly built")
@@ -72,7 +72,7 @@ func Test_newChart(t *testing.T) {
 }
 
 func Test_loadRepoWithEmptyCharts(t *testing.T) {
-	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
+	r := &chartmodels.Repo{Name: "test", URL: "http://testrepo.com"}
 	indexWithEmptyChart := validRepoIndexYAML + `emptyChart: []`
 	charts, err := ChartsFromIndex([]byte(indexWithEmptyChart), r, true)
 	assert.NoError(t, err)

@@ -17,12 +17,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/disintegration/imaging"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/stretchr/testify/assert"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	imaging "github.com/disintegration/imaging"
+	assetmanager "github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
+	assert "github.com/stretchr/testify/assert"
 )
 
 type bodyAPIListResponse struct {
@@ -34,7 +34,7 @@ type bodyAPIResponse struct {
 	Data apiResponse `json:"data"`
 }
 
-var chartsList []*models.Chart
+var chartsList []*chartmodels.Chart
 var cc count
 
 const (
@@ -47,7 +47,7 @@ const (
 	testRepoName         = "my-repo"
 )
 
-var testRepo *models.Repo = &models.Repo{Name: testRepoName, Namespace: namespace}
+var testRepo *chartmodels.Repo = &chartmodels.Repo{Name: testRepoName, Namespace: namespace}
 
 func iconBytes() []byte {
 	var b bytes.Buffer
@@ -65,7 +65,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func()) {
 	// TODO(absoludity): Let's not use globals for storing state like this.
 	origManager := manager
 
-	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalReposNamespace}}
+	manager = &assetmanager.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalReposNamespace}}
 
 	return mock, func() { db.Close(); manager = origManager }
 }
@@ -147,15 +147,15 @@ func Test_extractChartQueryFromRequest(t *testing.T) {
 func Test_chartAttributes(t *testing.T) {
 	tests := []struct {
 		name  string
-		chart models.Chart
+		chart chartmodels.Chart
 	}{
-		{"chart enconded has no icon", models.Chart{
+		{"chart enconded has no icon", chartmodels.Chart{
 			Repo: testRepo, Name: "foo%2Fwordpress", ID: "my-repo/foo%2Fwordpress",
 		}},
-		{"chart has no icon", models.Chart{
+		{"chart has no icon", chartmodels.Chart{
 			Repo: testRepo, Name: "wordpress", ID: "my-repo/wordpress",
 		}},
-		{"chart has a icon", models.Chart{
+		{"chart has a icon", chartmodels.Chart{
 			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", RawIcon: iconBytes(), IconContentType: "image/svg",
 		}},
 	}
@@ -178,13 +178,13 @@ func Test_chartAttributes(t *testing.T) {
 func Test_chartVersionAttributes(t *testing.T) {
 	tests := []struct {
 		name  string
-		chart models.Chart
+		chart chartmodels.Chart
 	}{
-		{"my-chart", models.Chart{
-			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}},
+		{"my-chart", chartmodels.Chart{
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}},
 		}},
-		{"foo%2Fmy-chart", models.Chart{
-			Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}},
+		{"foo%2Fmy-chart", chartmodels.Chart{
+			Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}},
 		}},
 	}
 	for _, tt := range tests {
@@ -201,19 +201,19 @@ func Test_newChartResponse(t *testing.T) {
 	tests := []struct {
 		name      string
 		chartName string
-		chart     models.Chart
+		chart     chartmodels.Chart
 	}{
-		{"chart has only one version", "my-chart", models.Chart{
-			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}},
+		{"chart has only one version", "my-chart", chartmodels.Chart{
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3"}}},
 		},
-		{"chart encoded has only one version", "foo%2Fmy-chart", models.Chart{
-			Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}},
+		{"chart encoded has only one version", "foo%2Fmy-chart", chartmodels.Chart{
+			Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3"}}},
 		},
-		{"chart has many versions", "my-chart", models.Chart{
-			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.2"}, {Version: "0.1.0"}},
+		{"chart has many versions", "my-chart", chartmodels.Chart{
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.2"}, {Version: "0.1.0"}},
 		}},
-		{"raw_icon is never sent down the wire", "my-chart", models.Chart{
-			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
+		{"raw_icon is never sent down the wire", "my-chart", chartmodels.Chart{
+			Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
 		}},
 	}
 	for _, tt := range tests {
@@ -221,10 +221,10 @@ func Test_newChartResponse(t *testing.T) {
 			cResponse := newChartResponse(&tt.chart)
 			assert.Equal(t, cResponse.Type, "chart", "response type is chart")
 			assert.Equal(t, cResponse.ID, tt.chart.ID, "chart ID should be the same")
-			assert.Equal(t, cResponse.Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, tt.chart.ChartVersions[0].Version, "latestChartVersion should match version at index 0")
+			assert.Equal(t, cResponse.Relationships["latestChartVersion"].Data.(chartmodels.ChartVersion).Version, tt.chart.ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			assert.Equal(t, cResponse.Links.(selfLink).Self, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID, "self link should be the same")
 			// We don't send the raw icon down the wire.
-			assert.Nil(t, cResponse.Attributes.(models.Chart).RawIcon)
+			assert.Nil(t, cResponse.Attributes.(chartmodels.Chart).RawIcon)
 		})
 	}
 }
@@ -232,28 +232,28 @@ func Test_newChartResponse(t *testing.T) {
 func Test_newChartListResponse(t *testing.T) {
 	tests := []struct {
 		name   string
-		input  []*models.Chart
-		result []*models.Chart
+		input  []*chartmodels.Chart
+		result []*chartmodels.Chart
 	}{
-		{"no charts", []*models.Chart{}, []*models.Chart{}},
-		{"has one chart", []*models.Chart{
-			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-		}, []*models.Chart{
-			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+		{"no charts", []*chartmodels.Chart{}, []*chartmodels.Chart{}},
+		{"has one chart", []*chartmodels.Chart{
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+		}, []*chartmodels.Chart{
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 		}},
-		{"has two charts", []*models.Chart{
-			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, Name: "wordpress", ID: "my-repo/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}, []*models.Chart{
-			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, Name: "wordpress", ID: "my-repo/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		{"has two charts", []*chartmodels.Chart{
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "wordpress", ID: "my-repo/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		}, []*chartmodels.Chart{
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "wordpress", ID: "my-repo/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}},
-		{"has two encoded charts", []*models.Chart{
-			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, Name: "foo%2Fwordpress", ID: "my-repo/foo%2Fwordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}, []*models.Chart{
-			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, Name: "foo%2Fwordpress", ID: "my-repo/foo%2Fwordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		{"has two encoded charts", []*chartmodels.Chart{
+			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "foo%2Fwordpress", ID: "my-repo/foo%2Fwordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		}, []*chartmodels.Chart{
+			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "foo%2Fwordpress", ID: "my-repo/foo%2Fwordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}},
 	}
 
@@ -264,7 +264,7 @@ func Test_newChartListResponse(t *testing.T) {
 			for i := range tt.result {
 				assert.Equal(t, "chart", clResponse[i].Type, "response type is chart")
 				assert.Equal(t, tt.result[i].ID, clResponse[i].ID, "chart ID should be the same")
-				assert.Equal(t, tt.result[i].ChartVersions[0].Version, clResponse[i].Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, "latestChartVersion should match version at index 0")
+				assert.Equal(t, tt.result[i].ChartVersions[0].Version, clResponse[i].Relationships["latestChartVersion"].Data.(chartmodels.ChartVersion).Version, "latestChartVersion should match version at index 0")
 				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.result[i].ID, clResponse[i].Links.(selfLink).Self, "self link should be the same")
 			}
 		})
@@ -274,25 +274,25 @@ func Test_newChartListResponse(t *testing.T) {
 func Test_newChartVersionResponse(t *testing.T) {
 	tests := []struct {
 		name         string
-		chart        models.Chart
+		chart        chartmodels.Chart
 		expectedIcon string
 	}{
 		{
 			name: "my-chart",
-			chart: models.Chart{
-				Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
+			chart: chartmodels.Chart{
+				Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
 			},
 		},
 		{
 			name: "foo%2Fmy-chart",
-			chart: models.Chart{
-				Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
+			chart: chartmodels.Chart{
+				Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
 			},
 		},
 		{
 			name: "RawIcon is never sent down the wire",
-			chart: models.Chart{
-				Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
+			chart: chartmodels.Chart{
+				Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
 			},
 			expectedIcon: "/v1/ns/" + namespace + "/assets/my-repo/my-chart/logo",
 		},
@@ -305,14 +305,14 @@ func Test_newChartVersionResponse(t *testing.T) {
 				assert.Equal(t, "chartVersion", cvResponse.Type, "response type is chartVersion")
 				assert.Equal(t, tt.chart.Repo.Name+"/"+tt.chart.Name+"-"+tt.chart.ChartVersions[i].Version, cvResponse.ID, "response id should have chart version suffix")
 				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, cvResponse.Links.(interface{}).(selfLink).Self, "self link should be the same")
-				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvResponse.Attributes.(models.ChartVersion).Version, "chart version in the response should be the same")
+				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvResponse.Attributes.(chartmodels.ChartVersion).Version, "chart version in the response should be the same")
 
 				// The chart should have had its icon url set and raw icon data removed.
 				expectedChart := tt.chart
 				expectedChart.RawIcon = nil
 				expectedChart.Icon = tt.expectedIcon
-				expectedChart.ChartVersions = []models.ChartVersion{}
-				assert.Equal(t, cvResponse.Relationships["chart"].Data.(interface{}).(models.Chart), expectedChart, "chart in relatioship matches")
+				expectedChart.ChartVersions = []chartmodels.ChartVersion{}
+				assert.Equal(t, cvResponse.Relationships["chart"].Data.(interface{}).(chartmodels.Chart), expectedChart, "chart in relatioship matches")
 			}
 		})
 	}
@@ -321,19 +321,19 @@ func Test_newChartVersionResponse(t *testing.T) {
 func Test_newChartVersionListResponse(t *testing.T) {
 	tests := []struct {
 		name  string
-		chart models.Chart
+		chart chartmodels.Chart
 	}{
-		{"chart has no versions", models.Chart{
-			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{},
+		{"chart has no versions", chartmodels.Chart{
+			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{},
 		}},
-		{"chart has one version", models.Chart{
-			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}},
+		{"chart has one version", chartmodels.Chart{
+			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1"}},
 		}},
-		{"chart has many versions", models.Chart{
-			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}, {Version: "0.0.2"}},
+		{"chart has many versions", chartmodels.Chart{
+			Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1"}, {Version: "0.0.2"}},
 		}},
-		{"chart encoded has many versions", models.Chart{
-			Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}, {Version: "0.0.2"}},
+		{"chart encoded has many versions", chartmodels.Chart{
+			Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1"}, {Version: "0.0.2"}},
 		}},
 	}
 
@@ -345,7 +345,7 @@ func Test_newChartVersionListResponse(t *testing.T) {
 				assert.Equal(t, "chartVersion", cvListResponse[i].Type, "response type is chartVersion")
 				assert.Equal(t, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, cvListResponse[i].ID, "response id should have chart version suffix")
 				assert.Equal(t, pathPrefix+"/ns/"+namespace+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, cvListResponse[i].Links.(interface{}).(selfLink).Self, "self link should be the same")
-				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvListResponse[i].Attributes.(models.ChartVersion).Version, "chart version in the response should be the same")
+				assert.Equal(t, tt.chart.ChartVersions[i].Version, cvListResponse[i].Attributes.(chartmodels.ChartVersion).Version, "chart version in the response should be the same")
 			}
 		})
 	}
@@ -354,26 +354,26 @@ func Test_newChartVersionListResponse(t *testing.T) {
 func Test_listCharts(t *testing.T) {
 	tests := []struct {
 		name   string
-		charts []*models.Chart
+		charts []*chartmodels.Chart
 		meta   meta
 	}{
-		{"no charts", []*models.Chart{}, meta{TotalPages: 1}},
-		{"one chart", []*models.Chart{
-			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+		{"no charts", []*chartmodels.Chart{}, meta{TotalPages: 1}},
+		{"one chart", []*chartmodels.Chart{
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 		}, meta{TotalPages: 1}},
-		{"two charts", []*models.Chart{
-			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		{"two charts", []*chartmodels.Chart{
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, meta{TotalPages: 1}},
-		{"two charts, one encoded", []*models.Chart{
-			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		{"two charts, one encoded", []*chartmodels.Chart{
+			{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, meta{TotalPages: 1}},
-		{"four charts", []*models.Chart{
-			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, Name: "drupal", ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, Name: "wordpress", ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"four charts", []*chartmodels.Chart{
+			{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, Name: "dokuwiki", ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, Name: "drupal", ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, Name: "wordpress", ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 1}},
 	}
 
@@ -428,76 +428,76 @@ func Test_listRepoCharts(t *testing.T) {
 		name   string
 		repo   string
 		query  string
-		charts []*models.Chart
+		charts []*chartmodels.Chart
 		meta   meta
 	}{
-		{"repo has no charts", "my-repo", "", []*models.Chart{}, meta{TotalPages: 1}},
-		{"repo has one chart", "my-repo", "", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+		{"repo has no charts", "my-repo", "", []*chartmodels.Chart{}, meta{TotalPages: 1}},
+		{"repo has one chart", "my-repo", "", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 		}, meta{TotalPages: 1}},
-		{"repo has many charts", "my-repo", "", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+		{"repo has many charts", "my-repo", "", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "my-repo/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}, meta{TotalPages: 1}},
-		{"repo has many encoded charts with pagination", "my-repo", "?page=1&size=2", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/foo%2Fdokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/foo%2Fdrupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many encoded charts with pagination", "my-repo", "?page=1&size=2", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/foo%2Fdokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/foo%2Fdrupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 2}},
-		{"repo has many charts with pagination (2 pages)", "my-repo", "?page=2&size=2", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (2 pages)", "my-repo", "?page=2&size=2", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 2}},
-		{"repo has many charts with pagination (non existing page)", "my-repo", "?page=3&size=2", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (non existing page)", "my-repo", "?page=3&size=2", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 2}},
-		{"repo has many charts with pagination (out of range size)", "my-repo", "?page=1&size=100", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (out of range size)", "my-repo", "?page=1&size=100", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 1}},
-		{"repo has many charts with pagination (w/ page, w size)", "my-repo", "?page=2size=3", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (w/ page, w size)", "my-repo", "?page=2size=3", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 1}},
-		{"repo has many charts with pagination (w/ page, w zero size)", "my-repo", "?page=2size=0", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (w/ page, w zero size)", "my-repo", "?page=2size=0", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 1}},
-		{"repo has many charts with pagination (w/ wrong page, w/ size)", "my-repo", "?page=-2size=2", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (w/ wrong page, w/ size)", "my-repo", "?page=-2size=2", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 1}},
-		{"repo has many charts with pagination (w/ page, w/o size)", "my-repo", "?page=2", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (w/ page, w/o size)", "my-repo", "?page=2", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 1}},
-		{"repo has many charts with pagination (w/o page, w/ size)", "my-repo", "?size=2", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (w/o page, w/ size)", "my-repo", "?size=2", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 2}},
-		{"repo has many charts with pagination (w/o page, w/o size)", "my-repo", "", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
-			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
-			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
+		{"repo has many charts with pagination (w/o page, w/o size)", "my-repo", "", []*chartmodels.Chart{
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "stable/dokuwiki", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "1234"}}},
+			{Repo: testRepo, ID: "stable/drupal", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "12345"}}},
+			{Repo: testRepo, ID: "stable/wordpress", ChartVersions: []chartmodels.ChartVersion{{Version: "1.2.3", Digest: "123456"}}},
 		}, meta{TotalPages: 1}},
 	}
 
@@ -561,37 +561,37 @@ func Test_getChart(t *testing.T) {
 	tests := []struct {
 		name     string
 		err      error
-		chart    models.Chart
+		chart    chartmodels.Chart
 		wantCode int
 	}{
 		{
 			"chart does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart"},
+			chartmodels.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart"},
+			chartmodels.Chart{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			nil,
-			models.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			chartmodels.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart encoded exists",
 			nil,
-			models.Chart{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			chartmodels.Chart{Repo: testRepo, Name: "foo%2Fmy-chart", ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart has multiple versions",
 			nil,
-			models.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
+			chartmodels.Chart{Repo: testRepo, Name: "my-chart", ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
 			http.StatusOK,
 		},
 	}
@@ -643,37 +643,37 @@ func Test_listChartVersions(t *testing.T) {
 	tests := []struct {
 		name     string
 		err      error
-		chart    models.Chart
+		chart    chartmodels.Chart
 		wantCode int
 	}{
 		{
 			"chart does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart"},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart"},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart encoded exists",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart has multiple versions",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
 			http.StatusOK,
 		},
 	}
@@ -727,37 +727,37 @@ func Test_getChartVersion(t *testing.T) {
 	tests := []struct {
 		name     string
 		err      error
-		chart    models.Chart
+		chart    chartmodels.Chart
 		wantCode int
 	}{
 		{
 			"chart does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart encoded exists",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/foo%2Fmy-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart has multiple versions",
 			nil,
-			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
+			chartmodels.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []chartmodels.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
 			http.StatusOK,
 		},
 	}
@@ -809,49 +809,49 @@ func Test_getChartIcon(t *testing.T) {
 	tests := []struct {
 		name     string
 		err      error
-		chart    models.Chart
+		chart    chartmodels.Chart
 		wantCode int
 	}{
 		{
 			"chart does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{ID: "my-repo/my-chart"},
+			chartmodels.Chart{ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{ID: "my-repo/foo%2Fmy-chart"},
+			chartmodels.Chart{ID: "my-repo/foo%2Fmy-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart has icon",
 			nil,
-			models.Chart{ID: "my-repo/my-chart", RawIcon: iconBytes(), IconContentType: "image/png"},
+			chartmodels.Chart{ID: "my-repo/my-chart", RawIcon: iconBytes(), IconContentType: "image/png"},
 			http.StatusOK,
 		},
 		{
 			"chart encoded has icon",
 			nil,
-			models.Chart{ID: "my-repo/foo%2Fmy-chart", RawIcon: iconBytes(), IconContentType: "image/png"},
+			chartmodels.Chart{ID: "my-repo/foo%2Fmy-chart", RawIcon: iconBytes(), IconContentType: "image/png"},
 			http.StatusOK,
 		},
 		{
 			"chart does not have a icon",
 			nil,
-			models.Chart{ID: "my-repo/my-chart"},
+			chartmodels.Chart{ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded does not have a icon",
 			nil,
-			models.Chart{ID: "my-repo/foo%2Fmy-chart"},
+			chartmodels.Chart{ID: "my-repo/foo%2Fmy-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart has icon with custom type",
 			nil,
-			models.Chart{ID: "my-repo/my-chart", RawIcon: iconBytes(), IconContentType: "image/svg"},
+			chartmodels.Chart{ID: "my-repo/my-chart", RawIcon: iconBytes(), IconContentType: "image/svg"},
 			http.StatusOK,
 		},
 	}
@@ -902,42 +902,42 @@ func Test_getChartVersionReadme(t *testing.T) {
 		name     string
 		version  string
 		err      error
-		files    models.ChartFiles
+		files    chartmodels.ChartFiles
 		wantCode int
 	}{
 		{
 			"chart does not exist",
 			"0.1.0",
 			errors.New("return an error when checking if chart exists"),
-			models.ChartFiles{ID: "my-repo/" + chartName},
+			chartmodels.ChartFiles{ID: "my-repo/" + chartName},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded does not exist",
 			"0.1.0",
 			errors.New("return an error when checking if chart exists"),
-			models.ChartFiles{ID: "my-repo/" + chartEncodedName},
+			chartmodels.ChartFiles{ID: "my-repo/" + chartEncodedName},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			"1.2.3",
 			nil,
-			models.ChartFiles{ID: "my-repo/" + chartName, Readme: testChartReadme},
+			chartmodels.ChartFiles{ID: "my-repo/" + chartName, Readme: testChartReadme},
 			http.StatusOK,
 		},
 		{
 			"chart encoded exists",
 			"1.2.3",
 			nil,
-			models.ChartFiles{ID: "my-repo/" + chartEncodedName, Readme: testChartReadme},
+			chartmodels.ChartFiles{ID: "my-repo/" + chartEncodedName, Readme: testChartReadme},
 			http.StatusOK,
 		},
 		{
 			"chart does not have a readme",
 			"1.1.1",
 			nil,
-			models.ChartFiles{ID: "my-repo/" + chartName},
+			chartmodels.ChartFiles{ID: "my-repo/" + chartName},
 			http.StatusNotFound,
 		},
 	}
@@ -986,42 +986,42 @@ func Test_getChartVersionValues(t *testing.T) {
 		name     string
 		version  string
 		err      error
-		files    models.ChartFiles
+		files    chartmodels.ChartFiles
 		wantCode int
 	}{
 		{
 			"chart does not exist",
 			"0.1.0",
 			errors.New("return an error when checking if chart exists"),
-			models.ChartFiles{ID: "my-repo/my-chart"},
+			chartmodels.ChartFiles{ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded does not exist",
 			"0.1.0",
 			errors.New("return an error when checking if chart exists"),
-			models.ChartFiles{ID: "my-repo/foo%2Fmy-chart"},
+			chartmodels.ChartFiles{ID: "my-repo/foo%2Fmy-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			"3.2.1",
 			nil,
-			models.ChartFiles{ID: "my-repo/my-chart", Values: testChartValues},
+			chartmodels.ChartFiles{ID: "my-repo/my-chart", Values: testChartValues},
 			http.StatusOK,
 		},
 		{
 			"chart encoded exists",
 			"3.2.1",
 			nil,
-			models.ChartFiles{ID: "my-repo/foo%2Fmy-chart", Values: testChartValues},
+			chartmodels.ChartFiles{ID: "my-repo/foo%2Fmy-chart", Values: testChartValues},
 			http.StatusOK,
 		},
 		{
 			"chart does not have values.yaml",
 			"2.2.2",
 			nil,
-			models.ChartFiles{ID: "my-repo/my-chart"},
+			chartmodels.ChartFiles{ID: "my-repo/my-chart"},
 			http.StatusOK,
 		},
 	}
@@ -1070,42 +1070,42 @@ func Test_getChartVersionSchema(t *testing.T) {
 		name     string
 		version  string
 		err      error
-		files    models.ChartFiles
+		files    chartmodels.ChartFiles
 		wantCode int
 	}{
 		{
 			"chart does not exist",
 			"0.1.0",
 			errors.New("return an error when checking if chart exists"),
-			models.ChartFiles{ID: "my-repo/my-chart"},
+			chartmodels.ChartFiles{ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart encoded not exist",
 			"0.1.0",
 			errors.New("return an error when checking if chart exists"),
-			models.ChartFiles{ID: "my-repo/foo%2Fmy-chart"},
+			chartmodels.ChartFiles{ID: "my-repo/foo%2Fmy-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			"3.2.1",
 			nil,
-			models.ChartFiles{ID: "my-repo/my-chart", Schema: testChartSchema},
+			chartmodels.ChartFiles{ID: "my-repo/my-chart", Schema: testChartSchema},
 			http.StatusOK,
 		},
 		{
 			"chart encoded exists",
 			"3.2.1",
 			nil,
-			models.ChartFiles{ID: "my-repo/foo%2Fmy-chart", Schema: testChartSchema},
+			chartmodels.ChartFiles{ID: "my-repo/foo%2Fmy-chart", Schema: testChartSchema},
 			http.StatusOK,
 		},
 		{
 			"chart does not have values.yaml",
 			"2.2.2",
 			nil,
-			models.ChartFiles{ID: "my-repo/my-chart"},
+			chartmodels.ChartFiles{ID: "my-repo/my-chart"},
 			http.StatusOK,
 		},
 	}
@@ -1150,51 +1150,51 @@ func Test_getChartVersionSchema(t *testing.T) {
 }
 
 func Test_findLatestChart(t *testing.T) {
-	chart1 := &models.Chart{
+	chart1 := &chartmodels.Chart{
 		Name:        "foo",
 		ID:          "foo",
 		Category:    "cat1",
 		Description: "best chart",
-		Repo: &models.Repo{
+		Repo: &chartmodels.Repo{
 			Name:      "bar",
 			Namespace: kubeappsNamespace,
 		},
-		ChartVersions: []models.ChartVersion{
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "1.0.0", AppVersion: "0.1.0"},
 			{Version: "1.0.0", AppVersion: "whatever"},
 			{Version: "whatever", AppVersion: "1.0.0"},
 		},
 	}
-	chart2 := &models.Chart{
+	chart2 := &chartmodels.Chart{
 		Name:        "no-name",
 		ID:          "no-id",
 		Category:    "no-category",
 		Description: "no-description",
-		Repo: &models.Repo{
+		Repo: &chartmodels.Repo{
 			Name:      "no-repo",
 			Namespace: kubeappsNamespace,
 		},
-		ChartVersions: []models.ChartVersion{
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "1.0.0", AppVersion: "whatever"},
 			{Version: "whatever", AppVersion: "1.0.0"},
 		},
 	}
-	chartDup1 := &models.Chart{
+	chartDup1 := &chartmodels.Chart{
 		Name: "foo",
 		ID:   "stable/foo",
-		Repo: &models.Repo{Name: "bar"},
-		ChartVersions: []models.ChartVersion{
+		Repo: &chartmodels.Repo{Name: "bar"},
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "1.0.0",
 				AppVersion: "0.1.0",
 				Digest:     "123",
 			},
 		},
 	}
-	chartDup2 := &models.Chart{
+	chartDup2 := &chartmodels.Chart{
 		Name: "foo",
 		ID:   "bitnami/foo",
-		Repo: &models.Repo{Name: "bar"},
-		ChartVersions: []models.ChartVersion{
+		Repo: &chartmodels.Repo{Name: "bar"},
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "1.0.0",
 				AppVersion: "0.1.0",
 				Digest:     "123",
@@ -1203,18 +1203,18 @@ func Test_findLatestChart(t *testing.T) {
 	}
 	tests := []struct {
 		name           string
-		charts         []*models.Chart
+		charts         []*chartmodels.Chart
 		chartName      string
 		version        string
 		appVersion     string
 		repos          string
 		categories     string
 		query          string
-		expectedCharts []*models.Chart
+		expectedCharts []*chartmodels.Chart
 	}{
 		{
 			name: "returns no charts (by name)",
-			charts: []*models.Chart{
+			charts: []*chartmodels.Chart{
 				chart1,
 			},
 			chartName:      "nothing",
@@ -1223,11 +1223,11 @@ func Test_findLatestChart(t *testing.T) {
 			repos:          "",
 			categories:     "",
 			query:          "",
-			expectedCharts: []*models.Chart{},
+			expectedCharts: []*chartmodels.Chart{},
 		},
 		{
 			name: "returns mocked chart (by name)",
-			charts: []*models.Chart{
+			charts: []*chartmodels.Chart{
 				chart1,
 				chart2,
 			},
@@ -1237,13 +1237,13 @@ func Test_findLatestChart(t *testing.T) {
 			repos:      "",
 			categories: "",
 			query:      "",
-			expectedCharts: []*models.Chart{
+			expectedCharts: []*chartmodels.Chart{
 				chart1,
 			},
 		},
 		{
 			name: "returns mocked chart (by version and appversion)",
-			charts: []*models.Chart{
+			charts: []*chartmodels.Chart{
 				chart1,
 				chart2,
 			},
@@ -1253,13 +1253,13 @@ func Test_findLatestChart(t *testing.T) {
 			repos:      "",
 			categories: "",
 			query:      "",
-			expectedCharts: []*models.Chart{
+			expectedCharts: []*chartmodels.Chart{
 				chart1,
 			},
 		},
 		{
 			name: "returns mocked chart (by repos)",
-			charts: []*models.Chart{
+			charts: []*chartmodels.Chart{
 				chart1,
 				chart2,
 			},
@@ -1269,13 +1269,13 @@ func Test_findLatestChart(t *testing.T) {
 			repos:      "bar",
 			categories: "",
 			query:      "",
-			expectedCharts: []*models.Chart{
+			expectedCharts: []*chartmodels.Chart{
 				chart1,
 			},
 		},
 		{
 			name: "returns mocked chart (by category)",
-			charts: []*models.Chart{
+			charts: []*chartmodels.Chart{
 				chart1,
 				chart2,
 			},
@@ -1285,13 +1285,13 @@ func Test_findLatestChart(t *testing.T) {
 			repos:      "",
 			categories: "cat1",
 			query:      "",
-			expectedCharts: []*models.Chart{
+			expectedCharts: []*chartmodels.Chart{
 				chart1,
 			},
 		},
 		{
 			name: "returns mocked chart (by query)",
-			charts: []*models.Chart{
+			charts: []*chartmodels.Chart{
 				chart1,
 				chart2,
 			},
@@ -1301,13 +1301,13 @@ func Test_findLatestChart(t *testing.T) {
 			repos:      "",
 			categories: "",
 			query:      "best",
-			expectedCharts: []*models.Chart{
+			expectedCharts: []*chartmodels.Chart{
 				chart1,
 			},
 		},
 		{
 			name: "includes duplicated charts",
-			charts: []*models.Chart{
+			charts: []*chartmodels.Chart{
 				chartDup1,
 				chartDup2,
 			},
@@ -1317,7 +1317,7 @@ func Test_findLatestChart(t *testing.T) {
 			repos:      "",
 			categories: "",
 			query:      "",
-			expectedCharts: []*models.Chart{
+			expectedCharts: []*chartmodels.Chart{
 				chartDup1,
 				chartDup2,
 			},

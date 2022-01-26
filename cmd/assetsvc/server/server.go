@@ -8,16 +8,16 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
-	"github.com/heptiolabs/healthcheck"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
+	mux "github.com/gorilla/mux"
+	healthcheck "github.com/heptiolabs/healthcheck"
+	assetmanager "github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
 	negroni "github.com/urfave/negroni/v2"
 	log "k8s.io/klog/v2"
 )
 
 type ServeOptions struct {
-	Manager              utils.AssetManager
+	Manager              assetmanager.AssetManager
 	DbURL                string
 	DbName               string
 	DbUsername           string
@@ -27,7 +27,7 @@ type ServeOptions struct {
 }
 
 // TODO(absoludity): Let's not use globals for storing state like this.
-var manager utils.AssetManager
+var manager assetmanager.AssetManager
 
 const pathPrefix = "/v1"
 
@@ -66,7 +66,7 @@ func Serve(serveOpts ServeOptions) error {
 	dbConfig := dbutils.Config{URL: *&serveOpts.DbURL, Database: *&serveOpts.DbName, Username: *&serveOpts.DbUsername, Password: serveOpts.DbPassword}
 
 	var err error
-	manager, err = utils.NewManager("postgresql", dbConfig, serveOpts.GlobalReposNamespace)
+	manager, err = assetmanager.NewManager("postgresql", dbConfig, serveOpts.GlobalReposNamespace)
 	if err != nil {
 		return fmt.Errorf("Error: %v", err)
 	}

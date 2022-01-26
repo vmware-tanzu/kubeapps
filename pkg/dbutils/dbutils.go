@@ -3,7 +3,9 @@
 
 package dbutils
 
-import "time"
+import (
+	"time"
+)
 
 // AssetManager basic manager for the different db types
 type AssetManager interface {

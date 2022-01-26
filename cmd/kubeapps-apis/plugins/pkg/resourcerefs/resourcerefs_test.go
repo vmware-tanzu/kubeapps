@@ -6,17 +6,17 @@ package resourcerefs
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	resourcerefstest "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	ignoredFields := cmpopts.IgnoreUnexported(
-		corev1.ResourceRef{},
+		pkgsGRPCv1alpha1.ResourceRef{},
 	)
 
 	testCases := []resourcerefstest.TestCase{}
@@ -33,9 +33,9 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				tc.ExistingReleases[0].Namespace)
 			expectedStatusCode := tc.ExpectedErrStatusCode
 			if expectedStatusCode == 0 {
-				expectedStatusCode = codes.OK
+				expectedStatusCode = grpccodes.OK
 			}
-			if got, want := status.Code(err), expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 

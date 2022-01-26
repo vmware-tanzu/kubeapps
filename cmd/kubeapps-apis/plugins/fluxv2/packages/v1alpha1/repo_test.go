@@ -13,28 +13,28 @@ import (
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pkgfluxv2v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
-	typfake "k8s.io/client-go/kubernetes/fake"
+	k8sapiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	k8sapiextensionsclientfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8stypes "k8s.io/apimachinery/pkg/types"
+	k8ssets "k8s.io/apimachinery/pkg/util/sets"
+	k8swatch "k8s.io/apimachinery/pkg/watch"
+	k8dynamicclient "k8s.io/client-go/dynamic"
+	k8dynamicclientfake "k8s.io/client-go/dynamic/fake"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8stypedclientfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
 
@@ -48,10 +48,10 @@ type testSpecGetAvailablePackageSummaries struct {
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
-		request           *corev1.GetAvailablePackageSummariesRequest
+		request           *pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest
 		repos             []testSpecGetAvailablePackageSummaries
-		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
-		expectedErrorCode codes.Code
+		expectedResponse  *pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse
+		expectedErrorCode grpccodes.Code
 	}{
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
@@ -63,8 +63,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/valid-index.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{}},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: valid_index_package_summaries,
 			},
 		},
@@ -78,8 +78,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/valid-index.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{Namespace: "default"}},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: valid_index_package_summaries,
 			},
 		},
@@ -93,11 +93,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/valid-index.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{
 				Cluster:   KubeappsCluster,
 				Namespace: "default",
 			}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: valid_index_package_summaries,
 			},
 		},
@@ -117,8 +117,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/jetstack-index.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{Namespace: "non-default"}},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: append(valid_index_package_summaries, cert_manager_summary),
 			},
 		},
@@ -138,14 +138,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/jetstack-index.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					Repositories: []string{"jetstack-1"},
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 					cert_manager_summary,
 				},
 			},
@@ -166,14 +166,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/jetstack-index.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					Repositories: []string{"jetstack-2"},
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -186,14 +186,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					Categories: []string{"Analytics"},
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 					elasticsearch_summary,
 				},
 			},
@@ -208,13 +208,13 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					Categories: []string{"Analytics", "CMS"},
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
 				AvailablePackageSummaries: index_with_categories_summaries,
 			},
 		},
@@ -228,14 +228,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					Categories: []string{"Foo"},
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -248,14 +248,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					AppVersion: "4.7.0",
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 					ghost_summary,
 				},
 			},
@@ -270,14 +270,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					AppVersion: "99.99.99",
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -290,14 +290,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					PkgVersion: "15.5.0",
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 					elasticsearch_summary,
 				},
 			},
@@ -312,14 +312,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					PkgVersion: "99.99.99",
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -332,14 +332,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					Query: "ela",
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 					elasticsearch_summary,
 				},
 			},
@@ -354,14 +354,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					Query: "vascrip",
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 					ghost_summary,
 				},
 			},
@@ -376,14 +376,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				FilterOptions: &corev1.FilterOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				FilterOptions: &pkgsGRPCv1alpha1.FilterOptions{
 					Query: "qwerty",
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{},
 			},
 		},
 		{
@@ -396,15 +396,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{
 					PageToken: "0",
 					PageSize:  1,
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 					elasticsearch_summary,
 				},
 				NextPageToken: "1",
@@ -420,15 +420,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{
 					PageToken: "1",
 					PageSize:  1,
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 					ghost_summary,
 				},
 				NextPageToken: "2",
@@ -444,30 +444,30 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					index:     "testdata/index-with-categories.yaml",
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "blah"},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{
 					PageToken: "2",
 					PageSize:  1,
 				},
 			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			expectedResponse: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*pkgsGRPCv1alpha1.AvailablePackageSummary{},
 				NextPageToken:             "",
 			},
 		},
 		{
 			name: "it returns an error if a cluster other than the kubeapps cluster is specified",
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{
 				Cluster: "not-kubeapps-cluster",
 			}},
-			expectedErrorCode: codes.Unimplemented,
+			expectedErrorCode: grpccodes.Unimplemented,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repos := []runtime.Object{}
+			repos := []k8sruntime.Object{}
 
 			for _, rs := range tc.repos {
 				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
@@ -490,12 +490,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
-			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %v, want: %v", got, want)
 			}
 			// If an error code was expected, then no need to continue checking
 			// the response.
-			if tc.expectedErrorCode != codes.OK {
+			if tc.expectedErrorCode != grpccodes.OK {
 				return
 			}
 
@@ -503,7 +503,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+			opt1 := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{}, pkgsGRPCv1alpha1.AvailablePackageSummary{}, pkgsGRPCv1alpha1.AvailablePackageReference{}, pkgsGRPCv1alpha1.Context{}, pluginsGRPCv1alpha1.Plugin{}, pkgsGRPCv1alpha1.PackageAppVersion{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -557,7 +557,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil, nil)
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, []k8sruntime.Object{repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -568,7 +568,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 		responseBeforeUpdate, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -577,7 +577,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
+		opt1 := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.AvailablePackageDetail{}, pkgsGRPCv1alpha1.AvailablePackageSummary{}, pkgsGRPCv1alpha1.AvailablePackageReference{}, pkgsGRPCv1alpha1.Context{}, pluginsGRPCv1alpha1.Plugin{}, pkgsGRPCv1alpha1.Maintainer{}, pkgsGRPCv1alpha1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeUpdate.AvailablePackageSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -592,16 +592,16 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
-		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
-		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
+		k8smetaunstructuredv1.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
+		k8smetaunstructuredv1.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
+		k8smetaunstructuredv1.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
 		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
 		mock.ExpectGet(key).SetVal(string(oldValue))
 		key, newValue, err := s.redisMockSetValueForRepo(mock, repo)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-		if repo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(context.Background(), repo, metav1.UpdateOptions{}); err != nil {
+		if repo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(context.Background(), repo, k8smetav1.UpdateOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -617,7 +617,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -634,7 +634,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 	t.Run("test get available package summaries after flux helm repository CRD gets deleted", func(t *testing.T) {
-		repoName := types.NamespacedName{Namespace: "default", Name: "bitnami-1"}
+		repoName := k8stypes.NamespacedName{Namespace: "default", Name: "bitnami-1"}
 		replaceUrls := make(map[string]string)
 		charts := []testSpecChartWithUrl{}
 		for _, s := range valid_index_charts_spec {
@@ -664,7 +664,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		defer ts.Close()
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, []k8sruntime.Object{repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -680,7 +680,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		responseBeforeDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -689,7 +689,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
+		opt1 := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.AvailablePackageDetail{}, pkgsGRPCv1alpha1.AvailablePackageSummary{}, pkgsGRPCv1alpha1.AvailablePackageReference{}, pkgsGRPCv1alpha1.Context{}, pluginsGRPCv1alpha1.Plugin{}, pkgsGRPCv1alpha1.Maintainer{}, pkgsGRPCv1alpha1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -712,7 +712,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		if err = dyncli.Resource(repositoriesGvr).Namespace(repoName.Namespace).Delete(
-			context.Background(), repoName.Name, metav1.DeleteOptions{}); err != nil {
+			context.Background(), repoName.Name, k8smetav1.DeleteOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -737,7 +737,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -761,7 +761,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil, nil)
+		s, mock, _, watcher, err := newServerWithRepos(t, []k8sruntime.Object{repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -772,7 +772,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		responseBeforeResync, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -781,7 +781,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
+		opt1 := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.AvailablePackageDetail{}, pkgsGRPCv1alpha1.AvailablePackageSummary{}, pkgsGRPCv1alpha1.AvailablePackageReference{}, pkgsGRPCv1alpha1.Context{}, pluginsGRPCv1alpha1.Plugin{}, pkgsGRPCv1alpha1.Maintainer{}, pkgsGRPCv1alpha1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -795,7 +795,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
 		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
 		// background: a FLUSHDB followed by a SET
-		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+		watcher.Error(&k8serrors.NewGone("test HTTP 410 Gone").ErrStatus)
 
 		// wait for the server to start the resync process. Don't care how big the work queue is
 		<-resyncCh
@@ -820,7 +820,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		responseAfterResync, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -847,7 +847,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		}
 
 		// first, I'd like to fill up the work queue with a whole bunch of work items
-		repos := []*unstructured.Unstructured{}
+		repos := []*k8smetaunstructuredv1.Unstructured{}
 		mapReposCached := make(map[string][]byte)
 		keysInOrder := []string{}
 
@@ -876,7 +876,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 
 		for _, r := range repos {
 			if _, err = dyncli.Resource(repositoriesGvr).Namespace("default").
-				Create(context.Background(), r, metav1.CreateOptions{}); err != nil {
+				Create(context.Background(), r, k8smetav1.CreateOptions{}); err != nil {
 				t.Fatalf("%v", err)
 			}
 		}
@@ -901,7 +901,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			}
 
 			// now we will simulate a HTTP 410 Gone error in the watcher
-			watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+			watcher.Error(&k8serrors.NewGone("test HTTP 410 Gone").ErrStatus)
 			// we need to wait until server can guarantee no more Redis SETs after
 			// this until resync() kicks in
 			len := <-resyncCh
@@ -948,14 +948,14 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		}
 
 		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
-			&corev1.GetAvailablePackageSummariesRequest{})
+			&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
 
 		// we need to make sure that response contains packages from all existing repositories
 		// regardless whether they're in the cache or not
-		expected := sets.String{}
+		expected := k8ssets.String{}
 		for i := 0; i < len(repos); i++ {
 			repo := fmt.Sprintf("bitnami-%d", i)
 			expected.Insert(repo)
@@ -1007,7 +1007,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		redisMockSetValueForRepo(mock, key, byteArray)
 
 		if _, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(context.Background(), repo, metav1.CreateOptions{}); err != nil {
+			Create(context.Background(), repo, k8smetav1.CreateOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -1029,7 +1029,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 			}
 
 			// now we will simulate a HTTP 410 Gone error in the watcher
-			watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+			watcher.Error(&k8serrors.NewGone("test HTTP 410 Gone").ErrStatus)
 			// we need to wait until server can guarantee no more Redis SETs after
 			// this until resync() kicks in
 			len := <-resyncCh
@@ -1061,14 +1061,14 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		mock.ExpectGet(key).SetVal(string(byteArray))
 
 		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
-			&corev1.GetAvailablePackageSummariesRequest{})
+			&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
 
 		// we need to make sure that response contains packages from all existing repositories
 		// regardless whether they're in the cache or not
-		expected := sets.String{}
+		expected := k8ssets.String{}
 		expected.Insert(repoName)
 		for _, s := range resp.AvailablePackageSummaries {
 			id := strings.Split(s.AvailablePackageRef.Identifier, "/")
@@ -1089,26 +1089,26 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name                        string
-		request                     *v1alpha1.GetPackageRepositoriesRequest
+		request                     *pkgfluxv2v1alpha1.GetPackageRepositoriesRequest
 		repoNamespace               string
 		repoSpecs                   map[string]map[string]interface{}
-		expectedPackageRepositories []*v1alpha1.PackageRepository
-		statusCode                  codes.Code
+		expectedPackageRepositories []*pkgfluxv2v1alpha1.PackageRepository
+		statusCode                  grpccodes.Code
 	}{
 		{
-			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
-			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
+			name:          "returns an internal error status if item in response cannot be converted to pkgfluxv2v1alpha1.PackageRepository",
+			request:       &pkgfluxv2v1alpha1.GetPackageRepositoriesRequest{Context: &pkgsGRPCv1alpha1.Context{}},
 			repoNamespace: "default",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
 					"foo": "bar",
 				},
 			},
-			statusCode: codes.Internal,
+			statusCode: grpccodes.Internal,
 		},
 		{
 			name:          "returns expected repositories",
-			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
+			request:       &pkgfluxv2v1alpha1.GetPackageRepositoriesRequest{Context: &pkgsGRPCv1alpha1.Context{}},
 			repoNamespace: "default",
 			repoSpecs: map[string]map[string]interface{}{
 				"repo-1": {
@@ -1118,7 +1118,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{
+			expectedPackageRepositories: []*pkgfluxv2v1alpha1.PackageRepository{
 				{
 					Name:      "repo-1",
 					Namespace: "default",
@@ -1133,8 +1133,8 @@ func TestGetPackageRepositories(t *testing.T) {
 		},
 		{
 			name: "returns expected repositories in specific namespace",
-			request: &v1alpha1.GetPackageRepositoriesRequest{
-				Context: &corev1.Context{
+			request: &pkgfluxv2v1alpha1.GetPackageRepositoriesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Namespace: "default",
 				},
 			},
@@ -1147,12 +1147,12 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
+			expectedPackageRepositories: []*pkgfluxv2v1alpha1.PackageRepository{},
 		},
 		{
 			name: "returns expected repositories in specific namespace (2)",
-			request: &v1alpha1.GetPackageRepositoriesRequest{
-				Context: &corev1.Context{
+			request: &pkgfluxv2v1alpha1.GetPackageRepositoriesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Namespace: "default",
 				},
 			},
@@ -1165,7 +1165,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					"url": "https://charts.helm.sh/stable",
 				},
 			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{
+			expectedPackageRepositories: []*pkgfluxv2v1alpha1.PackageRepository{
 				{
 					Name:      "repo-1",
 					Namespace: "default",
@@ -1189,16 +1189,16 @@ func TestGetPackageRepositories(t *testing.T) {
 
 			response, err := s.GetPackageRepositories(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			// Only check the response for OK status.
-			if tc.statusCode == codes.OK {
+			// Only check the response for OK grpcstatus.
+			if tc.statusCode == grpccodes.OK {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
+					opt1 := cmpopts.IgnoreUnexported(pkgfluxv2v1alpha1.PackageRepository{}, pkgsGRPCv1alpha1.Context{})
 					opt2 := cmpopts.SortSlices(lessPackageRepositoryFunc)
 					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1, opt2) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -1213,11 +1213,11 @@ func TestGetPackageRepositories(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
-	typedClient := typfake.NewSimpleClientset(secrets...)
-	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
-		map[schema.GroupVersionResource]string{
+func newServerWithRepos(t *testing.T, repos []k8sruntime.Object, charts []testSpecChartWithUrl, secrets []k8sruntime.Object) (*Server, redismock.ClientMock, *k8dynamicclientfake.FakeDynamicClient, *k8swatch.FakeWatcher, error) {
+	typedClient := k8stypedclientfake.NewSimpleClientset(secrets...)
+	dynamicClient := k8dynamicclientfake.NewSimpleDynamicClientWithCustomListKinds(
+		k8sruntime.NewScheme(),
+		map[k8sschema.GroupVersionResource]string{
 			repositoriesGvr: fluxHelmRepositoryList,
 		},
 		repos...)
@@ -1228,10 +1228,10 @@ func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecC
 	// is critical
 	reactor := dynamicClient.Fake.ReactionChain[0]
 	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
-		func(action k8stesting.Action) (bool, runtime.Object, error) {
+		func(action k8stesting.Action) (bool, k8sruntime.Object, error) {
 			handled, ret, err := reactor.React(action)
 			if err == nil {
-				ulist, ok := ret.(*unstructured.UnstructuredList)
+				ulist, ok := ret.(*k8smetaunstructuredv1.UnstructuredList)
 				if ok && ulist != nil {
 					ulist.SetResourceVersion("1")
 				}
@@ -1239,15 +1239,15 @@ func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecC
 			return handled, ret, err
 		})
 
-	watcher := watch.NewFake()
+	watcher := k8swatch.NewFake()
 
 	dynamicClient.Fake.PrependWatchReactor(
 		fluxHelmRepositories,
 		k8stesting.DefaultWatchReactor(watcher, nil))
 
-	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	apiextIfc := k8sapiextensionsclientfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
+	clientGetter := func(context.Context) (k8stypedclient.Interface, k8dynamicclient.Interface, k8sapiextensionsclient.Interface, error) {
 		return typedClient, dynamicClient, apiextIfc, nil
 	}
 
@@ -1255,7 +1255,7 @@ func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecC
 	return s, mock, dynamicClient, watcher, err
 }
 
-func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *k8smetaunstructuredv1.Unstructured {
 	metadata := map[string]interface{}{
 		"name":            name,
 		"generation":      int64(1),
@@ -1279,14 +1279,14 @@ func newRepo(name string, namespace string, spec map[string]interface{}, status 
 		obj["status"] = status
 	}
 
-	return &unstructured.Unstructured{
+	return &k8smetaunstructuredv1.Unstructured{
 		Object: obj,
 	}
 }
 
 // newRepos takes a map of specs keyed by object name converting them to unstructured objects.
-func newRepos(specs map[string]map[string]interface{}, namespace string) []runtime.Object {
-	repos := []runtime.Object{}
+func newRepos(specs map[string]map[string]interface{}, namespace string) []k8sruntime.Object {
+	repos := []k8sruntime.Object{}
 	for name, spec := range specs {
 		repo := newRepo(name, namespace, spec, nil)
 		repos = append(repos, repo)
@@ -1294,10 +1294,10 @@ func newRepos(specs map[string]map[string]interface{}, namespace string) []runti
 	return repos
 }
 
-// ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+// ref: https://k8stypedclient.io/docs/concepts/configuration/secret/#basic-authentication-secret
 func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secret {
 	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
@@ -1309,14 +1309,14 @@ func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secre
 	}
 }
 
-// Note that according to https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+// Note that according to https://k8stypedclient.io/docs/concepts/configuration/secret/#tls-secrets
 // TLS secrets need to look one way, but according to
 // https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
 // in a different format:
 // certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
 func newTlsSecret(name, namespace string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
 	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
@@ -1331,7 +1331,7 @@ func newTlsSecret(name, namespace string, pub, priv, ca []byte) (*k8scorev1.Secr
 
 func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
 	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
@@ -1348,7 +1348,7 @@ func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca
 
 // these functiosn should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
-func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
+func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *pkgsGRPCv1alpha1.FilterOptions, repos ...k8sruntime.Object) error {
 	mapVals := make(map[string][]byte)
 	for _, r := range repos {
 		key, bytes, err := s.redisKeyValueForRepo(r)
@@ -1373,7 +1373,7 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 	return nil
 }
 
-func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
+func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo k8sruntime.Object) (key string, bytes []byte, err error) {
 	cs := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   nil,
@@ -1381,7 +1381,7 @@ func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtim
 	return cs.redisMockSetValueForRepo(mock, repo)
 }
 
-func (cs *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, byteArray []byte, err error) {
+func (cs *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo k8sruntime.Object) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(repo); err != nil {
 		return key, nil, err
 	}
@@ -1399,7 +1399,7 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, byteArray [
 	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
 }
 
-func (s *Server) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
+func (s *Server) redisKeyValueForRepo(r k8sruntime.Object) (key string, byteArray []byte, err error) {
 	cs := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   nil,
@@ -1407,7 +1407,7 @@ func (s *Server) redisKeyValueForRepo(r runtime.Object) (key string, byteArray [
 	return cs.redisKeyValueForRepo(r)
 }
 
-func (cs *repoEventSink) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
+func (cs *repoEventSink) redisKeyValueForRepo(r k8sruntime.Object) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {
@@ -1415,7 +1415,7 @@ func (cs *repoEventSink) redisKeyValueForRepo(r runtime.Object) (key string, byt
 		// onAddRepo to compute the value that *WOULD* be stored in the cache
 		var byteArray interface{}
 		var add bool
-		byteArray, add, err = cs.onAddRepo(key, r.(*unstructured.Unstructured).Object)
+		byteArray, add, err = cs.onAddRepo(key, r.(*k8smetaunstructuredv1.Unstructured).Object)
 		if err != nil {
 			return key, nil, err
 		} else if !add {
@@ -1425,28 +1425,28 @@ func (cs *repoEventSink) redisKeyValueForRepo(r runtime.Object) (key string, byt
 	}
 }
 
-func redisKeyForRepo(r runtime.Object) (string, error) {
+func redisKeyForRepo(r k8sruntime.Object) (string, error) {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
-	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// Try to stick with a k8sschema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
-	return redisKeyForRepoNamespacedName(types.NamespacedName{
-		Namespace: r.(*unstructured.Unstructured).GetNamespace(),
-		Name:      r.(*unstructured.Unstructured).GetName()})
+	return redisKeyForRepoNamespacedName(k8stypes.NamespacedName{
+		Namespace: r.(*k8smetaunstructuredv1.Unstructured).GetNamespace(),
+		Name:      r.(*k8smetaunstructuredv1.Unstructured).GetName()})
 }
 
-func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
+func redisKeyForRepoNamespacedName(name k8stypes.NamespacedName) (string, error) {
 	if name.Name == "" || name.Namespace == "" {
 		return "", fmt.Errorf("invalid key: [%s]", name)
 	}
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
-	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// Try to stick with a k8sschema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
 	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
-func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *unstructured.Unstructured, error) {
+func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *k8smetaunstructuredv1.Unstructured, error) {
 	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
 	if err != nil {
 		return nil, nil, err
@@ -1495,7 +1495,7 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 }
 
 // misc global vars that get re-used in multiple tests scenarios
-var repositoriesGvr = schema.GroupVersionResource{
+var repositoriesGvr = k8sschema.GroupVersionResource{
 	Group:    fluxGroup,
 	Version:  fluxVersion,
 	Resource: fluxHelmRepositories,
@@ -1519,19 +1519,19 @@ var valid_index_charts_spec = []testSpecChartWithFile{
 	},
 }
 
-var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
+var valid_index_package_summaries = []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 	{
 		Name:        "acs-engine-autoscaler",
 		DisplayName: "acs-engine-autoscaler",
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "2.1.1",
 			AppVersion: "2.1.1",
 		},
 		IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
 		ShortDescription: "Scales worker nodes within agent pools",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 			Identifier: "bitnami-1/acs-engine-autoscaler",
-			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+			Context:    &pkgsGRPCv1alpha1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 		Categories: []string{""},
@@ -1539,89 +1539,89 @@ var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
 	{
 		Name:        "wordpress",
 		DisplayName: "wordpress",
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "0.7.5",
 			AppVersion: "4.9.1",
 		},
 		IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
 		ShortDescription: "new description!",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 			Identifier: "bitnami-1/wordpress",
-			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+			Context:    &pkgsGRPCv1alpha1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 		Categories: []string{""},
 	},
 }
 
-var cert_manager_summary = &corev1.AvailablePackageSummary{
+var cert_manager_summary = &pkgsGRPCv1alpha1.AvailablePackageSummary{
 	Name:        "cert-manager",
 	DisplayName: "cert-manager",
-	LatestVersion: &corev1.PackageAppVersion{
+	LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 		PkgVersion: "v1.4.0",
 		AppVersion: "v1.4.0",
 	},
 	IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
 	ShortDescription: "A Helm chart for cert-manager",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
+	AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 		Identifier: "jetstack-1/cert-manager",
-		Context:    &corev1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
+		Context:    &pkgsGRPCv1alpha1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 	Categories: []string{""},
 }
 
-var elasticsearch_summary = &corev1.AvailablePackageSummary{
+var elasticsearch_summary = &pkgsGRPCv1alpha1.AvailablePackageSummary{
 	Name:        "elasticsearch",
 	DisplayName: "elasticsearch",
-	LatestVersion: &corev1.PackageAppVersion{
+	LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 		PkgVersion: "15.5.0",
 		AppVersion: "7.13.2",
 	},
 	IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
 	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
+	AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 		Identifier: "index-with-categories-1/elasticsearch",
-		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+		Context:    &pkgsGRPCv1alpha1.Context{Namespace: "default", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 	Categories: []string{"Analytics"},
 }
 
-var ghost_summary = &corev1.AvailablePackageSummary{
+var ghost_summary = &pkgsGRPCv1alpha1.AvailablePackageSummary{
 	Name:        "ghost",
 	DisplayName: "ghost",
-	LatestVersion: &corev1.PackageAppVersion{
+	LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 		PkgVersion: "13.0.14",
 		AppVersion: "4.7.0",
 	},
 	IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
 	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
+	AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 		Identifier: "index-with-categories-1/ghost",
-		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+		Context:    &pkgsGRPCv1alpha1.Context{Namespace: "default", Cluster: KubeappsCluster},
 		Plugin:     fluxPlugin,
 	},
 	Categories: []string{"CMS"},
 }
 
-var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
+var index_with_categories_summaries = []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 	elasticsearch_summary,
 	ghost_summary,
 }
 
-var index_before_update_summaries = []*corev1.AvailablePackageSummary{
+var index_before_update_summaries = []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 	{
 		Name:        "alpine",
 		DisplayName: "alpine",
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "0.2.0",
 		},
 		IconUrl:          "",
 		ShortDescription: "Deploy a basic Alpine Linux pod",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+			Context:    &pkgsGRPCv1alpha1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 		Categories: []string{""},
@@ -1629,32 +1629,32 @@ var index_before_update_summaries = []*corev1.AvailablePackageSummary{
 	{
 		Name:        "nginx",
 		DisplayName: "nginx",
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "1.1.0",
 		},
 		IconUrl:          "",
 		ShortDescription: "Create a basic nginx HTTP server",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+			Context:    &pkgsGRPCv1alpha1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 		Categories: []string{""},
 	},
 }
 
-var index_after_update_summaries = []*corev1.AvailablePackageSummary{
+var index_after_update_summaries = []*pkgsGRPCv1alpha1.AvailablePackageSummary{
 	{
 		Name:        "alpine",
 		DisplayName: "alpine",
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "0.3.0",
 		},
 		IconUrl:          "",
 		ShortDescription: "Deploy a basic Alpine Linux pod",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+			Context:    &pkgsGRPCv1alpha1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 		Categories: []string{""},
@@ -1662,14 +1662,14 @@ var index_after_update_summaries = []*corev1.AvailablePackageSummary{
 	{
 		Name:        "nginx",
 		DisplayName: "nginx",
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "1.1.0",
 		},
 		IconUrl:          "",
 		ShortDescription: "Create a basic nginx HTTP server",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+			Context:    &pkgsGRPCv1alpha1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
 		Categories: []string{""},

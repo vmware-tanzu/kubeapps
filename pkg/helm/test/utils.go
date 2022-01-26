@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kubeapps/kubeapps/pkg/helm"
+	helmutils "github.com/kubeapps/kubeapps/pkg/helm"
 )
 
 // CheckHeader verifies that the given puller contains the given header
-func CheckHeader(t *testing.T, puller helm.ChartPuller, key, value string) {
+func CheckHeader(t *testing.T, puller helmutils.ChartPuller, key, value string) {
 	// The header property is private so we need to use reflect to get its value
-	resolver := puller.(*helm.OCIPuller).Resolver
+	resolver := puller.(*helmutils.OCIPuller).Resolver
 	resolverValue := reflect.ValueOf(resolver)
 	headerValue := reflect.Indirect(resolverValue).FieldByName("header")
 	got := fmt.Sprintf("%v", headerValue)

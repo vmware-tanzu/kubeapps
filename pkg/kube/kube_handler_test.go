@@ -18,24 +18,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	authorizationapi "k8s.io/api/authorization/v1"
-	authorizationv1 "k8s.io/api/authorization/v1"
-	corev1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
-	fakecoreclientset "k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/rest"
-	fakeRest "k8s.io/client-go/rest/fake"
-	k8stesting "k8s.io/client-go/testing"
-
-	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	fakeapprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	apprepofakeclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	k8sauthorizationv1 "k8s.io/api/authorization/v1"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8discoveryclient "k8s.io/client-go/discovery"
+	k8stypedclientfake "k8s.io/client-go/kubernetes/fake"
+	k8srest "k8s.io/client-go/rest"
+	k8srestfake "k8s.io/client-go/rest/fake"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 type repoStub struct {
@@ -60,53 +58,53 @@ func (f *fakeHTTPCli) Do(r *http.Request) (*http.Response, error) {
 
 const kubeappsNamespace = "kubeapps"
 
-func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []runtime.Object {
-	objects := []runtime.Object{}
+func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []k8sruntime.Object {
+	objects := []k8sruntime.Object{}
 	for namespace, repoStubs := range reposPerNamespace {
 		for _, repoStub := range repoStubs {
-			appRepo := &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo := &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      repoStub.name,
 					Namespace: namespace,
 				},
 			}
 			if repoStub.private {
-				authHeader := &v1alpha1.AppRepositoryAuthHeader{}
+				authHeader := &apprepov1alpha1.AppRepositoryAuthHeader{}
 				authHeader.SecretKeyRef.LocalObjectReference.Name = secretNameForRepo(repoStub.name)
 				appRepo.Spec.Auth.Header = authHeader
 			}
-			objects = append(objects, runtime.Object(appRepo))
+			objects = append(objects, k8sruntime.Object(appRepo))
 		}
 	}
 	return objects
 }
 
-func makeSecretObjects(secretsPerNamespace map[string][]secretStub) []runtime.Object {
-	objects := []runtime.Object{}
+func makeSecretObjects(secretsPerNamespace map[string][]secretStub) []k8sruntime.Object {
+	objects := []k8sruntime.Object{}
 	for namespace, secretsStubs := range secretsPerNamespace {
 		for _, secretStub := range secretsStubs {
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
+			secret := &k8scorev1.Secret{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      secretStub.name,
 					Namespace: namespace,
 				},
 			}
-			objects = append(objects, runtime.Object(secret))
+			objects = append(objects, k8sruntime.Object(secret))
 		}
 	}
 	return objects
 }
 
-func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamespace string) []runtime.Object {
-	objects := []runtime.Object{}
+func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamespace string) []k8sruntime.Object {
+	objects := []k8sruntime.Object{}
 	for namespace, repoStubs := range reposPerNamespace {
 		for _, repoStub := range repoStubs {
 			// Only create secrets if it's a private repo.
 			if !repoStub.private {
 				continue
 			}
-			var appRepo runtime.Object = &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
+			var appRepo k8sruntime.Object = &k8scorev1.Secret{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      secretNameForRepo(repoStub.name),
 					Namespace: namespace,
 				},
@@ -116,8 +114,8 @@ func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamesp
 			// Only create a copy of the secret in the kubeapps namespace if the app repo
 			// is in a user namespace.
 			if namespace != kubeappsNamespace {
-				var appRepo runtime.Object = &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
+				var appRepo k8sruntime.Object = &k8scorev1.Secret{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      KubeappsSecretNameForRepo(repoStub.name, namespace),
 						Namespace: kubeappsNamespace,
 					},
@@ -129,20 +127,20 @@ func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamesp
 	return objects
 }
 
-type fakeAppRepoClientset = fakeapprepoclientset.Clientset
+type fakeAppRepoClientset = apprepofakeclientset.Clientset
 type fakeCombinedClientset struct {
 	*fakeAppRepoClientset
-	*fakecoreclientset.Clientset
-	rc *fakeRest.RESTClient
+	*k8stypedclientfake.Clientset
+	rc *k8srestfake.RESTClient
 }
 
 // Not sure why golang thinks this Discovery() is ambiguous on the fake but not on
 // the real combinedClientset, but to satisfy:
-func (f fakeCombinedClientset) Discovery() discovery.DiscoveryInterface {
+func (f fakeCombinedClientset) Discovery() k8discoveryclient.DiscoveryInterface {
 	return f.Clientset.Discovery()
 }
 
-func (f fakeCombinedClientset) RestClient() rest.Interface {
+func (f fakeCombinedClientset) RestClient() k8srest.Interface {
 	return f.rc
 }
 
@@ -162,7 +160,7 @@ func checkErr(t *testing.T, err error, expectedError error) {
 	}
 }
 
-func checkAppRepo(t *testing.T, requestData string, requestNamespace string, cs fakeCombinedClientset) (appRepositoryRequest, *v1alpha1.AppRepository, *v1alpha1.AppRepository) {
+func checkAppRepo(t *testing.T, requestData string, requestNamespace string, cs fakeCombinedClientset) (appRepositoryRequest, *apprepov1alpha1.AppRepository, *apprepov1alpha1.AppRepository) {
 	var appRepoRequest appRepositoryRequest
 	err := json.NewDecoder(strings.NewReader(requestData)).Decode(&appRepoRequest)
 	if err != nil {
@@ -173,7 +171,7 @@ func checkAppRepo(t *testing.T, requestData string, requestNamespace string, cs 
 	expectedAppRepo := appRepositoryForRequest(&appRepoRequest)
 	expectedAppRepo.ObjectMeta.Namespace = requestNamespace
 
-	responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(context.TODO(), expectedAppRepo.ObjectMeta.Name, metav1.GetOptions{})
+	responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(context.TODO(), expectedAppRepo.ObjectMeta.Name, k8smetav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("expected data %v not present: %+v", expectedAppRepo, err)
 	}
@@ -184,7 +182,7 @@ func checkAppRepo(t *testing.T, requestData string, requestNamespace string, cs 
 	return appRepoRequest, expectedAppRepo, responseAppRepo
 }
 
-func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepositoryRequest, expectedAppRepo *v1alpha1.AppRepository, responseAppRepo *v1alpha1.AppRepository, handler userHandler) {
+func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepositoryRequest, expectedAppRepo *apprepov1alpha1.AppRepository, responseAppRepo *apprepov1alpha1.AppRepository, handler userHandler) {
 	// TODO(#1655)
 	// The fake k8s API does not generate UID's for created object
 	// (among other things). We would need to add reactors to the fake
@@ -199,7 +197,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 			t.Errorf("error getting the expected secret: %+v", err)
 		}
 		expectedSecret.ObjectMeta.Namespace = requestNamespace
-		responseSecret, err := handler.clientset.CoreV1().Secrets(requestNamespace).Get(context.TODO(), expectedSecret.ObjectMeta.Name, metav1.GetOptions{})
+		responseSecret, err := handler.clientset.CoreV1().Secrets(requestNamespace).Get(context.TODO(), expectedSecret.ObjectMeta.Name, k8smetav1.GetOptions{})
 
 		if err != nil {
 			t.Errorf("expected data %v not present: %+v", expectedSecret, err)
@@ -218,7 +216,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 		expectedSecret.ObjectMeta.OwnerReferences = nil
 
 		if requestNamespace != kubeappsNamespace {
-			responseSecret, err = handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), kubeappsSecretName, metav1.GetOptions{})
+			responseSecret, err = handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), kubeappsSecretName, k8smetav1.GetOptions{})
 			if err != nil {
 				t.Errorf("expected data %v not present: %+v", expectedSecret, err)
 			}
@@ -228,7 +226,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 			}
 		} else {
 			// The copy of the secret should not be created when the request namespace is kubeapps.
-			secret, err := handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), kubeappsSecretName, metav1.GetOptions{})
+			secret, err := handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), kubeappsSecretName, k8smetav1.GetOptions{})
 			if err == nil {
 				t.Fatalf("secret should not be created, found %+v", secret)
 			}
@@ -318,9 +316,9 @@ func TestAppRepositoryCreate(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cs := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
+				apprepofakeclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
+				k8stypedclientfake.NewSimpleClientset(),
+				&k8srestfake.RESTClient{},
 			}
 			handler := userHandler{
 				kubeappsNamespace: kubeappsNamespace,
@@ -364,9 +362,9 @@ func TestAppRepositoryList(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cs := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
+				apprepofakeclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
+				k8stypedclientfake.NewSimpleClientset(),
+				&k8srestfake.RESTClient{},
 			}
 			// Depending on the namespace, we instantiate the svcClientset or the user clientset
 			// to ensure that we are using the expected clientset.
@@ -478,9 +476,9 @@ func TestAppRepositoryUpdate(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cs := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
+				apprepofakeclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
+				k8stypedclientfake.NewSimpleClientset(),
+				&k8srestfake.RESTClient{},
 			}
 			handler := userHandler{
 				kubeappsNamespace: kubeappsNamespace,
@@ -538,12 +536,12 @@ func TestDeleteAppRepository(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cs := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
-				fakecoreclientset.NewSimpleClientset(makeSecretsForRepos(tc.existingRepos, kubeappsNamespace)...),
-				&fakeRest.RESTClient{},
+				apprepofakeclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
+				k8stypedclientfake.NewSimpleClientset(makeSecretsForRepos(tc.existingRepos, kubeappsNamespace)...),
+				&k8srestfake.RESTClient{},
 			}
 			handler := kubeHandler{
-				clientsetForConfig:   func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
+				clientsetForConfig:   func(*k8srest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:    kubeappsNamespace,
 				kubeappsSvcClientset: cs,
 				clustersConfig: ClustersConfig{
@@ -574,7 +572,7 @@ func TestDeleteAppRepository(t *testing.T) {
 
 			if err == nil {
 				// Ensure the repo has been deleted, so expecting a 404.
-				_, err = cs.KubeappsV1alpha1().AppRepositories(tc.requestNamespace).Get(context.TODO(), tc.repoName, metav1.GetOptions{})
+				_, err = cs.KubeappsV1alpha1().AppRepositories(tc.requestNamespace).Get(context.TODO(), tc.repoName, k8smetav1.GetOptions{})
 				if got, want := errorCodeForK8sError(t, err), 404; got != want {
 					t.Errorf("got: %d, want: %d", got, want)
 				}
@@ -583,7 +581,7 @@ func TestDeleteAppRepository(t *testing.T) {
 				// because the fake client does not handle finalizers but verified in real life.
 
 				// Ensure any copy of the repo credentials has been deleted from the kubeapps namespace.
-				_, err = cs.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), KubeappsSecretNameForRepo(tc.repoName, tc.requestNamespace), metav1.GetOptions{})
+				_, err = cs.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), KubeappsSecretNameForRepo(tc.repoName, tc.requestNamespace), k8smetav1.GetOptions{})
 				if got, want := errorCodeForK8sError(t, err), 404; got != want {
 					t.Errorf("got: %d, want: %d", got, want)
 				}
@@ -596,7 +594,7 @@ func errorCodeForK8sError(t *testing.T, err error) int {
 	if err == nil {
 		return 0
 	}
-	if statusErr, ok := err.(*k8sErrors.StatusError); ok {
+	if statusErr, ok := err.(*k8serrors.StatusError); ok {
 		return int(statusErr.ErrStatus.Code)
 	}
 	t.Fatalf("unable to convert error to status error")
@@ -607,7 +605,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 	testCases := []struct {
 		name    string
 		request appRepositoryRequestDetails
-		appRepo v1alpha1.AppRepository
+		appRepo apprepov1alpha1.AppRepository
 	}{
 		{
 			name: "it creates an app repo without auth",
@@ -616,11 +614,11 @@ func TestAppRepositoryForRequest(t *testing.T) {
 				Type:    "helm",
 				RepoURL: "http://example.com/test-repo",
 			},
-			appRepo: v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
 				},
@@ -634,17 +632,17 @@ func TestAppRepositoryForRequest(t *testing.T) {
 				RepoURL:    "http://example.com/test-repo",
 				AuthHeader: "testing",
 			},
-			appRepo: v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
-					Auth: v1alpha1.AppRepositoryAuth{
-						Header: &v1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
+					Auth: apprepov1alpha1.AppRepositoryAuth{
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+							SecretKeyRef: k8scorev1.SecretKeySelector{
+								LocalObjectReference: k8scorev1.LocalObjectReference{
 									Name: "apprepo-test-repo",
 								},
 								Key: "authorizationHeader",
@@ -662,17 +660,17 @@ func TestAppRepositoryForRequest(t *testing.T) {
 				RepoURL:  "http://example.com/test-repo",
 				CustomCA: "test-me",
 			},
-			appRepo: v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
-					Auth: v1alpha1.AppRepositoryAuth{
-						CustomCA: &v1alpha1.AppRepositoryCustomCA{
-							SecretKeyRef: corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
+					Auth: apprepov1alpha1.AppRepositoryAuth{
+						CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+							SecretKeyRef: k8scorev1.SecretKeySelector{
+								LocalObjectReference: k8scorev1.LocalObjectReference{
 									Name: "apprepo-test-repo",
 								},
 								Key: "ca.crt",
@@ -688,21 +686,21 @@ func TestAppRepositoryForRequest(t *testing.T) {
 				Name:    "test-repo",
 				Type:    "helm",
 				RepoURL: "http://example.com/test-repo",
-				SyncJobPodTemplate: corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
+				SyncJobPodTemplate: k8scorev1.PodTemplateSpec{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name: "test-sync-job",
 					},
 				},
 			},
-			appRepo: v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
-					SyncJobPodTemplate: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					SyncJobPodTemplate: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Name: "test-sync-job",
 						},
 					},
@@ -717,11 +715,11 @@ func TestAppRepositoryForRequest(t *testing.T) {
 				RepoURL:        "http://example.com/test-repo",
 				ResyncRequests: 99,
 			},
-			appRepo: v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:            "http://example.com/test-repo",
 					Type:           "helm",
 					ResyncRequests: 99,
@@ -734,11 +732,11 @@ func TestAppRepositoryForRequest(t *testing.T) {
 				Name:    "test-repo",
 				RepoURL: "http://example.com/test-repo",
 			},
-			appRepo: v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:  "http://example.com/test-repo",
 					Type: "helm",
 				},
@@ -752,11 +750,11 @@ func TestAppRepositoryForRequest(t *testing.T) {
 				RepoURL:         "http://example.com/test-repo",
 				OCIRepositories: []string{"apache", "jenkins"},
 			},
-			appRepo: v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:             "http://example.com/test-repo",
 					Type:            "oci",
 					OCIRepositories: []string{"apache", "jenkins"},
@@ -771,11 +769,11 @@ func TestAppRepositoryForRequest(t *testing.T) {
 				RepoURL:     "http://example.com/test-repo",
 				Description: "testing 1 2 3",
 			},
-			appRepo: v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:         "http://example.com/test-repo",
 					Type:        "oci",
 					Description: "testing 1 2 3",
@@ -795,12 +793,12 @@ func TestAppRepositoryForRequest(t *testing.T) {
 
 func TestSecretForRequest(t *testing.T) {
 	// Reuse the same app repo metadata for each test.
-	appRepo := v1alpha1.AppRepository{
-		TypeMeta: metav1.TypeMeta{
+	appRepo := apprepov1alpha1.AppRepository{
+		TypeMeta: k8smetav1.TypeMeta{
 			Kind:       "AppRepository",
 			APIVersion: "v1",
 		},
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:      "test-repo",
 			UID:       "abcd1234",
 			Namespace: "repo-namespace",
@@ -808,7 +806,7 @@ func TestSecretForRequest(t *testing.T) {
 	}
 	// And the same owner references expectation.
 	blockOwnerDeletion := true
-	ownerRefs := []metav1.OwnerReference{
+	ownerRefs := []k8smetav1.OwnerReference{
 		{
 			APIVersion:         "kubeapps.com/v1alpha1",
 			Kind:               "AppRepository",
@@ -817,8 +815,8 @@ func TestSecretForRequest(t *testing.T) {
 			BlockOwnerDeletion: &blockOwnerDeletion,
 		},
 	}
-	dockerCredsSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
+	dockerCredsSecret := &k8scorev1.Secret{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:      "test-repo",
 			Namespace: "default",
 		},
@@ -827,7 +825,7 @@ func TestSecretForRequest(t *testing.T) {
 	testCases := []struct {
 		name    string
 		request appRepositoryRequestDetails
-		secret  *corev1.Secret
+		secret  *k8scorev1.Secret
 	}{
 		{
 			name: "it does not create a secret without auth",
@@ -844,8 +842,8 @@ func TestSecretForRequest(t *testing.T) {
 				RepoURL:    "http://example.com/test-repo",
 				AuthHeader: "testing",
 			},
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
+			secret: &k8scorev1.Secret{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:            "apprepo-test-repo",
 					OwnerReferences: ownerRefs,
 				},
@@ -861,8 +859,8 @@ func TestSecretForRequest(t *testing.T) {
 				RepoURL:  "http://example.com/test-repo",
 				CustomCA: "test-me",
 			},
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
+			secret: &k8scorev1.Secret{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:            "apprepo-test-repo",
 					OwnerReferences: ownerRefs,
 				},
@@ -885,9 +883,9 @@ func TestSecretForRequest(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cs := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(dockerCredsSecret),
-				&fakeRest.RESTClient{},
+				apprepofakeclientset.NewSimpleClientset(),
+				k8stypedclientfake.NewSimpleClientset(dockerCredsSecret),
+				&k8srestfake.RESTClient{},
 			}
 			handler := userHandler{
 				kubeappsNamespace: kubeappsNamespace,
@@ -908,7 +906,7 @@ func TestSecretForRequest(t *testing.T) {
 
 type existingNs struct {
 	name  string
-	phase corev1.NamespacePhase
+	phase k8scorev1.NamespacePhase
 }
 
 func TestGetNamespaces(t *testing.T) {
@@ -920,14 +918,14 @@ func TestGetNamespaces(t *testing.T) {
 		userClientErr        error
 		svcClientErr         error
 		expectedNamespaces   []string
-		precheckedNamespaces []corev1.Namespace
+		precheckedNamespaces []k8scorev1.Namespace
 	}{
 		{
 			name: "it lists namespaces if the user client returns the namespaces",
 			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
-				{"bar", corev1.NamespaceActive},
-				{"zed", corev1.NamespaceActive},
+				{"foo", k8scorev1.NamespaceActive},
+				{"bar", k8scorev1.NamespaceActive},
+				{"zed", k8scorev1.NamespaceActive},
 			},
 			expectedNamespaces: []string{"foo", "bar", "zed"},
 			allowed:            true,
@@ -935,36 +933,36 @@ func TestGetNamespaces(t *testing.T) {
 		{
 			name: "it lists namespaces if the userclient fails but the service client succeeds",
 			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
+				{"foo", k8scorev1.NamespaceActive},
 			},
-			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
+			userClientErr:      k8serrors.NewForbidden(k8sschema.GroupResource{}, "bang", fmt.Errorf("Bang")),
 			expectedNamespaces: []string{"foo"},
 			allowed:            true,
 		},
 		{
 			name: "it filters the namespaces if the userclient fails but the service client succeeds",
 			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
+				{"foo", k8scorev1.NamespaceActive},
 			},
-			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
+			userClientErr:      k8serrors.NewForbidden(k8sschema.GroupResource{}, "bang", fmt.Errorf("Bang")),
 			expectedNamespaces: []string{},
 			allowed:            false,
 		},
 		{
 			name: "it returns an empty list if both the user and service account forbidden",
 			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
+				{"foo", k8scorev1.NamespaceActive},
 			},
-			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
-			svcClientErr:       k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
+			userClientErr:      k8serrors.NewForbidden(k8sschema.GroupResource{}, "bang", fmt.Errorf("Bang")),
+			svcClientErr:       k8serrors.NewForbidden(k8sschema.GroupResource{}, "bang", fmt.Errorf("Bang")),
 			expectedNamespaces: []string{},
 			allowed:            true,
 		},
 		{
 			name: "it filters namespaces in terminating status",
 			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceTerminating},
-				{"bar", corev1.NamespaceActive},
+				{"foo", k8scorev1.NamespaceTerminating},
+				{"bar", k8scorev1.NamespaceActive},
 			},
 			expectedNamespaces: []string{"bar"},
 			allowed:            true,
@@ -972,11 +970,11 @@ func TestGetNamespaces(t *testing.T) {
 		{
 			name: "it lists namespaces if the user client sends the namespaces",
 			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
+				{"foo", k8scorev1.NamespaceActive},
 			},
-			precheckedNamespaces: []corev1.Namespace{{
-				ObjectMeta: metav1.ObjectMeta{Name: "bar"},
-				Status:     corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
+			precheckedNamespaces: []k8scorev1.Namespace{{
+				ObjectMeta: k8smetav1.ObjectMeta{Name: "bar"},
+				Status:     k8scorev1.NamespaceStatus{Phase: k8scorev1.NamespaceActive},
 			}},
 			expectedNamespaces: []string{"bar"},
 			allowed:            true,
@@ -984,9 +982,9 @@ func TestGetNamespaces(t *testing.T) {
 		{
 			name: "it lists existing namespaces if the user client sends empty list of the namespaces",
 			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
+				{"foo", k8scorev1.NamespaceActive},
 			},
-			precheckedNamespaces: []corev1.Namespace{},
+			precheckedNamespaces: []k8scorev1.Namespace{},
 			expectedNamespaces:   []string{"foo"},
 			allowed:              true,
 		},
@@ -994,15 +992,15 @@ func TestGetNamespaces(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			userClientSet := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
+				apprepofakeclientset.NewSimpleClientset(),
+				k8stypedclientfake.NewSimpleClientset(),
+				&k8srestfake.RESTClient{},
 			}
 
 			svcClientSet := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
+				apprepofakeclientset.NewSimpleClientset(),
+				k8stypedclientfake.NewSimpleClientset(),
+				&k8srestfake.RESTClient{},
 			}
 
 			setClientsetData(userClientSet, tc.existingNamespaces, tc.userClientErr)
@@ -1017,9 +1015,9 @@ func TestGetNamespaces(t *testing.T) {
 			userClientSet.Clientset.Fake.PrependReactor(
 				"create",
 				"selfsubjectaccessreviews",
-				func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
-					mysar := &authorizationv1.SelfSubjectAccessReview{
-						Status: authorizationv1.SubjectAccessReviewStatus{
+				func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+					mysar := &k8sauthorizationv1.SelfSubjectAccessReview{
+						Status: k8sauthorizationv1.SubjectAccessReviewStatus{
 							Allowed: tc.allowed,
 							Reason:  "I want to test it",
 						},
@@ -1029,7 +1027,7 @@ func TestGetNamespaces(t *testing.T) {
 			)
 
 			handler := kubeHandler{
-				clientsetForConfig:   func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
+				clientsetForConfig:   func(*k8srest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
 				kubeappsNamespace:    "kubeapps",
 				kubeappsSvcClientset: svcClientSet,
 				clustersConfig: ClustersConfig{
@@ -1062,11 +1060,11 @@ func TestGetNamespaces(t *testing.T) {
 
 // setClientsetData configures the fake clientset with the return and error.
 func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err error) {
-	namespaces := []corev1.Namespace{}
+	namespaces := []k8scorev1.Namespace{}
 	for _, ns := range namespaceNames {
-		namespaces = append(namespaces, corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{Name: ns.name},
-			Status: corev1.NamespaceStatus{
+		namespaces = append(namespaces, k8scorev1.Namespace{
+			ObjectMeta: k8smetav1.ObjectMeta{Name: ns.name},
+			Status: k8scorev1.NamespaceStatus{
 				Phase: ns.phase,
 			},
 		})
@@ -1074,8 +1072,8 @@ func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err
 	cs.Clientset.Fake.PrependReactor(
 		"list",
 		"namespaces",
-		func(action k8stesting.Action) (bool, runtime.Object, error) {
-			return true, &corev1.NamespaceList{Items: namespaces}, err
+		func(action k8stesting.Action) (bool, k8sruntime.Object, error) {
+			return true, &k8scorev1.NamespaceList{Items: namespaces}, err
 		},
 	)
 }
@@ -1084,17 +1082,17 @@ func TestGetValidator(t *testing.T) {
 	const kubeappsNamespace = "kubeapps"
 	testCases := []struct {
 		name              string
-		appRepo           *v1alpha1.AppRepository
+		appRepo           *apprepov1alpha1.AppRepository
 		expectedValidator HttpValidator
 		expectedError     error
 	}{
 		{
 			name: "it returns a validator with a request to the repo index.yaml",
-			appRepo: &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL: "http://example.com/test-repo",
 				},
 			},
@@ -1113,22 +1111,22 @@ func TestGetValidator(t *testing.T) {
 		},
 		{
 			name: "it returns an OCI validator for an OCI repo",
-			appRepo: &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:             "http://example.com/test-repo",
 					Type:            "oci",
 					OCIRepositories: []string{"apache", "jenkins"},
 				},
 			},
 			expectedValidator: HelmOCIValidator{
-				AppRepo: &v1alpha1.AppRepository{
-					ObjectMeta: metav1.ObjectMeta{
+				AppRepo: &apprepov1alpha1.AppRepository{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name: "test-repo",
 					},
-					Spec: v1alpha1.AppRepositorySpec{
+					Spec: apprepov1alpha1.AppRepositorySpec{
 						URL:             "http://example.com/test-repo",
 						Type:            "oci",
 						OCIRepositories: []string{"apache", "jenkins"},
@@ -1138,11 +1136,11 @@ func TestGetValidator(t *testing.T) {
 		},
 		{
 			name: "it returns an error for an OCI repo if no repositories are given",
-			appRepo: &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			appRepo: &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "test-repo",
 				},
-				Spec: v1alpha1.AppRepositorySpec{
+				Spec: apprepov1alpha1.AppRepositorySpec{
 					URL:             "http://example.com/test-repo",
 					Type:            "oci",
 					OCIRepositories: []string{},
@@ -1292,8 +1290,8 @@ func TestOCIValidate(t *testing.T) {
 		{
 			name: "it returns a valid response if all the OCI repos are of the helm type",
 			validator: HelmOCIValidator{
-				AppRepo: &v1alpha1.AppRepository{
-					Spec: v1alpha1.AppRepositorySpec{
+				AppRepo: &apprepov1alpha1.AppRepository{
+					Spec: apprepov1alpha1.AppRepositorySpec{
 						Type:            "oci",
 						OCIRepositories: []string{"apache", "nginx"},
 					},
@@ -1329,8 +1327,8 @@ func TestOCIValidate(t *testing.T) {
 		{
 			name: "it returns an invalid response if just one of OCI repos is of the wrong type",
 			validator: HelmOCIValidator{
-				AppRepo: &v1alpha1.AppRepository{
-					Spec: v1alpha1.AppRepositorySpec{
+				AppRepo: &apprepov1alpha1.AppRepository{
+					Spec: apprepov1alpha1.AppRepositorySpec{
 						Type:            "oci",
 						OCIRepositories: []string{"apache", "nginx"},
 					},
@@ -1366,8 +1364,8 @@ func TestOCIValidate(t *testing.T) {
 		{
 			name: "it returns an invalid response if a repo does not exist",
 			validator: HelmOCIValidator{
-				AppRepo: &v1alpha1.AppRepository{
-					Spec: v1alpha1.AppRepositorySpec{
+				AppRepo: &apprepov1alpha1.AppRepository{
+					Spec: apprepov1alpha1.AppRepositorySpec{
 						Type:            "oci",
 						OCIRepositories: []string{"apache", "nginx"},
 					},
@@ -1394,8 +1392,8 @@ func TestOCIValidate(t *testing.T) {
 		{
 			name: "it returns an invalid response if a manifest does not exist",
 			validator: HelmOCIValidator{
-				AppRepo: &v1alpha1.AppRepository{
-					Spec: v1alpha1.AppRepositorySpec{
+				AppRepo: &apprepov1alpha1.AppRepository{
+					Spec: apprepov1alpha1.AppRepositorySpec{
 						Type:            "oci",
 						OCIRepositories: []string{"apache", "nginx"},
 					},
@@ -1609,8 +1607,8 @@ func TestNewClusterConfig(t *testing.T) {
 		userToken       string
 		cluster         string
 		clustersConfig  ClustersConfig
-		inClusterConfig *rest.Config
-		expectedConfig  *rest.Config
+		inClusterConfig *k8srest.Config
+		expectedConfig  *k8srest.Config
 		errorExpected   bool
 		maxReq          int
 	}{
@@ -1624,11 +1622,11 @@ func TestNewClusterConfig(t *testing.T) {
 					"default": {},
 				},
 			},
-			inClusterConfig: &rest.Config{
+			inClusterConfig: &k8srest.Config{
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
 			},
-			expectedConfig: &rest.Config{
+			expectedConfig: &k8srest.Config{
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
 			},
@@ -1648,11 +1646,11 @@ func TestNewClusterConfig(t *testing.T) {
 					},
 				},
 			},
-			inClusterConfig: &rest.Config{
+			inClusterConfig: &k8srest.Config{
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
 			},
-			expectedConfig: &rest.Config{
+			expectedConfig: &k8srest.Config{
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
 			},
@@ -1673,19 +1671,19 @@ func TestNewClusterConfig(t *testing.T) {
 					},
 				},
 			},
-			inClusterConfig: &rest.Config{
+			inClusterConfig: &k8srest.Config{
 				Host:            "https://something-else.example.com:6443",
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
-				TLSClientConfig: rest.TLSClientConfig{
+				TLSClientConfig: k8srest.TLSClientConfig{
 					CAFile: "/var/run/whatever/ca.crt",
 				},
 			},
-			expectedConfig: &rest.Config{
+			expectedConfig: &k8srest.Config{
 				Host:            "https://cluster-1.example.com:7890",
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
-				TLSClientConfig: rest.TLSClientConfig{
+				TLSClientConfig: k8srest.TLSClientConfig{
 					CAData: []byte("ca-file-data"),
 					CAFile: "/tmp/ca-file-data",
 				},
@@ -1704,15 +1702,15 @@ func TestNewClusterConfig(t *testing.T) {
 					},
 				},
 			},
-			inClusterConfig: &rest.Config{
+			inClusterConfig: &k8srest.Config{
 				Host:            "https://something-else.example.com:6443",
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
-				TLSClientConfig: rest.TLSClientConfig{
+				TLSClientConfig: k8srest.TLSClientConfig{
 					CAFile: "/var/run/whatever/ca.crt",
 				},
 			},
-			expectedConfig: &rest.Config{
+			expectedConfig: &k8srest.Config{
 				Host:            "https://cluster-1.example.com:7890",
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
@@ -1721,7 +1719,7 @@ func TestNewClusterConfig(t *testing.T) {
 		{
 			name:            "returns an error if the cluster does not exist",
 			cluster:         "cluster-1",
-			inClusterConfig: &rest.Config{},
+			inClusterConfig: &k8srest.Config{},
 			errorExpected:   true,
 		},
 		{
@@ -1739,11 +1737,11 @@ func TestNewClusterConfig(t *testing.T) {
 				},
 				PinnipedProxyURL: "https://172.0.1.18:3333",
 			},
-			inClusterConfig: &rest.Config{
+			inClusterConfig: &k8srest.Config{
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
 			},
-			expectedConfig: &rest.Config{
+			expectedConfig: &k8srest.Config{
 				Host:            "https://172.0.1.18:3333",
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
@@ -1764,11 +1762,11 @@ func TestNewClusterConfig(t *testing.T) {
 				},
 				PinnipedProxyURL: "https://172.0.1.18:3333",
 			},
-			inClusterConfig: &rest.Config{
+			inClusterConfig: &k8srest.Config{
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
 			},
-			expectedConfig: &rest.Config{
+			expectedConfig: &k8srest.Config{
 				Host:            "https://172.0.1.18:3333",
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
@@ -1789,11 +1787,11 @@ func TestNewClusterConfig(t *testing.T) {
 				},
 				PinnipedProxyURL: "https://172.0.1.18:3333",
 			},
-			inClusterConfig: &rest.Config{
+			inClusterConfig: &k8srest.Config{
 				BearerToken:     "something-else",
 				BearerTokenFile: "/foo/bar",
 			},
-			expectedConfig: &rest.Config{
+			expectedConfig: &k8srest.Config{
 				Host:            "https://172.0.1.18:3333",
 				BearerToken:     "token-1",
 				BearerTokenFile: "",
@@ -1808,7 +1806,7 @@ func TestNewClusterConfig(t *testing.T) {
 				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
 			}
 
-			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got, cmpopts.IgnoreFields(rest.Config{}, "WrapTransport")) {
+			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got, cmpopts.IgnoreFields(k8srest.Config{}, "WrapTransport")) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 			// If the test case defined a pinniped proxy url, verify that the expected headers
@@ -1841,13 +1839,13 @@ func TestParseSelfSubjectAccessRequest(t *testing.T) {
 	testCases := []struct {
 		name          string
 		body          string
-		expected      *authorizationapi.ResourceAttributes
+		expected      *k8sauthorizationv1.ResourceAttributes
 		errorExpected bool
 	}{
 		{
 			name: "should parse a valid body",
 			body: `{"resource":"namespaces"}`,
-			expected: &authorizationapi.ResourceAttributes{
+			expected: &k8sauthorizationv1.ResourceAttributes{
 				Resource: "namespaces",
 			},
 		},
@@ -1895,17 +1893,17 @@ func TestCanI(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			userClientSet := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
+				apprepofakeclientset.NewSimpleClientset(),
+				k8stypedclientfake.NewSimpleClientset(),
+				&k8srestfake.RESTClient{},
 			}
 
 			userClientSet.Clientset.Fake.PrependReactor(
 				"create",
 				"selfsubjectaccessreviews",
-				func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
-					mysar := &authorizationv1.SelfSubjectAccessReview{
-						Status: authorizationv1.SubjectAccessReviewStatus{
+				func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+					mysar := &k8sauthorizationv1.SelfSubjectAccessReview{
+						Status: k8sauthorizationv1.SubjectAccessReviewStatus{
 							Allowed: tc.allowed,
 							Reason:  "I want to test it",
 						},
@@ -1915,7 +1913,7 @@ func TestCanI(t *testing.T) {
 			)
 
 			handler := kubeHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
+				clientsetForConfig: func(*k8srest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
 				kubeappsNamespace:  "kubeapps",
 				clustersConfig: ClustersConfig{
 					KubeappsClusterName: "default",
@@ -1929,7 +1927,7 @@ func TestCanI(t *testing.T) {
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
-			allowed, err := userHandler.CanI(&authorizationv1.ResourceAttributes{})
+			allowed, err := userHandler.CanI(&k8sauthorizationv1.ResourceAttributes{})
 			if err != nil && err != tc.err {
 				t.Errorf("Unexpected error %v, wanted %v", err, tc.err)
 			}

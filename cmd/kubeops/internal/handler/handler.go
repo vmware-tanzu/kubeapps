@@ -9,19 +9,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/pkg/agent"
-	"github.com/kubeapps/kubeapps/pkg/auth"
-	"github.com/kubeapps/kubeapps/pkg/chart"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"github.com/kubeapps/kubeapps/pkg/handlerutil"
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	"github.com/kubeapps/kubeapps/pkg/response"
+	mux "github.com/gorilla/mux"
+	helmagent "github.com/kubeapps/kubeapps/pkg/agent"
+	authutils "github.com/kubeapps/kubeapps/pkg/auth"
+	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
+	handlerutil "github.com/kubeapps/kubeapps/pkg/handlerutil"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
+	responseutils "github.com/kubeapps/kubeapps/pkg/response"
 	log "github.com/sirupsen/logrus"
 	negroni "github.com/urfave/negroni/v2"
-	"helm.sh/helm/v3/pkg/action"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8srest "k8s.io/client-go/rest"
 )
 
 const (
@@ -44,7 +43,7 @@ type Options struct {
 	Timeout                int64
 	UserAgent              string
 	KubeappsNamespace      string
-	ClustersConfig         kube.ClustersConfig
+	ClustersConfig         kubeutils.ClustersConfig
 	Burst                  int
 	QPS                    float32
 	NamespaceHeaderName    string
@@ -54,19 +53,19 @@ type Options struct {
 // Config represents data needed by each handler to be able to create Helm 3 actions.
 // It cannot be created without a bearer token, so a new one must be created upon each HTTP request.
 type Config struct {
-	ActionConfig       *action.Configuration
+	ActionConfig       *helmaction.Configuration
 	Options            Options
-	KubeHandler        kube.AuthHandler
-	ChartClientFactory chartUtils.ChartClientFactoryInterface
+	KubeHandler        kubeutils.AuthHandler
+	ChartClientFactory chartutils.ChartClientFactoryInterface
 	Cluster            string
 	Token              string
-	userClientSet      kubernetes.Interface
+	userClientSet      k8stypedclient.Interface
 }
 
 // WithHandlerConfig takes a dependentHandler and creates a regular (WithParams) handler that,
 // for every request, will create a handler config for itself.
 // Written in a curried fashion for convenient usage; see cmd/kubeops/main.go.
-func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options) func(f dependentHandler) handlerutil.WithParams {
+func WithHandlerConfig(storageForDriver helmagent.StorageForDriver, options Options) func(f dependentHandler) handlerutil.WithParams {
 	return func(f dependentHandler) handlerutil.WithParams {
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 			// Don't assume the cluster name was in the url for backwards compatibility
@@ -76,38 +75,38 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				cluster = options.ClustersConfig.KubeappsClusterName
 			}
 			namespace := params[namespaceParam]
-			token := auth.ExtractToken(req.Header.Get(authHeader))
+			token := authutils.ExtractToken(req.Header.Get(authHeader))
 
-			inClusterConfig, err := rest.InClusterConfig()
+			inClusterConfig, err := k8srest.InClusterConfig()
 			if err != nil {
 				log.Errorf("Failed to create in-cluster config: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
+				responseutils.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 
-			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, cluster, options.ClustersConfig)
+			restConfig, err := kubeutils.NewClusterConfig(inClusterConfig, token, cluster, options.ClustersConfig)
 			if err != nil {
 				log.Errorf("Failed to create in-cluster config with user token: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
+				responseutils.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
-			userKubeClient, err := kubernetes.NewForConfig(restConfig)
+			userKubeClient, err := k8stypedclient.NewForConfig(restConfig)
 			if err != nil {
 				log.Errorf("Failed to create kube client with user config: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
+				responseutils.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
-			actionConfig, err := agent.NewActionConfig(storageForDriver, restConfig, userKubeClient, namespace)
+			actionConfig, err := helmagent.NewActionConfig(storageForDriver, restConfig, userKubeClient, namespace)
 			if err != nil {
 				log.Errorf("Failed to create action config with user client: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
+				responseutils.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 
-			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace, options.NamespaceHeaderName, options.NamespaceHeaderPattern, options.Burst, options.QPS, options.ClustersConfig)
+			kubeHandler, err := kubeutils.NewHandler(options.KubeappsNamespace, options.NamespaceHeaderName, options.NamespaceHeaderPattern, options.Burst, options.QPS, options.ClustersConfig)
 			if err != nil {
 				log.Errorf("Failed to create handler: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
+				responseutils.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 
@@ -117,7 +116,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				KubeHandler:        kubeHandler,
 				Cluster:            cluster,
 				Token:              token,
-				ChartClientFactory: &chartUtils.ChartClientFactory{},
+				ChartClientFactory: &chartutils.ChartClientFactory{},
 				userClientSet:      userKubeClient,
 			}
 			f(cfg, w, req, params)
@@ -135,40 +134,40 @@ func AddRouteWith(
 	}
 }
 
-func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWriter) {
+func returnForbiddenActions(forbiddenActions []authutils.Action, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	body, err := json.Marshal(forbiddenActions)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewErrorResponse(http.StatusForbidden, string(body)).Write(w)
+	responseutils.NewErrorResponse(http.StatusForbidden, string(body)).Write(w)
 }
 
 func returnErrMessage(err error, w http.ResponseWriter) {
 	code := handlerutil.ErrorCode(err)
 	errMessage := err.Error()
 	if code == http.StatusForbidden {
-		forbiddenActions := auth.ParseForbiddenActions(errMessage)
+		forbiddenActions := authutils.ParseForbiddenActions(errMessage)
 		if len(forbiddenActions) > 0 {
 			returnForbiddenActions(forbiddenActions, w)
 		} else {
 			// Unable to parse forbidden actions, return the raw message
-			response.NewErrorResponse(code, errMessage).Write(w)
+			responseutils.NewErrorResponse(code, errMessage).Write(w)
 		}
 	} else {
-		response.NewErrorResponse(code, errMessage).Write(w)
+		responseutils.NewErrorResponse(code, errMessage).Write(w)
 	}
 }
 
 // ListReleases list existing releases.
 func ListReleases(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	apps, err := agent.ListReleases(cfg.ActionConfig, params[namespaceParam], cfg.Options.ListLimit, req.URL.Query().Get("statuses"))
+	apps, err := helmagent.ListReleases(cfg.ActionConfig, params[namespaceParam], cfg.Options.ListLimit, req.URL.Query().Get("statuses"))
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewDataResponse(apps).Write(w)
+	responseutils.NewDataResponse(apps).Write(w)
 }
 
 // ListAllReleases list all the releases available.
@@ -184,7 +183,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		return
 	}
 	// TODO: currently app repositories are only supported on the cluster on which Kubeapps is installed. #1982
-	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Options.ClustersConfig.KubeappsClusterName, cfg.Options.ClustersConfig.GlobalReposNamespace, cfg.Options.ClustersConfig.KubeappsClusterName)
+	appRepo, caCertSecret, authSecret, err := chartutils.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Options.ClustersConfig.KubeappsClusterName, cfg.Options.ClustersConfig.GlobalReposNamespace, cfg.Options.ClustersConfig.KubeappsClusterName)
 	if err != nil {
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
@@ -203,17 +202,17 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
-	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(req.Context(), appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, cfg.userClientSet)
+	registrySecrets, err := chartutils.RegistrySecretsPerDomain(req.Context(), appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, cfg.userClientSet)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, registrySecrets, 0)
+	release, err := helmagent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, registrySecrets, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewDataResponse(release).Write(w)
+	responseutils.NewDataResponse(release).Write(w)
 }
 
 // OperateRelease decides which method to call depending on the "action" query param.
@@ -238,7 +237,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		return
 	}
 	// TODO: currently app repositories are only supported on the cluster on which Kubeapps is installed. #1982
-	appRepo, caCertSecret, authSecret, err := chart.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Options.ClustersConfig.KubeappsClusterName, cfg.Options.KubeappsNamespace, cfg.Options.ClustersConfig.KubeappsClusterName)
+	appRepo, caCertSecret, authSecret, err := chartutils.GetAppRepoAndRelatedSecrets(chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, cfg.KubeHandler, cfg.Token, cfg.Options.ClustersConfig.KubeappsClusterName, cfg.Options.KubeappsNamespace, cfg.Options.ClustersConfig.KubeappsClusterName)
 	if err != nil {
 		returnErrMessage(fmt.Errorf("unable to get app repository %q: %v", chartDetails.AppRepositoryResourceName, err), w)
 		return
@@ -249,25 +248,25 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		caCertSecret, authSecret,
 		cfg.ChartClientFactory.New(appRepo.Spec.Type, cfg.Options.UserAgent),
 	)
-	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(req.Context(), appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, cfg.userClientSet)
+	registrySecrets, err := chartutils.RegistrySecretsPerDomain(req.Context(), appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, cfg.userClientSet)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
 
-	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets, 0)
+	rel, err := helmagent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, registrySecrets, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewDataResponse(*rel).Write(w)
+	responseutils.NewDataResponse(*rel).Write(w)
 }
 
 func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	releaseName := params[nameParam]
 	revision := req.FormValue("revision")
 	if revision == "" {
-		response.NewErrorResponse(http.StatusUnprocessableEntity, "Missing revision to rollback in request").Write(w)
+		responseutils.NewErrorResponse(http.StatusUnprocessableEntity, "Missing revision to rollback in request").Write(w)
 		return
 	}
 	revisionInt, err := strconv.ParseInt(revision, 10, 32)
@@ -275,24 +274,24 @@ func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, param
 		returnErrMessage(err, w)
 		return
 	}
-	rel, err := agent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt), 0)
+	rel, err := helmagent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt), 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewDataResponse(*rel).Write(w)
+	responseutils.NewDataResponse(*rel).Write(w)
 }
 
 // GetRelease returns a release.
 func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	// Namespace is already known by the RESTClientGetter.
 	releaseName := params[nameParam]
-	release, err := agent.GetRelease(cfg.ActionConfig, releaseName)
+	release, err := helmagent.GetRelease(cfg.ActionConfig, releaseName)
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
-	response.NewDataResponse(*release).Write(w)
+	responseutils.NewDataResponse(*release).Write(w)
 }
 
 // DeleteRelease deletes a release.
@@ -302,7 +301,7 @@ func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	// Helm 3 has --purge by default; --keep-history in Helm 3 corresponds to omitting --purge in Helm 2.
 	// https://stackoverflow.com/a/59210923/2135002
 	keepHistory := !purge
-	err := agent.DeleteRelease(cfg.ActionConfig, releaseName, keepHistory, 0)
+	err := helmagent.DeleteRelease(cfg.ActionConfig, releaseName, keepHistory, 0)
 	if err != nil {
 		returnErrMessage(err, w)
 		return

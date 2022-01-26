@@ -12,20 +12,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
+	semver "github.com/Masterminds/semver/v3"
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	"gopkg.in/yaml.v3"
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
+	kappctrldatapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	goyaml "gopkg.in/yaml.v3"
+	k8sapiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	k8sstructuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8srest "k8s.io/client-go/rest"
 )
 
 type pkgSemver struct {
-	pkg     *datapackagingv1alpha1.Package
+	pkg     *kappctrldatapackagingv1alpha1.Package
 	version *semver.Version
 }
 
@@ -34,7 +34,7 @@ type pkgSemver struct {
 // A Package CR in carvel is really a particular version of a package, so we need
 // to sort them by the package metadata name, since this is what they share in common.
 // The packages are then sorted by version.
-func getPkgVersionsMap(packages []*datapackagingv1alpha1.Package) (map[string][]pkgSemver, error) {
+func getPkgVersionsMap(packages []*kappctrldatapackagingv1alpha1.Package) (map[string][]pkgSemver, error) {
 	pkgVersionsMap := map[string][]pkgSemver{}
 	for _, pkg := range packages {
 		semverVersion, err := semver.NewVersion(pkg.Spec.Version)
@@ -72,17 +72,17 @@ func latestMatchingVersion(versions []pkgSemver, constraints string) (*semver.Ve
 }
 
 // statusReasonForKappStatus returns the reason for a given status
-func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) corev1.InstalledPackageStatus_StatusReason {
+func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) pkgsGRPCv1alpha1.InstalledPackageStatus_StatusReason {
 	switch status {
 	case kappctrlv1alpha1.ReconcileSucceeded:
-		return corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
+		return pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_INSTALLED
 	case "ValuesSchemaCheckFailed", kappctrlv1alpha1.ReconcileFailed:
-		return corev1.InstalledPackageStatus_STATUS_REASON_FAILED
+		return pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_FAILED
 	case kappctrlv1alpha1.Reconciling:
-		return corev1.InstalledPackageStatus_STATUS_REASON_PENDING
+		return pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_PENDING
 	}
 	// Fall back to unknown/unspecified.
-	return corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED
+	return pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED
 }
 
 // simpleUserReasonForKappStatus returns the simplified reason for a given status
@@ -119,7 +119,7 @@ func extractValue(body string, key string) string {
 }
 
 // buildReadme generates a readme based on the information there is available
-func buildReadme(pkgMetadata *datapackagingv1alpha1.PackageMetadata, foundPkgSemver *pkgSemver) string {
+func buildReadme(pkgMetadata *kappctrldatapackagingv1alpha1.PackageMetadata, foundPkgSemver *pkgSemver) string {
 	var readmeSB strings.Builder
 	if txt := pkgMetadata.Spec.LongDescription; txt != "" {
 		readmeSB.WriteString(fmt.Sprintf("## Description\n\n%s\n\n", txt))
@@ -192,11 +192,11 @@ func defaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error)
 		return "", nil
 	}
 	// Deserialize the schema passed into the function
-	jsonSchemaProps := &apiextensions.JSONSchemaProps{}
-	if err := yaml.Unmarshal(schema, jsonSchemaProps); err != nil {
+	jsonSchemaProps := &k8sapiextensions.JSONSchemaProps{}
+	if err := goyaml.Unmarshal(schema, jsonSchemaProps); err != nil {
 		return "", err
 	}
-	structural, err := structuralschema.NewStructural(jsonSchemaProps)
+	structural, err := k8sstructuralschema.NewStructural(jsonSchemaProps)
 	if err != nil {
 		return "", err
 	}
@@ -204,7 +204,7 @@ func defaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error)
 	// Generate the default values
 	unstructuredDefaultValues := make(map[string]interface{})
 	defaultValues(unstructuredDefaultValues, structural)
-	yamlDefaultValues, err := yaml.Marshal(unstructuredDefaultValues)
+	yamlDefaultValues, err := goyaml.Marshal(unstructuredDefaultValues)
 	if err != nil {
 		return "", err
 	}
@@ -231,7 +231,7 @@ func defaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error)
 // -- 1. Prevent deep copy of int as it panics
 // -- 2. For type object scan the first level properties for any defaults to create an empty map to populate
 // -- 3. If the property does not have a default, add one based on the type ("", false, etc)
-func defaultValues(x interface{}, s *structuralschema.Structural) {
+func defaultValues(x interface{}, s *k8sstructuralschema.Structural) {
 	if s == nil {
 		return
 	}
@@ -274,7 +274,7 @@ func defaultValues(x interface{}, s *structuralschema.Structural) {
 				if isKindInt(prop.Default.Object) {
 					x[k] = prop.Default.Object
 				} else {
-					x[k] = runtime.DeepCopyJSONValue(prop.Default.Object)
+					x[k] = k8sruntime.DeepCopyJSONValue(prop.Default.Object)
 				}
 			}
 		}
@@ -286,7 +286,7 @@ func defaultValues(x interface{}, s *structuralschema.Structural) {
 					if isKindInt(s.AdditionalProperties.Structural.Default.Object) {
 						x[k] = s.AdditionalProperties.Structural.Default.Object
 					} else {
-						x[k] = runtime.DeepCopyJSONValue(s.AdditionalProperties.Structural.Default.Object)
+						x[k] = k8sruntime.DeepCopyJSONValue(s.AdditionalProperties.Structural.Default.Object)
 					}
 				}
 				defaultValues(x[k], s.AdditionalProperties.Structural)
@@ -298,7 +298,7 @@ func defaultValues(x interface{}, s *structuralschema.Structural) {
 				if isKindInt(s.Items.Default.Object) {
 					x[i] = s.Items.Default.Object
 				} else {
-					x[i] = runtime.DeepCopyJSONValue(s.Items.Default.Object)
+					x[i] = k8sruntime.DeepCopyJSONValue(s.Items.Default.Object)
 				}
 			}
 			defaultValues(x[i], s.Items)
@@ -309,7 +309,7 @@ func defaultValues(x interface{}, s *structuralschema.Structural) {
 }
 
 // isNonNullalbeNull returns true if the item is nil AND it's nullable
-func isNonNullableNull(x interface{}, s *structuralschema.Structural) bool {
+func isNonNullableNull(x interface{}, s *k8sstructuralschema.Structural) bool {
 	return x == nil && s != nil && !s.Generic.Nullable
 }
 
@@ -375,11 +375,11 @@ func versionConstraintWithUpgradePolicy(pkgVersion string, policy upgradePolicy)
 	return version.String(), nil
 }
 
-// implementing a custom ConfigFactory to allow for customizing the *rest.Config
+// implementing a custom ConfigFactory to allow for customizing the *k8srest.Config
 // https://kubernetes.slack.com/archives/CH8KCCKA5/p1642015047046200
 type ConfigurableConfigFactoryImpl struct {
 	kappcmdcore.ConfigFactoryImpl
-	config *rest.Config
+	config *k8srest.Config
 }
 
 var _ kappcmdcore.ConfigFactory = &ConfigurableConfigFactoryImpl{}
@@ -388,10 +388,10 @@ func NewConfigurableConfigFactoryImpl() *ConfigurableConfigFactoryImpl {
 	return &ConfigurableConfigFactoryImpl{}
 }
 
-func (f *ConfigurableConfigFactoryImpl) ConfigureRESTConfig(config *rest.Config) {
+func (f *ConfigurableConfigFactoryImpl) ConfigureRESTConfig(config *k8srest.Config) {
 	f.config = config
 }
 
-func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
+func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*k8srest.Config, error) {
 	return f.config, nil
 }

@@ -4,11 +4,11 @@
 package fake
 
 import (
-	authUtils "github.com/kubeapps/kubeapps/pkg/auth"
+	authutils "github.com/kubeapps/kubeapps/pkg/auth"
 )
 
 type FakeAuth struct {
-	ForbiddenActions []authUtils.Action
+	ForbiddenActions []authutils.Action
 }
 
 func (f *FakeAuth) Validate() error {
@@ -19,6 +19,6 @@ func (f *FakeAuth) ValidateForNamespace(namespace string) (bool, error) {
 	return true, nil
 }
 
-func (f *FakeAuth) GetForbiddenActions(namespace, action, manifest string) ([]authUtils.Action, error) {
+func (f *FakeAuth) GetForbiddenActions(namespace, action, manifest string) ([]authutils.Action, error) {
 	return f.ForbiddenActions, nil
 }

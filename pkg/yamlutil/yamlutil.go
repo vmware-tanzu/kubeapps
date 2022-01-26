@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-package yaml
+package yamlutil
 
 import (
 	"bufio"
@@ -9,22 +9,22 @@ import (
 	"io"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/yaml"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8syamlutil "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 // This function was taken from Kubecfg:
 // https://github.com/ksonnet/kubecfg/blob/9be86f33f20342024dafbd2dd0a4463f3ec96a27/utils/acquire.go#L211
-func flattenToV1(objs []runtime.Object) []*unstructured.Unstructured {
-	ret := make([]*unstructured.Unstructured, 0, len(objs))
+func flattenToV1(objs []k8sruntime.Object) []*k8smetaunstructuredv1.Unstructured {
+	ret := make([]*k8smetaunstructuredv1.Unstructured, 0, len(objs))
 	for _, obj := range objs {
 		switch o := obj.(type) {
-		case *unstructured.UnstructuredList:
+		case *k8smetaunstructuredv1.UnstructuredList:
 			for i := range o.Items {
 				ret = append(ret, &o.Items[i])
 			}
-		case *unstructured.Unstructured:
+		case *k8smetaunstructuredv1.Unstructured:
 			ret = append(ret, o)
 		default:
 			panic("Unexpected unstructured object type")
@@ -34,10 +34,10 @@ func flattenToV1(objs []runtime.Object) []*unstructured.Unstructured {
 }
 
 // ParseObjects returns an Unstructured object list based on the content of a YAML manifest
-func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
+func ParseObjects(manifest string) ([]*k8smetaunstructuredv1.Unstructured, error) {
 	r := strings.NewReader(manifest)
-	decoder := yaml.NewYAMLReader(bufio.NewReader(r))
-	ret := []runtime.Object{}
+	decoder := k8syamlutil.NewYAMLReader(bufio.NewReader(r))
+	ret := []k8sruntime.Object{}
 	nullResult := []byte("null")
 
 	for {
@@ -49,7 +49,7 @@ func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
 			return nil, err
 		}
 
-		jsondata, err := yaml.ToJSON(objManifest)
+		jsondata, err := k8syamlutil.ToJSON(objManifest)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +61,7 @@ func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
 			continue
 		}
 
-		obj, _, err := unstructured.UnstructuredJSONScheme.Decode(jsondata, nil, nil)
+		obj, _, err := k8smetaunstructuredv1.UnstructuredJSONScheme.Decode(jsondata, nil, nil)
 		if err != nil {
 			return nil, err
 		}

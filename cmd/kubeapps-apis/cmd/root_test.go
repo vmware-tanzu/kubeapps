@@ -7,15 +7,15 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	cmp "github.com/google/go-cmp/cmp"
+	apiscore "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 )
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
 		name string
 		args []string
-		conf core.ServeOptions
+		conf apiscore.ServeOptions
 	}{
 		{
 			"all arguments are captured",
@@ -31,7 +31,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--kube-api-qps", "1.0",
 				"--kube-api-burst", "1",
 			},
-			core.ServeOptions{
+			apiscore.ServeOptions{
 				Port:                     901,
 				PluginDirs:               []string{"foo01"},
 				ClustersConfigPath:       "foo02",

@@ -4,8 +4,8 @@
 package resourcerefstest
 
 import (
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	grpccodes "google.golang.org/grpc/codes"
 )
 
 // this is done so that test scenarios can be re-used in another package (helm and flux plug-ins)
@@ -19,8 +19,8 @@ type TestReleaseStub struct {
 type TestCase struct {
 	Name                  string
 	ExistingReleases      []TestReleaseStub
-	ExpectedResourceRefs  []*corev1.ResourceRef
-	ExpectedErrStatusCode codes.Code
+	ExpectedResourceRefs  []*pkgsGRPCv1alpha1.ResourceRef
+	ExpectedErrStatusCode grpccodes.Code
 }
 
 var (
@@ -54,7 +54,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "v1",
 					Name:       "apache-test",
@@ -85,7 +85,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "v1",
 					Name:       "apache-test",
@@ -116,7 +116,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "v1",
 					Name:       "test-cluster-role",
@@ -154,7 +154,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Name:       "apache-test",
@@ -171,7 +171,7 @@ metadata:
 					Namespace: "default",
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{},
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{},
 		},
 		{
 			Name: "returns internal error if the yaml manifest cannot be parsed",
@@ -186,7 +186,7 @@ should not be :! parsed as yaml$
 `,
 				},
 			},
-			ExpectedErrStatusCode: codes.Internal,
+			ExpectedErrStatusCode: grpccodes.Internal,
 		},
 		{
 			Name: "handles duplicate labels as helm does",
@@ -209,7 +209,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Name:       "apache-test",
@@ -235,7 +235,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Name:       "apache-test",
@@ -268,7 +268,7 @@ items:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Name:       "apache-test",
@@ -308,7 +308,7 @@ items:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "rbac.authorization.k8s.io/v1",
 					Name:       "role-1",
@@ -346,7 +346,7 @@ items:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "rbac.authorization.k8s.io/v1",
 					Name:       "clusterrole-1",
@@ -392,7 +392,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "v1",
 					Name:       "redis-test",
@@ -423,7 +423,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "v1",
 					Name:       "redis-test",
@@ -453,7 +453,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "v1",
 					Name:       "test-cluster-role",
@@ -488,7 +488,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Name:       "redis-test",
@@ -499,7 +499,7 @@ metadata:
 		},
 		{
 			Name:                  "returns a not found error if the helm release is not found (2)",
-			ExpectedErrStatusCode: codes.NotFound,
+			ExpectedErrStatusCode: grpccodes.NotFound,
 		},
 		{
 			Name: "returns internal error if the yaml manifest cannot be parsed (2)",
@@ -514,7 +514,7 @@ should not be :! parsed as yaml$
 `,
 				},
 			},
-			ExpectedErrStatusCode: codes.Internal,
+			ExpectedErrStatusCode: grpccodes.Internal,
 		},
 		{
 			Name: "handles duplicate labels in the manifest as helm does (2)",
@@ -536,7 +536,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Name:       "redis-test",
@@ -561,7 +561,7 @@ metadata:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Name:       "redis-test",
@@ -594,7 +594,7 @@ items:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "apps/v1",
 					Name:       "redis-test",
@@ -634,7 +634,7 @@ items:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "rbac.authorization.k8s.io/v1",
 					Name:       "role-1",
@@ -672,7 +672,7 @@ items:
 `,
 				},
 			},
-			ExpectedResourceRefs: []*corev1.ResourceRef{
+			ExpectedResourceRefs: []*pkgsGRPCv1alpha1.ResourceRef{
 				{
 					ApiVersion: "rbac.authorization.k8s.io/v1",
 					Name:       "clusterrole-1",

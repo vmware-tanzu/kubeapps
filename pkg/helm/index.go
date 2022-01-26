@@ -8,16 +8,16 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/ghodss/yaml"
-	"github.com/jinzhu/copier"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	copier "github.com/jinzhu/copier"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
 	helmrepo "helm.sh/helm/v3/pkg/repo"
 	log "k8s.io/klog/v2"
+	k8syaml "sigs.k8s.io/yaml"
 )
 
 func parseRepoIndex(contents []byte) (*helmrepo.IndexFile, error) {
 	var index helmrepo.IndexFile
-	err := yaml.Unmarshal(contents, &index)
+	err := k8syaml.Unmarshal(contents, &index)
 	if err != nil {
 		return nil, err
 	}
@@ -27,8 +27,8 @@ func parseRepoIndex(contents []byte) (*helmrepo.IndexFile, error) {
 
 // Takes an entry from the index and constructs a model representation of the
 // object.
-func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models.Chart {
-	var c models.Chart
+func newChart(entry helmrepo.ChartVersions, r *chartmodels.Repo, shallow bool) chartmodels.Chart {
+	var c chartmodels.Chart
 	copier.Copy(&c, entry[0])
 	if shallow {
 		copier.Copy(&c.ChartVersions, []helmrepo.ChartVersion{*entry[0]})
@@ -47,11 +47,11 @@ func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models
 // all Chart models from that index. The shallow flag controls whether only the latest version of the charts is returned
 // or all versions
 //
-func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Chart, error) {
-	var charts []models.Chart
+func ChartsFromIndex(contents []byte, r *chartmodels.Repo, shallow bool) ([]chartmodels.Chart, error) {
+	var charts []chartmodels.Chart
 	index, err := parseRepoIndex(contents)
 	if err != nil {
-		return []models.Chart{}, err
+		return []chartmodels.Chart{}, err
 	}
 	for key, entry := range index.Entries {
 		// note that 'entry' itself is an array of chart versions

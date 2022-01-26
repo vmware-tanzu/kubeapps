@@ -9,11 +9,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gorilla/mux"
-	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart"
-	corev1 "k8s.io/api/core/v1"
+	mux "github.com/gorilla/mux"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	k8scorev1 "k8s.io/api/core/v1"
 )
 
 // Params a key-value map of path params
@@ -73,13 +73,13 @@ func ErrorCodeWithDefault(err error, defaultCode int) int {
 }
 
 // ParseRequest extract chart info from the request
-func ParseRequest(req *http.Request) (*chartUtils.Details, error) {
+func ParseRequest(req *http.Request) (*chartutils.Details, error) {
 	defer req.Body.Close()
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
 	}
-	chartDetails, err := chartUtils.ParseDetails(body)
+	chartDetails, err := chartutils.ParseDetails(body)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func ParseRequest(req *http.Request) (*chartUtils.Details, error) {
 }
 
 // GetChart retrieves a chart
-func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret, chartClient chartUtils.ChartClient) (*chart.Chart, error) {
+func GetChart(chartDetails *chartutils.Details, appRepo *apprepov1alpha1.AppRepository, caCertSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret, chartClient chartutils.ChartClient) (*helmchart.Chart, error) {
 	err := chartClient.Init(appRepo, caCertSecret, authSecret)
 	if err != nil {
 		return nil, err

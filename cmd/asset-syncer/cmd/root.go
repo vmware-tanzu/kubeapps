@@ -7,17 +7,17 @@ import (
 	"flag"
 	"os"
 
-	"github.com/kubeapps/kubeapps/cmd/asset-syncer/server"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-
+	assetsyncerserver "github.com/kubeapps/kubeapps/cmd/asset-syncer/server"
+	homedir "github.com/mitchellh/go-homedir"
+	cobra "github.com/spf13/cobra"
+	pflag "github.com/spf13/pflag"
+	viper "github.com/spf13/viper"
 	log "k8s.io/klog/v2"
 )
 
 var (
 	cfgFile   string
-	serveOpts server.Config
+	serveOpts assetsyncerserver.Config
 	// This Version var is updated during the build
 	// see the -ldflags option in the cmd/asset-syncer/Dockerfile
 	version = "devel"
@@ -46,7 +46,7 @@ func newSyncCmd() *cobra.Command {
 		Use:   "sync [REPO NAME] [REPO URL] [REPO TYPE]",
 		Short: "Add a new chart repository, and resync its charts periodically",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return server.Sync(serveOpts, version, args)
+			return assetsyncerserver.Sync(serveOpts, version, args)
 		},
 		Version: "devel",
 	}
@@ -58,7 +58,7 @@ func newDeleteCmd() *cobra.Command {
 		Use:   "delete [REPO NAME]",
 		Short: "delete a package repository",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return server.Delete(serveOpts, args)
+			return assetsyncerserver.Delete(serveOpts, args)
 		},
 		Version: "devel",
 	}
@@ -70,7 +70,7 @@ func newInvalidateCacheCmd() *cobra.Command {
 		Use:   "invalidate-cache",
 		Short: "removes all data so the cache can be rebuilt",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return server.InvalidateCache(serveOpts, args)
+			return assetsyncerserver.InvalidateCache(serveOpts, args)
 		},
 		Version: "devel",
 	}
@@ -110,7 +110,7 @@ func init() {
 	serveOpts.KubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	serveOpts.AuthorizationHeader = os.Getenv("AUTHORIZATION_HEADER")
 	serveOpts.DockerConfigJson = os.Getenv("DOCKER_CONFIG_JSON")
-	serveOpts.UserAgent = server.GetUserAgent(version, serveOpts.UserAgent)
+	serveOpts.UserAgent = assetsyncerserver.GetUserAgent(version, serveOpts.UserAgent)
 
 	// Register each command to the root cmd
 	cmds := []*cobra.Command{syncCmd, deleteCmd, invalidateCacheCmd}
@@ -143,7 +143,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
+		home, err := homedir.Dir()
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".kubeops" (without extension).

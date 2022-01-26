@@ -5,10 +5,9 @@ package httpclient
 
 import (
 	"crypto/x509"
-	errors "errors"
+	"errors"
 	"net/http"
 	"net/url"
-
 	"testing"
 )
 

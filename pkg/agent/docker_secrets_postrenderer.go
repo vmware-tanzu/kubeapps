@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/distribution/distribution/reference"
+	distributionreference "github.com/distribution/distribution/reference"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	goyaml "gopkg.in/yaml.v3"
 )
 
 const (
@@ -57,7 +57,7 @@ func NewDockerSecretsPostRenderer(secrets map[string]string) (*DockerSecretsPost
 
 func (r *DockerSecretsPostRenderer) processResourceList(resourceList []interface{}) {
 	for _, resourceItem := range resourceList {
-		resource, ok := resourceItem.(map[interface{}]interface{})
+		resource, ok := resourceItem.(map[string]interface{})
 		if !ok {
 			continue
 		}
@@ -96,7 +96,7 @@ func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifi
 		return renderedManifests, nil
 	}
 
-	decoder := yaml.NewDecoder(renderedManifests)
+	decoder := goyaml.NewDecoder(renderedManifests)
 	var resourceList []interface{}
 	for {
 		var resource interface{}
@@ -117,7 +117,7 @@ func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifi
 	r.processResourceList(resourceList)
 
 	modifiedManifests = bytes.NewBuffer([]byte{})
-	encoder := yaml.NewEncoder(modifiedManifests)
+	encoder := goyaml.NewEncoder(modifiedManifests)
 	defer encoder.Close()
 
 	for _, resource := range resourceList {
@@ -137,7 +137,7 @@ func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifi
 // - The pod spec includes a 'containers' key with a slice value
 // - Each container value is a map with an 'image' key and string value.
 // An invalid resource doc is logged but left for the k8s API to respond to.
-func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[interface{}]interface{}) {
+func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[string]interface{}) {
 	containersObject, ok := podSpec["containers"]
 	if !ok {
 		log.Errorf("podSpec contained no containers key: %+v", podSpec)
@@ -156,7 +156,7 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 	existingNames := map[string]bool{}
 	if existingPullSecrets, ok := podSpec["imagePullSecrets"]; ok {
 		for _, s := range existingPullSecrets.([]interface{}) {
-			pullSecret := s.(map[interface{}]interface{})
+			pullSecret := s.(map[string]interface{})
 			if name, ok := pullSecret["name"]; ok {
 				if n, ok := name.(string); ok {
 					existingNames[n] = true
@@ -167,7 +167,7 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 	}
 
 	for _, c := range containers {
-		container, ok := c.(map[interface{}]interface{})
+		container, ok := c.(map[string]interface{})
 		if !ok {
 			log.Errorf("pod spec container is not a map: %+v", c)
 			continue
@@ -181,12 +181,12 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 			continue
 		}
 
-		ref, err := reference.ParseNormalizedNamed(image)
+		ref, err := distributionreference.ParseNormalizedNamed(image)
 		if err != nil {
 			log.Errorf("unable to parse image reference: %q", image)
 			continue
 		}
-		imageDomain := reference.Domain(ref)
+		imageDomain := distributionreference.Domain(ref)
 
 		secretName, ok := r.secrets[imageDomain]
 		if !ok {
@@ -212,7 +212,7 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 // invalid docs ignored and left for the API server to respond accordingly:
 // - A resource doc is a map with a "kind" key with a string value
 // - A pod resource doc has a "spec" key containing a map
-func getResourcePodSpec(kind string, resource map[interface{}]interface{}) map[interface{}]interface{} {
+func getResourcePodSpec(kind string, resource map[string]interface{}) map[string]interface{} {
 	switch kind {
 	case "Pod":
 		return getMapForKeys([]string{"spec"}, resource)
@@ -231,11 +231,11 @@ func getResourcePodSpec(kind string, resource map[interface{}]interface{}) map[i
 	return nil
 }
 
-func getMapForKeys(keys []string, m map[interface{}]interface{}) map[interface{}]interface{} {
+func getMapForKeys(keys []string, m map[string]interface{}) map[string]interface{} {
 	current := m
 	var ok bool
 	for _, k := range keys {
-		current, ok = current[k].(map[interface{}]interface{})
+		current, ok = current[k].(map[string]interface{})
 		if !ok {
 			log.Errorf("invalid resource: non-map %q, in %+v", k, m)
 			return nil

@@ -6,9 +6,9 @@ package paginate
 import (
 	"testing"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 func TestPageOffsetFromPageToken(t *testing.T) {
@@ -21,12 +21,12 @@ func TestPageOffsetFromPageToken(t *testing.T) {
 	}
 
 	_, err = PageOffsetFromPageToken("not a number")
-	if got, want := status.Code(err), codes.Unknown; got != want {
+	if got, want := grpcstatus.Code(err), grpccodes.Unknown; got != want {
 		t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 	}
 
-	req1 := &corev1.GetInstalledPackageSummariesRequest{
-		Context: &corev1.Context{Namespace: "namespace-1"},
+	req1 := &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+		Context: &pkgsGRPCv1alpha1.Context{Namespace: "namespace-1"},
 	}
 	offset, err = PageOffsetFromInstalledRequest(req1)
 	if err != nil {
@@ -36,9 +36,9 @@ func TestPageOffsetFromPageToken(t *testing.T) {
 		t.Fatalf("expected 1, got: %d", offset)
 	}
 
-	req2 := &corev1.GetInstalledPackageSummariesRequest{
-		Context: &corev1.Context{Namespace: "namespace-1"},
-		PaginationOptions: &corev1.PaginationOptions{
+	req2 := &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+		Context: &pkgsGRPCv1alpha1.Context{Namespace: "namespace-1"},
+		PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{
 			PageToken: "1",
 		},
 	}
@@ -50,8 +50,8 @@ func TestPageOffsetFromPageToken(t *testing.T) {
 		t.Fatalf("expected 1, got: %d", offset)
 	}
 
-	req3 := &corev1.GetAvailablePackageSummariesRequest{
-		Context: &corev1.Context{Namespace: "namespace-1"},
+	req3 := &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+		Context: &pkgsGRPCv1alpha1.Context{Namespace: "namespace-1"},
 	}
 	offset, err = PageOffsetFromAvailableRequest(req3)
 	if err != nil {
@@ -61,9 +61,9 @@ func TestPageOffsetFromPageToken(t *testing.T) {
 		t.Fatalf("expected 1, got: %d", offset)
 	}
 
-	req4 := &corev1.GetAvailablePackageSummariesRequest{
-		Context: &corev1.Context{Namespace: "namespace-1"},
-		PaginationOptions: &corev1.PaginationOptions{
+	req4 := &pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{
+		Context: &pkgsGRPCv1alpha1.Context{Namespace: "namespace-1"},
+		PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{
 			PageToken: "1",
 		},
 	}

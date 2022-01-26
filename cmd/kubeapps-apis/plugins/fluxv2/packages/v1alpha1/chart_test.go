@@ -14,20 +14,20 @@ import (
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pkgfluxv2cache "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
+	pkgfluxv2common "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 )
 
 type testSpecChartWithFile struct {
@@ -39,15 +39,15 @@ type testSpecChartWithFile struct {
 func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
 		testName              string
-		request               *corev1.GetAvailablePackageDetailRequest
+		request               *pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest
 		chartCacheHit         bool
 		basicAuth             bool // also known as "private" or "secure"
 		tls                   bool // also known as "private" or "secure"
-		expectedPackageDetail *corev1.AvailablePackageDetail
+		expectedPackageDetail *pkgsGRPCv1alpha1.AvailablePackageDetail
 	}{
 		{
 			testName: "it returns details about the latest redis package in bitnami repo",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
 			chartCacheHit:         true,
@@ -55,7 +55,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		},
 		{
 			testName: "it returns details about the redis package with specific version in bitnami repo",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 				PkgVersion:          "14.3.4",
 			},
@@ -64,7 +64,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		},
 		{
 			testName: "it returns details about the latest redis package from a repo with basic auth",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
 			chartCacheHit:         true,
@@ -73,7 +73,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		},
 		{
 			testName: "it returns details about the latest redis package from a repo with TLS",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
 			chartCacheHit:         true,
@@ -83,7 +83,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		},
 		{
 			testName: "it returns details about the latest redis package from a repo with TLS and basic auth",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
 			chartCacheHit:         true,
@@ -114,7 +114,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			requestChartUrl := ""
 
 			// these will be used later in a few places
-			opts := &common.ClientOptions{}
+			opts := &pkgfluxv2common.ClientOptions{}
 			if tc.basicAuth {
 				opts.Username = "foo"
 				opts.Password = "bar"
@@ -172,7 +172,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			secretRef := ""
-			secretObjs := []runtime.Object{}
+			secretObjs := []k8sruntime.Object{}
 			if tc.basicAuth && tc.tls {
 				secretRef = "both-credentials"
 				if secret, err := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca); err != nil {
@@ -199,7 +199,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, secretObjs)
+			s, mock, _, _, err := newServerWithRepos(t, []k8sruntime.Object{repo}, charts, secretObjs)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -294,7 +294,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+		s, mock, _, _, err := newServerWithRepos(t, []k8sruntime.Object{repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -318,7 +318,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 
 		response, err := s.GetAvailablePackageDetail(
 			context.Background(),
-			&corev1.GetAvailablePackageDetailRequest{
+			&pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef(packageIdentifier, repoNamespace),
 			})
 		if err != nil {
@@ -337,23 +337,23 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	negativeTestCases := []struct {
 		testName   string
-		request    *corev1.GetAvailablePackageDetailRequest
-		statusCode codes.Code
+		request    *pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest
+		statusCode grpccodes.Code
 	}{
 		{
 			testName: "it fails if request is missing namespace",
-			request: &corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 					Identifier: "redis",
 				}},
-			statusCode: codes.InvalidArgument,
+			statusCode: grpccodes.InvalidArgument,
 		},
 		{
 			testName: "it fails if request has invalid identifier",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("redis", "default"),
 			},
-			statusCode: codes.InvalidArgument,
+			statusCode: grpccodes.InvalidArgument,
 		},
 	}
 
@@ -369,7 +369,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -385,51 +385,51 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 }
 
 // TODO: (gfichtenholt) some, if not all, these scenarios probably ought to return
-// codes.NotFound instead of codes.Internal. The spec does not specify yet.
+// grpccodes.NotFound instead of grpccodes.Internal. The spec does not specify yet.
 func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.T) {
 	negativeTestCases := []struct {
 		testName      string
-		request       *corev1.GetAvailablePackageDetailRequest
+		request       *pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest
 		repoName      string
 		repoNamespace string
-		statusCode    codes.Code
+		statusCode    grpccodes.Code
 	}{
 		{
 			testName:      "it fails if request has invalid package version",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 				PkgVersion:          "99.99.0",
 			},
-			statusCode: codes.Internal,
+			statusCode: grpccodes.Internal,
 		},
 		{
 			testName:      "it fails if repo does not exist",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-2/redis", "default"),
 			},
-			statusCode: codes.NotFound,
+			statusCode: grpccodes.NotFound,
 		},
 		{
 			testName:      "it fails if repo does not exist in specified namespace",
 			repoName:      "bitnami-1",
 			repoNamespace: "non-default",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
-			statusCode: codes.NotFound,
+			statusCode: grpccodes.NotFound,
 		},
 		{
 			testName:      "it fails if request has invalid chart",
 			repoName:      "bitnami-1",
 			repoNamespace: "default",
-			request: &corev1.GetAvailablePackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis-123", "default"),
 			},
-			statusCode: codes.NotFound,
+			statusCode: grpccodes.NotFound,
 		},
 	}
 
@@ -465,7 +465,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+			s, mock, _, _, err := newServerWithRepos(t, []k8sruntime.Object{repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -499,7 +499,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -517,35 +517,35 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
 		name               string
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		request            *pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest
+		expectedStatusCode grpccodes.Code
+		expectedResponse   *pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse
 	}{
 		{
 			name:               "it returns invalid argument if called without a package reference",
 			request:            nil,
-			expectedStatusCode: codes.InvalidArgument,
+			expectedStatusCode: grpccodes.InvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without namespace",
-			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{},
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{},
 					Identifier: "bitnami/apache",
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedStatusCode: grpccodes.InvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without an identifier",
-			request: &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Namespace: "kubeapps",
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedStatusCode: grpccodes.InvalidArgument,
 		},
 	}
 
@@ -558,16 +558,16 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			// We don't need to check anything else for non-OK grpccodes.
+			if tc.expectedStatusCode != grpccodes.OK {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse{}, pkgsGRPCv1alpha1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -585,19 +585,19 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		repoIndex          string
 		repoNamespace      string
 		repoName           string
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		request            *pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest
+		expectedStatusCode grpccodes.Code
+		expectedResponse   *pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse
 	}{
 		{
 			name:          "it returns the package version summary for redis chart in bitnami repo",
 			repoIndex:     "testdata/redis-many-versions.yaml",
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
-			request: &corev1.GetAvailablePackageVersionsRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: availableRef("bitnami/redis", "kubeapps"),
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedResponse:   expected_versions_redis,
 		},
 		{
@@ -605,10 +605,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			repoIndex:     "testdata/redis-many-versions.yaml",
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
-			request: &corev1.GetAvailablePackageVersionsRequest{
+			request: &pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: availableRef("bitnami/redis-123", "kubeapps"),
 			},
-			expectedStatusCode: codes.Internal,
+			expectedStatusCode: grpccodes.Internal,
 		},
 	}
 
@@ -644,7 +644,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+			s, mock, _, _, err := newServerWithRepos(t, []k8sruntime.Object{repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -663,7 +663,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -672,14 +672,14 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 
-			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			// We don't need to check anything else for non-OK grpccodes.
+			if tc.expectedStatusCode != grpccodes.OK {
 				return
 			}
 
 			opts := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageVersionsResponse{},
-				corev1.PackageAppVersion{})
+				pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse{},
+				pkgsGRPCv1alpha1.PackageAppVersion{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -747,7 +747,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		defer ts2.Close()
 
 		if _, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(context.Background(), r, metav1.CreateOptions{}); err != nil {
+			Create(context.Background(), r, k8smetav1.CreateOptions{}); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -758,7 +758,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		mock.ExpectGet(repoKey).RedisNil()
 		redisMockSetValueForRepo(mock, repoKey, repoBytes)
 
-		opts := &common.ClientOptions{}
+		opts := &pkgfluxv2common.ClientOptions{}
 
 		chartCacheKeys := []string{}
 		var chartBytes []byte
@@ -770,7 +770,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 			if i == 0 {
-				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, opts)
+				chartBytes, err = pkgfluxv2cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, opts)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -805,7 +805,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			}
 
 			// now we will simulate a HTTP 410 Gone error in the watcher
-			watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
+			watcher.Error(&k8serrors.NewGone("test HTTP 410 Gone").ErrStatus)
 			// we need to wait until server can guarantee no more Redis SETs after
 			// this until resync() kicks in
 			len := <-repoResyncCh
@@ -856,7 +856,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 	})
 }
 
-func newChart(name, namespace string, spec, status map[string]interface{}) *unstructured.Unstructured {
+func newChart(name, namespace string, spec, status map[string]interface{}) *k8smetaunstructuredv1.Unstructured {
 	metadata := map[string]interface{}{
 		"name":            name,
 		"generation":      int64(1),
@@ -881,15 +881,15 @@ func newChart(name, namespace string, spec, status map[string]interface{}) *unst
 		obj["status"] = status
 	}
 
-	return &unstructured.Unstructured{
+	return &k8smetaunstructuredv1.Unstructured{
 		Object: obj,
 	}
 }
 
-func availableRef(id, namespace string) *corev1.AvailablePackageReference {
-	return &corev1.AvailablePackageReference{
+func availableRef(id, namespace string) *pkgsGRPCv1alpha1.AvailablePackageReference {
+	return &pkgsGRPCv1alpha1.AvailablePackageReference{
 		Identifier: id,
-		Context: &corev1.Context{
+		Context: &pkgsGRPCv1alpha1.Context{
 			Namespace: namespace,
 			Cluster:   KubeappsCluster,
 		},
@@ -897,7 +897,7 @@ func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 	}
 }
 
-func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *pkgfluxv2common.ClientOptions) error {
 	cs := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   s.chartCache,
@@ -905,12 +905,12 @@ func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url s
 	return cs.redisMockSetValueForChart(mock, key, url, opts)
 }
 
-func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *pkgfluxv2common.ClientOptions) error {
 	_, chartID, version, err := fromRedisKeyForChart(key)
 	if err != nil {
 		return err
 	}
-	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+	byteArray, err := pkgfluxv2cache.ChartCacheComputeValue(chartID, url, version, opts)
 	if err != nil {
 		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
 	}
@@ -925,13 +925,13 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key string, byteArray 
 }
 
 // does a series of mock.ExpectGet(...)
-func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *pkgfluxv2common.ClientOptions) error {
 	if url != "" {
 		_, chartID, version, err := fromRedisKeyForChart(key)
 		if err != nil {
 			return err
 		}
-		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+		bytes, err := pkgfluxv2cache.ChartCacheComputeValue(chartID, url, version, opts)
 		if err != nil {
 			return err
 		}
@@ -942,7 +942,7 @@ func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string
 	return nil
 }
 
-func redisMockExpectDeleteRepoWithCharts(mock redismock.ClientMock, name types.NamespacedName, charts []string) error {
+func redisMockExpectDeleteRepoWithCharts(mock redismock.ClientMock, name k8stypes.NamespacedName, charts []string) error {
 	key, err := redisKeyForRepoNamespacedName(name)
 	if err != nil {
 		return err
@@ -967,16 +967,16 @@ func redisMockExpectDeleteRepoWithCharts(mock redismock.ClientMock, name types.N
 func fromRedisKeyForChart(key string) (namespace, chartID, chartVersion string, err error) {
 	parts := strings.Split(key, ":")
 	if len(parts) != 4 || parts[0] != "helmcharts" || len(parts[1]) == 0 || len(parts[2]) == 0 || len(parts[3]) == 0 {
-		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
+		return "", "", "", grpcstatus.Errorf(grpccodes.Internal, "invalid key [%s]", key)
 	}
 	return parts[1], parts[2], parts[3], nil
 }
 
-func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.AvailablePackageDetail, expected *corev1.AvailablePackageDetail) {
-	opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *pkgsGRPCv1alpha1.AvailablePackageDetail, expected *pkgsGRPCv1alpha1.AvailablePackageDetail) {
+	opt1 := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.AvailablePackageDetail{}, pkgsGRPCv1alpha1.AvailablePackageReference{}, pkgsGRPCv1alpha1.Context{}, pkgsGRPCv1alpha1.Maintainer{}, pluginsGRPCv1alpha1.Plugin{}, pkgsGRPCv1alpha1.PackageAppVersion{})
 	// these few fields a bit special in that they are all very long strings,
 	// so we'll do a 'Contains' check for these instead of 'Equals'
-	opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
+	opt2 := cmpopts.IgnoreFields(pkgsGRPCv1alpha1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
 	if got, want := actual, expected; !cmp.Equal(got, want, opt1, opt2) {
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 	}
@@ -1006,10 +1006,10 @@ var redis_charts_spec = []testSpecChartWithFile{
 	},
 }
 
-var expected_detail_redis_1 = &corev1.AvailablePackageDetail{
+var expected_detail_redis_1 = &pkgsGRPCv1alpha1.AvailablePackageDetail{
 	AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 	Name:                "redis",
-	Version: &corev1.PackageAppVersion{
+	Version: &pkgsGRPCv1alpha1.PackageAppVersion{
 		PkgVersion: "14.4.0",
 		AppVersion: "6.2.4",
 	},
@@ -1023,7 +1023,7 @@ var expected_detail_redis_1 = &corev1.AvailablePackageDetail{
 	DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
 	ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
 	SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
-	Maintainers: []*corev1.Maintainer{
+	Maintainers: []*pkgsGRPCv1alpha1.Maintainer{
 		{
 			Name:  "Bitnami",
 			Email: "containers@bitnami.com",
@@ -1035,10 +1035,10 @@ var expected_detail_redis_1 = &corev1.AvailablePackageDetail{
 	},
 }
 
-var expected_detail_redis_2 = &corev1.AvailablePackageDetail{
+var expected_detail_redis_2 = &pkgsGRPCv1alpha1.AvailablePackageDetail{
 	AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 	Name:                "redis",
-	Version: &corev1.PackageAppVersion{
+	Version: &pkgsGRPCv1alpha1.PackageAppVersion{
 		PkgVersion: "14.3.4",
 		AppVersion: "6.2.4",
 	},
@@ -1052,7 +1052,7 @@ var expected_detail_redis_2 = &corev1.AvailablePackageDetail{
 	DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
 	ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
 	SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
-	Maintainers: []*corev1.Maintainer{
+	Maintainers: []*pkgsGRPCv1alpha1.Maintainer{
 		{
 			Name:  "Bitnami",
 			Email: "containers@bitnami.com",
@@ -1064,8 +1064,8 @@ var expected_detail_redis_2 = &corev1.AvailablePackageDetail{
 	},
 }
 
-var expected_versions_redis = &corev1.GetAvailablePackageVersionsResponse{
-	PackageAppVersions: []*corev1.PackageAppVersion{
+var expected_versions_redis = &pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse{
+	PackageAppVersions: []*pkgsGRPCv1alpha1.PackageAppVersion{
 		{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
 		{PkgVersion: "14.3.4", AppVersion: "6.2.4"},
 		{PkgVersion: "14.3.3", AppVersion: "6.2.4"},

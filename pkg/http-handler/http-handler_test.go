@@ -13,15 +13,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	corev1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	cmp "github.com/google/go-cmp/cmp"
+	mux "github.com/gorilla/mux"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func checkAppResponse(t *testing.T, response *httptest.ResponseRecorder, expectedResponse appRepositoryResponse) {
@@ -48,12 +47,12 @@ func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError
 		}
 	} else {
 		// The error should be a kubernetes error response.
-		var status metav1.Status
+		var status k8smetav1.Status
 		err := json.NewDecoder(response.Body).Decode(&status)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-		if got, want := status, expectedError.(*k8sErrors.StatusError).ErrStatus; !cmp.Equal(want, got) {
+		if got, want := status, expectedError.(*k8serrors.StatusError).ErrStatus; !cmp.Equal(want, got) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 		}
 	}
@@ -62,7 +61,7 @@ func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError
 func TestListAppRepositories(t *testing.T) {
 	testCases := []struct {
 		name         string
-		appRepos     []*v1alpha1.AppRepository
+		appRepos     []*apprepov1alpha1.AppRepository
 		err          error
 		expectedCode int
 	}{
@@ -78,8 +77,8 @@ func TestListAppRepositories(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			listFunc := ListAppRepositories(&kube.FakeHandler{AppRepos: []*v1alpha1.AppRepository{
-				{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			listFunc := ListAppRepositories(&kubeutils.FakeHandler{AppRepos: []*apprepov1alpha1.AppRepository{
+				{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}},
 			}, Err: tc.err})
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
@@ -101,25 +100,25 @@ func TestListAppRepositories(t *testing.T) {
 func TestGetAppRepository(t *testing.T) {
 	testCases := []struct {
 		name         string
-		appRepo      *v1alpha1.AppRepository
-		secret       *corev1.Secret
+		appRepo      *apprepov1alpha1.AppRepository
+		secret       *k8scorev1.Secret
 		err          error
 		expectedCode int
 	}{
 		{
 			name:         "it should return a 200 if the repo is found",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"}},
+			appRepo:      &apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"}},
 			expectedCode: 200,
 		},
 		{
 			name: "it should return a corresponding secret if present",
-			appRepo: &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"},
-				Spec: v1alpha1.AppRepositorySpec{
-					Auth: v1alpha1.AppRepositoryAuth{
-						Header: &v1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
+			appRepo: &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Auth: apprepov1alpha1.AppRepositoryAuth{
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+							SecretKeyRef: k8scorev1.SecretKeySelector{
+								LocalObjectReference: k8scorev1.LocalObjectReference{
 									Name: "repo-secret",
 								},
 								Key: "authorizationHeader",
@@ -128,8 +127,8 @@ func TestGetAppRepository(t *testing.T) {
 					},
 				},
 			},
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{Name: "repo-secret", Namespace: "kubeapps"},
+			secret: &k8scorev1.Secret{
+				ObjectMeta: k8smetav1.ObjectMeta{Name: "repo-secret", Namespace: "kubeapps"},
 				StringData: map[string]string{
 					"authorizationHeader": "someheader",
 				},
@@ -138,19 +137,19 @@ func TestGetAppRepository(t *testing.T) {
 		},
 		{
 			name:         "it should return a 404 if app repository not found",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
-			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
+			appRepo:      &apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
+			err:          k8serrors.NewNotFound(k8sschema.GroupResource{}, "foo"),
 			expectedCode: 404,
 		},
 		{
 			name: "it should return a 404 if related secret is not found",
-			appRepo: &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"},
-				Spec: v1alpha1.AppRepositorySpec{
-					Auth: v1alpha1.AppRepositoryAuth{
-						Header: &v1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
+			appRepo: &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Auth: apprepov1alpha1.AppRepositoryAuth{
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+							SecretKeyRef: k8scorev1.SecretKeySelector{
+								LocalObjectReference: k8scorev1.LocalObjectReference{
 									Name: "repo-secret",
 								},
 								Key: "authorizationHeader",
@@ -159,8 +158,8 @@ func TestGetAppRepository(t *testing.T) {
 					},
 				},
 			},
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{Name: "another-repo-secret", Namespace: "kubeapps"},
+			secret: &k8scorev1.Secret{
+				ObjectMeta: k8smetav1.ObjectMeta{Name: "another-repo-secret", Namespace: "kubeapps"},
 				StringData: map[string]string{
 					"authorizationHeader": "someheader",
 				},
@@ -169,16 +168,16 @@ func TestGetAppRepository(t *testing.T) {
 		},
 		{
 			name:         "it should return a 403 when forbidden",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
-			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
+			appRepo:      &apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
+			err:          k8serrors.NewForbidden(k8sschema.GroupResource{}, "foo", fmt.Errorf("nope")),
 			expectedCode: 403,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			getAppFunc := GetAppRepository(&kube.FakeHandler{
-				AppRepos: []*v1alpha1.AppRepository{tc.appRepo},
-				Secrets:  []*corev1.Secret{tc.secret},
+			getAppFunc := GetAppRepository(&kubeutils.FakeHandler{
+				AppRepos: []*apprepov1alpha1.AppRepository{tc.appRepo},
+				Secrets:  []*k8scorev1.Secret{tc.secret},
 				Err:      tc.err,
 			})
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/foo", strings.NewReader(""))
@@ -203,23 +202,23 @@ func TestGetAppRepository(t *testing.T) {
 func TestCreateAppRepository(t *testing.T) {
 	testCases := []struct {
 		name         string
-		appRepo      *v1alpha1.AppRepository
+		appRepo      *apprepov1alpha1.AppRepository
 		err          error
 		expectedCode int
 	}{
 		{
 			name:         "it should return the repo and a 200 if the repo is created",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			appRepo:      &apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}},
 			expectedCode: 201,
 		},
 		{
 			name:         "it should return a 404 if not found",
-			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
+			err:          k8serrors.NewNotFound(k8sschema.GroupResource{}, "foo"),
 			expectedCode: 404,
 		},
 		{
 			name:         "it should return a 409 when conflict",
-			err:          k8sErrors.NewConflict(schema.GroupResource{}, "foo", fmt.Errorf("already exists")),
+			err:          k8serrors.NewConflict(k8sschema.GroupResource{}, "foo", fmt.Errorf("already exists")),
 			expectedCode: 409,
 		},
 		{
@@ -230,7 +229,7 @@ func TestCreateAppRepository(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			createAppFunc := CreateAppRepository(&kube.FakeHandler{CreatedRepo: tc.appRepo, Err: tc.err})
+			createAppFunc := CreateAppRepository(&kubeutils.FakeHandler{CreatedRepo: tc.appRepo, Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
 
@@ -253,18 +252,18 @@ func TestCreateAppRepository(t *testing.T) {
 func TestUpdateAppRepository(t *testing.T) {
 	testCases := []struct {
 		name         string
-		appRepo      *v1alpha1.AppRepository
+		appRepo      *apprepov1alpha1.AppRepository
 		err          error
 		expectedCode int
 	}{
 		{
 			name:         "it should return the repo and a 200 if the repo is updated",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			appRepo:      &apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}},
 			expectedCode: 200,
 		},
 		{
 			name:         "it should return a 404 if not found",
-			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
+			err:          k8serrors.NewNotFound(k8sschema.GroupResource{}, "foo"),
 			expectedCode: 404,
 		},
 		{
@@ -275,7 +274,7 @@ func TestUpdateAppRepository(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			createAppFunc := UpdateAppRepository(&kube.FakeHandler{UpdatedRepo: tc.appRepo, Err: tc.err})
+			createAppFunc := UpdateAppRepository(&kubeutils.FakeHandler{UpdatedRepo: tc.appRepo, Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/foo", strings.NewReader("data"))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
 
@@ -307,18 +306,18 @@ func TestDeleteAppRepository(t *testing.T) {
 		},
 		{
 			name:         "it should return a 404 if not found",
-			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
+			err:          k8serrors.NewNotFound(k8sschema.GroupResource{}, "foo"),
 			expectedCode: 404,
 		},
 		{
 			name:         "it should return a 403 when forbidden",
-			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
+			err:          k8serrors.NewForbidden(k8sschema.GroupResource{}, "foo", fmt.Errorf("nope")),
 			expectedCode: 403,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			deleteAppFunc := DeleteAppRepository(&kube.FakeHandler{Err: tc.err})
+			deleteAppFunc := DeleteAppRepository(&kubeutils.FakeHandler{Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
 
@@ -335,92 +334,92 @@ func TestDeleteAppRepository(t *testing.T) {
 func TestGetNamespaces(t *testing.T) {
 	testCases := []struct {
 		name                   string
-		existingNamespaces     []corev1.Namespace
-		expectedNamespaces     []corev1.Namespace
+		existingNamespaces     []k8scorev1.Namespace
+		expectedNamespaces     []k8scorev1.Namespace
 		err                    error
 		expectedCode           int
 		additionalHeader       http.Header
-		namespaceHeaderOptions kube.KubeOptions
+		namespaceHeaderOptions kubeutils.KubeOptions
 	}{
 		{
 			name:               "it should return the list of namespaces and a 200 if the repo is created",
-			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
-			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			existingNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
 			expectedCode:       200,
 		},
 		{
 			name:         "it should return a 403 when forbidden",
-			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
+			err:          k8serrors.NewForbidden(k8sschema.GroupResource{}, "foo", fmt.Errorf("nope")),
 			expectedCode: 403,
 		},
 		{
 			name:               "it should return the list of namespaces from the header and a 200 if the repo is created",
-			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
-			expectedNamespaces: []corev1.Namespace{
-				{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}, Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive}},
-				{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}, Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive}},
+			existingNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []k8scorev1.Namespace{
+				{ObjectMeta: k8smetav1.ObjectMeta{Name: "ns1"}, Status: k8scorev1.NamespaceStatus{Phase: k8scorev1.NamespaceActive}},
+				{ObjectMeta: k8smetav1.ObjectMeta{Name: "ns2"}, Status: k8scorev1.NamespaceStatus{Phase: k8scorev1.NamespaceActive}},
 			},
 			expectedCode:     200,
 			additionalHeader: http.Header{"X-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
-			namespaceHeaderOptions: kube.KubeOptions{
+			namespaceHeaderOptions: kubeutils.KubeOptions{
 				NamespaceHeaderName:    "X-Consumer-Groups",
 				NamespaceHeaderPattern: "^namespace:(\\w+)$",
 			},
 		},
 		{
 			name:               "it should return the existing list of namespaces and a 200 when header does not match kubeops arg namespace-header-name",
-			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
-			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			existingNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
 			expectedCode:       200,
 			additionalHeader:   http.Header{"X-Consumer-Groups": []string{"nspace:ns1", "nspace:ns2"}},
-			namespaceHeaderOptions: kube.KubeOptions{
+			namespaceHeaderOptions: kubeutils.KubeOptions{
 				NamespaceHeaderName:    "X-Consumer-Groups",
 				NamespaceHeaderPattern: "^namespace:(\\w+)$",
 			},
 		},
 		{
 			name:               "it should return the existing list of namespaces and a 200 when header does not match kubeops arg namespace-header-pattern",
-			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
-			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			existingNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
 			expectedCode:       200,
 			additionalHeader:   http.Header{"Y-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
-			namespaceHeaderOptions: kube.KubeOptions{
+			namespaceHeaderOptions: kubeutils.KubeOptions{
 				NamespaceHeaderName:    "X-Consumer-Groups",
 				NamespaceHeaderPattern: "^namespace:(\\w+)$",
 			},
 		},
 		{
 			name:               "it should return the existing list of namespaces and a 200 when kubeops arg namespace-header-name is empty",
-			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
-			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			existingNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
 			expectedCode:       200,
 			additionalHeader:   http.Header{"Y-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
-			namespaceHeaderOptions: kube.KubeOptions{
+			namespaceHeaderOptions: kubeutils.KubeOptions{
 				NamespaceHeaderName:    "",
 				NamespaceHeaderPattern: "^namespace:(\\w+)$",
 			},
 		},
 		{
 			name:               "it should return the existing list of namespaces and a 200 when kubeops arg namespace-header-pattern is empty",
-			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
-			expectedNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			existingNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
 			expectedCode:       200,
 			additionalHeader:   http.Header{"Y-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
-			namespaceHeaderOptions: kube.KubeOptions{
+			namespaceHeaderOptions: kubeutils.KubeOptions{
 				NamespaceHeaderName:    "X-Consumer-Groups",
 				NamespaceHeaderPattern: "",
 			},
 		},
 		{
 			name:               "it should return some of the namespaces from header and a 200 when not all match namespace-header-pattern",
-			existingNamespaces: []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
-			expectedNamespaces: []corev1.Namespace{
-				{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}, Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive}},
-				{ObjectMeta: metav1.ObjectMeta{Name: "ns4"}, Status: corev1.NamespaceStatus{Phase: corev1.NamespaceActive}},
+			existingNamespaces: []k8scorev1.Namespace{{ObjectMeta: k8smetav1.ObjectMeta{Name: "foo"}}},
+			expectedNamespaces: []k8scorev1.Namespace{
+				{ObjectMeta: k8smetav1.ObjectMeta{Name: "ns2"}, Status: k8scorev1.NamespaceStatus{Phase: k8scorev1.NamespaceActive}},
+				{ObjectMeta: k8smetav1.ObjectMeta{Name: "ns4"}, Status: k8scorev1.NamespaceStatus{Phase: k8scorev1.NamespaceActive}},
 			},
 			expectedCode:     200,
 			additionalHeader: http.Header{"X-Consumer-Groups": []string{"namespace:ns1:read", "namespace:ns2", "ns3", "namespace:ns4", "ns:ns5:write"}},
-			namespaceHeaderOptions: kube.KubeOptions{
+			namespaceHeaderOptions: kubeutils.KubeOptions{
 				NamespaceHeaderName:    "X-Consumer-Groups",
 				NamespaceHeaderPattern: "^namespace:(\\w+)$",
 			},
@@ -428,7 +427,7 @@ func TestGetNamespaces(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			getNSFunc := GetNamespaces(&kube.FakeHandler{Namespaces: tc.existingNamespaces, Err: tc.err, Options: tc.namespaceHeaderOptions})
+			getNSFunc := GetNamespaces(&kubeutils.FakeHandler{Namespaces: tc.existingNamespaces, Err: tc.err, Options: tc.namespaceHeaderOptions})
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
 
 			for headerName, headerValue := range tc.additionalHeader {
@@ -461,33 +460,33 @@ func TestValidateAppRepository(t *testing.T) {
 	testCases := []struct {
 		name               string
 		err                error
-		validationResponse kube.ValidationResponse
+		validationResponse kubeutils.ValidationResponse
 		expectedCode       int
 		expectedBody       string
 	}{
 		{
 			name:               "it should return OK if no error is detected",
-			validationResponse: kube.ValidationResponse{Code: 200, Message: "OK"},
+			validationResponse: kubeutils.ValidationResponse{Code: 200, Message: "OK"},
 			expectedCode:       200,
 			expectedBody:       `{"code":200,"message":"OK"}`,
 		},
 		{
 			name:               "it should return the error code if given",
 			err:                fmt.Errorf("Boom"),
-			validationResponse: kube.ValidationResponse{},
+			validationResponse: kubeutils.ValidationResponse{},
 			expectedCode:       500,
 			expectedBody:       "\"Boom\"\n",
 		},
 		{
 			name:               "it should return an error in the validation response",
-			validationResponse: kube.ValidationResponse{Code: 401, Message: "Forbidden"},
+			validationResponse: kubeutils.ValidationResponse{Code: 401, Message: "Forbidden"},
 			expectedCode:       200,
 			expectedBody:       `{"code":401,"message":"Forbidden"}`,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			validateAppRepoFunc := ValidateAppRepository(&kube.FakeHandler{ValRes: &tc.validationResponse, Err: tc.err})
+			validateAppRepoFunc := ValidateAppRepository(&kubeutils.FakeHandler{ValRes: &tc.validationResponse, Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/validate", strings.NewReader("data"))
 
 			response := httptest.NewRecorder()
@@ -521,7 +520,7 @@ func TestGetOperatorLogo(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			getOpLogo := GetOperatorLogo(&kube.FakeHandler{Err: tc.err})
+			getOpLogo := GetOperatorLogo(&kubeutils.FakeHandler{Err: tc.err})
 			req := httptest.NewRequest("Get", "https://foo.bar/backend/v1/namespaces/kubeapps/operator/foo", bytes.NewReader(tc.logo))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps", "name": "foo"})
 
@@ -570,7 +569,7 @@ func TestCanI(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			function := CanI(&kube.FakeHandler{Can: tc.allowed, Err: tc.err})
+			function := CanI(&kubeutils.FakeHandler{Can: tc.allowed, Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/", strings.NewReader(tc.body))
 			req = mux.SetURLVars(req, map[string]string{"cluster": "default"})
 

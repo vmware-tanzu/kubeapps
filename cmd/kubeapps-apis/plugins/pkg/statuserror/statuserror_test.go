@@ -6,9 +6,9 @@ package statuserror
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	cmp "github.com/google/go-cmp/cmp"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 func TestErrorByStatus(t *testing.T) {
@@ -25,16 +25,16 @@ func TestErrorByStatus(t *testing.T) {
 			"get",
 			"my-resource",
 			"",
-			status.Errorf(codes.InvalidArgument, "boom!"),
-			status.Errorf(codes.Internal, "unable to get the my-resource 'all' due to 'rpc error: code = InvalidArgument desc = boom!'"),
+			grpcstatus.Errorf(grpccodes.InvalidArgument, "boom!"),
+			grpcstatus.Errorf(grpccodes.Internal, "unable to get the my-resource 'all' due to 'rpc error: code = InvalidArgument desc = boom!'"),
 		},
 		{
 			"error msg for a single resources ",
 			"get",
 			"my-resource",
 			"my-id",
-			status.Errorf(codes.InvalidArgument, "boom!"),
-			status.Errorf(codes.Internal, "unable to get the my-resource 'my-id' due to 'rpc error: code = InvalidArgument desc = boom!'"),
+			grpcstatus.Errorf(grpccodes.InvalidArgument, "boom!"),
+			grpcstatus.Errorf(grpccodes.Internal, "unable to get the my-resource 'my-id' due to 'rpc error: code = InvalidArgument desc = boom!'"),
 		},
 	}
 	for _, tt := range tests {

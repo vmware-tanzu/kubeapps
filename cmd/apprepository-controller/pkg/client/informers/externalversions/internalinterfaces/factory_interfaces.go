@@ -6,7 +6,7 @@
 package internalinterfaces
 
 import (
-	time "time"
+	"time"
 
 	versioned "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

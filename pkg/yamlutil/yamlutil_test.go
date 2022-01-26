@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-package yaml
+package yamlutil
 
 import (
 	"testing"

@@ -7,27 +7,27 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	helmv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/release"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pkghelmv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	helmrelease "helm.sh/helm/v3/pkg/release"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestRollbackInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
 		existingReleases   []releaseStub
-		request            *helmv1.RollbackInstalledPackageRequest
-		expectedResponse   *helmv1.RollbackInstalledPackageResponse
-		expectedStatusCode codes.Code
-		expectedRelease    *release.Release
+		request            *pkghelmv1alpha1.RollbackInstalledPackageRequest
+		expectedResponse   *pkghelmv1alpha1.RollbackInstalledPackageResponse
+		expectedStatusCode grpccodes.Code
+		expectedRelease    *helmrelease.Release
 	}{
 		{
 			name: "rolls back the installed package from revision 2 to 1, creating rev 3",
@@ -38,7 +38,7 @@ func TestRollbackInstalledPackage(t *testing.T) {
 					chartID:        "bitnami/apache",
 					chartVersion:   "1.18.3",
 					chartNamespace: globalPackagingNamespace,
-					status:         release.StatusDeployed,
+					status:         helmrelease.StatusDeployed,
 					version:        2,
 				},
 				{
@@ -47,13 +47,13 @@ func TestRollbackInstalledPackage(t *testing.T) {
 					chartID:        "bitnami/apache",
 					chartVersion:   "1.18.2",
 					chartNamespace: globalPackagingNamespace,
-					status:         release.StatusSuperseded,
+					status:         helmrelease.StatusSuperseded,
 					version:        1,
 				},
 			},
-			request: &helmv1.RollbackInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			request: &pkghelmv1alpha1.RollbackInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
 						Namespace: "default",
 					},
@@ -61,9 +61,9 @@ func TestRollbackInstalledPackage(t *testing.T) {
 				},
 				ReleaseRevision: 1,
 			},
-			expectedResponse: &helmv1.RollbackInstalledPackageResponse{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			expectedResponse: &pkghelmv1alpha1.RollbackInstalledPackageResponse{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
 						Namespace: "default",
 					},
@@ -71,15 +71,15 @@ func TestRollbackInstalledPackage(t *testing.T) {
 					Plugin:     GetPluginDetail(),
 				},
 			},
-			expectedStatusCode: codes.OK,
-			expectedRelease: &release.Release{
+			expectedStatusCode: grpccodes.OK,
+			expectedRelease: &helmrelease.Release{
 				Name: "my-apache",
-				Info: &release.Info{
+				Info: &helmrelease.Info{
 					Description: "Rollback to 1",
-					Status:      release.StatusDeployed,
+					Status:      helmrelease.StatusDeployed,
 				},
-				Chart: &chart.Chart{
-					Metadata: &chart.Metadata{
+				Chart: &helmchart.Chart{
+					Metadata: &helmchart.Metadata{
 						Version:    "1.18.2",
 						AppVersion: "1.2.6",
 						Icon:       "https://example.com/icon.png",
@@ -92,24 +92,24 @@ func TestRollbackInstalledPackage(t *testing.T) {
 		},
 		{
 			name: "returns not found if installed package doesn't exist",
-			request: &helmv1.RollbackInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			request: &pkghelmv1alpha1.RollbackInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Namespace: "default",
 					},
 					Identifier: "not-a-valid-identifier",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedStatusCode: grpccodes.NotFound,
 		},
 	}
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
-		helmv1.RollbackInstalledPackageResponse{},
-		corev1.InstalledPackageReference{},
-		corev1.Context{},
-		plugins.Plugin{},
-		chart.Chart{},
+		pkghelmv1alpha1.RollbackInstalledPackageResponse{},
+		pkgsGRPCv1alpha1.InstalledPackageReference{},
+		pkgsGRPCv1alpha1.Context{},
+		pluginsGRPCv1alpha1.Plugin{},
+		helmchart.Chart{},
 	)
 
 	for _, tc := range testCases {
@@ -117,8 +117,8 @@ func TestRollbackInstalledPackage(t *testing.T) {
 			authorized := true
 			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases, nil)
 
-			server, _, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			server, _, cleanup := makeServer(t, authorized, actionConfig, &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "bitnami",
 					Namespace: globalPackagingNamespace,
 				},
@@ -127,7 +127,7 @@ func TestRollbackInstalledPackage(t *testing.T) {
 
 			response, err := server.RollbackInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -138,8 +138,8 @@ func TestRollbackInstalledPackage(t *testing.T) {
 
 			if tc.expectedRelease != nil {
 				// Verify the expected request was made to Helm (our contract to the helm lib).
-				deployedFilter := func(r *release.Release) bool {
-					return r.Info.Status == release.StatusDeployed
+				deployedFilter := func(r *helmrelease.Release) bool {
+					return r.Info.Status == helmrelease.StatusDeployed
 				}
 				releases, err := actionConfig.Releases.Driver.List(deployedFilter)
 				if err != nil {
@@ -149,7 +149,7 @@ func TestRollbackInstalledPackage(t *testing.T) {
 					t.Fatalf("got: %d, want: %d", got, want)
 				}
 
-				ignoredFields := cmpopts.IgnoreFields(release.Info{}, "FirstDeployed", "LastDeployed")
+				ignoredFields := cmpopts.IgnoreFields(helmrelease.Info{}, "FirstDeployed", "LastDeployed")
 				if got, want := releases[0], tc.expectedRelease; !cmp.Equal(got, want, ignoredUnexported, ignoredFields) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported, ignoredFields))
 				}

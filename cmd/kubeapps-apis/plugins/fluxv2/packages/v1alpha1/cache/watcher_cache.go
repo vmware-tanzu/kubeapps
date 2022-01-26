@@ -13,23 +13,23 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis/v8"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	apiv1 "k8s.io/api/core/v1"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	errorutil "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/watch"
-	watchutil "k8s.io/client-go/tools/watch"
+	redis "github.com/go-redis/redis/v8"
+	pkgfluxv2common "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	clientgetter "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8sapiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8stypes "k8s.io/apimachinery/pkg/types"
+	k8serrorsutil "k8s.io/apimachinery/pkg/util/errors"
+	k8sruntime "k8s.io/apimachinery/pkg/util/runtime"
+	k8swait "k8s.io/apimachinery/pkg/util/wait"
+	k8swatch "k8s.io/apimachinery/pkg/watch"
+	k8stoolswatch "k8s.io/client-go/tools/watch"
 	log "k8s.io/klog/v2"
 )
 
@@ -93,7 +93,7 @@ type KeyDeleterFunc func(key string) (deleteValue bool, err error)
 type ResyncFunc func() error
 
 type NamespacedResourceWatcherCacheConfig struct {
-	Gvr schema.GroupVersionResource
+	Gvr k8sschema.GroupVersionResource
 	// this ClientGetter is for running out-of-request interactions with the Kubernetes API server,
 	// such as watching for resource changes
 	ClientGetter clientgetter.ClientGetterWithApiExtFunc
@@ -167,7 +167,7 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 	// then rekick the worker after one second
 	// We should be able to launch multiple workers, and the workqueue will make sure that
 	// only a single worker works on an item with a given key.
-	go wait.Until(c.runWorker, time.Second, stopCh)
+	go k8swait.Until(c.runWorker, time.Second, stopCh)
 
 	go c.watchLoop(watcher, stopCh)
 	return &c, nil
@@ -187,12 +187,12 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 
 	name := fmt.Sprintf("%s.%s", c.config.Gvr.Resource, c.config.Gvr.Group)
-	if crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{}); err != nil {
+	if crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, k8smetav1.GetOptions{}); err != nil {
 		return err
 	} else {
 		for _, condition := range crd.Status.Conditions {
-			if condition.Type == apiextv1.Established &&
-				condition.Status == apiextv1.ConditionTrue {
+			if condition.Type == k8sapiextensionsv1.Established &&
+				condition.Status == k8sapiextensionsv1.ConditionTrue {
 				return nil
 			}
 		}
@@ -241,7 +241,7 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 		// Forget() here else we'd go into a loop of attempting to
 		// process a work item that is invalid.
 		c.queue.Forget(obj)
-		runtime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
+		k8sruntime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
 		return true
 	}
 	if !c.queue.IsProcessing(key) {
@@ -261,12 +261,12 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 		// err != nil and too many retries
 		log.Errorf("Error processing %s (giving up): %v", key, err)
 		c.queue.Forget(key)
-		runtime.HandleError(fmt.Errorf("error syncing key [%s] due to: %v", key, err))
+		k8sruntime.HandleError(fmt.Errorf("error syncing key [%s] due to: %v", key, err))
 	}
 	return true
 }
 
-func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatcher, stopCh <-chan struct{}) {
+func (c *NamespacedResourceWatcherCache) watchLoop(watcher *k8stoolswatch.RetryWatcher, stopCh <-chan struct{}) {
 	for {
 		shutdown := c.processEvents(watcher.ResultChan(), stopCh)
 
@@ -301,13 +301,13 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 				c.queue.Name(), maxWatcherCacheRetries, err)
 			// yes, I really want this to panic. Something is seriously wrong
 			// possibly restarting plugin/kubeapps-apis server is needed...
-			defer runtime.Must(err)
+			defer k8sruntime.Must(err)
 			break
 		}
 	}
 }
 
-func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool) (watcher *watchutil.RetryWatcher, eror error) {
+func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool) (watcher *k8stoolswatch.RetryWatcher, eror error) {
 	log.Infof("+resyncAndNewRetryWatcher()")
 	c.resyncCond.L.Lock()
 	defer func() {
@@ -326,9 +326,9 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 	// max backoff is 2^(NamespacedResourceWatcherCacheMaxResyncBackoff) seconds
 	for i := 0; i < maxWatcherCacheResyncBackoff; i++ {
 		if resourceVersion, err = c.resync(bootstrap); err != nil {
-			runtime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
-		} else if watcher, err = watchutil.NewRetryWatcher(resourceVersion, c); err != nil {
-			runtime.HandleError(fmt.Errorf("failed to create a new RetryWatcher due to: %v", err))
+			k8sruntime.HandleError(fmt.Errorf("failed to resync due to: %v", err))
+		} else if watcher, err = k8stoolswatch.NewRetryWatcher(resourceVersion, c); err != nil {
+			k8sruntime.HandleError(fmt.Errorf("failed to create a new RetryWatcher due to: %v", err))
 		} else {
 			break
 		}
@@ -346,16 +346,16 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 
 // ResourceWatcherCache must implement cache.Watcher interface, which is this:
 // https://pkg.go.dev/k8s.io/client-go@v0.20.8/tools/cache#Watcher
-func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
+func (c *NamespacedResourceWatcherCache) Watch(options k8smetav1.ListOptions) (k8swatch.Interface, error) {
 	ctx := context.Background()
 
 	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		return nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
 	// this will start a watcher on all namespaces
-	return dynamicClient.Resource(c.config.Gvr).Namespace(apiv1.NamespaceAll).Watch(ctx, options)
+	return dynamicClient.Resource(c.config.Gvr).Namespace(k8scorev1.NamespaceAll).Watch(ctx, options)
 }
 
 // it is expected that the caller will perform lock/unlock of c.resyncCond as there maybe
@@ -366,8 +366,8 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 
 	// confidence test: I'd like to make sure this is called within the context
 	// of resync, i.e. resync.Cond.L is locked by this goroutine.
-	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
-		return "", status.Errorf(codes.Internal, "Invalid state of the cache in resync()")
+	if !pkgfluxv2common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
+		return "", grpcstatus.Errorf(grpccodes.Internal, "Invalid state of the cache in resync()")
 	}
 
 	// no need to do any of this on bootstrap, queue should be empty
@@ -384,7 +384,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 		c.queue.Reset()
 
 		if err := c.config.OnResyncFunc(); err != nil {
-			return "", status.Errorf(codes.Internal, "invocation of [OnResync] failed due to: %v", err)
+			return "", grpcstatus.Errorf(grpccodes.Internal, "invocation of [OnResync] failed due to: %v", err)
 		}
 	}
 
@@ -398,7 +398,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	ctx := context.Background()
 	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
 	if err != nil {
-		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		return "", grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
 	// This code runs in the background, i.e. not in a context of any specific user request.
@@ -410,19 +410,19 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
 	// For Get() and List(), the semantics of resource version unset are to get the most recent
 	// version
-	listItems, err := dynamicClient.Resource(c.config.Gvr).Namespace(apiv1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	listItems, err := dynamicClient.Resource(c.config.Gvr).Namespace(k8scorev1.NamespaceAll).List(ctx, k8smetav1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
 
 	// for debug only, will remove later
 	log.Infof("List(%s) returned list with [%d] items, object:\n%s",
-		c.config.Gvr.Resource, len(listItems.Items), common.PrettyPrintMap(listItems.Object))
+		c.config.Gvr.Resource, len(listItems.Items), pkgfluxv2common.PrettyPrintMap(listItems.Object))
 
 	rv := listItems.GetResourceVersion()
 	if rv == "" {
 		// fail fast, without a valid resource version the whole workflow breaks down
-		return "", status.Errorf(codes.Internal, "List() call response does not contain resource version")
+		return "", grpcstatus.Errorf(grpccodes.Internal, "List() call response does not contain resource version")
 	}
 
 	// re-populate the cache with current state from k8s
@@ -430,13 +430,13 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 		// we don't want to fail the whole re-sync process and trigger retries
 		// if, for example, just one of the repos fails to sync to cache, so
 		// for now log the error(s)
-		runtime.HandleError(fmt.Errorf("populateWith failed due to: %+v", err))
+		k8sruntime.HandleError(fmt.Errorf("populateWith failed due to: %+v", err))
 	}
 	return rv, nil
 }
 
 // this is loop that waits for new events and processes them when they happen
-func (c *NamespacedResourceWatcherCache) processEvents(watchCh <-chan watch.Event, stopCh <-chan struct{}) (shuttingDown bool) {
+func (c *NamespacedResourceWatcherCache) processEvents(watchCh <-chan k8swatch.Event, stopCh <-chan struct{}) (shuttingDown bool) {
 	for {
 		select {
 		case event, ok := <-watchCh:
@@ -459,30 +459,30 @@ func (c *NamespacedResourceWatcherCache) processEvents(watchCh <-chan watch.Even
 	}
 }
 
-func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
+func (c *NamespacedResourceWatcherCache) processOneEvent(event k8swatch.Event) {
 	if event.Type == "" {
 		// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 		return
 	}
-	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrintObject(event.Object))
+	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, pkgfluxv2common.PrettyPrintObject(event.Object))
 	switch event.Type {
-	case watch.Added, watch.Modified, watch.Deleted:
-		if unstructuredObj, ok := event.Object.(*unstructured.Unstructured); !ok {
-			runtime.HandleError(fmt.Errorf("could not cast %s to unstructured.Unstructured", reflect.TypeOf(event.Object)))
+	case k8swatch.Added, k8swatch.Modified, k8swatch.Deleted:
+		if unstructuredObj, ok := event.Object.(*k8smetaunstructuredv1.Unstructured); !ok {
+			k8sruntime.HandleError(fmt.Errorf("could not cast %s to k8smetaunstructuredv1.Unstructured", reflect.TypeOf(event.Object)))
 		} else {
 			if key, err := c.keyFor(unstructuredObj.Object); err != nil {
-				runtime.HandleError(err)
+				k8sruntime.HandleError(err)
 			} else {
 				c.queue.AddRateLimited(key)
 			}
 		}
-	case watch.Error:
+	case k8swatch.Error:
 		// will let RetryWatcher deal with it, which will close the channel
 		return
 
 	default:
 		// TODO (gfichtenholt) handle other kinds of events?
-		runtime.HandleError(fmt.Errorf("got unexpected event: %v", event))
+		k8sruntime.HandleError(fmt.Errorf("got unexpected event: %v", event))
 	}
 }
 
@@ -501,7 +501,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 	ctx := context.Background()
 	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
 	if err != nil {
-		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+		return grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
 	// TODO: (gfichtenholt) confidence test: I'd like to make sure the caller has the read lock,
@@ -512,13 +512,13 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 	// attempt processing again later. This could have been caused by a temporary network
 	// failure, or any other transient reason.
 	unstructuredObj, err := dynamicClient.Resource(c.config.Gvr).Namespace(name.Namespace).
-		Get(ctx, name.Name, metav1.GetOptions{})
+		Get(ctx, name.Name, k8smetav1.GetOptions{})
 	if err != nil {
 		// The resource may no longer exist, in which case we stop processing.
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			return c.onDelete(key)
 		} else {
-			return status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
+			return grpcstatus.Errorf(grpccodes.Internal, "error fetching object with key [%s]: %v", key, err)
 		}
 	}
 	return c.onAddOrModify(true, unstructuredObj.Object)
@@ -555,7 +555,7 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 	}
 
 	if err != nil {
-		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, common.PrettyPrintMap(unstructuredObj), err)
+		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, pkgfluxv2common.PrettyPrintMap(unstructuredObj), err)
 		// clear that key so cache doesn't contain any stale info for this object
 		keysremoved, err2 := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		if err2 != nil {
@@ -576,7 +576,7 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 		} else {
 			duration := time.Since(startTime)
 			// debugging an intermittent issue
-			usedMemory, totalMemory := common.RedisMemoryStats(c.redisCli)
+			usedMemory, totalMemory := pkgfluxv2common.RedisMemoryStats(c.redisCli)
 			log.Infof("Redis [SET %s]: %s in [%d] ms. Redis [INFO memory]: [%s/%s]",
 				key, result, duration.Milliseconds(), usedMemory, totalMemory)
 		}
@@ -706,7 +706,7 @@ func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[st
 			errs = append(errs, resp.err)
 		}
 	}
-	return response, errorutil.NewAggregate(errs)
+	return response, k8serrorsutil.NewAggregate(errs)
 }
 
 // the difference between 'fetchForMultiple' and 'GetForMultiple' is that 'fetch' will only
@@ -809,24 +809,24 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 			errs = append(errs, resp.err)
 		}
 	}
-	return chartsUntyped, errorutil.NewAggregate(errs)
+	return chartsUntyped, k8serrorsutil.NewAggregate(errs)
 }
 
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
 // for generating a cache key given an object
 // some kind of 'KeyFunc(unstructuredObj) string'
 func (c *NamespacedResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
-	name, err := common.NamespacedName(unstructuredObj)
+	name, err := pkgfluxv2common.NamespacedName(unstructuredObj)
 	if err != nil {
 		return "", err
 	}
 	return c.KeyForNamespacedName(*name), nil
 }
 
-func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.NamespacedName) string {
+func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name k8stypes.NamespacedName) string {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
-	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
+	// Try to stick with a k8sschema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepositories:ns:repoName"
 	return fmt.Sprintf("%s%s%s%s%s",
 		c.config.Gvr.Resource,
@@ -838,12 +838,12 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 
 // the opposite of keyFor()
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
-func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
+func (c *NamespacedResourceWatcherCache) fromKey(key string) (*k8stypes.NamespacedName, error) {
 	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[2]) == 0 {
-		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "invalid key [%s]", key)
 	}
-	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
+	return &k8stypes.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
 // This func is only called in the context of a resync() operation,
@@ -852,11 +852,11 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 // Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
-func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) error {
+func (c *NamespacedResourceWatcherCache) populateWith(items []k8smetaunstructuredv1.Unstructured) error {
 	// confidence test: I'd like to make sure this is called within the context
 	// of resync, i.e. resync.Cond.L is locked by this goroutine.
-	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
-		return status.Errorf(codes.Internal, "Invalid state of the cache in populateWith()")
+	if !pkgfluxv2common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
+		return grpcstatus.Errorf(grpccodes.Internal, "Invalid state of the cache in populateWith()")
 	}
 
 	// max number of concurrent workers computing cache values at the same time
@@ -912,7 +912,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 			errs = append(errs, resp.err)
 		}
 	}
-	return errorutil.NewAggregate(errs)
+	return k8serrorsutil.NewAggregate(errs)
 }
 
 // GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the
@@ -970,7 +970,7 @@ func (c *NamespacedResourceWatcherCache) ExpectResync() (chan int, error) {
 	}()
 
 	if c.resyncCh != nil {
-		return nil, status.Errorf(codes.Internal, "ExpectSync() already called")
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "ExpectSync() already called")
 	} else {
 		c.resyncCh = make(chan int, 1)
 		// this channel will be closed and nil'ed out at the end of resync()

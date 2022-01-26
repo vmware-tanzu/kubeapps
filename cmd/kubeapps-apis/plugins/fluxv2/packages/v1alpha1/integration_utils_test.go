@@ -18,28 +18,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis/v8"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/helm"
+	redis "github.com/go-redis/redis/v8"
+	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	helmutils "github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"golang.org/x/sync/semaphore"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	kubecorev1 "k8s.io/api/core/v1"
-	kuberbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
+	semaphore "golang.org/x/sync/semaphore"
+	grpc "google.golang.org/grpc"
+	grpcmetadata "google.golang.org/grpc/metadata"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8srbacv1 "k8s.io/api/rbac/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8ssets "k8s.io/apimachinery/pkg/util/sets"
+	k8swatch "k8s.io/apimachinery/pkg/watch"
+	k8dynamicclient "k8s.io/client-go/dynamic"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8srest "k8s.io/client-go/rest"
+	k8stoolsclientcmd "k8s.io/client-go/tools/clientcmd"
+	k8stoolsportforward "k8s.io/client-go/tools/portforward"
+	k8sspdy "k8s.io/client-go/transport/spdy"
 )
 
 const (
@@ -48,7 +48,7 @@ const (
 	defaultContextTimeout      = 30 * time.Second
 )
 
-func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
+func checkEnv(t *testing.T) pluginsGRPCv1alpha1.FluxV2PackagesServiceClient {
 	enableEnvVar := os.Getenv(envVarFluxIntegrationTests)
 	runTests := false
 	if enableEnvVar != "" {
@@ -65,7 +65,7 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
 			t.Fatalf("Failed to find local kind cluster due to: [%v]", err)
 		}
-		var fluxPluginClient fluxplugin.FluxV2PackagesServiceClient
+		var fluxPluginClient pluginsGRPCv1alpha1.FluxV2PackagesServiceClient
 		var err error
 		if fluxPluginClient, err = getFluxPluginClient(t); err != nil {
 			t.Fatalf("Failed to get fluxv2 plugin due to: [%v]", err)
@@ -80,7 +80,7 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
-		_, err = typedClient.CoreV1().Services("default").Get(ctx, "fluxv2plugin-testdata-svc", metav1.GetOptions{})
+		_, err = typedClient.CoreV1().Services("default").Get(ctx, "fluxv2plugin-testdata-svc", k8smetav1.GetOptions{})
 		if err != nil {
 			t.Fatalf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
 		}
@@ -112,7 +112,7 @@ func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	nodeList, err := typedClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	nodeList, err := typedClient.CoreV1().Nodes().List(ctx, k8smetav1.ListOptions{})
 	if err != nil {
 		t.Logf("%s", string(bytes))
 		return false, err
@@ -125,7 +125,7 @@ func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	}
 }
 
-func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, error) {
+func getFluxPluginClient(t *testing.T) (pluginsGRPCv1alpha1.FluxV2PackagesServiceClient, error) {
 	t.Logf("+getFluxPluginClient")
 
 	var opts []grpc.DialOption
@@ -137,10 +137,10 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 		t.Fatalf("failed to dial [%s] due to: %v", target, err)
 	}
 	t.Cleanup(func() { conn.Close() })
-	pluginsCli := plugins.NewPluginsServiceClient(conn)
+	pluginsCli := pluginsv1alpha1.NewPluginsServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	response, err := pluginsCli.GetConfiguredPlugins(ctx, &plugins.GetConfiguredPluginsRequest{})
+	response, err := pluginsCli.GetConfiguredPlugins(ctx, &pluginsv1alpha1.GetConfiguredPluginsRequest{})
 	if err != nil {
 		t.Fatalf("failed to GetConfiguredPlugins due to: %v", err)
 	}
@@ -154,14 +154,14 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 	if !found {
 		return nil, fmt.Errorf("kubeapps Flux v2 plugin is not registered")
 	}
-	return fluxplugin.NewFluxV2PackagesServiceClient(conn), nil
+	return pluginsGRPCv1alpha1.NewFluxV2PackagesServiceClient(conn), nil
 }
 
 // This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
 // the design
 func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
-	unstructuredRepo := unstructured.Unstructured{
+	unstructuredRepo := k8smetaunstructuredv1.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
 			"kind":       fluxHelmRepository,
@@ -177,14 +177,14 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName str
 	}
 
 	if secretName != "" {
-		unstructured.SetNestedField(unstructuredRepo.Object, secretName, "spec", "secretRef", "name")
+		k8smetaunstructuredv1.SetNestedField(unstructuredRepo.Object, secretName, "spec", "secretRef", "name")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
-	} else if _, err := ifc.Create(ctx, &unstructuredRepo, metav1.CreateOptions{}); err != nil {
+	} else if _, err := ifc.Create(ctx, &unstructuredRepo, k8smetav1.CreateOptions{}); err != nil {
 		return err
 	} else {
 		return nil
@@ -199,7 +199,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 	} else {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
-		if watcher, err := ifc.Watch(ctx, metav1.ListOptions{}); err != nil {
+		if watcher, err := ifc.Watch(ctx, k8smetav1.ListOptions{}); err != nil {
 			return err
 		} else {
 			ch := watcher.ResultChan()
@@ -214,9 +214,9 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 					continue
 				}
 				switch event.Type {
-				case watch.Added, watch.Modified:
-					if unstructuredRepo, ok := event.Object.(*unstructured.Unstructured); !ok {
-						return errors.New("Could not cast to unstructured.Unstructured")
+				case k8swatch.Added, k8swatch.Modified:
+					if unstructuredRepo, ok := event.Object.(*k8smetaunstructuredv1.Unstructured); !ok {
+						return errors.New("Could not cast to k8smetaunstructuredv1.Unstructured")
 					} else {
 						hour, minute, second := time.Now().Clock()
 						complete, success, reason := isHelmRepositoryReady(unstructuredRepo.Object)
@@ -238,7 +238,7 @@ func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
-	} else if err = ifc.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
+	} else if err = ifc.Delete(ctx, name, k8smetav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -250,7 +250,7 @@ func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
 	defer cancel()
 	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
 		return err
-	} else if err = ifc.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
+	} else if err = ifc.Delete(ctx, name, k8smetav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -262,7 +262,7 @@ func kubeExistsHelmRelease(t *testing.T, name, namespace string) (bool, error) {
 	defer cancel()
 	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
 		return false, err
-	} else if _, err = ifc.Get(ctx, name, metav1.GetOptions{}); err == nil {
+	} else if _, err = ifc.Get(ctx, name, k8smetav1.GetOptions{}); err == nil {
 		return true, nil
 	} else {
 		return false, nil
@@ -275,7 +275,7 @@ func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error)
 	defer cancel()
 	if typedClient, err := kubeGetTypedClient(); err != nil {
 		return nil, err
-	} else if podList, err := typedClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{}); err != nil {
+	} else if podList, err := typedClient.CoreV1().Pods(namespace).List(ctx, k8smetav1.ListOptions{}); err != nil {
 		return nil, err
 	} else {
 		names := []string{}
@@ -296,13 +296,13 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	defer cancel()
 	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
 		ctx,
-		&kubecorev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
+		&k8scorev1.ServiceAccount{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name:      name,
 				Namespace: namespace,
 			},
 		},
-		metav1.CreateOptions{})
+		k8smetav1.CreateOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -311,7 +311,7 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	for i := 0; i < 10; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
-		svcAccount, err := typedClient.CoreV1().ServiceAccounts(namespace).Get(ctx, name, metav1.GetOptions{})
+		svcAccount, err := typedClient.CoreV1().ServiceAccounts(namespace).Get(ctx, name, k8smetav1.GetOptions{})
 		if err != nil {
 			return "", err
 		}
@@ -331,7 +331,7 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
 		ctx,
 		secretName,
-		metav1.GetOptions{})
+		k8smetav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -341,30 +341,30 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	}
 	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
 		ctx,
-		&kuberbacv1.ClusterRoleBinding{
-			ObjectMeta: metav1.ObjectMeta{
+		&k8srbacv1.ClusterRoleBinding{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name: name + "-binding",
 			},
-			Subjects: []kuberbacv1.Subject{
+			Subjects: []k8srbacv1.Subject{
 				{
-					Kind:      kuberbacv1.ServiceAccountKind,
+					Kind:      k8srbacv1.ServiceAccountKind,
 					Name:      name,
 					Namespace: namespace,
 				},
 			},
-			RoleRef: kuberbacv1.RoleRef{
+			RoleRef: k8srbacv1.RoleRef{
 				Kind: "ClusterRole",
 				Name: role,
 			},
 		},
-		metav1.CreateOptions{})
+		k8smetav1.CreateOptions{})
 	if err != nil {
 		return "", err
 	}
 	return string(token), nil
 }
 
-// ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
+// ref: https://k8stypedclient.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
 // will create a service account with cluster-admin privs and return the associated
 // Bearer token (base64-encoded)
 func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
@@ -386,7 +386,7 @@ func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
 	err = typedClient.RbacV1().ClusterRoleBindings().Delete(
 		ctx,
 		name+"-binding",
-		metav1.DeleteOptions{})
+		k8smetav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -395,7 +395,7 @@ func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
 	err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
 		ctx,
 		name,
-		metav1.DeleteOptions{})
+		k8smetav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -412,12 +412,12 @@ func kubeCreateNamespace(t *testing.T, namespace string) error {
 	defer cancel()
 	_, err = typedClient.CoreV1().Namespaces().Create(
 		ctx,
-		&kubecorev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
+		&k8scorev1.Namespace{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Name: namespace,
 			},
 		},
-		metav1.CreateOptions{})
+		k8smetav1.CreateOptions{})
 	return err
 }
 
@@ -432,7 +432,7 @@ func kubeDeleteNamespace(t *testing.T, namespace string) error {
 	err = typedClient.CoreV1().Namespaces().Delete(
 		ctx,
 		namespace,
-		metav1.DeleteOptions{})
+		k8smetav1.DeleteOptions{})
 	return err
 }
 
@@ -447,7 +447,7 @@ func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error
 	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
 		ctx,
 		name,
-		metav1.GetOptions{})
+		k8smetav1.GetOptions{})
 	if err != nil {
 		return "", err
 	} else {
@@ -470,7 +470,7 @@ func kubeCreateBasicAuthSecret(t *testing.T, namespace, name, user, password str
 	_, err = typedClient.CoreV1().Secrets(namespace).Create(
 		ctx,
 		newBasicAuthSecret(name, namespace, user, password),
-		metav1.CreateOptions{})
+		k8smetav1.CreateOptions{})
 	return err
 }
 
@@ -485,7 +485,7 @@ func kubeDeleteSecret(t *testing.T, namespace, name string) error {
 	return typedClient.CoreV1().Secrets(namespace).Delete(
 		ctx,
 		name,
-		metav1.DeleteOptions{})
+		k8smetav1.DeleteOptions{})
 }
 
 func kubePortForwardToRedis(t *testing.T) error {
@@ -497,15 +497,15 @@ func kubePortForwardToRedis(t *testing.T) error {
 			// ref https://github.com/kubernetes/client-go/issues/51
 			if config, err := restConfig(); err != nil {
 				return err
-			} else if roundTripper, upgrader, err := spdy.RoundTripperFor(config); err != nil {
+			} else if roundTripper, upgrader, err := k8sspdy.RoundTripperFor(config); err != nil {
 				return err
 			} else {
 				path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", "kubeapps", "kubeapps-redis-master-0")
 				hostIP := strings.TrimLeft(config.Host, "htps:/")
 				serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
-				dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
+				dialer := k8sspdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
 				out, errOut := new(bytes.Buffer), new(bytes.Buffer)
-				if forwarder, err := portforward.New(dialer, []string{"6379"}, stopChan, readyChan, out, errOut); err != nil {
+				if forwarder, err := k8stoolsportforward.New(dialer, []string{"6379"}, stopChan, readyChan, out, errOut); err != nil {
 					return err
 				} else {
 					go func() {
@@ -539,12 +539,12 @@ func kubePortForwardToRedis(t *testing.T) error {
 	}
 }
 
-func kubeGetHelmReleaseResourceInterface(namespace string) (dynamic.ResourceInterface, error) {
+func kubeGetHelmReleaseResourceInterface(namespace string) (k8dynamicclient.ResourceInterface, error) {
 	clientset, err := kubeGetDynamicClient()
 	if err != nil {
 		return nil, err
 	}
-	relResource := schema.GroupVersionResource{
+	relResource := k8sschema.GroupVersionResource{
 		Group:    fluxHelmReleaseGroup,
 		Version:  fluxHelmReleaseVersion,
 		Resource: fluxHelmReleases,
@@ -552,12 +552,12 @@ func kubeGetHelmReleaseResourceInterface(namespace string) (dynamic.ResourceInte
 	return clientset.Resource(relResource).Namespace(namespace), nil
 }
 
-func kubeGetHelmRepositoryResourceInterface(namespace string) (dynamic.ResourceInterface, error) {
+func kubeGetHelmRepositoryResourceInterface(namespace string) (k8dynamicclient.ResourceInterface, error) {
 	clientset, err := kubeGetDynamicClient()
 	if err != nil {
 		return nil, err
 	}
-	repoResource := schema.GroupVersionResource{
+	repoResource := k8sschema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
 		Resource: fluxHelmRepositories,
@@ -565,35 +565,35 @@ func kubeGetHelmRepositoryResourceInterface(namespace string) (dynamic.ResourceI
 	return clientset.Resource(repoResource).Namespace(namespace), nil
 }
 
-func kubeGetDynamicClient() (dynamic.Interface, error) {
+func kubeGetDynamicClient() (k8dynamicclient.Interface, error) {
 	if dynamicClient != nil {
 		return dynamicClient, nil
 	} else {
 		if config, err := restConfig(); err != nil {
 			return nil, err
 		} else {
-			dynamicClient, err = dynamic.NewForConfig(config)
+			dynamicClient, err = k8dynamicclient.NewForConfig(config)
 			return dynamicClient, err
 		}
 	}
 }
 
-func kubeGetTypedClient() (kubernetes.Interface, error) {
+func kubeGetTypedClient() (k8stypedclient.Interface, error) {
 	if typedClient != nil {
 		return typedClient, nil
 	} else {
 		if config, err := restConfig(); err != nil {
 			return nil, err
 		} else {
-			typedClient, err = kubernetes.NewForConfig(config)
+			typedClient, err = k8stypedclient.NewForConfig(config)
 			return typedClient, err
 		}
 	}
 }
 
-func restConfig() (*rest.Config, error) {
+func restConfig() (*k8srest.Config, error) {
 	kubeconfig := os.Getenv("KUBECONFIG")
-	return clientcmd.BuildConfigFromFlags("", kubeconfig)
+	return k8stoolsclientcmd.BuildConfigFromFlags("", kubeconfig)
 }
 
 func randSeq(n int) string {
@@ -605,9 +605,9 @@ func randSeq(n int) string {
 }
 
 func newGrpcContext(t *testing.T, token string) context.Context {
-	return metadata.NewOutgoingContext(
+	return grpcmetadata.NewOutgoingContext(
 		context.TODO(),
-		metadata.Pairs("Authorization", "Bearer "+token))
+		grpcmetadata.Pairs("Authorization", "Bearer "+token))
 }
 
 func newGrpcAdminContext(t *testing.T, name string) context.Context {
@@ -711,7 +711,7 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	return redisCli, nil
 }
 
-func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *sets.String) {
+func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *k8ssets.String) {
 	if totalBitnamiCharts == -1 {
 		t.Errorf("Error: unexpected state: number of charts in bitnami catalog is not initialized")
 		return
@@ -720,7 +720,7 @@ func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *
 	// this for loop running in the background will signal to the main goroutine
 	// when it is okay to proceed to load the next repo
 	t.Logf("Listening for events from redis in the background...")
-	reposAdded := sets.String{}
+	reposAdded := k8ssets.String{}
 	var chartsLeftToSync = 0
 	for {
 		event, ok := <-ch
@@ -772,14 +772,14 @@ func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
 		return err
 	}
 
-	modelRepo := &models.Repo{
+	modelRepo := &chartmodels.Repo{
 		Namespace: "default",
 		Name:      "bitnami",
 		URL:       bitnamiUrl,
 		Type:      "helm",
 	}
 
-	charts, err := helm.ChartsFromIndex(byteArray, modelRepo, true)
+	charts, err := helmutils.ChartsFromIndex(byteArray, modelRepo, true)
 	if err != nil {
 		return err
 	}
@@ -791,8 +791,8 @@ func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
 
 // global vars
 var (
-	dynamicClient dynamic.Interface
-	typedClient   kubernetes.Interface
+	dynamicClient k8dynamicclient.Interface
+	typedClient   k8stypedclient.Interface
 	letters       = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 	// total number of unique packages in bitnami repo,
 	// initialized during running of the integration test

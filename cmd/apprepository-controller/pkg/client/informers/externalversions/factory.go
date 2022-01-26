@@ -6,9 +6,9 @@
 package externalversions
 
 import (
-	reflect "reflect"
-	sync "sync"
-	time "time"
+	"reflect"
+	"sync"
+	"time"
 
 	versioned "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	apprepository "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions/apprepository"

@@ -10,30 +10,30 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/auth"
-	"github.com/kubeapps/kubeapps/pkg/kube"
+	mux "github.com/gorilla/mux"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	authutils "github.com/kubeapps/kubeapps/pkg/auth"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
 	log "github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // namespacesResponse is used to marshal the JSON response
 type namespacesResponse struct {
-	Namespaces []corev1.Namespace `json:"namespaces"`
+	Namespaces []k8scorev1.Namespace `json:"namespaces"`
 }
 
 // appRepositoryResponse is used to marshal the JSON response
 type appRepositoryResponse struct {
-	AppRepository v1alpha1.AppRepository `json:"appRepository"`
-	Secret        corev1.Secret          `json:"secret"`
+	AppRepository apprepov1alpha1.AppRepository `json:"appRepository"`
+	Secret        k8scorev1.Secret              `json:"secret"`
 }
 
 // appRepositoryListResponse is used to marshal the JSON response
 type appRepositoryListResponse struct {
-	AppRepositoryList v1alpha1.AppRepositoryList `json:"appRepository"`
+	AppRepositoryList apprepov1alpha1.AppRepositoryList `json:"appRepository"`
 }
 
 type allowedResponse struct {
@@ -49,7 +49,7 @@ func JSONError(w http.ResponseWriter, err interface{}, code int) {
 }
 
 func returnK8sError(err error, action string, resource string, w http.ResponseWriter) {
-	if statusErr, ok := err.(*k8sErrors.StatusError); ok {
+	if statusErr, ok := err.(*k8serrors.StatusError); ok {
 		status := statusErr.ErrStatus
 		log.Infof("unable to %s %s: %v", action, resource, status.Reason)
 		JSONError(w, statusErr.ErrStatus, int(status.Code))
@@ -69,10 +69,10 @@ func getNamespaceAndCluster(req *http.Request) (string, string) {
 // The name and the value of the header field is specified by 2 variables:
 // - headerName is a name of the expected header field, e.g. X-Consumer-Groups
 // - headerPattern is a regular expression and it matches only single regex group, e.g. ^namespace:([\w-]+)$
-func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) ([]corev1.Namespace, error) {
-	var namespaces = []corev1.Namespace{}
+func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) ([]k8scorev1.Namespace, error) {
+	var namespaces = []k8scorev1.Namespace{}
 	if headerName == "" || headerPattern == "" {
-		return []corev1.Namespace{}, nil
+		return []k8scorev1.Namespace{}, nil
 	}
 	r, err := regexp.Compile(headerPattern)
 	if err != nil {
@@ -85,9 +85,9 @@ func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) ([
 		if rns == nil || len(rns) < 2 {
 			continue
 		}
-		ns := corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{Name: rns[1]},
-			Status:     corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
+		ns := k8scorev1.Namespace{
+			ObjectMeta: k8smetav1.ObjectMeta{Name: rns[1]},
+			Status:     k8scorev1.NamespaceStatus{Phase: k8scorev1.NamespaceActive},
 		}
 		namespaces = append(namespaces, ns)
 	}
@@ -95,10 +95,10 @@ func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) ([
 }
 
 // ListAppRepositories list app repositories
-func ListAppRepositories(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func ListAppRepositories(handler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 
 		clientset, err := handler.AsUser(token, requestCluster)
 		if err != nil {
@@ -124,10 +124,10 @@ func ListAppRepositories(handler kube.AuthHandler) func(w http.ResponseWriter, r
 }
 
 // CreateAppRepository creates App Repository
-func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func CreateAppRepository(handler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 
 		clientset, err := handler.AsUser(token, requestCluster)
 		if err != nil {
@@ -154,10 +154,10 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 }
 
 // UpdateAppRepository updates an App Repository
-func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func UpdateAppRepository(handler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 
 		clientset, err := handler.AsUser(token, requestCluster)
 		if err != nil {
@@ -184,11 +184,11 @@ func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 }
 
 // RefreshAppRepository forces a refresh in a given apprepository (by updating resyncRequests property)
-func RefreshAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func RefreshAppRepository(handler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		repoName := mux.Vars(req)["name"]
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 
 		clientset, err := handler.AsUser(token, requestCluster)
 		if err != nil {
@@ -215,10 +215,10 @@ func RefreshAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, 
 }
 
 // ValidateAppRepository returns a 200 if the connection to the AppRepo can be established
-func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func ValidateAppRepository(handler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 
 		clientset, err := handler.AsUser(token, requestCluster)
 		if err != nil {
@@ -241,11 +241,11 @@ func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter,
 }
 
 // DeleteAppRepository deletes an App Repository
-func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func DeleteAppRepository(kubeHandler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		repoName := mux.Vars(req)["name"]
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 
 		clientset, err := kubeHandler.AsUser(token, requestCluster)
 		if err != nil {
@@ -261,11 +261,11 @@ func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWrite
 }
 
 // GetAppRepository gets an App Repository with a related secret if present.
-func GetAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func GetAppRepository(kubeHandler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		repoName := mux.Vars(req)["name"]
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 
 		clientset, err := kubeHandler.AsUser(token, requestCluster)
 		if err != nil {
@@ -285,7 +285,7 @@ func GetAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, 
 
 		auth := &appRepo.Spec.Auth
 		if auth != nil {
-			var secretSelector *corev1.SecretKeySelector
+			var secretSelector *k8scorev1.SecretKeySelector
 			if auth.CustomCA != nil {
 				secretSelector = &auth.CustomCA.SecretKeyRef
 			} else if auth.Header != nil {
@@ -311,9 +311,9 @@ func GetAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, 
 }
 
 // GetNamespaces return the list of namespaces
-func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func GetNamespaces(kubeHandler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 		_, requestCluster := getNamespaceAndCluster(req)
 
 		options := kubeHandler.GetOptions()
@@ -347,7 +347,7 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 }
 
 // GetOperatorLogo return the list of namespaces
-func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func GetOperatorLogo(kubeHandler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		name := mux.Vars(req)["name"]
 		ns, requestCluster := getNamespaceAndCluster(req)
@@ -373,9 +373,9 @@ func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, r
 }
 
 // CanI returns a boolean if the user can do the given action
-func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func CanI(kubeHandler kubeutils.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := authutils.ExtractToken(req.Header.Get("Authorization"))
 		_, requestCluster := getNamespaceAndCluster(req)
 
 		clientset, err := kubeHandler.AsUser(token, requestCluster)
@@ -386,7 +386,7 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 		}
 
 		defer req.Body.Close()
-		attributes, err := kube.ParseSelfSubjectAccessRequest(req.Body)
+		attributes, err := kubeutils.ParseSelfSubjectAccessRequest(req.Body)
 		if err != nil {
 			returnK8sError(err, "get", "CanI", w)
 			return
@@ -410,8 +410,8 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 }
 
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
-func SetupDefaultRoutes(r *mux.Router, namespaceHeaderName, namespaceHeaderPattern string, burst int, qps float32, clustersConfig kube.ClustersConfig) error {
-	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), namespaceHeaderName, namespaceHeaderPattern, burst, qps, clustersConfig)
+func SetupDefaultRoutes(r *mux.Router, namespaceHeaderName, namespaceHeaderPattern string, burst int, qps float32, clustersConfig kubeutils.ClustersConfig) error {
+	backendHandler, err := kubeutils.NewHandler(os.Getenv("POD_NAMESPACE"), namespaceHeaderName, namespaceHeaderPattern, burst, qps, clustersConfig)
 	if err != nil {
 		return err
 	}

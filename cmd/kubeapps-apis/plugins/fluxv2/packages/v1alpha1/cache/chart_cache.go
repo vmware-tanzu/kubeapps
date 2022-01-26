@@ -14,18 +14,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis/v8"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	redis "github.com/go-redis/redis/v8"
+	pkgfluxv2common "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	pkgutils "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/wait"
-	k8scache "k8s.io/client-go/tools/cache"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	k8stypes "k8s.io/apimachinery/pkg/types"
+	k8sruntime "k8s.io/apimachinery/pkg/util/runtime"
+	k8ssets "k8s.io/apimachinery/pkg/util/sets"
+	k8swait "k8s.io/apimachinery/pkg/util/wait"
+	k8stoolscache "k8s.io/client-go/tools/cache"
 	log "k8s.io/klog/v2"
 )
 
@@ -57,7 +57,7 @@ type ChartCache struct {
 	// is called by the producer and runWorker consumer picks up
 	// the corresponding item from the queue. Upon successful processing
 	// of the item, the corresponding store entry is deleted
-	processing k8scache.Store
+	processing k8stoolscache.Store
 
 	// I am using a Read/Write Mutex to gate access to cache's resync() operation, which is
 	// significant in that it flushes the whole redis cache and re-populates the state from k8s.
@@ -82,7 +82,7 @@ type chartCacheStoreEntry struct {
 	id            string
 	version       string
 	url           string
-	clientOptions *common.ClientOptions
+	clientOptions *pkgfluxv2common.ClientOptions
 	deleted       bool
 }
 
@@ -96,7 +96,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 	c := ChartCache{
 		redisCli:   redisCli,
 		queue:      NewRateLimitingQueue(name, verboseChartCacheQueue),
-		processing: k8scache.NewStore(chartCacheKeyFunc),
+		processing: k8stoolscache.NewStore(chartCacheKeyFunc),
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
@@ -109,7 +109,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 		fn := func() {
 			c.runWorker(name)
 		}
-		go wait.Until(fn, time.Second, stopCh)
+		go k8swait.Until(fn, time.Second, stopCh)
 	}
 
 	return &c, nil
@@ -117,7 +117,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 
 // this func will enqueue work items into chart work queue and return.
 // the charts will be synced by a worker thread running in the background
-func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.ClientOptions) error {
+func (c *ChartCache) SyncCharts(charts []chartmodels.Chart, clientOptions *pkgfluxv2common.ClientOptions) error {
 	log.Infof("+SyncCharts()")
 	totalToSync := 0
 	defer func() {
@@ -200,7 +200,7 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 		// Forget() here else we'd go into a loop of attempting to
 		// process a work item that is invalid.
 		c.queue.Forget(obj)
-		runtime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
+		k8sruntime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
 		return true
 	}
 	if !c.queue.IsProcessing(key) {
@@ -222,12 +222,12 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 		log.Errorf("Error processing %s (giving up): %v", key, err)
 		c.queue.Forget(key)
 		c.processing.Delete(key)
-		runtime.HandleError(fmt.Errorf("error syncing key [%s] due to: %v", key, err))
+		k8sruntime.HandleError(fmt.Errorf("error syncing key [%s] due to: %v", key, err))
 	}
 	return true
 }
 
-func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
+func (c *ChartCache) DeleteChartsForRepo(repo *k8stypes.NamespacedName) error {
 	log.Infof("+DeleteChartsFor(%s)", repo)
 	defer log.Infof("-DeleteChartsFor(%s)", repo)
 
@@ -244,7 +244,7 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 		KeySegmentsSeparator,
 		repo.Name,
 		KeySegmentsSeparator)
-	redisKeysToDelete := sets.String{}
+	redisKeysToDelete := k8ssets.String{}
 	// https://redis.io/commands/scan An iteration starts when the cursor is set to 0,
 	// and terminates when the cursor returned by the server is 0
 	cursor := uint64(0)
@@ -318,7 +318,7 @@ func (c *ChartCache) OnResync() error {
 
 	log.Infof("Resetting work queue [%s] and store...", c.queue.Name())
 	c.queue.Reset()
-	c.processing = k8scache.NewStore(chartCacheKeyFunc)
+	c.processing = k8stoolscache.NewStore(chartCacheKeyFunc)
 	return nil
 }
 
@@ -377,7 +377,7 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 			return fmt.Errorf("failed to set value for object with key [%s] in cache due to: %v", key, err)
 		} else {
 			duration := time.Since(startTime)
-			usedMemory, totalMemory := common.RedisMemoryStats(c.redisCli)
+			usedMemory, totalMemory := pkgfluxv2common.RedisMemoryStats(c.redisCli)
 			log.Infof("Redis [SET %s]: %s in [%d] ms. Redis [INFO memory]: [%s/%s]",
 				key, result, duration.Milliseconds(), usedMemory, totalMemory)
 		}
@@ -424,7 +424,7 @@ func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
  • otherwise return the bytes stored in the
  chart cache for the given entry
 */
-func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *common.ClientOptions) ([]byte, error) {
+func (c *ChartCache) GetForOne(key string, chart *chartmodels.Chart, clientOptions *pkgfluxv2common.ClientOptions) ([]byte, error) {
 	// TODO (gfichtenholt) it'd be nice to get rid of all arguments except for the key, similar to that of
 	// NamespacedResourceWatcherCache.GetForOne()
 	log.Infof("+GetForOne(%s)", key)
@@ -482,7 +482,7 @@ func (c *ChartCache) String() string {
 func (c *ChartCache) fromKey(key string) (namespace, chartID, chartVersion string, err error) {
 	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 4 || parts[0] != "helmcharts" || len(parts[1]) == 0 || len(parts[2]) == 0 || len(parts[3]) == 0 {
-		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
+		return "", "", "", grpcstatus.Errorf(grpccodes.Internal, "invalid key [%s]", key)
 	}
 	return parts[1], parts[2], parts[3], nil
 }
@@ -514,7 +514,7 @@ func (c *ChartCache) ExpectResync() (chan int, error) {
 	}()
 
 	if c.resyncCh != nil {
-		return nil, status.Errorf(codes.Internal, "ExpectSync() already called")
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "ExpectSync() already called")
 	} else {
 		c.resyncCh = make(chan int, 1)
 		return c.resyncCh, nil
@@ -569,8 +569,8 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 }
 
 // FYI: The work queue is able to retry transient HTTP errors
-func ChartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *common.ClientOptions) ([]byte, error) {
-	client, headers, err := common.NewHttpClientAndHeaders(clientOptions)
+func ChartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *pkgfluxv2common.ClientOptions) ([]byte, error) {
+	client, headers, err := pkgfluxv2common.NewHttpClientAndHeaders(clientOptions)
 	if err != nil {
 		return nil, err
 	}

@@ -13,29 +13,29 @@ import (
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pkgfluxv2v1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	pkgfluxv2cache "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
+	pkgfluxv2common "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	clientgetter "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	pkgutils "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	k8sapiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	k8sapiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8stypes "k8s.io/apimachinery/pkg/types"
+	k8ssets "k8s.io/apimachinery/pkg/util/sets"
+	k8dynamicclient "k8s.io/client-go/dynamic"
+	k8stypedclient "k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
-	"sigs.k8s.io/yaml"
+	k8syaml "sigs.k8s.io/yaml"
 )
 
 const KubeappsCluster = "default"
@@ -44,19 +44,19 @@ func TestBadClientGetter(t *testing.T) {
 	testCases := []struct {
 		name         string
 		clientGetter clientgetter.ClientGetterWithApiExtFunc
-		statusCode   codes.Code
+		statusCode   grpccodes.Code
 	}{
 		{
 			name:         "returns internal error status when no getter configured",
 			clientGetter: nil,
-			statusCode:   codes.Internal,
+			statusCode:   grpccodes.Internal,
 		},
 		{
 			name: "returns failed-precondition when clientGetter itself errors",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
+			clientGetter: func(context.Context) (k8stypedclient.Interface, k8dynamicclient.Interface, k8sapiextensionsclient.Interface, error) {
 				return nil, nil, nil, fmt.Errorf("Bang!")
 			},
-			statusCode: codes.FailedPrecondition,
+			statusCode: grpccodes.FailedPrecondition,
 		},
 	}
 
@@ -65,11 +65,11 @@ func TestBadClientGetter(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter}
 
 			_, _, _, err := s.GetClients(context.Background())
-			if err == nil && tc.statusCode != codes.OK {
+			if err == nil && tc.statusCode != grpccodes.OK {
 				t.Fatalf("got: nil, want: error")
 			}
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
@@ -80,8 +80,8 @@ func TestBadClientGetter(t *testing.T) {
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name       string
-		repo       runtime.Object
-		statusCode codes.Code
+		repo       k8sruntime.Object
+		statusCode grpccodes.Code
 	}{
 		{
 			name: "returns without error if response status does not contain conditions",
@@ -91,7 +91,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 					"interval": "1m0s",
 				},
 				nil),
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "returns without error if response status does not contain conditions (2)",
@@ -103,7 +103,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				map[string]interface{}{
 					"zot": "xyz",
 				}),
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "returns without error if response does not contain ready repos",
@@ -120,7 +120,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 							"reason": "IndexationFailed",
 						},
 					}}),
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain namespace",
@@ -132,7 +132,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 						"reason": "IndexationSucceed",
 					},
 				}}),
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain spec url",
@@ -144,7 +144,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 						"reason": "IndexationSucceed",
 					},
 				}}),
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain status url",
@@ -159,20 +159,20 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 						"reason": "IndexationSucceed",
 					},
 				}}),
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{tc.repo}, nil, nil)
+			s, mock, _, _, err := newServerWithRepos(t, []k8sruntime.Object{tc.repo}, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
 			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
 			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
-			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
+			if isRepoReady(tc.repo.(*k8smetaunstructuredv1.Unstructured).Object) {
 				if key, err := redisKeyForRepo(tc.repo); err == nil {
 					// TODO explain why 3 calls to ExpectGet. It has to do with the way
 					// the caching internals work: a call such as GetAvailablePackageSummaries
@@ -186,11 +186,11 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 			response, err := s.GetAvailablePackageSummaries(
 				context.Background(),
-				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+				&pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest{Context: &pkgsGRPCv1alpha1.Context{}})
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, error: %v, want: %+v", got, err, want)
-			} else if got == codes.OK {
+			} else if got == grpccodes.OK {
 				if response == nil || len(response.AvailablePackageSummaries) != 0 {
 					t.Fatalf("unexpected response: %v", response)
 				}
@@ -262,7 +262,7 @@ core:
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
 			if tc.pluginYAMLConf != nil {
-				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				pluginJSONConf, err := k8syaml.YAMLToJSON(tc.pluginYAMLConf)
 				if err != nil {
 					log.Fatalf("%s", err)
 				}
@@ -320,7 +320,7 @@ core:
 		t.Run(tc.name, func(t *testing.T) {
 			filename := ""
 			if tc.pluginYAMLConf != nil {
-				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				pluginJSONConf, err := k8syaml.YAMLToJSON(tc.pluginYAMLConf)
 				if err != nil {
 					log.Fatalf("%s", err)
 				}
@@ -355,7 +355,7 @@ type testSpecChartWithUrl struct {
 	chartID       string
 	chartRevision string
 	chartUrl      string
-	opts          *common.ClientOptions
+	opts          *pkgfluxv2common.ClientOptions
 	repoNamespace string
 	// this is for a negative test TestTransientHttpFailuresAreRetriedForChartCache
 	numRetries int
@@ -367,8 +367,8 @@ type testSpecChartWithUrl struct {
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
 func newServer(t *testing.T,
 	clientGetter clientgetter.ClientGetterWithApiExtFunc,
-	actionConfig *action.Configuration,
-	repos []runtime.Object,
+	actionConfig *helmaction.Configuration,
+	repos []k8sruntime.Object,
 	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
 
 	stopCh := make(chan struct{})
@@ -390,9 +390,9 @@ func newServer(t *testing.T,
 		chartCache:   nil,
 	}
 
-	okRepos := sets.String{}
+	okRepos := k8ssets.String{}
 	for _, r := range repos {
-		if isRepoReady(r.(*unstructured.Unstructured).Object) {
+		if isRepoReady(r.(*k8smetaunstructuredv1.Unstructured).Object) {
 			// we are willfully ignoring any errors coming from redisMockSetValueForRepo()
 			// here and just skipping over to next repo. This is done for test
 			// TestGetAvailablePackagesStatus where we make sure that even if the flux CRD happens
@@ -406,13 +406,13 @@ func newServer(t *testing.T,
 		}
 	}
 
-	var chartCache *cache.ChartCache
+	var chartCache *pkgfluxv2cache.ChartCache
 	var err error
-	cachedChartKeys := sets.String{}
-	cachedChartIds := sets.String{}
+	cachedChartKeys := k8ssets.String{}
+	cachedChartIds := k8ssets.String{}
 
 	if charts != nil {
-		chartCache, err = cache.NewChartCache("chartCacheTest", redisCli, stopCh)
+		chartCache, err = pkgfluxv2cache.NewChartCache("chartCacheTest", redisCli, stopCh)
 		if err != nil {
 			return nil, mock, err
 		}
@@ -428,7 +428,7 @@ func newServer(t *testing.T,
 				if err != nil {
 					return nil, mock, err
 				}
-				repoName := types.NamespacedName{
+				repoName := k8stypes.NamespacedName{
 					Name:      strings.Split(c.chartID, "/")[0],
 					Namespace: c.repoNamespace}
 
@@ -452,7 +452,7 @@ func newServer(t *testing.T,
 		}
 	}
 
-	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
+	cacheConfig := pkgfluxv2cache.NamespacedResourceWatcherCacheConfig{
 		Gvr:          repositoriesGvr,
 		ClientGetter: clientGetter,
 		OnAddFunc:    cs.onAddRepo,
@@ -462,7 +462,7 @@ func newServer(t *testing.T,
 		OnResyncFunc: cs.onResync,
 	}
 
-	repoCache, err := cache.NewNamespacedResourceWatcherCache(
+	repoCache, err := pkgfluxv2cache.NewNamespacedResourceWatcherCache(
 		"repoCacheTest", cacheConfig, redisCli, stopCh)
 	if err != nil {
 		return nil, mock, err
@@ -480,7 +480,7 @@ func newServer(t *testing.T,
 
 	s := &Server{
 		clientGetter: clientGetter,
-		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
+		actionConfigGetter: func(context.Context, string) (*helmaction.Configuration, error) {
 			return actionConfig, nil
 		},
 		repoCache:         repoCache,
@@ -492,11 +492,11 @@ func newServer(t *testing.T,
 }
 
 // these are helpers to compare slices ignoring order
-func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
+func lessAvailablePackageFunc(p1, p2 *pkgsGRPCv1alpha1.AvailablePackageSummary) bool {
 	return p1.DisplayName < p2.DisplayName
 }
 
-func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
+func lessPackageRepositoryFunc(p1, p2 *pkgfluxv2v1alpha1.PackageRepository) bool {
 	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
 }
 
@@ -515,17 +515,17 @@ func basicAuth(handler http.HandlerFunc, username, password, realm string) http.
 }
 
 // misc global vars that get re-used in multiple tests
-var fluxPlugin = &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}
-var fluxHelmRepositoryCRD = &apiextv1.CustomResourceDefinition{
-	TypeMeta: metav1.TypeMeta{
+var fluxPlugin = &pluginsGRPCv1alpha1.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}
+var fluxHelmRepositoryCRD = &k8sapiextensionsv1.CustomResourceDefinition{
+	TypeMeta: k8smetav1.TypeMeta{
 		Kind:       "CustomResourceDefinition",
 		APIVersion: "apiextensions.k8s.io/v1",
 	},
-	ObjectMeta: metav1.ObjectMeta{
+	ObjectMeta: k8smetav1.ObjectMeta{
 		Name: "helmrepositories.source.toolkit.fluxcd.io",
 	},
-	Status: apiextv1.CustomResourceDefinitionStatus{
-		Conditions: []apiextv1.CustomResourceDefinitionCondition{
+	Status: k8sapiextensionsv1.CustomResourceDefinitionStatus{
+		Conditions: []k8sapiextensionsv1.CustomResourceDefinitionCondition{
 			{
 				Type:   "Established",
 				Status: "True",

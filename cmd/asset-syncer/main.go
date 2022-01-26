@@ -3,8 +3,10 @@
 
 package main
 
-import "github.com/kubeapps/kubeapps/cmd/asset-syncer/cmd"
+import (
+	assetsyncercmd "github.com/kubeapps/kubeapps/cmd/asset-syncer/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	assetsyncercmd.Execute()
 }

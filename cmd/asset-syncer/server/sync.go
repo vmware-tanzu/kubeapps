@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/kubeapps/kubeapps/pkg/kube"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
 	log "k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/credentialprovider"
+	k8scredentialprovider "k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 func Sync(serveOpts Config, version string, args []string) error {
@@ -41,12 +41,12 @@ func Sync(serveOpts Config, version string, args []string) error {
 	authorizationHeader := serveOpts.AuthorizationHeader
 	// The auth header may be a dockerconfig that we need to parse
 	if serveOpts.DockerConfigJson != "" {
-		dockerConfig := &credentialprovider.DockerConfigJSON{}
+		dockerConfig := &k8scredentialprovider.DockerConfigJSON{}
 		err = json.Unmarshal([]byte(serveOpts.DockerConfigJson), dockerConfig)
 		if err != nil {
 			return fmt.Errorf("Error: %v", err)
 		}
-		authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
+		authorizationHeader, err = kubeutils.GetAuthHeaderFromDockerConfig(dockerConfig)
 	}
 
 	filters, err := parseFilters(serveOpts.FilterRules)
@@ -70,7 +70,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 	}
 
 	// Check if the repo has been already processed
-	lastChecksum := manager.LastChecksum(models.Repo{Namespace: repo.Namespace, Name: repo.Name})
+	lastChecksum := manager.LastChecksum(chartmodels.Repo{Namespace: repo.Namespace, Name: repo.Name})
 	log.Infof("Last checksum: %v", lastChecksum)
 	if lastChecksum == checksum {
 		log.Infof("Skipping repository since there are no updatesrepo.URL= %v", repo.URL)
@@ -92,7 +92,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 		if err != nil {
 			return fmt.Errorf("Error: %v", err)
 		}
-		if err = manager.Sync(models.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
+		if err = manager.Sync(chartmodels.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
 			return fmt.Errorf("Can't add chart repository to database: %v", err)
 		}
 

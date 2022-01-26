@@ -7,20 +7,20 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/release"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmrelease "helm.sh/helm/v3/pkg/release"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestDeleteInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
 		existingReleases   []releaseStub
-		request            *corev1.DeleteInstalledPackageRequest
-		expectedStatusCode codes.Code
+		request            *pkgsGRPCv1alpha1.DeleteInstalledPackageRequest
+		expectedStatusCode grpccodes.Code
 	}{
 		{
 			name: "deletes the installed package",
@@ -31,31 +31,31 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					chartID:        "bitnami/apache",
 					chartVersion:   "1.18.3",
 					chartNamespace: globalPackagingNamespace,
-					status:         release.StatusDeployed,
+					status:         helmrelease.StatusDeployed,
 				},
 			},
-			request: &corev1.DeleteInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
 						Namespace: "default",
 					},
 					Identifier: "my-apache",
 				},
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 		},
 		{
 			name: "returns invalid if installed package doesn't exist",
-			request: &corev1.DeleteInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Namespace: "default",
 					},
 					Identifier: "not-a-valid-identifier",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedStatusCode: grpccodes.NotFound,
 		},
 	}
 
@@ -63,8 +63,8 @@ func TestDeleteInstalledPackage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
 			actionConfig := newActionConfigFixture(t, tc.request.GetInstalledPackageRef().GetContext().GetNamespace(), tc.existingReleases, nil)
-			server, _, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			server, _, cleanup := makeServer(t, authorized, actionConfig, &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "bitnami",
 					Namespace: globalPackagingNamespace,
 				},
@@ -73,7 +73,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 			_, err := server.DeleteInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 

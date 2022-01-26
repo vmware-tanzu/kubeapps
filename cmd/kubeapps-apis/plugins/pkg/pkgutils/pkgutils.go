@@ -10,12 +10,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Masterminds/semver"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	semver "github.com/Masterminds/semver/v3"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 // Contains miscellaneous package-utilities used by multiple plug-ins
@@ -45,8 +45,8 @@ func GetDefaultVersionsInSummary() VersionsInSummary {
 }
 
 // packageAppVersionsSummary converts the model chart versions into the required version summary.
-func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
-	pav := []*corev1.PackageAppVersion{}
+func PackageAppVersionsSummary(versions []chartmodels.ChartVersion, versionInSummary VersionsInSummary) []*pkgsGRPCv1alpha1.PackageAppVersion {
+	pav := []*pkgsGRPCv1alpha1.PackageAppVersion{}
 
 	// Use a version map to be able to count how many major, minor and patch versions
 	// we have included.
@@ -57,35 +57,35 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 			continue
 		}
 
-		if _, ok := version_map[version.Major()]; !ok {
+		if _, ok := version_map[int64(version.Major())]; !ok {
 			// Don't add a new major version if we already have enough
 			if len(version_map) >= versionInSummary.Major {
 				continue
 			}
 		} else {
 			// If we don't yet have this minor version
-			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
+			if _, ok := version_map[int64(version.Major())][int64(version.Minor())]; !ok {
 				// Don't add a new minor version if we already have enough for this major version
-				if len(version_map[version.Major()]) >= versionInSummary.Minor {
+				if len(version_map[int64(version.Major())]) >= versionInSummary.Minor {
 					continue
 				}
 			} else {
-				if len(version_map[version.Major()][version.Minor()]) >= versionInSummary.Patch {
+				if len(version_map[int64(version.Major())][int64(version.Minor())]) >= versionInSummary.Patch {
 					continue
 				}
 			}
 		}
 
 		// Include the version and update the version map.
-		pav = append(pav, &corev1.PackageAppVersion{
+		pav = append(pav, &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: v.Version,
 			AppVersion: v.AppVersion,
 		})
 
-		if _, ok := version_map[version.Major()]; !ok {
-			version_map[version.Major()] = map[int64][]int64{}
+		if _, ok := version_map[int64(version.Major())]; !ok {
+			version_map[int64(version.Major())] = map[int64][]int64{}
 		}
-		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
+		version_map[int64(version.Major())][int64(version.Minor())] = append(version_map[int64(version.Major())][int64(version.Minor())], int64(version.Patch()))
 	}
 
 	return pav
@@ -95,40 +95,40 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 // for each required field described at the Helm website:
 // https://helm.sh/docs/topics/charts/#the-chartyaml-file
 // together with required fields for our model.
-func IsValidChart(chart *models.Chart) (bool, error) {
+func IsValidChart(chart *chartmodels.Chart) (bool, error) {
 	if chart.Name == "" {
-		return false, status.Errorf(codes.Internal, "required field .Name not found on helm chart: %v", chart)
+		return false, grpcstatus.Errorf(grpccodes.Internal, "required field .Name not found on helm chart: %v", chart)
 	}
 	if chart.ID == "" {
-		return false, status.Errorf(codes.Internal, "required field .ID not found on helm chart: %v", chart)
+		return false, grpcstatus.Errorf(grpccodes.Internal, "required field .ID not found on helm chart: %v", chart)
 	}
 	if chart.Repo == nil {
-		return false, status.Errorf(codes.Internal, "required field .Repo not found on helm chart: %v", chart)
+		return false, grpcstatus.Errorf(grpccodes.Internal, "required field .Repo not found on helm chart: %v", chart)
 	}
 	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
-		return false, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0] not found on helm chart: %v", chart)
+		return false, grpcstatus.Errorf(grpccodes.Internal, "required field .chart.ChartVersions[0] not found on helm chart: %v", chart)
 	} else {
 		for _, chartVersion := range chart.ChartVersions {
 			if chartVersion.Version == "" {
-				return false, status.Errorf(codes.Internal, "required field .ChartVersions[i].Version not found on helm chart: %v", chart)
+				return false, grpcstatus.Errorf(grpccodes.Internal, "required field .ChartVersions[i].Version not found on helm chart: %v", chart)
 			}
 		}
 	}
 	for _, maintainer := range chart.Maintainers {
 		if maintainer.Name == "" {
-			return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
+			return false, grpcstatus.Errorf(grpccodes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
 		}
 	}
 	return true, nil
 }
 
 // AvailablePackageSummaryFromChart builds an AvailablePackageSummary from a Chart
-func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugin) (*corev1.AvailablePackageSummary, error) {
-	pkg := &corev1.AvailablePackageSummary{}
+func AvailablePackageSummaryFromChart(chart *chartmodels.Chart, plugin *pluginsGRPCv1alpha1.Plugin) (*pkgsGRPCv1alpha1.AvailablePackageSummary, error) {
+	pkg := &pkgsGRPCv1alpha1.AvailablePackageSummary{}
 
 	isValid, err := IsValidChart(chart)
 	if !isValid || err != nil {
-		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "invalid chart: %s", err.Error())
 	}
 
 	pkg.Name = chart.Name
@@ -142,14 +142,14 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 	// as is, so as not to break existing unit tests
 	pkg.Categories = []string{chart.Category}
 
-	pkg.AvailablePackageRef = &corev1.AvailablePackageReference{
+	pkg.AvailablePackageRef = &pkgsGRPCv1alpha1.AvailablePackageReference{
 		Identifier: chart.ID,
 		Plugin:     plugin,
 	}
-	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
+	pkg.AvailablePackageRef.Context = &pkgsGRPCv1alpha1.Context{Namespace: chart.Repo.Namespace}
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.LatestVersion = &corev1.PackageAppVersion{
+		pkg.LatestVersion = &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: chart.ChartVersions[0].Version,
 			AppVersion: chart.ChartVersions[0].AppVersion,
 		}
@@ -180,12 +180,12 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 func GetUnescapedChartID(chartID string) (string, error) {
 	unescapedChartID, err := url.QueryUnescape(chartID)
 	if err != nil {
-		return "", status.Errorf(codes.InvalidArgument, "Unable to decode chart ID chart: %v", chartID)
+		return "", grpcstatus.Errorf(grpccodes.InvalidArgument, "Unable to decode chart ID chart: %v", chartID)
 	}
 	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
 	chartIDParts := strings.Split(unescapedChartID, "/")
 	if len(chartIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
+		return "", grpcstatus.Errorf(grpccodes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
 	}
 	return unescapedChartID, nil
 }

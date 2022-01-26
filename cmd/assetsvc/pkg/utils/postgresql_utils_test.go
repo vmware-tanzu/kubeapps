@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	cmp "github.com/google/go-cmp/cmp"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
 func getMockManager(t *testing.T) (*PostgresAssetManager, sqlmock.Sqlmock, func()) {
@@ -33,8 +33,8 @@ func Test_PGGetChart(t *testing.T) {
 
 	icon := []byte("test")
 	iconB64 := base64.StdEncoding.EncodeToString(icon)
-	dbChart := models.ChartIconString{
-		Chart:   models.Chart{ID: "foo"},
+	dbChart := chartmodels.ChartIconString{
+		Chart:   chartmodels.Chart{ID: "foo"},
 		RawIcon: iconB64,
 	}
 	dbChartJSON, err := json.Marshal(dbChart)
@@ -49,7 +49,7 @@ func Test_PGGetChart(t *testing.T) {
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
-	expectedChart := models.Chart{
+	expectedChart := chartmodels.Chart{
 		ID:      "foo",
 		RawIcon: icon,
 	}
@@ -62,9 +62,9 @@ func Test_PGGetChartVersion(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
-	dbChart := models.Chart{
+	dbChart := chartmodels.Chart{
 		ID: "foo",
-		ChartVersions: []models.ChartVersion{
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "1.0.0"},
 			{Version: "2.0.0"},
 		},
@@ -81,9 +81,9 @@ func Test_PGGetChartVersion(t *testing.T) {
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
-	expectedChart := models.Chart{
+	expectedChart := chartmodels.Chart{
 		ID: "foo",
-		ChartVersions: []models.ChartVersion{
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "1.0.0"},
 		},
 	}
@@ -96,7 +96,7 @@ func Test_GetChartFiles(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
-	expectedFiles := models.ChartFiles{ID: "foo"}
+	expectedFiles := chartmodels.ChartFiles{ID: "foo"}
 	filesJSON, err := json.Marshal(expectedFiles)
 	if err != nil {
 		t.Fatalf("%+v", err)
@@ -118,7 +118,7 @@ func Test_GetChartFiles_withSlashes(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
-	expectedFiles := models.ChartFiles{ID: "fo%2Fo"}
+	expectedFiles := chartmodels.ChartFiles{ID: "fo%2Fo"}
 	filesJSON, err := json.Marshal(expectedFiles)
 	if err != nil {
 		t.Fatalf("%+v", err)
@@ -140,9 +140,9 @@ func Test_GetChartsWithFilters(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
-	dbChart := models.Chart{
+	dbChart := chartmodels.Chart{
 		Name: "foo",
-		ChartVersions: []models.ChartVersion{
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},
 			{Version: "1.0.0", AppVersion: "1.0.1"},
 		},
@@ -164,9 +164,9 @@ func Test_GetChartsWithFilters(t *testing.T) {
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
-	expectedCharts := []*models.Chart{&models.Chart{
+	expectedCharts := []*chartmodels.Chart{&chartmodels.Chart{
 		Name: "foo",
-		ChartVersions: []models.ChartVersion{
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},
 			{Version: "1.0.0", AppVersion: "1.0.1"},
 		},
@@ -180,9 +180,9 @@ func Test_GetChartsWithFilters_withSlashes(t *testing.T) {
 	pgManager, mock, cleanup := getMockManager(t)
 	defer cleanup()
 
-	dbChart := models.Chart{
+	dbChart := chartmodels.Chart{
 		Name: "fo%2Fo",
-		ChartVersions: []models.ChartVersion{
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},
 			{Version: "1.0.0", AppVersion: "1.0.1"},
 		},
@@ -204,9 +204,9 @@ func Test_GetChartsWithFilters_withSlashes(t *testing.T) {
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
-	expectedCharts := []*models.Chart{&models.Chart{
+	expectedCharts := []*chartmodels.Chart{&chartmodels.Chart{
 		Name: "fo%2Fo",
-		ChartVersions: []models.ChartVersion{
+		ChartVersions: []chartmodels.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},
 			{Version: "1.0.0", AppVersion: "1.0.1"},
 		},
@@ -222,13 +222,13 @@ func Test_GetAllChartCategories(t *testing.T) {
 		name                    string
 		namespace               string
 		repo                    string
-		expectedChartCategories []*models.ChartCategory
+		expectedChartCategories []*chartmodels.ChartCategory
 	}{
 		{
 			name:      "without repo",
 			namespace: "other-namespace",
 			repo:      "",
-			expectedChartCategories: []*models.ChartCategory{
+			expectedChartCategories: []*chartmodels.ChartCategory{
 				{Name: "cat1", Count: 1},
 				{Name: "cat2", Count: 2},
 				{Name: "cat3", Count: 3},
@@ -238,7 +238,7 @@ func Test_GetAllChartCategories(t *testing.T) {
 			name:      "with repo",
 			namespace: "other-namespace",
 			repo:      "bitnami",
-			expectedChartCategories: []*models.ChartCategory{
+			expectedChartCategories: []*chartmodels.ChartCategory{
 				{Name: "cat1", Count: 1},
 				{Name: "cat2", Count: 2},
 				{Name: "cat3", Count: 3},
@@ -274,11 +274,11 @@ func Test_GetAllChartCategories(t *testing.T) {
 	}
 }
 func Test_GetPaginatedChartList(t *testing.T) {
-	availableCharts := []*models.Chart{
-		{ID: "bar", ChartVersions: []models.ChartVersion{{Digest: "456"}}},
-		{ID: "copyFoo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
-		{ID: "foo", ChartVersions: []models.ChartVersion{{Digest: "123"}}},
-		{ID: "fo%2Fo", ChartVersions: []models.ChartVersion{{Digest: "321"}}},
+	availableCharts := []*chartmodels.Chart{
+		{ID: "bar", ChartVersions: []chartmodels.ChartVersion{{Digest: "456"}}},
+		{ID: "copyFoo", ChartVersions: []chartmodels.ChartVersion{{Digest: "123"}}},
+		{ID: "foo", ChartVersions: []chartmodels.ChartVersion{{Digest: "123"}}},
+		{ID: "fo%2Fo", ChartVersions: []chartmodels.ChartVersion{{Digest: "321"}}},
 	}
 	tests := []struct {
 		name               string
@@ -286,7 +286,7 @@ func Test_GetPaginatedChartList(t *testing.T) {
 		repo               string
 		pageNumber         int
 		pageSize           int
-		expectedCharts     []*models.Chart
+		expectedCharts     []*chartmodels.Chart
 		expectedTotalPages int
 	}{
 		{
@@ -313,7 +313,7 @@ func Test_GetPaginatedChartList(t *testing.T) {
 			repo:               "",
 			pageNumber:         2,
 			pageSize:           2,
-			expectedCharts:     []*models.Chart{availableCharts[2], availableCharts[3]},
+			expectedCharts:     []*chartmodels.Chart{availableCharts[2], availableCharts[3]},
 			expectedTotalPages: 2,
 		},
 		{
@@ -322,7 +322,7 @@ func Test_GetPaginatedChartList(t *testing.T) {
 			repo:               "",
 			pageNumber:         3,
 			pageSize:           2,
-			expectedCharts:     []*models.Chart{},
+			expectedCharts:     []*chartmodels.Chart{},
 			expectedTotalPages: 2,
 		},
 		{
@@ -339,7 +339,7 @@ func Test_GetPaginatedChartList(t *testing.T) {
 			namespace:          "other-namespace",
 			repo:               "",
 			pageSize:           3,
-			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1], availableCharts[2]},
+			expectedCharts:     []*chartmodels.Chart{availableCharts[0], availableCharts[1], availableCharts[2]},
 			expectedTotalPages: 2,
 		},
 		{
@@ -357,7 +357,7 @@ func Test_GetPaginatedChartList(t *testing.T) {
 			repo:               "",
 			pageNumber:         -2,
 			pageSize:           2,
-			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1]},
+			expectedCharts:     []*chartmodels.Chart{availableCharts[0], availableCharts[1]},
 			expectedTotalPages: 2,
 		},
 		{
@@ -373,7 +373,7 @@ func Test_GetPaginatedChartList(t *testing.T) {
 			namespace:          "other-namespace",
 			repo:               "",
 			pageSize:           2,
-			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1]},
+			expectedCharts:     []*chartmodels.Chart{availableCharts[0], availableCharts[1]},
 			expectedTotalPages: 2,
 		},
 		{

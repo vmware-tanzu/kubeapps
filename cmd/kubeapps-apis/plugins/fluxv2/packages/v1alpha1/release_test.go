@@ -13,33 +13,33 @@ import (
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v8"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
-	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
-	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
-	typfake "k8s.io/client-go/kubernetes/fake"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	paginate "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	resourcerefstest "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	helmchartutil "helm.sh/helm/v3/pkg/chartutil"
+	helmkubefake "helm.sh/helm/v3/pkg/kube/fake"
+	helmrelease "helm.sh/helm/v3/pkg/release"
+	helmstorage "helm.sh/helm/v3/pkg/storage"
+	helmstoragedriver "helm.sh/helm/v3/pkg/storage/driver"
+	k8sapiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	k8sapiextensionsclientfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8swatch "k8s.io/apimachinery/pkg/watch"
+	k8dynamicclient "k8s.io/client-go/dynamic"
+	k8dynamicclientfake "k8s.io/client-go/dynamic/fake"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8stypedclientfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
 
@@ -63,83 +63,83 @@ type testSpecGetInstalledPackages struct {
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name               string
-		request            *corev1.GetInstalledPackageSummariesRequest
+		request            *pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest
 		existingObjs       []testSpecGetInstalledPackages
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetInstalledPackageSummariesResponse
+		expectedStatusCode grpccodes.Code
+		expectedResponse   *pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse
 	}{
 		{
 			name: "returns installed packages when install fails",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "namespace-1"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_failed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					redis_summary_failed,
 				},
 			},
 		},
 		{
 			name: "returns installed packages when install is in progress",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "namespace-1"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_pending,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					redis_summary_pending,
 				},
 			},
 		},
 		{
 			name: "returns installed packages when install is in progress (2)",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "namespace-1"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_pending_2,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					redis_summary_pending_2,
 				},
 			},
 		},
 		{
 			name: "returns installed packages in a specific namespace",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: "namespace-1"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					redis_summary_installed,
 				},
 			},
 		},
 		{
 			name: "returns installed packages across all namespaces",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: ""},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: ""},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					redis_summary_installed,
 					airflow_summary_installed,
 				},
@@ -147,9 +147,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		},
 		{
 			name: "returns limited results",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: ""},
-				PaginationOptions: &corev1.PaginationOptions{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: ""},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{
 					PageToken: "0",
 					PageSize:  1,
 				},
@@ -158,9 +158,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					redis_summary_installed,
 				},
 				NextPageToken: "1",
@@ -168,9 +168,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		},
 		{
 			name: "fetches results from an offset",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: ""},
-				PaginationOptions: &corev1.PaginationOptions{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: ""},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{
 					PageSize:  1,
 					PageToken: "1",
 				},
@@ -179,9 +179,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					airflow_summary_installed,
 				},
 				NextPageToken: "2",
@@ -189,9 +189,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		},
 		{
 			name: "fetches results from an offset (2)",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: ""},
-				PaginationOptions: &corev1.PaginationOptions{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: ""},
+				PaginationOptions: &pkgsGRPCv1alpha1.PaginationOptions{
 					PageSize:  1,
 					PageToken: "2",
 				},
@@ -200,38 +200,38 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{},
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{},
 				NextPageToken:             "",
 			},
 		},
 		{
 			name: "returns installed package with semver constraint expression",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: ""},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: ""},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				airflow_existing_spec_semver,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					airflow_summary_semver,
 				},
 			},
 		},
 		{
 			name: "returns installed package with latest '*' version",
-			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: ""},
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest{
+				Context: &pkgsGRPCv1alpha1.Context{Namespace: ""},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_latest,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
-				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*pkgsGRPCv1alpha1.InstalledPackageSummary{
 					redis_summary_latest,
 				},
 			},
@@ -277,24 +277,24 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			response, err := s.GetInstalledPackageSummaries(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			// We don't need to check anything else for non-OK grpccodes.
+			if tc.expectedStatusCode != grpccodes.OK {
 				return
 			}
 
 			opts := cmpopts.IgnoreUnexported(
-				corev1.GetInstalledPackageSummariesResponse{},
-				corev1.InstalledPackageSummary{},
-				corev1.InstalledPackageReference{},
-				corev1.Context{},
-				corev1.VersionReference{},
-				corev1.InstalledPackageStatus{},
-				corev1.PackageAppVersion{},
-				plugins.Plugin{})
+				pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{},
+				pkgsGRPCv1alpha1.InstalledPackageSummary{},
+				pkgsGRPCv1alpha1.InstalledPackageReference{},
+				pkgsGRPCv1alpha1.Context{},
+				pkgsGRPCv1alpha1.VersionReference{},
+				pkgsGRPCv1alpha1.InstalledPackageStatus{},
+				pkgsGRPCv1alpha1.PackageAppVersion{},
+				pluginsGRPCv1alpha1.Plugin{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -313,22 +313,22 @@ type helmReleaseStub struct {
 	chartVersion string
 	notes        string
 	manifest     string
-	status       release.Status
+	status       helmrelease.Status
 }
 
 func TestGetInstalledPackageDetail(t *testing.T) {
 	testCases := []struct {
 		name               string
-		request            *corev1.GetInstalledPackageDetailRequest
+		request            *pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest
 		existingK8sObjs    []testSpecGetInstalledPackages
 		targetNamespace    string // this is where installation would actually place artifacts
 		existingHelmStubs  []helmReleaseStub
-		expectedStatusCode codes.Code
-		expectedDetail     *corev1.InstalledPackageDetail
+		expectedStatusCode grpccodes.Code
+		expectedDetail     *pkgsGRPCv1alpha1.InstalledPackageDetail
 	}{
 		{
 			name: "returns installed package detail when install fails",
-			request: &corev1.GetInstalledPackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
@@ -337,12 +337,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingHelmStubs: []helmReleaseStub{
 				redis_existing_stub_failed,
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedDetail:     redis_detail_failed,
 		},
 		{
 			name: "returns installed package detail when install is in progress",
-			request: &corev1.GetInstalledPackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
@@ -351,12 +351,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingHelmStubs: []helmReleaseStub{
 				redis_existing_stub_pending,
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedDetail:     redis_detail_pending,
 		},
 		{
 			name: "returns installed package detail when install is successful",
-			request: &corev1.GetInstalledPackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
@@ -365,22 +365,22 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingHelmStubs: []helmReleaseStub{
 				redis_existing_stub_completed,
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedDetail:     redis_detail_completed,
 		},
 		{
 			name: "returns a 404 if the installed package is not found",
-			request: &corev1.GetInstalledPackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: installedRef("dontworrybehappy", "namespace-1"),
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedStatusCode: grpccodes.NotFound,
 		},
 		{
 			name: "returns values and reconciliation options in package detail",
-			request: &corev1.GetInstalledPackageDetailRequest{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
@@ -389,7 +389,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			existingHelmStubs: []helmReleaseStub{
 				redis_existing_stub_completed,
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedDetail:     redis_detail_completed_with_values_and_reconciliation_options,
 		},
 	}
@@ -406,16 +406,16 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 
 			response, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			// We don't need to check anything else for non-OK grpccodes.
+			if tc.expectedStatusCode != grpccodes.OK {
 				return
 			}
 
-			expectedResp := &corev1.GetInstalledPackageDetailResponse{
+			expectedResp := &pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse{
 				InstalledPackageDetail: tc.expectedDetail,
 			}
 
@@ -438,18 +438,18 @@ type testSpecCreateInstalledPackage struct {
 func TestCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
-		request            *corev1.CreateInstalledPackageRequest
+		request            *pkgsGRPCv1alpha1.CreateInstalledPackageRequest
 		existingObjs       testSpecCreateInstalledPackage
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.CreateInstalledPackageResponse
+		expectedStatusCode grpccodes.Code
+		expectedResponse   *pkgsGRPCv1alpha1.CreateInstalledPackageResponse
 		expectedRelease    map[string]interface{}
 	}{
 		{
 			name: "create package (simple)",
-			request: &corev1.CreateInstalledPackageRequest{
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
 				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Namespace: "test",
 				},
 			},
@@ -458,19 +458,19 @@ func TestCreateInstalledPackage(t *testing.T) {
 				repoNamespace: "namespace-1",
 				repoIndex:     "testdata/podinfo-index.yaml",
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedResponse:   create_installed_package_resp_my_podinfo,
 			expectedRelease:    flux_helm_release_basic,
 		},
 		{
 			name: "create package (semver constraint)",
-			request: &corev1.CreateInstalledPackageRequest{
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
 				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Namespace: "test",
 				},
-				PkgVersionReference: &corev1.VersionReference{
+				PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 					Version: "> 5",
 				},
 			},
@@ -479,19 +479,19 @@ func TestCreateInstalledPackage(t *testing.T) {
 				repoNamespace: "namespace-1",
 				repoIndex:     "testdata/podinfo-index.yaml",
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedResponse:   create_installed_package_resp_my_podinfo,
 			expectedRelease:    flux_helm_release_semver_constraint,
 		},
 		{
 			name: "create package (reconcile options)",
-			request: &corev1.CreateInstalledPackageRequest{
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
 				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Namespace: "test",
 				},
-				ReconciliationOptions: &corev1.ReconciliationOptions{
+				ReconciliationOptions: &pkgsGRPCv1alpha1.ReconciliationOptions{
 					Interval:           60,
 					Suspend:            false,
 					ServiceAccountName: "foo",
@@ -502,16 +502,16 @@ func TestCreateInstalledPackage(t *testing.T) {
 				repoNamespace: "namespace-1",
 				repoIndex:     "testdata/podinfo-index.yaml",
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedResponse:   create_installed_package_resp_my_podinfo,
 			expectedRelease:    flux_helm_release_reconcile_options,
 		},
 		{
 			name: "create package (values override)",
-			request: &corev1.CreateInstalledPackageRequest{
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
 				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Namespace: "test",
 				},
 				Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
@@ -521,7 +521,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				repoNamespace: "namespace-1",
 				repoIndex:     "testdata/podinfo-index.yaml",
 			},
-			expectedStatusCode: codes.OK,
+			expectedStatusCode: grpccodes.OK,
 			expectedResponse:   create_installed_package_resp_my_podinfo,
 			expectedRelease:    flux_helm_release_values,
 		},
@@ -529,7 +529,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runtimeObjs := []runtime.Object{}
+			runtimeObjs := []k8sruntime.Object{}
 
 			ts, repo, err := newRepoWithIndex(
 				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil, "")
@@ -553,20 +553,20 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 			response, err := s.CreateInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			// We don't need to check anything else for non-OK grpccodes.
+			if tc.expectedStatusCode != grpccodes.OK {
 				return
 			}
 
 			opts := cmpopts.IgnoreUnexported(
-				corev1.CreateInstalledPackageResponse{},
-				corev1.InstalledPackageReference{},
-				plugins.Plugin{},
-				corev1.Context{})
+				pkgsGRPCv1alpha1.CreateInstalledPackageResponse{},
+				pkgsGRPCv1alpha1.InstalledPackageReference{},
+				pluginsGRPCv1alpha1.Plugin{},
+				pkgsGRPCv1alpha1.Context{})
 
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
@@ -586,7 +586,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			releaseObj, err := dynamicClient.Resource(releasesGvr).Namespace(tc.request.TargetContext.Namespace).Get(
 				context.Background(),
 				tc.request.Name,
-				v1.GetOptions{})
+				k8smetav1.GetOptions{})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -601,35 +601,35 @@ func TestCreateInstalledPackage(t *testing.T) {
 func TestUpdateInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
-		request            *corev1.UpdateInstalledPackageRequest
+		request            *pkgsGRPCv1alpha1.UpdateInstalledPackageRequest
 		existingK8sObjs    []testSpecGetInstalledPackages
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.UpdateInstalledPackageResponse
+		expectedStatusCode grpccodes.Code
+		expectedResponse   *pkgsGRPCv1alpha1.UpdateInstalledPackageResponse
 		expectedRelease    map[string]interface{}
 	}{
 		{
 			name: "update package (simple)",
-			request: &corev1.UpdateInstalledPackageRequest{
+			request: &pkgsGRPCv1alpha1.UpdateInstalledPackageRequest{
 				InstalledPackageRef: my_redis_ref,
-				PkgVersionReference: &corev1.VersionReference{
+				PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 					Version: ">14.4.0",
 				},
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse: &pkgsGRPCv1alpha1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
 			},
 			expectedRelease: flux_helm_release_updated_1,
 		},
 		{
 			name: "returns not found if installed package doesn't exist",
-			request: &corev1.UpdateInstalledPackageRequest{
+			request: &pkgsGRPCv1alpha1.UpdateInstalledPackageRequest{
 				InstalledPackageRef: installedRef("not-a-valid-identifier", "default"),
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedStatusCode: grpccodes.NotFound,
 		},
 	}
 
@@ -644,20 +644,20 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 			response, err := s.UpdateInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			// We don't need to check anything else for non-OK grpccodes.
+			if tc.expectedStatusCode != grpccodes.OK {
 				return
 			}
 
 			opts := cmpopts.IgnoreUnexported(
-				corev1.UpdateInstalledPackageResponse{},
-				corev1.InstalledPackageReference{},
-				plugins.Plugin{},
-				corev1.Context{})
+				pkgsGRPCv1alpha1.UpdateInstalledPackageResponse{},
+				pkgsGRPCv1alpha1.InstalledPackageReference{},
+				pluginsGRPCv1alpha1.Plugin{},
+				pkgsGRPCv1alpha1.Context{})
 
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
@@ -678,7 +678,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Namespace(tc.expectedResponse.InstalledPackageRef.Context.Namespace).Get(
 				context.Background(),
 				tc.expectedResponse.InstalledPackageRef.Identifier,
-				v1.GetOptions{})
+				k8smetav1.GetOptions{})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -693,33 +693,33 @@ func TestUpdateInstalledPackage(t *testing.T) {
 func TestDeleteInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
-		request            *corev1.DeleteInstalledPackageRequest
+		request            *pkgsGRPCv1alpha1.DeleteInstalledPackageRequest
 		existingK8sObjs    []testSpecGetInstalledPackages
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.DeleteInstalledPackageResponse
+		expectedStatusCode grpccodes.Code
+		expectedResponse   *pkgsGRPCv1alpha1.DeleteInstalledPackageResponse
 	}{
 		{
 			name: "delete package",
-			request: &corev1.DeleteInstalledPackageRequest{
+			request: &pkgsGRPCv1alpha1.DeleteInstalledPackageRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse:   &corev1.DeleteInstalledPackageResponse{},
+			expectedStatusCode: grpccodes.OK,
+			expectedResponse:   &pkgsGRPCv1alpha1.DeleteInstalledPackageResponse{},
 		},
 		{
 			name: "returns not found if installed package doesn't exist",
-			request: &corev1.DeleteInstalledPackageRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.DeleteInstalledPackageRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Namespace: "default",
 					},
 					Identifier: "not-a-valid-identifier",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedStatusCode: grpccodes.NotFound,
 		},
 	}
 
@@ -734,16 +734,16 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 			response, err := s.DeleteInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			// We don't need to check anything else for non-OK grpccodes.
+			if tc.expectedStatusCode != grpccodes.OK {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.DeleteInstalledPackageResponse{})
+			opts := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.DeleteInstalledPackageResponse{})
 
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
@@ -764,8 +764,8 @@ func TestDeleteInstalledPackage(t *testing.T) {
 				Namespace(tc.request.InstalledPackageRef.Context.Namespace).Get(
 				context.Background(),
 				tc.request.InstalledPackageRef.Identifier,
-				v1.GetOptions{})
-			if !errors.IsNotFound(err) {
+				k8smetav1.GetOptions{})
+			if !k8serrors.IsNotFound(err) {
 				t.Errorf("mismatch expected, NotFound, got %+v", err)
 			}
 		})
@@ -781,16 +781,16 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 
 	type testCase struct {
 		baseTestCase       resourcerefstest.TestCase
-		request            *corev1.GetInstalledPackageResourceRefsRequest
-		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
-		expectedStatusCode codes.Code
+		request            *pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest
+		expectedResponse   *pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse
+		expectedStatusCode grpccodes.Code
 	}
 
 	// newTestCase is a function to take an existing test-case
 	// (a so-called baseTestCase in pkg/resourcerefs module, which contains a LOT of useful data)
 	// and "enrich" it with some new fields to create a different kind of test case
 	// that tests server.GetInstalledPackageResourceRefs() func
-	newTestCase := func(tc int, response bool, code codes.Code) testCase {
+	newTestCase := func(tc int, response bool, code grpccodes.Code) testCase {
 		// Using the redis_existing_stub_completed data with
 		// different manifests for each test.
 		var (
@@ -800,9 +800,9 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 
 		newCase := testCase{
 			baseTestCase: resourcerefstest.TestCases2[tc],
-			request: &corev1.GetInstalledPackageResourceRefsRequest{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
 						Namespace: releaseNamespace,
 					},
@@ -811,8 +811,8 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			},
 		}
 		if response {
-			newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
-				Context: &corev1.Context{
+			newCase.expectedResponse = &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse{
+				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "default",
 					Namespace: releaseNamespace,
 				},
@@ -824,25 +824,25 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		newTestCase(0, true, codes.OK),
-		newTestCase(1, true, codes.OK),
-		newTestCase(2, true, codes.OK),
-		newTestCase(3, true, codes.OK),
-		newTestCase(4, false, codes.NotFound),
-		newTestCase(5, false, codes.Internal),
+		newTestCase(0, true, grpccodes.OK),
+		newTestCase(1, true, grpccodes.OK),
+		newTestCase(2, true, grpccodes.OK),
+		newTestCase(3, true, grpccodes.OK),
+		newTestCase(4, false, grpccodes.NotFound),
+		newTestCase(5, false, grpccodes.Internal),
 		// See https://github.com/kubeapps/kubeapps/issues/632
-		newTestCase(6, true, codes.OK),
-		newTestCase(7, true, codes.OK),
-		newTestCase(8, true, codes.OK),
-		// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
-		newTestCase(9, true, codes.OK),
-		newTestCase(10, true, codes.OK),
+		newTestCase(6, true, grpccodes.OK),
+		newTestCase(7, true, grpccodes.OK),
+		newTestCase(8, true, grpccodes.OK),
+		// See https://k8stypedclient.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
+		newTestCase(9, true, grpccodes.OK),
+		newTestCase(10, true, grpccodes.OK),
 	}
 
 	ignoredFields := cmpopts.IgnoreUnexported(
-		corev1.GetInstalledPackageResourceRefsResponse{},
-		corev1.ResourceRef{},
-		corev1.Context{},
+		pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse{},
+		pkgsGRPCv1alpha1.ResourceRef{},
+		pkgsGRPCv1alpha1.Context{},
 	)
 
 	toHelmReleaseStubs := func(in []resourcerefstest.TestReleaseStub) []helmReleaseStub {
@@ -868,7 +868,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 
 			response, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -884,7 +884,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	}
 }
 
-func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (runtimeObjs []runtime.Object, cleanup func()) {
+func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (runtimeObjs []k8sruntime.Object, cleanup func()) {
 	httpServers := []*httptest.Server{}
 	cleanup = func() {
 		for _, ts := range httpServers {
@@ -950,16 +950,16 @@ func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPacka
 			},
 		}
 		if len(existing.targetNamespace) != 0 {
-			unstructured.SetNestedField(releaseSpec, existing.targetNamespace, "targetNamespace")
+			k8smetaunstructuredv1.SetNestedField(releaseSpec, existing.targetNamespace, "targetNamespace")
 		}
 		if len(existing.releaseValues) != 0 {
-			unstructured.SetNestedMap(releaseSpec, existing.releaseValues, "values")
+			k8smetaunstructuredv1.SetNestedMap(releaseSpec, existing.releaseValues, "values")
 		}
 		if existing.releaseSuspend {
-			unstructured.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
+			k8smetaunstructuredv1.SetNestedField(releaseSpec, existing.releaseSuspend, "suspend")
 		}
 		if len(existing.releaseServiceAccountName) != 0 {
-			unstructured.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
+			k8smetaunstructuredv1.SetNestedField(releaseSpec, existing.releaseServiceAccountName, "serviceAccountName")
 		}
 		release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, existing.releaseStatus)
 		runtimeObjs = append(runtimeObjs, release)
@@ -967,20 +967,20 @@ func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPacka
 	return runtimeObjs, cleanup
 }
 
-func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actualResp *corev1.GetInstalledPackageDetailResponse, expectedResp *corev1.GetInstalledPackageDetailResponse) {
+func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actualResp *pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse, expectedResp *pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse) {
 	opts := cmpopts.IgnoreUnexported(
-		corev1.GetInstalledPackageDetailResponse{},
-		corev1.InstalledPackageDetail{},
-		corev1.InstalledPackageReference{},
-		corev1.Context{},
-		corev1.VersionReference{},
-		corev1.InstalledPackageStatus{},
-		corev1.PackageAppVersion{},
-		plugins.Plugin{},
-		corev1.ReconciliationOptions{},
-		corev1.AvailablePackageReference{})
+		pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse{},
+		pkgsGRPCv1alpha1.InstalledPackageDetail{},
+		pkgsGRPCv1alpha1.InstalledPackageReference{},
+		pkgsGRPCv1alpha1.Context{},
+		pkgsGRPCv1alpha1.VersionReference{},
+		pkgsGRPCv1alpha1.InstalledPackageStatus{},
+		pkgsGRPCv1alpha1.PackageAppVersion{},
+		pluginsGRPCv1alpha1.Plugin{},
+		pkgsGRPCv1alpha1.ReconciliationOptions{},
+		pkgsGRPCv1alpha1.AvailablePackageReference{})
 	// see comment in release_integration_test.go. Intermittently we get an inconsistent error message from flux
-	opts2 := cmpopts.IgnoreFields(corev1.InstalledPackageStatus{}, "UserReason")
+	opts2 := cmpopts.IgnoreFields(pkgsGRPCv1alpha1.InstalledPackageStatus{}, "UserReason")
 	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts, opts2) {
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
 	}
@@ -989,7 +989,7 @@ func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actu
 	}
 }
 
-func newRelease(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
+func newRelease(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *k8smetaunstructuredv1.Unstructured {
 	metadata := map[string]interface{}{
 		"name":            name,
 		"generation":      int64(1),
@@ -1014,36 +1014,36 @@ func newRelease(name string, namespace string, spec map[string]interface{}, stat
 		obj["status"] = status
 	}
 
-	return &unstructured.Unstructured{
+	return &k8smetaunstructuredv1.Unstructured{
 		Object: obj,
 	}
 }
 
-func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, chartOrRelease ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
-	typedClient := typfake.NewSimpleClientset()
-	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
-		map[schema.GroupVersionResource]string{
+func newServerWithChartsAndReleases(t *testing.T, actionConfig *helmaction.Configuration, chartOrRelease ...k8sruntime.Object) (*Server, redismock.ClientMock, *k8swatch.FakeWatcher, error) {
+	typedClient := k8stypedclientfake.NewSimpleClientset()
+	dynamicClient := k8dynamicclientfake.NewSimpleDynamicClientWithCustomListKinds(
+		k8sruntime.NewScheme(),
+		map[k8sschema.GroupVersionResource]string{
 			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmCharts}:                         fluxHelmChartList,
 			{Group: fluxHelmReleaseGroup, Version: fluxHelmReleaseVersion, Resource: fluxHelmReleases}: fluxHelmReleaseList,
 			{Group: fluxGroup, Version: fluxVersion, Resource: fluxHelmRepositories}:                   fluxHelmRepositoryList,
 		},
 		chartOrRelease...)
 
-	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	apiextIfc := k8sapiextensionsclientfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
+	clientGetter := func(context.Context) (k8stypedclient.Interface, k8dynamicclient.Interface, k8sapiextensionsclient.Interface, error) {
 		return typedClient, dynamicClient, apiextIfc, nil
 	}
 
-	watcher := watch.NewFake()
+	watcher := k8swatch.NewFake()
 
 	// see chart_test.go for explanation
 	reactor := dynamicClient.Fake.ReactionChain[0]
 	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
-		func(action k8stesting.Action) (bool, runtime.Object, error) {
+		func(action k8stesting.Action) (bool, k8sruntime.Object, error) {
 			handled, ret, err := reactor.React(action)
-			ulist, ok := ret.(*unstructured.UnstructuredList)
+			ulist, ok := ret.(*k8smetaunstructuredv1.UnstructuredList)
 			if ok && ulist != nil {
 				ulist.SetResourceVersion("1")
 			}
@@ -1061,16 +1061,16 @@ func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configura
 	return s, mock, watcher, nil
 }
 
-// newHelmActionConfig returns an action.Configuration with fake clients and memory storage.
-func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub) *action.Configuration {
+// newHelmActionConfig returns an helmaction.Configuration with fake clients and memory helmstorage.
+func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub) *helmaction.Configuration {
 	t.Helper()
 
-	memDriver := driver.NewMemory()
+	memDriver := helmstoragedriver.NewMemory()
 
-	actionConfig := &action.Configuration{
-		Releases:     storage.Init(memDriver),
-		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
-		Capabilities: chartutil.DefaultCapabilities,
+	actionConfig := &helmaction.Configuration{
+		Releases:     helmstorage.Init(memDriver),
+		KubeClient:   &helmkubefake.FailingKubeClient{PrintingKubeClient: helmkubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		Capabilities: helmchartutil.DefaultCapabilities,
 		Log: func(format string, v ...interface{}) {
 			t.Helper()
 			t.Logf(format, v...)
@@ -1079,15 +1079,15 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 
 	for _, r := range rels {
 		config := map[string]interface{}{}
-		rel := &release.Release{
+		rel := &helmrelease.Release{
 			Name:      r.name,
 			Namespace: r.namespace,
-			Info: &release.Info{
+			Info: &helmrelease.Info{
 				Status: r.status,
 				Notes:  r.notes,
 			},
-			Chart: &chart.Chart{
-				Metadata: &chart.Metadata{
+			Chart: &helmchart.Chart{
+				Metadata: &helmchart.Metadata{
 					Version:    r.chartVersion,
 					Icon:       "https://example.com/icon.png",
 					AppVersion: "1.2.3",
@@ -1108,9 +1108,9 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 	return actionConfig
 }
 
-func installedRef(id, namespace string) *corev1.InstalledPackageReference {
-	return &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
+func installedRef(id, namespace string) *pkgsGRPCv1alpha1.InstalledPackageReference {
+	return &pkgsGRPCv1alpha1.InstalledPackageReference{
+		Context: &pkgsGRPCv1alpha1.Context{
 			Namespace: namespace,
 			Cluster:   KubeappsCluster,
 		},
@@ -1121,124 +1121,124 @@ func installedRef(id, namespace string) *corev1.InstalledPackageReference {
 
 // misc global vars that get re-used in multiple tests scenarios
 var (
-	releasesGvr = schema.GroupVersionResource{
+	releasesGvr = k8sschema.GroupVersionResource{
 		Group:    fluxHelmReleaseGroup,
 		Version:  fluxHelmReleaseVersion,
 		Resource: fluxHelmReleases,
 	}
 
-	statusInstalled = &corev1.InstalledPackageStatus{
+	statusInstalled = &pkgsGRPCv1alpha1.InstalledPackageStatus{
 		Ready:      true,
-		Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+		Reason:     pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	}
 
 	my_redis_ref = installedRef("my-redis", "namespace-1")
 
-	redis_summary_installed = &corev1.InstalledPackageSummary{
+	redis_summary_installed = &pkgsGRPCv1alpha1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
 		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "14.4.0",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 		PkgDisplayName:   "redis",
 		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 		Status:           statusInstalled,
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
 
-	redis_summary_failed = &corev1.InstalledPackageSummary{
+	redis_summary_failed = &pkgsGRPCv1alpha1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
 		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "14.4.0",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 		PkgDisplayName:   "redis",
 		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-		Status: &corev1.InstalledPackageStatus{
+		Status: &pkgsGRPCv1alpha1.InstalledPackageStatus{
 			Ready:      false,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+			Reason:     pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_FAILED,
 			UserReason: "InstallFailed: install retries exhausted",
 		},
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
 
-	redis_summary_pending = &corev1.InstalledPackageSummary{
+	redis_summary_pending = &pkgsGRPCv1alpha1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
 		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "14.4.0",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 		PkgDisplayName:   "redis",
 		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-		Status: &corev1.InstalledPackageStatus{
+		Status: &pkgsGRPCv1alpha1.InstalledPackageStatus{
 			Ready:      false,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			Reason:     pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_PENDING,
 			UserReason: "Progressing: reconciliation in progress",
 		},
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
 
-	redis_summary_pending_2 = &corev1.InstalledPackageSummary{
+	redis_summary_pending_2 = &pkgsGRPCv1alpha1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
 		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "14.4.0",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 		PkgDisplayName:   "redis",
 		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-		Status: &corev1.InstalledPackageStatus{
+		Status: &pkgsGRPCv1alpha1.InstalledPackageStatus{
 			Ready:      false,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			Reason:     pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_PENDING,
 			UserReason: "ArtifactFailed: HelmChart 'default/kubeapps-my-redis' is not ready",
 		},
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
 
-	airflow_summary_installed = &corev1.InstalledPackageSummary{
+	airflow_summary_installed = &pkgsGRPCv1alpha1.InstalledPackageSummary{
 		InstalledPackageRef: installedRef("my-airflow", "namespace-2"),
 		Name:                "my-airflow",
 		IconUrl:             "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "6.7.1",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "6.7.1",
 			AppVersion: "1.10.12",
 		},
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "10.2.1",
 			AppVersion: "2.1.0",
 		},
@@ -1247,38 +1247,38 @@ var (
 		Status:           statusInstalled,
 	}
 
-	redis_summary_latest = &corev1.InstalledPackageSummary{
+	redis_summary_latest = &pkgsGRPCv1alpha1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
 		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "*",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 		PkgDisplayName:   "redis",
 		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 		Status:           statusInstalled,
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "6.2.4",
 		},
 	}
 
-	airflow_summary_semver = &corev1.InstalledPackageSummary{
+	airflow_summary_semver = &pkgsGRPCv1alpha1.InstalledPackageSummary{
 		InstalledPackageRef: installedRef("my-airflow", "namespace-2"),
 		Name:                "my-airflow",
 		IconUrl:             "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "<=6.7.1",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "6.7.1",
 			AppVersion: "1.10.12",
 		},
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "10.2.1",
 			AppVersion: "2.1.0",
 		},
@@ -1326,7 +1326,7 @@ var (
 		namespace:    "test",
 		chartVersion: "14.4.0",
 		notes:        "some notes",
-		status:       release.StatusDeployed,
+		status:       helmrelease.StatusDeployed,
 	}
 
 	redis_existing_spec_completed_with_values_and_reconciliation_options = testSpecGetInstalledPackages{
@@ -1412,7 +1412,7 @@ var (
 		namespace:    "test",
 		chartVersion: "14.4.0",
 		notes:        "some notes",
-		status:       release.StatusFailed,
+		status:       helmrelease.StatusFailed,
 	}
 
 	airflow_existing_spec_completed = testSpecGetInstalledPackages{
@@ -1538,7 +1538,7 @@ var (
 		namespace:    "test",
 		chartVersion: "14.4.0",
 		notes:        "some notes",
-		status:       release.StatusPendingInstall,
+		status:       helmrelease.StatusPendingInstall,
 	}
 
 	redis_existing_spec_latest = testSpecGetInstalledPackages{
@@ -1574,61 +1574,61 @@ var (
 		},
 	}
 
-	redis_detail_failed = &corev1.InstalledPackageDetail{
+	redis_detail_failed = &pkgsGRPCv1alpha1.InstalledPackageDetail{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "14.4.0",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "1.2.3",
 		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
+		ReconciliationOptions: &pkgsGRPCv1alpha1.ReconciliationOptions{
 			Interval: 60,
 		},
-		Status: &corev1.InstalledPackageStatus{
+		Status: &pkgsGRPCv1alpha1.InstalledPackageStatus{
 			Ready:      false,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+			Reason:     pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_FAILED,
 			UserReason: "InstallFailed: install retries exhausted",
 		},
 		AvailablePackageRef:   availableRef("bitnami-1/redis", "default"),
 		PostInstallationNotes: "some notes",
 	}
 
-	redis_detail_pending = &corev1.InstalledPackageDetail{
+	redis_detail_pending = &pkgsGRPCv1alpha1.InstalledPackageDetail{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "14.4.0",
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: "14.4.0",
 			AppVersion: "1.2.3",
 		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
+		ReconciliationOptions: &pkgsGRPCv1alpha1.ReconciliationOptions{
 			Interval: 60,
 		},
-		Status: &corev1.InstalledPackageStatus{
+		Status: &pkgsGRPCv1alpha1.InstalledPackageStatus{
 			Ready:      false,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			Reason:     pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_PENDING,
 			UserReason: "Progressing: reconciliation in progress",
 		},
 		AvailablePackageRef:   availableRef("bitnami-1/redis", "default"),
 		PostInstallationNotes: "some notes",
 	}
 
-	redis_detail_completed = &corev1.InstalledPackageDetail{
+	redis_detail_completed = &pkgsGRPCv1alpha1.InstalledPackageDetail{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			AppVersion: "1.2.3",
 			PkgVersion: "14.4.0",
 		},
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "14.4.0",
 		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
+		ReconciliationOptions: &pkgsGRPCv1alpha1.ReconciliationOptions{
 			Interval: 60,
 		},
 		Status:                statusInstalled,
@@ -1636,17 +1636,17 @@ var (
 		PostInstallationNotes: "some notes",
 	}
 
-	redis_detail_completed_with_values_and_reconciliation_options = &corev1.InstalledPackageDetail{
+	redis_detail_completed_with_values_and_reconciliation_options = &pkgsGRPCv1alpha1.InstalledPackageDetail{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			AppVersion: "1.2.3",
 			PkgVersion: "14.4.0",
 		},
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: "14.4.0",
 		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
+		ReconciliationOptions: &pkgsGRPCv1alpha1.ReconciliationOptions{
 			Interval:           60,
 			Suspend:            true,
 			ServiceAccountName: "foo",
@@ -1755,7 +1755,7 @@ var (
 		},
 	}
 
-	create_installed_package_resp_my_podinfo = &corev1.CreateInstalledPackageResponse{
+	create_installed_package_resp_my_podinfo = &pkgsGRPCv1alpha1.CreateInstalledPackageResponse{
 		InstalledPackageRef: installedRef("my-podinfo", "test"),
 	}
 

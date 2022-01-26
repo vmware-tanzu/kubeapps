@@ -10,27 +10,27 @@ import (
 	"strings"
 	"time"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pkgfluxv2common "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	pkgutils "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	statuserror "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/kubeapps/kubeapps/pkg/tarutil"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage/driver"
-	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/dynamic"
+	tarutil "github.com/kubeapps/kubeapps/pkg/tarutil"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	helmrelease "helm.sh/helm/v3/pkg/release"
+	helmstoragedriver "helm.sh/helm/v3/pkg/storage/driver"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8stypes "k8s.io/apimachinery/pkg/types"
+	k8dynamicclient "k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
+	k8syaml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -44,13 +44,13 @@ const (
 	defaultReconcileInterval = "1m"
 )
 
-func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace string) (k8dynamicclient.ResourceInterface, error) {
 	_, client, _, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	releasesResource := schema.GroupVersionResource{
+	releasesResource := k8sschema.GroupVersionResource{
 		Group:    fluxHelmReleaseGroup,
 		Version:  fluxHelmReleaseVersion,
 		Resource: fluxHelmReleases,
@@ -60,30 +60,30 @@ func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace str
 }
 
 // namespace maybe "", in which case releases from all namespaces are returned
-func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) (*k8smetaunstructuredv1.UnstructuredList, error) {
 	releasesIfc, err := s.getReleasesResourceInterface(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
-	if releases, err := releasesIfc.List(ctx, metav1.ListOptions{}); err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to list fluxv2 helmreleases: %v", err)
+	if releases, err := releasesIfc.List(ctx, k8smetav1.ListOptions{}); err != nil {
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to list fluxv2 helmreleases: %v", err)
 	} else {
 		return releases, nil
 	}
 }
 
-func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
+func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*pkgsGRPCv1alpha1.InstalledPackageSummary, error) {
 	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
+	installedPkgSummaries := []*pkgsGRPCv1alpha1.InstalledPackageSummary{}
 	if len(releasesFromCluster.Items) > 0 {
 		// we're going to need this later
 		// TODO (gfichtenholt) for now we get all charts and later find one that helmrelease is using
 		// there is probably a more efficient way to do this
-		chartsFromCluster, err := s.listChartsInCluster(ctx, apiv1.NamespaceAll)
+		chartsFromCluster, err := s.listChartsInCluster(ctx, k8scorev1.NamespaceAll)
 		if err != nil {
 			return nil, err
 		}
@@ -112,50 +112,50 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 	return installedPkgSummaries, nil
 }
 
-func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructuredRelease map[string]interface{}, chartsFromCluster *unstructured.UnstructuredList) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructuredRelease map[string]interface{}, chartsFromCluster *k8smetaunstructuredv1.UnstructuredList) (*pkgsGRPCv1alpha1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
-	if !common.CheckGeneration(unstructuredRelease) {
+	if !pkgfluxv2common.CheckGeneration(unstructuredRelease) {
 		return nil, nil
 	}
 
-	name, err := common.NamespacedName(unstructuredRelease)
+	name, err := pkgfluxv2common.NamespacedName(unstructuredRelease)
 	if err != nil {
 		return nil, err
 	}
 
-	var latestPkgVersion *corev1.PackageAppVersion
-	var pkgVersion *corev1.VersionReference
+	var latestPkgVersion *pkgsGRPCv1alpha1.PackageAppVersion
+	var pkgVersion *pkgsGRPCv1alpha1.VersionReference
 
-	version, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "version")
+	version, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "chart", "spec", "version")
 	if found && err == nil && version != "" {
-		pkgVersion = &corev1.VersionReference{
+		pkgVersion = &pkgsGRPCv1alpha1.VersionReference{
 			Version: version,
 		}
 	}
 
-	var pkgDetail *corev1.AvailablePackageDetail
+	var pkgDetail *pkgsGRPCv1alpha1.AvailablePackageDetail
 
 	// see https://fluxcd.io/docs/components/helm/helmreleases/
-	helmChartRef, found, err := unstructured.NestedString(unstructuredRelease, "status", "helmChart")
+	helmChartRef, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "status", "helmChart")
 	if err != nil || !found || helmChartRef == "" {
-		log.Warningf("Missing element status.helmChart on HelmRelease [%s]", name)
+		log.Warningf("Missing element grpcstatus.helmChart on HelmRelease [%s]", name)
 	}
 
-	repoName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
-	repoNamespace, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
-	chartName, _, _ := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
+	repoName, _, _ := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
+	repoNamespace, _, _ := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
+	chartName, _, _ := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
 
 	if repoName != "" && helmChartRef != "" && chartName != "" {
 		if parts := strings.Split(helmChartRef, "/"); len(parts) != 2 {
-			return nil, status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", helmChartRef)
+			return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", helmChartRef)
 		} else if ifc, err := s.getChartsResourceInterface(ctx, parts[0]); err != nil {
 			log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
-		} else if unstructuredChart, err := ifc.Get(ctx, parts[1], metav1.GetOptions{}); err != nil {
+		} else if unstructuredChart, err := ifc.Get(ctx, parts[1], k8smetav1.GetOptions{}); err != nil {
 			log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
 		} else {
-			tarUrl, found, err := unstructured.NestedString(unstructuredChart.Object, "status", "url")
+			tarUrl, found, err := k8smetaunstructuredv1.NestedString(unstructuredChart.Object, "status", "url")
 			if err != nil || !found || tarUrl == "" {
-				log.Warningf("Missing element status.url on HelmRelease [%s]", name)
+				log.Warningf("Missing element grpcstatus.url on HelmRelease [%s]", name)
 			} else {
 				chartID := fmt.Sprintf("%s/%s", repoName, chartName)
 				// fetch, unzip and untar .tgz file
@@ -180,21 +180,21 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructure
 	if repoNamespace == "" {
 		repoNamespace = name.Namespace
 	}
-	repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
+	repo := k8stypes.NamespacedName{Namespace: repoNamespace, Name: repoName}
 	chartFromCache, err := s.getChart(ctx, repo, chartName)
 	if err != nil {
 		return nil, err
 	} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
 		// charts in cache are already sorted with the latest being at position 0
-		latestPkgVersion = &corev1.PackageAppVersion{
+		latestPkgVersion = &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: chartFromCache.ChartVersions[0].Version,
 			AppVersion: chartFromCache.ChartVersions[0].AppVersion,
 		}
 	}
 
-	return &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
+	return &pkgsGRPCv1alpha1.InstalledPackageSummary{
+		InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Namespace: name.Namespace,
 				Cluster:   s.kubeappsCluster,
 			},
@@ -218,33 +218,33 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, unstructure
 	}, nil
 }
 
-func (s *Server) installedPackageDetail(ctx context.Context, name types.NamespacedName) (*corev1.InstalledPackageDetail, error) {
+func (s *Server) installedPackageDetail(ctx context.Context, name k8stypes.NamespacedName) (*pkgsGRPCv1alpha1.InstalledPackageDetail, error) {
 	releasesIfc, err := s.getReleasesResourceInterface(ctx, name.Namespace)
 	if err != nil {
 		return nil, err
 	}
-	unstructuredRelease, err := releasesIfc.Get(ctx, name.Name, metav1.GetOptions{})
+	unstructuredRelease, err := releasesIfc.Get(ctx, name.Name, k8smetav1.GetOptions{})
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "HelmRelease", name.String(), err)
 	}
 
-	log.V(4).Infof("installedPackageDetail:\n[%s]", common.PrettyPrintMap(unstructuredRelease.Object))
+	log.V(4).Infof("installedPackageDetail:\n[%s]", pkgfluxv2common.PrettyPrintMap(unstructuredRelease.Object))
 
 	obj := unstructuredRelease.Object
-	var pkgVersionRef *corev1.VersionReference
-	version, found, err := unstructured.NestedString(obj, "spec", "chart", "spec", "version")
+	var pkgVersionRef *pkgsGRPCv1alpha1.VersionReference
+	version, found, err := k8smetaunstructuredv1.NestedString(obj, "spec", "chart", "spec", "version")
 	if found && err == nil && version != "" {
-		pkgVersionRef = &corev1.VersionReference{
+		pkgVersionRef = &pkgsGRPCv1alpha1.VersionReference{
 			Version: version,
 		}
 	}
 
 	valuesApplied := ""
-	valuesMap, found, err := unstructured.NestedMap(obj, "spec", "values")
+	valuesMap, found, err := k8smetaunstructuredv1.NestedMap(obj, "spec", "values")
 	if found && err == nil && len(valuesMap) != 0 {
 		bytes, err := json.Marshal(valuesMap)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Unable to marshal Helm release values due to: %v", err)
+			return nil, grpcstatus.Errorf(grpccodes.Internal, "Unable to marshal Helm release values due to: %v", err)
 		}
 		valuesApplied = string(bytes)
 	}
@@ -252,10 +252,10 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	// ValuesReference maybe a config map or a secret
 
 	// this will only be present if install/upgrade succeeded
-	pkgVersion, found, err := unstructured.NestedString(obj, "status", "lastAppliedRevision")
+	pkgVersion, found, err := k8smetaunstructuredv1.NestedString(obj, "status", "lastAppliedRevision")
 	if !found || err != nil || pkgVersion == "" {
 		// this is the back-up option: will be there if the reconciliation is in progress or has failed
-		pkgVersion, _, _ = unstructured.NestedString(obj, "status", "lastAttemptedRevision")
+		pkgVersion, _, _ = k8smetaunstructuredv1.NestedString(obj, "status", "lastAttemptedRevision")
 	}
 
 	availablePackageRef, err := installedPackageAvailablePackageRefFromUnstructured(obj)
@@ -277,13 +277,13 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		if release.Info != nil {
 			postInstallNotes = release.Info.Notes
 		}
-	} else if err != nil && !errors.IsNotFound(err) {
+	} else if err != nil && !k8serrors.IsNotFound(err) {
 		log.Warningf("Failed to get helm release due to %v", err)
 	}
 
-	return &corev1.InstalledPackageDetail{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
+	return &pkgsGRPCv1alpha1.InstalledPackageDetail{
+		InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Namespace: name.Namespace,
 				Cluster:   s.kubeappsCluster,
 			},
@@ -292,7 +292,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 		},
 		Name:                name.Name,
 		PkgVersionReference: pkgVersionRef,
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: pkgVersion,
 			AppVersion: appVersion,
 		},
@@ -304,18 +304,18 @@ func (s *Server) installedPackageDetail(ctx context.Context, name types.Namespac
 	}, nil
 }
 
-func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.NamespacedName, unstructuredRelease map[string]interface{}) (*release.Release, error) {
+func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name k8stypes.NamespacedName, unstructuredRelease map[string]interface{}) (*helmrelease.Release, error) {
 	// post installation notes can only be retrieved via helm APIs, flux doesn't do it
 	// see discussion in https://cloud-native.slack.com/archives/CLAJ40HV3/p1629244025187100
 	if s.actionConfigGetter == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "Server is not configured with actionConfigGetter")
+		return nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "Server is not configured with actionConfigGetter")
 	}
 
-	helmReleaseName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "ReleaseName")
+	helmReleaseName, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "ReleaseName")
 	// according to docs ReleaseName is optional and defaults to a composition of
 	// '[TargetNamespace-]Name'.
 	if !found || err != nil || helmReleaseName == "" {
-		targetNamespace, found, err := unstructured.NestedString(unstructuredRelease, "spec", "targetNamespace")
+		targetNamespace, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "targetNamespace")
 		// according to docs targetNamespace is optional and defaults to the namespace of the HelmRelease
 		if !found || err != nil || targetNamespace == "" {
 			targetNamespace = name.Namespace
@@ -325,26 +325,26 @@ func (s *Server) helmReleaseFromUnstructured(ctx context.Context, name types.Nam
 
 	actionConfig, err := s.actionConfigGetter(ctx, name.Namespace)
 	if err != nil || actionConfig == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config in namespace [%s] due to: %v", name.Namespace, err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "Unable to create Helm action config in namespace [%s] due to: %v", name.Namespace, err)
 	}
-	cmd := action.NewGet(actionConfig)
+	cmd := helmaction.NewGet(actionConfig)
 	release, err := cmd.Run(helmReleaseName)
 	if err != nil {
-		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release [%s] in namespace [%s]", helmReleaseName, name.Namespace)
+		if err == helmstoragedriver.ErrReleaseNotFound {
+			return nil, grpcstatus.Errorf(grpccodes.NotFound, "Unable to find Helm release [%s] in namespace [%s]", helmReleaseName, name.Namespace)
 		}
-		return nil, status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s] in namespace [%s]: %v", helmReleaseName, name.Namespace, err)
+		return nil, grpcstatus.Errorf(grpccodes.NotFound, "Unable to run Helm Get action for release [%s] in namespace [%s]: %v", helmReleaseName, name.Namespace, err)
 	}
 	return release, nil
 }
 
-func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
+func (s *Server) newRelease(ctx context.Context, packageRef *pkgsGRPCv1alpha1.AvailablePackageReference, targetName k8stypes.NamespacedName, versionRef *pkgsGRPCv1alpha1.VersionReference, reconcile *pkgsGRPCv1alpha1.ReconciliationOptions, valuesString string) (*pkgsGRPCv1alpha1.InstalledPackageReference, error) {
 	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
-	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
+	repo := k8stypes.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
 	chart, err := s.getChart(ctx, repo, chartName)
 	if err != nil {
 		return nil, err
@@ -353,7 +353,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	var values map[string]interface{}
 	if valuesString != "" {
 		values = make(map[string]interface{})
-		err = yaml.Unmarshal([]byte(valuesString), &values)
+		err = k8syaml.Unmarshal([]byte(valuesString), &values)
 		if err != nil {
 			return nil, err
 		}
@@ -370,23 +370,23 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	if err != nil {
 		return nil, err
 	}
-	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, metav1.CreateOptions{})
+	newRelease, err := resourceIfc.Create(ctx, fluxHelmRelease, k8smetav1.CreateOptions{})
 	if err != nil {
-		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			// TODO (gfichtenholt) I think in some cases we should be returning codes.PermissionDenied instead,
+		if k8serrors.IsForbidden(err) || k8serrors.IsUnauthorized(err) {
+			// TODO (gfichtenholt) I think in some cases we should be returning grpccodes.PermissionDenied instead,
 			// but that has to be done consistently across all plug-in operations, not just here
-			return nil, status.Errorf(codes.Unauthenticated, "Unable to create release due to %v", err)
+			return nil, grpcstatus.Errorf(grpccodes.Unauthenticated, "Unable to create release due to %v", err)
 		} else {
-			return nil, status.Errorf(codes.Internal, "Unable to create release due to %v", err)
+			return nil, grpcstatus.Errorf(grpccodes.Internal, "Unable to create release due to %v", err)
 		}
 	}
 
-	name, err := common.NamespacedName(newRelease.Object)
+	name, err := pkgfluxv2common.NamespacedName(newRelease.Object)
 	if err != nil {
 		return nil, err
 	}
-	return &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
+	return &pkgsGRPCv1alpha1.InstalledPackageReference{
+		Context: &pkgsGRPCv1alpha1.Context{
 			Namespace: name.Namespace,
 			Cluster:   s.kubeappsCluster,
 		},
@@ -395,84 +395,84 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}, nil
 }
 
-func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
+func (s *Server) updateRelease(ctx context.Context, packageRef *pkgsGRPCv1alpha1.InstalledPackageReference, versionRef *pkgsGRPCv1alpha1.VersionReference, reconcile *pkgsGRPCv1alpha1.ReconciliationOptions, valuesString string) (*pkgsGRPCv1alpha1.InstalledPackageReference, error) {
 	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	unstructuredRel, err := ifc.Get(ctx, packageRef.Identifier, metav1.GetOptions{})
+	unstructuredRel, err := ifc.Get(ctx, packageRef.Identifier, k8smetav1.GetOptions{})
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "HelmRelease", packageRef.Identifier, err)
 	}
 
 	if versionRef.GetVersion() != "" {
-		if err = unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
+		if err = k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
 			return nil, err
 		}
 	} else {
-		unstructured.RemoveNestedField(unstructuredRel.Object, "spec", "chart", "spec", "version")
+		k8smetaunstructuredv1.RemoveNestedField(unstructuredRel.Object, "spec", "chart", "spec", "version")
 	}
 
 	if valuesString != "" {
 		values := make(map[string]interface{})
-		if err = yaml.Unmarshal([]byte(valuesString), &values); err != nil {
+		if err = k8syaml.Unmarshal([]byte(valuesString), &values); err != nil {
 			return nil, err
-		} else if err = unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
+		} else if err = k8smetaunstructuredv1.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
 			return nil, err
 		}
 	} else {
-		unstructured.RemoveNestedField(unstructuredRel.Object, "spec", "values")
+		k8smetaunstructuredv1.RemoveNestedField(unstructuredRel.Object, "spec", "values")
 	}
 
 	setInterval, setServiceAccount := false, false
 	if reconcile != nil {
 		if reconcile.Interval > 0 {
 			reconcileInterval := (time.Duration(reconcile.Interval) * time.Second).String()
-			if err := unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
+			if err := k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
 				return nil, err
 			}
 			setInterval = true
 		}
 		if reconcile.ServiceAccountName != "" {
-			if err = unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
+			if err = k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
 				setServiceAccount = true
 			}
 		}
-		if err = unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
+		if err = k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
 			return nil, err
 		}
 	}
 
 	if !setInterval {
 		// interval is a required field
-		if err = unstructured.SetNestedField(unstructuredRel.Object, defaultReconcileInterval, "spec", "interval"); err != nil {
+		if err = k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, defaultReconcileInterval, "spec", "interval"); err != nil {
 			return nil, err
 		}
 	}
 	if !setServiceAccount {
-		unstructured.RemoveNestedField(unstructuredRel.Object, "spec", "serviceAccountName")
+		k8smetaunstructuredv1.RemoveNestedField(unstructuredRel.Object, "spec", "serviceAccountName")
 	}
 
 	// get rid of the status field, since now there will be a new reconciliation process and the current status no
 	// longer applies. metadata and spec I want to keep, as they may have had added labels and/or annotations and/or
 	// even other changes made by the user.
-	unstructured.RemoveNestedField(unstructuredRel.Object, "status")
+	k8smetaunstructuredv1.RemoveNestedField(unstructuredRel.Object, "status")
 
 	// replace the object in k8s with a new desired state
-	unstructuredRel, err = ifc.Update(ctx, unstructuredRel, metav1.UpdateOptions{})
+	unstructuredRel, err = ifc.Update(ctx, unstructuredRel, k8smetav1.UpdateOptions{})
 	if err != nil {
-		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "Unable to update release due to %v", err)
+		if k8serrors.IsForbidden(err) || k8serrors.IsUnauthorized(err) {
+			return nil, grpcstatus.Errorf(grpccodes.Unauthenticated, "Unable to update release due to %v", err)
 		} else {
-			return nil, status.Errorf(codes.Internal, "Unable to update release due to %v", err)
+			return nil, grpcstatus.Errorf(grpccodes.Internal, "Unable to update release due to %v", err)
 		}
 	}
 
-	log.V(4).Infof("Updated release: %s", common.PrettyPrintMap(unstructuredRel.Object))
+	log.V(4).Infof("Updated release: %s", pkgfluxv2common.PrettyPrintMap(unstructuredRel.Object))
 
-	return &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
+	return &pkgsGRPCv1alpha1.InstalledPackageReference{
+		Context: &pkgsGRPCv1alpha1.Context{
 			Namespace: packageRef.Context.Namespace,
 			Cluster:   s.kubeappsCluster,
 		},
@@ -481,7 +481,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	}, nil
 }
 
-func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference) error {
+func (s *Server) deleteRelease(ctx context.Context, packageRef *pkgsGRPCv1alpha1.InstalledPackageReference) error {
 	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
 	if err != nil {
 		return err
@@ -489,7 +489,7 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 
 	log.V(4).Infof("Deleted release: [%s]", packageRef.Identifier)
 
-	if err = ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{}); err != nil {
+	if err = ifc.Delete(ctx, packageRef.Identifier, k8smetav1.DeleteOptions{}); err != nil {
 		return statuserror.FromK8sError("delete", "HelmRelease", packageRef.Identifier, err)
 	}
 	return nil
@@ -500,8 +500,8 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 // 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
 //    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
-func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*unstructured.Unstructured, error) {
-	unstructuredRel := unstructured.Unstructured{
+func (s *Server) newFluxHelmRelease(chart *chartmodels.Chart, targetName k8stypes.NamespacedName, versionRef *pkgsGRPCv1alpha1.VersionReference, reconcile *pkgsGRPCv1alpha1.ReconciliationOptions, values map[string]interface{}) (*k8smetaunstructuredv1.Unstructured, error) {
+	unstructuredRel := k8smetaunstructuredv1.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": fmt.Sprintf("%s/%s", fluxHelmReleaseGroup, fluxHelmReleaseVersion),
 			"kind":       fluxHelmRelease,
@@ -525,7 +525,7 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 		},
 	}
 	if versionRef.GetVersion() != "" {
-		if err := unstructured.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
+		if err := k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, versionRef.GetVersion(), "spec", "chart", "spec", "version"); err != nil {
 			return nil, err
 		}
 	}
@@ -534,33 +534,33 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 		if reconcile.Interval > 0 {
 			reconcileInterval = (time.Duration(reconcile.Interval) * time.Second).String()
 		}
-		if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
+		if err := k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, reconcile.Suspend, "spec", "suspend"); err != nil {
 			return nil, err
 		}
 		if reconcile.ServiceAccountName != "" {
-			if err := unstructured.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
+			if err := k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, reconcile.ServiceAccountName, "spec", "serviceAccountName"); err != nil {
 				return nil, err
 			}
 		}
 	}
 	if values != nil {
-		if err := unstructured.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
+		if err := k8smetaunstructuredv1.SetNestedMap(unstructuredRel.Object, values, "spec", "values"); err != nil {
 			return nil, err
 		}
 	}
 
 	// required fields, without which flux controller will fail to create the CRD
-	if err := unstructured.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
+	if err := k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, reconcileInterval, "spec", "interval"); err != nil {
 		return nil, err
 	}
 
 	// ref https://fluxcd.io/docs/components/helm/helmreleases/
-	// TODO (gfichtenholt) in theory, flux allows a timeout per release. So far we just use one
+	// TODO (gfichtenholt) in theory, flux allows a timeout per helmrelease. So far we just use one
 	// configured per server/installation, if specified, same as helm plug-in.
 	// Otherwise the default timeout is used.
 	if s.timeoutSeconds > 0 {
 		timeoutInterval := (time.Duration(s.timeoutSeconds) * time.Second).String()
-		if err := unstructured.SetNestedField(unstructuredRel.Object, timeoutInterval, "spec", "timeout"); err != nil {
+		if err := k8smetaunstructuredv1.SetNestedField(unstructuredRel.Object, timeoutInterval, "spec", "timeout"); err != nil {
 			return nil, err
 		}
 	}
@@ -582,14 +582,14 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 //    - "reason" field: failure only when flux returns "InstallFailed" reason
 //       otherwise pending or unspecified when there are no status conditions to go by
 //
-func isHelmReleaseReady(unstructuredObj map[string]interface{}) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
-	if !common.CheckGeneration(unstructuredObj) {
-		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
+func isHelmReleaseReady(unstructuredObj map[string]interface{}) (ready bool, status pkgsGRPCv1alpha1.InstalledPackageStatus_StatusReason, userReason string) {
+	if !pkgfluxv2common.CheckGeneration(unstructuredObj) {
+		return false, pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
 	}
 
-	conditions, found, err := unstructured.NestedSlice(unstructuredObj, "status", "conditions")
+	conditions, found, err := k8smetaunstructuredv1.NestedSlice(unstructuredObj, "status", "conditions")
 	if err != nil || !found {
-		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
+		return false, pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
 	}
 
 	isInstallFailed := false
@@ -617,66 +617,66 @@ func isHelmReleaseReady(unstructuredObj map[string]interface{}) (ready bool, sta
 				}
 				if statusString, ok := conditionAsMap["status"]; ok {
 					if statusString == "True" {
-						return true, corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED, userReason
+						return true, pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_INSTALLED, userReason
 					} else if isInstallFailed {
-						return false, corev1.InstalledPackageStatus_STATUS_REASON_FAILED, userReason
+						return false, pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_FAILED, userReason
 					} else {
-						return false, corev1.InstalledPackageStatus_STATUS_REASON_PENDING, userReason
+						return false, pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_PENDING, userReason
 					}
 				}
 			}
 		}
 	}
 	// catch all: unless we know something else, install is pending
-	return false, corev1.InstalledPackageStatus_STATUS_REASON_PENDING, userReason
+	return false, pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_PENDING, userReason
 }
 
-func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.InstalledPackageStatus {
+func installedPackageStatusFromUnstructured(unstructuredRelease map[string]interface{}) *pkgsGRPCv1alpha1.InstalledPackageStatus {
 	ready, reason, userReason := isHelmReleaseReady(unstructuredRelease)
-	return &corev1.InstalledPackageStatus{
+	return &pkgsGRPCv1alpha1.InstalledPackageStatus{
 		Ready:      ready,
 		Reason:     reason,
 		UserReason: userReason,
 	}
 }
 
-func installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease map[string]interface{}) *corev1.ReconciliationOptions {
-	reconciliationOptions := &corev1.ReconciliationOptions{}
-	if intervalString, found, err := unstructured.NestedString(unstructuredRelease, "spec", "interval"); found && err == nil {
+func installedPackageReconciliationOptionsFromUnstructured(unstructuredRelease map[string]interface{}) *pkgsGRPCv1alpha1.ReconciliationOptions {
+	reconciliationOptions := &pkgsGRPCv1alpha1.ReconciliationOptions{}
+	if intervalString, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "interval"); found && err == nil {
 		if duration, err := time.ParseDuration(intervalString); err == nil {
 			reconciliationOptions.Interval = int32(duration.Seconds())
 		}
 	}
-	if suspend, found, err := unstructured.NestedBool(unstructuredRelease, "spec", "suspend"); found && err == nil {
+	if suspend, found, err := k8smetaunstructuredv1.NestedBool(unstructuredRelease, "spec", "suspend"); found && err == nil {
 		reconciliationOptions.Suspend = suspend
 	}
-	if serviceAccountName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "serviceAccountName"); found && err == nil {
+	if serviceAccountName, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "serviceAccountName"); found && err == nil {
 		reconciliationOptions.ServiceAccountName = serviceAccountName
 	}
 	return reconciliationOptions
 }
 
-func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map[string]interface{}) (*corev1.AvailablePackageReference, error) {
-	repoName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
+func installedPackageAvailablePackageRefFromUnstructured(unstructuredRelease map[string]interface{}) (*pkgsGRPCv1alpha1.AvailablePackageReference, error) {
+	repoName, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "name")
 	if !found || err != nil {
-		return nil, status.Errorf(codes.Internal, "missing required field spec.chart.spec.sourceRef.name")
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "missing required field spec.chart.spec.sourceRef.name")
 	}
-	chartName, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
+	chartName, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "chart", "spec", "chart")
 	if !found || err != nil {
-		return nil, status.Errorf(codes.Internal, "missing required field spec.chart.spec.chart")
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "missing required field spec.chart.spec.chart")
 	}
-	repoNamespace, found, err := unstructured.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
+	repoNamespace, found, err := k8smetaunstructuredv1.NestedString(unstructuredRelease, "spec", "chart", "spec", "sourceRef", "namespace")
 	// CrossNamespaceObjectReference namespace is optional, so
 	if !found || err != nil || repoNamespace == "" {
-		name, err := common.NamespacedName(unstructuredRelease)
+		name, err := pkgfluxv2common.NamespacedName(unstructuredRelease)
 		if err != nil {
 			return nil, err
 		}
 		repoNamespace = name.Namespace
 	}
-	return &corev1.AvailablePackageReference{
+	return &pkgsGRPCv1alpha1.AvailablePackageReference{
 		Identifier: fmt.Sprintf("%s/%s", repoName, chartName),
 		Plugin:     GetPluginDetail(),
-		Context:    &corev1.Context{Namespace: repoNamespace},
+		Context:    &pkgsGRPCv1alpha1.Context{Namespace: repoNamespace},
 	}, nil
 }

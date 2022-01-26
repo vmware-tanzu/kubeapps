@@ -4,8 +4,8 @@
 package plugin_test
 
 import (
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 )
 
 const (
@@ -32,35 +32,35 @@ const (
 	DefaultMaintainerEmail  = "me@example.com"
 )
 
-var defaultInstalledPackageStatus = &corev1.InstalledPackageStatus{
+var defaultInstalledPackageStatus = &pkgsGRPCv1alpha1.InstalledPackageStatus{
 	Ready:      true,
-	Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+	Reason:     pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 	UserReason: "ReconciliationSucceeded",
 }
 
-func MakeAvailablePackageSummary(name string, plugin *plugins.Plugin) *corev1.AvailablePackageSummary {
-	return &corev1.AvailablePackageSummary{
+func MakeAvailablePackageSummary(name string, plugin *pluginsGRPCv1alpha1.Plugin) *pkgsGRPCv1alpha1.AvailablePackageSummary {
+	return &pkgsGRPCv1alpha1.AvailablePackageSummary{
 		Name:        name,
 		DisplayName: name,
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: DefaultPkgVersion,
 			AppVersion: DefaultAppVersion,
 		},
 		IconUrl:          DefaultIconURL,
 		Categories:       []string{DefaultCategory},
 		ShortDescription: DefaultDescription,
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context:    &corev1.Context{Cluster: GlobalPackagingCluster, Namespace: DefaultNamespace},
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+			Context:    &pkgsGRPCv1alpha1.Context{Cluster: GlobalPackagingCluster, Namespace: DefaultNamespace},
 			Identifier: DefaultId,
 			Plugin:     plugin,
 		},
 	}
 }
 
-func MakeInstalledPackageSummary(name string, plugin *plugins.Plugin) *corev1.InstalledPackageSummary {
-	return &corev1.InstalledPackageSummary{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
+func MakeInstalledPackageSummary(name string, plugin *pluginsGRPCv1alpha1.Plugin) *pkgsGRPCv1alpha1.InstalledPackageSummary {
+	return &pkgsGRPCv1alpha1.InstalledPackageSummary{
+		InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Namespace: DefaultNamespace,
 			},
 			Identifier: name,
@@ -68,32 +68,32 @@ func MakeInstalledPackageSummary(name string, plugin *plugins.Plugin) *corev1.In
 		},
 		Name:    name,
 		IconUrl: DefaultIconURL,
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: DefaultPkgVersion,
 		},
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: DefaultPkgVersion,
 			AppVersion: DefaultAppVersion,
 		},
 		PkgDisplayName:   name,
 		ShortDescription: DefaultDescription,
 		Status:           defaultInstalledPackageStatus,
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: DefaultPkgVersion,
 			AppVersion: DefaultAppVersion,
 		},
 	}
 }
 
-func MakeAvailablePackageDetail(name string, plugin *plugins.Plugin) *corev1.AvailablePackageDetail {
-	return &corev1.AvailablePackageDetail{
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context:    &corev1.Context{Cluster: GlobalPackagingCluster, Namespace: DefaultNamespace},
+func MakeAvailablePackageDetail(name string, plugin *pluginsGRPCv1alpha1.Plugin) *pkgsGRPCv1alpha1.AvailablePackageDetail {
+	return &pkgsGRPCv1alpha1.AvailablePackageDetail{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+			Context:    &pkgsGRPCv1alpha1.Context{Cluster: GlobalPackagingCluster, Namespace: DefaultNamespace},
 			Identifier: DefaultId,
 			Plugin:     plugin,
 		},
 		Name: name,
-		Version: &corev1.PackageAppVersion{
+		Version: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: DefaultPkgVersion,
 			AppVersion: DefaultAppVersion,
 		},
@@ -107,36 +107,36 @@ func MakeAvailablePackageDetail(name string, plugin *plugins.Plugin) *corev1.Ava
 		DefaultValues:    DefaultValues,
 		ValuesSchema:     DefaultValuesSchema,
 		SourceUrls:       []string{DefaultHomeURL},
-		Maintainers:      []*corev1.Maintainer{{Name: DefaultMaintainerName, Email: DefaultMaintainerEmail}},
+		Maintainers:      []*pkgsGRPCv1alpha1.Maintainer{{Name: DefaultMaintainerName, Email: DefaultMaintainerEmail}},
 	}
 }
 
-func MakeInstalledPackageDetail(name string, plugin *plugins.Plugin) *corev1.InstalledPackageDetail {
-	return &corev1.InstalledPackageDetail{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
+func MakeInstalledPackageDetail(name string, plugin *pluginsGRPCv1alpha1.Plugin) *pkgsGRPCv1alpha1.InstalledPackageDetail {
+	return &pkgsGRPCv1alpha1.InstalledPackageDetail{
+		InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Namespace: DefaultReleaseNamespace,
 				Cluster:   GlobalPackagingCluster,
 			},
 			Identifier: DefaultReleaseName,
 		},
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: DefaultReleaseVersion,
 		},
 		Name: DefaultReleaseName,
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: DefaultReleaseVersion,
 			AppVersion: DefaultAppVersion,
 		},
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: DefaultReleaseVersion,
 			AppVersion: DefaultAppVersion,
 		},
 		ValuesApplied:         DefaultReleaseValues,
 		PostInstallationNotes: DefaultReleaseNotes,
 		Status:                defaultInstalledPackageStatus,
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context: &corev1.Context{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Namespace: DefaultReleaseNamespace,
 				Cluster:   GlobalPackagingCluster,
 			},
@@ -147,8 +147,8 @@ func MakeInstalledPackageDetail(name string, plugin *plugins.Plugin) *corev1.Ins
 	}
 }
 
-func MakePackageAppVersion(appVersion, pkgVersion string) *corev1.PackageAppVersion {
-	return &corev1.PackageAppVersion{
+func MakePackageAppVersion(appVersion, pkgVersion string) *pkgsGRPCv1alpha1.PackageAppVersion {
+	return &pkgsGRPCv1alpha1.PackageAppVersion{
 		AppVersion: appVersion,
 		PkgVersion: pkgVersion,
 	}

@@ -6,24 +6,23 @@ package cmd
 import (
 	"bytes"
 	"strings"
-
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
-	v1 "k8s.io/api/core/v1"
+	cmp "github.com/google/go-cmp/cmp"
+	apprepoctrlserver "github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
+	k8scorev1 "k8s.io/api/core/v1"
 )
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
 		name string
 		args []string
-		conf server.Config
+		conf apprepoctrlserver.Config
 	}{
 		{
 			"no arguments returns default flag values",
 			[]string{},
-			server.Config{
+			apprepoctrlserver.Config{
 				Kubeconfig:               "",
 				APIServerURL:             "",
 				RepoSyncImage:            "docker.io/kubeapps/asset-syncer:latest",
@@ -52,12 +51,12 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--repo-sync-image-pullsecrets=s1, s2",
 				"--repo-sync-image-pullsecrets= s3",
 			},
-			server.Config{
+			apprepoctrlserver.Config{
 				Kubeconfig:               "",
 				APIServerURL:             "",
 				RepoSyncImage:            "docker.io/kubeapps/asset-syncer:latest",
 				RepoSyncImagePullSecrets: []string{"s1", " s2", " s3"},
-				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: " s2"}, {Name: " s3"}},
+				ImagePullSecretsRefs:     []k8scorev1.LocalObjectReference{{Name: "s1"}, {Name: " s2"}, {Name: " s3"}},
 				RepoSyncCommand:          "/chart-repo",
 				KubeappsNamespace:        "kubeapps",
 				GlobalReposNamespace:     "kubeapps",
@@ -99,12 +98,12 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--custom-annotations", "extra13=extra13",
 				"--custom-labels", "foo14=bar14,foo14x=bar14x",
 			},
-			server.Config{
+			apprepoctrlserver.Config{
 				Kubeconfig:               "foo01",
 				APIServerURL:             "foo02",
 				RepoSyncImage:            "foo03",
 				RepoSyncImagePullSecrets: []string{"s1", "s2", "s3"},
-				ImagePullSecretsRefs:     []v1.LocalObjectReference{{Name: "s1"}, {Name: "s2"}, {Name: "s3"}},
+				ImagePullSecretsRefs:     []k8scorev1.LocalObjectReference{{Name: "s1"}, {Name: "s2"}, {Name: "s3"}},
 				RepoSyncCommand:          "foo04",
 				KubeappsNamespace:        "foo05",
 				GlobalReposNamespace:     "kubeapps-repos-global",

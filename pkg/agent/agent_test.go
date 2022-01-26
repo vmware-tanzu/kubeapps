@@ -9,31 +9,31 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	kubechart "github.com/kubeapps/kubeapps/pkg/chart"
-	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
-	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	cmp "github.com/google/go-cmp/cmp"
+	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
+	chartutilsfake "github.com/kubeapps/kubeapps/pkg/chart/fake"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	helmchartutil "helm.sh/helm/v3/pkg/chartutil"
+	helmkubefake "helm.sh/helm/v3/pkg/kube/fake"
+	helmrelease "helm.sh/helm/v3/pkg/release"
+	helmstorage "helm.sh/helm/v3/pkg/storage"
+	helmstoragedriver "helm.sh/helm/v3/pkg/storage/driver"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8srest "k8s.io/client-go/rest"
 )
 
 const defaultListLimit = 256
 
-// newActionConfigFixture returns an action.Configuration with fake clients
-// and memory storage.
-func newActionConfigFixture(t *testing.T) *action.Configuration {
+// newActionConfigFixture returns an helmaction.Configuration with fake clients
+// and memory helmstorage.
+func newActionConfigFixture(t *testing.T) *helmaction.Configuration {
 	t.Helper()
 
-	return &action.Configuration{
-		Releases:     storage.Init(driver.NewMemory()),
-		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
-		Capabilities: chartutil.DefaultCapabilities,
+	return &helmaction.Configuration{
+		Releases:     helmstorage.Init(helmstoragedriver.NewMemory()),
+		KubeClient:   &helmkubefake.FailingKubeClient{PrintingKubeClient: helmkubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		Capabilities: helmchartutil.DefaultCapabilities,
 		Log: func(format string, v ...interface{}) {
 			t.Helper()
 			t.Logf(format, v...)
@@ -46,23 +46,23 @@ type releaseStub struct {
 	namespace    string
 	version      int
 	chartVersion string
-	status       release.Status
+	status       helmrelease.Status
 }
 
-// makeReleases adds a slice of releases to the configured storage.
-func makeReleases(t *testing.T, actionConfig *action.Configuration, rels []releaseStub) {
+// makeReleases adds a slice of releases to the configured helmstorage.
+func makeReleases(t *testing.T, actionConfig *helmaction.Configuration, rels []releaseStub) {
 	t.Helper()
 	storage := actionConfig.Releases
 	for _, r := range rels {
-		rel := &release.Release{
+		rel := &helmrelease.Release{
 			Name:      r.name,
 			Namespace: r.namespace,
 			Version:   r.version,
-			Info: &release.Info{
+			Info: &helmrelease.Info{
 				Status: r.status,
 			},
-			Chart: &chart.Chart{
-				Metadata: &chart.Metadata{
+			Chart: &helmchart.Chart{
+				Metadata: &helmchart.Metadata{
 					Version: r.chartVersion,
 					Icon:    "https://example.com/icon.png",
 				},
@@ -76,8 +76,8 @@ func makeReleases(t *testing.T, actionConfig *action.Configuration, rels []relea
 }
 
 func TestGetRelease(t *testing.T) {
-	fooApp := releaseStub{"foo", "my_ns", 1, "1.0.0", release.StatusDeployed}
-	barApp := releaseStub{"bar", "other_ns", 1, "1.0.0", release.StatusDeployed}
+	fooApp := releaseStub{"foo", "my_ns", 1, "1.0.0", helmrelease.StatusDeployed}
+	barApp := releaseStub{"bar", "other_ns", 1, "1.0.0", helmrelease.StatusDeployed}
 	testCases := []struct {
 		description      string
 		existingReleases []releaseStub
@@ -114,7 +114,7 @@ func TestGetRelease(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.existingReleases)
-			cfg.Releases.Driver.(*driver.Memory).SetNamespace(tc.targetNamespace)
+			cfg.Releases.Driver.(*helmstoragedriver.Memory).SetNamespace(tc.targetNamespace)
 
 			rls, err := GetRelease(cfg, tc.targetApp)
 			if tc.shouldFail && err == nil {
@@ -154,7 +154,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "default",
 			version:   1,
 			existingReleases: []releaseStub{
-				{"otherchart", "default", 1, "1.0.0", release.StatusDeployed},
+				{"otherchart", "default", 1, "1.0.0", helmrelease.StatusDeployed},
 			},
 			remainingReleases: 2,
 			shouldFail:        false,
@@ -166,7 +166,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "default",
 			version:   1,
 			existingReleases: []releaseStub{
-				{"mychart", "default", 1, "1.0.0", release.StatusDeployed},
+				{"mychart", "default", 1, "1.0.0", helmrelease.StatusDeployed},
 			},
 			remainingReleases: 1,
 			shouldFail:        true,
@@ -178,7 +178,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "dev",
 			version:   1,
 			existingReleases: []releaseStub{
-				{"mychart", "dev", 2, "1.0.0", release.StatusDeployed},
+				{"mychart", "dev", 2, "1.0.0", helmrelease.StatusDeployed},
 			},
 			remainingReleases: 1,
 			shouldFail:        true,
@@ -190,8 +190,8 @@ func TestCreateReleases(t *testing.T) {
 			// Initialize environment for test
 			actionConfig := newActionConfigFixture(t)
 			makeReleases(t, actionConfig, tc.existingReleases)
-			fakechart := chartFake.ChartClient{}
-			ch, _ := fakechart.GetChart(&kubechart.Details{
+			fakechart := chartutilsfake.ChartClient{}
+			ch, _ := fakechart.GetChart(&chartutils.Details{
 				ChartName: tc.chartName,
 			}, "")
 			// Perform test
@@ -228,9 +228,9 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-				{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", helmrelease.StatusDeployed},
+				{"wordpress", "default", 1, "1.0.1", helmrelease.StatusDeployed},
+				{"not-in-default-namespace", "other", 1, "1.0.2", helmrelease.StatusDeployed},
 			},
 			expectedApps: []AppOverview{
 				{
@@ -239,7 +239,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.0",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -250,7 +250,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.1",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -261,7 +261,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.2",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.2",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -273,9 +273,9 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-				{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", helmrelease.StatusDeployed},
+				{"wordpress", "default", 1, "1.0.1", helmrelease.StatusDeployed},
+				{"not-in-namespace", "other", 1, "1.0.2", helmrelease.StatusDeployed},
 			},
 			expectedApps: []AppOverview{
 				{
@@ -284,7 +284,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.0",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -295,7 +295,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.1",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -307,9 +307,9 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: 1,
 			releases: []releaseStub{
-				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-				{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", helmrelease.StatusDeployed},
+				{"wordpress", "default", 1, "1.0.1", helmrelease.StatusDeployed},
+				{"not-in-namespace", "other", 1, "1.0.2", helmrelease.StatusDeployed},
 			},
 			expectedApps: []AppOverview{
 				{
@@ -318,7 +318,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.0",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -330,8 +330,8 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				{"wordpress", "dev", 2, "2.0.0", release.StatusDeployed},
+				{"wordpress", "default", 1, "1.0.0", helmrelease.StatusDeployed},
+				{"wordpress", "dev", 2, "2.0.0", helmrelease.StatusDeployed},
 			},
 			expectedApps: []AppOverview{
 				{
@@ -340,7 +340,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.0",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -351,7 +351,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "2.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "2.0.0",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -363,8 +363,8 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				{"wordpress", "dev", 2, "1.0.0", release.StatusUninstalled},
+				{"wordpress", "default", 1, "1.0.0", helmrelease.StatusDeployed},
+				{"wordpress", "dev", 2, "1.0.0", helmrelease.StatusUninstalled},
 			},
 			expectedApps: []AppOverview{
 				{
@@ -373,7 +373,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.0",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -386,8 +386,8 @@ func TestListReleases(t *testing.T) {
 			status:    "all",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				{"wordpress", "dev", 2, "1.0.1", release.StatusUninstalled},
+				{"wordpress", "default", 1, "1.0.0", helmrelease.StatusDeployed},
+				{"wordpress", "dev", 2, "1.0.1", helmrelease.StatusUninstalled},
 			},
 			expectedApps: []AppOverview{
 				{
@@ -396,7 +396,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.0",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -407,7 +407,7 @@ func TestListReleases(t *testing.T) {
 					Version:     "1.0.1",
 					Status:      "uninstalled",
 					Icon:        "https://example.com/icon.png",
-					ChartMetadata: chart.Metadata{
+					ChartMetadata: helmchart.Metadata{
 						Version: "1.0.1",
 						Icon:    "https://example.com/icon.png",
 					},
@@ -420,7 +420,7 @@ func TestListReleases(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actionConfig := newActionConfigFixture(t)
 			makeReleases(t, actionConfig, tc.releases)
-			actionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
+			actionConfig.Releases.Driver.(*helmstoragedriver.Memory).SetNamespace(tc.namespace)
 
 			apps, err := ListReleases(actionConfig, tc.namespace, tc.listLimit, tc.status)
 			if err != nil {
@@ -456,14 +456,14 @@ func TestDeleteRelease(t *testing.T) {
 		{
 			description: "Delete a release",
 			releases: []releaseStub{
-				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", helmrelease.StatusDeployed},
 			},
 			releaseToDelete: "airwatch",
 		},
 		{
 			description: "Delete a non-existing release",
 			releases: []releaseStub{
-				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", helmrelease.StatusDeployed},
 			},
 			releaseToDelete: "apache",
 			shouldFail:      true,
@@ -471,8 +471,8 @@ func TestDeleteRelease(t *testing.T) {
 		{
 			description: "Delete a release in different namespace",
 			releases: []releaseStub{
-				{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				{"apache", "dev", 1, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", 1, "1.0.0", helmrelease.StatusDeployed},
+				{"apache", "dev", 1, "1.0.0", helmrelease.StatusDeployed},
 			},
 			releaseToDelete: "apache",
 		},
@@ -524,7 +524,7 @@ func TestParseDriverType(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
-			storage := storageForDriver("default", &kubernetes.Clientset{})
+			storage := storageForDriver("default", &k8stypedclient.Clientset{})
 			if got, want := storage.Name(), tc.driverName; got != want {
 				t.Errorf("expected: %s, actual: %s", want, got)
 			}
@@ -560,8 +560,8 @@ func TestRollbackRelease(t *testing.T) {
 		{
 			name: "rolls back a release",
 			releases: []releaseStub{
-				{"airwatch", "default", targetRevision, "1.0.0", release.StatusSuperseded},
-				{"airwatch", "default", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", targetRevision, "1.0.0", helmrelease.StatusSuperseded},
+				{"airwatch", "default", revisionBeingSuperseded, "1.0.0", helmrelease.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
@@ -569,18 +569,18 @@ func TestRollbackRelease(t *testing.T) {
 		{
 			name: "errors when rolling back to a release revision which does not exist",
 			releases: []releaseStub{
-				{"airwatch", "default", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
+				{"airwatch", "default", revisionBeingSuperseded, "1.0.0", helmrelease.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
-			err:      driver.ErrReleaseNotFound,
+			err:      helmstoragedriver.ErrReleaseNotFound,
 		},
 		{
 			name: "rolls back a release in non-default namespace",
 			releases: []releaseStub{
-				{"otherrelease", "default", 1, "1.0.0", release.StatusDeployed},
-				{"airwatch", "othernamespace", targetRevision, "1.0.0", release.StatusSuperseded},
-				{"airwatch", "othernamespace", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
+				{"otherrelease", "default", 1, "1.0.0", helmrelease.StatusDeployed},
+				{"airwatch", "othernamespace", targetRevision, "1.0.0", helmrelease.StatusSuperseded},
+				{"airwatch", "othernamespace", revisionBeingSuperseded, "1.0.0", helmrelease.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
@@ -605,7 +605,7 @@ func TestRollbackRelease(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
-			if got, want := rel.Info.Status, release.StatusSuperseded; got != want {
+			if got, want := rel.Info.Status, helmrelease.StatusSuperseded; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 
@@ -617,7 +617,7 @@ func TestRollbackRelease(t *testing.T) {
 			if got, want := newRelease.Version, revisionBeingSuperseded+1; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
-			if got, want := rel.Info.Status, release.StatusDeployed; got != want {
+			if got, want := rel.Info.Status, helmrelease.StatusDeployed; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})
@@ -637,7 +637,7 @@ func TestUpgradeRelease(t *testing.T) {
 		{
 			description: "upgrade a release with chart",
 			releases: []releaseStub{
-				{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusDeployed},
+				{"myrls", "default", revisionBeingUpdated, "mychart", helmrelease.StatusDeployed},
 			},
 			valuesYaml: "IsValidYaml: true",
 			release:    "myrls",
@@ -646,7 +646,7 @@ func TestUpgradeRelease(t *testing.T) {
 		{
 			description: "upgrade a release with invalid values",
 			releases: []releaseStub{
-				{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusDeployed},
+				{"myrls", "default", revisionBeingUpdated, "mychart", helmrelease.StatusDeployed},
 			},
 			valuesYaml: "\\-xx-@myval:\"test value\"\\\n", // ← invalid yaml
 			release:    "myrls",
@@ -656,7 +656,7 @@ func TestUpgradeRelease(t *testing.T) {
 		{
 			description: "upgrade a deleted release",
 			releases: []releaseStub{
-				{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusUninstalled},
+				{"myrls", "default", revisionBeingUpdated, "mychart", helmrelease.StatusUninstalled},
 			},
 			release:    "myrls",
 			chartName:  "mynewchart",
@@ -668,8 +668,8 @@ func TestUpgradeRelease(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
-			fakechart := chartFake.ChartClient{}
-			ch, _ := fakechart.GetChart(&kubechart.Details{
+			fakechart := chartutilsfake.ChartClient{}
+			ch, _ := fakechart.GetChart(&chartutils.Details{
 				ChartName: tc.chartName,
 			}, "")
 			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch, nil, 0)
@@ -688,12 +688,12 @@ func TestUpgradeRelease(t *testing.T) {
 			if got, want := newRelease.Version, revisionBeingUpdated+1; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
-			if got, want := rel.Info.Status, release.StatusDeployed; got != want {
+			if got, want := rel.Info.Status, helmrelease.StatusDeployed; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 			//check original version is superseded
 			rel, err = cfg.Releases.Get(tc.release, revisionBeingUpdated)
-			if got, want := rel.Info.Status, release.StatusSuperseded; got != want {
+			if got, want := rel.Info.Status, helmrelease.StatusSuperseded; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})
@@ -703,11 +703,11 @@ func TestUpgradeRelease(t *testing.T) {
 func TestNewConfigFlagsFromCluster(t *testing.T) {
 	testCases := []struct {
 		name   string
-		config rest.Config
+		config k8srest.Config
 	}{
 		{
 			name: "bearer token remains for an https host",
-			config: rest.Config{
+			config: k8srest.Config{
 				Host:        "https://example.com/",
 				APIPath:     "",
 				BearerToken: "foo",
@@ -715,7 +715,7 @@ func TestNewConfigFlagsFromCluster(t *testing.T) {
 		},
 		{
 			name: "bearer token remains for an http host",
-			config: rest.Config{
+			config: k8srest.Config{
 				Host:        "http://example.com/",
 				APIPath:     "",
 				BearerToken: "foo",

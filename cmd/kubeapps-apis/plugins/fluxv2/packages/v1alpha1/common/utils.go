@@ -15,16 +15,16 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-redis/redis/v8"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	redis "github.com/go-redis/redis/v8"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"golang.org/x/net/http/httpproxy"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	httpproxy "golang.org/x/net/http/httpproxy"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
 )
 
@@ -36,14 +36,14 @@ const (
 // Set the pluginDetail once during a module init function so the single struct
 // can be used throughout the plugin.
 var (
-	pluginDetail plugins.Plugin
+	pluginDetail pluginsGRPCv1alpha1.Plugin
 	// This version var is updated during the build (see the -ldflags option
 	// in the cmd/kubeapps-apis/Dockerfile)
 	version = "devel"
 )
 
 func init() {
-	pluginDetail = plugins.Plugin{
+	pluginDetail = pluginsGRPCv1alpha1.Plugin{
 		Name:    "fluxv2.packages",
 		Version: "v1alpha1",
 	}
@@ -52,7 +52,7 @@ func init() {
 //
 // miscellaneous utility funcs
 //
-func PrettyPrintObject(o runtime.Object) string {
+func PrettyPrintObject(o k8sruntime.Object) string {
 	prettyBytes, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("%v", o)
@@ -69,37 +69,37 @@ func PrettyPrintMap(m map[string]interface{}) string {
 }
 
 // Confirm the state we are observing is for the current generation
-// returns true if object's status.observedGeneration == metadata.generation
+// returns true if object's grpcstatus.observedGeneration == metadata.generation
 // false otherwise
 func CheckGeneration(unstructuredObj map[string]interface{}) bool {
-	observedGeneration, found, err := unstructured.NestedInt64(unstructuredObj, "status", "observedGeneration")
+	observedGeneration, found, err := k8smetaunstructuredv1.NestedInt64(unstructuredObj, "status", "observedGeneration")
 	if err != nil || !found {
 		return false
 	}
-	generation, found, err := unstructured.NestedInt64(unstructuredObj, "metadata", "generation")
+	generation, found, err := k8smetaunstructuredv1.NestedInt64(unstructuredObj, "metadata", "generation")
 	if err != nil || !found {
 		return false
 	}
 	return generation == observedGeneration
 }
 
-func NamespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedName, error) {
-	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
+func NamespacedName(unstructuredObj map[string]interface{}) (*k8stypes.NamespacedName, error) {
+	name, found, err := k8smetaunstructuredv1.NestedString(unstructuredObj, "metadata", "name")
 	if err != nil || !found {
 		return nil,
-			status.Errorf(codes.Internal, "required field 'metadata.name' not found on resource: %v:\n%s",
+			grpcstatus.Errorf(grpccodes.Internal, "required field 'metadata.name' not found on resource: %v:\n%s",
 				err,
 				PrettyPrintMap(unstructuredObj))
 	}
 
-	namespace, found, err := unstructured.NestedString(unstructuredObj, "metadata", "namespace")
+	namespace, found, err := k8smetaunstructuredv1.NestedString(unstructuredObj, "metadata", "namespace")
 	if err != nil || !found {
 		return nil,
-			status.Errorf(codes.Internal, "required field 'metadata.namespace' not found on resource: %v:\n%s",
+			grpcstatus.Errorf(grpccodes.Internal, "required field 'metadata.namespace' not found on resource: %v:\n%s",
 				err,
 				PrettyPrintMap(unstructuredObj))
 	}
-	return &types.NamespacedName{Name: name, Namespace: namespace}, nil
+	return &k8stypes.NamespacedName{Name: name, Namespace: namespace}, nil
 }
 
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
@@ -206,7 +206,7 @@ type ClientOptions struct {
 
 // ClientOptionsFromSecret constructs a getter.Option slice for the given secret.
 // It returns the slice, or an error.
-func ClientOptionsFromSecret(secret apiv1.Secret) (*ClientOptions, error) {
+func ClientOptionsFromSecret(secret k8scorev1.Secret) (*ClientOptions, error) {
 	var opts ClientOptions
 	if err := basicAuthFromSecret(secret, &opts); err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func ClientOptionsFromSecret(secret apiv1.Secret) (*ClientOptions, error) {
 //
 // Secrets with no username AND password are ignored, if only one is defined it
 // returns an error.
-func basicAuthFromSecret(secret apiv1.Secret, options *ClientOptions) error {
+func basicAuthFromSecret(secret k8scorev1.Secret, options *ClientOptions) error {
 	username, password := string(secret.Data["username"]), string(secret.Data["password"])
 	switch {
 	case username == "" && password == "":
@@ -235,7 +235,7 @@ func basicAuthFromSecret(secret apiv1.Secret, options *ClientOptions) error {
 
 // Secrets with no certFile, keyFile, AND caFile are ignored, if only a
 // certBytes OR keyBytes is defined it returns an error.
-func tlsClientConfigFromSecret(secret apiv1.Secret, options *ClientOptions) error {
+func tlsClientConfigFromSecret(secret k8scorev1.Secret, options *ClientOptions) error {
 	certBytes, keyBytes, caBytes := secret.Data["certFile"], secret.Data["keyFile"], secret.Data["caFile"]
 	switch {
 	case len(certBytes)+len(keyBytes)+len(caBytes) == 0:
@@ -296,6 +296,6 @@ func userAgentString() string {
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
-func GetPluginDetail() *plugins.Plugin {
+func GetPluginDetail() *pluginsGRPCv1alpha1.Plugin {
 	return &pluginDetail
 }

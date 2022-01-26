@@ -4,18 +4,18 @@
 package utils
 
 import (
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
 type AssetManager interface {
 	Init() error
 	Close() error
-	GetChart(namespace, chartID string) (models.Chart, error)
-	GetChartVersion(namespace, chartID, version string) (models.Chart, error)
-	GetChartFiles(namespace, filesID string) (models.ChartFiles, error)
-	GetPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
-	GetAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
+	GetChart(namespace, chartID string) (chartmodels.Chart, error)
+	GetChartVersion(namespace, chartID, version string) (chartmodels.Chart, error)
+	GetChartFiles(namespace, filesID string) (chartmodels.ChartFiles, error)
+	GetPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*chartmodels.Chart, int, error)
+	GetAllChartCategories(cq ChartQuery) ([]*chartmodels.ChartCategory, error)
 }
 
 // ChartQuery is a container for passing the supported query parameters for generating the WHERE query

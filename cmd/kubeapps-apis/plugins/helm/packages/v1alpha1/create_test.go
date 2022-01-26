@@ -7,27 +7,27 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/release"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	helmrelease "helm.sh/helm/v3/pkg/release"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
 		releaseStub        releaseStub
-		request            *corev1.CreateInstalledPackageRequest
-		expectedResponse   *corev1.CreateInstalledPackageResponse
-		expectedStatusCode codes.Code
-		expectedRelease    *release.Release
+		request            *pkgsGRPCv1alpha1.CreateInstalledPackageRequest
+		expectedResponse   *pkgsGRPCv1alpha1.CreateInstalledPackageResponse
+		expectedStatusCode grpccodes.Code
+		expectedRelease    *helmrelease.Release
 	}{
 		{
 			name: "creates the installed package from repo without credentials",
@@ -36,25 +36,25 @@ func TestCreateInstalledPackage(t *testing.T) {
 				chartID:       "bitnami/apache",
 				latestVersion: "1.18.3",
 			},
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "bitnami/apache",
 				},
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Namespace: "default",
 				},
 				Name: "my-apache",
-				PkgVersionReference: &corev1.VersionReference{
+				PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 					Version: "1.18.3",
 				},
 				Values: "{\"foo\": \"bar\"}",
 			},
-			expectedResponse: &corev1.CreateInstalledPackageResponse{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
+			expectedResponse: &pkgsGRPCv1alpha1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
 						Namespace: "default",
 					},
@@ -62,15 +62,15 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Plugin:     GetPluginDetail(),
 				},
 			},
-			expectedStatusCode: codes.OK,
-			expectedRelease: &release.Release{
+			expectedStatusCode: grpccodes.OK,
+			expectedRelease: &helmrelease.Release{
 				Name: "my-apache",
-				Info: &release.Info{
+				Info: &helmrelease.Info{
 					Description: "Install complete",
-					Status:      release.StatusDeployed,
+					Status:      helmrelease.StatusDeployed,
 				},
-				Chart: &chart.Chart{
-					Metadata: &chart.Metadata{
+				Chart: &helmchart.Chart{
+					Metadata: &helmchart.Metadata{
 						Name:    "apache",
 						Version: "1.18.3",
 					},
@@ -83,32 +83,32 @@ func TestCreateInstalledPackage(t *testing.T) {
 		},
 		{
 			name: "returns invalid if available package ref invalid",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
+			request: &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "not-a-valid-identifier",
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedStatusCode: grpccodes.InvalidArgument,
 		},
 	}
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
-		corev1.CreateInstalledPackageResponse{},
-		corev1.InstalledPackageReference{},
-		corev1.Context{},
-		plugins.Plugin{},
-		chart.Chart{},
+		pkgsGRPCv1alpha1.CreateInstalledPackageResponse{},
+		pkgsGRPCv1alpha1.InstalledPackageReference{},
+		pkgsGRPCv1alpha1.Context{},
+		pluginsGRPCv1alpha1.Plugin{},
+		helmchart.Chart{},
 	)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
 			actionConfig := newActionConfigFixture(t, tc.request.GetTargetContext().GetNamespace(), nil, nil)
-			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "bitnami",
 					Namespace: globalPackagingNamespace,
 				},
@@ -118,7 +118,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 			response, err := server.CreateInstalledPackage(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -129,7 +129,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 			if tc.expectedRelease != nil {
 				// Verify the expected request was made to Helm (our contract to the helm lib).
-				releases, err := actionConfig.Releases.Driver.List(func(*release.Release) bool { return true })
+				releases, err := actionConfig.Releases.Driver.List(func(*helmrelease.Release) bool { return true })
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -137,7 +137,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					t.Fatalf("got: %d, want: %d", got, want)
 				}
 
-				ignoredFields := cmpopts.IgnoreFields(release.Info{}, "FirstDeployed", "LastDeployed")
+				ignoredFields := cmpopts.IgnoreFields(helmrelease.Info{}, "FirstDeployed", "LastDeployed")
 				if got, want := releases[0], tc.expectedRelease; !cmp.Equal(got, want, ignoredUnexported, ignoredFields) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported, ignoredFields))
 				}
@@ -164,25 +164,25 @@ func TestTimeoutCreateInstalledPackage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authorized := true
-			request := &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
+			request := &pkgsGRPCv1alpha1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context: &pkgsGRPCv1alpha1.Context{
 						Namespace: globalPackagingNamespace,
 					},
 					Identifier: "bitnami/apache",
 				},
-				TargetContext: &corev1.Context{
+				TargetContext: &pkgsGRPCv1alpha1.Context{
 					Namespace: "default",
 				},
 				Name: "my-apache",
-				PkgVersionReference: &corev1.VersionReference{
+				PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 					Version: "1.18.3",
 				},
 				Values: "{\"foo\": \"bar\"}",
 			}
 			actionConfig := newActionConfigFixture(t, request.GetTargetContext().GetNamespace(), nil, nil)
-			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+			server, mockDB, cleanup := makeServer(t, authorized, actionConfig, &apprepov1alpha1.AppRepository{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "bitnami",
 					Namespace: globalPackagingNamespace,
 				},
@@ -190,17 +190,17 @@ func TestTimeoutCreateInstalledPackage(t *testing.T) {
 			server.timeoutSeconds = tc.timeoutSeconds
 
 			var effectiveTimeout int32 = -1
-			var effectiveConfig *action.Configuration
+			var effectiveConfig *helmaction.Configuration
 			var effectiveName string
 			var effectiveNs string
 			// stub createRelease function
-			server.createReleaseFunc = func(config *action.Configuration, name string, namespace string, valueString string, ch *chart.Chart,
-				registrySecrets map[string]string, timeout int32) (*release.Release, error) {
+			server.createReleaseFunc = func(config *helmaction.Configuration, name string, namespace string, valueString string, ch *helmchart.Chart,
+				registrySecrets map[string]string, timeout int32) (*helmrelease.Release, error) {
 				effectiveConfig = config
 				effectiveTimeout = timeout
 				effectiveName = name
 				effectiveNs = namespace
-				return &release.Release{}, nil
+				return &helmrelease.Release{}, nil
 			}
 
 			defer cleanup()

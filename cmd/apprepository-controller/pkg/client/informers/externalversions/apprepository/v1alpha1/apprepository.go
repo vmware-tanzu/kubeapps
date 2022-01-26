@@ -7,7 +7,7 @@ package v1alpha1
 
 import (
 	"context"
-	time "time"
+	"time"
 
 	apprepositoryv1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	versioned "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"

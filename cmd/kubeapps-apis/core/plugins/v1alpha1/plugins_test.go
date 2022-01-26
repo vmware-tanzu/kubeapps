@@ -11,45 +11,45 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	"k8s.io/client-go/rest"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	apiscore "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcmetadata "google.golang.org/grpc/metadata"
+	grpcstatus "google.golang.org/grpc/status"
+	k8srest "k8s.io/client-go/rest"
 )
 
 var ignoreUnexported = cmpopts.IgnoreUnexported(
 	PluginWithServer{},
-	plugins.Plugin{},
+	pluginsGRPCv1alpha1.Plugin{},
 )
 
 func TestPluginsAvailable(t *testing.T) {
 	testCases := []struct {
 		name              string
 		configuredPlugins []PluginWithServer
-		expectedPlugins   []*plugins.Plugin
+		expectedPlugins   []*pluginsGRPCv1alpha1.Plugin
 	}{
 		{
 			name: "it returns the configured plugins verbatim",
 			configuredPlugins: []PluginWithServer{
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1alpha1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "kapp_controller.packages",
 						Version: "v1alpha1",
 					},
 				},
 			},
-			expectedPlugins: []*plugins.Plugin{
+			expectedPlugins: []*pluginsGRPCv1alpha1.Plugin{
 				{
 					Name:    "fluxv2.packages",
 					Version: "v1alpha1",
@@ -69,7 +69,7 @@ func TestPluginsAvailable(t *testing.T) {
 				pluginsWithServers: tc.configuredPlugins,
 			}
 
-			resp, err := ps.GetConfiguredPlugins(context.TODO(), &plugins.GetConfiguredPluginsRequest{})
+			resp, err := ps.GetConfiguredPlugins(context.TODO(), &pluginsGRPCv1alpha1.GetConfiguredPluginsRequest{})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -95,13 +95,13 @@ func TestSortPlugins(t *testing.T) {
 			name: "it sorts plugins by name",
 			configuredPlugins: []PluginWithServer{
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "kapp_controller.packages",
 						Version: "v1alpha1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1alpha1",
 					},
@@ -109,13 +109,13 @@ func TestSortPlugins(t *testing.T) {
 			},
 			expectedPlugins: []PluginWithServer{
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1alpha1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "kapp_controller.packages",
 						Version: "v1alpha1",
 					},
@@ -126,31 +126,31 @@ func TestSortPlugins(t *testing.T) {
 			name: "it sorts plugins by version (alpha-ordering) when names equal",
 			configuredPlugins: []PluginWithServer{
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "kapp_controller.packages",
 						Version: "v1alpha1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1alpha1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1alpha2",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1beta1",
 					},
@@ -158,31 +158,31 @@ func TestSortPlugins(t *testing.T) {
 			},
 			expectedPlugins: []PluginWithServer{
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1alpha1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1alpha2",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "fluxv2.packages",
 						Version: "v1beta1",
 					},
 				},
 				{
-					Plugin: &plugins.Plugin{
+					Plugin: &pluginsGRPCv1alpha1.Plugin{
 						Name:    "kapp_controller.packages",
 						Version: "v1alpha1",
 					},
@@ -311,7 +311,7 @@ func TestExtractToken(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			context := context.Background()
-			context = metadata.NewIncomingContext(context, metadata.New(map[string]string{
+			context = grpcmetadata.NewIncomingContext(context, grpcmetadata.New(map[string]string{
 				tc.contextKey: tc.contextValue,
 			}))
 
@@ -339,12 +339,12 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 		OtherClusterName   = "other"
 		OtherK8sAPI        = "http://example.com/other/"
 	)
-	inClusterConfig := &rest.Config{
+	inClusterConfig := &k8srest.Config{
 		Host: DefaultK8sAPI,
 	}
-	clustersConfig := kube.ClustersConfig{
+	clustersConfig := kubeutils.ClustersConfig{
 		KubeappsClusterName: "default",
-		Clusters: map[string]kube.ClusterConfig{
+		Clusters: map[string]kubeutils.ClusterConfig{
 			DefaultClusterName: {
 				Name:              "default",
 				IsKubeappsCluster: true,
@@ -374,14 +374,14 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			name:           "it doesn't create the config and throws a grpc error when passing an invalid authorization metadata",
 			contextKey:     "authorization",
 			contextValue:   "Bla",
-			expectedErrMsg: status.Errorf(codes.Unauthenticated, "invalid authorization metadata: malformed authorization metadata"),
+			expectedErrMsg: grpcstatus.Errorf(grpccodes.Unauthenticated, "invalid authorization metadata: malformed authorization metadata"),
 		},
 		{
 			name:            "it doesn't create the config and throws a grpc error for the default cluster when no authorization metadata is passed",
 			contextKey:      "",
 			contextValue:    "",
 			expectedAPIHost: DefaultK8sAPI,
-			expectedErrMsg:  status.Errorf(codes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
+			expectedErrMsg:  grpcstatus.Errorf(grpccodes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
 		},
 		{
 			name:            "it doesn't create the config and throws a grpc error for the other cluster",
@@ -389,17 +389,17 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			contextValue:    "",
 			cluster:         OtherClusterName,
 			expectedAPIHost: OtherK8sAPI,
-			expectedErrMsg:  status.Errorf(codes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
+			expectedErrMsg:  grpcstatus.Errorf(grpccodes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
+			ctx := grpcmetadata.NewIncomingContext(context.Background(), grpcmetadata.New(map[string]string{
 				tc.contextKey: tc.contextValue,
 			}))
 
-			serveOpts := core.ServeOptions{
+			serveOpts := apiscore.ServeOptions{
 				ClustersConfigPath: "/config.yaml",
 				PinnipedProxyURL:   "http://example.com",
 			}
@@ -419,7 +419,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 
 			if tc.expectedErrMsg == nil {
 				if restConfig == nil {
-					t.Errorf("got: nil, want: rest.Config")
+					t.Errorf("got: nil, want: k8srest.Config")
 				}
 				if got, want := restConfig.Host, tc.expectedAPIHost; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
