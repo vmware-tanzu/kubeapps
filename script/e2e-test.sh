@@ -307,7 +307,6 @@ pushChart apache 8.6.3 admin password
 info ""
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$DEV_TAG"
-k8s_ensure_image kubeapps kubeapps-ci-internal-kubeops "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-kubeappsapis "$DEV_TAG"
 
 # Wait for Kubeapps Pods
@@ -317,7 +316,6 @@ deployments=(
   "kubeapps-ci-internal-apprepository-controller"
   "kubeapps-ci-internal-dashboard"
   "kubeapps-ci-internal-kubeappsapis"
-  "kubeapps-ci-internal-kubeops"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
@@ -341,7 +339,6 @@ svcs=(
   "kubeapps-ci"
   "kubeapps-ci-internal-dashboard"
   "kubeapps-ci-internal-kubeappsapis"
-  "kubeapps-ci-internal-kubeops"
 )
 for svc in "${svcs[@]}"; do
   k8s_wait_for_endpoints kubeapps "$svc" 1
