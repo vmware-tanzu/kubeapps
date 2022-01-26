@@ -604,7 +604,7 @@ jobs:
             docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
             docker run --network container:postgresql -d --name tests cimg/go:${GOLANG_VERSION} tail -f /dev/null
             docker cp /home/circleci/go tests:/
-            docker exec -it tests /bin/sh -c "cd /home/circleci/go/src/github.com/kubeapps/kubeapps/ && make test-db"
+            docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
   test_dashboard:
     environment:
       # Note that the max old space setting is per worker, so running the tests
