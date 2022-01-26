@@ -582,7 +582,7 @@ local_e2e_steps: &local_e2e_steps
 
 jobs:
   test_go:
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
     environment:
       CGO_ENABLED: "0"
       <<: *common_envars
@@ -650,7 +650,7 @@ jobs:
   build_go_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
       IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"
