@@ -188,9 +188,10 @@ installOrUpgradeKubeapps() {
     "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
     --set frontend.replicaCount=1
+    --set kubeops.replicaCount=1
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
-    --set kubeops.enabled=false
+    --set kubeops.enabled=true
     --set postgresql.replication.enabled=false
     --set postgresql.postgresqlPassword=password
     --set redis.auth.password=password
