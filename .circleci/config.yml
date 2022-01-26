@@ -51,6 +51,9 @@ parameters:
   GKE_REGULAR_VERSION:
     type: "string"
     default: "1.21"
+  DEFAULT_RESOURCE_CLASS:
+    type: "string"
+    default: "medium"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -497,6 +500,7 @@ run_e2e_tests: &run_e2e_tests
 gke_test: &gke_test
   docker:
     - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+  resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
   steps:
     - checkout
     - run:
@@ -588,6 +592,7 @@ jobs:
       <<: *common_envars
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     steps:
       - checkout
       - <<: *exports
@@ -611,6 +616,7 @@ jobs:
       NODE_OPTIONS: "--max-old-space-size=512"
     docker:
       - image: circleci/node:<< pipeline.parameters.NODE_VERSION >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     steps:
       - checkout
       - run:
@@ -628,6 +634,7 @@ jobs:
   test_pinniped_proxy:
     docker:
       - image: circleci/rust:<< pipeline.parameters.RUST_VERSION >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     steps:
       - checkout
       - run:
@@ -639,6 +646,7 @@ jobs:
       <<: *common_envars
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     steps:
       - <<: *exports
       - checkout
@@ -650,6 +658,7 @@ jobs:
   build_go_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
@@ -658,6 +667,7 @@ jobs:
   build_dashboard:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     environment:
       IMAGES: "dashboard"
     <<: *build_images
@@ -665,12 +675,14 @@ jobs:
     docker:
       # We're building the image in a docker container anyway so just re-use the golang image already in use.
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
   release:
     environment:
       <<: *common_envars
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
@@ -724,6 +736,7 @@ jobs:
   sync_chart_to_bitnami:
     environment:
       <<: *common_envars
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
@@ -756,6 +769,7 @@ jobs:
   sync_chart_from_bitnami:
     environment:
       <<: *common_envars
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
@@ -791,6 +805,7 @@ jobs:
   push_images:
     docker:
       - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    resource_class: << pipeline.parameters.DEFAULT_RESOURCE_CLASS >>
     steps:
       - setup_remote_docker
       - <<: *exports
