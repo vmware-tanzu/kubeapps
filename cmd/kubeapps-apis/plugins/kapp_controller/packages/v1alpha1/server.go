@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"strconv"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -68,16 +67,9 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 		return config, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfigFile), err)
 	}
 
-	// parse the configuration options
-	defaultUpgradePolicy := upgradePolicyMapping[pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
-	defaultIncludePrereleases, err := strconv.ParseBool(pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy)
-	if err != nil {
-		return config, fmt.Errorf("unable to parse DefaultUpgradePolicy: %q error: %w", string(pluginConfigFile), err)
-	}
-
 	// override the defaults with the loaded configuration
-	config.defaultUpgradePolicy = defaultUpgradePolicy
-	config.defaultIncludePrereleases = defaultIncludePrereleases
+	config.defaultUpgradePolicy = upgradePolicyMapping[pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
+	config.defaultIncludePrereleases = pluginConfig.KappController.Packages.V1alpha1.DefaultIncludePrereleases
 
 	return config, nil
 }
