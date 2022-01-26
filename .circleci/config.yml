@@ -519,7 +519,8 @@ gke_test: &gke_test
           fi
     - <<: *exports
     - <<: *install_gcloud_sdk
-    - setup_remote_docker
+    - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
     - run:
         name: Configure Google Cloud
         command: |
@@ -595,7 +596,8 @@ jobs:
           name: Run go unit tests
           command: |
             make test
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
       - run:
           name: Run go integration tests for DB
           command: |
@@ -792,7 +794,8 @@ jobs:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
       - <<: *exports
       - run:
           name: Push images
