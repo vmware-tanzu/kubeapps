@@ -19,8 +19,7 @@ import (
 	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
 	log "github.com/sirupsen/logrus"
 	k8sbatchv1 "k8s.io/api/batch/v1"
-	k8sbatchv1beta1 "k8s.io/api/batch/v1beta1"
-	corev1 "k8s.io/api/core/v1"
+	k8scorev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,6 +33,11 @@ import (
 	k8stoolscache "k8s.io/client-go/tools/cache"
 	k8stoolsrecord "k8s.io/client-go/tools/record"
 	k8workqueue "k8s.io/client-go/util/workqueue"
+
+	// Required for CronJobs in k8s <= v1.20
+	// https://github.com/kubeapps/kubeapps/issues/3846
+	// TODO(agamez): Move to v1 once v1.20 reaches its EOL
+	k8sbatchv1beta1 "k8s.io/api/batch/v1beta1"
 )
 
 const controllerAgentName = "apprepository-controller"
@@ -106,7 +110,7 @@ func NewController(
 	eventBroadcaster := k8stoolsrecord.NewBroadcaster()
 	eventBroadcaster.StartLogging(log.Infof)
 	eventBroadcaster.StartRecordingToSink(&k8stypedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
-	recorder := eventBroadcaster.NewRecorder(k8sscheme.Scheme, corev1.EventSource{Component: controllerAgentName})
+	recorder := eventBroadcaster.NewRecorder(k8sscheme.Scheme, k8scorev1.EventSource{Component: controllerAgentName})
 
 	controller := &Controller{
 		kubeclientset:    kubeclientset,
@@ -318,12 +322,12 @@ func (c *Controller) syncHandler(key string) error {
 	// log a warning to the event recorder and return it.
 	if !k8smetav1.IsControlledBy(cronjob, apprepo) && !objectBelongsTo(cronjob, apprepo) {
 		msg := fmt.Sprintf(MessageResourceExists, cronjob.Name)
-		c.recorder.Event(apprepo, corev1.EventTypeWarning, ErrResourceExists, msg)
+		c.recorder.Event(apprepo, k8scorev1.EventTypeWarning, ErrResourceExists, msg)
 		return fmt.Errorf(msg)
 	}
 
 	if apprepo.GetNamespace() == c.conf.KubeappsNamespace {
-		c.recorder.Event(apprepo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+		c.recorder.Event(apprepo, k8scorev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	}
 	return nil
 }
@@ -448,21 +452,21 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository, config Config) *k8sbatch
 
 // jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
 func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) k8sbatchv1.JobSpec {
-	volumes := []corev1.Volume{}
-	volumeMounts := []corev1.VolumeMount{}
+	volumes := []k8scorev1.Volume{}
+	volumeMounts := []k8scorev1.VolumeMount{}
 	if apprepo.Spec.Auth.CustomCA != nil {
-		volumes = append(volumes, corev1.Volume{
+		volumes = append(volumes, k8scorev1.Volume{
 			Name: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
+			VolumeSource: k8scorev1.VolumeSource{
+				Secret: &k8scorev1.SecretVolumeSource{
 					SecretName: secretKeyRefForRepo(apprepo.Spec.Auth.CustomCA.SecretKeyRef, apprepo, config).Name,
-					Items: []corev1.KeyToPath{
+					Items: []k8scorev1.KeyToPath{
 						{Key: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Key, Path: "ca.crt"},
 					},
 				},
 			},
 		})
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+		volumeMounts = append(volumeMounts, k8scorev1.VolumeMount{
 			Name:      apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
 			ReadOnly:  true,
 			MountPath: "/usr/local/share/ca-certificates",
@@ -484,7 +488,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) k8sbatch
 	podTemplateSpec.Spec.RestartPolicy = "OnFailure"
 	// Populate container spec
 	if len(podTemplateSpec.Spec.Containers) == 0 {
-		podTemplateSpec.Spec.Containers = []corev1.Container{{}}
+		podTemplateSpec.Spec.Containers = []k8scorev1.Container{{}}
 	}
 	// Populate ImagePullSecrets spec
 	podTemplateSpec.Spec.ImagePullSecrets = append(podTemplateSpec.Spec.ImagePullSecrets, config.ImagePullSecretsRefs...)
@@ -523,24 +527,24 @@ func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config)
 func cleanupJobSpec(namespace, name string, config Config) k8sbatchv1.JobSpec {
 	return k8sbatchv1.JobSpec{
 		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
-		Template: corev1.PodTemplateSpec{
-			Spec: corev1.PodSpec{
+		Template: k8scorev1.PodTemplateSpec{
+			Spec: k8scorev1.PodSpec{
 				// If there's an issue, delay till the next cron
 				RestartPolicy:    "Never",
 				ImagePullSecrets: config.ImagePullSecretsRefs,
-				Containers: []corev1.Container{
+				Containers: []k8scorev1.Container{
 					{
 						Name:            "delete",
 						Image:           config.RepoSyncImage,
 						ImagePullPolicy: "IfNotPresent",
 						Command:         []string{config.RepoSyncCommand},
 						Args:            apprepoCleanupJobArgs(namespace, name, config),
-						Env: []corev1.EnvVar{
+						Env: []k8scorev1.EnvVar{
 							{
 								Name: "DB_PASSWORD",
-								ValueFrom: &corev1.EnvVarSource{
-									SecretKeyRef: &corev1.SecretKeySelector{
-										LocalObjectReference: corev1.LocalObjectReference{Name: config.DBSecretName},
+								ValueFrom: &k8scorev1.EnvVarSource{
+									SecretKeyRef: &k8scorev1.SecretKeySelector{
+										LocalObjectReference: k8scorev1.LocalObjectReference{Name: config.DBSecretName},
 										Key:                  config.DBSecretKey,
 									},
 								},
@@ -625,29 +629,29 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container
-func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, config Config) []corev1.EnvVar {
-	var envVars []corev1.EnvVar
-	envVars = append(envVars, corev1.EnvVar{
+func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, config Config) []k8scorev1.EnvVar {
+	var envVars []k8scorev1.EnvVar
+	envVars = append(envVars, k8scorev1.EnvVar{
 		Name: "DB_PASSWORD",
-		ValueFrom: &corev1.EnvVarSource{
-			SecretKeyRef: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{Name: config.DBSecretName},
+		ValueFrom: &k8scorev1.EnvVarSource{
+			SecretKeyRef: &k8scorev1.SecretKeySelector{
+				LocalObjectReference: k8scorev1.LocalObjectReference{Name: config.DBSecretName},
 				Key:                  config.DBSecretKey,
 			},
 		},
 	})
 	if apprepo.Spec.Auth.Header != nil {
 		if apprepo.Spec.Auth.Header.SecretKeyRef.Key == ".dockerconfigjson" {
-			envVars = append(envVars, corev1.EnvVar{
+			envVars = append(envVars, k8scorev1.EnvVar{
 				Name: "DOCKER_CONFIG_JSON",
-				ValueFrom: &corev1.EnvVarSource{
+				ValueFrom: &k8scorev1.EnvVarSource{
 					SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, config),
 				},
 			})
 		} else {
-			envVars = append(envVars, corev1.EnvVar{
+			envVars = append(envVars, k8scorev1.EnvVar{
 				Name: "AUTHORIZATION_HEADER",
-				ValueFrom: &corev1.EnvVarSource{
+				ValueFrom: &k8scorev1.EnvVarSource{
 					SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, config),
 				},
 			})
@@ -660,7 +664,7 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, config Config
 // this repo is in the kubeapps namespace or not. If the repo is not in the
 // kubeapps namespace, then the secret will have been copied from another namespace
 // into the kubeapps namespace and have a slightly different name.
-func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alpha1.AppRepository, config Config) *corev1.SecretKeySelector {
+func secretKeyRefForRepo(keyRef k8scorev1.SecretKeySelector, apprepo *apprepov1alpha1.AppRepository, config Config) *k8scorev1.SecretKeySelector {
 	if apprepo.ObjectMeta.Namespace == config.KubeappsNamespace {
 		return &keyRef
 	}
