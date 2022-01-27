@@ -10,8 +10,9 @@ const config = {
     headless: true,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
-    video: "on-first-retry",
-    trace: "on-first-retry",
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    trace: 'retain-on-failure',
   },
   projects: [
     {

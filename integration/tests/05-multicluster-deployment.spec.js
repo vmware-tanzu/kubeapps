@@ -1,13 +1,13 @@
 const { test, expect } = require("@playwright/test");
-const { KubeappsOidcLogin } = require("./utils/kubeapps-login");
-const { TestUtils } = require("./utils/util-functions");
+const { KubeappsLogin } = require("./utils/kubeapps-login");
+const utils = require("./utils/util-functions");
 
 test("Deploys package with default values in the second cluster", async ({ page }) => {
   test.setTimeout(120000);
 
   // Log in
-  const login = new KubeappsOidcLogin(page);
-  await login.doOidcLogin("kubeapps-operator@example.com", "password");
+  const k = new KubeappsLogin(page);
+  await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
 
   // Change cluster using ui
   await page.click(".kubeapps-dropdown .kubeapps-nav-link");
@@ -16,6 +16,7 @@ test("Deploys package with default values in the second cluster", async ({ page 
 
   // Select package to deploy
   await page.click('a.nav-link:has-text("Catalog")');
+  await page.locator("input#search").type("apache");
   await page.click('a:has-text("foo apache chart for CI")');
   await page.click('cds-button:has-text("Deploy") >> nth=0');
 
@@ -23,11 +24,11 @@ test("Deploys package with default values in the second cluster", async ({ page 
   const releaseNameLocator = page.locator("#releaseName");
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
-  await releaseNameLocator.type(TestUtils.getRandomName("my-app-01-deploy"));
+  await releaseNameLocator.type(utils.getRandomName("test-05-release"));
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Assertions
-  await page.screenshot({ path: "reports/screenshots/01-multicluster-deploy-pre-assertion.png" });
+  await utils.takeScreenShot(page, "05-multicluster-deploy-pre-assertion.png");
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1");
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");
 

@@ -1,18 +1,43 @@
-const { TestUtils } = require("./util-functions");
+const utils = require("./util-functions");
 
-exports.KubeappsOidcLogin = class KubeappsOidcLogin {
+exports.KubeappsLogin = class KubeappsLogin {
   constructor(page) {
     this.page = page;
-    this.utils = new TestUtils();
+    this.oidc = process.env.USE_MULTICLUSTER_OIDC_ENV === "true";
   }
 
-  getUrl = path => this.utils.getUrl(path);
+  isOidc = () => this.oidc;
+
+  setToken(token) {
+    if ((token.match(/Bearer/g)).length > 1) {
+      token = token.split(",")[0];
+    }
+    this.token = token.trim().startsWith("Bearer") ? token.trim().substring(7) : token;
+  }
+
+  async doLogin(username, pwd, token) {
+    if (this.oidc) {
+      this.page.on("response", response => {
+        // retrieves the token after the oidc flow, note this require "--set-authorization-header=true" flag to be enabled in oauth2proxy
+        let oidcToken = response.headers()["authorization"];
+        if (oidcToken) this.setToken(oidcToken);
+      });
+      await this.doOidcLogin(username, pwd);
+    } else if (token) {
+      this.setToken(token);
+      await this.doTokenLogin(token);
+    } else {
+      console.log("ERROR: No valid login data provided.");
+      return;
+    }
+    console.log("Logged into Kubeapps!");
+  }
 
   async doOidcLogin(username, pwd) {
-    console.log(`Logging in Kubeapps via OIDC in host: ${this.utils.getUrl("/")}`);
+    console.log(`Logging in Kubeapps via OIDC in host: ${utils.getUrl("/")}`);
 
     // Go to Home page
-    await this.page.goto(this.utils.getUrl("/"));
+    await this.page.goto(utils.getUrl("/"));
     await this.page.waitForLoadState("networkidle");
 
     // Click to Log in with OIDC provider
@@ -30,8 +55,6 @@ exports.KubeappsOidcLogin = class KubeappsOidcLogin {
     await this.page.waitForLoadState("networkidle");
     await this.page.waitForLoadState("domcontentloaded");
 
-    await this.page.screenshot({ path: "screenshots/login-submit-grant.png" });
-
     // Confirm Grant Access
     await this.page.locator('button.dex-btn:has-text("Grant Access")').click();
     await this.page.waitForLoadState("networkidle");
@@ -39,8 +62,10 @@ exports.KubeappsOidcLogin = class KubeappsOidcLogin {
   }
 
   async doTokenLogin(token) {
+    console.log(`Logging in Kubeapps using token in host: ${utils.getUrl("/")}`);
+
     // Go to Home page
-    await this.page.goto(this.getUrl("/"));
+    await this.page.goto(utils.getUrl("/"));
     await this.page.waitForLoadState("networkidle");
 
     const formLocator = page.locator("form");

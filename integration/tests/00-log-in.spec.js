@@ -1,14 +1,13 @@
 const { test, expect } = require("@playwright/test");
-const { KubeappsOidcLogin } = require("./utils/kubeapps-login");
+const { KubeappsLogin } = require("./utils/kubeapps-login");
+const utils = require("./utils/util-functions");
 
 test.describe("Log in", () => {
   test("Logs in successfully via OIDC", async ({ page }) => {
-    const login = new KubeappsOidcLogin(page);
-    await login.doOidcLogin("kubeapps-user@example.com", "password");
+    const k = new KubeappsLogin(page);
+    await k.doLogin("kubeapps-user@example.com", "password", process.env.VIEW_TOKEN);
 
     //await page.waitForResponse(async response => (await response.status()) === 200);
-    await page.waitForSelector('css=h2 >> text="Welcome To Kubeapps"');
-
-    await page.screenshot({ path: "screenshots/login-submit-grant-post.png" });
+    await page.waitForSelector('css=h1 >> text="Applications"');
   });
 });

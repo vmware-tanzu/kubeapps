@@ -1,16 +1,16 @@
 const { test, expect } = require("@playwright/test");
-const { KubeappsOidcLogin } = require("./utils/kubeapps-login");
-const { TestUtils } = require("./utils/util-functions");
+const { KubeappsLogin } = require("./utils/kubeapps-login");
+const utils = require("./utils/util-functions");
 
 test("Create a new package repository successfully", async ({ page }) => {
   test.setTimeout(60000);
 
   // Log in
-  const login = new KubeappsOidcLogin(page);
-  await login.doOidcLogin("kubeapps-operator@example.com", "password");
+  const k = new KubeappsLogin(page);
+  await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
 
   // Go to repos page
-  await page.goto(login.getUrl("/#/c/default/ns/kubeapps/config/repos"));
+  await page.goto(utils.getUrl("/#/c/default/ns/kubeapps/config/repos"));
 
   // Add new repo
   await page.click('cds-button:has-text("Add App Repository")');
@@ -24,5 +24,14 @@ test("Create a new package repository successfully", async ({ page }) => {
   // Check if packages show up in catalog
   await page.reload({ waitUntil: "networkidle" });
   await page.click('a:has-text("my-repo")');
+  await utils.takeScreenShot(page, "02-test-pre-assertions");
   await page.waitForSelector('css=.catalog-container .card-title >> text="gitlab-runner"');
+  await utils.takeScreenShot(page, "02-test-post-assertions");
+
+  // Clean up
+  const axInstance = await utils.getAxiosInstance(page);
+  const response = await axInstance.delete(
+    "/api/v1/clusters/default/namespaces/kubeapps/apprepositories/my-repo",
+  );
+  expect(response.status).toEqual(200);
 });
