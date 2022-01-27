@@ -6,13 +6,13 @@ package server
 import (
 	"fmt"
 
-	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
-	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/signals"
-	corev1 "k8s.io/api/core/v1"
-	kubeinformers "k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd" // Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
+	apprepoclient "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	apprepoinformers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
+	appreposignals "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/signals"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8sinformers "k8s.io/client-go/informers"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8stoolsclientcmd "k8s.io/client-go/tools/clientcmd" // Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
 )
 
 type Config struct {
@@ -20,7 +20,7 @@ type Config struct {
 	Kubeconfig               string
 	RepoSyncImage            string
 	RepoSyncImagePullSecrets []string
-	ImagePullSecretsRefs     []corev1.LocalObjectReference
+	ImagePullSecretsRefs     []k8scorev1.LocalObjectReference
 	RepoSyncCommand          string
 	KubeappsNamespace        string
 	GlobalReposNamespace     string
@@ -40,32 +40,32 @@ type Config struct {
 }
 
 func Serve(serveOpts Config) error {
-	cfg, err := clientcmd.BuildConfigFromFlags(serveOpts.APIServerURL, serveOpts.Kubeconfig)
+	cfg, err := k8stoolsclientcmd.BuildConfigFromFlags(serveOpts.APIServerURL, serveOpts.Kubeconfig)
 	if err != nil {
 		return fmt.Errorf("Error building kubeconfig: %s", err.Error())
 	}
 
-	kubeClient, err := kubernetes.NewForConfig(cfg)
+	kubeClient, err := k8stypedclient.NewForConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("Error building kubernetes clientset: %s", err.Error())
 	}
 
-	apprepoClient, err := clientset.NewForConfig(cfg)
+	apprepoClient, err := apprepoclient.NewForConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("Error building apprepo clientset: %s", err.Error())
 	}
 
 	// set up signals so we handle the first shutdown signal gracefully
-	stopCh := signals.SetupSignalHandler()
+	stopCh := appreposignals.SetupSignalHandler()
 
 	// We're interested in being informed about cronjobs in kubeapps namespace only, currently.
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, kubeinformers.WithNamespace(serveOpts.KubeappsNamespace))
+	kubeInformerFactory := k8sinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, k8sinformers.WithNamespace(serveOpts.KubeappsNamespace))
 	// Enable app repo scanning to be manually set to scan the kubeapps repo only. See #1923.
-	var apprepoInformerFactory informers.SharedInformerFactory
+	var apprepoInformerFactory apprepoinformers.SharedInformerFactory
 	if serveOpts.ReposPerNamespace {
-		apprepoInformerFactory = informers.NewSharedInformerFactory(apprepoClient, 0)
+		apprepoInformerFactory = apprepoinformers.NewSharedInformerFactory(apprepoClient, 0)
 	} else {
-		apprepoInformerFactory = informers.NewFilteredSharedInformerFactory(apprepoClient, 0, serveOpts.KubeappsNamespace, nil)
+		apprepoInformerFactory = apprepoinformers.NewFilteredSharedInformerFactory(apprepoClient, 0, serveOpts.KubeappsNamespace, nil)
 	}
 
 	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory, &serveOpts)

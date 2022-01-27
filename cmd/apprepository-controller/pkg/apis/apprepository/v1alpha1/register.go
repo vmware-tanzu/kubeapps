@@ -4,39 +4,38 @@
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository"
+	apprepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: apprepository.GroupName, Version: "v1alpha1"}
+var SchemeGroupVersion = k8sschema.GroupVersion{Group: apprepo.GroupName, Version: "v1alpha1"}
 
 // Kind takes an unqualified kind and returns back a Group qualified GroupKind
-func Kind(kind string) schema.GroupKind {
+func Kind(kind string) k8sschema.GroupKind {
 	return SchemeGroupVersion.WithKind(kind).GroupKind()
 }
 
 // Resource takes an unqualified resource and returns a Group qualified GroupResource
-func Resource(resource string) schema.GroupResource {
+func Resource(resource string) k8sschema.GroupResource {
 	return SchemeGroupVersion.WithResource(resource).GroupResource()
 }
 
 var (
 	// SchemeBuilder is the SchemeBuilder for AppRepository
-	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
+	SchemeBuilder = k8sruntime.NewSchemeBuilder(addKnownTypes)
 	// AddToScheme is the function to add to the scheme for AppRepository
 	AddToScheme = SchemeBuilder.AddToScheme
 )
 
 // Adds the list of known types to Scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
+func addKnownTypes(scheme *k8sruntime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&AppRepository{},
 		&AppRepositoryList{},
 	)
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+	k8smetav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }

@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/distribution/distribution/reference"
+	distributionreference "github.com/distribution/distribution/reference"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -181,12 +181,12 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 			continue
 		}
 
-		ref, err := reference.ParseNormalizedNamed(image)
+		ref, err := distributionreference.ParseNormalizedNamed(image)
 		if err != nil {
 			log.Errorf("unable to parse image reference: %q", image)
 			continue
 		}
-		imageDomain := reference.Domain(ref)
+		imageDomain := distributionreference.Domain(ref)
 
 		secretName, ok := r.secrets[imageDomain]
 		if !ok {

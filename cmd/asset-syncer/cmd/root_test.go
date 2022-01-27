@@ -7,15 +7,15 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/asset-syncer/server"
+	cmp "github.com/google/go-cmp/cmp"
+	assetsyncerserver "github.com/kubeapps/kubeapps/cmd/asset-syncer/server"
 )
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
 		name string
 		args []string
-		conf server.Config
+		conf assetsyncerserver.Config
 	}{
 		{
 			"all arguments are captured (root command)",
@@ -32,7 +32,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--pass-credentials", "true",
 				"--oci-repositories", "foo07",
 			},
-			server.Config{
+			assetsyncerserver.Config{
 				DatabaseURL:           "foo01",
 				DatabaseName:          "foo02",
 				DatabaseUser:          "foo03",
@@ -62,7 +62,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--pass-credentials", "true",
 				"--oci-repositories", "foo07",
 			},
-			server.Config{
+			assetsyncerserver.Config{
 				DatabaseURL:           "foo01",
 				DatabaseName:          "foo02",
 				DatabaseUser:          "foo03",
@@ -92,7 +92,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--pass-credentials", "true",
 				"--oci-repositories", "foo07",
 			},
-			server.Config{
+			assetsyncerserver.Config{
 				DatabaseURL:           "foo01",
 				DatabaseName:          "foo02",
 				DatabaseUser:          "foo03",
@@ -118,7 +118,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			setSyncFlags(cmd)
 			cmd.SetArgs(tt.args)
 			cmd.Execute()
-			serveOpts.UserAgent = server.GetUserAgent(version, serveOpts.UserAgent)
+			serveOpts.UserAgent = assetsyncerserver.GetUserAgent(version, serveOpts.UserAgent)
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

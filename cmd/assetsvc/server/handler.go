@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/response"
+	mux "github.com/gorilla/mux"
+	assetmanager "github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	responseutils "github.com/kubeapps/kubeapps/pkg/response"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -41,7 +41,7 @@ type apiResponse struct {
 
 type apiListResponse []*apiResponse
 
-type apiChartCategoryListResponse []*models.ChartCategory
+type apiChartCategoryListResponse []*chartmodels.ChartCategory
 
 type selfLink struct {
 	Self string `json:"self"`
@@ -97,7 +97,7 @@ func extractDecodedNamespaceAndRepoAndVersionParams(params Params) (string, stri
 	return namespace, repo, version, "", nil
 }
 
-func extractChartQueryFromRequest(namespace, repo string, req *http.Request) utils.ChartQuery {
+func extractChartQueryFromRequest(namespace, repo string, req *http.Request) assetmanager.ChartQuery {
 	repos := []string{}
 	if repo != "" {
 		repos = append(repos, repo)
@@ -111,7 +111,7 @@ func extractChartQueryFromRequest(namespace, repo string, req *http.Request) uti
 		categories = strings.Split(strings.TrimSpace(req.FormValue("categories")), ",")
 	}
 
-	return utils.ChartQuery{
+	return assetmanager.ChartQuery{
 		Namespace:   namespace,
 		ChartName:   req.FormValue("name"), // chartName remains encoded
 		Version:     req.FormValue("version"),
@@ -122,7 +122,7 @@ func extractChartQueryFromRequest(namespace, repo string, req *http.Request) uti
 	}
 }
 
-func getAllChartCategories(cq utils.ChartQuery) (apiChartCategoryListResponse, error) {
+func getAllChartCategories(cq assetmanager.ChartQuery) (apiChartCategoryListResponse, error) {
 	chartCategories, err := manager.GetAllChartCategories(cq)
 	return newChartCategoryListResponse(chartCategories), err
 }
@@ -139,10 +139,10 @@ func getChartCategories(w http.ResponseWriter, req *http.Request, params Params)
 	chartCategories, err := getAllChartCategories(cq)
 	if err != nil {
 		log.WithError(err).Error("could not fetch categories")
-		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch chart categories").Write(w)
+		responseutils.NewErrorResponse(http.StatusInternalServerError, "could not fetch chart categories").Write(w)
 		return
 	}
-	response.NewDataResponse(chartCategories).Write(w)
+	responseutils.NewDataResponse(chartCategories).Write(w)
 }
 
 // getChart returns the chart from the given repo
@@ -157,12 +157,12 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 	chart, err := manager.GetChart(namespace, chartID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
-		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
+		responseutils.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
 		return
 	}
 
 	cr := newChartResponse(&chart)
-	response.NewDataResponse(cr).Write(w)
+	responseutils.NewDataResponse(cr).Write(w)
 }
 
 // listChartVersions returns a list of chart versions for the given chart
@@ -177,12 +177,12 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 	chart, err := manager.GetChart(namespace, chartID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
-		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
+		responseutils.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
 		return
 	}
 
 	cvl := newChartVersionListResponse(&chart)
-	response.NewDataResponse(cvl).Write(w)
+	responseutils.NewDataResponse(cvl).Write(w)
 }
 
 // getChartVersion returns the given chart version
@@ -197,12 +197,12 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 	chart, err := manager.GetChartVersion(namespace, chartID, version)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
-		response.NewErrorResponse(http.StatusNotFound, "could not find chart version").Write(w)
+		responseutils.NewErrorResponse(http.StatusNotFound, "could not find chart version").Write(w)
 		return
 	}
 
 	cvr := newChartVersionResponse(&chart, chart.ChartVersions[0])
-	response.NewDataResponse(cvr).Write(w)
+	responseutils.NewDataResponse(cvr).Write(w)
 }
 
 // getChartIcon returns the icon for a given chart
@@ -318,10 +318,10 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 	chartResponse := charts
 	cl := newChartListResponse(chartResponse)
 
-	response.NewDataResponseWithMeta(cl, meta{TotalPages: totalPages}).Write(w)
+	responseutils.NewDataResponseWithMeta(cl, meta{TotalPages: totalPages}).Write(w)
 }
 
-func newChartResponse(c *models.Chart) *apiResponse {
+func newChartResponse(c *chartmodels.Chart) *apiResponse {
 	latestCV := c.ChartVersions[0]
 	namespace := c.Repo.Namespace
 	chartPath := fmt.Sprintf("%s/ns/%s/charts/", pathPrefix, namespace)
@@ -339,8 +339,8 @@ func newChartResponse(c *models.Chart) *apiResponse {
 	}
 }
 
-func newChartCategoryResponse(c *models.ChartCategory) *models.ChartCategory {
-	return &models.ChartCategory{
+func newChartCategoryResponse(c *chartmodels.ChartCategory) *chartmodels.ChartCategory {
+	return &chartmodels.ChartCategory{
 		Name:  c.Name,
 		Count: c.Count,
 	}
@@ -349,13 +349,13 @@ func newChartCategoryResponse(c *models.ChartCategory) *models.ChartCategory {
 // blankRawIconAndChartVersions returns the same chart data but with a blank raw icon field and no chartversions.
 // TODO(mnelson): The raw icon data should be stored in a separate postgresql column
 // rather than the json field so that this isn't necessary.
-func blankRawIconAndChartVersions(c models.Chart) models.Chart {
+func blankRawIconAndChartVersions(c chartmodels.Chart) chartmodels.Chart {
 	c.RawIcon = nil
-	c.ChartVersions = []models.ChartVersion{}
+	c.ChartVersions = []chartmodels.ChartVersion{}
 	return c
 }
 
-func newChartListResponse(charts []*models.Chart) apiListResponse {
+func newChartListResponse(charts []*chartmodels.Chart) apiListResponse {
 	cl := apiListResponse{}
 	for _, c := range charts {
 		cl = append(cl, newChartResponse(c))
@@ -363,7 +363,7 @@ func newChartListResponse(charts []*models.Chart) apiListResponse {
 	return cl
 }
 
-func newChartCategoryListResponse(charts []*models.ChartCategory) apiChartCategoryListResponse {
+func newChartCategoryListResponse(charts []*chartmodels.ChartCategory) apiChartCategoryListResponse {
 	cl := apiChartCategoryListResponse{}
 	for _, c := range charts {
 		cl = append(cl, newChartCategoryResponse(c))
@@ -371,14 +371,14 @@ func newChartCategoryListResponse(charts []*models.ChartCategory) apiChartCatego
 	return cl
 }
 
-func chartVersionAttributes(namespace, chartRepoName, chartNameUnencoded string, cv models.ChartVersion) models.ChartVersion {
+func chartVersionAttributes(namespace, chartRepoName, chartNameUnencoded string, cv chartmodels.ChartVersion) chartmodels.ChartVersion {
 	versionPath := fmt.Sprintf("%s/ns/%s/assets/%s/versions/%s/", pathPrefix, namespace, getChartID(chartRepoName, chartNameUnencoded), cv.Version)
 	cv.Readme = versionPath + "README.md"
 	cv.Values = versionPath + "values.yaml"
 	return cv
 }
 
-func chartAttributes(namespace string, c models.Chart) models.Chart {
+func chartAttributes(namespace string, c chartmodels.Chart) chartmodels.Chart {
 	if c.RawIcon != nil {
 		c.Icon = pathPrefix + "/ns/" + namespace + "/assets/" + c.ID + "/logo"
 	} else {
@@ -388,7 +388,7 @@ func chartAttributes(namespace string, c models.Chart) models.Chart {
 	return c
 }
 
-func newChartVersionResponse(c *models.Chart, cv models.ChartVersion) *apiResponse {
+func newChartVersionResponse(c *chartmodels.Chart, cv chartmodels.ChartVersion) *apiResponse {
 	namespace := c.Repo.Namespace
 	chartPath := fmt.Sprintf("%s/ns/%s/charts/%s", pathPrefix, namespace, c.ID)
 	return &apiResponse{
@@ -405,7 +405,7 @@ func newChartVersionResponse(c *models.Chart, cv models.ChartVersion) *apiRespon
 	}
 }
 
-func newChartVersionListResponse(c *models.Chart) apiListResponse {
+func newChartVersionListResponse(c *chartmodels.Chart) apiListResponse {
 	var cvl apiListResponse
 	for _, cv := range c.ChartVersions {
 		cvl = append(cvl, newChartVersionResponse(c, cv))
@@ -416,7 +416,7 @@ func newChartVersionListResponse(c *models.Chart) apiListResponse {
 
 func handleDecodeError(paramErr string, w http.ResponseWriter, err error) {
 	log.WithError(err).Errorf("could not decode param %s", paramErr)
-	response.NewErrorResponse(http.StatusBadRequest, "could not decode params").Write(w)
+	responseutils.NewErrorResponse(http.StatusBadRequest, "could not decode params").Write(w)
 }
 
 func getChartID(chartRepoName, chartName string) string {

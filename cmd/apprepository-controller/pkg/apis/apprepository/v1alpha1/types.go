@@ -4,8 +4,8 @@
 package v1alpha1
 
 import (
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // +genclient
@@ -14,8 +14,8 @@ import (
 
 // AppRepository is a specification for an AppRepository resource
 type AppRepository struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	k8smetav1.TypeMeta   `json:",inline"`
+	k8smetav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   AppRepositorySpec   `json:"spec"`
 	Status AppRepositoryStatus `json:"status"`
@@ -23,11 +23,11 @@ type AppRepository struct {
 
 // AppRepositorySpec is the spec for an AppRepository resource
 type AppRepositorySpec struct {
-	Type               string                 `json:"type"`
-	URL                string                 `json:"url"`
-	Auth               AppRepositoryAuth      `json:"auth,omitempty"`
-	ResyncRequests     uint                   `json:"resyncRequests"`
-	SyncJobPodTemplate corev1.PodTemplateSpec `json:"syncJobPodTemplate"`
+	Type               string                    `json:"type"`
+	URL                string                    `json:"url"`
+	Auth               AppRepositoryAuth         `json:"auth,omitempty"`
+	ResyncRequests     uint                      `json:"resyncRequests"`
+	SyncJobPodTemplate k8scorev1.PodTemplateSpec `json:"syncJobPodTemplate"`
 	// DockerRegistrySecrets is a list of dockerconfigjson secrets which exist
 	// in the same namespace as the AppRepository and should be included
 	// automatically for matching images.
@@ -54,13 +54,13 @@ type AppRepositoryAuth struct {
 // AppRepositoryAuthHeader secret-key reference
 type AppRepositoryAuthHeader struct {
 	// Selects a key of a secret in the pod's namespace
-	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+	SecretKeyRef k8scorev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // AppRepositoryCustomCA secret-key reference
 type AppRepositoryCustomCA struct {
 	// Selects a key of a secret in the pod's namespace
-	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+	SecretKeyRef k8scorev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // FilterRuleSpec defines a set of rules and aggreagation logic
@@ -78,8 +78,8 @@ type AppRepositoryStatus struct {
 
 // AppRepositoryList is a list of AppRepository resources
 type AppRepositoryList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata"`
+	k8smetav1.TypeMeta `json:",inline"`
+	k8smetav1.ListMeta `json:"metadata"`
 
 	Items []AppRepository `json:"items"`
 }

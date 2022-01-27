@@ -11,14 +11,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containerd/containerd/remotes"
+	containerdremotes "github.com/containerd/containerd/remotes"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	errors "github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"oras.land/oras-go/pkg/content"
+	logrus "github.com/sirupsen/logrus"
+	orascontent "oras.land/oras-go/pkg/content"
 	orascontext "oras.land/oras-go/pkg/context"
-	"oras.land/oras-go/pkg/oras"
+	oras "oras.land/oras-go/pkg/oras"
 )
 
 // Code from Helm Registry Client. Copied here since it belongs to a internal package.
@@ -75,7 +75,7 @@ type ChartPuller interface {
 
 // OCIPuller implements ChartPuller
 type OCIPuller struct {
-	Resolver remotes.Resolver
+	Resolver containerdremotes.Resolver
 }
 
 // Code from Helm Registry Client. Copied here since it belongs to a internal package.
@@ -86,7 +86,7 @@ type OCIPuller struct {
 // https://github.com/helm/helm/blob/v3.7.1/internal/experimental/registry/client.go#L209
 func (p *OCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
 	ociFullName = strings.TrimPrefix(ociFullName, fmt.Sprintf("%s://", OCIScheme))
-	store := content.NewMemoryStore()
+	store := orascontent.NewMemoryStore()
 	allowedMediaTypes := []string{
 		ConfigMediaType,
 	}

@@ -10,98 +10,97 @@ import (
 	"os"
 	"sync"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
-	log "k8s.io/klog/v2"
-
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
+	apiscore "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	resourcesGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
+	statuserror "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	grpc "google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcmetadata "google.golang.org/grpc/metadata"
+	grpcstatus "google.golang.org/grpc/status"
+	k8smeta "k8s.io/apimachinery/pkg/api/meta"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8sserializer "k8s.io/apimachinery/pkg/runtime/serializer"
+	k8swatch "k8s.io/apimachinery/pkg/watch"
+	k8discoveryclient "k8s.io/client-go/discovery"
+	k8dynamicclient "k8s.io/client-go/dynamic"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8srest "k8s.io/client-go/rest"
+	k8srestmapper "k8s.io/client-go/restmapper"
+	log "k8s.io/klog/v2"
 )
 
-type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
+type clientGetter func(context.Context, string) (k8stypedclient.Interface, k8dynamicclient.Interface, error)
 
 // Currently just a stub unimplemented server. More to come in following PRs.
 type Server struct {
-	v1alpha1.UnimplementedResourcesServiceServer
+	resourcesGRPCv1alpha1.UnimplementedResourcesServiceServer
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
 	clientGetter clientGetter
 
-	// corePackagesClientGetter holds a function to obtain the core.packages.v1alpha1
+	// corePackagesClientGetter holds a function to obtain the apiscore.packages.v1alpha1
 	// client. It is similarly initialised in NewServer() below.
 	corePackagesClientGetter func() (pkgsGRPCv1alpha1.PackagesServiceClient, error)
 
 	// We keep a restmapper to cache discovery of REST mappings from GVK->GVR.
-	restMapper meta.RESTMapper
+	restMapper k8smeta.RESTMapper
 
 	// kindToResource is a function to convert a GVK to GVR with
 	// namespace/cluster scope information. Can be replaced in tests with a
 	// stub version using the unsafe helpers while the real implementation
 	// queries the k8s API for a REST mapper.
-	kindToResource func(meta.RESTMapper, schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error)
+	kindToResource func(k8smeta.RESTMapper, k8sschema.GroupVersionKind) (k8sschema.GroupVersionResource, k8smeta.RESTScopeName, error)
 }
 
 // createRESTMapper returns a rest mapper configured with the APIs of the
 // local k8s API server. This is used to convert between the GroupVersionKinds
 // of the resource references to the GroupVersionResource used by the API server.
-func createRESTMapper() (meta.RESTMapper, error) {
-	config, err := rest.InClusterConfig()
+func createRESTMapper() (k8smeta.RESTMapper, error) {
+	config, err := k8srest.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}
 	// To use the config with RESTClientFor, extra fields are required.
 	// See https://github.com/kubernetes/client-go/issues/657#issuecomment-842960258
-	config.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
-	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
-	client, err := rest.RESTClientFor(config)
+	config.GroupVersion = &k8sschema.GroupVersion{Group: "", Version: "v1"}
+	config.NegotiatedSerializer = k8sserializer.WithoutConversionCodecFactory{CodecFactory: appreposcheme.Codecs}
+	client, err := k8srest.RESTClientFor(config)
 	if err != nil {
 		return nil, err
 	}
-	discoveryClient := discovery.NewDiscoveryClient(client)
-	groupResources, err := restmapper.GetAPIGroupResources(discoveryClient)
+	discoveryClient := k8discoveryclient.NewDiscoveryClient(client)
+	groupResources, err := k8srestmapper.GetAPIGroupResources(discoveryClient)
 	if err != nil {
 		return nil, err
 	}
-	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
+	return k8srestmapper.NewDiscoveryRESTMapper(groupResources), nil
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter) (*Server, error) {
+func NewServer(configGetter apiscore.KubernetesConfigGetter) (*Server, error) {
 	mapper, err := createRESTMapper()
 	if err != nil {
 		return nil, err
 	}
 	return &Server{
-		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
+		clientGetter: func(ctx context.Context, cluster string) (k8stypedclient.Interface, k8dynamicclient.Interface, error) {
 			if configGetter == nil {
-				return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+				return nil, nil, grpcstatus.Errorf(grpccodes.Internal, "configGetter arg required")
 			}
 			config, err := configGetter(ctx, cluster)
 			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
+				return nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get config : %v", err.Error())
 			}
-			dynamicClient, err := dynamic.NewForConfig(config)
+			dynamicClient, err := k8dynamicclient.NewForConfig(config)
 			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client : %s", err.Error())
+				return nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get dynamic client : %s", err.Error())
 			}
-			typedClient, err := kubernetes.NewForConfig(config)
+			typedClient, err := k8stypedclient.NewForConfig(config)
 			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client: %s", err.Error())
+				return nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get typed client: %s", err.Error())
 			}
 			return typedClient, dynamicClient, nil
 		},
@@ -109,15 +108,15 @@ func NewServer(configGetter core.KubernetesConfigGetter) (*Server, error) {
 			port := os.Getenv("PORT")
 			conn, err := grpc.Dial("localhost:"+port, grpc.WithInsecure())
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, "unable to dial to localhost grpc service: %s", err.Error())
+				return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to dial to localhost grpc service: %s", err.Error())
 			}
 			return pkgsGRPCv1alpha1.NewPackagesServiceClient(conn), nil
 		},
 		restMapper: mapper,
-		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error) {
+		kindToResource: func(mapper k8smeta.RESTMapper, gvk k8sschema.GroupVersionKind) (k8sschema.GroupVersionResource, k8smeta.RESTScopeName, error) {
 			mapping, err := mapper.RESTMapping(gvk.GroupKind())
 			if err != nil {
-				return schema.GroupVersionResource{}, "", err
+				return k8sschema.GroupVersionResource{}, "", err
 			}
 			return mapping.Resource, mapping.Scope.Name(), nil
 		},
@@ -125,7 +124,7 @@ func NewServer(configGetter core.KubernetesConfigGetter) (*Server, error) {
 }
 
 // GetResources returns the resources for an installed package.
-func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.ResourcesService_GetResourcesServer) error {
+func (s *Server) GetResources(r *resourcesGRPCv1alpha1.GetResourcesRequest, stream resourcesGRPCv1alpha1.ResourcesService_GetResourcesServer) error {
 	namespace := r.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := r.GetInstalledPackageRef().GetContext().GetCluster()
 	log.Infof("+resources GetResources (cluster: %q, namespace=%q)", cluster, namespace)
@@ -152,7 +151,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	// we only return the requested ones.
 	if len(r.GetResourceRefs()) == 0 {
 		if r.GetWatch() {
-			return status.Errorf(codes.InvalidArgument, "resource refs must be specified in request when watching resources")
+			return grpcstatus.Errorf(grpccodes.InvalidArgument, "resource refs must be specified in request when watching resources")
 		}
 		resourcesToReturn = refsResponse.GetResourceRefs()
 	} else {
@@ -165,7 +164,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 				}
 			}
 			if !found {
-				return status.Errorf(codes.InvalidArgument, "requested resource %+v does not belong to installed package %+v", requestedRef, r.GetInstalledPackageRef())
+				return grpcstatus.Errorf(grpccodes.InvalidArgument, "requested resource %+v does not belong to installed package %+v", requestedRef, r.GetInstalledPackageRef())
 			}
 		}
 		resourcesToReturn = r.GetResourceRefs()
@@ -178,9 +177,9 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	}
 	var watchers []*ResourceWatcher
 	for _, ref := range resourcesToReturn {
-		groupVersion, err := schema.ParseGroupVersion(ref.ApiVersion)
+		groupVersion, err := k8sschema.ParseGroupVersion(ref.ApiVersion)
 		if err != nil {
-			return status.Errorf(codes.Internal, "unable to parse group version from %q: %s", ref.ApiVersion, err.Error())
+			return grpcstatus.Errorf(grpccodes.Internal, "unable to parse group version from %q: %s", ref.ApiVersion, err.Error())
 		}
 		gvk := groupVersion.WithKind(ref.Kind)
 
@@ -188,18 +187,18 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		// the scope of the resource (namespaced or not).
 		gvr, scopeName, err := s.kindToResource(s.restMapper, gvk)
 		if err != nil {
-			return status.Errorf(codes.Internal, "unable to map group-kind %v to resource: %s", gvk.GroupKind(), err.Error())
+			return grpcstatus.Errorf(grpccodes.Internal, "unable to map group-kind %v to resource: %s", gvk.GroupKind(), err.Error())
 		}
 
 		if !r.GetWatch() {
 			var resource interface{}
-			if scopeName == meta.RESTScopeNameNamespace {
-				resource, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+			if scopeName == k8smeta.RESTScopeNameNamespace {
+				resource, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Get(stream.Context(), ref.GetName(), k8smetav1.GetOptions{})
 			} else {
-				resource, err = dynamicClient.Resource(gvr).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+				resource, err = dynamicClient.Resource(gvr).Get(stream.Context(), ref.GetName(), k8smetav1.GetOptions{})
 			}
 			if err != nil {
-				return status.Errorf(codes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
+				return grpcstatus.Errorf(grpccodes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
 			}
 			err = sendResourceData(ref, resource, stream)
 			if err != nil {
@@ -209,18 +208,18 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 			continue
 		}
 
-		listOptions := metav1.ListOptions{
+		listOptions := k8smetav1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s", ref.GetName()),
 		}
-		var watcher watch.Interface
-		if scopeName == meta.RESTScopeNameNamespace {
+		var watcher k8swatch.Interface
+		if scopeName == k8smeta.RESTScopeNameNamespace {
 			watcher, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Watch(stream.Context(), listOptions)
 		} else {
 			watcher, err = dynamicClient.Resource(gvr).Watch(stream.Context(), listOptions)
 		}
 		if err != nil {
 			log.Errorf("unable to watch resource %v: %v", ref, err)
-			return status.Errorf(codes.Internal, "unable to watch resource %v", ref)
+			return grpcstatus.Errorf(grpccodes.Internal, "unable to watch resource %v", ref)
 		}
 		watchers = append(watchers, &ResourceWatcher{
 			ResourceRef: ref,
@@ -244,17 +243,17 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 }
 
 // GetServiceAccountNames returns the list of service account names in a given cluster and namespace.
-func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServiceAccountNamesRequest) (*v1alpha1.GetServiceAccountNamesResponse, error) {
+func (s *Server) GetServiceAccountNames(ctx context.Context, r *resourcesGRPCv1alpha1.GetServiceAccountNamesRequest) (*resourcesGRPCv1alpha1.GetServiceAccountNamesResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
 	log.Infof("+resources GetServiceAccountNames (cluster: %q, namespace=%q)", cluster, namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
-	saList, err := typedClient.CoreV1().ServiceAccounts(namespace).List(ctx, metav1.ListOptions{})
+	saList, err := typedClient.CoreV1().ServiceAccounts(namespace).List(ctx, k8smetav1.ListOptions{})
 	if err != nil {
 		return nil, statuserror.FromK8sError("list", "ServiceAccounts", "", err)
 	}
@@ -265,7 +264,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServ
 		saStringList = append(saStringList, sa.Name)
 	}
 
-	return &v1alpha1.GetServiceAccountNamesResponse{
+	return &resourcesGRPCv1alpha1.GetServiceAccountNamesResponse{
 		ServiceaccountNames: saStringList,
 	}, nil
 
@@ -273,15 +272,15 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServ
 
 // sendResourceData just DRYs up this functionality shared between requests to
 // watch or get resources.
-func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1alpha1.ResourcesService_GetResourcesServer) error {
+func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s resourcesGRPCv1alpha1.ResourcesService_GetResourcesServer) error {
 	resourceBytes, err := json.Marshal(obj)
 	if err != nil {
-		return status.Errorf(codes.Internal, "unable to marshal json for resource: %s", err.Error())
+		return grpcstatus.Errorf(grpccodes.Internal, "unable to marshal json for resource: %s", err.Error())
 	}
 
 	// Note, a string in Go is effectively a read-only slice of bytes.
 	// See https://stackoverflow.com/a/50880408 for interesting links.
-	s.Send(&v1alpha1.GetResourcesResponse{
+	s.Send(&resourcesGRPCv1alpha1.GetResourcesResponse{
 		ResourceRef: ref,
 		Manifest:    string(resourceBytes),
 	})
@@ -289,9 +288,9 @@ func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1al
 	return nil
 }
 
-// ResourceEvent embeds a watch.Event and adds the resource ref.
+// ResourceEvent embeds a k8swatch.Event and adds the resource ref.
 type ResourceEvent struct {
-	watch.Event
+	k8swatch.Event
 	ResourceRef *pkgsGRPCv1alpha1.ResourceRef
 }
 
@@ -349,7 +348,7 @@ func (mw *MultiResourceWatcher) ResultChan() <-chan ResourceEvent {
 
 // ResourceWatcher is a watcher that knows the resource its watching.
 type ResourceWatcher struct {
-	Watcher     watch.Interface
+	Watcher     k8swatch.Interface
 	ResourceRef *pkgsGRPCv1alpha1.ResourceRef
 	resultChan  chan ResourceEvent
 }
@@ -383,9 +382,9 @@ func (rw *ResourceWatcher) ResultChan() <-chan ResourceEvent {
 // incoming context to the outgoing context when making the outgoing call the
 // core packaging API.
 func copyAuthorizationMetadataForOutgoing(ctx context.Context) (context.Context, error) {
-	notAllowedErr := status.Errorf(codes.PermissionDenied, "unable to get authorization from request context")
+	notAllowedErr := grpcstatus.Errorf(grpccodes.PermissionDenied, "unable to get authorization from request context")
 
-	md, ok := metadata.FromIncomingContext(ctx)
+	md, ok := grpcmetadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, notAllowedErr
 	}
@@ -393,7 +392,7 @@ func copyAuthorizationMetadataForOutgoing(ctx context.Context) (context.Context,
 		return nil, notAllowedErr
 	}
 
-	return metadata.AppendToOutgoingContext(ctx, "authorization", md["authorization"][0]), nil
+	return grpcmetadata.AppendToOutgoingContext(ctx, "authorization", md["authorization"][0]), nil
 }
 
 func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {

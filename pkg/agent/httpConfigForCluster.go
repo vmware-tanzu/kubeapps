@@ -9,20 +9,20 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/discovery"
-	diskcached "k8s.io/client-go/discovery/cached/disk"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
+	k8smeta "k8s.io/apimachinery/pkg/api/meta"
+	k8sgenericclioptions "k8s.io/cli-runtime/pkg/genericclioptions"
+	k8discoveryclient "k8s.io/client-go/discovery"
+	k8sdiskcached "k8s.io/client-go/discovery/cached/disk"
+	k8srest "k8s.io/client-go/rest"
+	k8srestmapper "k8s.io/client-go/restmapper"
+	k8stoolsclientcmd "k8s.io/client-go/tools/clientcmd"
+	homedir "k8s.io/client-go/util/homedir"
 )
 
-// configForCluster implements the genericclioptions.RESTClientGetter interface
+// configForCluster implements the k8sgenericclioptions.RESTClientGetter interface
 // while ensuring that it returns the config it was given, rather
 // than re-creating a config as if the CLI options were passed in as the
-// genericclioptions.ConfigFlags implementation, which strips the bearer token
+// k8sgenericclioptions.ConfigFlags implementation, which strips the bearer token
 // if the host is not https (helpful for the CLI).
 //
 // TODO(mnelson) The better short-term option is to update pinniped-proxy to support TLS
@@ -30,21 +30,21 @@ import (
 // https://github.com/kubeapps/kubeapps/issues/2268
 // This implementation can be completely removed once TLS is used by pinniped-proxy.
 type configForCluster struct {
-	config         *rest.Config
+	config         *k8srest.Config
 	discoveryBurst int
-	*genericclioptions.ConfigFlags
+	*k8sgenericclioptions.ConfigFlags
 }
 
 // ToRESTConfig has the main difference from the original implementation,
 // returning the config as is.
-func (f *configForCluster) ToRESTConfig() (*rest.Config, error) {
+func (f *configForCluster) ToRESTConfig() (*k8srest.Config, error) {
 	return f.config, nil
 }
 
 // ToDiscoveryClient requires an implementation on the embedding struct because
 // the implementation calls ToRESTConfig(). Painfully, this then requires copying
 // the complete function.
-func (f *configForCluster) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
+func (f *configForCluster) ToDiscoveryClient() (k8discoveryclient.CachedDiscoveryInterface, error) {
 	config, err := f.ToRESTConfig()
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (f *configForCluster) ToDiscoveryClient() (discovery.CachedDiscoveryInterfa
 
 	// The more groups you have, the more discovery requests you need to make.
 	// given 25 groups (our groups + a few custom resources) with one-ish version each, discovery needs to make 50 requests
-	// double it just so we don't end up here again for a while.  This config is only used for discovery.
+	// double it just so we don't end up here again for a while.  This config is only used for k8discoveryclient.
 	config.Burst = f.discoveryBurst
 
 	cacheDir := filepath.Join(homedir.HomeDir(), ".kube", "cache")
@@ -65,25 +65,25 @@ func (f *configForCluster) ToDiscoveryClient() (discovery.CachedDiscoveryInterfa
 	httpCacheDir := filepath.Join(cacheDir, "http")
 	discoveryCacheDir := computeDiscoverCacheDir(filepath.Join(cacheDir, "discovery"), config.Host)
 
-	return diskcached.NewCachedDiscoveryClientForConfig(config, discoveryCacheDir, httpCacheDir, time.Duration(10*time.Minute))
+	return k8sdiskcached.NewCachedDiscoveryClientForConfig(config, discoveryCacheDir, httpCacheDir, time.Duration(10*time.Minute))
 }
 
 // ToRESTMapper requires an implementation on the embedding struct because
 // it calls ToDiscoveryClient.
-func (f *configForCluster) ToRESTMapper() (meta.RESTMapper, error) {
+func (f *configForCluster) ToRESTMapper() (k8smeta.RESTMapper, error) {
 	discoveryClient, err := f.ToDiscoveryClient()
 	if err != nil {
 		return nil, err
 	}
 
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
-	expander := restmapper.NewShortcutExpander(mapper, discoveryClient)
+	mapper := k8srestmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
+	expander := k8srestmapper.NewShortcutExpander(mapper, discoveryClient)
 	return expander, nil
 }
 
 // ToRawKubeConfigLoader may need to be replicated here, but from limited
 // testing it works just to call the embedded implementation.
-func (f *configForCluster) ToRawKubeConfigLoader() clientcmd.ClientConfig {
+func (f *configForCluster) ToRawKubeConfigLoader() k8stoolsclientcmd.ClientConfig {
 	return f.ConfigFlags.ToRawKubeConfigLoader()
 }
 

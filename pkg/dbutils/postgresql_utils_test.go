@@ -6,9 +6,9 @@ package dbutils
 import (
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	cmp "github.com/google/go-cmp/cmp"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
 )
 
 func Test_NewPGManager(t *testing.T) {
@@ -54,7 +54,7 @@ func Test_QueryOne(t *testing.T) {
 	query := "SELECT * from charts"
 	rows := sqlmock.NewRows([]string{"info"}).AddRow(`{"ID": "foo"}`)
 	mock.ExpectQuery("^SELECT (.+)$").WillReturnRows(rows)
-	target := models.Chart{}
+	target := chartmodels.Chart{}
 	err = manager.QueryOne(&target, query)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
@@ -62,7 +62,7 @@ func Test_QueryOne(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-	expectedChart := models.Chart{ID: "foo"}
+	expectedChart := chartmodels.Chart{ID: "foo"}
 	if !cmp.Equal(target, expectedChart) {
 		t.Errorf("Unexpected result %v", cmp.Diff(target, expectedChart))
 	}
@@ -89,7 +89,7 @@ func Test_QueryAll(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-	expectedCharts := []*models.Chart{{ID: "foo"}, {ID: "bar"}}
+	expectedCharts := []*chartmodels.Chart{{ID: "foo"}, {ID: "bar"}}
 	if !cmp.Equal(charts, expectedCharts) {
 		t.Errorf("Unexpected result %v", cmp.Diff(charts, expectedCharts))
 	}
@@ -118,7 +118,7 @@ func Test_QueryAllChartCategories(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-	expectedChartCategories := []*models.ChartCategory{
+	expectedChartCategories := []*chartmodels.ChartCategory{
 		{Name: "cat1", Count: 1},
 		{Name: "cat2", Count: 2},
 		{Name: "cat3", Count: 3},

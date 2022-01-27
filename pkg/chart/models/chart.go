@@ -4,12 +4,11 @@
 package models
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"time"
 
-	"database/sql/driver"
-
-	"helm.sh/helm/v3/pkg/chart"
+	helmchart "helm.sh/helm/v3/pkg/chart"
 )
 
 // Repo holds the App repository basic details
@@ -31,19 +30,19 @@ type RepoInternal struct {
 
 // Chart is a higher-level representation of a chart package
 type Chart struct {
-	ID              string             `json:"ID" bson:"chart_id"`
-	Name            string             `json:"name"`
-	Repo            *Repo              `json:"repo"`
-	Description     string             `json:"description"`
-	Home            string             `json:"home"`
-	Keywords        []string           `json:"keywords"`
-	Maintainers     []chart.Maintainer `json:"maintainers"`
-	Sources         []string           `json:"sources"`
-	Icon            string             `json:"icon"`
-	RawIcon         []byte             `json:"raw_icon" bson:"raw_icon"`
-	IconContentType string             `json:"icon_content_type" bson:"icon_content_type,omitempty"`
-	Category        string             `json:"category"`
-	ChartVersions   []ChartVersion     `json:"chartVersions"`
+	ID              string                 `json:"ID" bson:"chart_id"`
+	Name            string                 `json:"name"`
+	Repo            *Repo                  `json:"repo"`
+	Description     string                 `json:"description"`
+	Home            string                 `json:"home"`
+	Keywords        []string               `json:"keywords"`
+	Maintainers     []helmchart.Maintainer `json:"maintainers"`
+	Sources         []string               `json:"sources"`
+	Icon            string                 `json:"icon"`
+	RawIcon         []byte                 `json:"raw_icon" bson:"raw_icon"`
+	IconContentType string                 `json:"icon_content_type" bson:"icon_content_type,omitempty"`
+	Category        string                 `json:"category"`
+	ChartVersions   []ChartVersion         `json:"chartVersions"`
 }
 
 // ChartCategory is the representation of the chart category query

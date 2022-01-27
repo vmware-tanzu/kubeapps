@@ -14,15 +14,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/heptiolabs/healthcheck"
-	"github.com/kubeapps/kubeapps/cmd/kubeops/internal/handler"
-	"github.com/kubeapps/kubeapps/pkg/agent"
-	"github.com/kubeapps/kubeapps/pkg/auth"
-	backendHandlers "github.com/kubeapps/kubeapps/pkg/http-handler"
-	"github.com/kubeapps/kubeapps/pkg/kube"
+	mux "github.com/gorilla/mux"
+	healthcheck "github.com/heptiolabs/healthcheck"
+	kubeopshandler "github.com/kubeapps/kubeapps/cmd/kubeops/internal/handler"
+	helmagent "github.com/kubeapps/kubeapps/pkg/agent"
+	authutils "github.com/kubeapps/kubeapps/pkg/auth"
+	httphandler "github.com/kubeapps/kubeapps/pkg/http-handler"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
 	negroni "github.com/urfave/negroni/v2"
-
 	log "k8s.io/klog/v2"
 )
 
@@ -54,18 +53,18 @@ func Serve(serveOpts ServeOptions) error {
 	}
 
 	// If there is no clusters config, we default to the previous behaviour of a "default" cluster.
-	clustersConfig := kube.ClustersConfig{KubeappsClusterName: "default"}
+	clustersConfig := kubeutils.ClustersConfig{KubeappsClusterName: "default"}
 	if serveOpts.ClustersConfigPath != "" {
 		var err error
 		var cleanupCAFiles func()
-		clustersConfig, cleanupCAFiles, err = kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
+		clustersConfig, cleanupCAFiles, err = kubeutils.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
 		if err != nil {
 			return fmt.Errorf("unable to parse additional clusters config: %+v", err)
 		}
 		defer cleanupCAFiles()
 	}
 
-	options := handler.Options{
+	options := kubeopshandler.Options{
 		ListLimit:              serveOpts.ListLimit,
 		Timeout:                serveOpts.Timeout,
 		KubeappsNamespace:      kubeappsNamespace,
@@ -77,15 +76,15 @@ func Serve(serveOpts ServeOptions) error {
 		UserAgent:              serveOpts.UserAgent,
 	}
 
-	storageForDriver := agent.StorageForSecrets
+	storageForDriver := helmagent.StorageForSecrets
 	if serveOpts.HelmDriverArg != "" {
 		var err error
-		storageForDriver, err = agent.ParseDriverType(serveOpts.HelmDriverArg)
+		storageForDriver, err = helmagent.ParseDriverType(serveOpts.HelmDriverArg)
 		if err != nil {
 			panic(err)
 		}
 	}
-	withHandlerConfig := handler.WithHandlerConfig(storageForDriver, options)
+	withHandlerConfig := kubeopshandler.WithHandlerConfig(storageForDriver, options)
 	r := mux.NewRouter()
 
 	// Healthcheck
@@ -96,16 +95,16 @@ func Serve(serveOpts ServeOptions) error {
 
 	// Routes
 	// Auth not necessary here with Helm 3 because it's done by Kubernetes.
-	addRoute := handler.AddRouteWith(r.PathPrefix("/v1").Subrouter(), withHandlerConfig)
-	addRoute("GET", "/clusters/{cluster}/releases", handler.ListAllReleases)
-	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases", handler.ListReleases)
-	addRoute("POST", "/clusters/{cluster}/namespaces/{namespace}/releases", handler.CreateRelease)
-	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.GetRelease)
-	addRoute("PUT", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.OperateRelease)
-	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
+	addRoute := kubeopshandler.AddRouteWith(r.PathPrefix("/v1").Subrouter(), withHandlerConfig)
+	addRoute("GET", "/clusters/{cluster}/releases", kubeopshandler.ListAllReleases)
+	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases", kubeopshandler.ListReleases)
+	addRoute("POST", "/clusters/{cluster}/namespaces/{namespace}/releases", kubeopshandler.CreateRelease)
+	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", kubeopshandler.GetRelease)
+	addRoute("PUT", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", kubeopshandler.OperateRelease)
+	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", kubeopshandler.DeleteRelease)
 
 	// Backend routes unrelated to kubeops functionality.
-	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
+	err := httphandler.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
 	if err != nil {
 		return fmt.Errorf("Unable to setup backend routes: %+v", err)
 	}
@@ -114,7 +113,7 @@ func Serve(serveOpts ServeOptions) error {
 	// TODO(mnelson) remove this reverse proxy once the haproxy frontend
 	// proxies requests directly to the assetsvc. Move the authz to the
 	// assetsvc itself.
-	authGate := auth.AuthGate(clustersConfig, kubeappsNamespace)
+	authGate := authutils.AuthGate(clustersConfig, kubeappsNamespace)
 	parsedAssetsvcURL, err := url.Parse(serveOpts.AssetsvcURL)
 	if err != nil {
 		return fmt.Errorf("Unable to parse the assetsvc URL: %v", err)

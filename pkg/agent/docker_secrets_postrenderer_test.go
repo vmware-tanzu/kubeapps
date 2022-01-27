@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"gopkg.in/yaml.v2"
+	cmp "github.com/google/go-cmp/cmp"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func TestNewDockerSecretsPostRenderer(t *testing.T) {

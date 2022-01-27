@@ -10,14 +10,14 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"golang.org/x/net/http/httpproxy"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/credentialprovider"
+	httpproxy "golang.org/x/net/http/httpproxy"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8scredentialprovider "k8s.io/kubernetes/pkg/credentialprovider"
 )
 
-func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfigJSON) (string, error) {
+func GetAuthHeaderFromDockerConfig(dockerConfig *k8scredentialprovider.DockerConfigJSON) (string, error) {
 	if len(dockerConfig.Auths) > 1 {
 		return "", fmt.Errorf("The given config should include one auth entry")
 	}
@@ -32,13 +32,13 @@ func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfig
 }
 
 // getDataFromRegistrySecret retrieves the given key from the secret as a string
-func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
+func getDataFromRegistrySecret(key string, s *k8scorev1.Secret) (string, error) {
 	dockerConfigJson, ok := s.Data[key]
 	if !ok {
 		return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
 	}
 
-	dockerConfig := &credentialprovider.DockerConfigJSON{}
+	dockerConfig := &k8scredentialprovider.DockerConfigJSON{}
 	err := json.Unmarshal(dockerConfigJson, dockerConfig)
 	if err != nil {
 		return "", fmt.Errorf("Unable to parse secret %s as a Docker config. Got: %v", s.Name, err)
@@ -48,7 +48,7 @@ func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
 }
 
 // GetDataFromSecret retrieves the given key from the secret as a string
-func GetDataFromSecret(key string, s *corev1.Secret) (string, error) {
+func GetDataFromSecret(key string, s *k8scorev1.Secret) (string, error) {
 	if key == ".dockerconfigjson" {
 		// Parse the secret as a docker registry secret
 		return getDataFromRegistrySecret(key, s)
@@ -66,7 +66,7 @@ func GetDataFromSecret(key string, s *corev1.Secret) (string, error) {
 }
 
 // InitHTTPClient returns a HTTP client using the configuration from the apprepo and CA secret given.
-func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret) (*http.Client, error) {
+func InitHTTPClient(appRepo *apprepov1alpha1.AppRepository, caCertSecret *k8scorev1.Secret) (*http.Client, error) {
 	// create cert pool
 	var certsData []byte = nil
 	if caCertSecret != nil && appRepo.Spec.Auth.CustomCA != nil {
@@ -105,7 +105,7 @@ func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret
 
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *corev1.Secret, defaultHeaders http.Header) (httpclient.Client, error) {
+func InitNetClient(appRepo *apprepov1alpha1.AppRepository, caCertSecret, authSecret *k8scorev1.Secret, defaultHeaders http.Header) (httpclient.Client, error) {
 	netClient, err := InitHTTPClient(appRepo, caCertSecret)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *co
 	}, nil
 }
 
-func getProxyConfig(appRepo *v1alpha1.AppRepository) *httpproxy.Config {
+func getProxyConfig(appRepo *apprepov1alpha1.AppRepository) *httpproxy.Config {
 	template := appRepo.Spec.SyncJobPodTemplate
 	proxyConfig := httpproxy.Config{}
 	defaultToEnv := true

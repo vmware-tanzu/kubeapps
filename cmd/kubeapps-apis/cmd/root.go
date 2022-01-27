@@ -4,22 +4,22 @@
 package cmd
 
 import (
-	goflag "flag"
+	"flag"
 	"fmt"
 	"os"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
+	apiscore "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	apisserver "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	cobra "github.com/spf13/cobra"
+	pflag "github.com/spf13/pflag"
+	viper "github.com/spf13/viper"
 	log "k8s.io/klog/v2"
 )
 
 var (
 	cfgFile   string
-	serveOpts core.ServeOptions
+	serveOpts apiscore.ServeOptions
 	// This version var is updated during the build
 	// see the -ldflags option in the Dockerfile
 	version = "devel"
@@ -40,7 +40,7 @@ The api service serves both gRPC and HTTP requests for the configured APIs.`,
 			log.Infof("kubeapps-apis has been configured with: %#v", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return server.Serve(serveOpts)
+			return apisserver.Serve(serveOpts)
 		},
 		Version: "devel",
 	}
@@ -59,8 +59,8 @@ func init() {
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
 	//set initial value of verbosity
-	goflag.Set("v", "3")
-	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+	flag.Set("v", "3")
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
 func setFlags(c *cobra.Command) {

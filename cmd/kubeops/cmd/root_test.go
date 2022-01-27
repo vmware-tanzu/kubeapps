@@ -7,15 +7,15 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/kubeops/server"
+	cmp "github.com/google/go-cmp/cmp"
+	kubeopsserver "github.com/kubeapps/kubeapps/cmd/kubeops/server"
 )
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
 		name string
 		args []string
-		conf server.ServeOptions
+		conf kubeopsserver.ServeOptions
 	}{
 		{
 			"all arguments are captured",
@@ -34,7 +34,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--namespace-header-pattern", "foo07",
 				"--global-repos-namespace", "kubeapps-global",
 			},
-			server.ServeOptions{
+			kubeopsserver.ServeOptions{
 				AssetsvcURL:            "foo01",
 				HelmDriverArg:          "foo02",
 				ListLimit:              901,

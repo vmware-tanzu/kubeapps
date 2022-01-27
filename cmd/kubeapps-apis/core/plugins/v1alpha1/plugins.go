@@ -16,16 +16,16 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
+	grpcgwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	apiscore "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
+	grpc "google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcmetadata "google.golang.org/grpc/metadata"
+	grpcstatus "google.golang.org/grpc/status"
+	k8srest "k8s.io/client-go/rest"
+	k8stoolsclientcmd "k8s.io/client-go/tools/clientcmd"
 	log "k8s.io/klog/v2"
 )
 
@@ -39,22 +39,22 @@ const (
 
 // PluginWithServer keeps a record of a GRPC server and its plugin detail.
 type PluginWithServer struct {
-	Plugin *plugins.Plugin
+	Plugin *pluginsGRPCv1alpha1.Plugin
 	Server interface{}
 }
 
-// coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
+// coreServer implements the API defined in cmd/kubeapps-api-service/core/apiscore.proto
 type pluginsServer struct {
-	plugins.UnimplementedPluginsServiceServer
+	pluginsGRPCv1alpha1.UnimplementedPluginsServiceServer
 
 	// The slice of pluginsWithServers is initialised when registering pluginsWithServers during NewPluginsServer.
 	pluginsWithServers []PluginWithServer
 
 	// The parsed config for clusters in a multi-cluster setup.
-	clustersConfig kube.ClustersConfig
+	clustersConfig kubeutils.ClustersConfig
 }
 
-func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs) (*pluginsServer, error) {
+func NewPluginsServer(serveOpts apiscore.ServeOptions, registrar grpc.ServiceRegistrar, gwArgs apiscore.GatewayHandlerArgs) (*pluginsServer, error) {
 	// Store the serveOptions in the global 'pluginsServeOpts' variable
 
 	// Find all .so plugins in the specified plugins directory.
@@ -65,7 +65,7 @@ func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistr
 
 	ps := &pluginsServer{}
 
-	// get the parsed kube.ClustersConfig from the serveOpts
+	// get the parsed kubeutils.ClustersConfig from the serveOpts
 	clustersConfig, err := getClustersConfigFromServeOpts(serveOpts)
 	if err != nil {
 		return nil, err
@@ -88,21 +88,21 @@ func sortPlugins(p []PluginWithServer) {
 }
 
 // GetConfiguredPlugins returns details for each configured plugin.
-func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
+func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *pluginsGRPCv1alpha1.GetConfiguredPluginsRequest) (*pluginsGRPCv1alpha1.GetConfiguredPluginsResponse, error) {
 	// this gets logged twice (liveness and readiness checks) every 10 seconds and
 	// really adds a lot of noise to the logs, so lowering verbosity
 	log.V(4).Infof("+core GetConfiguredPlugins")
-	pluginDetails := make([]*plugins.Plugin, len(s.pluginsWithServers))
+	pluginDetails := make([]*pluginsGRPCv1alpha1.Plugin, len(s.pluginsWithServers))
 	for i, p := range s.pluginsWithServers {
 		pluginDetails[i] = p.Plugin
 	}
-	return &plugins.GetConfiguredPluginsResponse{
+	return &pluginsGRPCv1alpha1.GetConfiguredPluginsResponse{
 		Plugins: pluginDetails,
 	}, nil
 }
 
 // registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
-func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs, serveOpts core.ServeOptions) error {
+func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs apiscore.GatewayHandlerArgs, serveOpts apiscore.ServeOptions) error {
 	pluginsWithServers := []PluginWithServer{}
 
 	configGetter, err := createConfigGetter(serveOpts, s.clustersConfig)
@@ -116,7 +116,7 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			fmt.Errorf("unable to open plugin %q: %w", pluginPath, err)
 		}
 
-		var pluginDetail *plugins.Plugin
+		var pluginDetail *pluginsGRPCv1alpha1.Plugin
 		if pluginDetail, err = getPluginDetail(p, pluginPath); err != nil {
 			return err
 		}
@@ -145,17 +145,17 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar,
-	clientGetter core.KubernetesConfigGetter, pluginConfigPath string) (interface{}, error) {
+func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *pluginsGRPCv1alpha1.Plugin, registrar grpc.ServiceRegistrar,
+	clientGetter apiscore.KubernetesConfigGetter, pluginConfigPath string) (interface{}, error) {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return nil, fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, core.KubernetesConfigGetter, kube.ClustersConfig, string) (interface{}, error)
+	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, apiscore.KubernetesConfigGetter, kubeutils.ClustersConfig, string) (interface{}, error)
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var stubFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, core.KubernetesConfigGetter, kube.ClustersConfig, string) (interface{}, error) {
+		var stubFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, apiscore.KubernetesConfigGetter, kubeutils.ClustersConfig, string) (interface{}, error) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, stubFn, grpcRegFn)
@@ -173,7 +173,7 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 
 // GetPluginsSatisfyingInterface returns the registered plugins which satisfy a
 // particular interface. Currently this is used to return the plugins that satisfy
-// the core.packaging interface for the core packaging server.
+// the apiscore.packaging interface for the core packaging server.
 func (s *pluginsServer) GetPluginsSatisfyingInterface(targetInterface reflect.Type) []PluginWithServer {
 	satisfiedPlugins := []PluginWithServer{}
 	for _, pluginSrv := range s.pluginsWithServers {
@@ -189,18 +189,18 @@ func (s *pluginsServer) GetPluginsSatisfyingInterface(targetInterface reflect.Ty
 	return satisfiedPlugins
 }
 
-// getPluginDetail returns a core.plugins.Plugin as defined by the plugin itself.
-func getPluginDetail(p *plugin.Plugin, pluginPath string) (*plugins.Plugin, error) {
+// getPluginDetail returns a apiscore.plugins.Plugin as defined by the plugin itself.
+func getPluginDetail(p *plugin.Plugin, pluginPath string) (*pluginsGRPCv1alpha1.Plugin, error) {
 	pluginDetailFn, err := p.Lookup(pluginDetailFunction)
 	if err != nil {
 		return nil, fmt.Errorf("unable to lookup %q for %q: %w", pluginDetailFunction, pluginPath, err)
 	}
 
-	type pluginDetailFunctionType = func() *plugins.Plugin
+	type pluginDetailFunctionType = func() *pluginsGRPCv1alpha1.Plugin
 
 	fn, ok := pluginDetailFn.(pluginDetailFunctionType)
 	if !ok {
-		var stubFn pluginDetailFunctionType = func() *plugins.Plugin { return &plugins.Plugin{} }
+		var stubFn pluginDetailFunctionType = func() *pluginsGRPCv1alpha1.Plugin { return &pluginsGRPCv1alpha1.Plugin{} }
 		return nil, fmt.Errorf("unable to use %q in plugin %q due to a mismatched signature. \nwant: %T\ngot: %T", pluginDetailFunction, pluginPath, stubFn, pluginDetailFn)
 	}
 
@@ -208,17 +208,17 @@ func getPluginDetail(p *plugin.Plugin, pluginPath string) (*plugins.Plugin, erro
 }
 
 // registerHTTP finds and calls the required function for registering the plugin for the HTTP gateway server.
-func registerHTTP(p *plugin.Plugin, pluginDetail *plugins.Plugin, gwArgs core.GatewayHandlerArgs) error {
+func registerHTTP(p *plugin.Plugin, pluginDetail *pluginsGRPCv1alpha1.Plugin, gwArgs apiscore.GatewayHandlerArgs) error {
 	gwRegFn, err := p.Lookup(gatewayRegisterFunction)
 	if err != nil {
 		return fmt.Errorf("unable to lookup %q for %v: %w", gatewayRegisterFunction, pluginDetail, err)
 	}
-	type gatewayRegisterFunctionType = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error
+	type gatewayRegisterFunctionType = func(context.Context, *grpcgwruntime.ServeMux, string, []grpc.DialOption) error
 	gwfn, ok := gwRegFn.(gatewayRegisterFunctionType)
 	if !ok {
 		// Create a stubFn only so we can ensure the correct type is shown in case
 		// of an error.
-		var stubFn gatewayRegisterFunctionType = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error { return nil }
+		var stubFn gatewayRegisterFunctionType = func(context.Context, *grpcgwruntime.ServeMux, string, []grpc.DialOption) error { return nil }
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", gatewayRegisterFunction, pluginDetail, stubFn, gwRegFn)
 	}
 	return gwfn(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
@@ -258,8 +258,8 @@ func listSOFiles(fsys fs.FS, pluginDirs []string) ([]string, error) {
 // createConfigGetter returns a function closure for creating the k8s config to interact with the cluster.
 // The returned function utilizes the user credential present in the request context.
 // The plugins just have to call this function passing the context in order to retrieve the configured k8s client
-func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
-	var restConfig *rest.Config
+func createConfigGetter(serveOpts apiscore.ServeOptions, clustersConfig kubeutils.ClustersConfig) (apiscore.KubernetesConfigGetter, error) {
+	var restConfig *k8srest.Config
 	var err error
 
 	if serveOpts.UnsafeLocalDevKubeconfig {
@@ -270,13 +270,13 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 		if err != nil {
 			return nil, fmt.Errorf("unable to read the file in KUBECONFIG envar: %w", err)
 		}
-		restConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
+		restConfig, err = k8stoolsclientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get local KUBECONFIG='%s' file: %w", os.Getenv("KUBECONFIG"), err)
 		}
 	} else {
-		// otherwise, get the default rest inCluster config for the kube.NewClusterConfig function
-		restConfig, err = rest.InClusterConfig()
+		// otherwise, get the default rest inCluster config for the kubeutils.NewClusterConfig function
+		restConfig, err = k8srest.InClusterConfig()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get inClusterConfig: %w", err)
 		}
@@ -289,18 +289,18 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 
 // createClientGetter takes the required params and returns the closure fuction.
 // it's splitted for testing this fn separately
-func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
+func createConfigGetterWithParams(inClusterConfig *k8srest.Config, serveOpts apiscore.ServeOptions, clustersConfig kubeutils.ClustersConfig) (apiscore.KubernetesConfigGetter, error) {
 	// return the closure fuction that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return func(ctx context.Context, cluster string) (*rest.Config, error) {
+	return func(ctx context.Context, cluster string) (*k8srest.Config, error) {
 		log.V(4).Infof("+clientGetter.GetClient")
 		var err error
 		token, err := extractToken(ctx)
 		if err != nil {
-			return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
+			return nil, grpcstatus.Errorf(grpccodes.Unauthenticated, "invalid authorization metadata: %v", err)
 		}
 
-		var config *rest.Config
+		var config *k8srest.Config
 
 		// Enable existing plugins to pass an empty cluster name to get the
 		// kubeapps cluster for now, until we support (or otherwise decide)
@@ -309,7 +309,7 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 			cluster = clustersConfig.KubeappsClusterName
 		}
 
-		config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
+		config, err = kubeutils.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
 		}
@@ -332,8 +332,8 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 func extractToken(ctx context.Context) (string, error) {
 	// per https://github.com/kubeapps/kubeapps/issues/3560
 	// extractToken() to raise an error if there is no metadata with the context.
-	// note, the caller will wrap this as a codes.Unauthenticated status
-	md, ok := metadata.FromIncomingContext(ctx)
+	// note, the caller will wrap this as a grpccodes.Unauthenticated status
+	md, ok := grpcmetadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", fmt.Errorf("missing authorization metadata")
 	}
@@ -352,21 +352,21 @@ func extractToken(ctx context.Context) (string, error) {
 }
 
 // getClustersConfigFromServeOpts get the serveOptions and calls parseClusterConfig with the proper values
-// returning a kube.ClustersConfig
-func getClustersConfigFromServeOpts(serveOpts core.ServeOptions) (kube.ClustersConfig, error) {
+// returning a kubeutils.ClustersConfig
+func getClustersConfigFromServeOpts(serveOpts apiscore.ServeOptions) (kubeutils.ClustersConfig, error) {
 	if serveOpts.ClustersConfigPath == "" {
 		if serveOpts.UnsafeLocalDevKubeconfig {
 			// if using a local kubeconfig (dev purposes), this ClusterConfig file is not strictly required
-			return kube.ClustersConfig{}, nil
+			return kubeutils.ClustersConfig{}, nil
 		} else {
-			return kube.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
+			return kubeutils.ClustersConfig{}, fmt.Errorf("unable to parse clusters config, no config path passed")
 		}
 	}
 
 	var cleanupCAFiles func()
-	config, cleanupCAFiles, err := kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
+	config, cleanupCAFiles, err := kubeutils.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
 	if err != nil {
-		return kube.ClustersConfig{}, fmt.Errorf("unable to parse additional clusters config: %+v", err)
+		return kubeutils.ClustersConfig{}, fmt.Errorf("unable to parse additional clusters config: %+v", err)
 	}
 	config.GlobalReposNamespace = serveOpts.GlobalReposNamespace
 	defer cleanupCAFiles()

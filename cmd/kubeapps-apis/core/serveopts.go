@@ -6,9 +6,9 @@ package core
 import (
 	"context"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc"
-	"k8s.io/client-go/rest"
+	grpcgwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	grpc "google.golang.org/grpc"
+	k8srest "k8s.io/client-go/rest"
 )
 
 // ServeOptions encapsulates the available command-line options.
@@ -28,7 +28,7 @@ type ServeOptions struct {
 // required when registering an HTTP handler for the gateway.
 type GatewayHandlerArgs struct {
 	Ctx         context.Context
-	Mux         *runtime.ServeMux
+	Mux         *grpcgwruntime.ServeMux
 	Addr        string
 	DialOptions []grpc.DialOption
 }
@@ -36,4 +36,4 @@ type GatewayHandlerArgs struct {
 // KubernetesConfigGetter is a function type used throughout the apis server so
 // that call-sites don't need to know how to obtain an authenticated client, but
 // rather can just pass the request context and the cluster to get one.
-type KubernetesConfigGetter func(ctx context.Context, cluster string) (*rest.Config, error)
+type KubernetesConfigGetter func(ctx context.Context, cluster string) (*k8srest.Config, error)

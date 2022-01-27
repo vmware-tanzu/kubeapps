@@ -6,20 +6,20 @@ package pkgutils
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/chart"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmchart "helm.sh/helm/v3/pkg/chart"
 )
 
 const (
 	DefaultAppVersion       = "1.2.6"
 	DefaultChartDescription = "default chart description"
-	DefaultChartIconURL     = "https://example.com/chart.svg"
+	DefaultChartIconURL     = "https://example.com/helmchart.svg"
 	DefaultChartHomeURL     = "https://helm.sh/helm"
 	DefaultChartCategory    = "cat1"
 )
@@ -27,19 +27,19 @@ const (
 func TestPackageAppVersionsSummary(t *testing.T) {
 	testCases := []struct {
 		name                      string
-		chart_versions            []models.ChartVersion
-		version_summary           []*corev1.PackageAppVersion
+		chart_versions            []chartmodels.ChartVersion
+		version_summary           []*pkgsGRPCv1alpha1.PackageAppVersion
 		input_versions_in_summary VersionsInSummary
 	}{
 		{
 			name: "it includes the latest three major versions only",
-			chart_versions: []models.ChartVersion{
+			chart_versions: []chartmodels.ChartVersion{
 				{Version: "8.5.6", AppVersion: DefaultAppVersion},
 				{Version: "7.5.6", AppVersion: DefaultAppVersion},
 				{Version: "6.5.6", AppVersion: DefaultAppVersion},
 				{Version: "5.5.6", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.PackageAppVersion{
+			version_summary: []*pkgsGRPCv1alpha1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "7.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
@@ -48,13 +48,13 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 		},
 		{
 			name: "it includes the latest three minor versions for each major version only",
-			chart_versions: []models.ChartVersion{
+			chart_versions: []chartmodels.ChartVersion{
 				{Version: "8.5.6", AppVersion: DefaultAppVersion},
 				{Version: "8.4.6", AppVersion: DefaultAppVersion},
 				{Version: "8.3.6", AppVersion: DefaultAppVersion},
 				{Version: "8.2.6", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.PackageAppVersion{
+			version_summary: []*pkgsGRPCv1alpha1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.4.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.3.6", AppVersion: DefaultAppVersion},
@@ -63,13 +63,13 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 		},
 		{
 			name: "it includes the latest three patch versions for each minor version only",
-			chart_versions: []models.ChartVersion{
+			chart_versions: []chartmodels.ChartVersion{
 				{Version: "8.5.6", AppVersion: DefaultAppVersion},
 				{Version: "8.5.5", AppVersion: DefaultAppVersion},
 				{Version: "8.5.4", AppVersion: DefaultAppVersion},
 				{Version: "8.5.3", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.PackageAppVersion{
+			version_summary: []*pkgsGRPCv1alpha1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
@@ -78,7 +78,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 		},
 		{
 			name: "it includes the latest three patch versions of the latest three minor versions of the latest three major versions only",
-			chart_versions: []models.ChartVersion{
+			chart_versions: []chartmodels.ChartVersion{
 				{Version: "8.5.6", AppVersion: DefaultAppVersion},
 				{Version: "8.5.5", AppVersion: DefaultAppVersion},
 				{Version: "8.5.4", AppVersion: DefaultAppVersion},
@@ -144,7 +144,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "2.2.4", AppVersion: DefaultAppVersion},
 				{Version: "2.2.3", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.PackageAppVersion{
+			version_summary: []*pkgsGRPCv1alpha1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
@@ -177,7 +177,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 		},
 		{
 			name: "it includes the latest four patch versions of the latest one minor versions of the latest two major versions only",
-			chart_versions: []models.ChartVersion{
+			chart_versions: []chartmodels.ChartVersion{
 				{Version: "8.5.6", AppVersion: DefaultAppVersion},
 				{Version: "8.5.5", AppVersion: DefaultAppVersion},
 				{Version: "8.5.4", AppVersion: DefaultAppVersion},
@@ -245,7 +245,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "2.2.4", AppVersion: DefaultAppVersion},
 				{Version: "2.2.3", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.PackageAppVersion{
+			version_summary: []*pkgsGRPCv1alpha1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.5", AppVersion: DefaultAppVersion},
 				{PkgVersion: "8.5.4", AppVersion: DefaultAppVersion},
@@ -262,7 +262,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 		},
 		{
 			name: "it includes the latest zero patch versions of the latest zero minor versions of the latest six major versions only",
-			chart_versions: []models.ChartVersion{
+			chart_versions: []chartmodels.ChartVersion{
 				{Version: "8.5.6", AppVersion: DefaultAppVersion},
 				{Version: "8.5.5", AppVersion: DefaultAppVersion},
 				{Version: "8.5.4", AppVersion: DefaultAppVersion},
@@ -326,7 +326,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				{Version: "1.2.4", AppVersion: DefaultAppVersion},
 				{Version: "1.2.3", AppVersion: DefaultAppVersion},
 			},
-			version_summary: []*corev1.PackageAppVersion{
+			version_summary: []*pkgsGRPCv1alpha1.PackageAppVersion{
 				{PkgVersion: "8.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "6.5.6", AppVersion: DefaultAppVersion},
 				{PkgVersion: "4.5.6", AppVersion: DefaultAppVersion},
@@ -340,7 +340,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 		},
 	}
 
-	opts := cmpopts.IgnoreUnexported(corev1.PackageAppVersion{})
+	opts := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.PackageAppVersion{})
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -354,19 +354,19 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 func TestIsValidChart(t *testing.T) {
 	testCases := []struct {
 		name     string
-		in       *models.Chart
+		in       *chartmodels.Chart
 		expected bool
 	}{
 		{
 			name: "it returns true if the chart name, ID, repo and versions are specified",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				Repo: &models.Repo{
+				Repo: &chartmodels.Repo{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				ChartVersions: []models.ChartVersion{
+				ChartVersions: []chartmodels.ChartVersion{
 					{
 						Version: "3.0.0",
 					},
@@ -376,13 +376,13 @@ func TestIsValidChart(t *testing.T) {
 		},
 		{
 			name: "it returns false if the chart name is missing",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				ID: "foo/bar",
-				Repo: &models.Repo{
+				Repo: &chartmodels.Repo{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				ChartVersions: []models.ChartVersion{
+				ChartVersions: []chartmodels.ChartVersion{
 					{
 						Version: "3.0.0",
 					},
@@ -392,13 +392,13 @@ func TestIsValidChart(t *testing.T) {
 		},
 		{
 			name: "it returns false if the chart ID is missing",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name: "foo",
-				Repo: &models.Repo{
+				Repo: &chartmodels.Repo{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				ChartVersions: []models.ChartVersion{
+				ChartVersions: []chartmodels.ChartVersion{
 					{
 						Version: "3.0.0",
 					},
@@ -408,10 +408,10 @@ func TestIsValidChart(t *testing.T) {
 		},
 		{
 			name: "it returns false if the chart repo is missing",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
+				ChartVersions: []chartmodels.ChartVersion{
 					{
 						Version: "3.0.0",
 					},
@@ -421,7 +421,7 @@ func TestIsValidChart(t *testing.T) {
 		},
 		{
 			name: "it returns false if the ChartVersions are missing",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
 			},
@@ -429,10 +429,10 @@ func TestIsValidChart(t *testing.T) {
 		},
 		{
 			name: "it returns false if a ChartVersions.Version is missing",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
+				ChartVersions: []chartmodels.ChartVersion{
 					{Version: "3.0.0"},
 					{AppVersion: DefaultAppVersion},
 				},
@@ -441,33 +441,33 @@ func TestIsValidChart(t *testing.T) {
 		},
 		{
 			name: "it returns true if the minimum (+maintainer) chart is correct",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				Repo: &models.Repo{
+				Repo: &chartmodels.Repo{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				ChartVersions: []models.ChartVersion{
+				ChartVersions: []chartmodels.ChartVersion{
 					{
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chart.Maintainer{{Name: "me"}},
+				Maintainers: []helmchart.Maintainer{{Name: "me"}},
 			},
 			expected: true,
 		},
 		{
 			name: "it returns false if a Maintainer.Name is missing",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				ChartVersions: []models.ChartVersion{
+				ChartVersions: []chartmodels.ChartVersion{
 					{
 						Version: "3.0.0",
 					},
 				},
-				Maintainers: []chart.Maintainer{{Name: "me"}, {Email: "you"}},
+				Maintainers: []helmchart.Maintainer{{Name: "me"}, {Email: "you"}},
 			},
 			expected: false,
 		},
@@ -484,96 +484,96 @@ func TestIsValidChart(t *testing.T) {
 }
 
 func TestAvailablePackageSummaryFromChart(t *testing.T) {
-	invalidChart := &models.Chart{Name: "foo"}
+	invalidChart := &chartmodels.Chart{Name: "foo"}
 
 	testCases := []struct {
 		name       string
-		in         *models.Chart
-		expected   *corev1.AvailablePackageSummary
-		statusCode codes.Code
+		in         *chartmodels.Chart
+		expected   *pkgsGRPCv1alpha1.AvailablePackageSummary
+		statusCode grpccodes.Code
 	}{
 		{
 			name: "it returns a complete AvailablePackageSummary for a complete chart",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name:        "foo",
 				ID:          "foo/bar",
 				Category:    DefaultChartCategory,
 				Description: "best chart",
 				Icon:        "foo.bar/icon.svg",
-				Repo: &models.Repo{
+				Repo: &chartmodels.Repo{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
-				ChartVersions: []models.ChartVersion{
+				Maintainers: []helmchart.Maintainer{{Name: "me", Email: "me@me.me"}},
+				ChartVersions: []chartmodels.ChartVersion{
 					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
 					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
 					{Version: "1.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", Values: "chart values", Schema: "chart schema"},
 				},
 			},
-			expected: &corev1.AvailablePackageSummary{
+			expected: &pkgsGRPCv1alpha1.AvailablePackageSummary{
 				Name:        "foo",
 				DisplayName: "foo",
-				LatestVersion: &corev1.PackageAppVersion{
+				LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 					PkgVersion: "3.0.0",
 					AppVersion: DefaultAppVersion,
 				},
 				IconUrl:          "foo.bar/icon.svg",
 				ShortDescription: "best chart",
 				Categories:       []string{DefaultChartCategory},
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{Namespace: "my-ns"},
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
-					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name: "it returns a valid AvailablePackageSummary if the minimal chart is correct",
-			in: &models.Chart{
+			in: &chartmodels.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				Repo: &models.Repo{
+				Repo: &chartmodels.Repo{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
-				ChartVersions: []models.ChartVersion{
+				ChartVersions: []chartmodels.ChartVersion{
 					{
 						Version:    "3.0.0",
 						AppVersion: DefaultAppVersion,
 					},
 				},
 			},
-			expected: &corev1.AvailablePackageSummary{
+			expected: &pkgsGRPCv1alpha1.AvailablePackageSummary{
 				Name:        "foo",
 				DisplayName: "foo",
-				LatestVersion: &corev1.PackageAppVersion{
+				LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 					PkgVersion: "3.0.0",
 					AppVersion: DefaultAppVersion,
 				},
 				Categories: []string{""},
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context:    &corev1.Context{Namespace: "my-ns"},
+				AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+					Context:    &pkgsGRPCv1alpha1.Context{Namespace: "my-ns"},
 					Identifier: "foo/bar",
-					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+					Plugin:     &pluginsGRPCv1alpha1.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name:       "it returns internal error if empty chart",
-			in:         &models.Chart{},
-			statusCode: codes.Internal,
+			in:         &chartmodels.Chart{},
+			statusCode: grpccodes.Internal,
 		},
 		{
 			name:       "it returns internal error if chart is invalid",
 			in:         invalidChart,
-			statusCode: codes.Internal,
+			statusCode: grpccodes.Internal,
 		},
 	}
 
-	pluginDetail := plugins.Plugin{
+	pluginDetail := pluginsGRPCv1alpha1.Plugin{
 		Name:    "helm.packages",
 		Version: "v1alpha1",
 	}
@@ -582,12 +582,12 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			availablePackageSummary, err := AvailablePackageSummaryFromChart(tc.in, &pluginDetail)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
-				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
+			if tc.statusCode == grpccodes.OK {
+				opt1 := cmpopts.IgnoreUnexported(pkgsGRPCv1alpha1.AvailablePackageDetail{}, pkgsGRPCv1alpha1.AvailablePackageSummary{}, pkgsGRPCv1alpha1.AvailablePackageReference{}, pkgsGRPCv1alpha1.Context{}, pluginsGRPCv1alpha1.Plugin{}, pkgsGRPCv1alpha1.Maintainer{}, pkgsGRPCv1alpha1.PackageAppVersion{})
 				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
@@ -601,40 +601,40 @@ func TestGetUnescapedChartID(t *testing.T) {
 		name       string
 		in         string
 		out        string
-		statusCode codes.Code
+		statusCode grpccodes.Code
 	}{
 		{
 			name:       "it returns a chartID for a valid input",
 			in:         "foo/bar",
 			out:        "foo/bar",
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name:       "it returns a chartID for a valid input (2)",
 			in:         "foo%2Fbar",
 			out:        "foo/bar",
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name:       "it fails for an invalid chartID",
 			in:         "foo%ZZbar",
-			statusCode: codes.InvalidArgument,
+			statusCode: grpccodes.InvalidArgument,
 		},
 		{
 			name:       "it fails for an invalid chartID (2)",
 			in:         "foo/bar/zot",
-			statusCode: codes.InvalidArgument,
+			statusCode: grpccodes.InvalidArgument,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualOut, err := GetUnescapedChartID(tc.in)
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := actualOut, tc.out; !cmp.Equal(got, want) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}
@@ -649,30 +649,30 @@ func TestSplitChartIdentifier(t *testing.T) {
 		in         string
 		repoName   string
 		chartName  string
-		statusCode codes.Code
+		statusCode grpccodes.Code
 	}{
 		{
 			name:       "it returns a repoName and chartName for a valid input",
 			in:         "foo/bar",
 			repoName:   "foo",
 			chartName:  "bar",
-			statusCode: codes.OK,
+			statusCode: grpccodes.OK,
 		},
 		{
 			name:       "it fails for invalid input",
 			in:         "foo/bar/zot",
-			statusCode: codes.InvalidArgument,
+			statusCode: grpccodes.InvalidArgument,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			repoName, chartName, err := SplitChartIdentifier(tc.in)
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.statusCode == grpccodes.OK {
 				if got, want := repoName, tc.repoName; !cmp.Equal(got, want) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}

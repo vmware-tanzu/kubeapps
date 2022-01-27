@@ -6,7 +6,7 @@ package server
 import (
 	"fmt"
 
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
 	log "k8s.io/klog/v2"
 )
 

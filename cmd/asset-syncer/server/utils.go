@@ -22,21 +22,20 @@ import (
 	"time"
 
 	semver "github.com/Masterminds/semver/v3"
-	"github.com/containerd/containerd/remotes/docker"
-	"github.com/disintegration/imaging"
-	"github.com/ghodss/yaml"
-	"github.com/itchyny/gojq"
+	containerddocker "github.com/containerd/containerd/remotes/docker"
+	imaging "github.com/disintegration/imaging"
+	yaml "github.com/ghodss/yaml"
+	gojq "github.com/itchyny/gojq"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/kubeapps/kubeapps/pkg/helm"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
+	helmutils "github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/kubeapps/kubeapps/pkg/tarutil"
+	tarutil "github.com/kubeapps/kubeapps/pkg/tarutil"
 	log "github.com/sirupsen/logrus"
-	"github.com/srwiley/oksvg"
-	"github.com/srwiley/rasterx"
-	"helm.sh/helm/v3/pkg/chart"
-	h3chart "helm.sh/helm/v3/pkg/chart"
+	oksvg "github.com/srwiley/oksvg"
+	rasterx "github.com/srwiley/rasterx"
+	helmchart "helm.sh/helm/v3/pkg/chart"
 )
 
 const (
@@ -64,8 +63,8 @@ type Config struct {
 
 type importChartFilesJob struct {
 	Name         string
-	Repo         *models.Repo
-	ChartVersion models.ChartVersion
+	Repo         *chartmodels.Repo
+	ChartVersion chartmodels.ChartVersion
 }
 
 type pullChartJob struct {
@@ -74,7 +73,7 @@ type pullChartJob struct {
 }
 
 type pullChartResult struct {
-	Chart *models.Chart
+	Chart *chartmodels.Chart
 	Error error
 }
 
@@ -95,16 +94,16 @@ func parseRepoURL(repoURL string) (*url.URL, error) {
 }
 
 type assetManager interface {
-	Delete(repo models.Repo) error
-	Sync(repo models.Repo, charts []models.Chart) error
-	LastChecksum(repo models.Repo) string
+	Delete(repo chartmodels.Repo) error
+	Sync(repo chartmodels.Repo, charts []chartmodels.Chart) error
+	LastChecksum(repo chartmodels.Repo) string
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
 	Close() error
 	InvalidateCache() error
-	updateIcon(repo models.Repo, data []byte, contentType, ID string) error
-	filesExist(repo models.Repo, chartFilesID, digest string) bool
-	insertFiles(chartID string, files models.ChartFiles) error
+	updateIcon(repo chartmodels.Repo, data []byte, contentType, ID string) error
+	filesExist(repo chartmodels.Repo, chartFilesID, digest string) bool
+	insertFiles(chartID string, files chartmodels.ChartFiles) error
 }
 
 func newManager(config dbutils.Config, globalReposNamespace string) (assetManager, error) {
@@ -123,16 +122,16 @@ func getSha256(src []byte) (string, error) {
 // Repo defines the methods to retrive information from the given repository
 type Repo interface {
 	Checksum() (string, error)
-	Repo() *models.RepoInternal
+	Repo() *chartmodels.RepoInternal
 	FilterIndex()
-	Charts(fetchLatestOnly bool) ([]models.Chart, error)
-	FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
+	Charts(fetchLatestOnly bool) ([]chartmodels.Chart, error)
+	FetchFiles(name string, cv chartmodels.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
 }
 
 // HelmRepo implements the Repo interface for chartmuseum-like repositories
 type HelmRepo struct {
 	content []byte
-	*models.RepoInternal
+	*chartmodels.RepoInternal
 	netClient httpclient.Client
 	filter    *apprepov1alpha1.FilterRuleSpec
 }
@@ -143,7 +142,7 @@ func (r *HelmRepo) Checksum() (string, error) {
 }
 
 // Repo returns the repo information
-func (r *HelmRepo) Repo() *models.RepoInternal {
+func (r *HelmRepo) Repo() *chartmodels.RepoInternal {
 	return r.RepoInternal
 }
 
@@ -187,8 +186,8 @@ func satisfy(chartInput map[string]interface{}, code *gojq.Code, vars []interfac
 }
 
 // Make sure charts are treated without escaped data
-func unescapeChartsData(charts []models.Chart) []models.Chart {
-	result := []models.Chart{}
+func unescapeChartsData(charts []chartmodels.Chart) []chartmodels.Chart {
+	result := []chartmodels.Chart{}
 	for _, chart := range charts {
 		chart.Name = unescapeOrDefaultValue(chart.Name)
 		chart.ID = unescapeOrDefaultValue(chart.ID)
@@ -207,7 +206,7 @@ func unescapeOrDefaultValue(value string) string {
 	}
 }
 
-func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleSpec) ([]models.Chart, error) {
+func filterCharts(charts []chartmodels.Chart, filterRule *apprepov1alpha1.FilterRuleSpec) ([]chartmodels.Chart, error) {
 	if filterRule == nil || filterRule.JQ == "" {
 		// No filter
 		return charts, nil
@@ -216,7 +215,7 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 	if err != nil {
 		return nil, err
 	}
-	result := []models.Chart{}
+	result := []chartmodels.Chart{}
 	for _, chart := range charts {
 		// Convert the chart to a map[interface]{}
 		chartBytes, err := json.Marshal(chart)
@@ -242,26 +241,26 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
-	repo := &models.Repo{
+func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]chartmodels.Chart, error) {
+	repo := &chartmodels.Repo{
 		Namespace: r.Namespace,
 		Name:      r.Name,
 		URL:       r.URL,
 		Type:      r.Type,
 	}
-	charts, err := helm.ChartsFromIndex(r.content, repo, fetchLatestOnly)
+	charts, err := helmutils.ChartsFromIndex(r.content, repo, fetchLatestOnly)
 	if err != nil {
-		return []models.Chart{}, err
+		return []chartmodels.Chart{}, err
 	}
 	if len(charts) == 0 {
-		return []models.Chart{}, fmt.Errorf("no charts in repository index")
+		return []chartmodels.Chart{}, fmt.Errorf("no charts in repository index")
 	}
 
 	return filterCharts(unescapeChartsData(charts), r.filter)
 }
 
 // FetchFiles retrieves the important files of a chart and version from the repo
-func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
+func (r *HelmRepo) FetchFiles(name string, cv chartmodels.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	authorizationHeader := ""
 	chartTarballURL := chartTarballURL(r.RepoInternal, cv)
 
@@ -287,9 +286,9 @@ type TagList struct {
 // OCIRegistry implements the Repo interface for OCI repositories
 type OCIRegistry struct {
 	repositories []string
-	*models.RepoInternal
+	*chartmodels.RepoInternal
 	tags   map[string]TagList
-	puller helm.ChartPuller
+	puller helmutils.ChartPuller
 	ociCli ociAPI
 	filter *apprepov1alpha1.FilterRuleSpec
 }
@@ -360,7 +359,7 @@ func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return manifest.Config.MediaType == helm.HelmChartConfigMediaType, nil
+	return manifest.Config.MediaType == helmutils.HelmChartConfigMediaType, nil
 }
 
 func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
@@ -392,7 +391,7 @@ func (r *OCIRegistry) Checksum() (string, error) {
 }
 
 // Repo returns the repo information
-func (r *OCIRegistry) Repo() *models.RepoInternal {
+func (r *OCIRegistry) Repo() *chartmodels.RepoInternal {
 	return r.RepoInternal
 }
 
@@ -460,7 +459,7 @@ func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
 	return result, nil
 }
 
-func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPuller, r *OCIRegistry) (*models.Chart, error) {
+func pullAndExtract(repoURL *url.URL, appName, tag string, puller helmutils.ChartPuller, r *OCIRegistry) (*chartmodels.Chart, error) {
 	ref := path.Join(repoURL.Host, repoURL.Path, fmt.Sprintf("%s:%s", appName, tag))
 
 	chartBuffer, digest, err := puller.PullOCIChart(ref)
@@ -473,14 +472,14 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 	if err != nil {
 		return nil, err
 	}
-	chartMetadata := h3chart.Metadata{}
+	chartMetadata := helmchart.Metadata{}
 	err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
 	if err != nil {
 		return nil, err
 	}
 
 	// Format Data
-	chartVersion := models.ChartVersion{
+	chartVersion := chartmodels.ChartVersion{
 		Version:    chartMetadata.Version,
 		AppVersion: chartMetadata.AppVersion,
 		Digest:     digest,
@@ -490,9 +489,9 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 		Schema:     files.Schema,
 	}
 
-	maintainers := []chart.Maintainer{}
+	maintainers := []helmchart.Maintainer{}
 	for _, m := range chartMetadata.Maintainers {
-		maintainers = append(maintainers, chart.Maintainer{
+		maintainers = append(maintainers, helmchart.Maintainer{
 			Name:  m.Name,
 			Email: m.Email,
 			URL:   m.URL,
@@ -502,10 +501,10 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 	// Encode repository names to store them in the database.
 	encodedAppName := url.PathEscape(appName)
 
-	return &models.Chart{
+	return &chartmodels.Chart{
 		ID:            path.Join(r.Name, encodedAppName),
 		Name:          encodedAppName,
-		Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
+		Repo:          &chartmodels.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
 		Description:   chartMetadata.Description,
 		Home:          chartMetadata.Home,
 		Keywords:      chartMetadata.Keywords,
@@ -513,7 +512,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 		Sources:       chartMetadata.Sources,
 		Icon:          chartMetadata.Icon,
 		Category:      chartMetadata.Annotations["category"],
-		ChartVersions: []models.ChartVersion{chartVersion},
+		ChartVersions: []chartmodels.ChartVersion{chartVersion},
 	}, nil
 }
 
@@ -565,7 +564,7 @@ func (r *OCIRegistry) FilterIndex() {
 				}
 			}
 		} else {
-			log.Errorf("failed to pull chart. Got %v", res.Error)
+			log.Errorf("failed to pull helmchart. Got %v", res.Error)
 		}
 	}
 
@@ -592,8 +591,8 @@ func (r *OCIRegistry) FilterIndex() {
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
-	result := map[string]*models.Chart{}
+func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]chartmodels.Chart, error) {
+	result := map[string]*chartmodels.Chart{}
 	repoURL, err := parseRepoURL(r.RepoInternal.URL)
 	if err != nil {
 		return nil, err
@@ -642,11 +641,11 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 				result[ch.ID] = ch
 			}
 		} else {
-			log.Errorf("failed to pull chart. Got %v", res.Error)
+			log.Errorf("failed to pull helmchart. Got %v", res.Error)
 		}
 	}
 
-	charts := []models.Chart{}
+	charts := []chartmodels.Chart{}
 	for _, c := range result {
 		charts = append(charts, *c)
 	}
@@ -654,11 +653,11 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 }
 
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
-func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
+func (r *OCIRegistry) FetchFiles(name string, cv chartmodels.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
-		models.ValuesKey: cv.Values,
-		models.ReadmeKey: cv.Readme,
-		models.SchemaKey: cv.Schema,
+		chartmodels.ValuesKey: cv.Values,
+		chartmodels.ReadmeKey: cv.Readme,
+		chartmodels.SchemaKey: cv.Schema,
 	}, nil
 }
 
@@ -687,7 +686,7 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *a
 
 	return &HelmRepo{
 		content: repoBytes,
-		RepoInternal: &models.RepoInternal{
+		RepoInternal: &chartmodels.RepoInternal{
 			Namespace:           namespace,
 			Name:                name,
 			URL:                 url.String(),
@@ -708,12 +707,12 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 	if authorizationHeader != "" {
 		headers["Authorization"] = []string{authorizationHeader}
 	}
-	ociResolver := docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})
+	ociResolver := containerddocker.NewResolver(containerddocker.ResolverOptions{Headers: headers, Client: netClient})
 
 	return &OCIRegistry{
 		repositories: ociRepos,
-		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
-		puller:       &helm.OCIPuller{Resolver: ociResolver},
+		RepoInternal: &chartmodels.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
+		puller:       &helmutils.OCIPuller{Resolver: ociResolver},
 		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url, netClient: netClient},
 		filter:       filter,
 	}, nil
@@ -729,7 +728,7 @@ func fetchRepoIndex(url, authHeader string, cli httpclient.Client, userAgent str
 	return doReq(indexURL.String(), cli, map[string]string{"Authorization": authHeader}, userAgent)
 }
 
-func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {
+func chartTarballURL(r *chartmodels.RepoInternal, cv chartmodels.ChartVersion) string {
 	source := cv.URLs[0]
 	if _, err := parseRepoURL(source); err != nil {
 		// If the chart URL is not absolute, join with repo URL. It's fine if the
@@ -747,8 +746,8 @@ type fileImporter struct {
 	netClient httpclient.Client
 }
 
-func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo, userAgent string, passCredentials bool) {
-	iconJobs := make(chan models.Chart, numWorkers)
+func (f *fileImporter) fetchFiles(charts []chartmodels.Chart, repo Repo, userAgent string, passCredentials bool) {
+	iconJobs := make(chan chartmodels.Chart, numWorkers)
 	chartFilesJobs := make(chan importChartFilesJob, numWorkers)
 	var wg sync.WaitGroup
 
@@ -789,7 +788,7 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo, userAgent st
 	wg.Wait()
 }
 
-func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Chart, chartFiles <-chan importChartFilesJob, repo Repo, userAgent string, passCredentials bool) {
+func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan chartmodels.Chart, chartFiles <-chan importChartFilesJob, repo Repo, userAgent string, passCredentials bool) {
 	defer wg.Done()
 	for c := range icons {
 		log.WithFields(log.Fields{"name": c.Name}).Debug("importing icon")
@@ -805,7 +804,7 @@ func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Char
 	}
 }
 
-func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal, userAgent string, passCredentials bool) error {
+func (f *fileImporter) fetchAndImportIcon(c chartmodels.Chart, r *chartmodels.RepoInternal, userAgent string, passCredentials bool) error {
 	if c.Icon == "" {
 		log.WithFields(log.Fields{"name": c.Name}).Info("icon not found")
 		return nil
@@ -858,16 +857,16 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	b := buf.Bytes()
 	contentType = "image/png"
 
-	return f.manager.updateIcon(models.Repo{Namespace: r.Namespace, Name: r.Name}, b, contentType, c.ID)
+	return f.manager.updateIcon(chartmodels.Repo{Namespace: r.Namespace, Name: r.Name}, b, contentType, c.ID)
 }
 
-func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.ChartVersion, userAgent string, passCredentials bool) error {
+func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv chartmodels.ChartVersion, userAgent string, passCredentials bool) error {
 	r := repo.Repo()
 	chartID := fmt.Sprintf("%s/%s", r.Name, name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, cv.Version)
 
 	// Check if we already have indexed files for this chart version and digest
-	if f.manager.filesExist(models.Repo{Namespace: r.Namespace, Name: r.Name}, chartFilesID, cv.Digest) {
+	if f.manager.filesExist(chartmodels.Repo{Namespace: r.Namespace, Name: r.Name}, chartFilesID, cv.Digest) {
 		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Debug("skipping existing files")
 		return nil
 	}
@@ -878,18 +877,18 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 		return err
 	}
 
-	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.Repo{Name: r.Name, Namespace: r.Namespace, URL: r.URL}, Digest: cv.Digest}
-	if v, ok := files[models.ReadmeKey]; ok {
+	chartFiles := chartmodels.ChartFiles{ID: chartFilesID, Repo: &chartmodels.Repo{Name: r.Name, Namespace: r.Namespace, URL: r.URL}, Digest: cv.Digest}
+	if v, ok := files[chartmodels.ReadmeKey]; ok {
 		chartFiles.Readme = v
 	} else {
 		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("README.md not found")
 	}
-	if v, ok := files[models.ValuesKey]; ok {
+	if v, ok := files[chartmodels.ValuesKey]; ok {
 		chartFiles.Values = v
 	} else {
 		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.yaml not found")
 	}
-	if v, ok := files[models.SchemaKey]; ok {
+	if v, ok := files[chartmodels.SchemaKey]; ok {
 		chartFiles.Schema = v
 	} else {
 		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.schema.json not found")

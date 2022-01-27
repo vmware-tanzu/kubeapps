@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeops/server"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	kubeopsserver "github.com/kubeapps/kubeapps/cmd/kubeops/server"
+	cobra "github.com/spf13/cobra"
+	viper "github.com/spf13/viper"
 	log "k8s.io/klog/v2"
 )
 
 var (
 	cfgFile   string
-	serveOpts server.ServeOptions
+	serveOpts kubeopsserver.ServeOptions
 	// This Version var is updated during the build
 	// see the -ldflags option in the cmd/kubeops/Dockerfile
 	version = "devel"
@@ -32,7 +32,7 @@ func newRootCmd() *cobra.Command {
 			log.Infof("kubeops has been configured with: %#v", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return server.Serve(serveOpts)
+			return kubeopsserver.Serve(serveOpts)
 		},
 		Version: "devel",
 	}

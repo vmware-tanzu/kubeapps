@@ -6,13 +6,13 @@ package server
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	cmp "github.com/google/go-cmp/cmp"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8sbatchv1 "k8s.io/api/batch/v1"
+	k8sbatchv1beta1 "k8s.io/api/batch/v1beta1"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const repoSyncImage = "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
@@ -25,18 +25,18 @@ func Test_newCronJob(t *testing.T) {
 		crontab          string
 		userAgentComment string
 		apprepo          *apprepov1alpha1.AppRepository
-		expected         batchv1beta1.CronJob
+		expected         k8sbatchv1beta1.CronJob
 	}{
 		{
 			"my-charts",
 			"*/10 * * * *",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -49,13 +49,13 @@ func Test_newCronJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 				},
 			},
-			batchv1beta1.CronJob{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1beta1.CronJob{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "apprepo-kubeapps-sync-my-charts",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -67,23 +67,23 @@ func Test_newCronJob(t *testing.T) {
 					},
 					Annotations: map[string]string{},
 				},
-				Spec: batchv1beta1.CronJobSpec{
+				Spec: k8sbatchv1beta1.CronJobSpec{
 					Schedule:          "*/10 * * * *",
 					ConcurrencyPolicy: "Replace",
-					JobTemplate: batchv1beta1.JobTemplateSpec{
-						Spec: batchv1.JobSpec{
+					JobTemplate: k8sbatchv1beta1.JobTemplateSpec{
+						Spec: k8sbatchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
-							Template: corev1.PodTemplateSpec{
-								ObjectMeta: metav1.ObjectMeta{
+							Template: k8scorev1.PodTemplateSpec{
+								ObjectMeta: k8smetav1.ObjectMeta{
 									Labels: map[string]string{
 										LabelRepoName:      "my-charts",
 										LabelRepoNamespace: "kubeapps",
 									},
 									Annotations: map[string]string{},
 								},
-								Spec: corev1.PodSpec{
+								Spec: k8scorev1.PodSpec{
 									RestartPolicy: "OnFailure",
-									Containers: []corev1.Container{
+									Containers: []k8scorev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
@@ -100,11 +100,11 @@ func Test_newCronJob(t *testing.T) {
 												"https://charts.acme.com/my-charts",
 												"helm",
 											},
-											Env: []corev1.EnvVar{
+											Env: []k8scorev1.EnvVar{
 												{
 													Name: "DB_PASSWORD",
-													ValueFrom: &corev1.EnvVarSource{
-														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+													ValueFrom: &k8scorev1.EnvVarSource{
+														SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 												},
 											},
 											VolumeMounts: nil,
@@ -123,11 +123,11 @@ func Test_newCronJob(t *testing.T) {
 			"*/20 * * * *",
 			"kubeapps/v2.3",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -140,17 +140,17 @@ func Test_newCronJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
 						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
+							SecretKeyRef: k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 					},
 				},
 			},
-			batchv1beta1.CronJob{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1beta1.CronJob{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "apprepo-kubeapps-sync-my-charts",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -162,23 +162,23 @@ func Test_newCronJob(t *testing.T) {
 					},
 					Annotations: map[string]string{},
 				},
-				Spec: batchv1beta1.CronJobSpec{
+				Spec: k8sbatchv1beta1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
 					ConcurrencyPolicy: "Replace",
-					JobTemplate: batchv1beta1.JobTemplateSpec{
-						Spec: batchv1.JobSpec{
+					JobTemplate: k8sbatchv1beta1.JobTemplateSpec{
+						Spec: k8sbatchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
-							Template: corev1.PodTemplateSpec{
-								ObjectMeta: metav1.ObjectMeta{
+							Template: k8scorev1.PodTemplateSpec{
+								ObjectMeta: k8smetav1.ObjectMeta{
 									Labels: map[string]string{
 										LabelRepoName:      "my-charts",
 										LabelRepoNamespace: "kubeapps",
 									},
 									Annotations: map[string]string{},
 								},
-								Spec: corev1.PodSpec{
+								Spec: k8scorev1.PodSpec{
 									RestartPolicy: "OnFailure",
-									Containers: []corev1.Container{
+									Containers: []k8scorev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
@@ -196,16 +196,16 @@ func Test_newCronJob(t *testing.T) {
 												"https://charts.acme.com/my-charts",
 												"helm",
 											},
-											Env: []corev1.EnvVar{
+											Env: []k8scorev1.EnvVar{
 												{
 													Name: "DB_PASSWORD",
-													ValueFrom: &corev1.EnvVarSource{
-														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+													ValueFrom: &k8scorev1.EnvVarSource{
+														SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 												},
 												{
 													Name: "AUTHORIZATION_HEADER",
-													ValueFrom: &corev1.EnvVarSource{
-														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
+													ValueFrom: &k8scorev1.EnvVarSource{
+														SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 												},
 											},
 											VolumeMounts: nil,
@@ -224,11 +224,11 @@ func Test_newCronJob(t *testing.T) {
 			"*/20 * * * *",
 			"kubeapps/v2.3",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts-in-otherns",
 					Namespace: "otherns",
 					Labels: map[string]string{
@@ -241,12 +241,12 @@ func Test_newCronJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
 						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-in-otherns"}, Key: "AuthorizationHeader"}},
+							SecretKeyRef: k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-in-otherns"}, Key: "AuthorizationHeader"}},
 					},
 				},
 			},
-			batchv1beta1.CronJob{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1beta1.CronJob{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name: "apprepo-otherns-sync-my-charts-in-otherns",
 					Labels: map[string]string{
 						LabelRepoName:      "my-charts-in-otherns",
@@ -254,23 +254,23 @@ func Test_newCronJob(t *testing.T) {
 					},
 					Annotations: map[string]string{},
 				},
-				Spec: batchv1beta1.CronJobSpec{
+				Spec: k8sbatchv1beta1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
 					ConcurrencyPolicy: "Replace",
-					JobTemplate: batchv1beta1.JobTemplateSpec{
-						Spec: batchv1.JobSpec{
+					JobTemplate: k8sbatchv1beta1.JobTemplateSpec{
+						Spec: k8sbatchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
-							Template: corev1.PodTemplateSpec{
-								ObjectMeta: metav1.ObjectMeta{
+							Template: k8scorev1.PodTemplateSpec{
+								ObjectMeta: k8smetav1.ObjectMeta{
 									Labels: map[string]string{
 										LabelRepoName:      "my-charts-in-otherns",
 										LabelRepoNamespace: "otherns",
 									},
 									Annotations: map[string]string{},
 								},
-								Spec: corev1.PodSpec{
+								Spec: k8scorev1.PodSpec{
 									RestartPolicy: "OnFailure",
-									Containers: []corev1.Container{
+									Containers: []k8scorev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
@@ -288,16 +288,16 @@ func Test_newCronJob(t *testing.T) {
 												"https://charts.acme.com/my-charts",
 												"helm",
 											},
-											Env: []corev1.EnvVar{
+											Env: []k8scorev1.EnvVar{
 												{
 													Name: "DB_PASSWORD",
-													ValueFrom: &corev1.EnvVarSource{
-														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+													ValueFrom: &k8scorev1.EnvVarSource{
+														SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 												},
 												{
 													Name: "AUTHORIZATION_HEADER",
-													ValueFrom: &corev1.EnvVarSource{
-														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "otherns-apprepo-my-charts-in-otherns"}, Key: "AuthorizationHeader"}},
+													ValueFrom: &k8scorev1.EnvVarSource{
+														SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "otherns-apprepo-my-charts-in-otherns"}, Key: "AuthorizationHeader"}},
 												},
 											},
 											VolumeMounts: nil,
@@ -332,17 +332,17 @@ func Test_newSyncJob(t *testing.T) {
 		name             string
 		userAgentComment string
 		apprepo          *apprepov1alpha1.AppRepository
-		expected         batchv1.Job
+		expected         k8sbatchv1.Job
 	}{
 		{
 			"my-charts",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -355,13 +355,13 @@ func Test_newSyncJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -371,19 +371,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -400,11 +400,11 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -420,11 +420,11 @@ func Test_newSyncJob(t *testing.T) {
 			"an app repository in another namespace results in jobs without owner references",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "my-other-namespace",
 					Labels: map[string]string{
@@ -437,25 +437,25 @@ func Test_newSyncJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-my-other-namespace-sync-my-charts-",
 					Annotations:  map[string]string{},
 					Labels:       map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "my-other-namespace",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -472,11 +472,11 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -492,11 +492,11 @@ func Test_newSyncJob(t *testing.T) {
 			"my-charts with auth and userAgent comment",
 			"kubeapps/v2.3",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -509,17 +509,17 @@ func Test_newSyncJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
 						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
+							SecretKeyRef: k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 					},
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -529,19 +529,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -559,16 +559,16 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 										{
 											Name: "AUTHORIZATION_HEADER",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -584,11 +584,11 @@ func Test_newSyncJob(t *testing.T) {
 			"my-charts with a customCA",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -601,18 +601,18 @@ func Test_newSyncJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
 						CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
-							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "ca-cert-test"}, Key: "foo"},
+							SecretKeyRef: k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "ca-cert-test"}, Key: "foo"},
 						},
 					},
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -622,19 +622,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -651,26 +651,26 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
-									VolumeMounts: []corev1.VolumeMount{{
+									VolumeMounts: []k8scorev1.VolumeMount{{
 										Name:      "ca-cert-test",
 										ReadOnly:  true,
 										MountPath: "/usr/local/share/ca-certificates",
 									}},
 								},
 							},
-							Volumes: []corev1.Volume{{
+							Volumes: []k8scorev1.Volume{{
 								Name: "ca-cert-test",
-								VolumeSource: corev1.VolumeSource{
-									Secret: &corev1.SecretVolumeSource{
+								VolumeSource: k8scorev1.VolumeSource{
+									Secret: &k8scorev1.SecretVolumeSource{
 										SecretName: "ca-cert-test",
-										Items: []corev1.KeyToPath{
+										Items: []k8scorev1.KeyToPath{
 											{Key: "foo", Path: "ca.crt"},
 										},
 									},
@@ -685,11 +685,11 @@ func Test_newSyncJob(t *testing.T) {
 			"my-charts with a customCA and auth header",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -702,21 +702,21 @@ func Test_newSyncJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
 						CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
-							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "ca-cert-test"}, Key: "foo"},
+							SecretKeyRef: k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "ca-cert-test"}, Key: "foo"},
 						},
 						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"},
+							SecretKeyRef: k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"},
 						},
 					},
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -726,19 +726,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -755,31 +755,31 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 										{
 											Name: "AUTHORIZATION_HEADER",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 										},
 									},
-									VolumeMounts: []corev1.VolumeMount{{
+									VolumeMounts: []k8scorev1.VolumeMount{{
 										Name:      "ca-cert-test",
 										ReadOnly:  true,
 										MountPath: "/usr/local/share/ca-certificates",
 									}},
 								},
 							},
-							Volumes: []corev1.Volume{{
+							Volumes: []k8scorev1.Volume{{
 								Name: "ca-cert-test",
-								VolumeSource: corev1.VolumeSource{
-									Secret: &corev1.SecretVolumeSource{
+								VolumeSource: k8scorev1.VolumeSource{
+									Secret: &k8scorev1.SecretVolumeSource{
 										SecretName: "ca-cert-test",
-										Items: []corev1.KeyToPath{
+										Items: []k8scorev1.KeyToPath{
 											{Key: "foo", Path: "ca.crt"},
 										},
 									},
@@ -794,11 +794,11 @@ func Test_newSyncJob(t *testing.T) {
 			"my-charts linked to docker registry creds",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -811,18 +811,18 @@ func Test_newSyncJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 					Auth: apprepov1alpha1.AppRepositoryAuth{
 						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: ".dockerconfigjson"},
+							SecretKeyRef: k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: ".dockerconfigjson"},
 						},
 					},
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -832,19 +832,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -861,16 +861,16 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 										{
 											Name: "DOCKER_CONFIG_JSON",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: ".dockerconfigjson"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: ".dockerconfigjson"}},
 										},
 									},
 								},
@@ -884,11 +884,11 @@ func Test_newSyncJob(t *testing.T) {
 			"my-charts with a custom pod template",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -899,35 +899,35 @@ func Test_newSyncJob(t *testing.T) {
 				Spec: apprepov1alpha1.AppRepositorySpec{
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
-					SyncJobPodTemplate: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					SyncJobPodTemplate: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								"foo": "bar",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
-							Affinity: &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
-							Containers: []corev1.Container{
+						Spec: k8scorev1.PodSpec{
+							Affinity: &k8scorev1.Affinity{NodeAffinity: &k8scorev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &k8scorev1.NodeSelector{}}},
+							Containers: []k8scorev1.Container{
 								{
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{Name: "FOO", Value: "BAR"},
 									},
-									VolumeMounts: []corev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
+									VolumeMounts: []k8scorev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
 								},
 							},
-							Volumes: []corev1.Volume{{Name: "foo", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}}},
+							Volumes: []k8scorev1.Volume{{Name: "foo", VolumeSource: k8scorev1.VolumeSource{EmptyDir: &k8scorev1.EmptyDirVolumeSource{}}}},
 						},
 					},
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -937,10 +937,10 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
@@ -948,10 +948,10 @@ func Test_newSyncJob(t *testing.T) {
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
-							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
+						Spec: k8scorev1.PodSpec{
+							Affinity:      &k8scorev1.Affinity{NodeAffinity: &k8scorev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &k8scorev1.NodeSelector{}}},
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -968,18 +968,18 @@ func Test_newSyncJob(t *testing.T) {
 										"https://charts.acme.com/my-charts",
 										"helm",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{Name: "FOO", Value: "BAR"},
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
-									VolumeMounts: []corev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
+									VolumeMounts: []k8scorev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
 								},
 							},
-							Volumes: []corev1.Volume{{Name: "foo", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}}},
+							Volumes: []k8scorev1.Volume{{Name: "foo", VolumeSource: k8scorev1.VolumeSource{EmptyDir: &k8scorev1.EmptyDirVolumeSource{}}}},
 						},
 					},
 				},
@@ -989,11 +989,11 @@ func Test_newSyncJob(t *testing.T) {
 			"OCI registry with repositories",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -1007,13 +1007,13 @@ func Test_newSyncJob(t *testing.T) {
 					OCIRepositories: []string{"apache", "jenkins"},
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -1023,19 +1023,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -1054,11 +1054,11 @@ func Test_newSyncJob(t *testing.T) {
 										"--oci-repositories",
 										"apache,jenkins",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -1074,11 +1074,11 @@ func Test_newSyncJob(t *testing.T) {
 			"Skip TLS verification",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -1093,13 +1093,13 @@ func Test_newSyncJob(t *testing.T) {
 					TLSInsecureSkipVerify: true,
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -1109,19 +1109,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -1141,11 +1141,11 @@ func Test_newSyncJob(t *testing.T) {
 										"apache,jenkins",
 										"--tls-insecure-skip-verify",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -1161,11 +1161,11 @@ func Test_newSyncJob(t *testing.T) {
 			"Paas credentials",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -1180,13 +1180,13 @@ func Test_newSyncJob(t *testing.T) {
 					PassCredentials: true,
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -1196,19 +1196,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -1228,11 +1228,11 @@ func Test_newSyncJob(t *testing.T) {
 										"apache,jenkins",
 										"--pass-credentials",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -1248,11 +1248,11 @@ func Test_newSyncJob(t *testing.T) {
 			"Repository with filters",
 			"",
 			&apprepov1alpha1.AppRepository{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       "AppRepository",
 					APIVersion: "kubeapps.com/v1alpha1",
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -1268,13 +1268,13 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-sync-my-charts-",
-					OwnerReferences: []metav1.OwnerReference{
-						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
-							schema.GroupVersionKind{
+					OwnerReferences: []k8smetav1.OwnerReference{
+						*k8smetav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: k8smetav1.ObjectMeta{Name: "my-charts"}},
+							k8sschema.GroupVersionKind{
 								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 								Version: apprepov1alpha1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
@@ -1284,19 +1284,19 @@ func Test_newSyncJob(t *testing.T) {
 					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
+					Template: k8scorev1.PodTemplateSpec{
+						ObjectMeta: k8smetav1.ObjectMeta{
 							Labels: map[string]string{
 								LabelRepoName:      "my-charts",
 								LabelRepoNamespace: "kubeapps",
 							},
 							Annotations: map[string]string{},
 						},
-						Spec: corev1.PodSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "OnFailure",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
@@ -1315,11 +1315,11 @@ func Test_newSyncJob(t *testing.T) {
 										"--filter-rules",
 										`{"jq":".name == $var1","variables":{"$var1":"wordpress"}}`,
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 									VolumeMounts: nil,
@@ -1351,25 +1351,25 @@ func Test_newCleanupJob(t *testing.T) {
 		name          string
 		repoName      string
 		repoNamespace string
-		expected      batchv1.Job
+		expected      k8sbatchv1.Job
 	}{
 		{
 			"my-charts",
 			"my-charts",
 			"kubeapps",
-			batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
+			k8sbatchv1.Job{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-cleanup-my-charts-",
 					Namespace:    "kubeapps",
 					Annotations:  map[string]string{},
 					Labels:       map[string]string{},
 				},
-				Spec: batchv1.JobSpec{
+				Spec: k8sbatchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
 							RestartPolicy: "Never",
-							Containers: []corev1.Container{
+							Containers: []k8scorev1.Container{
 								{
 									Name:            "delete",
 									Image:           repoSyncImage,
@@ -1383,11 +1383,11 @@ func Test_newCleanupJob(t *testing.T) {
 										"--database-user=admin",
 										"--database-name=assets",
 									},
-									Env: []corev1.EnvVar{
+									Env: []k8scorev1.EnvVar{
 										{
 											Name: "DB_PASSWORD",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+											ValueFrom: &k8scorev1.EnvVarSource{
+												SecretKeyRef: &k8scorev1.SecretKeySelector{LocalObjectReference: k8scorev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 										},
 									},
 								},
@@ -1412,14 +1412,14 @@ func Test_newCleanupJob(t *testing.T) {
 func TestObjectBelongsTo(t *testing.T) {
 	testCases := []struct {
 		name   string
-		object metav1.Object
-		parent metav1.Object
+		object k8smetav1.Object
+		parent k8smetav1.Object
 		expect bool
 	}{
 		{
 			name: "it recognises a cronjob belonging to an app repository in another namespace",
-			object: &batchv1beta1.CronJob{
-				ObjectMeta: metav1.ObjectMeta{
+			object: &k8sbatchv1beta1.CronJob{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "apprepo-kubeapps-sync-my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -1429,7 +1429,7 @@ func TestObjectBelongsTo(t *testing.T) {
 				},
 			},
 			parent: &apprepov1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "my-namespace",
 				},
@@ -1438,8 +1438,8 @@ func TestObjectBelongsTo(t *testing.T) {
 		},
 		{
 			name: "it returns false if the namespace does not match",
-			object: &batchv1beta1.CronJob{
-				ObjectMeta: metav1.ObjectMeta{
+			object: &k8sbatchv1beta1.CronJob{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "apprepo-kubeapps-sync-my-charts",
 					Namespace: "kubeapps",
 					Labels: map[string]string{
@@ -1449,7 +1449,7 @@ func TestObjectBelongsTo(t *testing.T) {
 				},
 			},
 			parent: &apprepov1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Name:      "my-charts",
 					Namespace: "my-namespace2",
 				},

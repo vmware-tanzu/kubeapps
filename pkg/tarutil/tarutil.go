@@ -12,7 +12,7 @@ import (
 	"path"
 	"strings"
 
-	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 )
 
@@ -75,10 +75,10 @@ func FetchChartDetailFromTarball(reader io.Reader, name string) (map[string]stri
 	schemaFileName := fixedName + "/values.schema.json"
 	chartYamlFileName := fixedName + "/Chart.yaml"
 	filenames := map[string]string{
-		chart.ValuesKey:    valuesFileName,
-		chart.ReadmeKey:    readmeFileName,
-		chart.SchemaKey:    schemaFileName,
-		chart.ChartYamlKey: chartYamlFileName,
+		chartmodels.ValuesKey:    valuesFileName,
+		chartmodels.ReadmeKey:    readmeFileName,
+		chartmodels.SchemaKey:    schemaFileName,
+		chartmodels.ChartYamlKey: chartYamlFileName,
 	}
 
 	files, err := ExtractFilesFromTarball(filenames, tarf)
@@ -87,10 +87,10 @@ func FetchChartDetailFromTarball(reader io.Reader, name string) (map[string]stri
 	}
 
 	return map[string]string{
-		chart.ValuesKey:    files[chart.ValuesKey],
-		chart.ReadmeKey:    files[chart.ReadmeKey],
-		chart.SchemaKey:    files[chart.SchemaKey],
-		chart.ChartYamlKey: files[chart.ChartYamlKey],
+		chartmodels.ValuesKey:    files[chartmodels.ValuesKey],
+		chartmodels.ReadmeKey:    files[chartmodels.ReadmeKey],
+		chartmodels.SchemaKey:    files[chartmodels.SchemaKey],
+		chartmodels.ChartYamlKey: files[chartmodels.ChartYamlKey],
 	}, nil
 }
 

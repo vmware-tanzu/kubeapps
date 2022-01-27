@@ -6,113 +6,113 @@ package main
 import (
 	"context"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	resourcesGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
+	statuserror "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
 )
 
 // CreateSecret creates the secret in the given context if the user has the
 // required RBAC
-func (s *Server) CreateSecret(ctx context.Context, r *v1alpha1.CreateSecretRequest) (*v1alpha1.CreateSecretResponse, error) {
+func (s *Server) CreateSecret(ctx context.Context, r *resourcesGRPCv1alpha1.CreateSecretRequest) (*resourcesGRPCv1alpha1.CreateSecretResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
 	log.Infof("+resources CreateSecret (cluster: %q, namespace=%q)", cluster, namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
-	_, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, &core.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       core.ResourceSecrets.String(),
-			APIVersion: core.SchemeGroupVersion.WithResource(core.ResourceSecrets.String()).String(),
+	_, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, &k8scorev1.Secret{
+		TypeMeta: k8smetav1.TypeMeta{
+			Kind:       k8scorev1.ResourceSecrets.String(),
+			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
 		},
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      r.GetName(),
 		},
 		Type:       k8sTypeForProtoType(r.GetType()),
 		StringData: r.GetStringData(),
-	}, metav1.CreateOptions{})
+	}, k8smetav1.CreateOptions{})
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
-	return &v1alpha1.CreateSecretResponse{}, nil
+	return &resourcesGRPCv1alpha1.CreateSecretResponse{}, nil
 }
 
-func k8sTypeForProtoType(secretType v1alpha1.SecretType) core.SecretType {
+func k8sTypeForProtoType(secretType resourcesGRPCv1alpha1.SecretType) k8scorev1.SecretType {
 	switch secretType {
-	case v1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED:
-		return core.SecretTypeOpaque
-	case v1alpha1.SecretType_SECRET_TYPE_SERVICE_ACCOUNT_TOKEN:
-		return core.SecretTypeServiceAccountToken
-	case v1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG:
-		return core.SecretTypeDockercfg
-	case v1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG_JSON:
-		return core.SecretTypeDockerConfigJson
-	case v1alpha1.SecretType_SECRET_TYPE_BASIC_AUTH:
-		return core.SecretTypeBasicAuth
-	case v1alpha1.SecretType_SECRET_TYPE_SSH_AUTH:
-		return core.SecretTypeSSHAuth
-	case v1alpha1.SecretType_SECRET_TYPE_TLS:
-		return core.SecretTypeTLS
-	case v1alpha1.SecretType_SECRET_TYPE_BOOTSTRAP_TOKEN:
-		return core.SecretTypeBootstrapToken
+	case resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED:
+		return k8scorev1.SecretTypeOpaque
+	case resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_SERVICE_ACCOUNT_TOKEN:
+		return k8scorev1.SecretTypeServiceAccountToken
+	case resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG:
+		return k8scorev1.SecretTypeDockercfg
+	case resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG_JSON:
+		return k8scorev1.SecretTypeDockerConfigJson
+	case resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_BASIC_AUTH:
+		return k8scorev1.SecretTypeBasicAuth
+	case resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_SSH_AUTH:
+		return k8scorev1.SecretTypeSSHAuth
+	case resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_TLS:
+		return k8scorev1.SecretTypeTLS
+	case resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_BOOTSTRAP_TOKEN:
+		return k8scorev1.SecretTypeBootstrapToken
 	}
-	return core.SecretTypeOpaque
+	return k8scorev1.SecretTypeOpaque
 }
 
-func protoTypeForK8sType(secretType core.SecretType) v1alpha1.SecretType {
+func protoTypeForK8sType(secretType k8scorev1.SecretType) resourcesGRPCv1alpha1.SecretType {
 	switch secretType {
-	case core.SecretTypeOpaque:
-		return v1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED
-	case core.SecretTypeServiceAccountToken:
-		return v1alpha1.SecretType_SECRET_TYPE_SERVICE_ACCOUNT_TOKEN
-	case core.SecretTypeDockercfg:
-		return v1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG
-	case core.SecretTypeDockerConfigJson:
-		return v1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG_JSON
-	case core.SecretTypeBasicAuth:
-		return v1alpha1.SecretType_SECRET_TYPE_BASIC_AUTH
-	case core.SecretTypeSSHAuth:
-		return v1alpha1.SecretType_SECRET_TYPE_SSH_AUTH
-	case core.SecretTypeTLS:
-		return v1alpha1.SecretType_SECRET_TYPE_TLS
-	case core.SecretTypeBootstrapToken:
-		return v1alpha1.SecretType_SECRET_TYPE_BOOTSTRAP_TOKEN
+	case k8scorev1.SecretTypeOpaque:
+		return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED
+	case k8scorev1.SecretTypeServiceAccountToken:
+		return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_SERVICE_ACCOUNT_TOKEN
+	case k8scorev1.SecretTypeDockercfg:
+		return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG
+	case k8scorev1.SecretTypeDockerConfigJson:
+		return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG_JSON
+	case k8scorev1.SecretTypeBasicAuth:
+		return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_BASIC_AUTH
+	case k8scorev1.SecretTypeSSHAuth:
+		return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_SSH_AUTH
+	case k8scorev1.SecretTypeTLS:
+		return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_TLS
+	case k8scorev1.SecretTypeBootstrapToken:
+		return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_BOOTSTRAP_TOKEN
 	}
-	return v1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED
+	return resourcesGRPCv1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED
 }
 
 // GetSecretNames returns a map of secret names with their types for the given
 // context if the user has the required RBAC.
-func (s *Server) GetSecretNames(ctx context.Context, r *v1alpha1.GetSecretNamesRequest) (*v1alpha1.GetSecretNamesResponse, error) {
+func (s *Server) GetSecretNames(ctx context.Context, r *resourcesGRPCv1alpha1.GetSecretNamesRequest) (*resourcesGRPCv1alpha1.GetSecretNamesResponse, error) {
 	cluster := r.GetContext().GetCluster()
 	namespace := r.GetContext().GetNamespace()
 	log.Infof("+resources GetSecretNames (cluster: %q, namespace: %q)", cluster, namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
-	secretList, err := typedClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
+	secretList, err := typedClient.CoreV1().Secrets(namespace).List(ctx, k8smetav1.ListOptions{})
 	if err != nil {
 		return nil, statuserror.FromK8sError("list", "Secrets", "", err)
 	}
 
-	secrets := map[string]v1alpha1.SecretType{}
+	secrets := map[string]resourcesGRPCv1alpha1.SecretType{}
 	for _, s := range secretList.Items {
 		secrets[s.Name] = protoTypeForK8sType(s.Type)
 	}
 
-	return &v1alpha1.GetSecretNamesResponse{
+	return &resourcesGRPCv1alpha1.GetSecretNamesResponse{
 		SecretNames: secrets,
 	}, nil
 }

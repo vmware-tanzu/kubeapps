@@ -10,15 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	semver "github.com/Masterminds/semver/v3"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/json"
+	kappctrldatapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	k8sstructuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sjsonutil "k8s.io/apimachinery/pkg/util/json"
 )
 
 func TestGetPkgVersionsMap(t *testing.T) {
@@ -27,21 +27,21 @@ func TestGetPkgVersionsMap(t *testing.T) {
 	version127, _ := semver.NewVersion("1.2.7")
 	tests := []struct {
 		name                   string
-		packages               []*datapackagingv1alpha1.Package
+		packages               []*kappctrldatapackagingv1alpha1.Package
 		expectedPkgVersionsMap map[string][]pkgSemver
 	}{
-		{"empty packages", []*datapackagingv1alpha1.Package{}, map[string][]pkgSemver{}},
-		{"multiple package versions", []*datapackagingv1alpha1.Package{
+		{"empty packages", []*kappctrldatapackagingv1alpha1.Package{}, map[string][]pkgSemver{}},
+		{"multiple package versions", []*kappctrldatapackagingv1alpha1.Package{
 			{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       pkgResource,
 					APIVersion: datapackagingAPIVersion,
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Namespace: "default",
 					Name:      "tetris.foo.example.com.1.2.3",
 				},
-				Spec: datapackagingv1alpha1.PackageSpec{
+				Spec: kappctrldatapackagingv1alpha1.PackageSpec{
 					RefName:                         "tetris.foo.example.com",
 					Version:                         "1.2.3",
 					Licenses:                        []string{"my-license"},
@@ -50,15 +50,15 @@ func TestGetPkgVersionsMap(t *testing.T) {
 				},
 			},
 			{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       pkgResource,
 					APIVersion: datapackagingAPIVersion,
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Namespace: "default",
 					Name:      "tetris.foo.example.com.1.2.7",
 				},
-				Spec: datapackagingv1alpha1.PackageSpec{
+				Spec: kappctrldatapackagingv1alpha1.PackageSpec{
 					RefName:                         "tetris.foo.example.com",
 					Version:                         "1.2.7",
 					Licenses:                        []string{"my-license"},
@@ -67,15 +67,15 @@ func TestGetPkgVersionsMap(t *testing.T) {
 				},
 			},
 			{
-				TypeMeta: metav1.TypeMeta{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       pkgResource,
 					APIVersion: datapackagingAPIVersion,
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Namespace: "default",
 					Name:      "tetris.foo.example.com.1.2.4",
 				},
-				Spec: datapackagingv1alpha1.PackageSpec{
+				Spec: kappctrldatapackagingv1alpha1.PackageSpec{
 					RefName:                         "tetris.foo.example.com",
 					Version:                         "1.2.4",
 					Licenses:                        []string{"my-license"},
@@ -86,15 +86,15 @@ func TestGetPkgVersionsMap(t *testing.T) {
 		}, map[string][]pkgSemver{
 			"tetris.foo.example.com": {
 				{
-					pkg:     &datapackagingv1alpha1.Package{},
+					pkg:     &kappctrldatapackagingv1alpha1.Package{},
 					version: version123,
 				},
 				{
-					pkg:     &datapackagingv1alpha1.Package{},
+					pkg:     &kappctrldatapackagingv1alpha1.Package{},
 					version: version124,
 				},
 				{
-					pkg:     &datapackagingv1alpha1.Package{},
+					pkg:     &kappctrldatapackagingv1alpha1.Package{},
 					version: version127,
 				},
 			},
@@ -127,19 +127,19 @@ func TestLatestMatchingVersion(t *testing.T) {
 	}{
 		{"simple constaint", []pkgSemver{
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version200,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version127,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version124,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version123,
 			},
 		},
@@ -148,19 +148,19 @@ func TestLatestMatchingVersion(t *testing.T) {
 		},
 		{"complex constaint", []pkgSemver{
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version200,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version127,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version124,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version123,
 			},
 		},
@@ -169,19 +169,19 @@ func TestLatestMatchingVersion(t *testing.T) {
 		},
 		{"unsatisfiable constaint", []pkgSemver{
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version200,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version127,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version124,
 			},
 			{
-				pkg:     &datapackagingv1alpha1.Package{},
+				pkg:     &kappctrldatapackagingv1alpha1.Package{},
 				version: version123,
 			},
 		},
@@ -213,13 +213,13 @@ func TestStatusReasonForKappStatus(t *testing.T) {
 	tests := []struct {
 		name                 string
 		status               kappctrlv1alpha1.AppConditionType
-		expectedStatusReason corev1.InstalledPackageStatus_StatusReason
+		expectedStatusReason pkgsGRPCv1alpha1.InstalledPackageStatus_StatusReason
 	}{
-		{"ReconcileSucceeded", kappctrlv1alpha1.AppConditionType("ReconcileSucceeded"), corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED},
-		{"ValuesSchemaCheckFailed", kappctrlv1alpha1.AppConditionType("ValuesSchemaCheckFailed"), corev1.InstalledPackageStatus_STATUS_REASON_FAILED},
-		{"ReconcileFailed", kappctrlv1alpha1.AppConditionType("ReconcileFailed"), corev1.InstalledPackageStatus_STATUS_REASON_FAILED},
-		{"Reconciling", kappctrlv1alpha1.AppConditionType("Reconciling"), corev1.InstalledPackageStatus_STATUS_REASON_PENDING},
-		{"Unknown", kappctrlv1alpha1.AppConditionType("foo"), corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED},
+		{"ReconcileSucceeded", kappctrlv1alpha1.AppConditionType("ReconcileSucceeded"), pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_INSTALLED},
+		{"ValuesSchemaCheckFailed", kappctrlv1alpha1.AppConditionType("ValuesSchemaCheckFailed"), pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_FAILED},
+		{"ReconcileFailed", kappctrlv1alpha1.AppConditionType("ReconcileFailed"), pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_FAILED},
+		{"Reconciling", kappctrlv1alpha1.AppConditionType("Reconciling"), pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_PENDING},
+		{"Unknown", kappctrlv1alpha1.AppConditionType("foo"), pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -260,16 +260,16 @@ func TestBuildPostInstallationNotes(t *testing.T) {
 		expected string
 	}{
 		{"renders the expected notes (full)", &kappctrlv1alpha1.App{
-			TypeMeta: metav1.TypeMeta{
+			TypeMeta: k8smetav1.TypeMeta{
 				Kind:       appResource,
 				APIVersion: kappctrlAPIVersion,
 			},
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "my-installation",
 			},
 			Spec: kappctrlv1alpha1.AppSpec{
-				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+				SyncPeriod: &k8smetav1.Duration{(time.Second * 30)},
 			},
 			Status: kappctrlv1alpha1.AppStatus{
 				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -313,16 +313,16 @@ fetchStderr
 
 `},
 		{"renders the expected notes (no stderr)", &kappctrlv1alpha1.App{
-			TypeMeta: metav1.TypeMeta{
+			TypeMeta: k8smetav1.TypeMeta{
 				Kind:       appResource,
 				APIVersion: kappctrlAPIVersion,
 			},
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "my-installation",
 			},
 			Spec: kappctrlv1alpha1.AppSpec{
-				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+				SyncPeriod: &k8smetav1.Duration{(time.Second * 30)},
 			},
 			Status: kappctrlv1alpha1.AppStatus{
 				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -349,16 +349,16 @@ fetchStdout
 
 `},
 		{"renders the expected notes (no stdout)", &kappctrlv1alpha1.App{
-			TypeMeta: metav1.TypeMeta{
+			TypeMeta: k8smetav1.TypeMeta{
 				Kind:       appResource,
 				APIVersion: kappctrlAPIVersion,
 			},
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "my-installation",
 			},
 			Spec: kappctrlv1alpha1.AppSpec{
-				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+				SyncPeriod: &k8smetav1.Duration{(time.Second * 30)},
 			},
 			Status: kappctrlv1alpha1.AppStatus{
 				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -387,16 +387,16 @@ fetchStderr
 
 `},
 		{"renders the expected notes (missing field)", &kappctrlv1alpha1.App{
-			TypeMeta: metav1.TypeMeta{
+			TypeMeta: k8smetav1.TypeMeta{
 				Kind:       appResource,
 				APIVersion: kappctrlAPIVersion,
 			},
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "my-installation",
 			},
 			Spec: kappctrlv1alpha1.AppSpec{
-				SyncPeriod: &metav1.Duration{(time.Second * 30)},
+				SyncPeriod: &k8smetav1.Duration{(time.Second * 30)},
 			},
 			Status: kappctrlv1alpha1.AppStatus{
 				Fetch: &kappctrlv1alpha1.AppStatusFetch{
@@ -557,46 +557,46 @@ valueWithDefault: 80
 func TestBuildReadme(t *testing.T) {
 	tests := []struct {
 		name           string
-		pkgMetadata    *datapackagingv1alpha1.PackageMetadata
+		pkgMetadata    *kappctrldatapackagingv1alpha1.PackageMetadata
 		foundPkgSemver *pkgSemver
 		expected       string
 	}{
-		{"empty", &datapackagingv1alpha1.PackageMetadata{
-			TypeMeta: metav1.TypeMeta{
+		{"empty", &kappctrldatapackagingv1alpha1.PackageMetadata{
+			TypeMeta: k8smetav1.TypeMeta{
 				Kind:       pkgMetadataResource,
 				APIVersion: datapackagingAPIVersion,
 			},
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: k8smetav1.ObjectMeta{
 				Namespace: "default",
 				Name:      "tetris.foo.example.com",
 			},
-			Spec: datapackagingv1alpha1.PackageMetadataSpec{
+			Spec: kappctrldatapackagingv1alpha1.PackageMetadataSpec{
 				DisplayName:        "Classic Tetris",
 				IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
 				ShortDescription:   "A great game for arcade gamers",
 				LongDescription:    "A few sentences but not really a readme",
 				Categories:         []string{"logging", "daemon-set"},
-				Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+				Maintainers:        []kappctrldatapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
 				SupportDescription: "Some support information",
 				ProviderName:       "Tetris inc.",
 			},
 		}, &pkgSemver{
-			pkg: &datapackagingv1alpha1.Package{
-				TypeMeta: metav1.TypeMeta{
+			pkg: &kappctrldatapackagingv1alpha1.Package{
+				TypeMeta: k8smetav1.TypeMeta{
 					Kind:       pkgResource,
 					APIVersion: datapackagingAPIVersion,
 				},
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: k8smetav1.ObjectMeta{
 					Namespace: "default",
 					Name:      "tetris.foo.example.com.1.2.3",
 				},
-				Spec: datapackagingv1alpha1.PackageSpec{
+				Spec: kappctrldatapackagingv1alpha1.PackageSpec{
 					RefName:                         "tetris.foo.example.com",
 					Version:                         "1.2.3",
 					Licenses:                        []string{"my-license"},
 					ReleaseNotes:                    "release notes",
 					CapactiyRequirementsDescription: "capacity description",
-					ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					ReleasedAt:                      k8smetav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 				},
 			},
 			version: &semver.Version{},
@@ -640,73 +640,73 @@ func TestDefaultValues(t *testing.T) {
 	tests := []struct {
 		name     string
 		json     string
-		schema   *structuralschema.Structural
+		schema   *k8sstructuralschema.Structural
 		expected string
 	}{
 		{"empty", "null", nil, "null"},
-		{"scalar", "4", &structuralschema.Structural{
-			Generic: structuralschema.Generic{
-				Default: structuralschema.JSON{"foo"},
+		{"scalar", "4", &k8sstructuralschema.Structural{
+			Generic: k8sstructuralschema.Generic{
+				Default: k8sstructuralschema.JSON{"foo"},
 			},
 		}, "4"},
-		{"scalar array", "[1,2]", &structuralschema.Structural{
-			Items: &structuralschema.Structural{
-				Generic: structuralschema.Generic{
-					Default: structuralschema.JSON{"foo"},
+		{"scalar array", "[1,2]", &k8sstructuralschema.Structural{
+			Items: &k8sstructuralschema.Structural{
+				Generic: k8sstructuralschema.Generic{
+					Default: k8sstructuralschema.JSON{"foo"},
 				},
 			},
 		}, "[1,2]"},
-		{"object array", `[{"a":1},{"b":1},{"c":1}]`, &structuralschema.Structural{
-			Items: &structuralschema.Structural{
-				Properties: map[string]structuralschema.Structural{
+		{"object array", `[{"a":1},{"b":1},{"c":1}]`, &k8sstructuralschema.Structural{
+			Items: &k8sstructuralschema.Structural{
+				Properties: map[string]k8sstructuralschema.Structural{
 					"a": {
-						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"A"},
+						Generic: k8sstructuralschema.Generic{
+							Default: k8sstructuralschema.JSON{"A"},
 						},
 					},
 					"b": {
-						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"B"},
+						Generic: k8sstructuralschema.Generic{
+							Default: k8sstructuralschema.JSON{"B"},
 						},
 					},
 					"c": {
-						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"C"},
+						Generic: k8sstructuralschema.Generic{
+							Default: k8sstructuralschema.JSON{"C"},
 						},
 					},
 				},
 			},
 		}, `[{"a":1,"b":"B","c":"C"},{"a":"A","b":1,"c":"C"},{"a":"A","b":"B","c":1}]`},
 		// New test case checking our tweaks
-		{"object without default values", `{}`, &structuralschema.Structural{
-			Properties: map[string]structuralschema.Structural{
+		{"object without default values", `{}`, &k8sstructuralschema.Structural{
+			Properties: map[string]k8sstructuralschema.Structural{
 				"a": {
-					Generic: structuralschema.Generic{
+					Generic: k8sstructuralschema.Generic{
 						Type: "string",
 					},
 				},
 				"b": {
-					Generic: structuralschema.Generic{
+					Generic: k8sstructuralschema.Generic{
 						Type: "boolean",
 					},
 				},
 				"c": {
-					Generic: structuralschema.Generic{
+					Generic: k8sstructuralschema.Generic{
 						Type: "array",
 					},
 				},
 				"d": {
-					Generic: structuralschema.Generic{
+					Generic: k8sstructuralschema.Generic{
 						Type: "number",
 					},
 				},
 				"e": {
-					Generic: structuralschema.Generic{
+					Generic: k8sstructuralschema.Generic{
 						Type: "integer",
 					},
 				},
 				"f": {
-					Generic: structuralschema.Generic{
+					Generic: k8sstructuralschema.Generic{
 						Type: "object",
 					},
 				},
@@ -720,51 +720,51 @@ func TestDefaultValues(t *testing.T) {
   "f": {}
 }
 `},
-		{"object array object", `{"array":[{"a":1},{"b":2}],"object":{"a":1},"additionalProperties":{"x":{"a":1},"y":{"b":2}}}`, &structuralschema.Structural{
-			Properties: map[string]structuralschema.Structural{
+		{"object array object", `{"array":[{"a":1},{"b":2}],"object":{"a":1},"additionalProperties":{"x":{"a":1},"y":{"b":2}}}`, &k8sstructuralschema.Structural{
+			Properties: map[string]k8sstructuralschema.Structural{
 				"array": {
-					Items: &structuralschema.Structural{
-						Properties: map[string]structuralschema.Structural{
+					Items: &k8sstructuralschema.Structural{
+						Properties: map[string]k8sstructuralschema.Structural{
 							"a": {
-								Generic: structuralschema.Generic{
-									Default: structuralschema.JSON{"A"},
+								Generic: k8sstructuralschema.Generic{
+									Default: k8sstructuralschema.JSON{"A"},
 								},
 							},
 							"b": {
-								Generic: structuralschema.Generic{
-									Default: structuralschema.JSON{"B"},
+								Generic: k8sstructuralschema.Generic{
+									Default: k8sstructuralschema.JSON{"B"},
 								},
 							},
 						},
 					},
 				},
 				"object": {
-					Properties: map[string]structuralschema.Structural{
+					Properties: map[string]k8sstructuralschema.Structural{
 						"a": {
-							Generic: structuralschema.Generic{
-								Default: structuralschema.JSON{"N"},
+							Generic: k8sstructuralschema.Generic{
+								Default: k8sstructuralschema.JSON{"N"},
 							},
 						},
 						"b": {
-							Generic: structuralschema.Generic{
-								Default: structuralschema.JSON{"O"},
+							Generic: k8sstructuralschema.Generic{
+								Default: k8sstructuralschema.JSON{"O"},
 							},
 						},
 					},
 				},
 				"additionalProperties": {
-					Generic: structuralschema.Generic{
-						AdditionalProperties: &structuralschema.StructuralOrBool{
-							Structural: &structuralschema.Structural{
-								Properties: map[string]structuralschema.Structural{
+					Generic: k8sstructuralschema.Generic{
+						AdditionalProperties: &k8sstructuralschema.StructuralOrBool{
+							Structural: &k8sstructuralschema.Structural{
+								Properties: map[string]k8sstructuralschema.Structural{
 									"a": {
-										Generic: structuralschema.Generic{
-											Default: structuralschema.JSON{"alpha"},
+										Generic: k8sstructuralschema.Generic{
+											Default: k8sstructuralschema.JSON{"alpha"},
 										},
 									},
 									"b": {
-										Generic: structuralschema.Generic{
-											Default: structuralschema.JSON{"beta"},
+										Generic: k8sstructuralschema.Generic{
+											Default: k8sstructuralschema.JSON{"beta"},
 										},
 									},
 								},
@@ -773,95 +773,95 @@ func TestDefaultValues(t *testing.T) {
 					},
 				},
 				"foo": {
-					Generic: structuralschema.Generic{
-						Default: structuralschema.JSON{"bar"},
+					Generic: k8sstructuralschema.Generic{
+						Default: k8sstructuralschema.JSON{"bar"},
 					},
 				},
 			},
 		}, `{"array":[{"a":1,"b":"B"},{"a":"A","b":2}],"object":{"a":1,"b":"O"},"additionalProperties":{"x":{"a":1,"b":"beta"},"y":{"a":"alpha","b":2}},"foo":"bar"}`},
-		{"empty and null", `[{},{"a":1},{"a":0},{"a":0.0},{"a":""},{"a":null},{"a":[]},{"a":{}}]`, &structuralschema.Structural{
-			Items: &structuralschema.Structural{
-				Properties: map[string]structuralschema.Structural{
+		{"empty and null", `[{},{"a":1},{"a":0},{"a":0.0},{"a":""},{"a":null},{"a":[]},{"a":{}}]`, &k8sstructuralschema.Structural{
+			Items: &k8sstructuralschema.Structural{
+				Properties: map[string]k8sstructuralschema.Structural{
 					"a": {
-						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"A"},
+						Generic: k8sstructuralschema.Generic{
+							Default: k8sstructuralschema.JSON{"A"},
 						},
 					},
 				},
 			},
 		}, `[{"a":"A"},{"a":1},{"a":0},{"a":0.0},{"a":""},{"a":"A"},{"a":[]},{"a":{}}]`},
-		{"null in nullable list", `[null]`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{
+		{"null in nullable list", `[null]`, &k8sstructuralschema.Structural{
+			Generic: k8sstructuralschema.Generic{
 				Nullable: true,
 			},
-			Items: &structuralschema.Structural{
-				Properties: map[string]structuralschema.Structural{
+			Items: &k8sstructuralschema.Structural{
+				Properties: map[string]k8sstructuralschema.Structural{
 					"a": {
-						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"A"},
+						Generic: k8sstructuralschema.Generic{
+							Default: k8sstructuralschema.JSON{"A"},
 						},
 					},
 				},
 			},
 		}, `[null]`},
-		{"null in non-nullable list", `[null]`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{
+		{"null in non-nullable list", `[null]`, &k8sstructuralschema.Structural{
+			Generic: k8sstructuralschema.Generic{
 				Nullable: false,
 			},
-			Items: &structuralschema.Structural{
-				Generic: structuralschema.Generic{
-					Default: structuralschema.JSON{"A"},
+			Items: &k8sstructuralschema.Structural{
+				Generic: k8sstructuralschema.Generic{
+					Default: k8sstructuralschema.JSON{"A"},
 				},
 			},
 		}, `["A"]`},
-		{"null in nullable object", `{"a": null}`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{},
-			Properties: map[string]structuralschema.Structural{
+		{"null in nullable object", `{"a": null}`, &k8sstructuralschema.Structural{
+			Generic: k8sstructuralschema.Generic{},
+			Properties: map[string]k8sstructuralschema.Structural{
 				"a": {
-					Generic: structuralschema.Generic{
+					Generic: k8sstructuralschema.Generic{
 						Nullable: true,
-						Default:  structuralschema.JSON{"A"},
+						Default:  k8sstructuralschema.JSON{"A"},
 					},
 				},
 			},
 		}, `{"a": null}`},
-		{"null in non-nullable object", `{"a": null}`, &structuralschema.Structural{
-			Properties: map[string]structuralschema.Structural{
+		{"null in non-nullable object", `{"a": null}`, &k8sstructuralschema.Structural{
+			Properties: map[string]k8sstructuralschema.Structural{
 				"a": {
-					Generic: structuralschema.Generic{
+					Generic: k8sstructuralschema.Generic{
 						Nullable: false,
-						Default:  structuralschema.JSON{"A"},
+						Default:  k8sstructuralschema.JSON{"A"},
 					},
 				},
 			},
 		}, `{"a": "A"}`},
-		{"null in nullable object with additionalProperties", `{"a": null}`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{
-				AdditionalProperties: &structuralschema.StructuralOrBool{
-					Structural: &structuralschema.Structural{
-						Generic: structuralschema.Generic{
+		{"null in nullable object with additionalProperties", `{"a": null}`, &k8sstructuralschema.Structural{
+			Generic: k8sstructuralschema.Generic{
+				AdditionalProperties: &k8sstructuralschema.StructuralOrBool{
+					Structural: &k8sstructuralschema.Structural{
+						Generic: k8sstructuralschema.Generic{
 							Nullable: true,
-							Default:  structuralschema.JSON{"A"},
+							Default:  k8sstructuralschema.JSON{"A"},
 						},
 					},
 				},
 			},
 		}, `{"a": null}`},
-		{"null in non-nullable object with additionalProperties", `{"a": null}`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{
-				AdditionalProperties: &structuralschema.StructuralOrBool{
-					Structural: &structuralschema.Structural{
-						Generic: structuralschema.Generic{
+		{"null in non-nullable object with additionalProperties", `{"a": null}`, &k8sstructuralschema.Structural{
+			Generic: k8sstructuralschema.Generic{
+				AdditionalProperties: &k8sstructuralschema.StructuralOrBool{
+					Structural: &k8sstructuralschema.Structural{
+						Generic: k8sstructuralschema.Generic{
 							Nullable: false,
-							Default:  structuralschema.JSON{"A"},
+							Default:  k8sstructuralschema.JSON{"A"},
 						},
 					},
 				},
 			},
 		}, `{"a": "A"}`},
-		{"null unknown field", `{"a": null}`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{
-				AdditionalProperties: &structuralschema.StructuralOrBool{
+		{"null unknown field", `{"a": null}`, &k8sstructuralschema.Structural{
+			Generic: k8sstructuralschema.Generic{
+				AdditionalProperties: &k8sstructuralschema.StructuralOrBool{
 					Bool: true,
 				},
 			},
@@ -870,19 +870,19 @@ func TestDefaultValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var in interface{}
-			if err := json.Unmarshal([]byte(tt.json), &in); err != nil {
+			if err := k8sjsonutil.Unmarshal([]byte(tt.json), &in); err != nil {
 				t.Fatal(err)
 			}
 
 			var expected interface{}
-			if err := json.Unmarshal([]byte(tt.expected), &expected); err != nil {
+			if err := k8sjsonutil.Unmarshal([]byte(tt.expected), &expected); err != nil {
 				t.Fatal(err)
 			}
 
 			defaultValues(in, tt.schema)
 			if !reflect.DeepEqual(in, expected) {
 				var buf bytes.Buffer
-				enc := json.NewEncoder(&buf)
+				enc := k8sjsonutil.NewEncoder(&buf)
 				enc.SetIndent("", "  ")
 				err := enc.Encode(in)
 				if err != nil {

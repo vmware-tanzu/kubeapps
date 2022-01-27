@@ -10,7 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert "github.com/stretchr/testify/assert"
 )
 
 type resource struct {

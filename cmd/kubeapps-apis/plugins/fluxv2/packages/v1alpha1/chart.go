@@ -10,20 +10,20 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/ghodss/yaml"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/tarutil"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/chart"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
+	yaml "github.com/ghodss/yaml"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pkgutils "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	statuserror "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
+	tarutil "github.com/kubeapps/kubeapps/pkg/tarutil"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetaunstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8stypes "k8s.io/apimachinery/pkg/types"
+	k8dynamicclient "k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
 )
 
@@ -36,13 +36,13 @@ const (
 	fluxHelmChartList = "HelmChartList"
 )
 
-func (s *Server) getChartsResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+func (s *Server) getChartsResourceInterface(ctx context.Context, namespace string) (k8dynamicclient.ResourceInterface, error) {
 	_, client, _, err := s.GetClients(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	chartsResource := schema.GroupVersionResource{
+	chartsResource := k8sschema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
 		Resource: fluxHelmCharts,
@@ -51,20 +51,20 @@ func (s *Server) getChartsResourceInterface(ctx context.Context, namespace strin
 	return client.Resource(chartsResource).Namespace(namespace), nil
 }
 
-func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
+func (s *Server) listChartsInCluster(ctx context.Context, namespace string) (*k8smetaunstructuredv1.UnstructuredList, error) {
 	resourceIfc, err := s.getChartsResourceInterface(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if chartList, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
+	if chartList, err := resourceIfc.List(ctx, k8smetav1.ListOptions{}); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmCharts", "", err)
 	} else {
 		return chartList, nil
 	}
 }
 
-func (s *Server) availableChartDetail(ctx context.Context, repoName types.NamespacedName, chartName, chartVersion string) (*corev1.AvailablePackageDetail, error) {
+func (s *Server) availableChartDetail(ctx context.Context, repoName k8stypes.NamespacedName, chartName, chartVersion string) (*pkgsGRPCv1alpha1.AvailablePackageDetail, error) {
 	log.Infof("+availableChartDetail(%s, %s, %s)", repoName, chartName, chartVersion)
 
 	chartID := fmt.Sprintf("%s/%s", repoName.Name, chartName)
@@ -85,7 +85,7 @@ func (s *Server) availableChartDetail(ctx context.Context, repoName types.Namesp
 		if err != nil {
 			return nil, err
 		} else if chartModel == nil {
-			return nil, status.Errorf(codes.NotFound, "chart [%s] not found", chartName)
+			return nil, grpcstatus.Errorf(grpccodes.NotFound, "chart [%s] not found", chartName)
 		}
 
 		if chartVersion == "" {
@@ -99,7 +99,7 @@ func (s *Server) availableChartDetail(ctx context.Context, repoName types.Namesp
 		} else if byteArray, err = s.chartCache.GetForOne(key, chartModel, opts); err != nil {
 			return nil, err
 		} else if byteArray == nil {
-			return nil, status.Errorf(codes.Internal, "failed to load details for chart [%s]", chartModel.ID)
+			return nil, grpcstatus.Errorf(grpccodes.Internal, "failed to load details for chart [%s]", chartModel.ID)
 		}
 	}
 
@@ -111,9 +111,9 @@ func (s *Server) availableChartDetail(ctx context.Context, repoName types.Namesp
 	return availablePackageDetailFromChartDetail(chartID, chartDetail)
 }
 
-func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {
+func (s *Server) getChart(ctx context.Context, repo k8stypes.NamespacedName, chartName string) (*chartmodels.Chart, error) {
 	if s.repoCache == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+		return nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
 	key := s.repoCache.KeyForNamespacedName(repo)
@@ -121,8 +121,8 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 		return nil, err
 	} else if entry != nil {
 		if typedEntry, ok := entry.(repoCacheEntryValue); !ok {
-			return nil, status.Errorf(
-				codes.Internal,
+			return nil, grpcstatus.Errorf(
+				grpccodes.Internal,
 				"unexpected value fetched from cache: type: [%s], value: [%v]", reflect.TypeOf(entry), entry)
 		} else {
 			for _, chart := range typedEntry.Charts {
@@ -135,7 +135,7 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 	return nil, nil
 }
 
-func passesFilter(chart models.Chart, filters *corev1.FilterOptions) bool {
+func passesFilter(chart chartmodels.Chart, filters *pkgsGRPCv1alpha1.FilterOptions) bool {
 	if filters == nil {
 		return true
 	}
@@ -189,14 +189,14 @@ func passesFilter(chart models.Chart, filters *corev1.FilterOptions) bool {
 	return ok
 }
 
-func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, pageOffset int, charts map[string][]models.Chart) ([]*corev1.AvailablePackageSummary, error) {
+func filterAndPaginateCharts(filters *pkgsGRPCv1alpha1.FilterOptions, pageSize int32, pageOffset int, charts map[string][]chartmodels.Chart) ([]*pkgsGRPCv1alpha1.AvailablePackageSummary, error) {
 	// this loop is here for 3 reasons:
 	// 1) to convert from []interface{} which is what the generic cache implementation
 	// returns for cache hits to a typed array object.
 	// 2) perform any filtering of the results as needed, pending redis support for
 	// querying values stored in cache (see discussion in https://github.com/kubeapps/kubeapps/issues/3032)
 	// 3) if pagination was requested, only return up to one page size of results
-	summaries := make([]*corev1.AvailablePackageSummary, 0)
+	summaries := make([]*pkgsGRPCv1alpha1.AvailablePackageSummary, 0)
 	i := 0
 	startAt := -1
 	if pageSize > 0 {
@@ -209,8 +209,8 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 				if startAt < i {
 					pkg, err := pkgutils.AvailablePackageSummaryFromChart(&chart, GetPluginDetail())
 					if err != nil {
-						return nil, status.Errorf(
-							codes.Internal,
+						return nil, grpcstatus.Errorf(
+							grpccodes.Internal,
 							"Unable to parse chart to an AvailablePackageSummary: %v",
 							err)
 					}
@@ -225,22 +225,22 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 	return summaries, nil
 }
 
-func availablePackageDetailFromChartDetail(chartID string, chartDetail map[string]string) (*corev1.AvailablePackageDetail, error) {
-	chartYaml, ok := chartDetail[models.ChartYamlKey]
+func availablePackageDetailFromChartDetail(chartID string, chartDetail map[string]string) (*pkgsGRPCv1alpha1.AvailablePackageDetail, error) {
+	chartYaml, ok := chartDetail[chartmodels.ChartYamlKey]
 	// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
 	// fall back to chart info from repo index.yaml
 	if !ok || chartYaml == "" {
-		return nil, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "No chart manifest found for chart [%s]", chartID)
 	}
-	var chartMetadata chart.Metadata
+	var chartMetadata helmchart.Metadata
 	err := yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
 	if err != nil {
 		return nil, err
 	}
 
-	maintainers := []*corev1.Maintainer{}
+	maintainers := []*pkgsGRPCv1alpha1.Maintainer{}
 	for _, maintainer := range chartMetadata.Maintainers {
-		m := &corev1.Maintainer{Name: maintainer.Name, Email: maintainer.Email}
+		m := &pkgsGRPCv1alpha1.Maintainer{Name: maintainer.Name, Email: maintainer.Email}
 		maintainers = append(maintainers, m)
 	}
 
@@ -250,9 +250,9 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 		categories = []string{category}
 	}
 
-	pkg := &corev1.AvailablePackageDetail{
+	pkg := &pkgsGRPCv1alpha1.AvailablePackageDetail{
 		Name: chartMetadata.Name,
-		Version: &corev1.PackageAppVersion{
+		Version: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: chartMetadata.Version,
 			AppVersion: chartMetadata.AppVersion,
 		},
@@ -261,15 +261,15 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 		DisplayName:      chartMetadata.Name,
 		ShortDescription: chartMetadata.Description,
 		Categories:       categories,
-		Readme:           chartDetail[models.ReadmeKey],
-		DefaultValues:    chartDetail[models.ValuesKey],
-		ValuesSchema:     chartDetail[models.SchemaKey],
+		Readme:           chartDetail[chartmodels.ReadmeKey],
+		DefaultValues:    chartDetail[chartmodels.ValuesKey],
+		ValuesSchema:     chartDetail[chartmodels.SchemaKey],
 		SourceUrls:       chartMetadata.Sources,
 		Maintainers:      maintainers,
-		AvailablePackageRef: &corev1.AvailablePackageReference{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
 			Identifier: chartID,
 			Plugin:     GetPluginDetail(),
-			Context:    &corev1.Context{},
+			Context:    &pkgsGRPCv1alpha1.Context{},
 		},
 	}
 	// TODO: (gfichtenholt) LongDescription?

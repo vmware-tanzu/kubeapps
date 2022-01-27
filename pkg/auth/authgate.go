@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	"github.com/kubeapps/kubeapps/pkg/response"
+	mux "github.com/gorilla/mux"
+	dbutils "github.com/kubeapps/kubeapps/pkg/dbutils"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
+	responseutils "github.com/kubeapps/kubeapps/pkg/response"
 	negroni "github.com/urfave/negroni/v2"
 )
 
@@ -20,9 +20,9 @@ const tokenPrefix = "Bearer "
 
 // CheckerForRequest defines a function type so we can also inject a fake for tests
 // rather than setting a context value.
-type CheckerForRequest func(clustersConfig kube.ClustersConfig, req *http.Request) (Checker, error)
+type CheckerForRequest func(clustersConfig kubeutils.ClustersConfig, req *http.Request) (Checker, error)
 
-func AuthCheckerForRequest(clustersConfig kube.ClustersConfig, req *http.Request) (Checker, error) {
+func AuthCheckerForRequest(clustersConfig kubeutils.ClustersConfig, req *http.Request) (Checker, error) {
 	token := ExtractToken(req.Header.Get("Authorization"))
 	if token == "" {
 		return nil, fmt.Errorf("Authorization token missing")
@@ -38,11 +38,11 @@ func AuthCheckerForRequest(clustersConfig kube.ClustersConfig, req *http.Request
 //     is _all, then the check is for cluster-wide access.
 //   * If the namespace is the global chart namespace (ie. kubeappsNamespace) then
 //     we allow read access regardless.
-func AuthGate(clustersConfig kube.ClustersConfig, kubeappsNamespace string) negroni.HandlerFunc {
+func AuthGate(clustersConfig kubeutils.ClustersConfig, kubeappsNamespace string) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		userAuth, err := AuthCheckerForRequest(clustersConfig, req)
 		if err != nil {
-			response.NewErrorResponse(http.StatusUnauthorized, err.Error()).Write(w)
+			responseutils.NewErrorResponse(http.StatusUnauthorized, err.Error()).Write(w)
 			return
 		}
 		namespace := mux.Vars(req)["namespace"]
@@ -66,7 +66,7 @@ func AuthGate(clustersConfig kube.ClustersConfig, kubeappsNamespace string) negr
 			if err != nil {
 				msg = fmt.Sprintf("%s: %s", msg, err.Error())
 			}
-			response.NewErrorResponse(http.StatusForbidden, msg).Write(w)
+			responseutils.NewErrorResponse(http.StatusForbidden, msg).Write(w)
 			return
 		}
 		next(w, req)

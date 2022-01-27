@@ -4,24 +4,24 @@
 package fake
 
 import (
-	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	chart3 "helm.sh/helm/v3/pkg/chart"
-	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/yaml"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	chartutils "github.com/kubeapps/kubeapps/pkg/chart"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8syaml "sigs.k8s.io/yaml"
 )
 
 // ChartClient implements Resolver inteface
 type ChartClient struct{}
 
 // GetChart fake
-func (f *ChartClient) GetChart(details *chartUtils.Details, repoURL string) (*chart3.Chart, error) {
+func (f *ChartClient) GetChart(details *chartutils.Details, repoURL string) (*helmchart.Chart, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
 	}
-	return &chart3.Chart{
-		Metadata: &chart3.Metadata{
+	return &helmchart.Chart{
+		Metadata: &helmchart.Metadata{
 			Name:    details.ChartName,
 			Version: details.Version,
 		},
@@ -31,7 +31,7 @@ func (f *ChartClient) GetChart(details *chartUtils.Details, repoURL string) (*ch
 
 func getValues(raw []byte) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
-	err := yaml.Unmarshal(raw, &values)
+	err := k8syaml.Unmarshal(raw, &values)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 }
 
 // Init fake
-func (f *ChartClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
+func (f *ChartClient) Init(appRepo *apprepov1alpha1.AppRepository, caCertSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret) error {
 	return nil
 }
 
@@ -47,6 +47,6 @@ func (f *ChartClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev
 type ChartClientFactory struct{}
 
 // New returns a fake ChartClient
-func (c *ChartClientFactory) New(repoType, userAgent string) chartUtils.ChartClient {
+func (c *ChartClientFactory) New(repoType, userAgent string) chartutils.ChartClient {
 	return &ChartClient{}
 }

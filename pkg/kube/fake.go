@@ -6,20 +6,20 @@ package kube
 import (
 	"io"
 
-	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	authorizationapi "k8s.io/api/authorization/v1"
-	corev1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	k8sauthorizationv1 "k8s.io/api/authorization/v1"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // FakeHandler represents a fake Handler for testing purposes
 type FakeHandler struct {
-	AppRepos    []*v1alpha1.AppRepository
-	CreatedRepo *v1alpha1.AppRepository
-	UpdatedRepo *v1alpha1.AppRepository
-	Namespaces  []corev1.Namespace
-	Secrets     []*corev1.Secret
+	AppRepos    []*apprepov1alpha1.AppRepository
+	CreatedRepo *apprepov1alpha1.AppRepository
+	UpdatedRepo *apprepov1alpha1.AppRepository
+	Namespaces  []k8scorev1.Namespace
+	Secrets     []*k8scorev1.Secret
 	ValRes      *ValidationResponse
 	Options     KubeOptions
 	Err         error
@@ -42,8 +42,8 @@ func (c *FakeHandler) GetOptions() KubeOptions {
 }
 
 // ListAppRepositories fake
-func (c *FakeHandler) ListAppRepositories(requestNamespace string) (*v1alpha1.AppRepositoryList, error) {
-	appRepos := &v1alpha1.AppRepositoryList{}
+func (c *FakeHandler) ListAppRepositories(requestNamespace string) (*apprepov1alpha1.AppRepositoryList, error) {
+	appRepos := &apprepov1alpha1.AppRepositoryList{}
 	for _, repo := range c.AppRepos {
 		appRepos.Items = append(appRepos.Items, *repo)
 	}
@@ -51,18 +51,18 @@ func (c *FakeHandler) ListAppRepositories(requestNamespace string) (*v1alpha1.Ap
 }
 
 // CreateAppRepository fake
-func (c *FakeHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
+func (c *FakeHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*apprepov1alpha1.AppRepository, error) {
 	c.AppRepos = append(c.AppRepos, c.CreatedRepo)
 	return c.CreatedRepo, c.Err
 }
 
 // RefreshAppRepository fake
-func (c *FakeHandler) RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error) {
+func (c *FakeHandler) RefreshAppRepository(repoName string, requestNamespace string) (*apprepov1alpha1.AppRepository, error) {
 	return c.UpdatedRepo, c.Err
 }
 
 // UpdateAppRepository fake
-func (c *FakeHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
+func (c *FakeHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*apprepov1alpha1.AppRepository, error) {
 	return c.UpdatedRepo, c.Err
 }
 
@@ -72,7 +72,7 @@ func (c *FakeHandler) DeleteAppRepository(name, namespace string) error {
 }
 
 // GetAppRepository fake
-func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRepository, error) {
+func (c *FakeHandler) GetAppRepository(name, namespace string) (*apprepov1alpha1.AppRepository, error) {
 	if c.Err != nil {
 		return nil, c.Err
 	}
@@ -81,11 +81,11 @@ func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRep
 			return r, nil
 		}
 	}
-	return nil, k8sErrors.NewNotFound(schema.GroupResource{}, "foo")
+	return nil, k8serrors.NewNotFound(k8sschema.GroupResource{}, "foo")
 }
 
 // GetNamespaces fake
-func (c *FakeHandler) GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
+func (c *FakeHandler) GetNamespaces(precheckedNamespaces []k8scorev1.Namespace) ([]k8scorev1.Namespace, error) {
 	if len(precheckedNamespaces) > 0 {
 		return precheckedNamespaces, c.Err
 	}
@@ -93,13 +93,13 @@ func (c *FakeHandler) GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]
 }
 
 // GetSecret fake
-func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
+func (c *FakeHandler) GetSecret(name, namespace string) (*k8scorev1.Secret, error) {
 	for _, r := range c.Secrets {
 		if r.Name == name && r.Namespace == namespace {
 			return r, nil
 		}
 	}
-	return nil, k8sErrors.NewNotFound(schema.GroupResource{}, "foo")
+	return nil, k8serrors.NewNotFound(k8sschema.GroupResource{}, "foo")
 }
 
 // ValidateAppRepository fake
@@ -113,6 +113,6 @@ func (c *FakeHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
 }
 
 // CanI fake
-func (c *FakeHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
+func (c *FakeHandler) CanI(resourceAttributes *k8sauthorizationv1.ResourceAttributes) (bool, error) {
 	return c.Can, c.Err
 }

@@ -6,81 +6,81 @@ package clientgetter
 import (
 	"context"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	"github.com/kubeapps/kubeapps/pkg/agent"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/kube"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	apiscore "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	helmagent "github.com/kubeapps/kubeapps/pkg/agent"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	helmkube "helm.sh/helm/v3/pkg/kube"
+	k8sapiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	k8dynamicclient "k8s.io/client-go/dynamic"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8srest "k8s.io/client-go/rest"
 	log "k8s.io/klog/v2"
 )
 
-type HelmActionConfigGetterFunc func(ctx context.Context, namespace string) (*action.Configuration, error)
-type ClientGetterFunc func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error)
-type ClientGetterWithApiExtFunc func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error)
+type HelmActionConfigGetterFunc func(ctx context.Context, namespace string) (*helmaction.Configuration, error)
+type ClientGetterFunc func(ctx context.Context, cluster string) (k8stypedclient.Interface, k8dynamicclient.Interface, error)
+type ClientGetterWithApiExtFunc func(context.Context) (k8stypedclient.Interface, k8dynamicclient.Interface, k8sapiextensionsclient.Interface, error)
 
-func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster string) HelmActionConfigGetterFunc {
-	return func(ctx context.Context, namespace string) (*action.Configuration, error) {
+func NewHelmActionConfigGetter(configGetter apiscore.KubernetesConfigGetter, cluster string) HelmActionConfigGetterFunc {
+	return func(ctx context.Context, namespace string) (*helmaction.Configuration, error) {
 		if configGetter == nil {
-			return nil, status.Errorf(codes.Internal, "configGetter arg required")
+			return nil, grpcstatus.Errorf(grpccodes.Internal, "configGetter arg required")
 		}
 		// The Flux plugin currently supports interactions with the default (kubeapps)
 		// cluster only:
 		config, err := configGetter(ctx, cluster)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+			return nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get config due to: %v", err)
 		}
 
-		restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
-		clientSet, err := kubernetes.NewForConfig(config)
+		restClientGetter := helmagent.NewConfigFlagsFromCluster(namespace, config)
+		clientSet, err := k8stypedclient.NewForConfig(config)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to create kubernetes client due to: %v", err)
+			return nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to create kubernetes client due to: %v", err)
 		}
 		// TODO(mnelson): Update to allow different helm storage options.
-		storage := agent.StorageForSecrets(namespace, clientSet)
-		return &action.Configuration{
+		storage := helmagent.StorageForSecrets(namespace, clientSet)
+		return &helmaction.Configuration{
 			RESTClientGetter: restClientGetter,
-			KubeClient:       kube.New(restClientGetter),
+			KubeClient:       helmkube.New(restClientGetter),
 			Releases:         storage,
 			Log:              log.Infof,
 		}, nil
 	}
 }
 
-func NewClientGetter(configGetter core.KubernetesConfigGetter) ClientGetterFunc {
-	return func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
+func NewClientGetter(configGetter apiscore.KubernetesConfigGetter) ClientGetterFunc {
+	return func(ctx context.Context, cluster string) (k8stypedclient.Interface, k8dynamicclient.Interface, error) {
 		if configGetter == nil {
-			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+			return nil, nil, grpcstatus.Errorf(grpccodes.Internal, "configGetter arg required")
 		}
 		config, err := configGetter(ctx, cluster)
 		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err)
+			return nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get config : %v", err)
 		}
 		typedClient, dynamicClient, _, err := clientGetterHelper(config)
 		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
+			return nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get client due to: %v", err)
 		}
 		return typedClient, dynamicClient, nil
 	}
 }
 
-func NewClientGetterWithApiExt(configGetter core.KubernetesConfigGetter, cluster string) ClientGetterWithApiExtFunc {
-	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
+func NewClientGetterWithApiExt(configGetter apiscore.KubernetesConfigGetter, cluster string) ClientGetterWithApiExtFunc {
+	return func(ctx context.Context) (k8stypedclient.Interface, k8dynamicclient.Interface, k8sapiextensionsclient.Interface, error) {
 		if configGetter == nil {
-			return nil, nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+			return nil, nil, nil, grpcstatus.Errorf(grpccodes.Internal, "configGetter arg required")
 		}
 		// The Flux plugin currently supports interactions with the default (kubeapps)
 		// cluster only:
 		if config, err := configGetter(ctx, cluster); err != nil {
-			if status.Code(err) == codes.Unauthenticated {
+			if grpcstatus.Code(err) == grpccodes.Unauthenticated {
 				// want to make sure we return same status in this case
-				return nil, nil, nil, status.Errorf(codes.Unauthenticated, "unable to get config due to: %v", err)
+				return nil, nil, nil, grpcstatus.Errorf(grpccodes.Unauthenticated, "unable to get config due to: %v", err)
 			} else {
-				return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+				return nil, nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get config due to: %v", err)
 			}
 		} else {
 			return clientGetterHelper(config)
@@ -94,27 +94,27 @@ func NewClientGetterWithApiExt(configGetter core.KubernetesConfigGetter, cluster
 // will be granted additional read privileges, we also need to ensure that the plugin can get a
 // config based on the service account rather than the request context
 func NewBackgroundClientGetter() ClientGetterWithApiExtFunc {
-	return func(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-		if config, err := rest.InClusterConfig(); err != nil {
-			return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get in cluster config due to: %v", err)
+	return func(ctx context.Context) (k8stypedclient.Interface, k8dynamicclient.Interface, k8sapiextensionsclient.Interface, error) {
+		if config, err := k8srest.InClusterConfig(); err != nil {
+			return nil, nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get in cluster config due to: %v", err)
 		} else {
 			return clientGetterHelper(config)
 		}
 	}
 }
 
-func clientGetterHelper(config *rest.Config) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-	typedClient, err := kubernetes.NewForConfig(config)
+func clientGetterHelper(config *k8srest.Config) (k8stypedclient.Interface, k8dynamicclient.Interface, k8sapiextensionsclient.Interface, error) {
+	typedClient, err := k8stypedclient.NewForConfig(config)
 	if err != nil {
-		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client : %v", err)
+		return nil, nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get typed client : %v", err)
 	}
-	dynamicClient, err := dynamic.NewForConfig(config)
+	dynamicClient, err := k8dynamicclient.NewForConfig(config)
 	if err != nil {
-		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
+		return nil, nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
 	}
-	apiExtensions, err := apiext.NewForConfig(config)
+	apiExtensions, err := k8sapiextensionsclient.NewForConfig(config)
 	if err != nil {
-		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
+		return nil, nil, nil, grpcstatus.Errorf(grpccodes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
 	}
 	return typedClient, dynamicClient, apiExtensions, nil
 }

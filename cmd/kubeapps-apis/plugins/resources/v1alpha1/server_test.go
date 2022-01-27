@@ -12,40 +12,39 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
-	apps "k8s.io/api/apps/v1"
-	core "k8s.io/api/core/v1"
-	rbac "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-	dynfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
-	typfake "k8s.io/client-go/kubernetes/fake"
-
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
 	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugin_test"
+	resourcesGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
+	plugintest "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugin_test"
+	grpc "google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcmetadata "google.golang.org/grpc/metadata"
+	grpcstatus "google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+	k8sappsv1 "k8s.io/api/apps/v1"
+	k8scorev1 "k8s.io/api/core/v1"
+	k8srbacv1 "k8s.io/api/rbac/v1"
+	k8smeta "k8s.io/apimachinery/pkg/api/meta"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8dynamicclient "k8s.io/client-go/dynamic"
+	k8dynamicclientfake "k8s.io/client-go/dynamic/fake"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8stypedclientfake "k8s.io/client-go/kubernetes/fake"
 )
 
 const bufSize = 1024 * 1024
 
 var fakePkgsPlugin *pluginsGRPCv1alpha1.Plugin = &pluginsGRPCv1alpha1.Plugin{Name: "fake.packages", Version: "v1alpha1"}
 
-func resourceRefsForObjects(t *testing.T, objects ...runtime.Object) []*pkgsGRPCv1alpha1.ResourceRef {
+func resourceRefsForObjects(t *testing.T, objects ...k8sruntime.Object) []*pkgsGRPCv1alpha1.ResourceRef {
 	refs := []*pkgsGRPCv1alpha1.ResourceRef{}
 	for _, obj := range objects {
 		k8sObjValue := reflect.ValueOf(obj).Elem()
-		objMeta, ok := k8sObjValue.FieldByName("ObjectMeta").Interface().(metav1.ObjectMeta)
+		objMeta, ok := k8sObjValue.FieldByName("ObjectMeta").Interface().(k8smetav1.ObjectMeta)
 		if !ok {
 			t.Fatalf("failed to retrieve object metadata for: %+v", objMeta)
 		}
@@ -64,7 +63,7 @@ func resourceRefsForObjects(t *testing.T, objects ...runtime.Object) []*pkgsGRPC
 // and a test core packages service, but using a buf connection (ie. no need for
 // slow network port etc.). More at
 // https://stackoverflow.com/a/52080545
-func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.ResourcesServiceClient, *dynfake.FakeDynamicClient, func()) {
+func getResourcesClient(t *testing.T, objects ...k8sruntime.Object) (resourcesGRPCv1alpha1.ResourcesServiceClient, *k8dynamicclientfake.FakeDynamicClient, func()) {
 	lis := bufconn.Listen(bufSize)
 	s := grpc.NewServer()
 	bufDialer := func(context.Context, string) (net.Conn, error) {
@@ -77,23 +76,23 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 	}
 
 	// Create and register a fake packages plugin returning resourcerefs for objects.
-	fakePkgsPluginServer := &plugin_test.TestPackagingPluginServer{
+	fakePkgsPluginServer := &plugintest.TestPackagingPluginServer{
 		Plugin:       fakePkgsPlugin,
 		ResourceRefs: resourceRefsForObjects(t, objects...),
 	}
 	pkgsGRPCv1alpha1.RegisterPackagesServiceServer(s, fakePkgsPluginServer)
 
-	scheme := runtime.NewScheme()
+	scheme := k8sruntime.NewScheme()
 	t.Logf("loading fake client with objects: %+v", objects)
-	fakeDynamicClient := dynfake.NewSimpleDynamicClient(
+	fakeDynamicClient := k8dynamicclientfake.NewSimpleDynamicClient(
 		scheme,
 		objects...,
 	)
 	// Create the resources service server.
-	v1alpha1.RegisterResourcesServiceServer(s, &Server{
+	resourcesGRPCv1alpha1.RegisterResourcesServiceServer(s, &Server{
 		// Use a client getter that returns a dynamic client prepped with the
 		// specified objects.
-		clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+		clientGetter: func(context.Context, string) (k8stypedclient.Interface, k8dynamicclient.Interface, error) {
 			return nil, fakeDynamicClient, nil
 		},
 		// Use a corePackagesClientGetter that returns a client connected to our
@@ -103,9 +102,9 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 		},
 		// For testing, define a kindToResource converter that doesn't require
 		// a rest mapper.
-		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error) {
-			gvr, _ := meta.UnsafeGuessKindToResource(gvk)
-			return gvr, meta.RESTScopeNameNamespace, nil
+		kindToResource: func(mapper k8smeta.RESTMapper, gvk k8sschema.GroupVersionKind) (k8sschema.GroupVersionResource, k8smeta.RESTScopeName, error) {
+			gvr, _ := k8smeta.UnsafeGuessKindToResource(gvk)
+			return gvr, k8smeta.RESTScopeNameNamespace, nil
 		},
 	})
 
@@ -118,7 +117,7 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 		}
 	}()
 
-	return v1alpha1.NewResourcesServiceClient(conn), fakeDynamicClient, func() {
+	return resourcesGRPCv1alpha1.NewResourcesServiceClient(conn), fakeDynamicClient, func() {
 		conn.Close()
 		lis.Close()
 	}
@@ -127,15 +126,15 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 func TestGetResources(t *testing.T) {
 	testCases := []struct {
 		name              string
-		request           *v1alpha1.GetResourcesRequest
+		request           *resourcesGRPCv1alpha1.GetResourcesRequest
 		withoutAuthz      bool
-		clusterObjects    []runtime.Object
-		expectedErrorCode codes.Code
-		expectedResources []*v1alpha1.GetResourcesResponse
+		clusterObjects    []k8sruntime.Object
+		expectedErrorCode grpccodes.Code
+		expectedResources []*resourcesGRPCv1alpha1.GetResourcesResponse
 	}{
 		{
 			name: "it returns permission denied for a request without auth",
-			request: &v1alpha1.GetResourcesRequest{
+			request: &resourcesGRPCv1alpha1.GetResourcesRequest{
 				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
@@ -146,11 +145,11 @@ func TestGetResources(t *testing.T) {
 				},
 			},
 			withoutAuthz:      true,
-			expectedErrorCode: codes.PermissionDenied,
+			expectedErrorCode: grpccodes.PermissionDenied,
 		},
 		{
 			name: "it gets all resources for an installed app when the filter is empty",
-			request: &v1alpha1.GetResourcesRequest{
+			request: &resourcesGRPCv1alpha1.GetResourcesRequest{
 				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
@@ -160,30 +159,30 @@ func TestGetResources(t *testing.T) {
 					Plugin:     fakePkgsPlugin,
 				},
 			},
-			clusterObjects: []runtime.Object{
-				&apps.Deployment{
-					TypeMeta: metav1.TypeMeta{
+			clusterObjects: []k8sruntime.Object{
+				&k8sappsv1.Deployment{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "Deployment",
 						APIVersion: "apps/v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "some-deployment",
 						Namespace: "default",
 					},
 				},
-				&core.Service{
-					TypeMeta: metav1.TypeMeta{
+				&k8scorev1.Service{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "Service",
 						APIVersion: "core/v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "some-service",
 						Namespace: "default",
 					},
 				},
 			},
-			expectedErrorCode: codes.OK,
-			expectedResources: []*v1alpha1.GetResourcesResponse{
+			expectedErrorCode: grpccodes.OK,
+			expectedResources: []*resourcesGRPCv1alpha1.GetResourcesResponse{
 				{
 					ResourceRef: &pkgsGRPCv1alpha1.ResourceRef{
 						ApiVersion: "apps/v1",
@@ -204,7 +203,7 @@ func TestGetResources(t *testing.T) {
 		},
 		{
 			name: "it gets only requested resources for an installed app when the filter is specified",
-			request: &v1alpha1.GetResourcesRequest{
+			request: &resourcesGRPCv1alpha1.GetResourcesRequest{
 				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
@@ -222,30 +221,30 @@ func TestGetResources(t *testing.T) {
 					},
 				},
 			},
-			clusterObjects: []runtime.Object{
-				&apps.Deployment{
-					TypeMeta: metav1.TypeMeta{
+			clusterObjects: []k8sruntime.Object{
+				&k8sappsv1.Deployment{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "Deployment",
 						APIVersion: "apps/v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "some-deployment",
 						Namespace: "default",
 					},
 				},
-				&core.Service{
-					TypeMeta: metav1.TypeMeta{
+				&k8scorev1.Service{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "Service",
 						APIVersion: "core/v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "some-service",
 						Namespace: "default",
 					},
 				},
 			},
-			expectedErrorCode: codes.OK,
-			expectedResources: []*v1alpha1.GetResourcesResponse{
+			expectedErrorCode: grpccodes.OK,
+			expectedResources: []*resourcesGRPCv1alpha1.GetResourcesResponse{
 				{
 					ResourceRef: &pkgsGRPCv1alpha1.ResourceRef{
 						ApiVersion: "core/v1",
@@ -258,7 +257,7 @@ func TestGetResources(t *testing.T) {
 		},
 		{
 			name: "it returns invalid argument if a requested resource isn't part of the installed package",
-			request: &v1alpha1.GetResourcesRequest{
+			request: &resourcesGRPCv1alpha1.GetResourcesRequest{
 				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
@@ -275,23 +274,23 @@ func TestGetResources(t *testing.T) {
 					},
 				},
 			},
-			clusterObjects: []runtime.Object{
-				&apps.Deployment{
-					TypeMeta: metav1.TypeMeta{
+			clusterObjects: []k8sruntime.Object{
+				&k8sappsv1.Deployment{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "Deployment",
 						APIVersion: "apps/v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "some-deployment",
 						Namespace: "default",
 					},
 				},
 			},
-			expectedErrorCode: codes.InvalidArgument,
+			expectedErrorCode: grpccodes.InvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if request is to watch all packages implicitly (ie. empty resource refs filter in request)",
-			request: &v1alpha1.GetResourcesRequest{
+			request: &resourcesGRPCv1alpha1.GetResourcesRequest{
 				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
@@ -302,11 +301,11 @@ func TestGetResources(t *testing.T) {
 				},
 				Watch: true,
 			},
-			expectedErrorCode: codes.InvalidArgument,
+			expectedErrorCode: grpccodes.InvalidArgument,
 		},
 		{
 			name: "it gets requested resources from different namespaces when they belong to the installed package",
-			request: &v1alpha1.GetResourcesRequest{
+			request: &resourcesGRPCv1alpha1.GetResourcesRequest{
 				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
@@ -324,20 +323,20 @@ func TestGetResources(t *testing.T) {
 					},
 				},
 			},
-			clusterObjects: []runtime.Object{
-				&core.Service{
-					TypeMeta: metav1.TypeMeta{
+			clusterObjects: []k8sruntime.Object{
+				&k8scorev1.Service{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "Service",
 						APIVersion: "core/v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "some-service",
 						Namespace: "other-namespace",
 					},
 				},
 			},
-			expectedErrorCode: codes.OK,
-			expectedResources: []*v1alpha1.GetResourcesResponse{
+			expectedErrorCode: grpccodes.OK,
+			expectedResources: []*resourcesGRPCv1alpha1.GetResourcesResponse{
 				{
 					ResourceRef: &pkgsGRPCv1alpha1.ResourceRef{
 						ApiVersion: "core/v1",
@@ -350,7 +349,7 @@ func TestGetResources(t *testing.T) {
 		},
 		{
 			name: "it gets non-namespaced requested resources when they belong to the installed package",
-			request: &v1alpha1.GetResourcesRequest{
+			request: &resourcesGRPCv1alpha1.GetResourcesRequest{
 				InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
 					Context: &pkgsGRPCv1alpha1.Context{
 						Cluster:   "default",
@@ -367,19 +366,19 @@ func TestGetResources(t *testing.T) {
 					},
 				},
 			},
-			clusterObjects: []runtime.Object{
-				&rbac.ClusterRole{
-					TypeMeta: metav1.TypeMeta{
+			clusterObjects: []k8sruntime.Object{
+				&k8srbacv1.ClusterRole{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "ClusterRole",
 						APIVersion: "rbac/v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name: "some-cluster-role",
 					},
 				},
 			},
-			expectedErrorCode: codes.OK,
-			expectedResources: []*v1alpha1.GetResourcesResponse{
+			expectedErrorCode: grpccodes.OK,
+			expectedResources: []*resourcesGRPCv1alpha1.GetResourcesResponse{
 				{
 					ResourceRef: &pkgsGRPCv1alpha1.ResourceRef{
 						ApiVersion: "rbac/v1",
@@ -398,10 +397,10 @@ func TestGetResources(t *testing.T) {
 	}
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
-		v1alpha1.GetResourcesResponse{},
+		resourcesGRPCv1alpha1.GetResourcesResponse{},
 		pkgsGRPCv1alpha1.ResourceRef{},
 	)
-	ignoreManifest := cmpopts.IgnoreFields(v1alpha1.GetResourcesResponse{}, "Manifest")
+	ignoreManifest := cmpopts.IgnoreFields(resourcesGRPCv1alpha1.GetResourcesResponse{}, "Manifest")
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -413,7 +412,7 @@ func TestGetResources(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
 			if !tc.withoutAuthz {
-				ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "some-auth-token")
+				ctx = grpcmetadata.AppendToOutgoingContext(ctx, "authorization", "some-auth-token")
 			}
 
 			responseStream, err := client.GetResources(ctx, tc.request)
@@ -421,14 +420,14 @@ func TestGetResources(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			var resources []*v1alpha1.GetResourcesResponse
+			var resources []*resourcesGRPCv1alpha1.GetResourcesResponse
 			for numResponses := 0; numResponses < len(tc.expectedResources); numResponses++ {
 				resource, err := responseStream.Recv()
 				if err == io.EOF {
 					break
 				}
 				if err != nil {
-					if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+					if got, want := grpcstatus.Code(err), tc.expectedErrorCode; got != want {
 						t.Fatalf("got: %s, want: %s, err: %+v", got, want, err)
 					}
 					// If it was an expected error, we continue to the next test.
@@ -448,46 +447,46 @@ func TestGetResources(t *testing.T) {
 func TestGetServiceAccountNames(t *testing.T) {
 	testCases := []struct {
 		name               string
-		request            *v1alpha1.GetServiceAccountNamesRequest
-		existingObjects    []runtime.Object
+		request            *resourcesGRPCv1alpha1.GetServiceAccountNamesRequest
+		existingObjects    []k8sruntime.Object
 		expectedResponse   []string
-		expectedStatusCode codes.Code
+		expectedStatusCode grpccodes.Code
 	}{
 		{
 			name: "returns expected SAs",
-			request: &v1alpha1.GetServiceAccountNamesRequest{
+			request: &resourcesGRPCv1alpha1.GetServiceAccountNamesRequest{
 				Context: &pkgsGRPCv1alpha1.Context{
 					Cluster:   "default",
 					Namespace: "default",
 				},
 			},
-			existingObjects: []runtime.Object{
-				&core.ServiceAccount{
-					TypeMeta: metav1.TypeMeta{
+			existingObjects: []k8sruntime.Object{
+				&k8scorev1.ServiceAccount{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "ServiceAccount",
 						APIVersion: "v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "some-service-account",
 						Namespace: "default",
 					},
 				},
-				&core.ServiceAccount{
-					TypeMeta: metav1.TypeMeta{
+				&k8scorev1.ServiceAccount{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "ServiceAccount",
 						APIVersion: "v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "another-service-account",
 						Namespace: "default",
 					},
 				},
-				&core.ServiceAccount{
-					TypeMeta: metav1.TypeMeta{
+				&k8scorev1.ServiceAccount{
+					TypeMeta: k8smetav1.TypeMeta{
 						Kind:       "ServiceAccount",
 						APIVersion: "v1",
 					},
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      "unwanted-service-account",
 						Namespace: "other-ns",
 					},
@@ -501,19 +500,19 @@ func TestGetServiceAccountNames(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return typfake.NewSimpleClientset(tc.existingObjects...), nil, nil
+				clientGetter: func(context.Context, string) (k8stypedclient.Interface, k8dynamicclient.Interface, error) {
+					return k8stypedclientfake.NewSimpleClientset(tc.existingObjects...), nil, nil
 				},
 			}
 
 			GetServiceAccountNamesResponse, err := s.GetServiceAccountNames(context.Background(), tc.request)
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := grpcstatus.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 
-			// Only check the response for OK status.
-			if tc.expectedStatusCode == codes.OK {
+			// Only check the response for OK grpcstatus.
+			if tc.expectedStatusCode == grpccodes.OK {
 				if GetServiceAccountNamesResponse == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {

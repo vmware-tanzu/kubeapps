@@ -12,28 +12,28 @@ import (
 	"time"
 
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	apprepoclient "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
-	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
-	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/kube"
+	apprepoinformers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
+	apprepolisters "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
 	log "github.com/sirupsen/logrus"
-	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	k8sbatchv1 "k8s.io/api/batch/v1"
+	k8sbatchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
-	kubeinformers "k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
-	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	batchlisters "k8s.io/client-go/listers/batch/v1beta1"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/workqueue"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8sruntimeutil "k8s.io/apimachinery/pkg/util/runtime"
+	k8swait "k8s.io/apimachinery/pkg/util/wait"
+	k8sinformers "k8s.io/client-go/informers"
+	k8stypedclient "k8s.io/client-go/kubernetes"
+	k8sscheme "k8s.io/client-go/kubernetes/scheme"
+	k8stypedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	k8sbatchlistersv1 "k8s.io/client-go/listers/batch/v1beta1"
+	k8stoolscache "k8s.io/client-go/tools/cache"
+	k8stoolsrecord "k8s.io/client-go/tools/record"
+	k8workqueue "k8s.io/client-go/util/workqueue"
 )
 
 const controllerAgentName = "apprepository-controller"
@@ -63,34 +63,34 @@ const (
 // Controller is the controller implementation for AppRepository resources
 type Controller struct {
 	// kubeclientset is a standard kubernetes clientset
-	kubeclientset kubernetes.Interface
+	kubeclientset k8stypedclient.Interface
 	// apprepoclientset is the clientset for AppRepository resources
-	apprepoclientset clientset.Interface
+	apprepoclientset apprepoclient.Interface
 
-	cronjobsLister batchlisters.CronJobLister
-	cronjobsSynced cache.InformerSynced
-	appreposLister listers.AppRepositoryLister
-	appreposSynced cache.InformerSynced
+	cronjobsLister k8sbatchlistersv1.CronJobLister
+	cronjobsSynced k8stoolscache.InformerSynced
+	appreposLister apprepolisters.AppRepositoryLister
+	appreposSynced k8stoolscache.InformerSynced
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
 	// processed instead of performing it as soon as a change happens. This
 	// means we can ensure we only process a fixed amount of resources at a
 	// time, and makes it easy to ensure we are never processing the same item
 	// simultaneously in two different workers.
-	workqueue workqueue.RateLimitingInterface
+	workqueue k8workqueue.RateLimitingInterface
 	// recorder is an event recorder for recording Event resources to the
 	// Kubernetes API.
-	recorder record.EventRecorder
+	recorder k8stoolsrecord.EventRecorder
 
 	conf Config
 }
 
 // NewController returns a new sample controller
 func NewController(
-	kubeclientset kubernetes.Interface,
-	apprepoclientset clientset.Interface,
-	kubeInformerFactory kubeinformers.SharedInformerFactory,
-	apprepoInformerFactory informers.SharedInformerFactory,
+	kubeclientset k8stypedclient.Interface,
+	apprepoclientset apprepoclient.Interface,
+	kubeInformerFactory k8sinformers.SharedInformerFactory,
+	apprepoInformerFactory apprepoinformers.SharedInformerFactory,
 	conf *Config) *Controller {
 
 	// obtain references to shared index informers for the CronJob and
@@ -101,12 +101,12 @@ func NewController(
 	// Create event broadcaster
 	// Add apprepository-controller types to the default Kubernetes Scheme so
 	// Events can be logged for apprepository-controller types.
-	appreposcheme.AddToScheme(scheme.Scheme)
+	appreposcheme.AddToScheme(k8sscheme.Scheme)
 	log.Info("Creating event broadcaster")
-	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster := k8stoolsrecord.NewBroadcaster()
 	eventBroadcaster.StartLogging(log.Infof)
-	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
-	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
+	eventBroadcaster.StartRecordingToSink(&k8stypedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
+	recorder := eventBroadcaster.NewRecorder(k8sscheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	controller := &Controller{
 		kubeclientset:    kubeclientset,
@@ -115,14 +115,14 @@ func NewController(
 		cronjobsSynced:   cronjobInformer.Informer().HasSynced,
 		appreposLister:   apprepoInformer.Lister(),
 		appreposSynced:   apprepoInformer.Informer().HasSynced,
-		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "AppRepositories"),
+		workqueue:        k8workqueue.NewNamedRateLimitingQueue(k8workqueue.DefaultControllerRateLimiter(), "AppRepositories"),
 		recorder:         recorder,
 		conf:             *conf,
 	}
 
 	log.Info("Setting up event handlers")
 	// Set up an event handler for when AppRepository resources change
-	apprepoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	apprepoInformer.Informer().AddEventHandler(k8stoolscache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueAppRepo,
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldApp := oldObj.(*apprepov1alpha1.AppRepository)
@@ -132,7 +132,7 @@ func NewController(
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+			key, err := k8stoolscache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
 				controller.workqueue.AddRateLimited(key)
 			}
@@ -146,7 +146,7 @@ func NewController(
 	// to implement custom logic for handling CronJob resources. More info on this
 	// pattern:
 	// https://github.com/kubernetes/community/blob/8cafef897a22026d42f5e5bb3f104febe7e29830/contributors/devel/controllers.md
-	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	cronjobInformer.Informer().AddEventHandler(k8stoolscache.ResourceEventHandlerFuncs{
 		DeleteFunc: controller.handleObject,
 	})
 
@@ -158,7 +158,7 @@ func NewController(
 // is closed, at which point it will shutdown the workqueue and wait for
 // workers to finish processing their current work items.
 func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
-	defer runtime.HandleCrash()
+	defer k8sruntimeutil.HandleCrash()
 	defer c.workqueue.ShutDown()
 
 	// Start the informer factories to begin populating the informer caches
@@ -166,14 +166,14 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 
 	// Wait for the caches to be synced before starting workers
 	log.Info("Waiting for informer caches to sync")
-	if ok := cache.WaitForCacheSync(stopCh, c.cronjobsSynced, c.appreposSynced); !ok {
+	if ok := k8stoolscache.WaitForCacheSync(stopCh, c.cronjobsSynced, c.appreposSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
 	log.Info("Starting workers")
 	// Launch two workers to process AppRepository resources
 	for i := 0; i < threadiness; i++ {
-		go wait.Until(c.runWorker, time.Second, stopCh)
+		go k8swait.Until(c.runWorker, time.Second, stopCh)
 	}
 
 	log.Info("Started workers")
@@ -221,7 +221,7 @@ func (c *Controller) processNextWorkItem() bool {
 			// Forget here else we'd go into a loop of attempting to
 			// process a work item that is invalid.
 			c.workqueue.Forget(obj)
-			runtime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
+			k8sruntimeutil.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
 			return nil
 		}
 		// Run the syncHandler, passing it the namespace/name string of the
@@ -237,7 +237,7 @@ func (c *Controller) processNextWorkItem() bool {
 	}(obj)
 
 	if err != nil {
-		runtime.HandleError(err)
+		k8sruntimeutil.HandleError(err)
 		return true
 	}
 
@@ -249,9 +249,9 @@ func (c *Controller) processNextWorkItem() bool {
 // resource with the current status of the resource.
 func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	namespace, name, err := k8stoolscache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
+		k8sruntimeutil.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
 
@@ -260,10 +260,10 @@ func (c *Controller) syncHandler(key string) error {
 	if err != nil {
 		// The AppRepository resource may no longer exist, in which case we stop
 		// processing.
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			log.Infof("AppRepository '%s' no longer exists so performing cleanup of charts from the DB", key)
 			// Trigger a Job to perfrom the cleanup of the charts in the DB corresponding to deleted AppRepository
-			_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCleanupJob(c.conf.KubeappsNamespace, namespace, name, c.conf), metav1.CreateOptions{})
+			_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCleanupJob(c.conf.KubeappsNamespace, namespace, name, c.conf), k8smetav1.CreateOptions{})
 			if err != nil {
 				log.Errorf("Unable to create cleanup job: %v", err)
 				return err
@@ -271,8 +271,8 @@ func (c *Controller) syncHandler(key string) error {
 
 			// TODO: Workaround until the sync jobs are moved to the repoNamespace (#1647)
 			// Delete the cronjob in the Kubeapps namespace to avoid re-syncing the repository
-			err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Delete(context.TODO(), cronJobName(namespace, name), metav1.DeleteOptions{})
-			if err != nil && !errors.IsNotFound(err) {
+			err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Delete(context.TODO(), cronJobName(namespace, name), k8smetav1.DeleteOptions{})
+			if err != nil && !k8serrors.IsNotFound(err) {
 				log.Errorf("Unable to delete sync cronjob: %v", err)
 				return err
 			}
@@ -285,25 +285,25 @@ func (c *Controller) syncHandler(key string) error {
 	cronjobName := cronJobName(namespace, name)
 	cronjob, err := c.cronjobsLister.CronJobs(c.conf.KubeappsNamespace).Get(cronjobName)
 	// If the resource doesn't exist, we'll create it
-	if errors.IsNotFound(err) {
+	if k8serrors.IsNotFound(err) {
 		log.Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCronJob(apprepo, c.conf), metav1.CreateOptions{})
+		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCronJob(apprepo, c.conf), k8smetav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
 
 		// Trigger a manual Job for the initial sync
-		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
+		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), k8smetav1.CreateOptions{})
 	} else if err == nil {
 		// If the resource already exists, we'll update it
 		log.Infof("Updating CronJob %q in namespace %q for AppRepository %q in namespace %q", cronjobName, c.conf.KubeappsNamespace, apprepo.GetName(), apprepo.GetNamespace())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), newCronJob(apprepo, c.conf), metav1.UpdateOptions{})
+		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), newCronJob(apprepo, c.conf), k8smetav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
 
 		// The AppRepository has changed, launch a manual Job
-		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
+		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), k8smetav1.CreateOptions{})
 	}
 
 	// If an error occurs during Get/Create, we'll requeue the item so we can
@@ -316,7 +316,7 @@ func (c *Controller) syncHandler(key string) error {
 	// If the CronJob is not controlled by this AppRepository resource and it is not a
 	// cronjob for an app repo in another namespace, then we should
 	// log a warning to the event recorder and return it.
-	if !metav1.IsControlledBy(cronjob, apprepo) && !objectBelongsTo(cronjob, apprepo) {
+	if !k8smetav1.IsControlledBy(cronjob, apprepo) && !objectBelongsTo(cronjob, apprepo) {
 		msg := fmt.Sprintf(MessageResourceExists, cronjob.Name)
 		c.recorder.Event(apprepo, corev1.EventTypeWarning, ErrResourceExists, msg)
 		return fmt.Errorf(msg)
@@ -330,7 +330,7 @@ func (c *Controller) syncHandler(key string) error {
 
 // belongsTo is similar to IsControlledBy, but enables us to establish a relationship
 // between cronjobs and app repositories in different namespaces.
-func objectBelongsTo(object, parent metav1.Object) bool {
+func objectBelongsTo(object, parent k8smetav1.Object) bool {
 	labels := object.GetLabels()
 	return labels[LabelRepoName] == parent.GetName() && labels[LabelRepoNamespace] == parent.GetNamespace()
 }
@@ -341,8 +341,8 @@ func objectBelongsTo(object, parent metav1.Object) bool {
 func (c *Controller) enqueueAppRepo(obj interface{}) {
 	var key string
 	var err error
-	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
-		runtime.HandleError(err)
+	if key, err = k8stoolscache.MetaNamespaceKeyFunc(obj); err != nil {
+		k8sruntimeutil.HandleError(err)
 		return
 	}
 	c.workqueue.AddRateLimited(key)
@@ -354,23 +354,23 @@ func (c *Controller) enqueueAppRepo(obj interface{}) {
 // It then enqueues that AppRepository resource to be processed. If the object
 // does not have an appropriate OwnerReference, it will simply be skipped.
 func (c *Controller) handleObject(obj interface{}) {
-	var object metav1.Object
+	var object k8smetav1.Object
 	var ok bool
-	if object, ok = obj.(metav1.Object); !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+	if object, ok = obj.(k8smetav1.Object); !ok {
+		tombstone, ok := obj.(k8stoolscache.DeletedFinalStateUnknown)
 		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object, invalid type"))
+			k8sruntimeutil.HandleError(fmt.Errorf("error decoding object, invalid type"))
 			return
 		}
-		object, ok = tombstone.Obj.(metav1.Object)
+		object, ok = tombstone.Obj.(k8smetav1.Object)
 		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
+			k8sruntimeutil.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
 			return
 		}
 		log.Infof("Recovered deleted object '%s' from tombstone", object.GetName())
 	}
 	log.Infof("Processing object: %s", object.GetName())
-	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
+	if ownerRef := k8smetav1.GetControllerOf(object); ownerRef != nil {
 		// If this object is not owned by an AppRepository, we should not do
 		// anything more with it.
 		if ownerRef.Kind != "AppRepository" {
@@ -395,10 +395,10 @@ func (c *Controller) handleObject(obj interface{}) {
 
 // ownerReferencesForAppRepo returns populated owner references for app repos in the same namespace
 // as the cronjob and nil otherwise.
-func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childNamespace string) []metav1.OwnerReference {
+func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childNamespace string) []k8smetav1.OwnerReference {
 	if apprepo.GetNamespace() == childNamespace {
-		return []metav1.OwnerReference{
-			*metav1.NewControllerRef(apprepo, schema.GroupVersionKind{
+		return []k8smetav1.OwnerReference{
+			*k8smetav1.NewControllerRef(apprepo, k8sschema.GroupVersionKind{
 				Group:   apprepov1alpha1.SchemeGroupVersion.Group,
 				Version: apprepov1alpha1.SchemeGroupVersion.Version,
 				Kind:    "AppRepository",
@@ -411,21 +411,21 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
-func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1beta1.CronJob {
-	return &batchv1beta1.CronJob{
-		ObjectMeta: metav1.ObjectMeta{
+func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *k8sbatchv1beta1.CronJob {
+	return &k8sbatchv1beta1.CronJob{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:            cronJobName(apprepo.Namespace, apprepo.Name),
 			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
 			Labels:          jobLabels(apprepo, config),
 			Annotations:     config.ParsedCustomAnnotations,
 		},
-		Spec: batchv1beta1.CronJobSpec{
+		Spec: k8sbatchv1beta1.CronJobSpec{
 			Schedule: config.Crontab,
 			// Set to replace as short-circuit in k8s <1.12
 			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
 			// https://github.com/kubernetes/kubernetes/issues/54870
 			ConcurrencyPolicy: "Replace",
-			JobTemplate: batchv1beta1.JobTemplateSpec{
+			JobTemplate: k8sbatchv1beta1.JobTemplateSpec{
 				Spec: syncJobSpec(apprepo, config),
 			},
 		},
@@ -434,9 +434,9 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1b
 
 // newSyncJob triggers a job for the AppRepository resource. It also sets the
 // appropriate OwnerReferences on the resource
-func newSyncJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.Job {
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
+func newSyncJob(apprepo *apprepov1alpha1.AppRepository, config Config) *k8sbatchv1.Job {
+	return &k8sbatchv1.Job{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			GenerateName:    cronJobName(apprepo.Namespace, apprepo.Name) + "-",
 			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
 			Annotations:     config.ParsedCustomLabels,
@@ -447,7 +447,7 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.
 }
 
 // jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
-func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.JobSpec {
+func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) k8sbatchv1.JobSpec {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
 	if apprepo.Spec.Auth.CustomCA != nil {
@@ -499,7 +499,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	// Add volumes
 	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
 
-	return batchv1.JobSpec{
+	return k8sbatchv1.JobSpec{
 		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
 		Template:                podTemplateSpec,
 	}
@@ -507,9 +507,9 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 
 // newCleanupJob triggers a job for the AppRepository resource. It also sets the
 // appropriate OwnerReferences on the resource
-func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config) *batchv1.Job {
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
+func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config) *k8sbatchv1.Job {
+	return &k8sbatchv1.Job{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			GenerateName: deleteJobName(repoNamespace, name) + "-",
 			Namespace:    kubeappsNamespace,
 			Annotations:  config.ParsedCustomAnnotations,
@@ -520,8 +520,8 @@ func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config)
 }
 
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
-func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
-	return batchv1.JobSpec{
+func cleanupJobSpec(namespace, name string, config Config) k8sbatchv1.JobSpec {
+	return k8sbatchv1.JobSpec{
 		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
@@ -664,7 +664,7 @@ func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alph
 	if apprepo.ObjectMeta.Namespace == config.KubeappsNamespace {
 		return &keyRef
 	}
-	keyRef.LocalObjectReference.Name = kube.KubeappsSecretNameForRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
+	keyRef.LocalObjectReference.Name = kubeutils.KubeappsSecretNameForRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
 	return &keyRef
 }
 

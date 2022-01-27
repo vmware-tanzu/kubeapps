@@ -3,7 +3,9 @@
 
 package kube
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // pinnipedProxyRoundTripper is a round tripper that additionally sets
 // any required headers for the exchange of credentials and request proxying.

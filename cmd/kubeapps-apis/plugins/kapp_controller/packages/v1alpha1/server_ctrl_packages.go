@@ -10,22 +10,22 @@ import (
 	"sync"
 	"time"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	paginate "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	statuserror "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	kappctrlpackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	kappctrldatapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	vendirversionsv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8swait "k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
 )
 
 // GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
-func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
+func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest) (*pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse, error) {
 	// Retrieve parameters from the request
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
@@ -49,7 +49,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	// paginate the list of results
-	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, len(pkgMetadatas))
+	availablePackageSummaries := make([]*pkgsGRPCv1alpha1.AvailablePackageSummary, len(pkgMetadatas))
 
 	// create the waiting group for processing each item aynchronously
 	var wg sync.WaitGroup
@@ -63,7 +63,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		for i, pkgMetadata := range pkgMetadatas {
 			wg.Add(1)
 			if startAt <= i {
-				go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) error {
+				go func(i int, pkgMetadata *kappctrldatapackagingv1alpha1.PackageMetadata) error {
 					defer wg.Done()
 					// fetch the associated packages
 					// Use the field selector to return only Package CRs that match on the spec.refName.
@@ -81,7 +81,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					// generate the availablePackageSummary from the fetched information
 					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
-						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageSummary: %v", err))
+						return grpcstatus.Errorf(grpccodes.Internal, fmt.Sprintf("unable to create the AvailablePackageSummary: %v", err))
 					}
 
 					// append the availablePackageSummary to the slice
@@ -103,7 +103,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
 	// However, should we just return an error if so? See https://github.com/kubeapps/kubeapps/pull/3784#discussion_r754836475
 	// filter out <nil> values
-	availablePackageSummariesNilSafe := []*corev1.AvailablePackageSummary{}
+	availablePackageSummariesNilSafe := []*pkgsGRPCv1alpha1.AvailablePackageSummary{}
 	categories := []string{}
 	for _, availablePackageSummary := range availablePackageSummaries {
 		if availablePackageSummary != nil {
@@ -114,7 +114,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 	// if no results whatsoever, throw an error
 	if len(availablePackageSummariesNilSafe) == 0 {
-		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("no available packages: %v", err))
+		return nil, grpcstatus.Errorf(grpccodes.NotFound, fmt.Sprintf("no available packages: %v", err))
 	}
 
 	// Only return a next page token if the request was for pagination and
@@ -123,7 +123,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if pageSize > 0 && len(availablePackageSummariesNilSafe) == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
-	response := &corev1.GetAvailablePackageSummariesResponse{
+	response := &pkgsGRPCv1alpha1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: availablePackageSummariesNilSafe,
 		Categories:                categories,
 		NextPageToken:             nextPageToken,
@@ -132,7 +132,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 }
 
 // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
-func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
+func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *pkgsGRPCv1alpha1.GetAvailablePackageVersionsRequest) (*pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse, error) {
 	// Retrieve parameters from the request
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
@@ -142,7 +142,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 	// Validate the request
 	if namespace == "" || identifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "Required context or identifier not provided")
 	}
 
 	if cluster == "" {
@@ -157,29 +157,29 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 
 	}
 
 	// TODO(minelson): support configurable version summary for kapp-controller pkgs
 	// as already done for Helm (see #3588 for more info).
-	versions := make([]*corev1.PackageAppVersion, len(pkgVersionsMap[identifier]))
+	versions := make([]*pkgsGRPCv1alpha1.PackageAppVersion, len(pkgVersionsMap[identifier]))
 	for i, v := range pkgVersionsMap[identifier] {
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		versions[i] = &corev1.PackageAppVersion{
+		versions[i] = &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: v.version.String(),
 			AppVersion: v.version.String(),
 		}
 	}
 
-	return &corev1.GetAvailablePackageVersionsResponse{
+	return &pkgsGRPCv1alpha1.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: versions,
 	}, nil
 }
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'kapp_controller' plugin
-func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
+func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *pkgsGRPCv1alpha1.GetAvailablePackageDetailRequest) (*pkgsGRPCv1alpha1.GetAvailablePackageDetailResponse, error) {
 	// Retrieve parameters from the request
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
@@ -192,7 +192,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	// Validate the request
 	if request.GetAvailablePackageRef().GetContext() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef.Context provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "no request AvailablePackageRef.Context provided")
 	}
 
 	if cluster == "" {
@@ -213,7 +213,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 	}
 
 	var foundPkgSemver = &pkgSemver{}
@@ -226,7 +226,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			}
 		}
 		if foundPkgSemver.version == nil {
-			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find %q package with version %q", identifier, requestedPkgVersion))
+			return nil, grpcstatus.Errorf(grpccodes.NotFound, fmt.Sprintf("unable to find %q package with version %q", identifier, requestedPkgVersion))
 		}
 	} else {
 		// If the pkgVersion wasn't specified, grab the packages to find the latest.
@@ -234,7 +234,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			foundPkgSemver = &pkgVersionsMap[identifier][0]
 			requestedPkgVersion = foundPkgSemver.version.String()
 		} else {
-			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", identifier))
+			return nil, grpcstatus.Errorf(grpccodes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", identifier))
 		}
 	}
 
@@ -244,13 +244,13 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 
 	}
 
-	return &corev1.GetAvailablePackageDetailResponse{
+	return &pkgsGRPCv1alpha1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: availablePackageDetail,
 	}, nil
 }
 
 // GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
-func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
+func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest) (*pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse, error) {
 	// Retrieve parameters from the request
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
@@ -277,7 +277,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	// paginate the list of results
-	installedPkgSummaries := make([]*corev1.InstalledPackageSummary, len(pkgInstalls))
+	installedPkgSummaries := make([]*pkgsGRPCv1alpha1.InstalledPackageSummary, len(pkgInstalls))
 
 	// create the waiting group for processing each item aynchronously
 	var wg sync.WaitGroup
@@ -291,7 +291,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		for i, pkgInstall := range pkgInstalls {
 			wg.Add(1)
 			if startAt <= i {
-				go func(i int, pkgInstall *packagingv1alpha1.PackageInstall) error {
+				go func(i int, pkgInstall *kappctrlpackagingv1alpha1.PackageInstall) error {
 					defer wg.Done()
 					// fetch additional information from the package metadata
 					// TODO(agamez): if the repository where the package belongs to is not installed, it will throw an error;
@@ -315,7 +315,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 					// generate the installedPackageSummary from the fetched information
 					installedPackageSummary, err := s.buildInstalledPackageSummary(pkgInstall, pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
-						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
+						return grpcstatus.Errorf(grpccodes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
 					}
 
 					// append the availablePackageSummary to the slice
@@ -339,7 +339,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
 	// However, should we just return an error if so? See https://github.com/kubeapps/kubeapps/pull/3784#discussion_r754836475
 	// filter out <nil> values
-	installedPkgSummariesNilSafe := []*corev1.InstalledPackageSummary{}
+	installedPkgSummariesNilSafe := []*pkgsGRPCv1alpha1.InstalledPackageSummary{}
 	for _, installedPkgSummary := range installedPkgSummaries {
 		if installedPkgSummary != nil {
 			installedPkgSummariesNilSafe = append(installedPkgSummariesNilSafe, installedPkgSummary)
@@ -352,7 +352,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	if pageSize > 0 && len(installedPkgSummariesNilSafe) == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
-	response := &corev1.GetInstalledPackageSummariesResponse{
+	response := &pkgsGRPCv1alpha1.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: installedPkgSummariesNilSafe,
 		NextPageToken:             nextPageToken,
 	}
@@ -360,7 +360,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 }
 
 // GetInstalledPackageDetail returns the package metadata managed by the 'kapp_controller' plugin
-func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
+func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *pkgsGRPCv1alpha1.GetInstalledPackageDetailRequest) (*pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse, error) {
 	// Retrieve parameters from the request
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
@@ -374,7 +374,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	typedClient, _, err := s.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package install
@@ -404,7 +404,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
 	}
 
 	// get the values applies i) get the secret name where it is stored; 2) get the values from the secret
@@ -414,9 +414,9 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		secretRefName := pkgInstallValue.SecretRef.Name
 		// if there is a secret containing the applied values of this installed package, get the them
 		if secretRefName != "" {
-			values, err := typedClient.CoreV1().Secrets(namespace).Get(ctx, secretRefName, metav1.GetOptions{})
+			values, err := typedClient.CoreV1().Secrets(namespace).Get(ctx, secretRefName, k8smetav1.GetOptions{})
 			if err != nil {
-				if errors.IsNotFound(err) {
+				if k8serrors.IsNotFound(err) {
 					log.Warningf("The referenced secret does not exist: %s", statuserror.FromK8sError("get", "Secret", secretRefName, err).Error())
 				} else {
 					return nil, statuserror.FromK8sError("get", "Secret", secretRefName, err)
@@ -438,14 +438,14 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	}
 
-	response := &corev1.GetInstalledPackageDetailResponse{
+	response := &pkgsGRPCv1alpha1.GetInstalledPackageDetailResponse{
 		InstalledPackageDetail: installedPackageDetail,
 	}
 	return response, nil
 }
 
 // CreateInstalledPackage creates an installed package managed by the 'kapp_controller' plugin
-func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
+func (s *Server) CreateInstalledPackage(ctx context.Context, request *pkgsGRPCv1alpha1.CreateInstalledPackageRequest) (*pkgsGRPCv1alpha1.CreateInstalledPackageResponse, error) {
 	// Retrieve parameters from the request
 	targetCluster := request.GetTargetContext().GetCluster()
 	targetNamespace := request.GetTargetContext().GetNamespace()
@@ -455,19 +455,19 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 
 	// Validate the request
 	if request.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "required context or identifier not provided")
 	}
 	if request == nil || request.GetAvailablePackageRef() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
 	if request.GetName() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "no request Name provided")
 	}
 	if request.GetTargetContext() == nil || request.GetTargetContext().GetNamespace() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "no request TargetContext namespace provided")
 	}
 	if request.GetReconciliationOptions() == nil || request.GetReconciliationOptions().GetServiceAccountName() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request ReconciliationOptions serviceAccountName provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "no request ReconciliationOptions serviceAccountName provided")
 	}
 
 	// Retrieve additional parameters from the request
@@ -483,12 +483,12 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	if targetCluster != packageCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "installing packages in other clusters in not supported yet")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "installing packages in other clusters in not supported yet")
 	}
 
 	typedClient, _, err := s.GetClients(ctx, targetCluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package metadata
@@ -513,7 +513,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	// create the Secret in the cluster
 	// TODO(agamez): check when is the best moment to create this object.
 	// See if we can delay the creation until the PackageInstall is successfully created.
-	createdSecret, err := typedClient.CoreV1().Secrets(targetNamespace).Create(ctx, secret, metav1.CreateOptions{})
+	createdSecret, err := typedClient.CoreV1().Secrets(targetNamespace).Create(ctx, secret, k8smetav1.CreateOptions{})
 	if createdSecret == nil || err != nil {
 		return nil, statuserror.FromK8sError("create", "Secret", secret.Name, err)
 	}
@@ -522,7 +522,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	createdPkgInstall, err := s.createPkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall)
 	if err != nil {
 		// clean-up the secret if something fails
-		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
+		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, k8smetav1.DeleteOptions{})
 		if err != nil {
 			return nil, statuserror.FromK8sError("delete", "Secret", secret.Name, err)
 		}
@@ -530,10 +530,10 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// TODO(agamez): some seconds should be enough, however, make it configurable
-	err = wait.PollImmediateWithContext(ctx, time.Second*1, time.Second*5, func(ctx context.Context) (bool, error) {
+	err = k8swait.PollImmediateWithContext(ctx, time.Second*1, time.Second*5, func(ctx context.Context) (bool, error) {
 		_, err := s.getApp(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
 		if err != nil {
-			if errors.IsNotFound(err) {
+			if k8serrors.IsNotFound(err) {
 				// the resource hasn't been created yet
 				return false, nil
 			} else {
@@ -549,8 +549,8 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// generate the response
-	installedRef := &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
+	installedRef := &pkgsGRPCv1alpha1.InstalledPackageReference{
+		Context: &pkgsGRPCv1alpha1.Context{
 			Namespace: createdPkgInstall.GetNamespace(),
 			Cluster:   targetCluster,
 		},
@@ -558,13 +558,13 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		Plugin:     GetPluginDetail(),
 	}
 
-	return &corev1.CreateInstalledPackageResponse{
+	return &pkgsGRPCv1alpha1.CreateInstalledPackageResponse{
 		InstalledPackageRef: installedRef,
 	}, nil
 }
 
 // UpdateInstalledPackage Updates an installed package managed by the 'kapp_controller' plugin
-func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
+func (s *Server) UpdateInstalledPackage(ctx context.Context, request *pkgsGRPCv1alpha1.UpdateInstalledPackageRequest) (*pkgsGRPCv1alpha1.UpdateInstalledPackageResponse, error) {
 	// Retrieve parameters from the request
 	packageCluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	packageNamespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
@@ -574,13 +574,13 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 
 	// Validate the request
 	if request == nil || request.GetInstalledPackageRef() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
 	if request.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "required context or identifier not provided")
 	}
 	if request.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "no request Name provided")
 	}
 
 	// Retrieve additional parameters from the request
@@ -609,15 +609,15 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	}
 
 	// Update the rest of the fields
-	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversions.VersionSelectionSemver{
+	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversionsv1alpha1.VersionSelectionSemver{
 		Constraints: versionConstraints,
 		// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
 		// This is to allow prereleases to be also installed
-		Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+		Prereleases: &vendirversionsv1alpha1.VersionSelectionSemverPrereleases{},
 	}
 	if reconciliationOptions != nil {
 		if reconciliationOptions.Interval > 0 {
-			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
+			pkgInstall.Spec.SyncPeriod = &k8smetav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
 		}
 		if reconciliationOptions.ServiceAccountName != "" {
 			pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
@@ -637,7 +637,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		if err != nil {
 			return nil, statuserror.FromK8sError("upsate", "Secret", secret.Name, err)
 		}
-		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
+		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, k8smetav1.UpdateOptions{})
 		if updatedSecret == nil || err != nil {
 			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
 		}
@@ -647,8 +647,8 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
-			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
-			if errors.IsNotFound(err) {
+			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, k8smetav1.DeleteOptions{})
+			if k8serrors.IsNotFound(err) {
 				log.Warningf("The referenced secret does not exist: %s", statuserror.FromK8sError("get", "Secret", secretId, err).Error())
 			} else {
 				return nil, statuserror.FromK8sError("delete", "Secret", secretId, err)
@@ -657,21 +657,21 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	}
 
 	// generate the response
-	updatedRef := &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
+	updatedRef := &pkgsGRPCv1alpha1.InstalledPackageReference{
+		Context: &pkgsGRPCv1alpha1.Context{
 			Namespace: updatedPkgInstall.GetNamespace(),
 			Cluster:   packageCluster,
 		},
 		Identifier: updatedPkgInstall.Name,
 		Plugin:     GetPluginDetail(),
 	}
-	return &corev1.UpdateInstalledPackageResponse{
+	return &pkgsGRPCv1alpha1.UpdateInstalledPackageResponse{
 		InstalledPackageRef: updatedRef,
 	}, nil
 }
 
 // DeleteInstalledPackage Deletes an installed package managed by the 'kapp_controller' plugin
-func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
+func (s *Server) DeleteInstalledPackage(ctx context.Context, request *pkgsGRPCv1alpha1.DeleteInstalledPackageRequest) (*pkgsGRPCv1alpha1.DeleteInstalledPackageResponse, error) {
 	// Retrieve parameters from the request
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
@@ -681,10 +681,10 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 
 	// Validate the request
 	if request == nil || request.GetInstalledPackageRef() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 	if request.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+		return nil, grpcstatus.Errorf(grpccodes.InvalidArgument, "required context or identifier not provided")
 	}
 
 	if cluster == "" {
@@ -712,20 +712,20 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 	for _, packageInstallValue := range pkgInstall.Spec.Values {
 		secretId := packageInstallValue.SecretRef.Name
-		err := typedClient.CoreV1().Secrets(namespace).Delete(ctx, secretId, metav1.DeleteOptions{})
+		err := typedClient.CoreV1().Secrets(namespace).Delete(ctx, secretId, k8smetav1.DeleteOptions{})
 		if err != nil {
-			if errors.IsNotFound(err) {
+			if k8serrors.IsNotFound(err) {
 				log.Warningf("The referenced secret does not exist: %s", statuserror.FromK8sError("get", "Secret", secretId, err).Error())
 			} else {
 				return nil, statuserror.FromK8sError("delete", "Secret", secretId, err)
 			}
 		}
 	}
-	return &corev1.DeleteInstalledPackageResponse{}, nil
+	return &pkgsGRPCv1alpha1.DeleteInstalledPackageResponse{}, nil
 }
 
 // GetInstalledPackageResourceRefs returns the references for the k8s resources of an installed package managed by the 'kapp_controller' plugin
-func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
+func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest) (*pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse, error) {
 	// Retrieve parameters from the request
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
@@ -743,7 +743,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		return nil, err
 	}
 
-	return &corev1.GetInstalledPackageResourceRefsResponse{
+	return &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse{
 		Context:      request.GetInstalledPackageRef().GetContext(),
 		ResourceRefs: refs,
 	}, nil

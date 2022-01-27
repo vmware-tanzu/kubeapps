@@ -6,9 +6,9 @@ package paginate
 import (
 	"strconv"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 // PageOffsetFromPageToken converts a page token to an integer offset
@@ -28,20 +28,20 @@ func PageOffsetFromPageToken(pageToken string) (int, error) {
 	return int(offset), nil
 }
 
-func PageOffsetFromInstalledRequest(request *corev1.GetInstalledPackageSummariesRequest) (int, error) {
+func PageOffsetFromInstalledRequest(request *pkgsGRPCv1alpha1.GetInstalledPackageSummariesRequest) (int, error) {
 	offset, err := PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
-		return 0, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v",
+		return 0, grpcstatus.Errorf(grpccodes.InvalidArgument, "unable to intepret page token %q: %v",
 			request.GetPaginationOptions().GetPageToken(), err)
 	} else {
 		return offset, nil
 	}
 }
 
-func PageOffsetFromAvailableRequest(request *corev1.GetAvailablePackageSummariesRequest) (int, error) {
+func PageOffsetFromAvailableRequest(request *pkgsGRPCv1alpha1.GetAvailablePackageSummariesRequest) (int, error) {
 	offset, err := PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
-		return 0, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v",
+		return 0, grpcstatus.Errorf(grpccodes.InvalidArgument, "unable to intepret page token %q: %v",
 			request.GetPaginationOptions().GetPageToken(), err)
 	} else {
 		return offset, nil

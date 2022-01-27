@@ -8,19 +8,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	discovery "k8s.io/client-go/discovery"
-	fakediscovery "k8s.io/client-go/discovery/fake"
-	"k8s.io/client-go/kubernetes/fake"
+	cmp "github.com/google/go-cmp/cmp"
+	cmpopts "github.com/google/go-cmp/cmp/cmpopts"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
+	k8discoveryclient "k8s.io/client-go/discovery"
+	k8discoveryclientfake "k8s.io/client-go/discovery/fake"
+	k8stypedclientfake "k8s.io/client-go/kubernetes/fake"
 )
 
 type fakeK8sAuth struct {
-	DiscoveryCli discovery.DiscoveryInterface
+	DiscoveryCli k8discoveryclient.DiscoveryInterface
 	canIResult   bool
 	canIError    error
 }
@@ -28,11 +27,11 @@ type fakeK8sAuth struct {
 func (u fakeK8sAuth) Validate() error {
 	return nil
 }
-func (u fakeK8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceList, error) {
+func (u fakeK8sAuth) GetResourceList(groupVersion string) (*k8smetav1.APIResourceList, error) {
 	g, err := u.DiscoveryCli.ServerResourcesForGroupVersion(groupVersion)
 	if err != nil && strings.Contains(err.Error(), "not found") {
 		// Fake DiscoveryCli doesn't return a valid NotFound error so we need to forge it
-		err = k8sErrors.NewNotFound(schema.GroupResource{}, groupVersion)
+		err = k8serrors.NewNotFound(k8sschema.GroupResource{}, groupVersion)
 	}
 	return g, err
 }
@@ -42,34 +41,34 @@ func (u fakeK8sAuth) CanI(verb, group, resource, namespace string) (bool, error)
 }
 
 func newFakeUserAuth(canIResult bool, canIError error) *UserAuth {
-	resourceListV1 := metav1.APIResourceList{
+	resourceListV1 := k8smetav1.APIResourceList{
 		GroupVersion: "v1",
-		APIResources: []metav1.APIResource{
+		APIResources: []k8smetav1.APIResource{
 			{Name: "pods", Kind: "Pod", Namespaced: true},
 		},
 	}
-	resourceListAppsV1Beta1 := metav1.APIResourceList{
+	resourceListAppsV1Beta1 := k8smetav1.APIResourceList{
 		GroupVersion: "apps/v1beta1",
-		APIResources: []metav1.APIResource{
+		APIResources: []k8smetav1.APIResource{
 			{Name: "deployments", Kind: "Deployment", Namespaced: true},
 		},
 	}
-	resourceListExtensionsV1Beta1 := metav1.APIResourceList{
+	resourceListExtensionsV1Beta1 := k8smetav1.APIResourceList{
 		GroupVersion: "extensions/v1beta1",
-		APIResources: []metav1.APIResource{
+		APIResources: []k8smetav1.APIResource{
 			{Name: "deployments", Kind: "Deployment", Namespaced: true},
 		},
 	}
-	resourceListClusterRoleRBAC := metav1.APIResourceList{
+	resourceListClusterRoleRBAC := k8smetav1.APIResourceList{
 		GroupVersion: "rbac.authorization.k8s.io/v1",
-		APIResources: []metav1.APIResource{
+		APIResources: []k8smetav1.APIResource{
 			{Name: "clusterrolebindings", Kind: "ClusterRoleBinding", Namespaced: false},
 			{Name: "clusterroles", Kind: "ClusterRole", Namespaced: false},
 		},
 	}
-	cli := fake.NewSimpleClientset()
-	fakeDiscovery, _ := cli.Discovery().(*fakediscovery.FakeDiscovery)
-	fakeDiscovery.Resources = []*metav1.APIResourceList{
+	cli := k8stypedclientfake.NewSimpleClientset()
+	fakeDiscovery, _ := cli.Discovery().(*k8discoveryclientfake.FakeDiscovery)
+	fakeDiscovery.Resources = []*k8smetav1.APIResourceList{
 		&resourceListV1,
 		&resourceListAppsV1Beta1,
 		&resourceListExtensionsV1Beta1,

@@ -5,17 +5,17 @@ package resourcerefs
 
 import (
 	"context"
-	goerrs "errors"
+	"errors"
 	"io"
 	"strings"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/storage/driver"
-	"k8s.io/apimachinery/pkg/util/yaml"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	clientgetter "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	helmstoragedriver "helm.sh/helm/v3/pkg/storage/driver"
+	k8syamlutil "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 type yamlMetadata struct {
@@ -31,17 +31,17 @@ type yamlResource struct {
 }
 
 // resourceRefsFromManifest returns the resource refs for a given yaml manifest.
-func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, error) {
-	decoder := yaml.NewYAMLToJSONDecoder(strings.NewReader(m))
-	refs := []*corev1.ResourceRef{}
+func ResourceRefsFromManifest(m, pkgNamespace string) ([]*pkgsGRPCv1alpha1.ResourceRef, error) {
+	decoder := k8syamlutil.NewYAMLToJSONDecoder(strings.NewReader(m))
+	refs := []*pkgsGRPCv1alpha1.ResourceRef{}
 	doc := yamlResource{}
 	for {
 		err := decoder.Decode(&doc)
 		if err != nil {
-			if goerrs.Is(err, io.EOF) {
+			if errors.Is(err, io.EOF) {
 				break
 			}
-			return nil, status.Errorf(codes.Internal, "Unable to decode yaml manifest: %v", err)
+			return nil, grpcstatus.Errorf(grpccodes.Internal, "Unable to decode yaml manifest: %v", err)
 		}
 		if doc.Kind == "" {
 			continue
@@ -52,7 +52,7 @@ func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 				if namespace == "" {
 					namespace = pkgNamespace
 				}
-				refs = append(refs, &corev1.ResourceRef{
+				refs = append(refs, &pkgsGRPCv1alpha1.ResourceRef{
 					ApiVersion: i.APIVersion,
 					Kind:       i.Kind,
 					Name:       i.Metadata.Name,
@@ -75,7 +75,7 @@ func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 		if namespace == "" {
 			namespace = pkgNamespace
 		}
-		refs = append(refs, &corev1.ResourceRef{
+		refs = append(refs, &pkgsGRPCv1alpha1.ResourceRef{
 			ApiVersion: doc.APIVersion,
 			Kind:       doc.Kind,
 			Name:       doc.Metadata.Name,
@@ -88,15 +88,15 @@ func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 
 func GetInstalledPackageResourceRefs(
 	ctx context.Context,
-	request *corev1.GetInstalledPackageResourceRefsRequest,
-	actionConfigGetter clientgetter.HelmActionConfigGetterFunc) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
+	request *pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest,
+	actionConfigGetter clientgetter.HelmActionConfigGetterFunc) (*pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse, error) {
 	pkgRef := request.GetInstalledPackageRef()
 	identifier := pkgRef.GetIdentifier()
 	namespace := pkgRef.GetContext().GetNamespace()
 
 	actionConfig, err := actionConfigGetter(ctx, namespace)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
 	// Grab the released manifest from the release.
@@ -106,13 +106,13 @@ func GetInstalledPackageResourceRefs(
 	// to instead query for labelled resources. See the discussion following for
 	// more details:
 	// https://github.com/kubeapps/kubeapps/pull/3811#issuecomment-977689570
-	getcmd := action.NewGet(actionConfig)
+	getcmd := helmaction.NewGet(actionConfig)
 	release, err := getcmd.Run(identifier)
 	if err != nil {
-		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+		if err == helmstoragedriver.ErrReleaseNotFound {
+			return nil, grpcstatus.Errorf(grpccodes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
 		}
-		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
+		return nil, grpcstatus.Errorf(grpccodes.Internal, "Unable to run Helm get action: %v", err)
 	}
 
 	refs, err := ResourceRefsFromManifest(release.Manifest, namespace)
@@ -120,7 +120,7 @@ func GetInstalledPackageResourceRefs(
 		return nil, err
 	}
 
-	return &corev1.GetInstalledPackageResourceRefsResponse{
+	return &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsResponse{
 		Context:      pkgRef.GetContext(),
 		ResourceRefs: refs,
 	}, nil

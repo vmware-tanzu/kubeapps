@@ -15,20 +15,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	fakeChartUtils "github.com/kubeapps/kubeapps/pkg/chart/fake"
-	kubeappsKube "github.com/kubeapps/kubeapps/pkg/kube"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
-	helmTime "helm.sh/helm/v3/pkg/time"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"helm.sh/helm/v3/pkg/release"
+	cmp "github.com/google/go-cmp/cmp"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	chartutilsfake "github.com/kubeapps/kubeapps/pkg/chart/fake"
+	kubeutils "github.com/kubeapps/kubeapps/pkg/kube"
+	helmaction "helm.sh/helm/v3/pkg/action"
+	helmchart "helm.sh/helm/v3/pkg/chart"
+	helmchartutil "helm.sh/helm/v3/pkg/chartutil"
+	helmkubefake "helm.sh/helm/v3/pkg/kube/fake"
+	helmrelease "helm.sh/helm/v3/pkg/release"
+	helmstorage "helm.sh/helm/v3/pkg/storage"
+	helmstoragedriver "helm.sh/helm/v3/pkg/storage/driver"
+	helmtime "helm.sh/helm/v3/pkg/time"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -36,33 +35,33 @@ const (
 )
 
 var (
-	testingTime, _    = helmTime.Parse(time.RFC3339, "1977-09-02T22:04:05Z")
+	testingTime, _    = helmtime.Parse(time.RFC3339, "1977-09-02T22:04:05Z")
 	lastDeployedRegex = regexp.MustCompile(`"last_deployed":\s*"[^"]+?[^\/"]+"`)
 )
 
 // newConfigFixture returns a Config with fake clients
-// and memory storage.
-func newConfigFixture(t *testing.T, k *kubefake.FailingKubeClient) *Config {
+// and memory helmstorage.
+func newConfigFixture(t *testing.T, k *helmkubefake.FailingKubeClient) *Config {
 	t.Helper()
 
 	return &Config{
-		ActionConfig: &action.Configuration{
-			Releases:     storage.Init(driver.NewMemory()),
+		ActionConfig: &helmaction.Configuration{
+			Releases:     helmstorage.Init(helmstoragedriver.NewMemory()),
 			KubeClient:   k,
-			Capabilities: chartutil.DefaultCapabilities,
+			Capabilities: helmchartutil.DefaultCapabilities,
 			Log: func(format string, v ...interface{}) {
 				t.Helper()
 				t.Logf(format, v...)
 			},
 		},
-		KubeHandler: &kubeappsKube.FakeHandler{
-			AppRepos: []*v1alpha1.AppRepository{
-				{ObjectMeta: v1.ObjectMeta{Name: "bitnami", Namespace: "default"},
-					Spec: v1alpha1.AppRepositorySpec{Type: "helm", URL: "http://foo.bar"},
+		KubeHandler: &kubeutils.FakeHandler{
+			AppRepos: []*apprepov1alpha1.AppRepository{
+				{ObjectMeta: k8smetav1.ObjectMeta{Name: "bitnami", Namespace: "default"},
+					Spec: apprepov1alpha1.AppRepositorySpec{Type: "helm", URL: "http://foo.bar"},
 				},
 			},
 		},
-		ChartClientFactory: &fakeChartUtils.ChartClientFactory{},
+		ChartClientFactory: &chartutilsfake.ChartClientFactory{},
 		Options: Options{
 			ListLimit: defaultListLimit,
 		},
@@ -80,7 +79,7 @@ func and(exps ...bool) bool {
 	return true
 }
 
-var releaseComparer = cmp.Comparer(func(x release.Release, y release.Release) bool {
+var releaseComparer = cmp.Comparer(func(x helmrelease.Release, y helmrelease.Release) bool {
 	return and(
 		x.Name == y.Name,
 		x.Version == y.Version,
@@ -97,7 +96,7 @@ func TestActions(t *testing.T) {
 	type testScenario struct {
 		// Scenario params
 		Description      string
-		ExistingReleases []*release.Release
+		ExistingReleases []*helmrelease.Release
 		KubeError        error
 		// Request params
 		RequestBody  string
@@ -106,7 +105,7 @@ func TestActions(t *testing.T) {
 		Params       map[string]string
 		// Expected result
 		StatusCode        int
-		RemainingReleases []*release.Release
+		RemainingReleases []*helmrelease.Release
 		ResponseBody      string //optional
 	}
 
@@ -114,7 +113,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description:      "Create a simple release",
-			ExistingReleases: []*release.Release{},
+			ExistingReleases: []*helmrelease.Release{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
 			RequestQuery: "",
@@ -122,16 +121,16 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			RemainingReleases: []*helmrelease.Release{
+				createRelease("foo", "foobar", "default", 1, helmrelease.StatusDeployed),
 			},
 			ResponseBody: "",
 		},
 		{
 			// Scenario params
 			Description: "Create a conflicting release",
-			ExistingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			ExistingReleases: []*helmrelease.Release{
+				createRelease("foo", "foobar", "default", 1, helmrelease.StatusDeployed),
 			},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
@@ -140,15 +139,15 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 409,
-			RemainingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			RemainingReleases: []*helmrelease.Release{
+				createRelease("foo", "foobar", "default", 1, helmrelease.StatusDeployed),
 			},
 			ResponseBody: "",
 		},
 		{
 			// Scenario params
 			Description:      "Get a non-existing release",
-			ExistingReleases: []*release.Release{},
+			ExistingReleases: []*helmrelease.Release{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -161,8 +160,8 @@ func TestActions(t *testing.T) {
 		},
 		{
 			Description: "Delete a simple release",
-			ExistingReleases: []*release.Release{
-				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
+			ExistingReleases: []*helmrelease.Release{
+				createRelease("foobarchart", "foobar", "default", 1, helmrelease.StatusDeployed),
 			},
 			// Request params
 			RequestBody:  "",
@@ -171,16 +170,16 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []*release.Release{
-				createRelease("foobarchart", "foobar", "default", 1, release.StatusUninstalled),
+			RemainingReleases: []*helmrelease.Release{
+				createRelease("foobarchart", "foobar", "default", 1, helmrelease.StatusUninstalled),
 			},
 			ResponseBody: "",
 		},
 		{
 			// Scenario params
 			Description: "Delete and purge a simple release with purge=true",
-			ExistingReleases: []*release.Release{
-				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
+			ExistingReleases: []*helmrelease.Release{
+				createRelease("foobarchart", "foobar", "default", 1, helmrelease.StatusDeployed),
 			},
 			// Request params
 			RequestBody:  "",
@@ -195,8 +194,8 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description: "Get a simple release",
-			ExistingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			ExistingReleases: []*helmrelease.Release{
+				createRelease("foo", "foobar", "default", 1, helmrelease.StatusDeployed),
 			},
 			// Request params
 			RequestBody:  "",
@@ -205,16 +204,16 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			RemainingReleases: []*helmrelease.Release{
+				createRelease("foo", "foobar", "default", 1, helmrelease.StatusDeployed),
 			},
 			ResponseBody: `{"data":{"name":"foobar","info":{"first_deployed":"1977-09-02T22:04:05Z","last_deployed":"1977-09-02T22:04:05Z","deleted":"","status":"deployed"},"chart":{"metadata":{"name":"foo"},"lock":null,"templates":null,"values":{},"schema":null,"files":null},"version":1,"namespace":"default"}}`,
 		},
 		{
 			// Scenario params
 			Description: "Get a deleted release",
-			ExistingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusUninstalled),
+			ExistingReleases: []*helmrelease.Release{
+				createRelease("foo", "foobar", "default", 1, helmrelease.StatusUninstalled),
 			},
 			// Request params
 			RequestBody:  "",
@@ -223,16 +222,16 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusUninstalled),
+			RemainingReleases: []*helmrelease.Release{
+				createRelease("foo", "foobar", "default", 1, helmrelease.StatusUninstalled),
 			},
 			ResponseBody: `{"data":{"name":"foobar","info":{"first_deployed":"1977-09-02T22:04:05Z","last_deployed":"1977-09-02T22:04:05Z","deleted":"1977-09-02T22:04:05Z","status":"uninstalled"},"chart":{"metadata":{"name":"foo"},"lock":null,"templates":null,"values":{},"schema":null,"files":null},"version":1,"namespace":"default"}}`,
 		},
 		{
 			// Scenario params
 			Description: "Delete and purge a simple release with purge=1",
-			ExistingReleases: []*release.Release{
-				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
+			ExistingReleases: []*helmrelease.Release{
+				createRelease("foobarchart", "foobar", "default", 1, helmrelease.StatusDeployed),
 			},
 			// Request params
 			RequestBody:  "",
@@ -247,7 +246,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description:      "Delete a missing release",
-			ExistingReleases: []*release.Release{},
+			ExistingReleases: []*helmrelease.Release{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -261,7 +260,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description:      "Creates a release with missing permissions",
-			ExistingReleases: []*release.Release{},
+			ExistingReleases: []*helmrelease.Release{},
 			KubeError:        errors.New(`Failed to create: secrets is forbidden: User "foo" cannot create resource "secrets" in API group "" in the namespace "default"`),
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
@@ -280,7 +279,7 @@ func TestActions(t *testing.T) {
 			// Initialize environment for test
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
 			response := httptest.NewRecorder()
-			k := &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+			k := &helmkubefake.FailingKubeClient{PrintingKubeClient: helmkubefake.PrintingKubeClient{Out: ioutil.Discard}}
 			if test.KubeError != nil {
 				// The helm fake Kube Client runs build before
 				// create/install/upgrade. It also stores a release in storage
@@ -330,18 +329,18 @@ func TestActions(t *testing.T) {
 	}
 }
 
-func createRelease(chartName, name, namespace string, version int, status release.Status) *release.Release {
-	deleted := helmTime.Time{}
-	if status == release.StatusUninstalled {
+func createRelease(chartName, name, namespace string, version int, status helmrelease.Status) *helmrelease.Release {
+	deleted := helmtime.Time{}
+	if status == helmrelease.StatusUninstalled {
 		deleted = testingTime
 	}
-	return &release.Release{
+	return &helmrelease.Release{
 		Name:      name,
 		Namespace: namespace,
 		Version:   version,
-		Info:      &release.Info{Status: status, Deleted: deleted, FirstDeployed: testingTime, LastDeployed: testingTime},
-		Chart: &chart.Chart{
-			Metadata: &chart.Metadata{
+		Info:      &helmrelease.Info{Status: status, Deleted: deleted, FirstDeployed: testingTime, LastDeployed: testingTime},
+		Chart: &helmchart.Chart{
+			Metadata: &helmchart.Metadata{
 				Name: chartName,
 			},
 			Values: make(map[string]interface{}),
@@ -350,7 +349,7 @@ func createRelease(chartName, name, namespace string, version int, status releas
 	}
 }
 
-func createExistingReleases(t *testing.T, cfg *Config, releases []*release.Release) {
+func createExistingReleases(t *testing.T, cfg *Config, releases []*helmrelease.Release) {
 	for i := range releases {
 		err := cfg.ActionConfig.Releases.Create(releases[i])
 		if err != nil {
@@ -363,78 +362,78 @@ func TestRollbackAction(t *testing.T) {
 	const releaseName = "my-release"
 	testCases := []struct {
 		name             string
-		existingReleases []*release.Release
+		existingReleases []*helmrelease.Release
 		queryString      string
 		params           map[string]string
 		statusCode       int
-		expectedReleases []*release.Release
+		expectedReleases []*helmrelease.Release
 		responseBody     string
 	}{
 		{
 			name: "rolls back a release",
-			existingReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			existingReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusDeployed),
 			},
 			queryString: "action=rollback&revision=1",
 			params:      map[string]string{nameParam: "my-release"},
 			statusCode:  http.StatusOK,
-			expectedReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 3, release.StatusDeployed),
+			expectedReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 3, helmrelease.StatusDeployed),
 			},
 			responseBody: `{"data":{"name":"my-release","info":{"first_deployed":"1977-09-02T22:04:05Z","last_deployed":"1977-09-02T22:04:05Z","deleted":"","description":"Rollback to 1","status":"deployed"},"chart":{"metadata":{"name":"apache"},"lock":null,"templates":null,"values":{},"schema":null,"files":null},"version":3,"namespace":"default"}}`,
 		},
 		{
 			name: "errors if the release does not exist",
-			existingReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			existingReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusDeployed),
 			},
 			queryString: "action=rollback&revision=1",
 			params:      map[string]string{nameParam: "does-not-exist"},
 			statusCode:  http.StatusNotFound,
-			expectedReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			expectedReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusDeployed),
 			},
 			responseBody: `{"code":404,"message":"release: not found"}`,
 		},
 		{
 			name: "errors if the revision does not exist",
-			existingReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			existingReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusDeployed),
 			},
 			queryString: "action=rollback&revision=3",
 			params:      map[string]string{nameParam: "apache"},
 			statusCode:  http.StatusNotFound,
-			expectedReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			expectedReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusDeployed),
 			},
 			responseBody: `{"code":404,"message":"release: not found"}`,
 		},
 		{
 			name: "errors if the revision is not specified",
-			existingReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			existingReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusDeployed),
 			},
 			queryString: "action=rollback",
 			params:      map[string]string{nameParam: "apache"},
 			statusCode:  http.StatusUnprocessableEntity,
-			expectedReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			expectedReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusDeployed),
 			},
 			responseBody: `{"code":422,"message":"Missing revision to rollback in request"}`,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			k := &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+			k := &helmkubefake.FailingKubeClient{PrintingKubeClient: helmkubefake.PrintingKubeClient{Out: ioutil.Discard}}
 			cfg := newConfigFixture(t, k)
 			createExistingReleases(t, cfg, tc.existingReleases)
 			req := httptest.NewRequest("PUT", fmt.Sprintf("https://example.com/whatever?%s", tc.queryString), strings.NewReader(""))
@@ -469,32 +468,32 @@ func TestUpgradeAction(t *testing.T) {
 	const releaseName = "my-release"
 	testCases := []struct {
 		name             string
-		existingReleases []*release.Release
+		existingReleases []*helmrelease.Release
 		queryString      string
 		requestBody      string
 		params           map[string]string
 		statusCode       int
-		expectedReleases []*release.Release
+		expectedReleases []*helmrelease.Release
 		responseBody     string
 	}{
 		{
 			name: "upgrade a release",
-			existingReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusDeployed),
+			existingReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusDeployed),
 			},
 			queryString: "action=upgrade",
 			requestBody: `{"chartName": "apache",	"releaseName":"my-release",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
 			params:     map[string]string{nameParam: releaseName},
 			statusCode: http.StatusOK,
-			expectedReleases: []*release.Release{
-				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
-				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			expectedReleases: []*helmrelease.Release{
+				createRelease("apache", releaseName, "default", 1, helmrelease.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, helmrelease.StatusDeployed),
 			},
 			responseBody: `{"data":{"name":"my-release","info":{"first_deployed":"1977-09-02T22:04:05Z","last_deployed":"1977-09-02T22:04:05Z","deleted":"","description":"Upgrade complete","status":"deployed"},"chart":{"metadata":{"name":"apache","version":"1.0.0"},"lock":null,"templates":null,"values":{},"schema":null,"files":null},"version":2,"namespace":"default"}}`,
 		},
 		{
 			name:             "upgrade a missing release",
-			existingReleases: []*release.Release{},
+			existingReleases: []*helmrelease.Release{},
 			queryString:      "action=upgrade",
 			requestBody: `{"chartName": "apache",	"releaseName":"my-release",	"version": "1.0.0", "appRepositoryResourceName": "bitnami", "appRepositoryResourceNamespace": "default"}`,
 			params:     map[string]string{nameParam: releaseName},
@@ -508,7 +507,7 @@ func TestUpgradeAction(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			k := &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+			k := &helmkubefake.FailingKubeClient{PrintingKubeClient: helmkubefake.PrintingKubeClient{Out: ioutil.Discard}}
 			cfg := newConfigFixture(t, k)
 			createExistingReleases(t, cfg, tc.existingReleases)
 			req := httptest.NewRequest("PUT", fmt.Sprintf("https://example.com/whatever?%s", tc.queryString), strings.NewReader(tc.requestBody))

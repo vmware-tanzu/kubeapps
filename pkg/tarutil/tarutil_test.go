@@ -10,27 +10,27 @@ import (
 	"io"
 	"testing"
 
-	"github.com/kubeapps/kubeapps/pkg/tarutil/test"
-	"github.com/stretchr/testify/assert"
+	tartest "github.com/kubeapps/kubeapps/pkg/tarutil/test"
+	assert "github.com/stretchr/testify/assert"
 )
 
 func Test_extractFilesFromTarball(t *testing.T) {
 	tests := []struct {
 		name     string
-		files    []test.TarballFile
+		files    []tartest.TarballFile
 		filename string
 		want     string
 	}{
-		{"file", []test.TarballFile{{Name: "file.txt", Body: "best file ever"}}, "file.txt", "best file ever"},
-		{"multiple file tarball", []test.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "file2.txt", Body: "worst file ever"}}, "file2.txt", "worst file ever"},
-		{"file in dir", []test.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "test/file2.txt", Body: "worst file ever"}}, "test/file2.txt", "worst file ever"},
-		{"filename ignore case", []test.TarballFile{{Name: "Readme.md", Body: "# readme for chart"}, {Name: "values.yaml", Body: "key: value"}}, "README.md", "# readme for chart"},
+		{"file", []tartest.TarballFile{{Name: "file.txt", Body: "best file ever"}}, "file.txt", "best file ever"},
+		{"multiple file tarball", []tartest.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "file2.txt", Body: "worst file ever"}}, "file2.txt", "worst file ever"},
+		{"file in dir", []tartest.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "test/file2.txt", Body: "worst file ever"}}, "test/file2.txt", "worst file ever"},
+		{"filename ignore case", []tartest.TarballFile{{Name: "Readme.md", Body: "# readme for chart"}, {Name: "values.yaml", Body: "key: value"}}, "README.md", "# readme for chart"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var b bytes.Buffer
-			test.CreateTestTarball(&b, tt.files)
+			tartest.CreateTestTarball(&b, tt.files)
 			r := bytes.NewReader(b.Bytes())
 			tarf := tar.NewReader(r)
 			files, err := ExtractFilesFromTarball(map[string]string{tt.filename: tt.filename}, tarf)
@@ -41,8 +41,8 @@ func Test_extractFilesFromTarball(t *testing.T) {
 
 	t.Run("extract multiple files", func(t *testing.T) {
 		var b bytes.Buffer
-		tFiles := []test.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "file2.txt", Body: "worst file ever"}}
-		test.CreateTestTarball(&b, tFiles)
+		tFiles := []tartest.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "file2.txt", Body: "worst file ever"}}
+		tartest.CreateTestTarball(&b, tFiles)
 		r := bytes.NewReader(b.Bytes())
 		tarf := tar.NewReader(r)
 		files, err := ExtractFilesFromTarball(map[string]string{tFiles[0].Name: tFiles[0].Name, tFiles[1].Name: tFiles[1].Name}, tarf)
@@ -55,7 +55,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 
 	t.Run("file not found", func(t *testing.T) {
 		var b bytes.Buffer
-		test.CreateTestTarball(&b, []test.TarballFile{{Name: "file.txt", Body: "best file ever"}})
+		tartest.CreateTestTarball(&b, []tartest.TarballFile{{Name: "file.txt", Body: "best file ever"}})
 		r := bytes.NewReader(b.Bytes())
 		tarf := tar.NewReader(r)
 		name := "file2.txt"

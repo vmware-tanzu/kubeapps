@@ -8,19 +8,18 @@ import (
 	"strings"
 	"time"
 
-	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
-
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pkgkappv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
-	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
-	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kappctrlpackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	kappctrldatapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	vendirversionsv1alpha1 "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	k8scorev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
 )
 
-func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.AvailablePackageSummary, error) {
+func (s *Server) buildAvailablePackageSummary(pkgMetadata *kappctrldatapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*pkgsGRPCv1alpha1.AvailablePackageSummary, error) {
 	var iconStringBuilder strings.Builder
 
 	// get the versions associated with the package
@@ -40,9 +39,9 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
-	availablePackageSummary := &corev1.AvailablePackageSummary{
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context: &corev1.Context{
+	availablePackageSummary := &pkgsGRPCv1alpha1.AvailablePackageSummary{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Cluster:   cluster,
 				Namespace: pkgMetadata.Namespace,
 			},
@@ -52,7 +51,7 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 		Name: pkgMetadata.Name,
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),
 		},
@@ -65,7 +64,7 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 	return availablePackageSummary, nil
 }
 
-func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*corev1.AvailablePackageDetail, error) {
+func (s *Server) buildAvailablePackageDetail(pkgMetadata *kappctrldatapackagingv1alpha1.PackageMetadata, requestedPkgVersion string, foundPkgSemver *pkgSemver, cluster string) (*pkgsGRPCv1alpha1.AvailablePackageDetail, error) {
 
 	// Carvel uses base64-encoded SVG data for IconSVGBase64, whereas we need
 	// a url, so convert to a data-url.
@@ -80,9 +79,9 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 	}
 
 	// build maintainers information
-	maintainers := []*corev1.Maintainer{}
+	maintainers := []*pkgsGRPCv1alpha1.Maintainer{}
 	for _, maintainer := range pkgMetadata.Spec.Maintainers {
-		maintainers = append(maintainers, &corev1.Maintainer{
+		maintainers = append(maintainers, &pkgsGRPCv1alpha1.Maintainer{
 			Name: maintainer.Name,
 		})
 	}
@@ -97,9 +96,9 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		defaultValues = "# There is an error while parsing the schema."
 	}
 
-	availablePackageDetail := &corev1.AvailablePackageDetail{
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context: &corev1.Context{
+	availablePackageDetail := &pkgsGRPCv1alpha1.AvailablePackageDetail{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Cluster:   cluster,
 				Namespace: pkgMetadata.Namespace,
 			},
@@ -114,7 +113,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		LongDescription:  pkgMetadata.Spec.LongDescription,
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		Version: &corev1.PackageAppVersion{
+		Version: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: requestedPkgVersion,
 			AppVersion: requestedPkgVersion,
 		},
@@ -130,7 +129,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 	return availablePackageDetail, nil
 }
 
-func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) buildInstalledPackageSummary(pkgInstall *kappctrlpackagingv1alpha1.PackageInstall, pkgMetadata *kappctrldatapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*pkgsGRPCv1alpha1.InstalledPackageSummary, error) {
 	// get the versions associated with the package
 	versions := pkgVersionsMap[pkgInstall.Spec.PackageRef.RefName]
 	if len(versions) == 0 {
@@ -154,16 +153,16 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
-	installedPackageSummary := &corev1.InstalledPackageSummary{
+	installedPackageSummary := &pkgsGRPCv1alpha1.InstalledPackageSummary{
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
 			AppVersion: pkgInstall.Status.LastAttemptedVersion,
 		},
 		IconUrl: iconStringBuilder.String(),
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
+		InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Namespace: pkgMetadata.Namespace,
 				Cluster:   cluster,
 			},
@@ -172,19 +171,19 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 		},
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),
 		},
 		Name:           pkgInstall.Name,
 		PkgDisplayName: pkgMetadata.Spec.DisplayName,
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: pkgInstall.Status.LastAttemptedVersion,
 		},
 		ShortDescription: pkgMetadata.Spec.ShortDescription,
-		Status: &corev1.InstalledPackageStatus{
+		Status: &pkgsGRPCv1alpha1.InstalledPackageStatus{
 			Ready:      false,
-			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_PENDING,
+			Reason:     pkgsGRPCv1alpha1.InstalledPackageStatus_STATUS_REASON_PENDING,
 			UserReason: simpleUserReasonForKappStatus(""),
 		},
 	}
@@ -192,14 +191,14 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 	if latestMatchingVersion != nil {
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		installedPackageSummary.LatestMatchingVersion = &corev1.PackageAppVersion{
+		installedPackageSummary.LatestMatchingVersion = &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: latestMatchingVersion.String(),
 			AppVersion: latestMatchingVersion.String(),
 		}
 	}
 
 	if len(pkgInstall.Status.Conditions) > 0 {
-		installedPackageSummary.Status = &corev1.InstalledPackageStatus{
+		installedPackageSummary.Status = &pkgsGRPCv1alpha1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
 			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
 			UserReason: simpleUserReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
@@ -209,7 +208,7 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 	return installedPackageSummary, nil
 }
 
-func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, app *kappctrlv1alpha1.App, valuesApplied, cluster string) (*corev1.InstalledPackageDetail, error) {
+func (s *Server) buildInstalledPackageDetail(pkgInstall *kappctrlpackagingv1alpha1.PackageInstall, pkgMetadata *kappctrldatapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, app *kappctrlv1alpha1.App, valuesApplied, cluster string) (*pkgsGRPCv1alpha1.InstalledPackageDetail, error) {
 	// get the versions associated with the package
 	versions := pkgVersionsMap[pkgMetadata.Name]
 	if len(versions) == 0 {
@@ -228,33 +227,33 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
-	installedPackageDetail := &corev1.InstalledPackageDetail{
-		InstalledPackageRef: &corev1.InstalledPackageReference{
-			Context: &corev1.Context{
+	installedPackageDetail := &pkgsGRPCv1alpha1.InstalledPackageDetail{
+		InstalledPackageRef: &pkgsGRPCv1alpha1.InstalledPackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Namespace: pkgMetadata.Namespace,
 				Cluster:   cluster,
 			},
 			Plugin:     &pluginDetail,
 			Identifier: pkgInstall.Name,
 		},
-		PkgVersionReference: &corev1.VersionReference{
+		PkgVersionReference: &pkgsGRPCv1alpha1.VersionReference{
 			Version: pkgInstall.Status.LastAttemptedVersion,
 		},
 		Name: pkgInstall.Name,
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		CurrentVersion: &corev1.PackageAppVersion{
+		CurrentVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: pkgInstall.Status.LastAttemptedVersion,
 			AppVersion: pkgInstall.Status.LastAttemptedVersion,
 		},
 		ValuesApplied: valuesApplied,
 
-		ReconciliationOptions: &corev1.ReconciliationOptions{
+		ReconciliationOptions: &pkgsGRPCv1alpha1.ReconciliationOptions{
 			ServiceAccountName: pkgInstall.Spec.ServiceAccountName,
 		},
 		PostInstallationNotes: postInstallationNotes,
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context: &corev1.Context{
+		AvailablePackageRef: &pkgsGRPCv1alpha1.AvailablePackageReference{
+			Context: &pkgsGRPCv1alpha1.Context{
 				Namespace: pkgMetadata.Namespace,
 				Cluster:   cluster,
 			},
@@ -263,7 +262,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 		},
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		LatestVersion: &corev1.PackageAppVersion{
+		LatestVersion: &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: versions[0].version.String(),
 			AppVersion: versions[0].version.String(),
 		},
@@ -272,7 +271,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 	if latestMatchingVersion != nil {
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
-		installedPackageDetail.LatestMatchingVersion = &corev1.PackageAppVersion{
+		installedPackageDetail.LatestMatchingVersion = &pkgsGRPCv1alpha1.PackageAppVersion{
 			PkgVersion: latestMatchingVersion.String(),
 			AppVersion: latestMatchingVersion.String(),
 		}
@@ -284,7 +283,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 	}
 
 	if pkgInstall.Status.Conditions != nil && len(pkgInstall.Status.Conditions) > 0 {
-		installedPackageDetail.Status = &corev1.InstalledPackageStatus{
+		installedPackageDetail.Status = &pkgsGRPCv1alpha1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
 			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),
 			UserReason: pkgInstall.Status.UsefulErrorMessage, // long message, instead of the simpleUserReasonForKappStatus
@@ -297,11 +296,11 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 
 func (s *Server) buildSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
 	return &k8scorev1.Secret{
-		TypeMeta: metav1.TypeMeta{
+		TypeMeta: k8smetav1.TypeMeta{
 			Kind:       k8scorev1.ResourceSecrets.String(),
 			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
 		},
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			// TODO(agamez): think about name collisions
 			Name:      fmt.Sprintf("%s-values", installedPackageName),
 			Namespace: targetNamespace,
@@ -316,22 +315,22 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 	}, nil
 }
 
-func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *pkgsGRPCv1alpha1.ReconciliationOptions) (*kappctrlpackagingv1alpha1.PackageInstall, error) {
 	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.defaultUpgradePolicy)
 	if err != nil {
 		return nil, err
 	}
 
-	pkgInstall := &packagingv1alpha1.PackageInstall{
-		TypeMeta: metav1.TypeMeta{
+	pkgInstall := &kappctrlpackagingv1alpha1.PackageInstall{
+		TypeMeta: k8smetav1.TypeMeta{
 			Kind:       pkgInstallResource,
-			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
+			APIVersion: fmt.Sprintf("%s/%s", kappctrlpackagingv1alpha1.SchemeGroupVersion.Group, kappctrlpackagingv1alpha1.SchemeGroupVersion.Version),
 		},
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: k8smetav1.ObjectMeta{
 			Name:      installedPackageName,
 			Namespace: targetNamespace,
 		},
-		Spec: packagingv1alpha1.PackageInstallSpec{
+		Spec: kappctrlpackagingv1alpha1.PackageInstallSpec{
 			// This is the Carvel's way of supporting deployments across clusters
 			// without having kapp-controller on those other clusters
 			// We, currently, don't support deploying to another cluster without kapp-controller
@@ -340,21 +339,21 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			// 	Namespace:           targetNamespace,
 			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
 			// },
-			Values: []packagingv1alpha1.PackageInstallValues{
+			Values: []kappctrlpackagingv1alpha1.PackageInstallValues{
 				{
-					SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+					SecretRef: &kappctrlpackagingv1alpha1.PackageInstallValuesSecretRef{
 						Name: fmt.Sprintf("%s-values", installedPackageName),
 						Key:  "values.yaml",
 					},
 				},
 			},
-			PackageRef: &packagingv1alpha1.PackageRef{
+			PackageRef: &kappctrlpackagingv1alpha1.PackageRef{
 				RefName: packageRefName,
-				VersionSelection: &vendirversions.VersionSelectionSemver{
+				VersionSelection: &vendirversionsv1alpha1.VersionSelectionSemver{
 					Constraints: versionConstraints,
 					// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
 					// This is to allow prereleases to be also installed
-					Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+					Prereleases: &vendirversionsv1alpha1.VersionSelectionSemverPrereleases{},
 				},
 			},
 		},
@@ -362,7 +361,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 
 	if reconciliationOptions != nil {
 		if reconciliationOptions.Interval > 0 {
-			pkgInstall.Spec.SyncPeriod = &metav1.Duration{
+			pkgInstall.Spec.SyncPeriod = &k8smetav1.Duration{
 				Duration: time.Duration(reconciliationOptions.Interval) * time.Second,
 			}
 		}
@@ -372,7 +371,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 	return pkgInstall, nil
 }
 
-func getPackageRepository(pr *packagingv1alpha1.PackageRepository) (*v1alpha1.PackageRepository, error) {
+func getPackageRepository(pr *kappctrlpackagingv1alpha1.PackageRepository) (*pkgkappv1alpha1.PackageRepository, error) {
 	// See the PackageRepository CR at
 	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
 
@@ -393,7 +392,7 @@ func getPackageRepository(pr *packagingv1alpha1.PackageRepository) (*v1alpha1.Pa
 		return nil, fmt.Errorf("packagerepository without fetch of one of imgpkgBundle, image, http or git: %v", pr)
 	}
 
-	repo := &v1alpha1.PackageRepository{
+	repo := &pkgkappv1alpha1.PackageRepository{
 		Name:      pr.Name,
 		Namespace: pr.Namespace,
 		Url:       repoURL,

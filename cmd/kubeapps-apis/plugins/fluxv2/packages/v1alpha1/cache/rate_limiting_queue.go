@@ -10,16 +10,16 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/workqueue"
+	k8sruntimeutil "k8s.io/apimachinery/pkg/util/runtime"
+	k8ssets "k8s.io/apimachinery/pkg/util/sets"
+	k8swait "k8s.io/apimachinery/pkg/util/wait"
+	k8sworkqueue "k8s.io/client-go/util/workqueue"
 	log "k8s.io/klog/v2"
 )
 
 // RateLimitingInterface is an interface that rate limits items being added to the queue.
 type RateLimitingInterface interface {
-	workqueue.RateLimitingInterface
+	k8sworkqueue.RateLimitingInterface
 	Name() string
 	ExpectAdd(item string)
 	IsProcessing(item string) bool
@@ -34,15 +34,15 @@ func NewRateLimitingQueue(name string, verbose bool) RateLimitingInterface {
 	queue := newQueue(name, verbose)
 	return &rateLimitingType{
 		queue:             queue,
-		DelayingInterface: workqueue.NewDelayingQueueWithCustomQueue(queue, name),
-		rateLimiter:       workqueue.DefaultControllerRateLimiter(),
+		DelayingInterface: k8sworkqueue.NewDelayingQueueWithCustomQueue(queue, name),
+		rateLimiter:       k8sworkqueue.DefaultControllerRateLimiter(),
 	}
 }
 
 // rateLimitingType wraps an Interface and provides rateLimited re-enquing
 type rateLimitingType struct {
-	workqueue.DelayingInterface
-	rateLimiter workqueue.RateLimiter
+	k8sworkqueue.DelayingInterface
+	rateLimiter k8sworkqueue.RateLimiter
 	queue       *Type
 }
 
@@ -53,8 +53,8 @@ func (q *rateLimitingType) AddRateLimited(item interface{}) {
 		log.Infof("[%s]: AddRateLimited(%s) - in %d ms", q.queue.name, item, duration.Milliseconds())
 	}
 	if itemstr, ok := item.(string); !ok {
-		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
+		// k8sworkqueue.Interface does not allow returning errors, so
+		k8sruntimeutil.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
 			reflect.TypeOf(item)))
 	} else {
 		q.DelayingInterface.AddAfter(itemstr, duration)
@@ -84,7 +84,7 @@ func (q *rateLimitingType) Reset() {
 	q.queue.reset()
 
 	// this way we "forget" about ratelimit failures
-	q.rateLimiter = workqueue.DefaultControllerRateLimiter()
+	q.rateLimiter = k8sworkqueue.DefaultControllerRateLimiter()
 
 	// TODO (gfichtenholt) Also need to "forget" the items queued up via previous call(s)
 	// to .AddRateLimited() (i.e. via q.DelayingInterface.AddAfter) ?
@@ -102,9 +102,9 @@ func (q *rateLimitingType) WaitUntilForgotten(item string) {
 	// re-added via AddRateLimited if there was an error processing the item
 	// in which case, NumRequeues will be > 0, and will only become 0 after
 	// a call to .Forget(item).
-	// TODO: (gfichtenholt) don't do wait.PollInfinite() here, use some sensible
+	// TODO: (gfichtenholt) don't do k8swait.PollInfinite() here, use some sensible
 	// timeout instead, and then this func will need to return an error
-	wait.PollInfinite(10*time.Millisecond, func() (bool, error) {
+	k8swait.PollInfinite(10*time.Millisecond, func() (bool, error) {
 		return q.rateLimiter.NumRequeues(item) == 0, nil
 	})
 }
@@ -113,9 +113,9 @@ func newQueue(name string, verbose bool) *Type {
 	return &Type{
 		name:       name,
 		verbose:    verbose,
-		expected:   sets.String{},
-		dirty:      sets.String{},
-		processing: sets.String{},
+		expected:   k8ssets.String{},
+		dirty:      k8ssets.String{},
+		processing: k8ssets.String{},
 		cond:       sync.NewCond(&sync.Mutex{}),
 	}
 }
@@ -136,16 +136,16 @@ type Type struct {
 
 	// expected defines all of the items that are expected to be processed.
 	// Used in unit tests only
-	expected sets.String
+	expected k8ssets.String
 
 	// dirty defines all of the items that need to be processed.
-	dirty sets.String
+	dirty k8ssets.String
 
 	// Things that are currently being processed are in the processing set.
 	// These things may be simultaneously in the dirty set. When we finish
 	// processing something and remove it from this set, we'll check if
 	// it's in the dirty set, and if so, add it to the queue.
-	processing sets.String
+	processing k8ssets.String
 
 	cond *sync.Cond
 
@@ -161,8 +161,8 @@ func (q *Type) Add(item interface{}) {
 		return
 	}
 	if itemstr, ok := item.(string); !ok {
-		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
+		// k8sworkqueue.Interface does not allow returning errors, so
+		k8sruntimeutil.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
 			reflect.TypeOf(item)))
 	} else {
 		q.expected.Delete(itemstr)
@@ -231,8 +231,8 @@ func (q *Type) Done(item interface{}) {
 	}
 
 	if itemstr, ok := item.(string); !ok {
-		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
+		// k8sworkqueue.Interface does not allow returning errors, so
+		k8sruntimeutil.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
 			reflect.TypeOf(item)))
 	} else {
 		q.processing.Delete(itemstr)
@@ -326,8 +326,8 @@ func (q *Type) reset() {
 	defer q.cond.L.Unlock()
 
 	q.queue = []string{}
-	q.dirty = sets.String{}
-	q.processing = sets.String{}
+	q.dirty = k8ssets.String{}
+	q.processing = k8ssets.String{}
 	// we are intentionally not resetting q.expected as we don't want to lose
 	// those across resync's
 }

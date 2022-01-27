@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	chartmodels "github.com/kubeapps/kubeapps/pkg/chart/models"
 )
 
 const (
@@ -37,8 +37,8 @@ type PostgresAssetManagerIface interface {
 	AssetManager
 	QueryCount(query string, args ...interface{}) (int, error)
 	QueryOne(target interface{}, query string, args ...interface{}) error
-	QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error)
-	QueryAllChartCategories(query string, args ...interface{}) ([]*models.ChartCategory, error)
+	QueryAllCharts(query string, args ...interface{}) ([]*chartmodels.Chart, error)
+	QueryAllChartCategories(query string, args ...interface{}) ([]*chartmodels.ChartCategory, error)
 	InitTables() error
 	InvalidateCache() error
 	EnsureRepoExists(repoNamespace, repoName string) (int, error)
@@ -93,7 +93,7 @@ func (m *PostgresAssetManager) QueryOne(target interface{}, query string, args .
 }
 
 // QueryAllCharts perform the given query and return the list of charts
-func (m *PostgresAssetManager) QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error) {
+func (m *PostgresAssetManager) QueryAllCharts(query string, args ...interface{}) ([]*chartmodels.Chart, error) {
 	rows, err := m.DB.Query(query, args...)
 	if rows != nil {
 		defer rows.Close()
@@ -101,14 +101,14 @@ func (m *PostgresAssetManager) QueryAllCharts(query string, args ...interface{})
 	if err != nil {
 		return nil, err
 	}
-	result := []*models.Chart{}
+	result := []*chartmodels.Chart{}
 	for rows.Next() {
 		var info string
 		err := rows.Scan(&info)
 		if err != nil {
 			return nil, err
 		}
-		var chart models.Chart
+		var chart chartmodels.Chart
 		err = json.Unmarshal([]byte(info), &chart)
 		if err != nil {
 			return nil, err
@@ -119,7 +119,7 @@ func (m *PostgresAssetManager) QueryAllCharts(query string, args ...interface{})
 }
 
 // QueryAllChartCategories performs the query and return the array of all the chart categories
-func (m *PostgresAssetManager) QueryAllChartCategories(query string, args ...interface{}) ([]*models.ChartCategory, error) {
+func (m *PostgresAssetManager) QueryAllChartCategories(query string, args ...interface{}) ([]*chartmodels.ChartCategory, error) {
 	rows, err := m.DB.Query(query, args...)
 	if rows != nil {
 		defer rows.Close()
@@ -127,7 +127,7 @@ func (m *PostgresAssetManager) QueryAllChartCategories(query string, args ...int
 	if err != nil {
 		return nil, err
 	}
-	result := []*models.ChartCategory{}
+	result := []*chartmodels.ChartCategory{}
 	for rows.Next() {
 		var name string
 		var count int
@@ -135,7 +135,7 @@ func (m *PostgresAssetManager) QueryAllChartCategories(query string, args ...int
 		if err != nil {
 			return nil, err
 		}
-		chartCategory := models.ChartCategory{Name: name, Count: count}
+		chartCategory := chartmodels.ChartCategory{Name: name, Count: count}
 		result = append(result, &chartCategory)
 	}
 	return result, nil

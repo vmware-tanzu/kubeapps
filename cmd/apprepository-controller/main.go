@@ -3,8 +3,10 @@
 
 package main
 
-import "github.com/kubeapps/kubeapps/cmd/apprepository-controller/cmd"
+import (
+	apprepoctrlcmd "github.com/kubeapps/kubeapps/cmd/apprepository-controller/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	apprepoctrlcmd.Execute()
 }

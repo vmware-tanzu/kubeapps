@@ -8,17 +8,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
-	corev1 "k8s.io/api/core/v1"
+	apprepoctrlserver "github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
+	cobra "github.com/spf13/cobra"
+	viper "github.com/spf13/viper"
+	k8scorev1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
 
 var (
 	cfgFile   string
-	serveOpts server.Config
+	serveOpts apprepoctrlserver.Config
 	// This Version var is updated during the build
 	// see the -ldflags option in the cmd/apprepository-controller/Dockerfile
 	version = "devel"
@@ -36,7 +35,7 @@ func newRootCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			return server.Serve(serveOpts)
+			return apprepoctrlserver.Serve(serveOpts)
 		},
 		Version: "devel",
 	}
@@ -108,12 +107,12 @@ func initConfig() {
 
 // getImagePullSecretsRefs gets the []string of Secrets names from the
 // StringSliceVar flag list passed in the repoSyncImagePullSecrets arg
-func getImagePullSecretsRefs(imagePullSecretsRefsArr []string) []corev1.LocalObjectReference {
-	var imagePullSecretsRefs []corev1.LocalObjectReference
+func getImagePullSecretsRefs(imagePullSecretsRefsArr []string) []k8scorev1.LocalObjectReference {
+	var imagePullSecretsRefs []k8scorev1.LocalObjectReference
 
 	// getting and appending a []LocalObjectReference for each ImagePullSecret passed
 	for _, imagePullSecretName := range imagePullSecretsRefsArr {
-		imagePullSecretsRefs = append(imagePullSecretsRefs, corev1.LocalObjectReference{Name: imagePullSecretName})
+		imagePullSecretsRefs = append(imagePullSecretsRefs, k8scorev1.LocalObjectReference{Name: imagePullSecretName})
 	}
 	return imagePullSecretsRefs
 }
