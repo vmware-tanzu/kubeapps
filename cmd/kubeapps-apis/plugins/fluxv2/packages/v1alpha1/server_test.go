@@ -21,7 +21,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -38,8 +40,6 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
@@ -90,15 +90,15 @@ func TestBadClientGetter(t *testing.T) {
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name       string
-		repo       runtime.Object
+		repo       sourcev1.HelmRepository
 		statusCode codes.Code
 	}{
 		{
 			name: "returns without error if response status does not contain conditions",
 			repo: newRepo("test", "default",
-				map[string]interface{}{
-					"url":      "http://example.com",
-					"interval": "1m0s",
+				&sourcev1.HelmRepositorySpec{
+					URL:      "http://example.com",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
 				nil),
 			statusCode: codes.OK,
@@ -106,83 +106,106 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		{
 			name: "returns without error if response status does not contain conditions (2)",
 			repo: newRepo("test", "default",
-				map[string]interface{}{
-					"url":      "http://example.com",
-					"interval": "1m0s",
+				&sourcev1.HelmRepositorySpec{
+					URL:      "http://example.com",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
-				map[string]interface{}{
-					"zot": "xyz",
-				}),
+				&sourcev1.HelmRepositoryStatus{}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if response does not contain ready repos",
 			repo: newRepo("test", "default",
-				map[string]interface{}{
-					"url":      "http://example.com",
-					"interval": "1m0s",
+				&sourcev1.HelmRepositorySpec{
+					URL:      "http://example.com",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
-				map[string]interface{}{
-					"conditions": []interface{}{
-						map[string]interface{}{
-							"type":   "Ready",
-							"status": "False",
-							"reason": "IndexationFailed",
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "False",
+							Reason: "IndexationFailed",
 						},
-					}}),
+					},
+				}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain namespace",
-			repo: newRepo("test", "", nil, map[string]interface{}{
-				"conditions": []interface{}{
-					map[string]interface{}{
-						"type":   "Ready",
-						"status": "True",
-						"reason": "IndexationSucceed",
+			repo: newRepo("test", "",
+				nil,
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "IndexationSucceed",
+						},
 					},
-				}}),
+				}),
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if repo object contains default spec",
+			repo: newRepo("test", "default",
+				nil,
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "IndexationSucceed",
+						},
+					},
+				}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain spec url",
-			repo: newRepo("test", "default", nil, map[string]interface{}{
-				"conditions": []interface{}{
-					map[string]interface{}{
-						"type":   "Ready",
-						"status": "True",
-						"reason": "IndexationSucceed",
+			repo: newRepo("test", "default",
+				&sourcev1.HelmRepositorySpec{},
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "IndexationSucceed",
+						},
 					},
-				}}),
+				}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain status url",
-			repo: newRepo("test", "default", map[string]interface{}{
-				"url":      "http://example.com",
-				"interval": "1m0s",
-			}, map[string]interface{}{
-				"conditions": []interface{}{
-					map[string]interface{}{
-						"type":   "Ready",
-						"status": "True",
-						"reason": "IndexationSucceed",
+			repo: newRepo("test", "default",
+				&sourcev1.HelmRepositorySpec{
+					URL:      "http://example.com",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
+				},
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "IndexationSucceed",
+						},
 					},
-				}}),
+				}),
 			statusCode: codes.OK,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{tc.repo}, nil, nil)
+			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{tc.repo}, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
 			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
 			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
-			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
+			if isRepoReady(tc.repo) {
 				if key, err := redisKeyForRepo(tc.repo); err == nil {
 					// TODO explain why 3 calls to ExpectGet. It has to do with the way
 					// the caching internals work: a call such as GetAvailablePackageSummaries
@@ -378,7 +401,7 @@ type testSpecChartWithUrl struct {
 func newServer(t *testing.T,
 	clientGetter clientgetter.ClientGetterWithApiExtFunc,
 	actionConfig *action.Configuration,
-	repos []runtime.Object,
+	repos []sourcev1.HelmRepository,
 	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
 
 	stopCh := make(chan struct{})
@@ -395,19 +418,19 @@ func newServer(t *testing.T,
 		}
 	}
 
-	cs := repoEventSink{
+	sink := repoEventSink{
 		clientGetter: clientGetter,
 		chartCache:   nil,
 	}
 
 	okRepos := sets.String{}
 	for _, r := range repos {
-		if isRepoReady(r.(*unstructured.Unstructured).Object) {
-			// we are willfully ignoring any errors coming from redisMockSetValueForRepo()
+		if isRepoReady(r) {
+			// we are willfully just logging any errors coming from redisMockSetValueForRepo()
 			// here and just skipping over to next repo. This is done for test
 			// TestGetAvailablePackagesStatus where we make sure that even if the flux CRD happens
 			// to be invalid flux plug in can still operate
-			key, _, err := cs.redisMockSetValueForRepo(mock, r)
+			key, _, err := sink.redisMockSetValueForRepo(mock, r)
 			if err != nil {
 				t.Logf("Skipping repo [%s] due to %+v", key, err)
 			} else {
@@ -447,7 +470,7 @@ func newServer(t *testing.T,
 					for i := 0; i < c.numRetries; i++ {
 						mock.ExpectExists(key).SetVal(0)
 					}
-					err = cs.redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
+					err = sink.redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
 					if err != nil {
 						return nil, mock, err
 					}
@@ -456,7 +479,7 @@ func newServer(t *testing.T,
 				}
 			}
 		}
-		cs = repoEventSink{
+		sink = repoEventSink{
 			clientGetter: clientGetter,
 			chartCache:   chartCache,
 		}
@@ -465,11 +488,11 @@ func newServer(t *testing.T,
 	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 		Gvr:          repositoriesGvr,
 		ClientGetter: clientGetter,
-		OnAddFunc:    cs.onAddRepo,
-		OnModifyFunc: cs.onModifyRepo,
-		OnGetFunc:    cs.onGetRepo,
-		OnDeleteFunc: cs.onDeleteRepo,
-		OnResyncFunc: cs.onResync,
+		OnAddFunc:    sink.onAddRepo,
+		OnModifyFunc: sink.onModifyRepo,
+		OnGetFunc:    sink.onGetRepo,
+		OnDeleteFunc: sink.onDeleteRepo,
+		OnResyncFunc: sink.onResync,
 	}
 
 	repoCache, err := cache.NewNamespacedResourceWatcherCache(

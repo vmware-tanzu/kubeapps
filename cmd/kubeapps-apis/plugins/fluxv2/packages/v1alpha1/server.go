@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -69,8 +69,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 		kubeappsCluster, pluginConfigPath)
 
 	repositoriesGvr := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
 		Resource: fluxHelmRepositories,
 	}
 
@@ -175,8 +175,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	}
 
 	responseRepos := []*v1alpha1.PackageRepository{}
-	for _, repoUnstructured := range repos.Items {
-		repo, err := packageRepositoryFromUnstructured(repoUnstructured.Object)
+	for _, repo := range repos {
+		repo, err := packageRepositoryFromFlux(repo)
 		if err != nil {
 			return nil, err
 		}
@@ -267,29 +267,29 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	repoN, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
 	// check specified repo exists and is in ready state
-	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
+	repoName := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoN}
 
 	// this verifies that the repo exists
-	repoUnstructured, err := s.getRepoInCluster(ctx, repo)
+	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
 		return nil, err
 	}
 
-	pkgDetail, err := s.availableChartDetail(ctx, repo, chartName, request.GetPkgVersion())
+	pkgDetail, err := s.availableChartDetail(ctx, repoName, chartName, request.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
 
 	// fix up a couple of fields that don't come from the chart tarball
-	repoUrl, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
-	if err != nil || !found {
-		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repo)
+	repoUrl := repo.Spec.URL
+	if repoUrl == "" {
+		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repoName)
 	}
 	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace

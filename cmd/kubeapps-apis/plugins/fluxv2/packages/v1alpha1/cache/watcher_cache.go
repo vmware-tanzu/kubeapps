@@ -426,7 +426,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 
 	// for debug only, will remove later
 	log.Infof("List(%s) returned list with [%d] items, object:\n%s",
-		c.config.Gvr.Resource, len(listItems.Items), common.PrettyPrintMap(listItems.Object))
+		c.config.Gvr.Resource, len(listItems.Items), common.PrettyPrint(listItems.Object))
 
 	rv := listItems.GetResourceVersion()
 	if rv == "" {
@@ -473,7 +473,7 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 		// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 		return
 	}
-	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrintObject(event.Object))
+	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
 		if unstructuredObj, ok := event.Object.(*unstructured.Unstructured); !ok {
@@ -564,7 +564,7 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 	}
 
 	if err != nil {
-		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, common.PrettyPrintMap(unstructuredObj), err)
+		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, common.PrettyPrint(unstructuredObj), err)
 		// clear that key so cache doesn't contain any stale info for this object
 		keysremoved, err2 := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		if err2 != nil {
@@ -825,7 +825,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 // for generating a cache key given an object
 // some kind of 'KeyFunc(unstructuredObj) string'
 func (c *NamespacedResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
-	name, err := common.NamespacedName(unstructuredObj)
+	name, err := common.NamespacedNameForUnstructured(unstructuredObj)
 	if err != nil {
 		return "", err
 	}

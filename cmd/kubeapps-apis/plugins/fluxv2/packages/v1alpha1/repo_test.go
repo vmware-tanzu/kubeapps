@@ -21,7 +21,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/fluxcd/pkg/apis/meta"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -477,7 +480,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repos := []runtime.Object{}
+			repos := []sourcev1.HelmRepository{}
 
 			for _, rs := range tc.repos {
 				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
@@ -485,7 +488,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					t.Fatalf("%+v", err)
 				}
 				defer ts2.Close()
-				repos = append(repos, repo)
+				repos = append(repos, *repo)
 			}
 
 			// the index.yaml will contain links to charts but for the purposes
@@ -545,29 +548,35 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		repoSpec := map[string]interface{}{
-			"url":      "https://example.repo.com/charts",
-			"interval": "1m0s",
+		repoSpec := &sourcev1.HelmRepositorySpec{
+			URL:      "https://example.repo.com/charts",
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		}
 
-		repoStatus := map[string]interface{}{
-			"artifact": map[string]interface{}{
-				"checksum":       "651f952130ea96823711d08345b85e82be011dc6",
-				"lastUpdateTime": "2021-07-01T05:09:45Z",
-				"revision":       "651f952130ea96823711d08345b85e82be011dc6",
+		lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		repoStatus := &sourcev1.HelmRepositoryStatus{
+			Artifact: &sourcev1.Artifact{
+				Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+				LastUpdateTime: metav1.Time{Time: lastUpdateTime},
+				Revision:       "651f952130ea96823711d08345b85e82be011dc6",
 			},
-			"conditions": []interface{}{
-				map[string]interface{}{
-					"type":   "Ready",
-					"status": "True",
-					"reason": "IndexationSucceed",
+			Conditions: []metav1.Condition{
+				{
+					Type:   "Ready",
+					Status: "True",
+					Reason: sourcev1.IndexationSucceededReason,
 				},
 			},
-			"url": ts.URL,
+			URL: ts.URL,
 		}
+
 		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil, nil)
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -587,7 +596,14 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
+		opt1 := cmpopts.IgnoreUnexported(
+			corev1.AvailablePackageDetail{},
+			corev1.AvailablePackageSummary{},
+			corev1.AvailablePackageReference{},
+			corev1.Context{},
+			plugins.Plugin{},
+			corev1.Maintainer{},
+			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeUpdate.AvailablePackageSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -602,21 +618,34 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		updateHappened = true
 		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
 		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		unstructured.SetNestedField(repo.Object, "2", "metadata", "resourceVersion")
-		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "checksum")
-		unstructured.SetNestedField(repo.Object, "4e881a3c34a5430c1059d2c4f753cb9aed006803", "status", "artifact", "revision")
+		repo.ObjectMeta.ResourceVersion = "2"
+		repo.Status.Artifact.Checksum = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
+		repo.Status.Artifact.Revision = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
+
 		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
 		mock.ExpectGet(key).SetVal(string(oldValue))
 		key, newValue, err := s.redisMockSetValueForRepo(mock, repo)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-		if repo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(context.Background(), repo, metav1.UpdateOptions{}); err != nil {
+
+		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&repo)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		unstructuredRepo, err := dyncli.
+			Resource(repositoriesGvr).
+			Namespace("ns2").Update(
+			context.Background(),
+			&unstructured.Unstructured{Object: unstructuredObj},
+			metav1.UpdateOptions{})
+		if err != nil {
 			t.Fatalf("%v", err)
 		}
 
 		s.repoCache.ExpectAdd(key)
-		watcher.Modify(repo)
+		watcher.Modify(unstructuredRepo)
 		s.repoCache.WaitUntilForgotten(key)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -674,7 +703,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		defer ts.Close()
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+		s, mock, dyncli, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -684,7 +713,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Errorf("there were unfulfilled expectations: %s", err)
 		}
 
-		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -699,7 +728,14 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
+		opt1 := cmpopts.IgnoreUnexported(
+			corev1.AvailablePackageDetail{},
+			corev1.AvailablePackageSummary{},
+			corev1.AvailablePackageReference{},
+			corev1.Context{},
+			plugins.Plugin{},
+			corev1.Maintainer{},
+			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -735,7 +771,12 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		for _, k := range chartCacheKeys {
 			s.chartCache.ExpectAdd(k)
 		}
-		watcher.Delete(repo)
+
+		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(repo)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		watcher.Delete(&unstructured.Unstructured{Object: unstructuredObj})
 		s.repoCache.WaitUntilForgotten(repoKey)
 		for _, k := range chartCacheKeys {
 			s.chartCache.WaitUntilForgotten(k)
@@ -771,12 +812,12 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, watcher, err := newServerWithRepos(t, []runtime.Object{repo}, nil, nil)
+		s, mock, _, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
-		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -791,7 +832,13 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
+		opt1 := cmpopts.IgnoreUnexported(
+			corev1.AvailablePackageDetail{},
+			corev1.AvailablePackageSummary{},
+			corev1.AvailablePackageReference{},
+			corev1.Context{}, plugins.Plugin{},
+			corev1.Maintainer{},
+			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
@@ -812,7 +859,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		// set up expectations
 		mock.ExpectFlushDB().SetVal("OK")
-		if _, _, err := s.redisMockSetValueForRepo(mock, repo); err != nil {
+		if _, _, err := s.redisMockSetValueForRepo(mock, *repo); err != nil {
 			t.Fatalf("%+v", err)
 		}
 
@@ -824,7 +871,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
 			t.Fatalf("%v", err)
 		}
 
@@ -873,7 +920,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 
 			// the GETs and SETs will be done by background worker upon processing of Add event in
 			// NamespaceResourceWatcherCache.onAddOrModify()
-			key, byteArray, err := s.redisKeyValueForRepo(repo)
+			key, byteArray, err := s.redisKeyValueForRepo(*repo)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -881,7 +928,11 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			keysInOrder = append(keysInOrder, key)
 			mock.ExpectGet(key).RedisNil()
 			redisMockSetValueForRepo(mock, key, byteArray)
-			repos = append(repos, repo)
+			unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(repo)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+			repos = append(repos, &unstructured.Unstructured{Object: unstructuredObj})
 		}
 
 		for _, r := range repos {
@@ -1009,20 +1060,28 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 
 		// the GETs and SETs will be done by background worker upon processing of Add event in
 		// NamespaceResourceWatcherCache.onAddOrModify()
-		key, byteArray, err := s.redisKeyValueForRepo(repo)
+		key, byteArray, err := s.redisKeyValueForRepo(*repo)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 		mock.ExpectGet(key).RedisNil()
 		redisMockSetValueForRepo(mock, key, byteArray)
 
-		if _, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(context.Background(), repo, metav1.CreateOptions{}); err != nil {
+		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(repo)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		unstructuredRepo, err := dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
+			Create(
+				context.Background(),
+				&unstructured.Unstructured{Object: unstructuredObj},
+				metav1.CreateOptions{})
+		if err != nil {
 			t.Fatalf("%v", err)
 		}
 
 		s.repoCache.ExpectAdd(key)
-		watcher.Add(repo)
+		watcher.Add(unstructuredRepo)
 
 		done := make(chan int, 1)
 
@@ -1101,7 +1160,7 @@ func TestGetPackageRepositories(t *testing.T) {
 		name                        string
 		request                     *v1alpha1.GetPackageRepositoriesRequest
 		repoNamespace               string
-		repoSpecs                   map[string]map[string]interface{}
+		repoSpecs                   map[string]sourcev1.HelmRepositorySpec
 		expectedPackageRepositories []*v1alpha1.PackageRepository
 		statusCode                  codes.Code
 	}{
@@ -1109,10 +1168,8 @@ func TestGetPackageRepositories(t *testing.T) {
 			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
 			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoNamespace: "default",
-			repoSpecs: map[string]map[string]interface{}{
-				"repo-1": {
-					"foo": "bar",
-				},
+			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
+				"repo-1": {},
 			},
 			statusCode: codes.Internal,
 		},
@@ -1120,12 +1177,12 @@ func TestGetPackageRepositories(t *testing.T) {
 			name:          "returns expected repositories",
 			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
 			repoNamespace: "default",
-			repoSpecs: map[string]map[string]interface{}{
+			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
 				"repo-1": {
-					"url": "https://charts.bitnami.com/bitnami",
+					URL: "https://charts.bitnami.com/bitnami",
 				},
 				"repo-2": {
-					"url": "https://charts.helm.sh/stable",
+					URL: "https://charts.helm.sh/stable",
 				},
 			},
 			expectedPackageRepositories: []*v1alpha1.PackageRepository{
@@ -1149,12 +1206,12 @@ func TestGetPackageRepositories(t *testing.T) {
 				},
 			},
 			repoNamespace: "non-default",
-			repoSpecs: map[string]map[string]interface{}{
+			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
 				"repo-1": {
-					"url": "https://charts.bitnami.com/bitnami",
+					URL: "https://charts.bitnami.com/bitnami",
 				},
 				"repo-2": {
-					"url": "https://charts.helm.sh/stable",
+					URL: "https://charts.helm.sh/stable",
 				},
 			},
 			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
@@ -1167,12 +1224,12 @@ func TestGetPackageRepositories(t *testing.T) {
 				},
 			},
 			repoNamespace: "default",
-			repoSpecs: map[string]map[string]interface{}{
+			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
 				"repo-1": {
-					"url": "https://charts.bitnami.com/bitnami",
+					URL: "https://charts.bitnami.com/bitnami",
 				},
 				"repo-2": {
-					"url": "https://charts.helm.sh/stable",
+					URL: "https://charts.helm.sh/stable",
 				},
 			},
 			expectedPackageRepositories: []*v1alpha1.PackageRepository{
@@ -1223,20 +1280,36 @@ func TestGetPackageRepositories(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
+func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
 	typedClient := typfake.NewSimpleClientset(secrets...)
+
+	initObjs := []runtime.Object{}
+	for _, r := range repos {
+		unstructuredRepo, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&r)
+		if err != nil {
+			return nil, nil, nil, nil, err
+		}
+		obj := &unstructured.Unstructured{Object: unstructuredRepo}
+		initObjs = append(initObjs, obj.DeepCopy())
+	}
+
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
 		runtime.NewScheme(),
 		map[schema.GroupVersionResource]string{
 			repositoriesGvr: fluxHelmRepositoryList,
 		},
-		repos...)
+		initObjs...)
 
 	// here we are essentially adding on to how List() works for HelmRepository objects
 	// this is done so that the the item list returned by List() command with fake client contains
 	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
 	// is critical
 	reactor := dynamicClient.Fake.ReactionChain[0]
+
+	// here we are essentially adding on to how List() works for HelmRepository objects
+	// this is done so that the the item list returned by List() command with fake client contains
+	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
+	// is critical
 	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
 		func(action k8stesting.Action) (bool, runtime.Object, error) {
 			handled, ret, err := reactor.React(action)
@@ -1265,40 +1338,50 @@ func newServerWithRepos(t *testing.T, repos []runtime.Object, charts []testSpecC
 	return s, mock, dynamicClient, watcher, err
 }
 
-func newRepo(name string, namespace string, spec map[string]interface{}, status map[string]interface{}) *unstructured.Unstructured {
-	metadata := map[string]interface{}{
-		"name":            name,
-		"generation":      int64(1),
-		"resourceVersion": "1",
+func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
+	helmRepository := sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            name,
+			Generation:      int64(1),
+			ResourceVersion: "1",
+		},
 	}
 	if namespace != "" {
-		metadata["namespace"] = namespace
-	}
-	obj := map[string]interface{}{
-		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-		"kind":       fluxHelmRepository,
-		"metadata":   metadata,
+		helmRepository.ObjectMeta.Namespace = namespace
 	}
 
+	// Just FYI, if spec is not specified, the repo object will have a default one, e.g.
+	// {
+	//	"metadata": {
+	//	 ...
+	//	},
+	//	"spec": {
+	//	  "url": "",
+	//	  "interval": "0s"
+	//	},
+	//	"status": {
+	//  ...
 	if spec != nil {
-		obj["spec"] = spec
+		helmRepository.Spec = *spec.DeepCopy()
 	}
 
 	if status != nil {
-		status["observedGeneration"] = int64(1)
-		obj["status"] = status
+		helmRepository.Status = *status.DeepCopy()
+		helmRepository.Status.ObservedGeneration = int64(1)
 	}
 
-	return &unstructured.Unstructured{
-		Object: obj,
-	}
+	return helmRepository
 }
 
-// newRepos takes a map of specs keyed by object name converting them to unstructured objects.
-func newRepos(specs map[string]map[string]interface{}, namespace string) []runtime.Object {
-	repos := []runtime.Object{}
+// newRepos takes a map of specs keyed by object name converting them to typed flux HelmRepository objects.
+func newRepos(specs map[string]sourcev1.HelmRepositorySpec, namespace string) []sourcev1.HelmRepository {
+	repos := []sourcev1.HelmRepository{}
 	for name, spec := range specs {
-		repo := newRepo(name, namespace, spec, nil)
+		repo := newRepo(name, namespace, &spec, nil)
 		repos = append(repos, repo)
 	}
 	return repos
@@ -1358,7 +1441,7 @@ func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca
 
 // these functiosn should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
-func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...runtime.Object) error {
+func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
 	mapVals := make(map[string][]byte)
 	for _, r := range repos {
 		key, bytes, err := s.redisKeyValueForRepo(r)
@@ -1383,19 +1466,19 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 	return nil
 }
 
-func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, bytes []byte, err error) {
-	cs := repoEventSink{
+func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository) (key string, bytes []byte, err error) {
+	sink := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   nil,
 	}
-	return cs.redisMockSetValueForRepo(mock, repo)
+	return sink.redisMockSetValueForRepo(mock, repo)
 }
 
-func (cs *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo runtime.Object) (key string, byteArray []byte, err error) {
+func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(repo); err != nil {
 		return key, nil, err
 	}
-	if key, byteArray, err = cs.redisKeyValueForRepo(repo); err != nil {
+	if key, byteArray, err = sink.redisKeyValueForRepo(repo); err != nil {
 		mock.ExpectDel(key).SetVal(0)
 		return key, nil, err
 	} else {
@@ -1409,23 +1492,28 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, byteArray [
 	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
 }
 
-func (s *Server) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
-	cs := repoEventSink{
+func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
+	sink := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   nil,
 	}
-	return cs.redisKeyValueForRepo(r)
+	return sink.redisKeyValueForRepo(r)
 }
 
-func (cs *repoEventSink) redisKeyValueForRepo(r runtime.Object) (key string, byteArray []byte, err error) {
+func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {
+		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&r)
+		if err != nil {
+			return key, nil, err
+		}
+
 		// we are not really adding anything to the cache here, rather just calling a
 		// onAddRepo to compute the value that *WOULD* be stored in the cache
 		var byteArray interface{}
 		var add bool
-		byteArray, add, err = cs.onAddRepo(key, r.(*unstructured.Unstructured).Object)
+		byteArray, add, err = sink.onAddRepo(key, unstructuredObj)
 		if err != nil {
 			return key, nil, err
 		} else if !add {
@@ -1435,14 +1523,14 @@ func (cs *repoEventSink) redisKeyValueForRepo(r runtime.Object) (key string, byt
 	}
 }
 
-func redisKeyForRepo(r runtime.Object) (string, error) {
+func redisKeyForRepo(r sourcev1.HelmRepository) (string, error) {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
 	// We will use "helmrepository:ns:repoName"
 	return redisKeyForRepoNamespacedName(types.NamespacedName{
-		Namespace: r.(*unstructured.Unstructured).GetNamespace(),
-		Name:      r.(*unstructured.Unstructured).GetName()})
+		Namespace: r.GetNamespace(),
+		Name:      r.GetName()})
 }
 
 func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
@@ -1456,7 +1544,7 @@ func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
 	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
-func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *unstructured.Unstructured, error) {
+func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *sourcev1.HelmRepository, error) {
 	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
 	if err != nil {
 		return nil, nil, err
@@ -1475,39 +1563,43 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 		fmt.Fprintln(w, string(indexYAMLBytes))
 	}))
 
-	repoSpec := map[string]interface{}{
-		"url":      "https://example.repo.com/charts",
-		"interval": "1m0s",
+	repoSpec := &sourcev1.HelmRepositorySpec{
+		URL:      "https://example.repo.com/charts",
+		Interval: metav1.Duration{Duration: 1 * time.Minute},
 	}
 
 	if secretRef != "" {
-		repoSpec["secretRef"] = map[string]interface{}{
-			"name": secretRef,
-		}
+		repoSpec.SecretRef = &meta.LocalObjectReference{Name: secretRef}
 	}
 
-	repoStatus := map[string]interface{}{
-		"artifact": map[string]interface{}{
-			"checksum":       "651f952130ea96823711d08345b85e82be011dc6",
-			"lastUpdateTime": "2021-07-01T05:09:45Z",
-			"revision":       "651f952130ea96823711d08345b85e82be011dc6",
+	lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	repoStatus := &sourcev1.HelmRepositoryStatus{
+		Artifact: &sourcev1.Artifact{
+			Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+			LastUpdateTime: metav1.Time{Time: lastUpdateTime},
+			Revision:       "651f952130ea96823711d08345b85e82be011dc6",
 		},
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"type":   "Ready",
-				"status": "True",
-				"reason": "IndexationSucceed",
+		Conditions: []metav1.Condition{
+			{
+				Type:   "Ready",
+				Status: "True",
+				Reason: sourcev1.IndexationSucceededReason,
 			},
 		},
-		"url": ts.URL,
+		URL: ts.URL,
 	}
-	return ts, newRepo(repoName, repoNamespace, repoSpec, repoStatus), nil
+	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
+	return ts, &repo, nil
 }
 
 // misc global vars that get re-used in multiple tests scenarios
 var repositoriesGvr = schema.GroupVersionResource{
-	Group:    fluxGroup,
-	Version:  fluxVersion,
+	Group:    sourcev1.GroupVersion.Group,
+	Version:  sourcev1.GroupVersion.Version,
 	Resource: fluxHelmRepositories,
 }
 

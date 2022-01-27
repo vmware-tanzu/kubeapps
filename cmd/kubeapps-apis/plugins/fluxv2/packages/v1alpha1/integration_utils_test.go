@@ -27,6 +27,9 @@ import (
 	"testing"
 	"time"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	"github.com/fluxcd/pkg/apis/meta"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
@@ -40,6 +43,7 @@ import (
 	kuberbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
@@ -170,30 +174,39 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 // the design
 func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
-	unstructuredRepo := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-			"kind":       fluxHelmRepository,
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": namespace,
-			},
-			"spec": map[string]interface{}{
-				"url":      url,
-				"interval": "1m",
-			},
+	repo := sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL: url,
 		},
 	}
 
 	if secretName != "" {
-		unstructured.SetNestedField(unstructuredRepo.Object, secretName, "spec", "secretRef", "name")
+		repo.Spec.SecretRef = &meta.LocalObjectReference{
+			Name: secretName,
+		}
+	}
+
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&repo)
+	if err != nil {
+		t.Fatalf("%v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
-	} else if _, err := ifc.Create(ctx, &unstructuredRepo, metav1.CreateOptions{}); err != nil {
+	} else if _, err := ifc.Create(
+		ctx,
+		&unstructured.Unstructured{Object: u},
+		metav1.CreateOptions{}); err != nil {
 		return err
 	} else {
 		return nil
@@ -228,7 +241,11 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 						return errors.New("Could not cast to unstructured.Unstructured")
 					} else {
 						hour, minute, second := time.Now().Clock()
-						complete, success, reason := isHelmRepositoryReady(unstructuredRepo.Object)
+						repo := sourcev1.HelmRepository{}
+						if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredRepo.Object, &repo); err != nil {
+							return err
+						}
+						complete, success, reason := isHelmRepositoryReady(repo)
 						t.Logf("[%d:%d:%d] Got event: type: [%v], reason [%s]", hour, minute, second, event.Type, reason)
 						if complete && success {
 							return nil
@@ -554,8 +571,8 @@ func kubeGetHelmReleaseResourceInterface(namespace string) (dynamic.ResourceInte
 		return nil, err
 	}
 	relResource := schema.GroupVersionResource{
-		Group:    fluxHelmReleaseGroup,
-		Version:  fluxHelmReleaseVersion,
+		Group:    helmv2.GroupVersion.Group,
+		Version:  helmv2.GroupVersion.Version,
 		Resource: fluxHelmReleases,
 	}
 	return clientset.Resource(relResource).Namespace(namespace), nil
@@ -567,8 +584,8 @@ func kubeGetHelmRepositoryResourceInterface(namespace string) (dynamic.ResourceI
 		return nil, err
 	}
 	repoResource := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
 		Resource: fluxHelmRepositories,
 	}
 	return clientset.Resource(repoResource).Namespace(namespace), nil

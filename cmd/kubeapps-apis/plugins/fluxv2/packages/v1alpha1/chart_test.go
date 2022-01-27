@@ -23,6 +23,7 @@ import (
 	"strings"
 	"testing"
 
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -209,12 +210,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, secretObjs)
+			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			s.redisMockExpectGetFromRepoCache(mock, nil, repo)
+			s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
 			chartVersion := tc.request.PkgVersion
 			if chartVersion == "" {
 				chartVersion = charts[0].chartRevision
@@ -304,7 +305,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+		s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -313,7 +314,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		chartVersion := charts[0].chartRevision
 		requestChartUrl := charts[0].chartUrl
 
-		s.redisMockExpectGetFromRepoCache(mock, nil, repo)
+		s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
 		chartCacheKey, err := s.chartCache.KeyFor(
 			repoNamespace,
 			packageIdentifier,
@@ -475,7 +476,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -485,7 +486,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 
 			repoExists := requestRepoName == tc.repoName && requestRepoNamespace == tc.repoNamespace
 			if repoExists {
-				s.redisMockExpectGetFromRepoCache(mock, nil, repo)
+				s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
 				requestChartName := strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[1]
 				chartExists := requestChartName == "redis"
 				if chartExists {
@@ -654,7 +655,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{repo}, charts, nil)
+			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -664,7 +665,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 
-			key, bytes, err := s.redisKeyValueForRepo(repo)
+			key, bytes, err := s.redisKeyValueForRepo(*repo)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -756,12 +757,20 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		if _, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(context.Background(), r, metav1.CreateOptions{}); err != nil {
+		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&r)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		unstructuredRepo, err := dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
+			Create(
+				context.Background(),
+				&unstructured.Unstructured{Object: unstructuredObj},
+				metav1.CreateOptions{})
+		if err != nil {
 			t.Fatalf("%v", err)
 		}
 
-		repoKey, repoBytes, err := s.redisKeyValueForRepo(r)
+		repoKey, repoBytes, err := s.redisKeyValueForRepo(*r)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -791,7 +800,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 		s.repoCache.ExpectAdd(repoKey)
 
-		watcher.Add(r)
+		watcher.Add(unstructuredRepo)
 
 		done := make(chan int, 1)
 
@@ -866,34 +875,32 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 	})
 }
 
-func newChart(name, namespace string, spec, status map[string]interface{}) *unstructured.Unstructured {
-	metadata := map[string]interface{}{
-		"name":            name,
-		"generation":      int64(1),
-		"resourceVersion": "1",
+func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sourcev1.HelmChartStatus) sourcev1.HelmChart {
+	helmChart := sourcev1.HelmChart{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmChartKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            name,
+			Generation:      int64(1),
+			ResourceVersion: "1",
+		},
 	}
 	if namespace != "" {
-		metadata["namespace"] = namespace
-	}
-
-	obj := map[string]interface{}{
-		"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-		"kind":       fluxHelmChart,
-		"metadata":   metadata,
+		helmChart.ObjectMeta.Namespace = namespace
 	}
 
 	if spec != nil {
-		obj["spec"] = spec
+		helmChart.Spec = *spec.DeepCopy()
 	}
 
 	if status != nil {
-		status["observedGeneration"] = int64(1)
-		obj["status"] = status
+		helmChart.Status = *status.DeepCopy()
+		helmChart.Status.ObservedGeneration = int64(1)
 	}
 
-	return &unstructured.Unstructured{
-		Object: obj,
-	}
+	return helmChart
 }
 
 func availableRef(id, namespace string) *corev1.AvailablePackageReference {
@@ -908,11 +915,11 @@ func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 }
 
 func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
-	cs := repoEventSink{
+	sink := repoEventSink{
 		clientGetter: s.clientGetter,
 		chartCache:   s.chartCache,
 	}
-	return cs.redisMockSetValueForChart(mock, key, url, opts)
+	return sink.redisMockSetValueForChart(mock, key, url, opts)
 }
 
 func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
