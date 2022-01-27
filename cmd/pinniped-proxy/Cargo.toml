@@ -37,6 +37,7 @@ http = "0.2.6"
 default = ["v1_22"]
 
 # k8s target version when compiling k8s-openapi
+# See https://doc.rust-lang.org/cargo/reference/features.html#dependency-features
 v1_20 = ["k8s-openapi/v1_20"]
 v1_21 = ["k8s-openapi/v1_21"]
 v1_22 = ["k8s-openapi/v1_22"]
