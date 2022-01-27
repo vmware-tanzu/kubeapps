@@ -559,14 +559,8 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 	if versionRef.GetVersion() != "" {
 		fluxRelease.Spec.Chart.Spec.Version = versionRef.GetVersion()
 	}
-<<<<<<< HEAD
 
-	// default reconcile interval is 1 sec
-	reconcileInterval := defaultReconcileInterval
-	// unless explictly specified
-=======
 	reconcileInterval := defaultReconcileInterval // unless explicitly specified
->>>>>>> main
 	if reconcile != nil {
 		if reconcile.Interval > 0 {
 			reconcileInterval = metav1.Duration{Duration: (time.Duration(reconcile.Interval) * time.Second)}
