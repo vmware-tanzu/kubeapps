@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 const path = require("path");
 const fs = require("fs");
 const waitOn = require("wait-on");

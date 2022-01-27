@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -568,10 +559,14 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 	if versionRef.GetVersion() != "" {
 		fluxRelease.Spec.Chart.Spec.Version = versionRef.GetVersion()
 	}
+<<<<<<< HEAD
 
 	// default reconcile interval is 1 sec
 	reconcileInterval := defaultReconcileInterval
 	// unless explictly specified
+=======
+	reconcileInterval := defaultReconcileInterval // unless explicitly specified
+>>>>>>> main
 	if reconcile != nil {
 		if reconcile.Interval > 0 {
 			reconcileInterval = metav1.Duration{Duration: (time.Duration(reconcile.Interval) * time.Second)}

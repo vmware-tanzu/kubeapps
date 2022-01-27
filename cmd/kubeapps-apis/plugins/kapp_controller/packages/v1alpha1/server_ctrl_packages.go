@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -24,7 +15,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	vendirVersions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -612,8 +603,18 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
 	}
 
+	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.defaultUpgradePolicy)
+	if err != nil {
+		return nil, err
+	}
+
 	// Update the rest of the fields
-	pkgInstall.Spec.PackageRef.VersionSelection = &vendirVersions.VersionSelectionSemver{Constraints: pkgVersion}
+	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversions.VersionSelectionSemver{
+		Constraints: versionConstraints,
+		// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
+		// This is to allow prereleases to be also installed
+		Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+	}
 	if reconciliationOptions != nil {
 		if reconciliationOptions.Interval > 0 {
 			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
@@ -642,7 +643,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		}
 	} else {
 		// Delete all the associated secrets
-		// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+		// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
 		// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
@@ -707,7 +708,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	}
 
 	// Delete all the associated secrets
-	// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+	// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
 	// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 	for _, packageInstallValue := range pkgInstall.Spec.Values {
 		secretId := packageInstallValue.SecretRef.Name

@@ -1,18 +1,5 @@
-/*
-Copyright (c) 2019 Bitnami
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
 
 package kube
 
@@ -203,7 +190,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 	// (among other things). We would need to add reactors to the fake
 	// to do so to test the UID being set on the secret.
 	// https://github.com/kubernetes/client-go/issues/439
-	// responseAppRepo.ObjectMeta.UID = "dead-beef"
+	// responseAppRepo.ObjectMeta.UID = "5ef40f28-3c69-460d-bd12-c00b944e6d1b"
 
 	// When appropriate, ensure the expected secret is stored.
 	if appRepoRequest.AppRepository.AuthHeader != "" {
@@ -222,7 +209,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 		}
 
-		// Verify the copy of the repo secret in in kubeapps is
+		// Verify the copy of the repo secret in kubeapps is
 		// also stored if this is a per-namespace app repository.
 		kubeappsSecretName := KubeappsSecretNameForRepo(expectedAppRepo.ObjectMeta.Name, expectedAppRepo.ObjectMeta.Namespace)
 		expectedSecret.ObjectMeta.Name = kubeappsSecretName
@@ -1217,7 +1204,7 @@ func TestNonOCIValidate(t *testing.T) {
 			httpValidator:    HelmNonOCIValidator{Req: validRequest},
 		},
 		{
-			name:             "it returns a 400 error if the validation cannot be executed",
+			name:             "it returns a 400 error if the validation cannot be run",
 			fakeHttpError:    fmt.Errorf("client.Do returns an error"),
 			expectedResponse: &ValidationResponse{Code: 400, Message: "client.Do returns an error"},
 			httpValidator:    HelmNonOCIValidator{Req: validRequest},

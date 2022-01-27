@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 const utils = require("./lib/utils");
 
 test("Deploys an application with the values by default", async () => {

@@ -1,21 +1,13 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
 	"context"
 	"fmt"
 
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -437,7 +429,7 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 	}
 
 	// List the k8s resources that match the label selector
-	resources, err := resourcesClient.List(labelSelector, nil)
+	resources, err := resourcesClient.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{})
 	if err != nil {
 		return nil, err
 	}

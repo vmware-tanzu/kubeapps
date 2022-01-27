@@ -9,7 +9,7 @@ Since Kubeapps 1.6.0, it's possible to include a JSON schema with a chart that d
 
 The goal of this feature is to present the user with the most common parameters which are typically modified before deploying a chart (like username and password) in a more user-friendly form.
 
-This document specifies what's needed to be defined in order to present this basic form to the users of a chart. If the basic form components do not fit your needs we also offer the ability for developers to inject their own custom components, the integration docs can be found [here](https://github.com/kubeapps/kubeapps/blob/master/docs/developer/custom-form-component-support.md).
+This document specifies what's needed to be defined in order to present this basic form to the users of a chart. If the basic form components do not fit your needs we also offer the ability for developers to inject their own custom components, the integration docs can be found [here](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/custom-form-component-support.md).
 
 ## Create a values.schema.json
 
@@ -51,7 +51,7 @@ In order to render a slider, there are some requirements and additional tags tha
 - The supported types are `string`, `integer` and `numeric`.
 - It's necessary to specify the tag `render` and set it to `slider`.
 - The tag `sliderMin` identifies the minimum value the slider allows (this can be bypassed writing a smaller value in the input).
-- The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writing a bigger value in the input).
+- The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writing a greater value in the input).
 - The tag `sliderStep` identifies the step the slider will increment or decrement the value when moved.
 - The tag `sliderUnit` specifies the unit of the value to set. For example `Gi`.
 

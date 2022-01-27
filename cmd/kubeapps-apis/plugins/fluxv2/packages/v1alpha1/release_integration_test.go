@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -346,7 +337,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				}
 			}
 
-			// sanity check
+			// confidence test
 			exists, err := kubeExistsHelmRelease(t, installedRef.Identifier, installedRef.Context.Namespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -763,7 +754,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 
 	// generate a unique target namespace for each test to avoid situations when tests are
 	// run multiple times in a row and they fail due to the fact that the specified namespace
-	// in in 'Terminating' state
+	// in 'Terminating' state
 	if tc.request.TargetContext.Namespace != "" {
 		tc.request.TargetContext.Namespace += "-" + randSeq(4)
 
@@ -824,7 +815,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 
 	if tc.expectedDetail != nil {
 		// set some of the expected fields here to values we already know to expect,
-		// the rest should be specified explictly
+		// the rest should be specified explicitly
 		tc.expectedDetail.InstalledPackageRef = installedRef(tc.request.Name, tc.request.TargetContext.Namespace)
 		tc.expectedDetail.AvailablePackageRef = tc.request.AvailablePackageRef
 		tc.expectedDetail.Name = tc.request.Name

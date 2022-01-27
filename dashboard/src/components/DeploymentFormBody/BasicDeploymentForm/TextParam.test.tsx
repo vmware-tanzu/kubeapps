@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { mount } from "enzyme";
 import React from "react";
 import { act } from "react-dom/test-utils";

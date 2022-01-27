@@ -1,8 +1,11 @@
-import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import {
   CreateSecretRequest,
   SecretType,
 } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class Secret {
   public static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
@@ -39,7 +42,7 @@ export default class Secret {
           username: user,
           password,
           email,
-          auth: btoa(`${user}:${password}`),
+          auth: Buffer.from(`${user}:${password}`).toString("base64"),
         },
       },
     };
