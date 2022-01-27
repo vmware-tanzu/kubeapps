@@ -24,6 +24,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -34,7 +35,6 @@ import (
 	kuberbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
@@ -185,7 +185,7 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName str
 		}
 	}
 
-	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&repo)
+	u, err := common.ToUnstructured(&repo)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -194,10 +194,7 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName str
 	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
-	} else if _, err := ifc.Create(
-		ctx,
-		&unstructured.Unstructured{Object: u},
-		metav1.CreateOptions{}); err != nil {
+	} else if _, err := ifc.Create(ctx, u, metav1.CreateOptions{}); err != nil {
 		return err
 	} else {
 		return nil
@@ -233,7 +230,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 					} else {
 						hour, minute, second := time.Now().Clock()
 						repo := sourcev1.HelmRepository{}
-						if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredRepo.Object, &repo); err != nil {
+						if err := common.FromUnstructured(unstructuredRepo, &repo); err != nil {
 							return err
 						}
 						complete, success, reason := isHelmRepositoryReady(repo)

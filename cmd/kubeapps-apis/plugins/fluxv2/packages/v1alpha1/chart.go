@@ -13,6 +13,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/ghodss/yaml"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -21,7 +22,6 @@ import (
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -64,10 +64,8 @@ func (s *Server) listChartsInCluster(ctx context.Context, namespace string) ([]s
 		chartArray := []sourcev1.HelmChart{}
 		for _, u := range unstructuredList.Items {
 			chart := sourcev1.HelmChart{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &chart); err != nil {
-				return nil, status.Errorf(codes.Internal,
-					"error converting from unstructured due to: %v",
-					err)
+			if err := common.FromUnstructured(&u, &chart); err != nil {
+				return nil, err
 			}
 			chartArray = append(chartArray, chart)
 		}
@@ -89,10 +87,8 @@ func (s *Server) getChartInCluster(ctx context.Context, key types.NamespacedName
 	}
 
 	chart := sourcev1.HelmChart{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &chart); err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"error converting from unstructured due to: %v",
-			err)
+	if err := common.FromUnstructured(u, &chart); err != nil {
+		return nil, err
 	}
 	return &chart, nil
 }

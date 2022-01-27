@@ -63,14 +63,24 @@ func PrettyPrint(o interface{}) string {
 	return string(prettyBytes)
 }
 
-func FromUnstructured(unstructuredObj map[string]interface{}, obj interface{}) error {
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, obj)
+func FromUnstructured(unstructuredObj *unstructured.Unstructured, obj interface{}) error {
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, obj)
 	if err != nil {
 		return status.Errorf(codes.Internal,
 			"failed to convert unstructured content for %s to a typed: %v",
-			PrettyPrint(unstructuredObj))
+			PrettyPrint(unstructuredObj), err)
 	}
 	return nil
+}
+
+func ToUnstructured(obj interface{}) (*unstructured.Unstructured, error) {
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to convert typed content for %s to unstructured: %v",
+			PrettyPrint(obj), err)
+	}
+	return &unstructured.Unstructured{Object: unstructuredObj}, nil
 }
 
 func CheckGeneration(obj ctrlclient.Object) bool {

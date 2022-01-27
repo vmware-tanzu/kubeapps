@@ -29,8 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -75,10 +73,8 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) ([
 		relArray := []helmv2.HelmRelease{}
 		for _, u := range unstructuredList.Items {
 			rel := helmv2.HelmRelease{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &rel); err != nil {
-				return nil, status.Errorf(codes.Internal,
-					"error converting from unstructured due to: %v",
-					err)
+			if err := common.FromUnstructured(&u, &rel); err != nil {
+				return nil, err
 			}
 			relArray = append(relArray, rel)
 		}
@@ -100,10 +96,8 @@ func (s *Server) getReleaseInCluster(ctx context.Context, key types.NamespacedNa
 	}
 
 	rel := helmv2.HelmRelease{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &rel); err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"error converting from unstructured due to: %v",
-			err)
+	if err := common.FromUnstructured(u, &rel); err != nil {
+		return nil, err
 	}
 	return &rel, nil
 }
@@ -395,11 +389,9 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 
 	// convert to unstructured so we can pass it to dynamic.Interface
 	// kind of a hack to be converting it here, but it's temporary
-	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(fluxRelease)
+	u, err := common.ToUnstructured(fluxRelease)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"error converting to unstructured due to: %v",
-			err)
+		return nil, err
 	}
 
 	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
@@ -410,7 +402,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	_, err = resourceIfc.Create(ctx, &unstructured.Unstructured{Object: u}, metav1.CreateOptions{})
+	_, err = resourceIfc.Create(ctx, u, metav1.CreateOptions{})
 	if err != nil {
 		return nil, statuserror.FromK8sError("create", "HelmRelease", targetName.String(), err)
 	}
@@ -484,11 +476,9 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 
 	// replace the object in k8s with a new desired state
 	// convert to unstructured so we can pass it to dynamic.Interface
-	unstructuredRel, err := runtime.DefaultUnstructuredConverter.ToUnstructured(rel)
+	unstructuredRel, err := common.ToUnstructured(rel)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"error converting to unstructured due to: %v",
-			err)
+		return nil, err
 	}
 
 	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
@@ -496,7 +486,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		return nil, err
 	}
 
-	_, err = ifc.Update(ctx, &unstructured.Unstructured{Object: unstructuredRel}, metav1.UpdateOptions{})
+	_, err = ifc.Update(ctx, unstructuredRel, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, statuserror.FromK8sError("update", "HelmRelease", key.String(), err)
 	}

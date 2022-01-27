@@ -27,7 +27,7 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -69,10 +69,8 @@ func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]
 		repoArray := []sourcev1.HelmRepository{}
 		for _, u := range unstructuredList.Items {
 			repo := sourcev1.HelmRepository{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &repo); err != nil {
-				return nil, status.Errorf(codes.Internal,
-					"error converting from unstructured due to: %v",
-					err)
+			if err := common.FromUnstructured(&u, &repo); err != nil {
+				return nil, err
 			}
 			repoArray = append(repoArray, repo)
 		}
@@ -94,10 +92,8 @@ func (s *Server) getRepoInCluster(ctx context.Context, key types.NamespacedName)
 	}
 
 	repo := sourcev1.HelmRepository{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &repo); err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"error converting from unstructured due to: %v",
-			err)
+	if err := common.FromUnstructured(u, &repo); err != nil {
+		return nil, err
 	}
 	return &repo, nil
 }
@@ -212,15 +208,13 @@ type repoCacheEntryValue struct {
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
-func (s *repoEventSink) onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
+func (s *repoEventSink) onAddRepo(key string, unstructuredRepo unstructured.Unstructured) (interface{}, bool, error) {
 	log.V(4).Info("+onAddRepo()")
 	defer log.V(4).Info("-onAddRepo()")
 
 	repo := sourcev1.HelmRepository{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredRepo, &repo); err != nil {
-		return nil, false, status.Errorf(codes.Internal,
-			"error converting from unstructured due to: %v",
-			err)
+	if err := common.FromUnstructured(&unstructuredRepo, &repo); err != nil {
+		return nil, false, err
 	}
 
 	// first, check the repo is ready
@@ -344,12 +338,10 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 }
 
 // onModifyRepo essentially tells the cache whether or not to and what to store for a given key
-func (s *repoEventSink) onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue interface{}) (interface{}, bool, error) {
+func (s *repoEventSink) onModifyRepo(key string, unstructuredRepo unstructured.Unstructured, oldValue interface{}) (interface{}, bool, error) {
 	repo := sourcev1.HelmRepository{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredRepo, &repo); err != nil {
-		return nil, false, status.Errorf(codes.Internal,
-			"error converting from unstructured due to: %v",
-			err)
+	if err := common.FromUnstructured(&unstructuredRepo, &repo); err != nil {
+		return nil, false, err
 	}
 
 	// first check the repo is ready

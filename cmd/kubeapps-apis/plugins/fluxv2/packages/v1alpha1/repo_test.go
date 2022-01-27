@@ -21,6 +21,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
@@ -619,16 +620,14 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&repo)
+		unstructuredRepo, err := common.ToUnstructured(&repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
 
-		unstructuredRepo, err := dyncli.
-			Resource(repositoriesGvr).
-			Namespace("ns2").Update(
+		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(
 			context.Background(),
-			&unstructured.Unstructured{Object: unstructuredObj},
+			unstructuredRepo,
 			metav1.UpdateOptions{})
 		if err != nil {
 			t.Fatalf("%v", err)
@@ -762,11 +761,11 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			s.chartCache.ExpectAdd(k)
 		}
 
-		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(repo)
+		unstructuredObj, err := common.ToUnstructured(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
-		watcher.Delete(&unstructured.Unstructured{Object: unstructuredObj})
+		watcher.Delete(unstructuredObj)
 		s.repoCache.WaitUntilForgotten(repoKey)
 		for _, k := range chartCacheKeys {
 			s.chartCache.WaitUntilForgotten(k)
@@ -918,11 +917,11 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			keysInOrder = append(keysInOrder, key)
 			mock.ExpectGet(key).RedisNil()
 			redisMockSetValueForRepo(mock, key, byteArray)
-			unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(repo)
+			unstructuredObj, err := common.ToUnstructured(repo)
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
-			repos = append(repos, &unstructured.Unstructured{Object: unstructuredObj})
+			repos = append(repos, unstructuredObj)
 		}
 
 		for _, r := range repos {
@@ -1057,15 +1056,12 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		mock.ExpectGet(key).RedisNil()
 		redisMockSetValueForRepo(mock, key, byteArray)
 
-		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(repo)
+		unstructuredRepo, err := common.ToUnstructured(repo)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
-		unstructuredRepo, err := dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(
-				context.Background(),
-				&unstructured.Unstructured{Object: unstructuredObj},
-				metav1.CreateOptions{})
+		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
+			Create(context.Background(), unstructuredRepo, metav1.CreateOptions{})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -1275,12 +1271,11 @@ func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []
 
 	initObjs := []runtime.Object{}
 	for _, r := range repos {
-		unstructuredRepo, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&r)
+		unstructuredRepo, err := common.ToUnstructured(&r)
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
-		obj := &unstructured.Unstructured{Object: unstructuredRepo}
-		initObjs = append(initObjs, obj.DeepCopy())
+		initObjs = append(initObjs, unstructuredRepo)
 	}
 
 	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
@@ -1494,7 +1489,7 @@ func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key 
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {
-		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&r)
+		unstructuredObj, err := common.ToUnstructured(&r)
 		if err != nil {
 			return key, nil, err
 		}
@@ -1503,7 +1498,7 @@ func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key 
 		// onAddRepo to compute the value that *WOULD* be stored in the cache
 		var byteArray interface{}
 		var add bool
-		byteArray, add, err = sink.onAddRepo(key, unstructuredObj)
+		byteArray, add, err = sink.onAddRepo(key, *unstructuredObj)
 		if err != nil {
 			return key, nil, err
 		} else if !add {

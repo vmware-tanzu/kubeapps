@@ -26,7 +26,6 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -747,15 +746,12 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&r)
+		unstructuredRepo, err := common.ToUnstructured(&r)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
-		unstructuredRepo, err := dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(
-				context.Background(),
-				&unstructured.Unstructured{Object: unstructuredObj},
-				metav1.CreateOptions{})
+		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
+			Create(context.Background(), unstructuredRepo, metav1.CreateOptions{})
 		if err != nil {
 			t.Fatalf("%v", err)
 		}

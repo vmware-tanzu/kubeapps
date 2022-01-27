@@ -87,8 +87,8 @@ type NamespacedResourceWatcherCache struct {
 }
 
 type ValueGetterFunc func(key string, cachedValue interface{}) (rawValue interface{}, err error)
-type ValueAdderFunc func(key string, obj map[string]interface{}) (cachedValue interface{}, setValue bool, err error)
-type ValueModifierFunc func(key string, obj map[string]interface{}, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
+type ValueAdderFunc func(key string, obj unstructured.Unstructured) (cachedValue interface{}, setValue bool, err error)
+type ValueModifierFunc func(key string, obj unstructured.Unstructured, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
 type KeyDeleterFunc func(key string) (deleteValue bool, err error)
 type ResyncFunc func() error
 
@@ -521,15 +521,15 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 			return status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
 		}
 	}
-	return c.onAddOrModify(true, unstructuredObj.Object)
+	return c.onAddOrModify(true, *unstructuredObj)
 }
 
 // this is effectively a cache SET operation
-func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj map[string]interface{}) (err error) {
+func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj unstructured.Unstructured) (err error) {
 	log.V(4).Infof("+onAddOrModify")
 	defer log.V(4).Infof("-onAddOrModify")
 
-	key, err := c.keyFor(unstructuredObj)
+	key, err := c.keyFor(unstructuredObj.Object)
 	if err != nil {
 		return fmt.Errorf("failed to get redis key due to: %v", err)
 	}
@@ -863,7 +863,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 	const maxWorkers = 10
 
 	type populateJob struct {
-		item map[string]interface{}
+		item unstructured.Unstructured
 	}
 
 	type populateJobResult struct {
@@ -898,7 +898,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 
 	go func() {
 		for _, item := range items {
-			requestChan <- populateJob{item.Object}
+			requestChan <- populateJob{item}
 		}
 		close(requestChan)
 	}()

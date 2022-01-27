@@ -22,6 +22,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
@@ -596,7 +597,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 
 			actualRel := &helmv2.HelmRelease{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &actualRel); err != nil {
+			if err := common.FromUnstructured(u, &actualRel); err != nil {
 				t.Fatalf("%+v", err)
 			}
 
@@ -697,7 +698,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 
 			actualRel := &helmv2.HelmRelease{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, &actualRel); err != nil {
+			if err := common.FromUnstructured(u, &actualRel); err != nil {
 				t.Fatalf("%+v", err)
 			}
 
@@ -959,11 +960,11 @@ func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPacka
 		}
 		chart := newChart(existing.chartName, existing.repoNamespace, chartSpec, chartStatus)
 
-		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&chart)
+		unstructuredObj, err := common.ToUnstructured(&chart)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
-		runtimeObjs = append(runtimeObjs, &unstructured.Unstructured{Object: unstructuredObj})
+		runtimeObjs = append(runtimeObjs, unstructuredObj)
 
 		releaseSpec := &helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -996,11 +997,11 @@ func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPacka
 		}
 
 		release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, &existing.releaseStatus)
-		unstructuredObj, err = runtime.DefaultUnstructuredConverter.ToUnstructured(&release)
+		unstructuredObj, err = common.ToUnstructured(&release)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
-		runtimeObjs = append(runtimeObjs, &unstructured.Unstructured{Object: unstructuredObj})
+		runtimeObjs = append(runtimeObjs, unstructuredObj)
 	}
 	return runtimeObjs, cleanup
 }
