@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	kappresources "github.com/k14s/kapp/pkg/kapp/resources"
 	pkgsGRPCv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	kappctrlpackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -428,7 +429,7 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 	}
 
 	// List the k8s resources that match the label selector
-	resources, err := resourcesClient.List(labelSelector, nil)
+	resources, err := resourcesClient.List(labelSelector, nil, kappresources.IdentifiedResourcesListOpts{})
 	if err != nil {
 		return nil, err
 	}
