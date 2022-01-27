@@ -1675,8 +1675,7 @@ var (
 					},
 				},
 			},
-			"interval":        "1m",
-			"targetNamespace": "test",
+			"interval": "1m",
 		},
 	}
 
@@ -1699,8 +1698,7 @@ var (
 					"version": "> 5",
 				},
 			},
-			"interval":        "1m",
-			"targetNamespace": "test",
+			"interval": "1m",
 		},
 	}
 
@@ -1725,7 +1723,6 @@ var (
 			"interval":           "1m0s",
 			"serviceAccountName": "foo",
 			"suspend":            false,
-			"targetNamespace":    "test",
 		},
 	}
 
@@ -1747,8 +1744,7 @@ var (
 					},
 				},
 			},
-			"interval":        "1m",
-			"targetNamespace": "test",
+			"interval": "1m",
 			"values": map[string]interface{}{
 				"ui": map[string]interface{}{"message": "what we do in the shadows"},
 			},

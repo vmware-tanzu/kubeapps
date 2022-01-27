@@ -520,7 +520,6 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 						},
 					},
 				},
-				"targetNamespace": targetName.Namespace,
 			},
 		},
 	}
