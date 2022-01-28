@@ -30,10 +30,13 @@ import (
 type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
-	globalPackagingNamespace                        = "kapp-controller-packaging-global"
-	fallbackDefaultUpgradePolicy      upgradePolicy = none
-	fallbackDefaultIncludePrereleases               = false
+	globalPackagingNamespace                   = "kapp-controller-packaging-global"
+	fallbackDefaultUpgradePolicy upgradePolicy = none
 )
+
+func fallbackdefaultPrereleasesVersionSelection() []string {
+	return nil
+}
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
@@ -69,7 +72,7 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 
 	// override the defaults with the loaded configuration
 	config.defaultUpgradePolicy = upgradePolicyMapping[pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
-	config.defaultIncludePrereleases = pluginConfig.KappController.Packages.V1alpha1.DefaultIncludePrereleases
+	config.defaultPrereleasesVersionSelection = pluginConfig.KappController.Packages.V1alpha1.defaultPrereleasesVersionSelection
 
 	return config, nil
 }

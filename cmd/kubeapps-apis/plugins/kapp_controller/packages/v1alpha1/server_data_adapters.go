@@ -317,10 +317,12 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 }
 
 func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+	// Calculate the constraints and prerelease fields
 	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.pluginConfig.defaultUpgradePolicy)
 	if err != nil {
 		return nil, err
 	}
+	prereleases := prereleasesVersionSelection(s.pluginConfig.defaultPrereleasesVersionSelection)
 
 	pkgInstall := &packagingv1alpha1.PackageInstall{
 		TypeMeta: metav1.TypeMeta{
@@ -352,15 +354,10 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 				RefName: packageRefName,
 				VersionSelection: &vendirversions.VersionSelectionSemver{
 					Constraints: versionConstraints,
+					Prereleases: prereleases,
 				},
 			},
 		},
-	}
-
-	if s.pluginConfig.defaultIncludePrereleases {
-		// This how "allowing prereleases" is done right now
-		// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/300
-		pkgInstall.Spec.PackageRef.VersionSelection.Prereleases = &vendirversions.VersionSelectionSemverPrereleases{}
 	}
 
 	if reconciliationOptions != nil {
