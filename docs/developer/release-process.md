@@ -44,6 +44,8 @@ The versions used there _must_ match the ones used for building the container im
 
 Besides, the `GKE_STABLE_VERSION_XX` and the `GKE_REGULAR_VERSION_XX` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 
+> **NOTE**: at least one of those `GKE_STABLE_VERSION_XX` or `GKE_REGULAR_VERSION_XX` versions _must_ match the Kubernetes-related dependencies in [Go](../../go.mod) and [Rust](../../cmd/pinniped-proxy/Cargo.toml).
+
 > As part of this release process, these variables _must_ be updated accordingly. Other variable changes _should_ be tracked in a separate PR.
 
 #### 0.2.2 - CI integration image and dependencies
