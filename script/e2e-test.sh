@@ -403,7 +403,7 @@ if [[ "${#testsToIgnore[@]}" > "0" ]]; then
   testsToIgnore=${testsToIgnore:1}
   ignoreFlag="--testPathIgnorePatterns '$testsToIgnore'"
 fi
-kubectl cp ./use-cases "${pod}:/app/"
+kubectl cp ./tests "${pod}:/app/"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
