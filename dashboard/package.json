@@ -69,7 +69,7 @@
     "redux-thunk": "^2.4.1",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.5.2",
-    "swagger-ui-react": "^4.3.0",
+    "swagger-ui-react": "^4.4.0",
     "typesafe-actions": "^5.1.0",
     "yaml": "^1.10.2"
   },
@@ -100,7 +100,7 @@
     "eslint-plugin-redos": "^4.2.2",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
-    "mock-socket": "^9.1.0",
+    "mock-socket": "^9.1.2",
     "moxios": "^0.4.0",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.5",
