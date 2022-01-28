@@ -11,11 +11,13 @@ test("Upgrades an application", async ({ page }) => {
 
   // Go to catalog
   await page.goto(utils.getUrl("/#/c/default/ns/default/catalog?Search=apache&Repository=bitnami"));
+  await page.waitForTimeout(3000);
 
   // Select package
   await page.click('.card-title:has-text("kubeapps-apache")');
 
   // Select an older version to be installed
+  await page.waitForSelector('select[name="package-versions"]');
   const defaultVersion = await page.inputValue('select[name="package-versions"]');
   await page.selectOption('select[name="package-versions"]', "8.6.2");
   const olderVersion = await page.inputValue('select[name="package-versions"]');

@@ -22,10 +22,12 @@ test("Regular user fails to deploy an application due to missing permissions", a
   const errorLocator = page.locator(".alert-items .alert-text");
   await expect(errorLocator).toHaveCount(1);
   await page.waitForTimeout(5000);
+
   // For some reason, UI is showing different error messages randomly
-  try {
-    await expect(errorLocator).toContainText("secrets is forbidden");
-  } catch (err) {
-    await expect(errorLocator).toContainText("unable to read secret");
+  // Custom assertion logic
+  const errorMsg = await errorLocator.textContent();
+  console.log(`Error message on UI = "${errorMsg}"`);
+  if (errorMsg.indexOf("secrets is forbidden") < 0 && errorMsg.indexOf("unable to read secret") < 0){
+    throw new Error("Error about secrets is not found");
   }
 });
