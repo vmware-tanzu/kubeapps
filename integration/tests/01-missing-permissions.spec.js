@@ -3,6 +3,8 @@ const { KubeappsLogin } = require("./utils/kubeapps-login");
 const utils = require("./utils/util-functions");
 
 test("Regular user fails to deploy an application due to missing permissions", async ({ page }) => {
+  test.setTimeout(60000);
+  
   // Log in
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-user@example.com", "password", process.env.VIEW_TOKEN);
