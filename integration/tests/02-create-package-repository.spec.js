@@ -13,6 +13,7 @@ test("Create a new package repository successfully", async ({ page }) => {
   await page.goto(utils.getUrl("/#/c/default/ns/kubeapps/config/repos"));
 
   // Add new repo
+  console.log('Creating repository "my-repo"');
   await page.click('cds-button:has-text("Add App Repository")');
   await page.type("input#kubeapps-repo-name", "my-repo");
   await page.type("input#kubeapps-repo-url", "https://charts.gitlab.io/");
@@ -24,9 +25,7 @@ test("Create a new package repository successfully", async ({ page }) => {
   // Check if packages show up in catalog
   await page.reload({ waitUntil: "networkidle" });
   await page.click('a:has-text("my-repo")');
-  await utils.takeScreenShot(page, "02-test-pre-assertions");
   await page.waitForSelector('css=.catalog-container .card-title >> text="gitlab-runner"');
-  await utils.takeScreenShot(page, "02-test-post-assertions");
 
   // Clean up
   const axInstance = await utils.getAxiosInstance(page);

@@ -1,6 +1,8 @@
 *.*~
 telepresence.log
 devel/*
+integration/reports/*
+!integration/reports/.notempty
 
 # OSX
 .DS_Store

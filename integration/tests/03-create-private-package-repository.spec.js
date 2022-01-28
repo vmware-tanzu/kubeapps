@@ -15,6 +15,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   // Add new repo
   await page.click('cds-button:has-text("Add App Repository")');
   const repoName = utils.getRandomName("my-repo");
+  console.log(`Creating repository "${repoName}"`);
   await page.type("input#kubeapps-repo-name", repoName);
   await page.type("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
 
@@ -53,6 +54,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
   const appName = utils.getRandomName("test-03-release");
+  console.log(`Creating release "${appName}"`);
   await releaseNameLocator.type(appName);
 
   // Select version and deploy
@@ -114,6 +116,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.click('cds-button:has-text("Deploy")');
 
   // Check upgrade result
+  await page.waitForSelector(".left-menu");
   await expect(page.locator(".left-menu")).toContainText("Up to date");
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1");
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");

@@ -12,6 +12,7 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   // Select package to deploy
   await page.click('a.nav-link:has-text("Catalog")');
   await page.locator("input#search").type("apache");
+  await page.waitForTimeout(3000);
   await page.click('a:has-text("foo apache chart for CI")');
   await page.click('cds-button:has-text("Deploy") >> nth=0');
 
@@ -19,7 +20,9 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   const releaseNameLocator = page.locator("#releaseName");
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
-  await releaseNameLocator.type(utils.getRandomName("test-04-release"));
+  const releaseName = utils.getRandomName("test-04-release");
+  console.log(`Creating release "${releaseName}"`);
+  await releaseNameLocator.type(releaseName);
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Assertions

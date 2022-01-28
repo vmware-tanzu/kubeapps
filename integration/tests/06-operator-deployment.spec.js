@@ -14,6 +14,7 @@ test("Deploys an Operator", async ({ page }) => {
 
   // Select operator to deploy
   await page.locator("input#search").type("prometheus");
+  await page.waitForTimeout(3000);
   await page.click('a:has-text("prometheus")');
   await page.click('cds-button:has-text("Deploy") >> nth=0');
   await page.click('cds-button:has-text("Deploy")');

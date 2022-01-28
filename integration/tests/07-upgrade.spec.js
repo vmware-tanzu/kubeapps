@@ -13,7 +13,6 @@ test("Upgrades an application", async ({ page }) => {
   await page.goto(utils.getUrl("/#/c/default/ns/default/catalog?Search=apache&Repository=bitnami"));
 
   // Select package
-  //await page.waitForSelector('.card-title:has-text("kubeapps-apache")');
   await page.click('.card-title:has-text("kubeapps-apache")');
 
   // Select an older version to be installed
@@ -36,11 +35,12 @@ test("Upgrades an application", async ({ page }) => {
   const releaseNameLocator = page.locator("#releaseName");
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
-  await releaseNameLocator.type(utils.getRandomName("test-07-upgrade"));
+  const releaseName = utils.getRandomName("test-07-upgrade");
+  console.log(`Creating release "${releaseName}"`);
+  await releaseNameLocator.type(releaseName);
 
   // Trigger deploy
   await page.locator('cds-button:has-text("Deploy")').click();
-  await utils.takeScreenShot(page, "07-deployed");
 
   await page.click('cds-button:has-text("Upgrade")');
 
@@ -50,7 +50,6 @@ test("Upgrades an application", async ({ page }) => {
   const newSelection = await page.inputValue('select[name="package-versions"]');
   expect(newSelection).toBe(defaultVersion);
 
-  await utils.takeScreenShot(page, "07-test-pre-upgrade");
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Check upgrade result

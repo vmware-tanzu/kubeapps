@@ -22,6 +22,5 @@ test("Regular user fails to deploy an application due to missing permissions", a
   const errorLocator = page.locator(".alert-items .alert-text");
   await expect(errorLocator).toHaveCount(1);
   await page.waitForTimeout(5000);
-  await utils.takeScreenShot(page, "01-test-pre-assertions");
   await expect(errorLocator).toContainText("secrets is forbidden");
 });
