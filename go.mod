@@ -48,6 +48,9 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.7.1+incompatible
+	github.com/fluxcd/helm-controller/api v0.15.0
+	github.com/fluxcd/pkg/apis/meta v0.10.2
+	github.com/fluxcd/source-controller/api v0.21.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-redis/redismock/v8 v8.0.6
@@ -92,6 +95,7 @@ require (
 	k8s.io/klog/v2 v2.40.1
 	k8s.io/kubernetes v1.22.6
 	oras.land/oras-go v1.1.0
+	sigs.k8s.io/controller-runtime v0.11.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -125,12 +129,9 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/fluxcd/helm-controller/api v0.15.0 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.0.3 // indirect
 	github.com/fluxcd/pkg/apis/kustomize v0.3.1 // indirect
-	github.com/fluxcd/pkg/apis/meta v0.10.2 // indirect
 	github.com/fluxcd/pkg/runtime v0.12.3 // indirect
-	github.com/fluxcd/source-controller/api v0.21.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-logr/logr v1.2.2 // indirect
@@ -220,12 +221,11 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
 	k8s.io/apiserver v0.23.1 // indirect
-	k8s.io/component-base v0.22.6 // indirect
+	k8s.io/component-base v0.23.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
 	k8s.io/kubectl v0.23.1 // indirect
 	k8s.io/utils v0.0.0-20211208161948-7d6a63dca704 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
-	sigs.k8s.io/controller-runtime v0.11.0 // indirect
 	sigs.k8s.io/kustomize/api v0.10.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
