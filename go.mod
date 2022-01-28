@@ -37,9 +37,6 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.22.6
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.6
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.22.6
-
-	// required by helm, new versions have breaking changes
-	oras.land/oras-go => oras.land/oras-go v0.4.0
 )
 
 require (
@@ -86,12 +83,12 @@ require (
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	helm.sh/helm/v3 v3.7.2
-	k8s.io/api v0.22.6
-	k8s.io/apiextensions-apiserver v0.22.6
-	k8s.io/apimachinery v0.22.6
-	k8s.io/cli-runtime v0.22.6
-	k8s.io/client-go v0.22.6
+	helm.sh/helm/v3 v3.8.0
+	k8s.io/api v0.23.1
+	k8s.io/apiextensions-apiserver v0.23.1
+	k8s.io/apimachinery v0.23.1
+	k8s.io/cli-runtime v0.23.1
+	k8s.io/client-go v0.23.1
 	k8s.io/klog/v2 v2.40.1
 	k8s.io/kubernetes v1.22.6
 	oras.land/oras-go v1.1.0
@@ -216,10 +213,10 @@ require (
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
-	k8s.io/apiserver v0.22.6 // indirect
+	k8s.io/apiserver v0.23.1 // indirect
 	k8s.io/component-base v0.22.6 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
-	k8s.io/kubectl v0.22.6 // indirect
+	k8s.io/kubectl v0.23.1 // indirect
 	k8s.io/utils v0.0.0-20211208161948-7d6a63dca704 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/kustomize/api v0.10.1 // indirect
