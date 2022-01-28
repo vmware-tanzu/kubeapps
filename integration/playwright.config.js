@@ -11,8 +11,8 @@ const config = {
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     video: 'retain-on-failure',
-    screenshot: 'on',
-    trace: 'on',
+    screenshot: 'only-on-failure',
+    trace: 'retain-on-failure',
   },
   projects: [
     {
@@ -20,7 +20,7 @@ const config = {
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  reporter: [ ['list'], ['html', { open: 'never', outputFolder: 'reports/' }] ],
+  //reporter: [ ['list'], ['html', { open: 'never', outputFolder: 'reports/' }] ],
   outputDir: 'reports/',
 };
 

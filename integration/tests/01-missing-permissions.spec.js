@@ -27,7 +27,8 @@ test("Regular user fails to deploy an application due to missing permissions", a
   // Custom assertion logic
   const errorMsg = await errorLocator.textContent();
   console.log(`Error message on UI = "${errorMsg}"`);
-  if (errorMsg.indexOf("secrets is forbidden") < 0 && errorMsg.indexOf("unable to read secret") < 0){
-    throw new Error("Error about secrets is not found");
-  }
+
+  await page.waitForFunction(msg => {
+    return msg.indexOf("secrets is forbidden") > -1 || msg.indexOf("unable to read secret") > -1;
+  }, errorMsg);
 });
