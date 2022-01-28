@@ -18,7 +18,7 @@ spec:
             - tail
             - -f
             - /dev/null
-          image: rcastelblanq/kubeapps-integration-pw:v1.0.0
+          image: kubeapps/integration-tests-pw:v1.0.0
           name: integration
           resources:
             requests:
