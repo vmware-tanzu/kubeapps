@@ -5,13 +5,13 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.17.5"
+    default: "1.17.6"
   NODE_VERSION:
     type: string
-    default: "16"
+    default: "16.13.2"
   RUST_VERSION:
     type: string
-    default: "1.57.0"
+    default: "1.58.1"
   DOCKER_VERSION:
     type: string
     default: "20.10.11"
@@ -496,7 +496,7 @@ run_e2e_tests: &run_e2e_tests
       fi
 gke_test: &gke_test
   docker:
-    - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
   steps:
     - checkout
     - run:
@@ -519,7 +519,8 @@ gke_test: &gke_test
           fi
     - <<: *exports
     - <<: *install_gcloud_sdk
-    - setup_remote_docker
+    - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
     - run:
         name: Configure Google Cloud
         command: |
@@ -582,12 +583,12 @@ local_e2e_steps: &local_e2e_steps
 
 jobs:
   test_go:
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
     environment:
       CGO_ENABLED: "0"
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *exports
@@ -595,13 +596,14 @@ jobs:
           name: Run go unit tests
           command: |
             make test
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
       - run:
           name: Run go integration tests for DB
           command: |
             docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
-            docker run --network container:postgresql -d --name tests circleci/golang:${GOLANG_VERSION} tail -f /dev/null
-            docker cp /go tests:/
+            docker run --network container:postgresql -d --name tests cimg/go:${GOLANG_VERSION} tail -f /dev/null
+            docker cp /home/circleci/go tests:/
             docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
   test_dashboard:
     environment:
@@ -610,7 +612,7 @@ jobs:
       # garbage collection to start earlier with 512M per worker.
       NODE_OPTIONS: "--max-old-space-size=512"
     docker:
-      - image: circleci/node:<< pipeline.parameters.NODE_VERSION >>
+      - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
       - checkout
       - run:
@@ -627,7 +629,7 @@ jobs:
             yarn --cwd=dashboard run test --maxWorkers=4 --coverage --logHeapUsage
   test_pinniped_proxy:
     docker:
-      - image: circleci/rust:<< pipeline.parameters.RUST_VERSION >>
+      - image: cimg/rust:<< pipeline.parameters.RUST_VERSION >>
     steps:
       - checkout
       - run:
@@ -638,7 +640,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - <<: *exports
       - checkout
@@ -649,22 +651,22 @@ jobs:
             ./script/chart-template-test.sh
   build_go_images:
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
       IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"
     <<: *build_images
   build_dashboard:
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     environment:
       IMAGES: "dashboard"
     <<: *build_images
   build_pinniped_proxy:
     docker:
       # We're building the image in a docker container anyway so just re-use the golang image already in use.
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
@@ -672,7 +674,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -725,7 +727,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -757,7 +759,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -790,9 +792,10 @@ jobs:
             ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >>
   push_images:
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
       - <<: *exports
       - run:
           name: Push images
