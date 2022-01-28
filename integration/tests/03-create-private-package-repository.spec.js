@@ -11,6 +11,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   // Go to repos page
   await page.goto(utils.getUrl("/#/c/default/ns/default/config/repos"));
+  await page.waitForTimeout(5000);
 
   // Add new repo
   await page.click('cds-button:has-text("Add App Repository")');

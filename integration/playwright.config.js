@@ -20,7 +20,7 @@ const config = {
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  reporter: [ ['html', { open: 'never', outputFolder: 'reports/' }] ],
+  reporter: [ ['list'], ['html', { open: 'never', outputFolder: 'reports/' }] ],
   outputDir: 'reports/',
 };
 
