@@ -12,6 +12,7 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	kappctrlinstalled "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -302,21 +303,22 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			// TODO(agamez): think about name collisions
-			Name:      fmt.Sprintf("%s-values", installedPackageName),
+			Name:      fmt.Sprintf(kappctrlinstalled.SecretName, installedPackageName, targetNamespace),
 			Namespace: targetNamespace,
+			Annotations: map[string]string{
+				kappctrlinstalled.KctrlPkgAnnotation: fmt.Sprintf("%s-%s", installedPackageName, targetNamespace),
+			},
 		},
 		Data: map[string][]byte{
-			// TODO(agamez): check the actual value for the key.
-			// Assuming "values.yaml" perhaps is not always true.
-			// Perhaos this info is in the "package" object?
+			// Using "values.yaml" as per:
+			// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L32
 			"values.yaml": []byte(values),
 		},
 		Type: "Opaque",
 	}, nil
 }
 
-func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions, secret *k8scorev1.Secret) (*packagingv1alpha1.PackageInstall, error) {
 	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.defaultUpgradePolicy)
 	if err != nil {
 		return nil, err
@@ -340,14 +342,6 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			// 	Namespace:           targetNamespace,
 			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
 			// },
-			Values: []packagingv1alpha1.PackageInstallValues{
-				{
-					SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-						Name: fmt.Sprintf("%s-values", installedPackageName),
-						Key:  "values.yaml",
-					},
-				},
-			},
 			PackageRef: &packagingv1alpha1.PackageRef{
 				RefName: packageRefName,
 				VersionSelection: &vendirversions.VersionSelectionSemver{
@@ -369,6 +363,23 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 		pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
 		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
 	}
+
+	if secret != nil {
+		// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L670
+		if pkgInstall.ObjectMeta.Annotations == nil {
+			pkgInstall.ObjectMeta.Annotations = make(map[string]string)
+		}
+		pkgInstall.ObjectMeta.Annotations[kappctrlinstalled.KctrlPkgAnnotation+"-"+kappctrlinstalled.KindSecret.AsString()] = secret.Name
+		pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
+			SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+				// The secret name should have the format: <name>-<namespace> as per:
+				// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+				Name: secret.Name,
+				Key:  "values.yaml",
+			},
+		}}
+	}
+
 	return pkgInstall, nil
 }
 
