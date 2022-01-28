@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsAlert, CdsAlertGroup } from "@cds/react/alert";
 import { mount } from "enzyme";
 import { act } from "react-dom/test-utils";

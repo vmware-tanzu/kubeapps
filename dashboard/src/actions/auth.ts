@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { ThunkAction } from "redux-thunk";
 import { Auth } from "shared/Auth";
 import * as Namespace from "shared/Namespace";

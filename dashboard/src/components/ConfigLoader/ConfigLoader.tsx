@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Alert from "components/js/Alert";
 import React from "react";
 import { useIntl } from "react-intl";

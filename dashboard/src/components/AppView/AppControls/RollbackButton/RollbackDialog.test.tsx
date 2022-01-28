@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import { mount, shallow } from "enzyme";
 import { act } from "react-dom/test-utils";
@@ -39,7 +42,7 @@ it("should submit the current revision", () => {
   expect(onConfirm).toBeCalledWith(Number(currentRevision) - 1);
 });
 
-it("should disable the rollback button if there are no revisions", () => {
+it("should deactivate the rollback button if there are no revisions", () => {
   const wrapper = mount(<RollbackDialog {...defaultProps} currentRevision={1} />);
   expect(wrapper).toIncludeText("it's not possible to rollback");
   const submit = wrapper.find(CdsButton).filterWhere(b => b.text() === "Rollback");

@@ -1,3 +1,6 @@
+# Copyright 2021-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 version: v1beta1
 plugins:
   - name: go
@@ -48,6 +51,6 @@ plugins:
     opt:
       - outputClientImpl=grpc-web # client implementation it generates
       - esModuleInterop=true # use imports as required in modern ts setups
-      - useOptionals=true # use optional TypeScript properties instead of undefined
+      - useOptionals=messages # use optional TypeScript properties instead of undefined
       # - context=true #  Go-style ctx parameters # have to re-check it
       # - exportCommonSymbols=false # utility types like DeepPartial wont be exported (avoid some import conflicts) # have to re-check it

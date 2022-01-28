@@ -1,3 +1,6 @@
+# Copyright 2017-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 IMPORT_PATH:= github.com/kubeapps/kubeapps
 GO = /usr/bin/env go
 GOFMT = /usr/bin/env gofmt

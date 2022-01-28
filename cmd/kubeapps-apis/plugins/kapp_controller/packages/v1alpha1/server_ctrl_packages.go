@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -20,10 +11,12 @@ import (
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	kappctrlinstalled "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	vendirVersions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -42,9 +35,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 	// Assume the default cluster if none is specified
 	if cluster == "" {
@@ -267,9 +260,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromInstalledRequest(request)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 
 	// Assume the default cluster if none is specified
@@ -513,7 +506,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// build a new pkgInstall object
-	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions)
+	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions, secret)
 	if err != nil {
 		return nil, statuserror.FromK8sError("create", "PackageInstall", installedPackageName, err)
 	}
@@ -611,8 +604,18 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
 	}
 
+	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.defaultUpgradePolicy)
+	if err != nil {
+		return nil, err
+	}
+
 	// Update the rest of the fields
-	pkgInstall.Spec.PackageRef.VersionSelection = &vendirVersions.VersionSelectionSemver{Constraints: pkgVersion}
+	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversions.VersionSelectionSemver{
+		Constraints: versionConstraints,
+		// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
+		// This is to allow prereleases to be also installed
+		Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+	}
 	if reconciliationOptions != nil {
 		if reconciliationOptions.Interval > 0 {
 			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
@@ -639,9 +642,26 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		if updatedSecret == nil || err != nil {
 			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
 		}
+
+		if updatedSecret != nil {
+			// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L670
+			if pkgInstall.ObjectMeta.Annotations == nil {
+				pkgInstall.ObjectMeta.Annotations = make(map[string]string)
+			}
+			pkgInstall.ObjectMeta.Annotations[kappctrlinstalled.KctrlPkgAnnotation+"-"+kappctrlinstalled.KindSecret.AsString()] = fmt.Sprintf(kappctrlinstalled.SecretName, secret.Name, secret.ObjectMeta.Namespace)
+			pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
+				SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+					// The secret name should have the format: <name>-<namespace> as per:
+					// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+					Name: updatedSecret.Name,
+					Key:  "values.yaml",
+				},
+			}}
+		}
+
 	} else {
 		// Delete all the associated secrets
-		// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+		// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
 		// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
@@ -706,7 +726,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	}
 
 	// Delete all the associated secrets
-	// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+	// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
 	// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 	for _, packageInstallValue := range pkgInstall.Spec.Values {
 		secretId := packageInstallValue.SecretRef.Name
@@ -735,90 +755,10 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, _, err := s.GetClients(ctx, cluster)
+	// get the list of every k8s resource matching ResourceRef
+	refs, err := s.inspectKappK8sResources(ctx, cluster, namespace, installedPackageRefId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
-	}
-
-	refs := []*corev1.ResourceRef{}
-
-	// TODO(agamez): apparently, App CRs not being created by a "kapp deploy"
-	// don't have the proper annotations. So, in order to retrieve the annotation value,
-	// we have to get the ConfigMap <AppName>-ctrl and, then, fetch the
-	// vaulue of the key "labelValue" in data.spec.
-	// See https://kubernetes.slack.com/archives/CH8KCCKA5/p1637842398026700
-	// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/430
-
-	// the ConfigMap name is, by convention, "<appname>-ctrl", but it will change in the near future
-	cmName := fmt.Sprintf("%s-ctrl", installedPackageRefId)
-	cm, err := typedClient.CoreV1().ConfigMaps(namespace).Get(ctx, cmName, metav1.GetOptions{})
-	if err == nil && cm.Data["spec"] != "" {
-
-		appLabelValue := extractValue(cm.Data["spec"], "labelValue")
-		appLabelSelector := fmt.Sprintf("%s=%s", appLabelKey, appLabelValue)
-		listOptions := metav1.ListOptions{LabelSelector: appLabelSelector}
-
-		// TODO(agamez): perform an actual query over all the resources available in the cluster
-		// this is currently just a PoC getting the bare minimum: pods, deployments, services and secrets.
-		// Also, the xxx.Items[i] are not populating the Kind and APIVersion fields. Check why.
-
-		// Fetching all the matching pods
-		pods, err := typedClient.CoreV1().Pods(namespace).List(ctx, listOptions)
-		if err != nil {
-			return nil, statuserror.FromK8sError("get", "Pods", "", err)
-		}
-		for _, resource := range pods.Items {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: "core/v1",
-				Kind:       "Pod",
-				Name:       resource.Name,
-				Namespace:  resource.Namespace,
-			})
-		}
-
-		// Fetching all the matching deployments
-		deployments, err := typedClient.AppsV1().Deployments(namespace).List(ctx, listOptions)
-		if err != nil {
-			return nil, statuserror.FromK8sError("get", "Deployments", "", err)
-		}
-		for _, resource := range deployments.Items {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: "apps/v1",
-				Kind:       "Deployment",
-				Name:       resource.ObjectMeta.Name,
-				Namespace:  resource.ObjectMeta.Namespace,
-			})
-		}
-
-		// Fetching all the matching services
-		services, err := typedClient.CoreV1().Services(namespace).List(ctx, listOptions)
-		if err != nil {
-			return nil, statuserror.FromK8sError("get", "services", "", err)
-		}
-		for _, resource := range services.Items {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: "core/v1",
-				Kind:       "Service",
-				Name:       resource.ObjectMeta.Name,
-				Namespace:  resource.ObjectMeta.Namespace,
-			})
-		}
-
-		// Fetching all the matching secrets
-		secrets, err := typedClient.CoreV1().Secrets(namespace).List(ctx, listOptions)
-		if err != nil {
-			return nil, statuserror.FromK8sError("get", "Secrets", "", err)
-		}
-		for _, resource := range secrets.Items {
-			refs = append(refs, &corev1.ResourceRef{
-				ApiVersion: "core/v1",
-				Kind:       "Secret",
-				Name:       resource.ObjectMeta.Name,
-				Namespace:  resource.ObjectMeta.Namespace,
-			})
-		}
-	} else {
-		log.Warning(statuserror.FromK8sError("get", "ConfigMap", cmName, err))
+		return nil, err
 	}
 
 	return &corev1.GetInstalledPackageResourceRefsResponse{

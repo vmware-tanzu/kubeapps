@@ -1,8 +1,11 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsModal } from "@cds/react/modal";
 import { shallow } from "enzyme";
 import { createMemoryHistory } from "history";
 import React from "react";
-import { Redirect, RouteComponentProps } from "react-router";
+import { Redirect, RouteComponentProps } from "react-router-dom";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import PrivateRoute from "./PrivateRoute";
 

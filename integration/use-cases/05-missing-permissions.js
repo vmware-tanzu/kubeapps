@@ -1,7 +1,11 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 const utils = require("./lib/utils");
 const testName = "05-missing-permissions";
 
 test("Fails to deploy an application due to missing permissions", async () => {
+  /* 
   await utils.login(
     page,
     process.env.USE_MULTICLUSTER_OIDC_ENV,
@@ -11,31 +15,21 @@ test("Fails to deploy an application due to missing permissions", async () => {
     "password",
   );
 
-  await expect(page).toClick("a", { text: "Catalog" });
-  await utils.retryAndRefresh(
-    page,
-    3,
-    async () => {
-      await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
-    },
-    testName,
-  );
+  await utils.doAction("Click on Catalog", expect(page).toClick("a", { text: "Catalog" }));
 
-  await expect(page).toClick("a", { text: "apache" });
+  await expect(page).toMatchElement("a", { text: "apache", timeout: 60000 });
 
-  await expect(page).toClick("cds-button", { text: "Deploy" });
+  await utils.doAction("Click on Apache card", expect(page).toClick("a", { text: "apache" }));
+
+  await utils.doAction("Select Deploy the selection button", expect(page).toClick("cds-button", { text: "Deploy" }));
 
   await expect(page).toMatchElement("#releaseName", { text: "" });
-  await page.type("#releaseName", utils.getRandomName("my-app-for-05-perms"));
+  const releaseName = utils.getRandomName("my-app-for-05-perms");
+  await page.type("#releaseName", releaseName);
 
+  page.waitForTimeout(3000);
   await expect(page).toClick("cds-button", { text: "Deploy" });
 
-  await utils.retryAndRefresh(
-    page,
-    3,
-    async () => {
-      await expect(page).toMatch("Missing permissions", { timeout: 60000 });
-    },
-    testName,
-  );
+  await expect(page).toMatch("Missing permissions", { timeout: 60000 });
+  */
 });

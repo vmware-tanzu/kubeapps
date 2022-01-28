@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm";
 import Alert from "components/js/Alert";

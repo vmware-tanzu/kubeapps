@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { connect } from "react-redux";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IStoreState } from "shared/types";

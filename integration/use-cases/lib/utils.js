@@ -1,7 +1,19 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 const { screenshotsFolder } = require("../../args");
 const path = require("path");
+const WAIT_EVENT_NETWORK = "networkidle0";
+const WAIT_EVENT_DOM = "domcontentloaded";
 
 module.exports = {
+  takeScreenShot: async (fileName) => {
+    let screenshotFilename = `../../${screenshotsFolder}/${fileName}.png`;
+    console.log(`Saving screenshot to ${screenshotFilename}`);
+    await page.screenshot({
+      path: path.join(__dirname, screenshotFilename),
+    });
+  },
   retryAndRefresh: async (page, retries, toCheck, testName) => {
     let retriesLeft = retries;
     while (retriesLeft > 0) {
@@ -10,13 +22,7 @@ module.exports = {
         break;
       } catch (e) {
         testName = testName || "unknown";
-        let screenshotFilename = `../../${screenshotsFolder}/${testName}-${
-          retries - retriesLeft
-        }.png`;
-        console.log(`Saving screenshot to ${screenshotFilename}`);
-        await page.screenshot({
-          path: path.join(__dirname, screenshotFilename),
-        });
+        await module.exports.takeScreenShot(`${testName}-${retries - retriesLeft}`);
         if (retriesLeft === 1) {
           // Unable to get it done
           throw e;
@@ -24,7 +30,7 @@ module.exports = {
         // Refresh since the package will get a bit of time to populate
         try {
           await page.reload({
-            waitUntil: ["domcontentloaded"],
+            waitUntil: [WAIT_EVENT_NETWORK],
             timeout: 20000,
           });
         } catch (e) {
@@ -36,29 +42,43 @@ module.exports = {
       }
     }
   },
+  doAction: async (name, action) => {
+    await Promise.all([
+      action,
+      page.waitForNavigation({ waitUntil: WAIT_EVENT_NETWORK }),
+      page.waitForNavigation({ waitUntil: WAIT_EVENT_DOM })
+    ]).catch(function(e) {
+      console.log(`ERROR (${name}): ${e.message}`);
+      module.exports.takeScreenShot(name.replace(/\s/g, ''));
+      throw e;
+    });
+  },
   login: async (page, isOIDC, uri, token, username, password) => {
-    await page.goto(getUrl(uri));
+    let doAction = module.exports.doAction;
+    await doAction("Go to Home", page.goto(getUrl(uri)));
     if (isOIDC === "true") {
-      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
-      await expect(page).toClick("cds-button", {
-        text: "Login via OIDC Provider",
-      });
-      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
+      console.log("Log in using OIDC")
+      await doAction("Click to start login", page.click(".login-submit-button"));
+
+      // DEX: Choose email as login method
+      page.waitForSelector('.dex-container button');
       await expect(page).toMatchElement(".dex-container button", {
         text: "Log in with Email",
       });
-      await expect(page).toClick(".dex-container button", {
+      expect(page).toClick(".dex-container button", {
         text: "Log in with Email",
       });
-      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
-      await page.type('input[id="login"]', username);
-      await page.type('input[id="password"]', password);
+
+      await page.waitForNavigation({ waitUntil: WAIT_EVENT_NETWORK });
       await page.waitForSelector("#submit-login", {
         visible: true,
         timeout: 10000,
       });
-      await page.click("#submit-login");
-      // Additionally click on the new "Grant Access" confirmation.
+      await page.type('input[id="login"]', username);
+      await page.type('input[id="password"]', password);
+      await doAction("Click submit user and password", page.click("#submit-login"));
+
+      // DEX: click on the new "Grant Access" confirmation.
       await page.waitForSelector('.dex-container button[type="submit"]', {
         text: "Grant Access",
         visible: true,
@@ -67,14 +87,15 @@ module.exports = {
       await expect(page).toMatchElement('.dex-container button[type="submit"]', {
         text: "Grant Access",
       });
-      await expect(page).toClick('.dex-container button[type="submit"]');
-      await page.waitForNavigation({ waitUntil: "domcontentloaded" });
+      await doAction("Click submit Grant Access in DEX", page.click('.dex-container button[type="submit"]'));
+
+      // Navigation back in Kubeapps
       await page.waitForSelector(".kubeapps-header-content", {
         visible: true,
         timeout: 10000,
       });
       if (uri !== "/") {
-        await page.goto(getUrl(uri));
+        await doAction("Go back to Home", page.goto(getUrl(uri)));
       }
     } else {
       await expect(page).toFillForm("form", {

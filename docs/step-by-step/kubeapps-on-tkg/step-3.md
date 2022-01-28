@@ -88,7 +88,7 @@ Once the secret has been created, it will appear in the list of _Associate Docke
 
 ![Adding the private repository](./img/apprepository-example-tac.png)
 
-> **NOTE**: To obtain the most current list of repositories, log in to the registry using the `oras` tool and execute the command below:
+> **NOTE**: To obtain the most current list of repositories, log in to the registry using the `oras` tool and run the command below:
 >
 > ```bash
 > oras pull registry.pivotal.io/tac-for-tanzu-advanced/index:latest -a && cat asset-index.json | jq -r '.charts | map(.name) | join(",")'

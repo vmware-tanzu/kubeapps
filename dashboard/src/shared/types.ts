@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
 import { Subscription } from "rxjs";
@@ -15,13 +18,28 @@ import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
 import { IAppRepositoryState } from "../reducers/repos";
+import { RpcError } from "./RpcError";
 
-class CustomError extends Error {
+export class CustomError extends Error {
+  public causes: Error[] | undefined;
   // The constructor is defined so we can later on compare the returned object
-  // via err.contructor  == FOO
-  constructor(message?: string) {
+  // via err.constructor  == FOO
+  constructor(message?: string, causes?: Error[]) {
     super(message);
     Object.setPrototypeOf(this, new.target.prototype);
+    this.causes = causes;
+    this.checkCauses();
+  }
+  // Workaround used until RPC code (unary) throws a custom rpc error
+  // Check if any RPC error is among the causes
+  private checkCauses() {
+    if (!this.causes) return;
+    for (let i = 0; i < this.causes.length; i++) {
+      const cause = this.causes[i];
+      if (RpcError.isRpcError(cause)) {
+        this.causes[i] = new RpcError(cause);
+      }
+    }
   }
 }
 

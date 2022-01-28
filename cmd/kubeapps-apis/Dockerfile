@@ -1,13 +1,16 @@
+# Copyright 2021-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.17.3 as builder
+FROM bitnami/golang:1.17.6 as builder
 WORKDIR /go/src/github.com/kubeapps/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg
 COPY cmd cmd
 ARG VERSION="devel"
 
-ARG BUF_VERSION="1.0.0-rc8"
+ARG BUF_VERSION="1.0.0-rc11"
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
 
 # With the trick below, Go's build cache is kept between builds.

@@ -1,3 +1,6 @@
+# Copyright 2021-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 # Deploy a dev environment of Kubeapps using OIDC for authentication with a
 # local dex as the provider.
 #

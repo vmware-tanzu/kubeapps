@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 // CODE ADAPTED FROM: https://sghall.github.io/react-compound-slider/#/slider-demos/horizontal
 import React from "react";
 import { Handles, Rail, Slider as ReactSlider, Tracks } from "react-compound-slider";

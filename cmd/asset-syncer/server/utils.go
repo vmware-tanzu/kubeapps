@@ -1,18 +1,5 @@
-/*
-Copyright 2021 VMware. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
 
 package server
 
@@ -49,7 +36,7 @@ import (
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
 	"helm.sh/helm/v3/pkg/chart"
-	h3chart "helm.sh/helm/v3/pkg/chart"
+	helmregistry "helm.sh/helm/v3/pkg/registry"
 )
 
 const (
@@ -291,7 +278,7 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion, userAgent str
 }
 
 // TagList represents a list of tags as specified at
-// https://github.com/opencontainers/distribution-spec/blob/master/spec.md#content-discovery
+// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#content-discovery
 type TagList struct {
 	Name string   `json:"name"`
 	Tags []string `json:"tags"`
@@ -373,7 +360,7 @@ func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return manifest.Config.MediaType == helm.HelmChartConfigMediaType, nil
+	return manifest.Config.MediaType == helmregistry.ConfigMediaType, nil
 }
 
 func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
@@ -486,7 +473,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 	if err != nil {
 		return nil, err
 	}
-	chartMetadata := h3chart.Metadata{}
+	chartMetadata := chart.Metadata{}
 	err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
 	if err != nil {
 		return nil, err

@@ -1,7 +1,10 @@
+# Copyright 2018-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 apiVersion: kubeapps.com/v1alpha1
 kind: AppRepository
 metadata:
   name: stable
 spec:
-  url: https://charts.bitnami.com/incubator
+  url: https://charts.bitnami.com/bitnami
   type: helm

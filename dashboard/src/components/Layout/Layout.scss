@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 .color-icon-info {
   cds-icon {
     --color: var(--cds-alias-status-info, #0072a3);
@@ -145,7 +148,7 @@
   }
 }
 
-.application-readme {
+@mixin default-markdown-style {
   pre {
     overflow: auto;
     padding: 0.6rem;
@@ -190,6 +193,21 @@
   img {
     max-width: 100%;
   }
+}
+
+.application-readme {
+  @include default-markdown-style;
+}
+
+.application-notes {
+  @include default-markdown-style;
+
+  display: grid;
+  padding: 0.6rem;
+  border: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
+  margin: 0.625em 0;
+  font-family: monospace;
+  white-space: pre-wrap;
 }
 
 .after-readme-button {
@@ -265,7 +283,7 @@
   }
 }
 
-// TODO(andresmgot): workaround to avoid styling issue for a disabled CdsButton
+// TODO(andresmgot): workaround to avoid styling issue for a deactivated CdsButton
 // https://github.com/vmware/clarity/issues/5315
 // We need to apply the target classes manually
 .flat-btn[disabled] {

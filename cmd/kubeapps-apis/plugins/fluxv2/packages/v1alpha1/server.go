@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -17,10 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"strings"
 
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/storage/driver"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,7 +22,9 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/packageutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -53,13 +43,13 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter       common.ClientGetterFunc
-	actionConfigGetter common.HelmActionConfigGetterFunc
+	clientGetter       clientgetter.ClientGetterWithApiExtFunc
+	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
 	chartCache *cache.ChartCache
 
-	versionsInSummary packageutils.VersionsInSummary
+	versionsInSummary pkgutils.VersionsInSummary
 	timeoutSeconds    int32
 }
 
@@ -68,6 +58,7 @@ type Server struct {
 func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}, pluginConfigPath string) (*Server, error) {
 	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v], pluginConfigPath: [%s]",
 		kubeappsCluster, pluginConfigPath)
+
 	repositoriesGvr := schema.GroupVersionResource{
 		Group:    fluxGroup,
 		Version:  fluxVersion,
@@ -81,7 +72,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 	} else {
 		// If no config is provided, we default to the existing values for backwards
 		// compatibility.
-		versionsInSummary := packageutils.GetDefaultVersionsInSummary()
+		versionsInSummary := pkgutils.GetDefaultVersionsInSummary()
 		timeoutSecs := int32(-1)
 		if pluginConfigPath != "" {
 			versionsInSummary, timeoutSecs, err = parsePluginConfig(pluginConfigPath)
@@ -94,7 +85,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 		}
 
 		s := repoEventSink{
-			clientGetter: common.NewBackgroundClientGetter(),
+			clientGetter: clientgetter.NewBackgroundClientGetter(),
 			chartCache:   chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
@@ -111,8 +102,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return nil, err
 		} else {
 			return &Server{
-				clientGetter:       common.NewClientGetter(configGetter, kubeappsCluster),
-				actionConfigGetter: common.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
+				clientGetter:       clientgetter.NewClientGetterWithApiExt(configGetter, kubeappsCluster),
+				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
 				repoCache:          repoCache,
 				chartCache:         chartCache,
 				kubeappsCluster:    kubeappsCluster,
@@ -205,13 +196,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			request.Context.Cluster)
 	}
 
-	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := common.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"unable to intepret page token %q: %v",
-			request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 
 	charts, err := s.getChartsForRepos(ctx, request.GetFilterOptions().GetRepositories())
@@ -219,7 +206,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	packageSummaries, err := filterAndPaginateCharts(request.GetFilterOptions(), pageSize, pageOffset, charts)
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	packageSummaries, err := filterAndPaginateCharts(
+		request.GetFilterOptions(), pageSize, pageOffset, charts)
 	if err != nil {
 		return nil, err
 	}
@@ -269,14 +258,13 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
+	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
-	packageIdParts := strings.Split(unescapedChartID, "/")
 
 	// check specified repo exists and is in ready state
-	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageIdParts[0]}
+	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
 
 	// this verifies that the repo exists
 	repoUnstructured, err := s.getRepoInCluster(ctx, repo)
@@ -284,7 +272,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	pkgDetail, err := s.availableChartDetail(ctx, repo, packageIdParts[1], request.GetPkgVersion())
+	pkgDetail, err := s.availableChartDetail(ctx, repo, chartName, request.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -330,21 +318,20 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 			cluster)
 	}
 
-	unescapedChartID, err := common.GetUnescapedChartID(packageRef.Identifier)
+	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("Requesting chart [%s] in namespace [%s]", unescapedChartID, namespace)
-	packageIdParts := strings.Split(unescapedChartID, "/")
-	repo := types.NamespacedName{Namespace: namespace, Name: packageIdParts[0]}
-	chart, err := s.getChart(ctx, repo, packageIdParts[1])
+	log.Infof("Requesting chart [%s] in namespace [%s]", chartName, namespace)
+	repo := types.NamespacedName{Namespace: namespace, Name: repoName}
+	chart, err := s.getChart(ctx, repo, chartName)
 	if err != nil {
 		return nil, err
 	} else if chart != nil {
 		// found it
 		return &corev1.GetAvailablePackageVersionsResponse{
-			PackageAppVersions: packageutils.PackageAppVersionsSummary(
+			PackageAppVersions: pkgutils.PackageAppVersionsSummary(
 				chart.ChartVersions,
 				s.versionsInSummary),
 		}, nil
@@ -356,13 +343,9 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 // GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetInstalledPackageSummaries [%v]", request)
-	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := common.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromInstalledRequest(request)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"unable to intepret page token %q: %v",
-			request.GetPaginationOptions().GetPageToken(), err)
+		return nil, err
 	}
 
 	cluster := request.GetContext().GetCluster()
@@ -373,7 +356,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			cluster)
 	}
 
-	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
+	pageSize := request.GetPaginationOptions().GetPageSize()
+	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(
+		ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -535,40 +520,9 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	pkgRef := request.GetInstalledPackageRef()
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
-	log.Infof("+fluxv2 GetResourceRefs %s %s", contextMsg, identifier)
+	log.Infof("+fluxv2 GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
 
-	namespace := pkgRef.GetContext().GetNamespace()
-
-	actionConfig, err := s.actionConfigGetter(ctx, request.GetInstalledPackageRef().GetContext().GetNamespace())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
-	}
-
-	// Grab the released manifest from the release.
-	// TODO(minelson): We're currently getting the resource refs for a package
-	// install by checking the helm manifest, as we do for the helm plugin. With
-	// certain assumptions about the RBAC of the Kubeapps user, we may be able
-	// to instead query for labelled resources. See the discussion following for
-	// more details:
-	// https://github.com/kubeapps/kubeapps/pull/3811#issuecomment-977689570
-	getcmd := action.NewGet(actionConfig)
-	release, err := getcmd.Run(identifier)
-	if err != nil {
-		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
-		}
-		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
-	}
-
-	refs, err := resourcerefs.ResourceRefsFromManifest(release.Manifest, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return &corev1.GetInstalledPackageResourceRefsResponse{
-		Context:      pkgRef.GetContext(),
-		ResourceRefs: refs,
-	}, nil
+	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, s.actionConfigGetter)
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
@@ -578,9 +532,9 @@ func GetPluginDetail() *plugins.Plugin {
 
 // parsePluginConfig parses the input plugin configuration json file and return the
 // configuration options.
-func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary, int32, error) {
+func parsePluginConfig(pluginConfigPath string) (pkgutils.VersionsInSummary, int32, error) {
 	// Note at present VersionsInSummary is the only configurable option for this plugin,
-	// and if required this func can be enhaned to return helmConfig struct
+	// and if required this func can be enhanced to return fluxConfig struct
 
 	// In the flux plugin, for example, we are interested in config for the
 	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
@@ -588,7 +542,7 @@ func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary,
 		Core struct {
 			Packages struct {
 				V1alpha1 struct {
-					VersionsInSummary packageutils.VersionsInSummary
+					VersionsInSummary pkgutils.VersionsInSummary
 					TimeoutSeconds    int32 `json:"timeoutSeconds"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
@@ -598,11 +552,11 @@ func parsePluginConfig(pluginConfigPath string) (packageutils.VersionsInSummary,
 
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		return packageutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
 	}
 
 	// return configured value

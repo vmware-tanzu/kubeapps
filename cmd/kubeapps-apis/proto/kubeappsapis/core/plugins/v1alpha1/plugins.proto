@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 package kubeappsapis.core.plugins.v1alpha1;
 option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1";
@@ -59,4 +62,3 @@ message Plugin {
   // The version of the plugin, such as v1alpha1
   string version = 2;
 }
-

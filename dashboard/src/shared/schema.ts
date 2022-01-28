@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import Ajv, { ErrorObject, JSONSchemaType } from "ajv";
 import * as jsonpatch from "fast-json-patch";
 import * as yaml from "js-yaml";
