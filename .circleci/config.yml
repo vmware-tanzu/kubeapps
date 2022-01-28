@@ -381,7 +381,12 @@ install_additional_cluster: &install_additional_cluster
       } || {
         echo "Error while creating the additional cluster after retry"
       }
-
+load_kind_images: &load_kind_images
+  run:
+    name: "Load needed images into Kind"
+    command:
+      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r74 kubeapps-ci kubeapps-ci-additional
+      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional
 copy_apiserver_certificates: &copy_apiserver_certificates
   run:
     name: "Copy apiserver certificates"
@@ -559,6 +564,7 @@ local_e2e_steps: &local_e2e_steps
     - <<: *export_cluster_variables
     - <<: *install_mkcert
     - <<: *install_helm_cli
+    - <<: *load_kind_images
     # Load images from other jobs
     - attach_workspace:
         at: /tmp/images

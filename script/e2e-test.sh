@@ -404,6 +404,7 @@ if [[ "${#testsToIgnore[@]}" > "0" ]]; then
   ignoreFlag="--testPathIgnorePatterns '$testsToIgnore'"
 fi
 kubectl cp ./tests "${pod}:/app/"
+info "Copied tests to integration pod ${pod}"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
@@ -431,7 +432,7 @@ edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 
 ## Run tests
 info "Running Integration tests..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test"; then #${ignoreFlag}
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=30 INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test"; then #${ignoreFlag}
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
