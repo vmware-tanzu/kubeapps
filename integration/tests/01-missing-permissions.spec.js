@@ -24,8 +24,8 @@ test("Regular user fails to deploy an application due to missing permissions", a
   await page.waitForTimeout(5000);
   // For some reason, UI is showing different error messages randomly
   try {
-    await expect(errorLocator).to .toContainText("secrets is forbidden");
+    await expect(errorLocator).to.toContainText("secrets is forbidden");
   } catch (err) {
-    await expect(errorLocator).to .toContainText("unable to read secret");
+    await expect(errorLocator).to.toContainText("unable to read secret");
   }
 });

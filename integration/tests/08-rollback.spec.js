@@ -11,6 +11,7 @@ test("Rolls back an application", async ({ page }) => {
 
   // Go to catalog
   await page.goto(utils.getUrl("/#/c/default/ns/default/catalog?Search=apache&Repository=bitnami"));
+  await page.waitForTimeout(3000);
 
   // Select package
   await page.click('.card-title:has-text("kubeapps-apache")');

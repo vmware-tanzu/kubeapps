@@ -23,7 +23,7 @@ test("Create a new package repository successfully", async ({ page }) => {
   await page.waitForTimeout(5000);
 
   // Check if packages show up in catalog
-  await page.reload({ waitUntil: "networkidle" });
+  // await page.reload({ waitUntil: "networkidle" });
   await page.click('a:has-text("my-repo")');
   await page.waitForSelector('css=.catalog-container .card-title >> text="gitlab-runner"');
 
