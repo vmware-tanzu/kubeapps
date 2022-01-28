@@ -13,7 +13,6 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	kappctrlinstalled "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
@@ -629,14 +628,14 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	// update the pkgInstall in the server
 	updatedPkgInstall, err := s.updatePkgInstall(ctx, packageCluster, packageNamespace, pkgInstall)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
+		return nil, statuserror.FromK8sError("update", "PackageInstall", installedPackageName, err)
 	}
 
 	// Update the values.yaml values file if any is passed, otherwise, delete the values
 	if values != "" {
 		secret, err := s.buildSecret(installedPackageName, values, packageNamespace)
 		if err != nil {
-			return nil, statuserror.FromK8sError("upsate", "Secret", secret.Name, err)
+			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
 		}
 		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
 		if updatedSecret == nil || err != nil {
@@ -644,17 +643,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		}
 
 		if updatedSecret != nil {
-			// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L670
-			if pkgInstall.ObjectMeta.Annotations == nil {
-				pkgInstall.ObjectMeta.Annotations = make(map[string]string)
-			}
-			pkgInstall.ObjectMeta.Annotations[kappctrlinstalled.KctrlPkgAnnotation+"-"+kappctrlinstalled.KindSecret.AsString()] = fmt.Sprintf(kappctrlinstalled.SecretName, secret.Name, secret.ObjectMeta.Namespace)
+			// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L505
 			pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
 				SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
 					// The secret name should have the format: <name>-<namespace> as per:
-					// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+					// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
 					Name: updatedSecret.Name,
-					Key:  "values.yaml",
 				},
 			}}
 		}
