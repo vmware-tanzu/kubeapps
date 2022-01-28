@@ -34,8 +34,11 @@ type (
 )
 
 // Code from Helm Registry Client. Copied here since it belonged to a internal package.
-// TODO(agamez): Some adaptations on the Kubeapps side are still required to be fully able to
+// TODO(agamez): Some adaptations on the Kubeapps/Helm side are still required to be fully able to
 // use the Helm code a library instead
+// More information:
+// // https://github.com/helm/helm/issues/10623
+// // https://github.com/kubeapps/kubeapps/pull/4154
 //
 // This function has been slightly adapted from:
 // https://github.com/helm/helm/blob/v3.8.0/pkg/registry/client.go#L249
@@ -106,8 +109,11 @@ func (p *OCIPuller) PullOCIChart(ref string) (*bytes.Buffer, string, error) {
 }
 
 // Code from Helm Registry Client. Copied here since it belonged to a internal package.
-// TODO(agamez): Some adaptations on the Kubeapps side are still required to be fully able to
+// TODO(agamez): Some adaptations on the Kubeapps/Helm side are still required to be fully able to
 // use the Helm code a library instead
+// More information:
+// // https://github.com/helm/helm/issues/10623
+// // https://github.com/kubeapps/kubeapps/pull/4154
 //
 // https://github.com/helm/helm/blob/v3.8.0/pkg/registry/util.go#L112
 func parseReference(raw string) (registry.Reference, error) {
