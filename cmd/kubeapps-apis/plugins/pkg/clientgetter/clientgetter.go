@@ -29,6 +29,12 @@ type ClientGetterWithApiExtFunc func(context.Context) (kubernetes.Interface, dyn
 //   dynamic.Interface
 //   apiext.Interface
 // }
+// or for even better abstraction something like
+// type ClientInterface interface {
+//   Typed() kubernetes.Interface
+//   Dynamic() dynamic.Interface
+//   ApiExt() apiext.Interface
+//}
 // and have ClientGetterFunc return this instead of multiple results. That way it is more extensible
 // in the future, e.g. one day (pretty soon) we may want to add
 //  an instance of  "sigs.k8s.io/controller-runtime/pkg/client" to this struct
@@ -117,7 +123,7 @@ func NewBackgroundClientGetter() ClientGetterWithApiExtFunc {
 func clientGetterHelper(config *rest.Config) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
 	typedClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client dur to: %v", err)
+		return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client due to: %v", err)
 	}
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
