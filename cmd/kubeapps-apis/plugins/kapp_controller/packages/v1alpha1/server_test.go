@@ -1067,7 +1067,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -1229,7 +1229,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -1273,7 +1273,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -1421,7 +1421,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -1563,7 +1563,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -1902,7 +1902,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -1959,7 +1959,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-installation-values",
+						Name:      "my-installation-default-values",
 					},
 					Type: "Opaque",
 					Data: map[string][]byte{
@@ -2393,7 +2393,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-installation-values",
+							Name: "my-installation-default-values",
 						},
 					},
 					},
@@ -2602,7 +2602,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-installation-values",
+							Name: "my-installation-default-values",
 						},
 					},
 					},
@@ -2747,7 +2747,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-installation-values",
+							Name: "my-installation-default-values",
 						},
 					},
 					},
@@ -2890,7 +2890,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-installation-values",
+							Name: "my-installation-default-values",
 						},
 					},
 					},
@@ -3047,7 +3047,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -3077,7 +3077,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-installation-values",
+						Name:      "my-installation-default-values",
 					},
 					Type: "Opaque",
 					Data: map[string][]byte{
@@ -3112,7 +3112,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-							Name: "my-installation-values",
+							Name: "my-installation-default-values",
 						},
 					},
 					},
@@ -3219,7 +3219,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -3249,7 +3249,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-installation-values",
+						Name:      "my-installation-default-values",
 					},
 					Type: "Opaque",
 					Data: map[string][]byte{
@@ -3289,7 +3289,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -3319,7 +3319,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-installation-values",
+						Name:      "my-installation-default-values",
 					},
 					Type: "Opaque",
 					Data: map[string][]byte{
