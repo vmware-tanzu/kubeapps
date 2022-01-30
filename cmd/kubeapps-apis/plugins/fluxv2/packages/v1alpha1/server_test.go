@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"crypto/subtle"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -28,54 +27,14 @@ import (
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
 
 const KubeappsCluster = "default"
-
-func TestBadClientGetter(t *testing.T) {
-	testCases := []struct {
-		name         string
-		clientGetter clientgetter.ClientGetterWithApiExtFunc
-		statusCode   codes.Code
-	}{
-		{
-			name:         "returns internal error status when no getter configured",
-			clientGetter: nil,
-			statusCode:   codes.Internal,
-		},
-		{
-			name: "returns failed-precondition when clientGetter itself errors",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-				return nil, nil, nil, fmt.Errorf("Bang!")
-			},
-			statusCode: codes.FailedPrecondition,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			s := Server{clientGetter: tc.clientGetter}
-
-			_, _, _, err := s.GetClients(context.Background())
-			if err == nil && tc.statusCode != codes.OK {
-				t.Fatalf("got: nil, want: error")
-			}
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
-			}
-
-		})
-	}
-}
 
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
@@ -389,7 +348,7 @@ type testSpecChartWithUrl struct {
 // (unlike charts or releases) is that repos are treated special because
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
 func newServer(t *testing.T,
-	clientGetter clientgetter.ClientGetterWithApiExtFunc,
+	clientGetter clientgetter.ClientGetterFunc,
 	actionConfig *action.Configuration,
 	repos []sourcev1.HelmRepository,
 	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
@@ -403,13 +362,17 @@ func newServer(t *testing.T,
 	if clientGetter != nil {
 		// if client getter returns an error, FLUSHDB call does not take place, because
 		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
-		if _, _, _, err := clientGetter(context.TODO()); err == nil {
+		if _, err := clientGetter(context.TODO(), ""); err == nil {
 			mock.ExpectFlushDB().SetVal("OK")
 		}
 	}
 
+	backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return clientGetter(ctx, KubeappsCluster)
+	}
+
 	sink := repoEventSink{
-		clientGetter: clientGetter,
+		clientGetter: backgroundClientGetter,
 		chartCache:   nil,
 	}
 
@@ -441,6 +404,8 @@ func newServer(t *testing.T,
 		}
 		t.Cleanup(func() { chartCache.Shutdown() })
 
+		sink.chartCache = chartCache
+
 		// for now we only cache latest version of each chart
 		for _, c := range charts {
 			// very simple logic for now, relies on the order of elements in the array
@@ -469,15 +434,11 @@ func newServer(t *testing.T,
 				}
 			}
 		}
-		sink = repoEventSink{
-			clientGetter: clientGetter,
-			chartCache:   chartCache,
-		}
 	}
 
 	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 		Gvr:          repositoriesGvr,
-		ClientGetter: clientGetter,
+		ClientGetter: backgroundClientGetter,
 		OnAddFunc:    sink.onAddRepo,
 		OnModifyFunc: sink.onModifyRepo,
 		OnGetFunc:    sink.onGetRepo,

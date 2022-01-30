@@ -96,7 +96,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
 	// this ClientGetter is for running out-of-request interactions with the Kubernetes API server,
 	// such as watching for resource changes
-	ClientGetter clientgetter.ClientGetterWithApiExtFunc
+	ClientGetter clientgetter.BackgroundClientGetterFunc
 	// 'OnAddFunc' hook is called when an object comes about and the cache does not have a
 	// corresponding entry. Note this maybe happen as a result of a newly created k8s object
 	// or a modified object for which there was no entry in the cache
@@ -179,11 +179,9 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 	// confidence test that CRD for GVR has been registered
 	ctx := context.Background()
-	_, _, apiExt, err := c.config.ClientGetter(ctx)
+	apiExt, err := c.config.ClientGetter.ApiExt(ctx)
 	if err != nil {
-		return fmt.Errorf("clientGetter failed due to: %v", err)
-	} else if apiExt == nil {
-		return fmt.Errorf("clientGetter returned invalid data")
+		return err
 	}
 
 	name := fmt.Sprintf("%s.%s", c.config.Gvr.Resource, c.config.Gvr.Group)
@@ -349,7 +347,7 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	ctx := context.Background()
 
-	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
+	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -396,7 +394,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	}
 
 	ctx := context.Background()
-	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
+	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
 	if err != nil {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -410,7 +408,8 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
 	// For Get() and List(), the semantics of resource version unset are to get the most recent
 	// version
-	listItems, err := dynamicClient.Resource(c.config.Gvr).Namespace(apiv1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	listItems, err := dynamicClient.Resource(c.config.Gvr).
+		Namespace(apiv1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -499,7 +498,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 
 	// Get the resource with this namespace/name
 	ctx := context.Background()
-	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
+	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
 	if err != nil {
 		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}

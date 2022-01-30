@@ -22,10 +22,10 @@ import (
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,9 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
@@ -1315,8 +1313,8 @@ func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []
 
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-		return typedClient, dynamicClient, apiextIfc, nil
+	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
+		return clientgetter.NewClientInterfaces(typedClient, dynamicClient, apiextIfc), nil
 	}
 
 	s, mock, err := newServer(t, clientGetter, nil, repos, charts)
@@ -1452,8 +1450,11 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 }
 
 func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository) (key string, bytes []byte, err error) {
+	backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
+	}
 	sink := repoEventSink{
-		clientGetter: s.clientGetter,
+		clientGetter: backgroundClientGetter,
 		chartCache:   nil,
 	}
 	return sink.redisMockSetValueForRepo(mock, repo)
@@ -1479,7 +1480,7 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, byteArray [
 
 func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
 	sink := repoEventSink{
-		clientGetter: s.clientGetter,
+		clientGetter: s.newBackgroundClientGetter(),
 		chartCache:   nil,
 	}
 	return sink.redisKeyValueForRepo(r)

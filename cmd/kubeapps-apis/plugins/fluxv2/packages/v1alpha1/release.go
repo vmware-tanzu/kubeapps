@@ -46,7 +46,7 @@ var (
 )
 
 func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	_, client, _, err := s.GetClients(ctx)
+	client, err := s.clientGetter.Dynamic(ctx, s.kubeappsCluster)
 	if err != nil {
 		return nil, err
 	}

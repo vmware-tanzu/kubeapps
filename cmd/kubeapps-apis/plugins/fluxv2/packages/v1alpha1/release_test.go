@@ -23,6 +23,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
@@ -35,7 +36,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,9 +43,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
@@ -582,9 +580,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been created
-			_, dynamicClient, _, err := s.clientGetter(context.Background())
+			dynamicClient, err := s.clientGetter.Dynamic(context.Background(), s.kubeappsCluster)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			u, err := dynamicClient.Resource(releasesGvr).
@@ -683,9 +681,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been updated
-			_, dynamicClient, _, err := s.clientGetter(context.Background())
+			dynamicClient, err := s.clientGetter.Dynamic(context.Background(), s.kubeappsCluster)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			u, err := dynamicClient.Resource(releasesGvr).
@@ -778,9 +776,9 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been updated
-			_, dynamicClient, _, err := s.clientGetter(context.Background())
+			dynamicClient, err := s.clientGetter.Dynamic(context.Background(), s.kubeappsCluster)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			_, err = dynamicClient.Resource(releasesGvr).
@@ -1109,8 +1107,8 @@ func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configura
 
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 
-	clientGetter := func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-		return typedClient, dynamicClient, apiextIfc, nil
+	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
+		return clientgetter.NewClientInterfaces(typedClient, dynamicClient, apiextIfc), nil
 	}
 
 	watcher := watch.NewFake()

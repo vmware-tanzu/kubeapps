@@ -42,7 +42,7 @@ const (
 )
 
 func (s *Server) getRepoResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	_, client, _, err := s.GetClients(ctx)
+	client, err := s.clientGetter.Dynamic(ctx, s.kubeappsCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -184,9 +184,9 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.Namesp
 	// I don't think it's necessarily a bad thing if the incoming user's RBAC
 	// settings are more permissive than that of the default RBAC for
 	// kubeapps-internal-kubeappsapis account. If we don't like that behavior,
-	// I can easily switch to using common.NewBackgroundClientGetter here
+	// I can easily switch to BackgroundClientGetter here
 	sink := repoEventSink{
-		clientGetter: s.clientGetter,
+		clientGetter: s.newBackgroundClientGetter(),
 		chartCache:   s.chartCache,
 	}
 	return sink.clientOptionsForRepo(ctx, *repo)
@@ -196,7 +196,7 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.Namesp
 // implements plug-in specific cache-related functionality
 //
 type repoEventSink struct {
-	clientGetter clientgetter.ClientGetterWithApiExtFunc
+	clientGetter clientgetter.BackgroundClientGetterFunc
 	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
 }
 
@@ -451,7 +451,7 @@ func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.
 	if s == nil || s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
 	}
-	typedClient, _, _, err := s.clientGetter(ctx)
+	typedClient, err := s.clientGetter.Typed(ctx)
 	if err != nil {
 		return nil, err
 	}

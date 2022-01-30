@@ -902,7 +902,7 @@ func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 
 func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
 	sink := repoEventSink{
-		clientGetter: s.clientGetter,
+		clientGetter: s.newBackgroundClientGetter(),
 		chartCache:   s.chartCache,
 	}
 	return sink.redisMockSetValueForChart(mock, key, url, opts)
