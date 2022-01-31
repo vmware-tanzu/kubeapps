@@ -87,8 +87,8 @@ type NamespacedResourceWatcherCache struct {
 }
 
 type ValueGetterFunc func(key string, cachedValue interface{}) (rawValue interface{}, err error)
-type ValueAdderFunc func(key string, obj map[string]interface{}) (cachedValue interface{}, setValue bool, err error)
-type ValueModifierFunc func(key string, obj map[string]interface{}, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
+type ValueAdderFunc func(key string, obj unstructured.Unstructured) (cachedValue interface{}, setValue bool, err error)
+type ValueModifierFunc func(key string, obj unstructured.Unstructured, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
 type KeyDeleterFunc func(key string) (deleteValue bool, err error)
 type ResyncFunc func() error
 
@@ -96,7 +96,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
 	// this ClientGetter is for running out-of-request interactions with the Kubernetes API server,
 	// such as watching for resource changes
-	ClientGetter clientgetter.ClientGetterWithApiExtFunc
+	ClientGetter clientgetter.BackgroundClientGetterFunc
 	// 'OnAddFunc' hook is called when an object comes about and the cache does not have a
 	// corresponding entry. Note this maybe happen as a result of a newly created k8s object
 	// or a modified object for which there was no entry in the cache
@@ -179,11 +179,9 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 	// confidence test that CRD for GVR has been registered
 	ctx := context.Background()
-	_, _, apiExt, err := c.config.ClientGetter(ctx)
+	apiExt, err := c.config.ClientGetter.ApiExt(ctx)
 	if err != nil {
-		return fmt.Errorf("clientGetter failed due to: %v", err)
-	} else if apiExt == nil {
-		return fmt.Errorf("clientGetter returned invalid data")
+		return err
 	}
 
 	name := fmt.Sprintf("%s.%s", c.config.Gvr.Resource, c.config.Gvr.Group)
@@ -349,7 +347,7 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	ctx := context.Background()
 
-	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
+	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -396,7 +394,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	}
 
 	ctx := context.Background()
-	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
+	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
 	if err != nil {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -410,14 +408,15 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
 	// For Get() and List(), the semantics of resource version unset are to get the most recent
 	// version
-	listItems, err := dynamicClient.Resource(c.config.Gvr).Namespace(apiv1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	listItems, err := dynamicClient.Resource(c.config.Gvr).
+		Namespace(apiv1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
 
 	// for debug only, will remove later
 	log.Infof("List(%s) returned list with [%d] items, object:\n%s",
-		c.config.Gvr.Resource, len(listItems.Items), common.PrettyPrintMap(listItems.Object))
+		c.config.Gvr.Resource, len(listItems.Items), common.PrettyPrint(listItems.Object))
 
 	rv := listItems.GetResourceVersion()
 	if rv == "" {
@@ -464,7 +463,7 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 		// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 		return
 	}
-	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrintObject(event.Object))
+	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
 		if unstructuredObj, ok := event.Object.(*unstructured.Unstructured); !ok {
@@ -499,7 +498,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 
 	// Get the resource with this namespace/name
 	ctx := context.Background()
-	_, dynamicClient, _, err := c.config.ClientGetter(ctx)
+	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
 	if err != nil {
 		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -521,15 +520,15 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 			return status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
 		}
 	}
-	return c.onAddOrModify(true, unstructuredObj.Object)
+	return c.onAddOrModify(true, *unstructuredObj)
 }
 
 // this is effectively a cache SET operation
-func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj map[string]interface{}) (err error) {
+func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj unstructured.Unstructured) (err error) {
 	log.V(4).Infof("+onAddOrModify")
 	defer log.V(4).Infof("-onAddOrModify")
 
-	key, err := c.keyFor(unstructuredObj)
+	key, err := c.keyFor(unstructuredObj.Object)
 	if err != nil {
 		return fmt.Errorf("failed to get redis key due to: %v", err)
 	}
@@ -555,7 +554,7 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 	}
 
 	if err != nil {
-		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, common.PrettyPrintMap(unstructuredObj), err)
+		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, common.PrettyPrint(unstructuredObj), err)
 		// clear that key so cache doesn't contain any stale info for this object
 		keysremoved, err2 := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		if err2 != nil {
@@ -816,7 +815,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 // for generating a cache key given an object
 // some kind of 'KeyFunc(unstructuredObj) string'
 func (c *NamespacedResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
-	name, err := common.NamespacedName(unstructuredObj)
+	name, err := common.NamespacedNameForUnstructured(unstructuredObj)
 	if err != nil {
 		return "", err
 	}
@@ -863,7 +862,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 	const maxWorkers = 10
 
 	type populateJob struct {
-		item map[string]interface{}
+		item unstructured.Unstructured
 	}
 
 	type populateJobResult struct {
@@ -898,7 +897,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstr
 
 	go func() {
 		for _, item := range items {
-			requestChan <- populateJob{item.Object}
+			requestChan <- populateJob{item}
 		}
 		close(requestChan)
 	}()

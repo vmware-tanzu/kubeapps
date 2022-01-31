@@ -116,7 +116,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoUrl:            podinfo_repo_url,
 			request:            create_request_target_ns_doesnt_exist,
 			noPreCreateNs:      true,
-			expectedStatusCode: codes.Internal,
+			expectedStatusCode: codes.NotFound,
 		},
 	}
 
@@ -703,8 +703,8 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 	if err == nil {
 		t.Fatalf("Expected error, did not get one")
-	} else if status.Code(err) != codes.Unauthenticated {
-		t.Fatalf("GetAvailablePackageDetailRequest expected Unauthenticated got %v", err)
+	} else if status.Code(err) != codes.PermissionDenied {
+		t.Fatalf("GetAvailablePackageDetailRequest expected: PermissionDenied, got: %v", err)
 	}
 
 	// this should succeed as it is done in the context of cluster admin
@@ -893,8 +893,8 @@ func waitUntilInstallCompletes(t *testing.T, fluxPluginClient fluxplugin.FluxV2P
 				break
 			}
 		} else {
-			if resp2.InstalledPackageDetail.Status.Ready == false &&
-				resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_FAILED {
+			if resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_FAILED ||
+				resp2.InstalledPackageDetail.Status.Reason == corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED {
 				actualResp = resp2
 				break
 			}

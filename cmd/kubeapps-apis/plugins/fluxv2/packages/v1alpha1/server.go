@@ -9,12 +9,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -43,7 +40,7 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter       clientgetter.ClientGetterWithApiExtFunc
+	clientGetter       clientgetter.ClientGetterFunc
 	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
@@ -60,8 +57,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 		kubeappsCluster, pluginConfigPath)
 
 	repositoriesGvr := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
 		Resource: fluxHelmRepositories,
 	}
 
@@ -85,7 +82,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 		}
 
 		s := repoEventSink{
-			clientGetter: clientgetter.NewBackgroundClientGetter(),
+			clientGetter: clientgetter.NewBackgroundClientGetter(configGetter),
 			chartCache:   chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
@@ -102,7 +99,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return nil, err
 		} else {
 			return &Server{
-				clientGetter:       clientgetter.NewClientGetterWithApiExt(configGetter, kubeappsCluster),
+				clientGetter:       clientgetter.NewClientGetter(configGetter),
 				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
 				repoCache:          repoCache,
 				chartCache:         chartCache,
@@ -112,23 +109,6 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			}, nil
 		}
 	}
-}
-
-// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-	if s.clientGetter == nil {
-		return nil, nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
-	}
-	typedClient, dynamicClient, apiExtClient, err := s.clientGetter(ctx)
-	if err != nil {
-		if status.Code(err) == codes.Unknown {
-			return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
-		} else {
-			// this could be codes.Unauthorized which we want to pass through
-			return nil, nil, nil, err
-		}
-	}
-	return typedClient, dynamicClient, apiExtClient, nil
 }
 
 // ===== general note on error handling ========
@@ -166,8 +146,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	}
 
 	responseRepos := []*v1alpha1.PackageRepository{}
-	for _, repoUnstructured := range repos.Items {
-		repo, err := packageRepositoryFromUnstructured(repoUnstructured.Object)
+	for _, repo := range repos {
+		repo, err := packageRepositoryFromFlux(repo)
 		if err != nil {
 			return nil, err
 		}
@@ -258,29 +238,29 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	repoN, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
 	// check specified repo exists and is in ready state
-	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
+	repoName := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoN}
 
 	// this verifies that the repo exists
-	repoUnstructured, err := s.getRepoInCluster(ctx, repo)
+	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
 		return nil, err
 	}
 
-	pkgDetail, err := s.availableChartDetail(ctx, repo, chartName, request.GetPkgVersion())
+	pkgDetail, err := s.availableChartDetail(ctx, repoName, chartName, request.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
 
 	// fix up a couple of fields that don't come from the chart tarball
-	repoUrl, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
-	if err != nil || !found {
-		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repo)
+	repoUrl := repo.Spec.URL
+	if repoUrl == "" {
+		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repoName)
 	}
 	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
@@ -523,6 +503,13 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	log.Infof("+fluxv2 GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
 
 	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, s.actionConfigGetter)
+}
+
+// convinience func mostly used by unit tests
+func (s *Server) newBackgroundClientGetter() clientgetter.BackgroundClientGetterFunc {
+	return func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
+	}
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
