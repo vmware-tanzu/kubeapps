@@ -3365,7 +3365,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               major,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -3507,7 +3507,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               minor,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -3649,7 +3649,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               patch,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -4564,7 +4564,7 @@ kappController:
       `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "",
 		},
@@ -4578,7 +4578,7 @@ kappController:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               major,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "",
 		},
@@ -4592,7 +4592,7 @@ kappController:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               minor,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "",
 		},
@@ -4606,7 +4606,7 @@ kappController:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               patch,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "",
 		},
@@ -4620,7 +4620,7 @@ kappController:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               none,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "",
 		},
@@ -4703,7 +4703,7 @@ kappController:
       `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "unable to parse DefaultUpgradePolicy",
 		},
@@ -4717,7 +4717,7 @@ kappController:
       `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "json: cannot unmarshal",
 		},
@@ -4731,7 +4731,7 @@ kappController:
       `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "json: cannot unmarshal",
 		},
@@ -4745,7 +4745,7 @@ kappController:
       `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 			},
 			expectedErrorStr: "json: cannot unmarshal",
 		},

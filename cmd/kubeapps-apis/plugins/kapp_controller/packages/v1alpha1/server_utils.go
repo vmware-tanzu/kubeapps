@@ -325,7 +325,7 @@ type (
 			Packages struct {
 				V1alpha1 struct {
 					DefaultUpgradePolicy               string   `json:"defaultUpgradePolicy"`
-					defaultPrereleasesVersionSelection []string `json:"defaultPrereleasesVersionSelection"`
+					DefaultPrereleasesVersionSelection []string `json:"defaultPrereleasesVersionSelection"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"kappController"`
@@ -338,7 +338,7 @@ type (
 
 var defaultPluginConfig = &kappControllerPluginParsedConfig{
 	defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-	defaultPrereleasesVersionSelection: fallbackdefaultPrereleasesVersionSelection(),
+	defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 }
 
 // Create a upgradePolicy enum-alike

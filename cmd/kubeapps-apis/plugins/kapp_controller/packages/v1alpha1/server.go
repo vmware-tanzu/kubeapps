@@ -34,7 +34,7 @@ const (
 	fallbackDefaultUpgradePolicy upgradePolicy = none
 )
 
-func fallbackdefaultPrereleasesVersionSelection() []string {
+func fallbackDefaultPrereleasesVersionSelection() []string {
 	return nil
 }
 
@@ -72,7 +72,7 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 
 	// override the defaults with the loaded configuration
 	config.defaultUpgradePolicy = upgradePolicyMapping[pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
-	config.defaultPrereleasesVersionSelection = pluginConfig.KappController.Packages.V1alpha1.defaultPrereleasesVersionSelection
+	config.defaultPrereleasesVersionSelection = pluginConfig.KappController.Packages.V1alpha1.DefaultPrereleasesVersionSelection
 
 	return config, nil
 }
