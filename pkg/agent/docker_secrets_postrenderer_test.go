@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" is not used because we're dealing with unstructured yaml directly
 )
 
 func TestNewDockerSecretsPostRenderer(t *testing.T) {

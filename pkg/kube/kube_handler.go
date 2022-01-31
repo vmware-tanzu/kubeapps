@@ -23,7 +23,6 @@ import (
 	apprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	v1alpha1typed "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,6 +33,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	log "k8s.io/klog/v2"
 )
 
 const OCIImageManifestMediaType = "application/vnd.oci.image.manifest.v1+json"

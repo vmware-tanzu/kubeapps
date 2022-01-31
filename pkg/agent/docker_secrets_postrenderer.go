@@ -10,10 +10,8 @@ import (
 	"strings"
 
 	"github.com/distribution/distribution/reference"
-	log "github.com/sirupsen/logrus"
-
-	// The usual "sigs.k8s.io/yaml" is not used because we're dealing with unstructured yaml directly
-	yaml "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" is not used because we're dealing with unstructured yaml directly
+	log "k8s.io/klog/v2"
 )
 
 const (
