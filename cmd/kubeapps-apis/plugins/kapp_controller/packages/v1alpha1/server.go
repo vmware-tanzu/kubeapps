@@ -50,8 +50,11 @@ type Server struct {
 	clientGetter             clientgetter.ClientGetterFunc
 	globalPackagingNamespace string
 	globalPackagingCluster   string
-	kappClientsGetter        kappClientsGetter
-	pluginConfig             *kappControllerPluginParsedConfig
+	// TODO (gfichtenholt) it should now be possible to add this into clientgetter pkg,
+	// and thus just have a single clientGetter field. Only *if* it makes sense to do so
+	// (i.e. code is re-usable by multiple components)
+	kappClientsGetter kappClientsGetter
+	pluginConfig      *kappControllerPluginParsedConfig
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
@@ -148,7 +151,17 @@ func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Int
 	if s.clientGetter == nil {
 		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	typedClient, dynamicClient, err := s.clientGetter(ctx, cluster)
+	// TODO (gfichtenholt) Today this function returns 2 different
+	// clients (typed and dynamic). Now if one looks at the callers, it is clear that
+	// only one client is actually needed for a given scenario.
+	// So for now, in order not to make too many changes, I am going to do more work than
+	// is actually needed by getting *all* clients and returning them.
+	// But we should think about refactoring the callers to ask for only what's needed
+	dynamicClient, err := s.clientGetter.Dynamic(ctx, cluster)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+	}
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
