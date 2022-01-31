@@ -4,13 +4,14 @@
 package cmd
 
 import (
-	"fmt"
+	"flag"
 	"os"
 
 	"github.com/kubeapps/kubeapps/cmd/asset-syncer/server"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
 	log "k8s.io/klog/v2"
 )
 
@@ -82,7 +83,14 @@ func Execute() {
 }
 
 func init() {
+	log.InitFlags(nil)
 	cobra.OnInitialize(initConfig)
+	//set initial value of verbosity
+	err := flag.Set("v", "3")
+	if err != nil {
+		log.Errorf("Error parsing verbosity: %v", viper.ConfigFileUsed())
+	}
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 
 	// Create new commands
 	rootCmd = newRootCmd()
@@ -135,7 +143,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
+		home, err := homedir.Dir()
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".kubeops" (without extension).
@@ -148,6 +156,6 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		log.Errorf("Using config file: %v", viper.ConfigFileUsed())
 	}
 }

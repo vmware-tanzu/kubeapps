@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mitchellh/go-homedir"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
@@ -16,7 +17,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
 // configForCluster implements the genericclioptions.RESTClientGetter interface
@@ -55,7 +55,11 @@ func (f *configForCluster) ToDiscoveryClient() (discovery.CachedDiscoveryInterfa
 	// double it just so we don't end up here again for a while.  This config is only used for discovery.
 	config.Burst = f.discoveryBurst
 
-	cacheDir := filepath.Join(homedir.HomeDir(), ".kube", "cache")
+	home, err := homedir.Dir()
+	if err != nil {
+		return nil, err
+	}
+	cacheDir := filepath.Join(home, ".kube", "cache")
 
 	// retrieve a user-provided value for the "cache-dir"
 	// override httpCacheDir and discoveryCacheDir if user-value is given.
