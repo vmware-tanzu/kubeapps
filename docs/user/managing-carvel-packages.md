@@ -92,6 +92,10 @@ Additionally, you can pass the following configuration values to the `kapp-contr
   - With `major` selected, the package will be upgraded to `>=1.2.3`, for example, `2.0.0`, for
   - With `minor` selected, the package will be upgraded to `>=1.2.3 <2.0.0`, for example, `1.3.0`,
   - With `patch` selected, the package will be upgraded to `>=1.2.3 <1.3.0`, for example, `1.2.4`,
+- `defaultPrereleasesVersionSelection`: denotes the default behavior for installing prerelease versions (such as `1.0.0-rc1`). There are three possible values:
+  - `null`: no prereleases will be installed.
+  - `[]`: any prerelease version will be installed (if the version `defaultUpgradePolicy` allows it).
+  - `["rc", "foo"]`: only prerelease versions with `rc` or `foo` as part of their names will be installed (if the version `defaultUpgradePolicy` allows it). For instance, `1.0.0-rc1` will be installed, but `1.0.0-bar` will not.
 
 An example of the configuration values that can be passed to the `kapp-controller` plugin is:
 
@@ -103,6 +107,7 @@ kubeappsapis:
       packages:
         v1alpha1:
           defaultUpgradePolicy: none # [ "major", "minor", "patch", "none" ]
+          defaultPrereleasesVersionSelection: null # [ "null", "[]", "['foo']" ]
 ```
 
 ### Installing a Package Repository

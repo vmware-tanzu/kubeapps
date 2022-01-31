@@ -603,18 +603,20 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
 	}
 
-	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.defaultUpgradePolicy)
+	// Calculate the constraints and prerelease fields
+	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.pluginConfig.defaultUpgradePolicy)
 	if err != nil {
 		return nil, err
 	}
+	prereleases := prereleasesVersionSelection(s.pluginConfig.defaultPrereleasesVersionSelection)
 
-	// Update the rest of the fields
+	// Set the versionSelection
 	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversions.VersionSelectionSemver{
 		Constraints: versionConstraints,
-		// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
-		// This is to allow prereleases to be also installed
-		Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+		Prereleases: prereleases,
 	}
+
+	// Update the rest of the fields
 	if reconciliationOptions != nil {
 		if reconciliationOptions.Interval > 0 {
 			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}

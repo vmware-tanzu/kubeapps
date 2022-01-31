@@ -17,6 +17,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
@@ -318,6 +319,28 @@ func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
 }
 
+type (
+	kappControllerPluginConfig struct {
+		KappController struct {
+			Packages struct {
+				V1alpha1 struct {
+					DefaultUpgradePolicy               string   `json:"defaultUpgradePolicy"`
+					DefaultPrereleasesVersionSelection []string `json:"defaultPrereleasesVersionSelection"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"kappController"`
+	}
+	kappControllerPluginParsedConfig struct {
+		defaultUpgradePolicy               upgradePolicy
+		defaultPrereleasesVersionSelection []string
+	}
+)
+
+var defaultPluginConfig = &kappControllerPluginParsedConfig{
+	defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+	defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+}
+
 // Create a upgradePolicy enum-alike
 type upgradePolicy int
 
@@ -373,6 +396,30 @@ func versionConstraintWithUpgradePolicy(pkgVersion string, policy upgradePolicy)
 	}
 	// Default: 1.2.3 (only 1.2.3 is valid)
 	return version.String(), nil
+}
+
+// prereleasesVersionSelection returns the proper value to the prereleases used in kappctrl from the selection
+func prereleasesVersionSelection(prereleasesVersionSelection []string) *vendirversions.VersionSelectionSemverPrereleases {
+	// More info on the semantics of prereleases
+	// https://kubernetes.slack.com/archives/CH8KCCKA5/p1643376802571959
+
+	if prereleasesVersionSelection == nil {
+		// Exception: if the version constraint is a prerelease itself:
+		// Current behavior (as of v0.32.0): error, it won't install a prerelease if `prereleases: nil`:
+		// Future behavior: install it, it won't be required to set `prereleases:  {}` if the version constraint is a prerelease
+		return nil
+	}
+	// `prereleases: {}`: allow any prerelease if the version constraint allows it
+	if len(prereleasesVersionSelection) == 0 {
+		return &vendirversions.VersionSelectionSemverPrereleases{}
+	} else {
+		// `prereleases: {Identifiers: []string{"foo"}}`: allow only prerelease with "foo" as part of the name if the version constraint allows it
+		prereleases := &vendirversions.VersionSelectionSemverPrereleases{Identifiers: []string{}}
+		for _, prereleaseVersionSelectionId := range prereleasesVersionSelection {
+			prereleases.Identifiers = append(prereleases.Identifiers, prereleaseVersionSelectionId)
+		}
+		return prereleases
+	}
 }
 
 // implementing a custom ConfigFactory to allow for customizing the *rest.Config
