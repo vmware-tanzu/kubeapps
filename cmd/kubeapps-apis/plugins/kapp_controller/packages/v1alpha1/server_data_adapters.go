@@ -305,13 +305,10 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf(kappctrlinstalled.SecretName, installedPackageName, targetNamespace),
 			Namespace: targetNamespace,
-			Annotations: map[string]string{
-				kappctrlinstalled.KctrlPkgAnnotation: fmt.Sprintf("%s-%s", installedPackageName, targetNamespace),
-			},
 		},
 		Data: map[string][]byte{
 			// Using "values.yaml" as per:
-			// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L32
+			// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L32
 			"values.yaml": []byte(values),
 		},
 		Type: "Opaque",
@@ -365,17 +362,12 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 	}
 
 	if secret != nil {
-		// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L670
-		if pkgInstall.ObjectMeta.Annotations == nil {
-			pkgInstall.ObjectMeta.Annotations = make(map[string]string)
-		}
-		pkgInstall.ObjectMeta.Annotations[kappctrlinstalled.KctrlPkgAnnotation+"-"+kappctrlinstalled.KindSecret.AsString()] = secret.Name
+		// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L505
 		pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
 			SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
 				// The secret name should have the format: <name>-<namespace> as per:
-				// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+				// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
 				Name: secret.Name,
-				Key:  "values.yaml",
 			},
 		}}
 	}
