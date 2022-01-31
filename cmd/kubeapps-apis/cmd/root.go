@@ -4,13 +4,12 @@
 package cmd
 
 import (
-	goflag "flag"
+	"flag"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	log "k8s.io/klog/v2"
 )
@@ -57,8 +56,10 @@ func init() {
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
 	//set initial value of verbosity
-	goflag.Set("v", "3")
-	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+	err := flag.Set("v", "3")
+	if err != nil {
+		log.Errorf("Error parsing verbosity: %v", viper.ConfigFileUsed())
+	}
 }
 
 func setFlags(c *cobra.Command) {

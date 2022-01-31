@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
-	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -29,6 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/credentialprovider"
+	"sigs.k8s.io/yaml"
 )
 
 const (
