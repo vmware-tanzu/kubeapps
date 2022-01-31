@@ -6,16 +6,11 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "start": "jest --runInBand --ci --colors",
-    "start:window": "INTEGRATION_HEADLESS=false jest --runInBand",
     "prettier": "prettier --write './**/*.{js, json}'",
     "test": "playwright test --workers=1"
   },
   "dependencies": {
-    "@jest/test-sequencer": "^27.4.6",
     "axios": "^0.25.0",
-    "jest": "^27.4.7",
-    "jest-circus": "^27.4.6",
     "playwright": "^1.17.2",
     "wait-on": "^6.0.0"
   },
