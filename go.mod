@@ -37,9 +37,6 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.22.6
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.6
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.22.6
-
-	// required by helm, new versions have breaking changes
-	oras.land/oras-go => oras.land/oras-go v0.4.0
 )
 
 require (
@@ -76,6 +73,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/vmware-tanzu/carvel-kapp-controller v0.32.0
+	github.com/vmware-tanzu/carvel-kapp-controller/cli v0.0.0-20220127145805-87cafa901323
 	github.com/vmware-tanzu/carvel-vendir v0.24.0
 	golang.org/x/net v0.0.0-20220121210141-e204ce36a2ba
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -85,12 +83,12 @@ require (
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	helm.sh/helm/v3 v3.7.2
-	k8s.io/api v0.22.6
-	k8s.io/apiextensions-apiserver v0.22.6
-	k8s.io/apimachinery v0.22.6
-	k8s.io/cli-runtime v0.22.6
-	k8s.io/client-go v0.22.6
+	helm.sh/helm/v3 v3.8.0
+	k8s.io/api v0.23.1
+	k8s.io/apiextensions-apiserver v0.23.1
+	k8s.io/apimachinery v0.23.1
+	k8s.io/cli-runtime v0.23.1
+	k8s.io/client-go v0.23.1
 	k8s.io/klog/v2 v2.40.1
 	k8s.io/kubernetes v1.22.6
 	oras.land/oras-go v1.1.0
@@ -155,6 +153,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57 // indirect
+	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115 // indirect
 	github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 // indirect
 	github.com/k14s/ytt v0.38.0 // indirect
 	github.com/klauspost/compress v1.14.2 // indirect
@@ -214,10 +213,10 @@ require (
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
-	k8s.io/apiserver v0.22.6 // indirect
+	k8s.io/apiserver v0.23.1 // indirect
 	k8s.io/component-base v0.22.6 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
-	k8s.io/kubectl v0.22.6 // indirect
+	k8s.io/kubectl v0.23.1 // indirect
 	k8s.io/utils v0.0.0-20211208161948-7d6a63dca704 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/kustomize/api v0.10.1 // indirect

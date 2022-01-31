@@ -6,7 +6,7 @@ package fake
 import (
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	chart3 "helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -15,13 +15,13 @@ import (
 type ChartClient struct{}
 
 // GetChart fake
-func (f *ChartClient) GetChart(details *chartUtils.Details, repoURL string) (*chart3.Chart, error) {
+func (f *ChartClient) GetChart(details *chartUtils.Details, repoURL string) (*chart.Chart, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
 	}
-	return &chart3.Chart{
-		Metadata: &chart3.Metadata{
+	return &chart.Chart{
+		Metadata: &chart.Metadata{
 			Name:    details.ChartName,
 			Version: details.Version,
 		},

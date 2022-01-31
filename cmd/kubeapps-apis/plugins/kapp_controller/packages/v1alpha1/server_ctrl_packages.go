@@ -505,7 +505,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// build a new pkgInstall object
-	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions)
+	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions, secret)
 	if err != nil {
 		return nil, statuserror.FromK8sError("create", "PackageInstall", installedPackageName, err)
 	}
@@ -630,19 +630,31 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	// update the pkgInstall in the server
 	updatedPkgInstall, err := s.updatePkgInstall(ctx, packageCluster, packageNamespace, pkgInstall)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
+		return nil, statuserror.FromK8sError("update", "PackageInstall", installedPackageName, err)
 	}
 
 	// Update the values.yaml values file if any is passed, otherwise, delete the values
 	if values != "" {
 		secret, err := s.buildSecret(installedPackageName, values, packageNamespace)
 		if err != nil {
-			return nil, statuserror.FromK8sError("upsate", "Secret", secret.Name, err)
+			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
 		}
 		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
 		if updatedSecret == nil || err != nil {
 			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
 		}
+
+		if updatedSecret != nil {
+			// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L505
+			pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
+				SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+					// The secret name should have the format: <name>-<namespace> as per:
+					// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+					Name: updatedSecret.Name,
+				},
+			}}
+		}
+
 	} else {
 		// Delete all the associated secrets
 		// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
