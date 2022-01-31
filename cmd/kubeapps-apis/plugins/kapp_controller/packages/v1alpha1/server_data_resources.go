@@ -396,7 +396,7 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 
 // inspectKappK8sResources returns the list of k8s resources matching the given listOptions
 func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
-	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/pkg/deploy/kapp.go#L151
+	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
 	appName := fmt.Sprintf("%s-ctrl", packageId)
 
 	refs := []*corev1.ResourceRef{}
