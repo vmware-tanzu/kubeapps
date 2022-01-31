@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/distribution/distribution/reference"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	log "k8s.io/klog/v2"
 )
 
 const (

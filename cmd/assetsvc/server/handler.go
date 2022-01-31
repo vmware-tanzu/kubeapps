@@ -14,7 +14,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/response"
-	log "github.com/sirupsen/logrus"
+	log "k8s.io/klog/v2"
 )
 
 // Params a key-value map of path params
@@ -138,7 +138,7 @@ func getChartCategories(w http.ResponseWriter, req *http.Request, params Params)
 
 	chartCategories, err := getAllChartCategories(cq)
 	if err != nil {
-		log.WithError(err).Error("could not fetch categories")
+		log.Errorf("could not fetch categories: %v", err)
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch chart categories").Write(w)
 		return
 	}
@@ -156,7 +156,7 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 
 	chart, err := manager.GetChart(namespace, chartID)
 	if err != nil {
-		log.WithError(err).Errorf("could not find chart with id %s", chartID)
+		log.Errorf("could not find chart with id %s: %v", chartID, err)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
 		return
 	}
@@ -176,7 +176,7 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 
 	chart, err := manager.GetChart(namespace, chartID)
 	if err != nil {
-		log.WithError(err).Errorf("could not find chart with id %s", chartID)
+		log.Errorf("could not find chart with id %s: %v", chartID, err)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
 		return
 	}
@@ -196,7 +196,7 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 
 	chart, err := manager.GetChartVersion(namespace, chartID, version)
 	if err != nil {
-		log.WithError(err).Errorf("could not find chart with id %s", chartID)
+		log.Errorf("could not find chart with id %s: %v", chartID, err)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart version").Write(w)
 		return
 	}
@@ -216,7 +216,7 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 
 	chart, err := manager.GetChart(namespace, chartID)
 	if err != nil {
-		log.WithError(err).Errorf("could not find chart with id %s", chartID)
+		log.Errorf("could not find chart with id %s: %v", chartID, err)
 		http.NotFound(w, req)
 		return
 	}
@@ -246,7 +246,7 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 
 	files, err := manager.GetChartFiles(namespace, fileID)
 	if err != nil {
-		log.WithError(err).Errorf("could not find files with id %s", fileID)
+		log.Errorf("could not find files with id %s: %v", fileID, err)
 		http.NotFound(w, req)
 		return
 	}
@@ -270,7 +270,7 @@ func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Para
 
 	files, err := manager.GetChartFiles(namespace, fileID)
 	if err != nil {
-		log.WithError(err).Errorf("could not find values.yaml with id %s", fileID)
+		log.Errorf("could not find values.yaml with id %s: %v", fileID, err)
 		http.NotFound(w, req)
 		return
 	}
@@ -289,7 +289,7 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 
 	files, err := manager.GetChartFiles(namespace, fileID)
 	if err != nil {
-		log.WithError(err).Errorf("could not find values.schema.json with id %s", fileID)
+		log.Errorf("could not find values.schema.json with id %s: %v", fileID, err)
 		http.NotFound(w, req)
 		return
 	}
@@ -309,7 +309,7 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 	pageNumber, pageSize := getPageAndSizeParams(req)
 	charts, totalPages, err := manager.GetPaginatedChartListWithFilters(cq, pageNumber, pageSize)
 	if err != nil {
-		log.WithError(err).Errorf("could not find charts with the given namespace=%s, chartName=%s, version=%s, appversion=%s, repos=%s, categories=%s, searchQuery=%s",
+		log.Errorf("could not find charts with the given namespace=%s, chartName=%s, version=%s, appversion=%s, repos=%s, categories=%s, searchQuery=%s: %v",
 			cq.Namespace, cq.ChartName, cq.Version, cq.AppVersion, cq.Repos, cq.Categories, cq.SearchQuery,
 		)
 		// continue to return empty list
@@ -415,7 +415,7 @@ func newChartVersionListResponse(c *models.Chart) apiListResponse {
 }
 
 func handleDecodeError(paramErr string, w http.ResponseWriter, err error) {
-	log.WithError(err).Errorf("could not decode param %s", paramErr)
+	log.Errorf("could not decode param %s: %v", paramErr, err)
 	response.NewErrorResponse(http.StatusBadRequest, "could not decode params").Write(w)
 }
 

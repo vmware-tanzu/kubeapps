@@ -17,11 +17,11 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 	"github.com/kubeapps/kubeapps/pkg/response"
-	log "github.com/sirupsen/logrus"
 	negroni "github.com/urfave/negroni/v2"
 	"helm.sh/helm/v3/pkg/action"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	log "k8s.io/klog/v2"
 )
 
 const (
