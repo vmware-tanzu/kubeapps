@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -28,6 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	log "k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
@@ -331,7 +331,7 @@ func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Char
 		}
 	} else {
 		// TODO(agamez): remove this branch as it is really expensive and it is solely used in a few places in kubeops
-		log.Printf("calling GetChart without any tarball url, please note this action is memory-expensive")
+		log.Infof("calling GetChart without any tarball url, please note this action is memory-expensive")
 		indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
 		repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
 		if err != nil {
@@ -342,7 +342,7 @@ func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Char
 			return nil, err
 		}
 	}
-	log.Printf("Downloading %s ...", chartURL)
+	log.Infof("Downloading %s ...", chartURL)
 	chart, err := fetchChart(&c.netClient, chartURL)
 	if err != nil {
 		return nil, err

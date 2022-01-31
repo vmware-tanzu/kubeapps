@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -102,7 +101,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		log.Errorf("Using config file: %v", viper.ConfigFileUsed())
 	}
 }
 
@@ -125,7 +124,7 @@ func parseLabelsAnnotations(textArr []string) map[string]string {
 		if text != "" {
 			parts := strings.Split(text, "=")
 			if len(parts) != 2 {
-				log.Fatalf("Cannot parse '%s'", text)
+				log.Errorf("Cannot parse '%s'", text)
 			}
 			textMap[parts[0]] = parts[1]
 		}
