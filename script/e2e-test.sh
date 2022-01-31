@@ -358,19 +358,16 @@ pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
-# Ignore operator tests on main run.
-testsToIgnore=("operators")
+
+# Set tests to be run
+# Playwright does not allow to ignore tests on command line, only in config file
+testsToRun=("tests/main/")
 # Skip the multicluster scenario for GKE
-if [[ -n "${GKE_BRANCH-}" ]]; then
-  testsToIgnore=("operators" "add-multicluster-deployment.js")
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  testsToRun+=("tests/multicluster/")
 fi
-ignoreFlag=""
-if [[ "${#testsToIgnore[@]}" > "0" ]]; then
-  # Join tests to ignore
-  testsToIgnore=$(printf "|%s" "${testsToIgnore[@]}")
-  testsToIgnore=${testsToIgnore:1}
-  ignoreFlag="--testPathIgnorePatterns '$testsToIgnore'"
-fi
+testsArgs="$(printf "%s " "${testsToRun[@]}")"
+
 kubectl cp ./tests "${pod}:/app/"
 info "Copied tests to integration pod ${pod}"
 ## Create admin user
@@ -399,7 +396,7 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
 info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=30 INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test"; then #${ignoreFlag}
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=40 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"${testsArgs}\""; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
@@ -426,7 +423,7 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   retry_while isOperatorHubCatalogRunning 24
 
   info "Running operator integration test with k8s API access..."
-  if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start --testMatch '<rootDir>/use-cases/operators/*.js'"; then
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=20 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports

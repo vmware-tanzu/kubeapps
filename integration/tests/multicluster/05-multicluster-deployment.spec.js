@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
-const { KubeappsLogin } = require("./utils/kubeapps-login");
-const utils = require("./utils/util-functions");
+const { KubeappsLogin } = require("../utils/kubeapps-login");
+const utils = require("../utils/util-functions");
 
 test("Deploys package with default values in the second cluster", async ({ page }) => {
   test.setTimeout(120000);

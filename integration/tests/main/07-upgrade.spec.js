@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
-const { KubeappsLogin } = require("./utils/kubeapps-login");
-const utils = require("./utils/util-functions");
+const { KubeappsLogin } = require("../utils/kubeapps-login");
+const utils = require("../utils/util-functions");
 
 test("Upgrades an application", async ({ page }) => {
   test.setTimeout(360000);
