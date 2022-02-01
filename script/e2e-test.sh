@@ -285,7 +285,6 @@ pushChart apache 8.6.3 admin password
 info ""
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$DEV_TAG"
-k8s_ensure_image kubeapps kubeapps-ci-internal-kubeops "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-kubeappsapis "$DEV_TAG"
 
 # Wait for Kubeapps Pods
@@ -295,7 +294,6 @@ deployments=(
   "kubeapps-ci-internal-apprepository-controller"
   "kubeapps-ci-internal-dashboard"
   "kubeapps-ci-internal-kubeappsapis"
-  "kubeapps-ci-internal-kubeops"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
@@ -319,7 +317,6 @@ svcs=(
   "kubeapps-ci"
   "kubeapps-ci-internal-dashboard"
   "kubeapps-ci-internal-kubeappsapis"
-  "kubeapps-ci-internal-kubeops"
 )
 for svc in "${svcs[@]}"; do
   k8s_wait_for_endpoints kubeapps "$svc" 1
@@ -361,20 +358,18 @@ pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
-# Ignore operator tests on main run.
-testsToIgnore=("operators")
+
+# Set tests to be run
+# Playwright does not allow to ignore tests on command line, only in config file
+testsToRun=("tests/main/")
 # Skip the multicluster scenario for GKE
-if [[ -n "${GKE_BRANCH-}" ]]; then
-  testsToIgnore=("operators" "add-multicluster-deployment.js")
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  testsToRun+=("tests/multicluster/")
 fi
-ignoreFlag=""
-if [[ "${#testsToIgnore[@]}" > "0" ]]; then
-  # Join tests to ignore
-  testsToIgnore=$(printf "|%s" "${testsToIgnore[@]}")
-  testsToIgnore=${testsToIgnore:1}
-  ignoreFlag="--testPathIgnorePatterns '$testsToIgnore'"
-fi
-kubectl cp ./use-cases "${pod}:/app/"
+testsArgs="$(printf "%s " "${testsToRun[@]}")"
+
+kubectl cp ./tests "${pod}:/app/"
+info "Copied tests to integration pod ${pod}"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
@@ -401,7 +396,7 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
 info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=40 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
@@ -428,7 +423,7 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   retry_while isOperatorHubCatalogRunning 24
 
   info "Running operator integration test with k8s API access..."
-  if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start --testMatch '<rootDir>/use-cases/operators/*.js'"; then
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=20 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports
