@@ -379,8 +379,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
-	pkgDetail, err := s.installedPackageDetail(ctx, name)
+	key := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
+	pkgDetail, err := s.installedPackageDetail(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -502,7 +502,24 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	identifier := pkgRef.GetIdentifier()
 	log.Infof("+fluxv2 GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
 
-	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, s.actionConfigGetter)
+	key := types.NamespacedName{Namespace: pkgRef.Context.Namespace, Name: identifier}
+	rel, err := s.getReleaseInCluster(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	hrName := helmReleaseName(key, rel)
+	refs, err := resourcerefs.GetInstalledPackageResourceRefs(ctx, hrName, s.actionConfigGetter)
+	if err != nil {
+		return nil, err
+	} else {
+		return &corev1.GetInstalledPackageResourceRefsResponse{
+			Context: &corev1.Context{
+				Cluster:   s.kubeappsCluster,
+				Namespace: hrName.Namespace,
+			},
+			ResourceRefs: refs,
+		}, nil
+	}
 }
 
 // convinience func mostly used by unit tests

@@ -807,27 +807,28 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		expectedStatusCode codes.Code
 	}
 
+	// Using the redis_existing_stub_completed data with
+	// different manifests for each test.
+	var (
+		flux_obj_namespace = redis_existing_spec_completed.releaseNamespace
+		flux_obj_name      = redis_existing_spec_completed.releaseName
+		flux_obj_target_ns = redis_existing_spec_completed.targetNamespace
+	)
+
 	// newTestCase is a function to take an existing test-case
 	// (a so-called baseTestCase in pkg/resourcerefs module, which contains a LOT of useful data)
 	// and "enrich" it with some new fields to create a different kind of test case
 	// that tests server.GetInstalledPackageResourceRefs() func
 	newTestCase := func(tc int, response bool, code codes.Code) testCase {
-		// Using the redis_existing_stub_completed data with
-		// different manifests for each test.
-		var (
-			releaseNamespace = redis_existing_stub_completed.namespace
-			releaseName      = redis_existing_stub_completed.name
-		)
-
 		newCase := testCase{
 			baseTestCase: resourcerefstest.TestCases2[tc],
 			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Cluster:   "default",
-						Namespace: releaseNamespace,
+						Namespace: flux_obj_namespace,
 					},
-					Identifier: releaseName,
+					Identifier: flux_obj_name,
 				},
 			},
 		}
@@ -835,7 +836,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
 				Context: &corev1.Context{
 					Cluster:   "default",
-					Namespace: releaseNamespace,
+					Namespace: flux_obj_target_ns,
 				},
 				ResourceRefs: resourcerefstest.TestCases2[tc].ExpectedResourceRefs,
 			}
@@ -869,7 +870,11 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	toHelmReleaseStubs := func(in []resourcerefstest.TestReleaseStub) []helmReleaseStub {
 		out := []helmReleaseStub{}
 		for _, r := range in {
-			out = append(out, helmReleaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
+			out = append(out, helmReleaseStub{
+				name:      r.Name,
+				namespace: r.Namespace,
+				manifest:  r.Manifest,
+			})
 		}
 		return out
 	}
@@ -880,7 +885,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			defer cleanup()
 			actionConfig := newHelmActionConfig(
 				t,
-				tc.request.InstalledPackageRef.GetContext().GetNamespace(),
+				flux_obj_target_ns,
 				toHelmReleaseStubs(tc.baseTestCase.ExistingReleases))
 			server, mock, _, err := newServerWithChartsAndReleases(t, actionConfig, runtimeObjs...)
 			if err != nil {

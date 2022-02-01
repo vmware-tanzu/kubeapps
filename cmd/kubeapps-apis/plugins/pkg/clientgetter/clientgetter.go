@@ -200,7 +200,7 @@ func clientGetterHelper(config *rest.Config) (ClientInterfaces, error) {
 	return NewClientInterfaces(typedClient, dynamicClient, apiExtensions), nil
 }
 
-// convinience func exported only for unit tests in plugins
+// convenience func exported only for unit tests in plugins
 func NewClientInterfaces(typedClient kubernetes.Interface, dynamicClient dynamic.Interface, apiExtensions apiext.Interface) ClientInterfaces {
 	return &clientInterfacesType{
 		typedClient,
