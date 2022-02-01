@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 const { test, expect } = require("@playwright/test");

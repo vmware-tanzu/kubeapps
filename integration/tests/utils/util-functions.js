@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 const path = require("path");
@@ -7,10 +7,6 @@ const axios = require("axios");
 const https = require('https');
 
 module.exports = {
-  waitFor: async page => {
-    await page.waitForLoadState("networkidle");
-    await page.waitForLoadState("domcontentloaded");
-  },
 
   getRandomName: base => {
     const randomNumber = Math.floor(Math.random() * Math.floor(100000));
@@ -18,23 +14,6 @@ module.exports = {
   },
 
   getUrl: path => `${process.env.INTEGRATION_ENTRYPOINT}${path}`,
-
-  takeScreenShot: async (page, name) => {
-    let screenshotsFolder = process.env.SCREENSHOTS_FOLDER
-      ? process.env.SCREENSHOTS_FOLDER
-      : "reports/screenshots";
-    let screenshotPath = path.join(__dirname, `../../${screenshotsFolder}/${name}.png`);
-    console.log(`Saving screenshot to ${screenshotPath}`);
-    await page.screenshot({ path: screenshotPath });
-  },
-
-  loadFile: fileName => {
-    try {
-      return fs.readFileSync(fileName);
-    } catch (err) {
-      console.log(`Error occurred while trying to read file ${fileName}`, err);
-    }
-  },
 
   goTo: async (page, url) => {
     try {

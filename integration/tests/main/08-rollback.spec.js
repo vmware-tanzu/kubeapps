@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 const { test, expect } = require("@playwright/test");
@@ -13,7 +13,6 @@ test("Rolls back an application", async ({ page }) => {
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.EDIT_TOKEN);
 
   // Go to catalog
-  //await page.goto(utils.getUrl("/#/c/default/ns/default/catalog?Search=apache&Repository=bitnami"));
   await page.click('a.nav-link:has-text("Catalog")');
   await page.click('.filters-menu label:has-text("bitnami")');  
   await page.waitForSelector("input#search");

@@ -693,6 +693,8 @@ jobs:
             ./script/create_release.sh ${CIRCLE_TAG} << pipeline.parameters.KUBEAPPS_REPO >>
   local_e2e_tests:
     machine: true
+    # Reference for available machines
+    # https://circleci.com/docs/2.0/configuration-reference/#machine-executor-linux
     resource_class: large
     environment:
       DEFAULT_DEX_IP: "172.18.0.2"
