@@ -132,7 +132,7 @@ func parseLabelsAnnotations(textArr []string) map[string]string {
 		if text != "" {
 			parts := strings.Split(text, "=")
 			if len(parts) != 2 {
-				log.Fatalf("Cannot parse '%s'", text)
+				log.Errorf("Cannot parse '%s'", text)
 			}
 			textMap[parts[0]] = parts[1]
 		}

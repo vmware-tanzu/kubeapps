@@ -12,7 +12,6 @@ import (
 
 	"github.com/containerd/containerd/remotes"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/pkg/errors"
 	helmregistry "helm.sh/helm/v3/pkg/registry"
 	log "k8s.io/klog/v2"
 	"oras.land/oras-go/pkg/content"
@@ -102,7 +101,7 @@ func (p *OCIPuller) PullOCIChart(ref string) (*bytes.Buffer, string, error) {
 
 	_, chartData, ok := memoryStore.Get(*chartDescriptor)
 	if !ok {
-		return nil, manifest.Digest.String(), errors.Errorf("Unable to retrieve blob with digest %s", chartDescriptor.Digest)
+		return nil, manifest.Digest.String(), fmt.Errorf("Unable to retrieve blob with digest %s", chartDescriptor.Digest)
 	}
 
 	return bytes.NewBuffer(chartData), manifest.Digest.String(), nil
