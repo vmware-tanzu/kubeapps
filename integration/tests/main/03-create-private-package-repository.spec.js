@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 const { test, expect } = require("@playwright/test");
 const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
@@ -10,7 +13,6 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
 
   // Go to repos page
-  //await page.goto(utils.getUrl("/#/c/default/ns/default/config/repos"));
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
   await page.click('a.dropdown-menu-link:has-text("App Repositories")');
   await page.waitForTimeout(3000);

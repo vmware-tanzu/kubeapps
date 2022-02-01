@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 const { test, expect } = require("@playwright/test");
 const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
@@ -10,7 +13,9 @@ test("Create a new package repository successfully", async ({ page }) => {
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
 
   // Go to repos page
-  await page.goto(utils.getUrl("/#/c/default/ns/kubeapps/config/repos"));
+  await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
+  await page.click('a.dropdown-menu-link:has-text("App Repositories")');
+  await page.waitForTimeout(3000);
 
   // Add new repo
   console.log('Creating repository "my-repo"');
@@ -27,9 +32,10 @@ test("Create a new package repository successfully", async ({ page }) => {
   await page.waitForSelector('css=.catalog-container .card-title >> text="gitlab-runner"');
 
   // Clean up
-  const axInstance = await utils.getAxiosInstance(page);
-  const response = await axInstance.delete(
-    "/api/v1/clusters/default/namespaces/kubeapps/apprepositories/my-repo",
-  );
-  expect(response.status).toEqual(200);
+  // Go back to repos page and delete repo
+  await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
+  await page.click('a.dropdown-menu-link:has-text("App Repositories")');
+  await page.waitForTimeout(3000);
+  await page.click('cds-button#delete-repo-my-repo');
+  await page.locator('cds-modal-actions button:has-text("Delete")').click();
 });
