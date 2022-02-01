@@ -15,7 +15,7 @@
     "wait-on": "^6.0.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.17.2",
+    "@playwright/test": "^1.18.1",
     "prettier": "^2.5.1"
   }
 }
