@@ -534,8 +534,18 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 	// The InstalledPackage is considered as created once the associated kapp App gets created,
 	// so we actively wait for the App CR to be present in the cluster before returning OK
-	err = WaitForResource(ctx, resource, newPkgInstall.Name, time.Second*1, time.Duration(s.pluginConfig.timeoutSeconds))
+	err = WaitForResource(ctx, resource, newPkgInstall.Name, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
 	if err != nil {
+		// clean-up the secret if something fails
+		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return nil, statuserror.FromK8sError("delete", "Secret", secret.Name, err)
+		}
+		// clean-up the package install if something fails
+		err = s.deletePkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
+		if err != nil {
+			return nil, statuserror.FromK8sError("delete", "PackageInstall", newPkgInstall.Name, err)
+		}
 		return nil, status.Errorf(codes.Internal, "timeout exceeded (%v s) waiting for resource to be installed: '%v'", s.pluginConfig.timeoutSeconds, err)
 	}
 
