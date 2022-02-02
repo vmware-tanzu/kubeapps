@@ -16,6 +16,7 @@ import (
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
+	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -611,11 +612,19 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	}
 	prereleases := prereleasesVersionSelection(s.pluginConfig.defaultPrereleasesVersionSelection)
 
-	// Set the versionSelection
-	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversions.VersionSelectionSemver{
+	versionSelection := &vendirversions.VersionSelectionSemver{
 		Constraints: versionConstraints,
 		Prereleases: prereleases,
 	}
+
+	// Ensure the selected version can be, actually installed to let the user know before installing
+	elegibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
+	if elegibleVersion == "" || err != nil {
+		return nil, fmt.Errorf("The selected version %q is not elegible to be installed: %v", pkgVersion, err)
+	}
+
+	// Set the versionSelection
+	pkgInstall.Spec.PackageRef.VersionSelection = versionSelection
 
 	// Allow this PackageInstall to be downgraded
 	// https://carvel.dev/kapp-controller/docs/v0.32.0/package-consumer-concepts/#downgrading
