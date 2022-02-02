@@ -30,7 +30,6 @@ import (
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	tartest "github.com/kubeapps/kubeapps/pkg/tarutil/test"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"helm.sh/helm/v3/pkg/chart"
 )
@@ -1004,7 +1003,6 @@ version: 1.0.0
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			log.SetLevel(log.DebugLevel)
 			w := map[string]*httptest.ResponseRecorder{}
 			content := map[string]*bytes.Buffer{}
 			for _, tag := range tt.tags {
