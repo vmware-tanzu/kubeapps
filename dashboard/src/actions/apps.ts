@@ -126,7 +126,7 @@ export function getApp(
       }
       dispatch(selectApp(installedPackageDetail!, resourceRefs, availablePackageDetail));
     } catch (e: any) {
-      dispatch(errorApp(new FetchError(e.message)));
+      dispatch(errorApp(new FetchError("Unable to get installed package", [e])));
     }
   };
 }
@@ -162,13 +162,7 @@ export function fetchApps(
       dispatch(receiveAppList(installedPackageSummaries));
       return installedPackageSummaries;
     } catch (e: any) {
-      dispatch(
-        errorApp(
-          e instanceof Error
-            ? new FetchError("Unable to list apps", [e])
-            : new FetchError("Unable to list apps: " + e.message),
-        ),
-      );
+      dispatch(errorApp(new FetchError("Unable to list apps", [e])));
       return [];
     }
   };

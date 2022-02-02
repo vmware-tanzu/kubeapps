@@ -67,6 +67,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.ResourceRef{},
 	corev1.UpdateInstalledPackageResponse{},
 	corev1.VersionReference{},
+	kappControllerPluginParsedConfig{},
 	pluginv1.Plugin{},
 	v1alpha1.PackageRepository{},
 )
@@ -119,7 +120,10 @@ func TestGetClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := Server{clientGetter: tc.clientGetter}
+			s := Server{
+				pluginConfig: defaultPluginConfig,
+				clientGetter: tc.clientGetter,
+			}
 
 			typedClient, dynamicClient, errClient := s.GetClients(context.Background(), "")
 
@@ -483,6 +487,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(
 						nil,
@@ -645,6 +650,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(
 						nil,
@@ -939,6 +945,7 @@ Some support information
 			}
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(
 						nil,
@@ -1714,7 +1721,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -1779,6 +1786,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(
 						nil,
@@ -2120,7 +2128,7 @@ fetchStderr
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -2177,7 +2185,7 @@ fetchStderr
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-installation-values",
+						Name:      "my-installation-default-values",
 					},
 					Type: "Opaque",
 					Data: map[string][]byte{
@@ -2260,6 +2268,7 @@ fetchStderr
 			}
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(
 						typfake.NewSimpleClientset(tc.existingTypedObjects...),
@@ -2294,6 +2303,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name                   string
 		request                *corev1.CreateInstalledPackageRequest
+		pluginConfig           *kappControllerPluginParsedConfig
 		existingObjects        []runtime.Object
 		expectedStatusCode     codes.Code
 		expectedResponse       *corev1.CreateInstalledPackageResponse
@@ -2322,6 +2332,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 				},
 			},
+			pluginConfig: defaultPluginConfig,
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -2422,23 +2433,18 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Paused:     false,
 					Canceled:   false,
-					SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					SyncPeriod: nil,
 					NoopDelete: false,
 				},
 				Status: packagingv1alpha1.PackageInstallStatus{
 					GenericStatus: kappctrlv1alpha1.GenericStatus{
-						ObservedGeneration: 1,
-						Conditions: []kappctrlv1alpha1.AppCondition{{
-							Type:    kappctrlv1alpha1.ReconcileSucceeded,
-							Status:  k8scorev1.ConditionTrue,
-							Reason:  "baz",
-							Message: "qux",
-						}},
-						FriendlyDescription: "foo",
-						UsefulErrorMessage:  "Deployed",
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
 					},
-					Version:              "1.2.3",
-					LastAttemptedVersion: "1.2.3",
+					Version:              "",
+					LastAttemptedVersion: "",
 				},
 			},
 		},
@@ -2465,6 +2471,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 				},
 			},
+			pluginConfig: defaultPluginConfig,
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -2531,6 +2538,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 				},
 			},
+			pluginConfig: defaultPluginConfig,
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -2631,23 +2639,18 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Paused:     false,
 					Canceled:   false,
-					SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					SyncPeriod: nil,
 					NoopDelete: false,
 				},
 				Status: packagingv1alpha1.PackageInstallStatus{
 					GenericStatus: kappctrlv1alpha1.GenericStatus{
-						ObservedGeneration: 1,
-						Conditions: []kappctrlv1alpha1.AppCondition{{
-							Type:    kappctrlv1alpha1.ReconcileSucceeded,
-							Status:  k8scorev1.ConditionTrue,
-							Reason:  "baz",
-							Message: "qux",
-						}},
-						FriendlyDescription: "foo",
-						UsefulErrorMessage:  "Deployed",
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
 					},
-					Version:              "1.2.3",
-					LastAttemptedVersion: "1.2.3",
+					Version:              "",
+					LastAttemptedVersion: "",
 				},
 			},
 		},
@@ -2676,6 +2679,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Cluster:   "default",
 				},
 			},
+			pluginConfig: defaultPluginConfig,
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -2761,7 +2765,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Name:      "my-installation",
 				},
 				Spec: packagingv1alpha1.PackageInstallSpec{
-					ServiceAccountName: "default",
+					ServiceAccountName: "my-sa",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
 						VersionSelection: &vendirversions.VersionSelectionSemver{
@@ -2774,30 +2778,25 @@ func TestCreateInstalledPackage(t *testing.T) {
 						},
 					},
 					},
-					Paused:     false,
+					Paused:     true,
 					Canceled:   false,
-					SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					SyncPeriod: &metav1.Duration{(time.Second * 99)},
 					NoopDelete: false,
 				},
 				Status: packagingv1alpha1.PackageInstallStatus{
 					GenericStatus: kappctrlv1alpha1.GenericStatus{
-						ObservedGeneration: 1,
-						Conditions: []kappctrlv1alpha1.AppCondition{{
-							Type:    kappctrlv1alpha1.ReconcileSucceeded,
-							Status:  k8scorev1.ConditionTrue,
-							Reason:  "baz",
-							Message: "qux",
-						}},
-						FriendlyDescription: "foo",
-						UsefulErrorMessage:  "Deployed",
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
 					},
-					Version:              "1.2.3",
-					LastAttemptedVersion: "1.2.3",
+					Version:              "",
+					LastAttemptedVersion: "",
 				},
 			},
 		},
 		{
-			name: "create installed package (version constraint)",
+			name: "create installed package (prereleases - defaultPrereleasesVersionSelection: nil)",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
@@ -2819,6 +2818,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 				},
 			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: nil,
+			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -2908,7 +2911,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
 						VersionSelection: &vendirversions.VersionSelectionSemver{
-							Constraints: "1.2.3",
+							Constraints: "1.0.0",
+							Prereleases: nil,
 						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
@@ -2919,23 +2923,869 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Paused:     false,
 					Canceled:   false,
-					SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					SyncPeriod: nil,
 					NoopDelete: false,
 				},
 				Status: packagingv1alpha1.PackageInstallStatus{
 					GenericStatus: kappctrlv1alpha1.GenericStatus{
-						ObservedGeneration: 1,
-						Conditions: []kappctrlv1alpha1.AppCondition{{
-							Type:    kappctrlv1alpha1.ReconcileSucceeded,
-							Status:  k8scorev1.ConditionTrue,
-							Reason:  "baz",
-							Message: "qux",
-						}},
-						FriendlyDescription: "foo",
-						UsefulErrorMessage:  "Deployed",
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
 					},
-					Version:              "1.2.3",
-					LastAttemptedVersion: "1.2.3",
+					Version:              "",
+					LastAttemptedVersion: "",
+				},
+			},
+		},
+		{
+			name: "create installed package (prereleases - defaultPrereleasesVersionSelection: [])",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1",
+				},
+				Name: "my-installation",
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
+			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: []string{},
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&kappctrlv1alpha1.App{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       appResource,
+						APIVersion: kappctrlAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: kappctrlv1alpha1.AppSpec{
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					},
+					Status: kappctrlv1alpha1.AppStatus{
+						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+							Stdout: "deployStdout",
+							Stderr: "deployStderr",
+						},
+						Fetch: &kappctrlv1alpha1.AppStatusFetch{
+							Stdout: "fetchStdout",
+							Stderr: "fetchStderr",
+						},
+						Inspect: &kappctrlv1alpha1.AppStatusInspect{
+							Stdout: "inspectStdout",
+							Stderr: "inspectStderr",
+						},
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgInstallResource,
+					APIVersion: packagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "my-installation",
+				},
+				Spec: packagingv1alpha1.PackageInstallSpec{
+					ServiceAccountName: "default",
+					PackageRef: &packagingv1alpha1.PackageRef{
+						RefName: "tetris.foo.example.com",
+						VersionSelection: &vendirversions.VersionSelectionSemver{
+							Constraints: "1.0.0",
+							Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+						},
+					},
+					Values: []packagingv1alpha1.PackageInstallValues{{
+						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+							Name: "my-installation-default-values",
+						},
+					},
+					},
+					Paused:     false,
+					Canceled:   false,
+					SyncPeriod: nil,
+					NoopDelete: false,
+				},
+				Status: packagingv1alpha1.PackageInstallStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
+					},
+					Version:              "",
+					LastAttemptedVersion: "",
+				},
+			},
+		},
+		{
+			name: "create installed package (prereleases - defaultPrereleasesVersionSelection: ['rc'])",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1",
+				},
+				Name: "my-installation",
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
+			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: []string{"rc"},
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&kappctrlv1alpha1.App{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       appResource,
+						APIVersion: kappctrlAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: kappctrlv1alpha1.AppSpec{
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					},
+					Status: kappctrlv1alpha1.AppStatus{
+						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+							Stdout: "deployStdout",
+							Stderr: "deployStderr",
+						},
+						Fetch: &kappctrlv1alpha1.AppStatusFetch{
+							Stdout: "fetchStdout",
+							Stderr: "fetchStderr",
+						},
+						Inspect: &kappctrlv1alpha1.AppStatusInspect{
+							Stdout: "inspectStdout",
+							Stderr: "inspectStderr",
+						},
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgInstallResource,
+					APIVersion: packagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "my-installation",
+				},
+				Spec: packagingv1alpha1.PackageInstallSpec{
+					ServiceAccountName: "default",
+					PackageRef: &packagingv1alpha1.PackageRef{
+						RefName: "tetris.foo.example.com",
+						VersionSelection: &vendirversions.VersionSelectionSemver{
+							Constraints: "1.0.0",
+							Prereleases: &vendirversions.VersionSelectionSemverPrereleases{Identifiers: []string{"rc"}},
+						},
+					},
+					Values: []packagingv1alpha1.PackageInstallValues{{
+						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+							Name: "my-installation-default-values",
+						},
+					},
+					},
+					Paused:     false,
+					Canceled:   false,
+					SyncPeriod: nil,
+					NoopDelete: false,
+				},
+				Status: packagingv1alpha1.PackageInstallStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
+					},
+					Version:              "",
+					LastAttemptedVersion: "",
+				},
+			},
+		},
+		{
+			name: "create installed package (version constraint - upgradePolicy: none)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1",
+				},
+				Name: "my-installation",
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
+			},
+			pluginConfig: defaultPluginConfig,
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&kappctrlv1alpha1.App{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       appResource,
+						APIVersion: kappctrlAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: kappctrlv1alpha1.AppSpec{
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					},
+					Status: kappctrlv1alpha1.AppStatus{
+						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+							Stdout: "deployStdout",
+							Stderr: "deployStderr",
+						},
+						Fetch: &kappctrlv1alpha1.AppStatusFetch{
+							Stdout: "fetchStdout",
+							Stderr: "fetchStderr",
+						},
+						Inspect: &kappctrlv1alpha1.AppStatusInspect{
+							Stdout: "inspectStdout",
+							Stderr: "inspectStderr",
+						},
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgInstallResource,
+					APIVersion: packagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "my-installation",
+				},
+				Spec: packagingv1alpha1.PackageInstallSpec{
+					ServiceAccountName: "default",
+					PackageRef: &packagingv1alpha1.PackageRef{
+						RefName: "tetris.foo.example.com",
+						VersionSelection: &vendirversions.VersionSelectionSemver{
+							Constraints: "1.0.0",
+						},
+					},
+					Values: []packagingv1alpha1.PackageInstallValues{{
+						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+							Name: "my-installation-default-values",
+						},
+					},
+					},
+					Paused:     false,
+					Canceled:   false,
+					SyncPeriod: nil,
+					NoopDelete: false,
+				},
+				Status: packagingv1alpha1.PackageInstallStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
+					},
+					Version:              "",
+					LastAttemptedVersion: "",
+				},
+			},
+		},
+		{
+			name: "create installed package (version constraint - upgradePolicy: major)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1",
+				},
+				Name: "my-installation",
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
+			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               major,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&kappctrlv1alpha1.App{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       appResource,
+						APIVersion: kappctrlAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: kappctrlv1alpha1.AppSpec{
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					},
+					Status: kappctrlv1alpha1.AppStatus{
+						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+							Stdout: "deployStdout",
+							Stderr: "deployStderr",
+						},
+						Fetch: &kappctrlv1alpha1.AppStatusFetch{
+							Stdout: "fetchStdout",
+							Stderr: "fetchStderr",
+						},
+						Inspect: &kappctrlv1alpha1.AppStatusInspect{
+							Stdout: "inspectStdout",
+							Stderr: "inspectStderr",
+						},
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgInstallResource,
+					APIVersion: packagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "my-installation",
+				},
+				Spec: packagingv1alpha1.PackageInstallSpec{
+					ServiceAccountName: "default",
+					PackageRef: &packagingv1alpha1.PackageRef{
+						RefName: "tetris.foo.example.com",
+						VersionSelection: &vendirversions.VersionSelectionSemver{
+							Constraints: ">=1.0.0",
+						},
+					},
+					Values: []packagingv1alpha1.PackageInstallValues{{
+						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+							Name: "my-installation-default-values",
+						},
+					},
+					},
+					Paused:     false,
+					Canceled:   false,
+					SyncPeriod: nil,
+					NoopDelete: false,
+				},
+				Status: packagingv1alpha1.PackageInstallStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
+					},
+					Version:              "",
+					LastAttemptedVersion: "",
+				},
+			},
+		},
+		{
+			name: "create installed package (version constraint - upgradePolicy: minor)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1",
+				},
+				Name: "my-installation",
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
+			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               minor,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&kappctrlv1alpha1.App{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       appResource,
+						APIVersion: kappctrlAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: kappctrlv1alpha1.AppSpec{
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					},
+					Status: kappctrlv1alpha1.AppStatus{
+						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+							Stdout: "deployStdout",
+							Stderr: "deployStderr",
+						},
+						Fetch: &kappctrlv1alpha1.AppStatusFetch{
+							Stdout: "fetchStdout",
+							Stderr: "fetchStderr",
+						},
+						Inspect: &kappctrlv1alpha1.AppStatusInspect{
+							Stdout: "inspectStdout",
+							Stderr: "inspectStderr",
+						},
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgInstallResource,
+					APIVersion: packagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "my-installation",
+				},
+				Spec: packagingv1alpha1.PackageInstallSpec{
+					ServiceAccountName: "default",
+					PackageRef: &packagingv1alpha1.PackageRef{
+						RefName: "tetris.foo.example.com",
+						VersionSelection: &vendirversions.VersionSelectionSemver{
+							Constraints: ">=1.0.0 <2.0.0",
+						},
+					},
+					Values: []packagingv1alpha1.PackageInstallValues{{
+						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+							Name: "my-installation-default-values",
+						},
+					},
+					},
+					Paused:     false,
+					Canceled:   false,
+					SyncPeriod: nil,
+					NoopDelete: false,
+				},
+				Status: packagingv1alpha1.PackageInstallStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
+					},
+					Version:              "",
+					LastAttemptedVersion: "",
+				},
+			},
+		},
+		{
+			name: "create installed package (version constraint - upgradePolicy: patch)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1",
+				},
+				Name: "my-installation",
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
+			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               patch,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&kappctrlv1alpha1.App{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       appResource,
+						APIVersion: kappctrlAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: kappctrlv1alpha1.AppSpec{
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					},
+					Status: kappctrlv1alpha1.AppStatus{
+						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+							Stdout: "deployStdout",
+							Stderr: "deployStderr",
+						},
+						Fetch: &kappctrlv1alpha1.AppStatusFetch{
+							Stdout: "fetchStdout",
+							Stderr: "fetchStderr",
+						},
+						Inspect: &kappctrlv1alpha1.AppStatusInspect{
+							Stdout: "inspectStdout",
+							Stderr: "inspectStderr",
+						},
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgInstallResource,
+					APIVersion: packagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "my-installation",
+				},
+				Spec: packagingv1alpha1.PackageInstallSpec{
+					ServiceAccountName: "default",
+					PackageRef: &packagingv1alpha1.PackageRef{
+						RefName: "tetris.foo.example.com",
+						VersionSelection: &vendirversions.VersionSelectionSemver{
+							Constraints: ">=1.0.0 <1.1.0",
+						},
+					},
+					Values: []packagingv1alpha1.PackageInstallValues{{
+						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+							Name: "my-installation-default-values",
+						},
+					},
+					},
+					Paused:     false,
+					Canceled:   false,
+					SyncPeriod: nil,
+					NoopDelete: false,
+				},
+				Status: packagingv1alpha1.PackageInstallStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
+					},
+					Version:              "",
+					LastAttemptedVersion: "",
 				},
 			},
 		},
@@ -2949,21 +3799,20 @@ func TestCreateInstalledPackage(t *testing.T) {
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
+			dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				runtime.NewScheme(),
+				map[schema.GroupVersionResource]string{
+					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
+					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
+					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
+				},
+				unstructuredObjects...,
+			)
+
 			s := Server{
+				pluginConfig: tc.pluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						typfake.NewSimpleClientset(),
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
-							map[schema.GroupVersionResource]string{
-								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
-								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
-								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
-							},
-							unstructuredObjects...,
-						),
-						nil,
-					), nil
+					return clientgetter.NewClientInterfaces(typfake.NewSimpleClientset(), dynamicClient, nil), nil
 				},
 			}
 
@@ -2980,6 +3829,16 @@ func TestCreateInstalledPackage(t *testing.T) {
 				if got, want := createInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
+
+				createdPkgInstall, err := s.getPkgInstall(context.Background(), "default", tc.request.TargetContext.Namespace, createInstalledPackageResponse.InstalledPackageRef.Identifier)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+
+				if got, want := createdPkgInstall, tc.expectedPackageInstall; !cmp.Equal(want, got, ignoreUnexported) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+				}
+
 			}
 		})
 	}
@@ -3176,6 +4035,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(
 						typfake.NewSimpleClientset(tc.existingTypedObjects...),
@@ -3372,6 +4232,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			}
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(
 						typfake.NewSimpleClientset(tc.existingTypedObjects...),
@@ -3443,7 +4304,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-								Name: "my-installation-values",
+								Name: "my-installation-default-values",
 							},
 						},
 						},
@@ -3552,6 +4413,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			)
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(typedClient, dynClient, nil), nil
 				},
@@ -3679,6 +4541,7 @@ func TestGetPackageRepositories(t *testing.T) {
 			}
 
 			s := Server{
+				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewClientInterfaces(
 						nil,
@@ -3716,26 +4579,29 @@ func TestGetPackageRepositories(t *testing.T) {
 
 func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {
-		name                         string
-		pluginYAMLConf               []byte
-		expectedDefaultUpgradePolicy upgradePolicy
-		expectedErrorStr             string
+		name                 string
+		pluginYAMLConf       []byte
+		expectedPluginConfig *kappControllerPluginParsedConfig
+		expectedErrorStr     string
 	}{
 		{
-			name:                         "non existing plugin-config file",
-			pluginYAMLConf:               nil,
-			expectedDefaultUpgradePolicy: none,
-			expectedErrorStr:             "no such file or directory",
+			name:                 "non existing plugin-config file",
+			pluginYAMLConf:       nil,
+			expectedPluginConfig: defaultPluginConfig,
+			expectedErrorStr:     "no such file or directory",
 		},
 		{
-			name: "defaultUpgradePolicy not set",
+			name: "no config options are set",
 			pluginYAMLConf: []byte(`
 kappController:
   packages:
     v1alpha1:
       `),
-			expectedDefaultUpgradePolicy: none,
-			expectedErrorStr:             "",
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "",
 		},
 		{
 			name: "defaultUpgradePolicy: major",
@@ -3745,8 +4611,11 @@ kappController:
     v1alpha1:
       defaultUpgradePolicy: major
         `),
-			expectedDefaultUpgradePolicy: major,
-			expectedErrorStr:             "",
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               major,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "",
 		},
 		{
 			name: "defaultUpgradePolicy: minor",
@@ -3756,8 +4625,11 @@ kappController:
     v1alpha1:
       defaultUpgradePolicy: minor
         `),
-			expectedDefaultUpgradePolicy: minor,
-			expectedErrorStr:             "",
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               minor,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "",
 		},
 		{
 			name: "defaultUpgradePolicy: patch",
@@ -3767,8 +4639,11 @@ kappController:
     v1alpha1:
       defaultUpgradePolicy: patch
         `),
-			expectedDefaultUpgradePolicy: patch,
-			expectedErrorStr:             "",
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               patch,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "",
 		},
 		{
 			name: "defaultUpgradePolicy: none",
@@ -3778,8 +4653,80 @@ kappController:
     v1alpha1:
       defaultUpgradePolicy: none
         `),
-			expectedDefaultUpgradePolicy: none,
-			expectedErrorStr:             "",
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               none,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "",
+		},
+		{
+			name: "defaultPrereleasesVersionSelection: nil",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+        `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: nil,
+			},
+			expectedErrorStr: "",
+		},
+		{
+			name: "defaultPrereleasesVersionSelection: null",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultPrereleasesVersionSelection: null
+        `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: nil,
+			},
+			expectedErrorStr: "",
+		},
+		{
+			name: "defaultPrereleasesVersionSelection: []",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultPrereleasesVersionSelection: []
+        `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: []string{},
+			},
+			expectedErrorStr: "",
+		},
+		{
+			name: "defaultPrereleasesVersionSelection: ['foo']",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultPrereleasesVersionSelection: ["foo"]
+        `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: []string{"foo"},
+			},
+			expectedErrorStr: "",
+		},
+		{
+			name: "defaultPrereleasesVersionSelection: ['foo','bar']",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultPrereleasesVersionSelection: ["foo","bar"]
+        `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: []string{"foo", "bar"},
+			},
+			expectedErrorStr: "",
 		},
 		{
 			name: "invalid defaultUpgradePolicy",
@@ -3789,8 +4736,11 @@ kappController:
     v1alpha1:
       defaultUpgradePolicy: foo
       `),
-			expectedDefaultUpgradePolicy: none,
-			expectedErrorStr:             "json: cannot unmarshal",
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "unable to parse DefaultUpgradePolicy",
 		},
 		{
 			name: "invalid defaultUpgradePolicy",
@@ -3800,8 +4750,39 @@ kappController:
     v1alpha1:
       defaultUpgradePolicy: 10.09
       `),
-			expectedDefaultUpgradePolicy: none,
-			expectedErrorStr:             "json: cannot unmarshal",
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "json: cannot unmarshal",
+		},
+		{
+			name: "invalid defaultPrereleasesVersionSelection",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultPrereleasesVersionSelection: trueish
+      `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "json: cannot unmarshal",
+		},
+		{
+			name: "invalid defaultPrereleasesVersionSelection",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultPrereleasesVersionSelection: 10.09
+      `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+			},
+			expectedErrorStr: "json: cannot unmarshal",
 		},
 	}
 	for _, tc := range testCases {
@@ -3829,9 +4810,10 @@ kappController:
 			if goterr != nil && !strings.Contains(goterr.Error(), tc.expectedErrorStr) {
 				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.expectedErrorStr)
 			}
-			if got, want := defaultUpgradePolicy, tc.expectedDefaultUpgradePolicy; !cmp.Equal(want, got) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			if got, want := defaultUpgradePolicy, tc.expectedPluginConfig; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
+
 		})
 	}
 }

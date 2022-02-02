@@ -34,6 +34,10 @@ const (
 	fallbackDefaultUpgradePolicy upgradePolicy = none
 )
 
+func fallbackDefaultPrereleasesVersionSelection() []string {
+	return nil
+}
+
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
@@ -47,51 +51,46 @@ type Server struct {
 	globalPackagingNamespace string
 	globalPackagingCluster   string
 	// TODO (gfichtenholt) it should now be possible to add this into clientgetter pkg,
-	// and thus just have a single clientGetter field. ONly *if* it makes sense to do so
+	// and thus just have a single clientGetter field. Only *if* it makes sense to do so
 	// (i.e. code is re-usable by multiple components)
-	kappClientsGetter    kappClientsGetter
-	defaultUpgradePolicy upgradePolicy
+	kappClientsGetter kappClientsGetter
+	pluginConfig      *kappControllerPluginParsedConfig
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) (upgradePolicy, error) {
-	type kappControllerPluginConfig struct {
-		KappController struct {
-			Packages struct {
-				V1alpha1 struct {
-					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
-				} `json:"v1alpha1"`
-			} `json:"packages"`
-		} `json:"kappController"`
-	}
-	var config kappControllerPluginConfig
+func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConfig, error) {
+	// default configuration
+	config := defaultPluginConfig
 
-	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	// load the configuration file and unmarshall the values
+	pluginConfigFile, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
-		return none, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+		return config, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}
-	err = json.Unmarshal([]byte(pluginConfig), &config)
+	var pluginConfig kappControllerPluginConfig
+	err = json.Unmarshal([]byte(pluginConfigFile), &pluginConfig)
 	if err != nil {
-		return none, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+		return config, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfigFile), err)
 	}
 
-	defaultUpgradePolicy := upgradePolicyMapping[config.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
+	// override the defaults with the loaded configuration
+	config.defaultUpgradePolicy = upgradePolicyMapping[pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
+	config.defaultPrereleasesVersionSelection = pluginConfig.KappController.Packages.V1alpha1.DefaultPrereleasesVersionSelection
 
-	// return configured value
-	return defaultUpgradePolicy, nil
+	return config, nil
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
 func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster, pluginConfigPath string) *Server {
 	var err error
-	defaultUpgradePolicy := fallbackDefaultUpgradePolicy
+	pluginConfig := defaultPluginConfig
 	if pluginConfigPath != "" {
-		defaultUpgradePolicy, err = parsePluginConfig(pluginConfigPath)
+		pluginConfig, err = parsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
-		log.Infof("+kapp-controller using custom packages config with defaultUpgradePolicy: %v\n", defaultUpgradePolicy.string())
+		log.Infof("+kapp-controller using custom config: %v\n", pluginConfig)
 	} else {
 		log.Infof("+kapp-controller using default config since pluginConfigPath is empty")
 	}
@@ -99,6 +98,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 		clientGetter:             clientgetter.NewClientGetter(configGetter),
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
+		pluginConfig:             pluginConfig,
 		kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 			if configGetter == nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "configGetter arg required")

@@ -16,6 +16,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/json"
@@ -914,6 +915,27 @@ func TestVersionConstraintWithUpgradePolicy(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
+			if !cmp.Equal(tt.expected, values) {
+				t.Errorf("mismatch in '%s': %s", tt.name, cmp.Diff(tt.expected, values))
+			}
+		})
+	}
+}
+
+func TestPrereleasesVersionSelection(t *testing.T) {
+	tests := []struct {
+		name                        string
+		prereleasesVersionSelection []string
+		expected                    *vendirversions.VersionSelectionSemverPrereleases
+	}{
+		{"disallow prereleases", nil, nil},
+		{"allow prereleases - matching any identifier", []string{}, &vendirversions.VersionSelectionSemverPrereleases{}},
+		{"allow prereleases - only matching one identifier", []string{"rc"}, &vendirversions.VersionSelectionSemverPrereleases{Identifiers: []string{"rc"}}},
+		{"allow prereleases - only matching anyof identifier", []string{"rc", "pre"}, &vendirversions.VersionSelectionSemverPrereleases{Identifiers: []string{"rc", "pre"}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			values := prereleasesVersionSelection(tt.prereleasesVersionSelection)
 			if !cmp.Equal(tt.expected, values) {
 				t.Errorf("mismatch in '%s': %s", tt.name, cmp.Diff(tt.expected, values))
 			}
