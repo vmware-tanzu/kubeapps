@@ -71,7 +71,12 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
       >
         {refreshing ? "Refreshing" : "Refresh"}
       </CdsButton>
-      <CdsButton status="danger" onClick={openModal} action="outline">
+      <CdsButton
+        id={`delete-repo-${repo.metadata.name}`}
+        status="danger"
+        onClick={openModal}
+        action="outline"
+      >
         Delete
       </CdsButton>
     </div>

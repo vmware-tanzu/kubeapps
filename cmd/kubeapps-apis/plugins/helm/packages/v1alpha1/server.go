@@ -40,6 +40,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
@@ -1013,5 +1014,15 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		}
 		return actionGetter, nil
 	}
-	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, fn)
+
+	refs, err := resourcerefs.GetInstalledPackageResourceRefs(
+		ctx, types.NamespacedName{Name: identifier, Namespace: pkgRef.Context.Namespace}, fn)
+	if err != nil {
+		return nil, err
+	} else {
+		return &corev1.GetInstalledPackageResourceRefsResponse{
+			Context:      pkgRef.GetContext(),
+			ResourceRefs: refs,
+		}, nil
+	}
 }
