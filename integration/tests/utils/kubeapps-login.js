@@ -38,6 +38,14 @@ exports.KubeappsLogin = class KubeappsLogin {
     console.log("Logged into Kubeapps!");
   }
 
+  async doLogout() {
+    console.log("Logging out of Kubeapps");
+    await this.page.click(".dropdown.kubeapps-menu .kubeapps-nav-link");
+    await this.page.click('cds-button:has-text("Log out")');
+    await this.page.waitForLoadState("networkidle");
+    console.log("Logged out of Kubeapps");
+  }
+
   async doOidcLogin(username, pwd) {
     console.log(`Logging in Kubeapps via OIDC in host: ${utils.getUrl("/")}`);
 
