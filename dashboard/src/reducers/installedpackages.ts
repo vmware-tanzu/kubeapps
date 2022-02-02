@@ -6,7 +6,7 @@ import { InstalledPackageDetailCustomDataHelm } from "gen/kubeappsapis/plugins/h
 import { IAppState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { AppsAction } from "../actions/apps";
+import { InstalledPackagesAction } from "../actions/installedpackages";
 
 export const initialState: IAppState = {
   isFetching: false,
@@ -15,7 +15,7 @@ export const initialState: IAppState = {
 
 const appsReducer = (
   state: IAppState = initialState,
-  action: AppsAction | LocationChangeAction,
+  action: InstalledPackagesAction | LocationChangeAction,
 ): IAppState => {
   switch (action.type) {
     case getType(actions.apps.requestInstalledPackage):

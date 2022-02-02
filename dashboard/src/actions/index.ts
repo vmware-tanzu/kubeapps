@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { push } from "connected-react-router";
-import * as apps from "./apps";
+import * as apps from "./installedpackages";
 import * as auth from "./auth";
-import * as packages from "./packages";
+import * as packages from "./availablepackages";
 import * as config from "./config";
 import * as kube from "./kube";
 import * as namespace from "./namespace";

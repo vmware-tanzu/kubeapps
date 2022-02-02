@@ -6,7 +6,7 @@ import { uniqBy } from "lodash";
 import { IPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { PackagesAction } from "../actions/packages";
+import { PackagesAction } from "../actions/availablepackages";
 import { NamespaceAction } from "../actions/namespace";
 
 export const initialState: IPackageState = {

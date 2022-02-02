@@ -79,7 +79,7 @@ describe("fetches installed packages", () => {
         error: undefined,
       },
     ];
-    await store.dispatch(actions.apps.fetchApps("second-cluster", "default"));
+    await store.dispatch(actions.apps.fetchInstalledPackages("second-cluster", "default"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(requestInstalledPackageListMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
   });

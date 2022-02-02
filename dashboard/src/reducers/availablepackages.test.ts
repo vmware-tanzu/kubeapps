@@ -6,7 +6,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";
-import packageReducer from "./packages";
+import packageReducer from "./availablepackages";
 
 describe("packageReducer", () => {
   let initialState: IPackageState;

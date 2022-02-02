@@ -4,7 +4,7 @@
 import { FetchError, IAppState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import appsReducer from "./apps";
+import appsReducer from "./installedpackages";
 
 describe("appsReducer", () => {
   let initialState: IAppState;

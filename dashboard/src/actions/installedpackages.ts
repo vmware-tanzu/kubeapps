@@ -42,7 +42,7 @@ export const receiveInstalledPkgResourceRefs = createAction("RECEIVE_INSTALLED_P
 export const requestInstalledPackageList = createAction("REQUEST_INSTALLED_PACKAGE_LIST");
 
 export const receiveInstalledPackageList = createAction("RECEIVE_INSTALLED_PACKAGE_LIST", resolve => {
-  return (apps: InstalledPackageSummary[]) => resolve(apps);
+  return (pkgs: InstalledPackageSummary[]) => resolve(pkgs);
 });
 
 export const requestDeleteInstalledPackage = createAction("REQUEST_DELETE_INSTALLED_PACKAGE");
@@ -98,11 +98,11 @@ const allActions = [
   selectInstalledPackage,
 ];
 
-export type AppsAction = ActionType<typeof allActions[number]>;
+export type InstalledPackagesAction = ActionType<typeof allActions[number]>;
 
 export function getInstalledPackage(
   installedPackageRef?: InstalledPackageReference,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestInstalledPackage());
     try {
@@ -137,7 +137,7 @@ export function getInstalledPackage(
 
 export function getInstalledPkgResourceRefs(
   installedPackageRef?: InstalledPackageReference,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestInstalledPkgResourceRefs());
 
@@ -152,7 +152,7 @@ export function getInstalledPkgResourceRefs(
 
 export function deleteInstalledPackage(
   installedPackageRef: InstalledPackageReference,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestDeleteInstalledPackage());
     try {
@@ -166,11 +166,11 @@ export function deleteInstalledPackage(
   };
 }
 
-// fetchApps returns a list of apps for other actions to compose on top of it
-export function fetchApps(
+// fetchInstalledPackages returns a list of apps for other actions to compose on top of it
+export function fetchInstalledPackages(
   cluster: string,
   namespace?: string,
-): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestInstalledPackageList());
     let installedPackageSummaries: InstalledPackageSummary[];
@@ -195,7 +195,7 @@ export function installPackage(
   values?: string,
   schema?: JSONSchemaType<any>,
   reconciliationOptions?: ReconciliationOptions,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestInstallPackage());
     try {
@@ -244,7 +244,7 @@ export function updateInstalledPackage(
   availablePackageDetail: AvailablePackageDetail,
   values?: string,
   schema?: JSONSchemaType<any>,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestUpdateInstalledPackage());
     try {
@@ -285,7 +285,7 @@ export function updateInstalledPackage(
 export function rollbackInstalledPackage(
   installedPackageRef: InstalledPackageReference,
   revision: number,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     // rollbackInstalledPackage is currently only available for Helm packages
     if (
