@@ -97,7 +97,7 @@ Additionally, you can pass the following configuration values to the `kapp-contr
   - `[]`: any prerelease version will be installed (if the version `defaultUpgradePolicy` allows it).
   - `["rc", "foo"]`: only prerelease versions with `rc` or `foo` as part of their names will be installed (if the version `defaultUpgradePolicy` allows it). For instance, `1.0.0-rc1` will be installed, but `1.0.0-bar` will not.
 - `defaultAllowDowngrades`: is a boolean value that determines whether the `kapp-controller` will allow downgrades of packages.
-  - `true`: adds an annotation to every `PackageInstall` resource created by Kubeaoos that will allow them to be downgraded to previous versions of a `Package`.
+  - `true`: adds an annotation to every `PackageInstall` resource created by Kubeapps that will allow them to be downgraded to previous versions of a `Package`.
   - `false`: is the default value and disables a `PackageInstall` to be downgraded to previous versions.
 
 An example of the configuration values that can be passed to the `kapp-controller` plugin is:
