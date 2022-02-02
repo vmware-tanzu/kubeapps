@@ -14,7 +14,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { App } from "shared/App";
+import { InstalledPackage } from "shared/InstalledPackage";
 import { FetchError, IInstalledPackageState, UnprocessableEntity, UpgradeError } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
@@ -59,7 +59,7 @@ describe("fetches installed packages", () => {
           installedPackageSummaries,
         } as GetInstalledPackageSummariesResponse),
     );
-    App.GetInstalledPackageSummaries = requestInstalledPackageListMock;
+    InstalledPackage.GetInstalledPackageSummaries = requestInstalledPackageListMock;
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -86,14 +86,14 @@ describe("fetches installed packages", () => {
 });
 
 describe("delete applications", () => {
-  const deleteInstalledPackageOrig = App.DeleteInstalledPackage;
+  const deleteInstalledPackageOrig = InstalledPackage.DeleteInstalledPackage;
   let deleteInstalledPackage: jest.Mock;
   beforeEach(() => {
     deleteInstalledPackage = jest.fn(() => []);
-    App.DeleteInstalledPackage = deleteInstalledPackage;
+    InstalledPackage.DeleteInstalledPackage = deleteInstalledPackage;
   });
   afterEach(() => {
-    App.DeleteInstalledPackage = deleteInstalledPackageOrig;
+    InstalledPackage.DeleteInstalledPackage = deleteInstalledPackageOrig;
   });
   it("delete an application", async () => {
     await store.dispatch(
@@ -140,7 +140,7 @@ describe("delete applications", () => {
 
 describe("deploy package", () => {
   beforeEach(() => {
-    App.CreateInstalledPackage = jest.fn();
+    InstalledPackage.CreateInstalledPackage = jest.fn();
   });
 
   it("returns true if namespace is correct and deployment is successful", async () => {
@@ -162,7 +162,7 @@ describe("deploy package", () => {
       ),
     );
     expect(res).toBe(true);
-    expect(App.CreateInstalledPackage).toHaveBeenCalledWith(
+    expect(InstalledPackage.CreateInstalledPackage).toHaveBeenCalledWith(
       { cluster: "target-cluster", namespace: "target-namespace" },
       "my-release",
       { identifier: "testrepo/foo" },
@@ -199,7 +199,7 @@ describe("deploy package", () => {
       ),
     );
     expect(res).toBe(true);
-    expect(App.CreateInstalledPackage).toHaveBeenCalledWith(
+    expect(InstalledPackage.CreateInstalledPackage).toHaveBeenCalledWith(
       { cluster: "target-cluster", namespace: "target-namespace" },
       "my-release",
       { identifier: "testrepo/foo" },
@@ -253,7 +253,7 @@ describe("updateInstalledPackage", () => {
   );
 
   it("calls updateInstalledPackage and returns true if no error", async () => {
-    App.UpdateInstalledPackage = jest.fn().mockImplementationOnce(() => true);
+    InstalledPackage.UpdateInstalledPackage = jest.fn().mockImplementationOnce(() => true);
     const res = await store.dispatch(updateInstalledPackageAction);
     expect(res).toBe(true);
 
@@ -262,7 +262,7 @@ describe("updateInstalledPackage", () => {
       { type: getType(actions.installedpackages.receiveUpdateInstalledPackage) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.UpdateInstalledPackage).toHaveBeenCalledWith(
+    expect(InstalledPackage.UpdateInstalledPackage).toHaveBeenCalledWith(
       {
         context: { cluster: "default-c", namespace: "default-ns" },
         identifier: "my-release",
@@ -274,7 +274,7 @@ describe("updateInstalledPackage", () => {
   });
 
   it("dispatches UpgradeError if error", async () => {
-    App.UpdateInstalledPackage = jest.fn().mockImplementationOnce(() => {
+    InstalledPackage.UpdateInstalledPackage = jest.fn().mockImplementationOnce(() => {
       throw new UpgradeError("Boom!");
     });
 
@@ -342,8 +342,8 @@ describe("rollbackInstalledPackage", () => {
 
     const availablePackageDetail = { name: "test" } as AvailablePackageDetail;
 
-    App.RollbackInstalledPackage = jest.fn().mockImplementationOnce(() => true);
-    App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
+    InstalledPackage.RollbackInstalledPackage = jest.fn().mockImplementationOnce(() => true);
+    InstalledPackage.GetInstalledPackageDetail = jest.fn().mockReturnValue({
       installedPackageDetail: installedPackageDetail,
     });
     const res = await store.dispatch(rollbackInstalledPackageAction);
@@ -364,7 +364,7 @@ describe("rollbackInstalledPackage", () => {
     ];
 
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.RollbackInstalledPackage).toHaveBeenCalledWith(
+    expect(InstalledPackage.RollbackInstalledPackage).toHaveBeenCalledWith(
       {
         context: { cluster: "default-c", namespace: "default-ns" },
         identifier: "my-release",
@@ -413,7 +413,7 @@ describe("getInstalledPkgResourceRefs", () => {
   ] as ResourceRef[];
 
   it("dispatches the resource refs when successful", async () => {
-    App.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue({ resourceRefs: expectedRefs });
+    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue({ resourceRefs: expectedRefs });
     const expectedActions = [
       { type: getType(actions.installedpackages.requestInstalledPkgResourceRefs) },
       {
@@ -425,13 +425,13 @@ describe("getInstalledPkgResourceRefs", () => {
     const getInstalledPkgResourceRefsAction = actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef);
     await store.dispatch(getInstalledPkgResourceRefsAction);
 
-    expect(App.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
+    expect(InstalledPackage.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("dispatches a fetch error when unsuccessful", async () => {
     const e = new Error("Bang!");
-    App.GetInstalledPackageResourceRefs = jest.fn().mockImplementation(() => {
+    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockImplementation(() => {
       throw e;
     });
     const expectedActions = [
@@ -445,7 +445,7 @@ describe("getInstalledPkgResourceRefs", () => {
     const getInstalledPkgResourceRefsAction = actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef);
     await store.dispatch(getInstalledPkgResourceRefsAction);
 
-    expect(App.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
+    expect(InstalledPackage.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

@@ -26,7 +26,7 @@ import {
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
-import { App } from "../shared/App";
+import { InstalledPackage } from "../shared/InstalledPackage";
 import { validate } from "../shared/schema";
 
 const { createAction } = deprecated;
@@ -107,7 +107,7 @@ export function getInstalledPackage(
     dispatch(requestInstalledPackage());
     try {
       // Get the details of an installed package
-      const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
+      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(installedPackageRef);
 
       // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
@@ -142,7 +142,7 @@ export function getInstalledPkgResourceRefs(
     dispatch(requestInstalledPkgResourceRefs());
 
     try {
-      const { resourceRefs } = await App.GetInstalledPackageResourceRefs(installedPackageRef);
+      const { resourceRefs } = await InstalledPackage.GetInstalledPackageResourceRefs(installedPackageRef);
       dispatch(receiveInstalledPkgResourceRefs(resourceRefs));
     } catch (e: any) {
       dispatch(errorInstalledPackage(new FetchError("Unable to get installed package resources", [e])));
@@ -156,7 +156,7 @@ export function deleteInstalledPackage(
   return async dispatch => {
     dispatch(requestDeleteInstalledPackage());
     try {
-      await App.DeleteInstalledPackage(installedPackageRef);
+      await InstalledPackage.DeleteInstalledPackage(installedPackageRef);
       dispatch(receiveDeleteInstalledPackage());
       return true;
     } catch (e: any) {
@@ -175,7 +175,7 @@ export function fetchInstalledPackages(
     dispatch(requestInstalledPackageList());
     let installedPackageSummaries: InstalledPackageSummary[];
     try {
-      const res = await App.GetInstalledPackageSummaries(cluster, namespace);
+      const res = await InstalledPackage.GetInstalledPackageSummaries(cluster, namespace);
       installedPackageSummaries = res?.installedPackageSummaries;
 
       dispatch(receiveInstalledPackageList(installedPackageSummaries));
@@ -214,7 +214,7 @@ export function installPackage(
         availablePackageDetail?.availablePackageRef &&
         availablePackageDetail?.version?.pkgVersion
       ) {
-        await App.CreateInstalledPackage(
+        await InstalledPackage.CreateInstalledPackage(
           { cluster: targetCluster, namespace: targetNamespace } as Context,
           releaseName,
           availablePackageDetail.availablePackageRef,
@@ -260,7 +260,7 @@ export function updateInstalledPackage(
         }
       }
       if (availablePackageDetail?.version?.pkgVersion) {
-        await App.UpdateInstalledPackage(
+        await InstalledPackage.UpdateInstalledPackage(
           installedPackageRef,
           { version: availablePackageDetail.version.pkgVersion } as VersionReference,
           values,
@@ -294,7 +294,7 @@ export function rollbackInstalledPackage(
     ) {
       dispatch(requestRollbackInstalledPackage());
       try {
-        await App.RollbackInstalledPackage(installedPackageRef, revision);
+        await InstalledPackage.RollbackInstalledPackage(installedPackageRef, revision);
         dispatch(receiveRollbackInstalledPackage());
         dispatch(getInstalledPackage(installedPackageRef));
         return true;
