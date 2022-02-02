@@ -39,7 +39,7 @@ beforeEach(() => {
   });
 });
 
-describe("fetches applications", () => {
+describe("fetches installed packages", () => {
   const validInstalledPackageSummary: InstalledPackageSummary = {
     installedPackageRef: {
       context: { cluster: "second-cluster", namespace: "my-ns" },
@@ -50,16 +50,16 @@ describe("fetches applications", () => {
     pkgDisplayName: "foo",
     shortDescription: "some description",
   };
-  let listAppsMock: jest.Mock;
+  let requestInstalledPackageListMock: jest.Mock;
   const installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
   beforeEach(() => {
-    listAppsMock = jest.fn(
+    requestInstalledPackageListMock = jest.fn(
       () =>
         ({
           installedPackageSummaries,
         } as GetInstalledPackageSummariesResponse),
     );
-    App.GetInstalledPackageSummaries = listAppsMock;
+    App.GetInstalledPackageSummaries = requestInstalledPackageListMock;
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -67,13 +67,13 @@ describe("fetches applications", () => {
   it("fetches applications", async () => {
     const expectedActions = [
       {
-        type: getType(actions.apps.listApps),
+        type: getType(actions.apps.requestInstalledPackageList),
         payload: undefined,
         meta: undefined,
         error: undefined,
       },
       {
-        type: getType(actions.apps.receiveAppList),
+        type: getType(actions.apps.receiveInstalledPackageList),
         payload: [validInstalledPackageSummary],
         meta: undefined,
         error: undefined,
@@ -81,7 +81,7 @@ describe("fetches applications", () => {
     ];
     await store.dispatch(actions.apps.fetchApps("second-cluster", "default"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(listAppsMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
+    expect(requestInstalledPackageListMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
   });
 });
 
@@ -120,7 +120,7 @@ describe("delete applications", () => {
     const error = new Error("something went wrong!");
     const expectedActions = [
       { type: getType(actions.apps.requestDeleteInstalledPackage) },
-      { type: getType(actions.apps.errorApp), payload: error },
+      { type: getType(actions.apps.errorInstalledPackage), payload: error },
     ];
     deleteInstalledPackage.mockImplementation(() => {
       throw error;
@@ -231,7 +231,7 @@ describe("deploy package", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestInstallPackage) },
       {
-        type: getType(actions.apps.errorApp),
+        type: getType(actions.apps.errorInstalledPackage),
         payload: new UnprocessableEntity(
           "The given values don't match the required format. The following errors were found:\n  - /foo: must be string",
         ),
@@ -281,7 +281,7 @@ describe("updateInstalledPackage", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestUpdateInstalledPackage) },
       {
-        type: getType(actions.apps.errorApp),
+        type: getType(actions.apps.errorInstalledPackage),
         payload: new UpgradeError("Boom!"),
       },
     ];
@@ -310,7 +310,7 @@ describe("updateInstalledPackage", () => {
     const expectedActions = [
       { type: getType(actions.apps.requestUpdateInstalledPackage) },
       {
-        type: getType(actions.apps.errorApp),
+        type: getType(actions.apps.errorInstalledPackage),
         payload: new UnprocessableEntity(
           "The given values don't match the required format. The following errors were found:\n  - /foo: must be string",
         ),
@@ -349,17 +349,17 @@ describe("rollbackInstalledPackage", () => {
     const res = await store.dispatch(rollbackInstalledPackageAction);
     expect(res).toBe(true);
 
-    const selectCMD = actions.apps.selectApp(installedPackageDetail as any, availablePackageDetail);
+    const selectCMD = actions.apps.selectInstalledPackage(installedPackageDetail as any, availablePackageDetail);
     const res2 = await store.dispatch(selectCMD);
     expect(res2).not.toBeNull();
 
     const expectedActions = [
       { type: getType(actions.apps.requestRollbackInstalledPackage) },
       { type: getType(actions.apps.receiveRollbackInstalledPackage) },
-      { type: getType(actions.apps.requestApp) },
+      { type: getType(actions.apps.requestInstalledPackage) },
       {
-        type: getType(actions.apps.selectApp),
-        payload: { app: installedPackageDetail, details: availablePackageDetail },
+        type: getType(actions.apps.selectInstalledPackage),
+        payload: { pkg: installedPackageDetail, details: availablePackageDetail },
       },
     ];
 
@@ -377,7 +377,7 @@ describe("rollbackInstalledPackage", () => {
   it("dispatches an error if the package is not from one of the supported plugins", async () => {
     const expectedActions = [
       {
-        type: getType(actions.apps.errorApp),
+        type: getType(actions.apps.errorInstalledPackage),
         payload: new UpgradeError(
           "This package cannot be rolled back; this operation is only available for Helm packages",
         ),
@@ -397,7 +397,7 @@ describe("rollbackInstalledPackage", () => {
   });
 });
 
-describe("getAppResourceRefs", () => {
+describe("getInstalledPkgResourceRefs", () => {
   const installedPkgRef = {
     context: { cluster: "default-c", namespace: "default-ns" },
     identifier: "my-release",
@@ -415,15 +415,15 @@ describe("getAppResourceRefs", () => {
   it("dispatches the resource refs when successful", async () => {
     App.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue({ resourceRefs: expectedRefs });
     const expectedActions = [
-      { type: getType(actions.apps.requestAppResourceRefs) },
+      { type: getType(actions.apps.requestInstalledPkgResourceRefs) },
       {
-        type: getType(actions.apps.receiveAppResourceRefs),
+        type: getType(actions.apps.receiveInstalledPkgResourceRefs),
         payload: expectedRefs,
       },
     ];
 
-    const getAppResourceRefsAction = actions.apps.getAppResourceRefs(installedPkgRef);
-    await store.dispatch(getAppResourceRefsAction);
+    const getInstalledPkgResourceRefsAction = actions.apps.getInstalledPkgResourceRefs(installedPkgRef);
+    await store.dispatch(getInstalledPkgResourceRefsAction);
 
     expect(App.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
     expect(store.getActions()).toEqual(expectedActions);
@@ -435,15 +435,15 @@ describe("getAppResourceRefs", () => {
       throw e;
     });
     const expectedActions = [
-      { type: getType(actions.apps.requestAppResourceRefs) },
+      { type: getType(actions.apps.requestInstalledPkgResourceRefs) },
       {
-        type: getType(actions.apps.errorApp),
+        type: getType(actions.apps.errorInstalledPackage),
         payload: new FetchError("Unable to get installed package resources", [e]),
       },
     ];
 
-    const getAppResourceRefsAction = actions.apps.getAppResourceRefs(installedPkgRef);
-    await store.dispatch(getAppResourceRefsAction);
+    const getInstalledPkgResourceRefsAction = actions.apps.getInstalledPkgResourceRefs(installedPkgRef);
+    await store.dispatch(getInstalledPkgResourceRefsAction);
 
     expect(App.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
     expect(store.getActions()).toEqual(expectedActions);

@@ -10,8 +10,8 @@ describe("appsReducer", () => {
   let initialState: IAppState;
 
   const actionTypes = {
-    listApps: getType(actions.apps.listApps),
-    requestApp: getType(actions.apps.requestApp),
+    requestInstalledPackageList: getType(actions.apps.requestInstalledPackageList),
+    requestInstalledPackage: getType(actions.apps.requestInstalledPackage),
   };
 
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe("appsReducer", () => {
       [true, false].forEach(_e => {
         expect(
           appsReducer(undefined, {
-            type: actionTypes.requestApp as any,
+            type: actionTypes.requestInstalledPackage as any,
           }),
         ).toEqual({ ...initialState, isFetching: true });
       });
@@ -34,23 +34,23 @@ describe("appsReducer", () => {
 
     it("toggles the listAll state", () => {
       let state = appsReducer(undefined, {
-        type: actionTypes.listApps as any,
+        type: actionTypes.requestInstalledPackageList as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: true });
       state = appsReducer(state, {
-        type: actionTypes.listApps as any,
+        type: actionTypes.requestInstalledPackageList as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: true });
     });
 
-    it("clears the error after clearErrorApp", () => {
+    it("clears the error after clearErrorInstalledPackage", () => {
       let state = appsReducer(undefined, {
-        type: getType(actions.apps.errorApp) as any,
+        type: getType(actions.apps.errorInstalledPackage) as any,
         payload: new FetchError("boom"),
       });
       expect(state).toEqual({ ...initialState, isFetching: false, error: new FetchError("boom") });
       state = appsReducer(state, {
-        type: getType(actions.apps.clearErrorApp) as any,
+        type: getType(actions.apps.clearErrorInstalledPackage) as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: false, error: undefined });
     });

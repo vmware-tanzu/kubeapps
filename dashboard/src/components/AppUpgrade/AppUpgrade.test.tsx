@@ -229,8 +229,8 @@ describe("when an error exists", () => {
 });
 
 it("renders the upgrade form when the repo is available, clears state and fetches app", () => {
-  const getApp = jest.fn();
-  actions.apps.getApp = getApp;
+  const getInstalledPackage = jest.fn();
+  actions.apps.getInstalledPackage = getInstalledPackage;
   const resetSelectedAvailablePackageDetail = jest
     .spyOn(actions.packages, "resetSelectedAvailablePackageDetail")
     .mockImplementation(jest.fn());
@@ -263,7 +263,7 @@ it("renders the upgrade form when the repo is available, clears state and fetche
   expect(wrapper.find(SelectRepoForm)).not.toExist();
 
   expect(resetSelectedAvailablePackageDetail).toHaveBeenCalled();
-  expect(getApp).toHaveBeenCalledWith({
+  expect(getInstalledPackage).toHaveBeenCalledWith({
     context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
     identifier: defaultProps.releaseName,
     plugin: defaultProps.plugin,

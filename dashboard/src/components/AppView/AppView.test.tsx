@@ -351,10 +351,10 @@ describe("AppView actions", () => {
 
     expect(store.getActions()).toEqual([
       {
-        type: getType(actions.apps.requestApp),
+        type: getType(actions.apps.requestInstalledPackage),
       },
       {
-        type: getType(actions.apps.requestAppResourceRefs),
+        type: getType(actions.apps.requestInstalledPkgResourceRefs),
       },
       {
         type: getType(actions.kube.requestResources),
@@ -397,10 +397,10 @@ describe("AppView actions", () => {
     const watch = true;
     expect(store.getActions()).toEqual([
       {
-        type: getType(actions.apps.requestApp),
+        type: getType(actions.apps.requestInstalledPackage),
       },
       {
-        type: getType(actions.apps.requestAppResourceRefs),
+        type: getType(actions.apps.requestInstalledPkgResourceRefs),
       },
       {
         type: getType(actions.kube.requestResources),

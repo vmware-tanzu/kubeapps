@@ -47,7 +47,7 @@ function AppUpgrade() {
   useEffect(() => {
     dispatch(actions.packages.resetSelectedAvailablePackageDetail());
     dispatch(
-      actions.apps.getApp({
+      actions.apps.getInstalledPackage({
         context: { cluster: cluster, namespace: namespace },
         identifier: releaseName,
         plugin: pluginObj,

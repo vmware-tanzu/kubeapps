@@ -18,7 +18,7 @@ const appsReducer = (
   action: AppsAction | LocationChangeAction,
 ): IAppState => {
   switch (action.type) {
-    case getType(actions.apps.requestApp):
+    case getType(actions.apps.requestInstalledPackage):
       return {
         ...state,
         isFetching: true,
@@ -26,11 +26,11 @@ const appsReducer = (
         selectedDetails: undefined,
         resourceRefs: undefined,
       };
-    case getType(actions.apps.errorApp):
+    case getType(actions.apps.errorInstalledPackage):
       return { ...state, isFetching: false, error: action.payload };
-    case getType(actions.apps.clearErrorApp):
+    case getType(actions.apps.clearErrorInstalledPackage):
       return { ...state, error: undefined };
-    case getType(actions.apps.selectApp):
+    case getType(actions.apps.selectInstalledPackage):
       /* eslint-disable-next-line no-case-declarations */
       let revision: number;
       try {
@@ -52,14 +52,14 @@ const appsReducer = (
         },
         selectedDetails: action.payload.details,
       };
-    case getType(actions.apps.receiveAppResourceRefs):
+    case getType(actions.apps.receiveInstalledPkgResourceRefs):
       return {
         ...state,
         resourceRefs: action.payload,
       };
-    case getType(actions.apps.listApps):
+    case getType(actions.apps.requestInstalledPackageList):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveAppList):
+    case getType(actions.apps.receiveInstalledPackageList):
       return { ...state, isFetching: false, listOverview: action.payload };
     case getType(actions.apps.requestDeleteInstalledPackage):
       return { ...state, isFetching: true };
