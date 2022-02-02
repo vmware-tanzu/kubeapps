@@ -31,14 +31,14 @@ import CustomResourceListItem from "./CustomResourceListItem";
 
 let spyOnUseDispatch: jest.SpyInstance;
 const opActions = { ...actions.operators };
-const appActions = { ...actions.apps };
+const appActions = { ...actions.installedpackages };
 beforeEach(() => {
   actions.operators = {
     ...actions.operators,
     getResources: jest.fn(),
   };
-  actions.apps = {
-    ...actions.apps,
+  actions.installedpackages = {
+    ...actions.installedpackages,
     fetchApps: jest.fn(),
   };
   const mockDispatch = jest.fn();
@@ -50,7 +50,7 @@ beforeEach(() => {
 
 afterEach(() => {
   actions.operators = { ...opActions };
-  actions.apps = { ...appActions };
+  actions.installedpackages = { ...appActions };
   spyOnUseDispatch.mockRestore();
 });
 
@@ -61,7 +61,7 @@ context("when changing props", () => {
     const store = getStore(state);
     const fetchApps = jest.fn();
     const getCustomResources = jest.fn();
-    actions.apps.fetchApps = fetchApps;
+    actions.installedpackages.fetchApps = fetchApps;
     actions.operators.getResources = getCustomResources;
     mountWrapper(store, <AppList />);
     expect(fetchApps).toHaveBeenCalledWith("default-cluster", "default");
@@ -74,7 +74,7 @@ context("when changing props", () => {
     const store = getStore(state);
     const fetchApps = jest.fn();
     const getCustomResources = jest.fn();
-    actions.apps.fetchApps = fetchApps;
+    actions.installedpackages.fetchApps = fetchApps;
     actions.operators.getResources = getCustomResources;
     mountWrapper(store, <AppList />);
     expect(fetchApps).toHaveBeenCalledWith("default-cluster", "default");
@@ -113,7 +113,7 @@ context("when changing props", () => {
     const store = getStore(state);
     const fetchApps = jest.fn();
     const getCustomResources = jest.fn();
-    actions.apps.fetchApps = fetchApps;
+    actions.installedpackages.fetchApps = fetchApps;
     actions.operators.getResources = getCustomResources;
     const wrapper = mountWrapper(store, <AppList />);
     act(() => {

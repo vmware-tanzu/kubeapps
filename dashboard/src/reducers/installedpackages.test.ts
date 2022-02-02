@@ -1,17 +1,17 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { FetchError, IAppState } from "shared/types";
+import { FetchError, IInstalledPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import appsReducer from "./installedpackages";
+import installedPackagesReducer from "./installedpackages";
 
 describe("appsReducer", () => {
-  let initialState: IAppState;
+  let initialState: IInstalledPackageState;
 
   const actionTypes = {
-    requestInstalledPackageList: getType(actions.apps.requestInstalledPackageList),
-    requestInstalledPackage: getType(actions.apps.requestInstalledPackage),
+    requestInstalledPackageList: getType(actions.installedpackages.requestInstalledPackageList),
+    requestInstalledPackage: getType(actions.installedpackages.requestInstalledPackage),
   };
 
   beforeEach(() => {
@@ -25,7 +25,7 @@ describe("appsReducer", () => {
     it("sets isFetching when requesting an app", () => {
       [true, false].forEach(_e => {
         expect(
-          appsReducer(undefined, {
+          installedPackagesReducer(undefined, {
             type: actionTypes.requestInstalledPackage as any,
           }),
         ).toEqual({ ...initialState, isFetching: true });
@@ -33,24 +33,24 @@ describe("appsReducer", () => {
     });
 
     it("toggles the listAll state", () => {
-      let state = appsReducer(undefined, {
+      let state = installedPackagesReducer(undefined, {
         type: actionTypes.requestInstalledPackageList as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: true });
-      state = appsReducer(state, {
+      state = installedPackagesReducer(state, {
         type: actionTypes.requestInstalledPackageList as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: true });
     });
 
     it("clears the error after clearErrorInstalledPackage", () => {
-      let state = appsReducer(undefined, {
-        type: getType(actions.apps.errorInstalledPackage) as any,
+      let state = installedPackagesReducer(undefined, {
+        type: getType(actions.installedpackages.errorInstalledPackage) as any,
         payload: new FetchError("boom"),
       });
       expect(state).toEqual({ ...initialState, isFetching: false, error: new FetchError("boom") });
-      state = appsReducer(state, {
-        type: getType(actions.apps.clearErrorInstalledPackage) as any,
+      state = installedPackagesReducer(state, {
+        type: getType(actions.installedpackages.clearErrorInstalledPackage) as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: false, error: undefined });
     });

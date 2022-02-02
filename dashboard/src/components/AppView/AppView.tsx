@@ -165,8 +165,8 @@ export default function AppView() {
       plugin: pluginObj,
     } as InstalledPackageReference;
 
-    dispatch(actions.apps.getInstalledPackage(installedPkgRef));
-    dispatch(actions.apps.getInstalledPkgResourceRefs(installedPkgRef));
+    dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
+    dispatch(actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef));
   }, [cluster, dispatch, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
@@ -206,9 +206,9 @@ export default function AppView() {
   }, [dispatch, app?.installedPackageRef, appViewResourceRefs]);
 
   const forceRetry = () => {
-    dispatch(actions.apps.clearErrorInstalledPackage());
+    dispatch(actions.installedpackages.clearErrorInstalledPackage());
     dispatch(
-      actions.apps.getInstalledPackage({
+      actions.installedpackages.getInstalledPackage({
         context: { cluster: cluster, namespace: namespace },
         identifier: releaseName,
         plugin: pluginObj,

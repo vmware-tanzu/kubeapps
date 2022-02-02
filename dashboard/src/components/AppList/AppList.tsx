@@ -72,7 +72,7 @@ function AppList() {
   }, [allNS, currentNamespace]);
 
   useEffect(() => {
-    dispatch(actions.apps.fetchApps(cluster, namespace));
+    dispatch(actions.installedpackages.fetchApps(cluster, namespace));
     if (featureFlags?.operators) {
       dispatch(actions.operators.getResources(cluster, namespace));
     }

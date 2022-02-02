@@ -3,22 +3,22 @@
 
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import { InstalledPackageDetailCustomDataHelm } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { IAppState } from "shared/types";
+import { IInstalledPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { InstalledPackagesAction } from "../actions/installedpackages";
 
-export const initialState: IAppState = {
+export const initialState: IInstalledPackageState = {
   isFetching: false,
   items: [],
 };
 
-const appsReducer = (
-  state: IAppState = initialState,
+const installedPackagesReducer = (
+  state: IInstalledPackageState = initialState,
   action: InstalledPackagesAction | LocationChangeAction,
-): IAppState => {
+): IInstalledPackageState => {
   switch (action.type) {
-    case getType(actions.apps.requestInstalledPackage):
+    case getType(actions.installedpackages.requestInstalledPackage):
       return {
         ...state,
         isFetching: true,
@@ -26,11 +26,11 @@ const appsReducer = (
         selectedDetails: undefined,
         resourceRefs: undefined,
       };
-    case getType(actions.apps.errorInstalledPackage):
+    case getType(actions.installedpackages.errorInstalledPackage):
       return { ...state, isFetching: false, error: action.payload };
-    case getType(actions.apps.clearErrorInstalledPackage):
+    case getType(actions.installedpackages.clearErrorInstalledPackage):
       return { ...state, error: undefined };
-    case getType(actions.apps.selectInstalledPackage):
+    case getType(actions.installedpackages.selectInstalledPackage):
       /* eslint-disable-next-line no-case-declarations */
       let revision: number;
       try {
@@ -52,26 +52,26 @@ const appsReducer = (
         },
         selectedDetails: action.payload.details,
       };
-    case getType(actions.apps.receiveInstalledPkgResourceRefs):
+    case getType(actions.installedpackages.receiveInstalledPkgResourceRefs):
       return {
         ...state,
         resourceRefs: action.payload,
       };
-    case getType(actions.apps.requestInstalledPackageList):
+    case getType(actions.installedpackages.requestInstalledPackageList):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveInstalledPackageList):
+    case getType(actions.installedpackages.receiveInstalledPackageList):
       return { ...state, isFetching: false, listOverview: action.payload };
-    case getType(actions.apps.requestDeleteInstalledPackage):
+    case getType(actions.installedpackages.requestDeleteInstalledPackage):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveDeleteInstalledPackage):
+    case getType(actions.installedpackages.receiveDeleteInstalledPackage):
       return { ...state, isFetching: false };
-    case getType(actions.apps.requestInstallPackage):
+    case getType(actions.installedpackages.requestInstallPackage):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveInstallPackage):
+    case getType(actions.installedpackages.receiveInstallPackage):
       return { ...state, isFetching: false };
-    case getType(actions.apps.requestRollbackInstalledPackage):
+    case getType(actions.installedpackages.requestRollbackInstalledPackage):
       return { ...state, isFetching: true };
-    case getType(actions.apps.receiveRollbackInstalledPackage):
+    case getType(actions.installedpackages.receiveRollbackInstalledPackage):
       return { ...state, isFetching: false };
     case LOCATION_CHANGE:
       return {
@@ -85,4 +85,4 @@ const appsReducer = (
   return state;
 };
 
-export default appsReducer;
+export default installedPackagesReducer;

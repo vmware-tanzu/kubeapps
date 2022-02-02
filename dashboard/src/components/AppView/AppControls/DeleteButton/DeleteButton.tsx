@@ -37,7 +37,7 @@ export default function DeleteButton({
   const closeModal = () => setModal(false);
   const handleDeleteClick = async () => {
     setDeleting(true);
-    const deleted = await dispatch(actions.apps.deleteInstalledPackage(installedPackageRef));
+    const deleted = await dispatch(actions.installedpackages.deleteInstalledPackage(installedPackageRef));
     setDeleting(false);
     if (deleted) {
       dispatch(
