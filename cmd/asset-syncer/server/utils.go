@@ -22,7 +22,6 @@ import (
 	"time"
 
 	semver "github.com/Masterminds/semver/v3"
-	"github.com/containerd/containerd/remotes/docker"
 	"github.com/disintegration/imaging"
 	"github.com/itchyny/gojq"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -288,10 +287,10 @@ type TagList struct {
 type OCIRegistry struct {
 	repositories []string
 	*models.RepoInternal
-	tags   map[string]TagList
-	puller helm.ChartPuller
-	ociCli ociAPI
-	filter *apprepov1alpha1.FilterRuleSpec
+	tags      map[string]TagList
+	ociClient helm.IOCIClient
+	ociCli    ociAPI
+	filter    *apprepov1alpha1.FilterRuleSpec
 }
 
 func doReq(url string, cli httpclient.Client, headers map[string]string, userAgent string) ([]byte, error) {
@@ -460,16 +459,16 @@ func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
 	return result, nil
 }
 
-func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPuller, r *OCIRegistry) (*models.Chart, error) {
+func pullAndExtract(repoURL *url.URL, appName, tag string, ociClient helm.IOCIClient, r *OCIRegistry) (*models.Chart, error) {
 	ref := path.Join(repoURL.Host, repoURL.Path, fmt.Sprintf("%s:%s", appName, tag))
 
-	chartBuffer, digest, err := puller.PullOCIChart(ref)
+	pullResult, err := ociClient.Pull(ref)
 	if err != nil {
 		return nil, err
 	}
 
 	// Extract
-	files, err := extractFilesFromBuffer(chartBuffer)
+	files, err := extractFilesFromBuffer(bytes.NewBuffer(pullResult.Chart.Data))
 	if err != nil {
 		return nil, err
 	}
@@ -483,7 +482,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 	chartVersion := models.ChartVersion{
 		Version:    chartMetadata.Version,
 		AppVersion: chartMetadata.AppVersion,
-		Digest:     digest,
+		Digest:     pullResult.Chart.Digest,
 		URLs:       chartMetadata.Sources,
 		Readme:     files.Readme,
 		Values:     files.Values,
@@ -520,7 +519,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullChartJob, resultChan chan pullChartResult) {
 	for j := range chartJobs {
 		log.V(4).Infof("pulling chart, name=%s, tag=%s", j.AppName, j.Tag)
-		chart, err := pullAndExtract(repoURL, j.AppName, j.Tag, r.puller, r)
+		chart, err := pullAndExtract(repoURL, j.AppName, j.Tag, r.ociClient, r)
 		resultChan <- pullChartResult{chart, err}
 	}
 }
@@ -708,12 +707,15 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 	if authorizationHeader != "" {
 		headers["Authorization"] = []string{authorizationHeader}
 	}
-	ociResolver := docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})
+	ociClient, err := helm.BuildOCIClient(helm.OCIClientFactory{}, helm.GetResolver(headers, netClient))
+	if err != nil {
+		return nil, err
+	}
 
 	return &OCIRegistry{
 		repositories: ociRepos,
 		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
-		puller:       &helm.OCIPuller{Resolver: ociResolver},
+		ociClient:    ociClient,
 		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url, netClient: netClient},
 		filter:       filter,
 	}, nil

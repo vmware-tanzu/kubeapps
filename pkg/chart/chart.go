@@ -4,6 +4,7 @@
 package chart
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/json"
@@ -15,7 +16,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/containerd/containerd/remotes/docker"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -92,13 +92,15 @@ func NewChartClient(userAgent string) ChartClient {
 // OCIRepoClient struct contains the clients required to retrieve charts info from an OCI registry
 type OCIRepoClient struct {
 	userAgent string
-	puller    helm.ChartPuller
+	ociClient helm.IOCIClient
 }
 
-// NewOCIClient returns a new OCIClient
-func NewOCIClient(userAgent string) ChartClient {
+// NewOCIChartClient returns a new OCIRepoClient configured with a userAgent and, optionally, an ociClient (for testing).
+// If ociClient is nil, it should be later initialized with a call to its Init function.
+func NewOCIChartClient(userAgent string, ociClient helm.IOCIClient) ChartClient {
 	return &OCIRepoClient{
 		userAgent: userAgent,
+		ociClient: ociClient,
 	}
 }
 
@@ -388,7 +390,6 @@ func RegistrySecretsPerDomain(ctx context.Context, appRepoSecrets []string, name
 // custom CA if provided (as a secret)
 // TODO(andresmgot): Using a custom CA cert is not supported by ORAS (neither helm), only using the insecure flag
 func (c *OCIRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
-	var err error
 	headers := http.Header{
 		"User-Agent": []string{c.userAgent},
 	}
@@ -405,13 +406,17 @@ func (c *OCIRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *cor
 		headers.Set("Authorization", string(auth))
 	}
 
-	c.puller = &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})}
-	return err
+	ociClient, err := helm.BuildOCIClient(helm.OCIClientFactory{}, helm.GetResolver(headers, netClient))
+	if err != nil {
+		return err
+	}
+	c.ociClient = ociClient
+	return nil
 }
 
 // GetChart retrieves and loads a Chart from a OCI registry
 func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart, error) {
-	if c.puller == nil {
+	if c.ociClient == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
 	url, err := url.ParseRequestURI(strings.TrimSpace(repoURL))
@@ -420,12 +425,15 @@ func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart
 	}
 
 	ref := path.Join(url.Host, url.Path, fmt.Sprintf("%s:%s", details.ChartName, details.Version))
-	chartBuffer, _, err := c.puller.PullOCIChart(ref)
+	pullResult, err := c.ociClient.Pull(ref)
 	if err != nil {
 		return nil, err
 	}
-
-	return loader.LoadArchive(chartBuffer)
+	chart, err := loader.LoadArchive(bytes.NewBuffer(pullResult.Chart.Data))
+	if err != nil {
+		return nil, err
+	}
+	return chart, nil
 }
 
 // ChartClientFactoryInterface defines how a ChartClientFactory implementation
@@ -445,7 +453,7 @@ func (c *ChartClientFactory) New(repoType, userAgent string) ChartClient {
 	var client ChartClient
 	switch repoType {
 	case "oci":
-		client = NewOCIClient(userAgent)
+		client = NewOCIChartClient(userAgent, nil)
 		break
 	default:
 		client = NewChartClient(userAgent)
