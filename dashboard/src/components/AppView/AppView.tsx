@@ -4,6 +4,7 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
+import ErrorAlert from "components/ErrorAlert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
@@ -216,13 +217,12 @@ export default function AppView() {
 
   if (error && error.constructor === FetchError) {
     return (
-      <Alert theme="danger">
-        Application not found: {error.message}
+      <ErrorAlert error={error}>
         <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
           {" "}
           Try again{" "}
         </CdsButton>
-      </Alert>
+      </ErrorAlert>
     );
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =

@@ -134,7 +134,7 @@ function AppList() {
         className="margin-t-xl"
       >
         {error ? (
-          <ErrorAlert>{error}</ErrorAlert>
+          <ErrorAlert error={error} />
         ) : (
           <AppListGrid
             appList={listOverview}
