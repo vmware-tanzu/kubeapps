@@ -20,6 +20,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/helm"
 	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
 	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -844,13 +845,24 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 
 func TestOCIClient(t *testing.T) {
 	t.Run("InitClient - Creates puller with User-Agent header", func(t *testing.T) {
-		cli := NewOCIClient("foo")
-		cli.Init(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
-		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "User-Agent", "foo")
+		ociClient, err := helm.BuildOCIClient(helmfake.OCIClientFactoryMock{}, nil)
+		if err != nil {
+			t.Fatalf("Unexpected err %s", err)
+		}
+		cli := NewOCIChartClient("foo", ociClient).(*OCIRepoClient)
+		err = cli.Init(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		helmtest.CheckHeader(t, cli.ociClient, "User-Agent", "foo")
 	})
 
 	t.Run("InitClient - Creates puller with Authorization", func(t *testing.T) {
-		cli := NewOCIClient("")
+		ociClient, err := helm.BuildOCIClient(helmfake.OCIClientFactoryMock{}, nil)
+		if err != nil {
+			t.Fatalf("Unexpected err %s", err)
+		}
+		cli := NewOCIChartClient("foo", ociClient).(*OCIRepoClient)
 		appRepo := &appRepov1.AppRepository{
 			Spec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
@@ -868,12 +880,14 @@ func TestOCIClient(t *testing.T) {
 				"custom-secret-key": []byte("Basic Auth"),
 			},
 		}
-		cli.Init(appRepo, &corev1.Secret{}, authSecret)
-		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "Authorization", "Basic Auth")
+		err = cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		helmtest.CheckHeader(t, cli.ociClient, "Authorization", "Basic Auth")
 	})
 
 	t.Run("InitClient - Creates puller with Docker Creds Authorization", func(t *testing.T) {
-		cli := NewOCIClient("")
 		appRepo := &appRepov1.AppRepository{
 			Spec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
@@ -891,38 +905,53 @@ func TestOCIClient(t *testing.T) {
 				".dockerconfigjson": []byte(`{"auths":{"foo":{"username":"foo","password":"bar"}}}`),
 			},
 		}
-		err := cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		ociClient, err := helm.BuildOCIClient(helmfake.OCIClientFactoryMock{}, nil)
+		if err != nil {
+			t.Fatalf("Unexpected err %s", err)
+		}
+		cli := NewOCIChartClient("foo", ociClient).(*OCIRepoClient)
+		err = cli.Init(appRepo, &corev1.Secret{}, authSecret)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
 		// Authorization: Basic base64('foo:bar')
-		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "Authorization", "Basic Zm9vOmJhcg==")
+		helmtest.CheckHeader(t, cli.ociClient, "Authorization", "Basic Zm9vOmJhcg==")
 	})
 
 	t.Run("GetChart - Fails if the puller has not been instantiated", func(t *testing.T) {
-		cli := NewOCIClient("foo")
+		cli := NewOCIChartClient("foo", nil)
 		_, err := cli.GetChart(nil, "")
 		assert.Error(t, fmt.Errorf("unable to retrieve chart, Init should be called first"), err)
 	})
 
 	t.Run("GetChart - Fails if the URL is not valid", func(t *testing.T) {
-		cli := NewOCIClient("foo")
-		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{}
-		_, err := cli.GetChart(nil, "foo")
+		ociClient, err := helm.BuildOCIClient(helmfake.OCIClientFactoryMock{}, nil)
+		if err != nil {
+			t.Fatalf("Unexpected err %s", err)
+		}
+		cli := NewOCIChartClient("foo", ociClient).(*OCIRepoClient)
+		_, err = cli.GetChart(nil, "foo")
 		if !strings.Contains(err.Error(), "invalid URI for request") {
 			t.Errorf("Unexpected error %v", err)
 		}
 	})
 
 	t.Run("GetChart - Returns a chart", func(t *testing.T) {
-		cli := NewOCIClient("foo")
 		data, err := ioutil.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
-		assert.NoError(t, err)
-		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{
+		if err != nil {
+			t.Fatalf("Unexpected err %s", err)
+		}
+		ociClient, err := helm.BuildOCIClient(helmfake.OCIClientFactoryMock{
 			ExpectedName: "foo/bar/nginx:5.1.1",
 			Content:      map[string]*bytes.Buffer{"5.1.1": bytes.NewBuffer(data)},
-		}
+		}, nil)
+		cli := NewOCIChartClient("foo", ociClient).(*OCIRepoClient)
+
+		assert.NoError(t, err)
 		ch, err := cli.GetChart(&Details{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar")
+		if err != nil || ch == nil || ch.Metadata == nil {
+			t.Fatalf("Unexpected err %s", err)
+		}
 		if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {
 			t.Errorf("Unexpected chart %s:%s", ch.Name(), ch.Metadata.Version)
 		}

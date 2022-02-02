@@ -206,7 +206,7 @@ func Test_getOCIRepo(t *testing.T) {
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
 		repo, err := getOCIRepo("namespace", "test", "https://test", "Basic auth", nil, []string{}, &http.Client{})
 		assert.NoError(t, err)
-		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
+		helmtest.CheckHeader(t, repo.(*OCIRegistry).ociClient, "Authorization", "Basic auth")
 	})
 }
 
@@ -1019,16 +1019,21 @@ version: 1.0.0
 			for _, tag := range tt.tags {
 				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`
 			}
+			// create an OCI client using the mocked OCIClientFactoryMock, whose Pull is mocked using these values
+			ociClient, err := helm.BuildOCIClient(helmfake.OCIClientFactoryMock{
+				Content:  content,
+				Checksum: "123",
+			}, nil)
+			if err != nil {
+				t.Fatalf("Unexpected error %v", err)
+			}
 			chartsRepo := OCIRegistry{
 				repositories: []string{tt.chartName},
 				RepoInternal: &models.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
 				tags: map[string]TagList{
 					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: tt.tags},
 				},
-				puller: &helmfake.OCIPuller{
-					Content:  content,
-					Checksum: "123",
-				},
+				ociClient: ociClient,
 				ociCli: &ociAPICli{
 					url: url,
 					netClient: &goodOCIAPIHTTPClient{
