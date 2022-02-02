@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -88,11 +89,9 @@ func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 
 func GetInstalledPackageResourceRefs(
 	ctx context.Context,
-	request *corev1.GetInstalledPackageResourceRefsRequest,
-	actionConfigGetter clientgetter.HelmActionConfigGetterFunc) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
-	pkgRef := request.GetInstalledPackageRef()
-	identifier := pkgRef.GetIdentifier()
-	namespace := pkgRef.GetContext().GetNamespace()
+	helmReleaseName types.NamespacedName,
+	actionConfigGetter clientgetter.HelmActionConfigGetterFunc) ([]*corev1.ResourceRef, error) {
+	namespace := helmReleaseName.Namespace
 
 	actionConfig, err := actionConfigGetter(ctx, namespace)
 	if err != nil {
@@ -107,10 +106,10 @@ func GetInstalledPackageResourceRefs(
 	// more details:
 	// https://github.com/kubeapps/kubeapps/pull/3811#issuecomment-977689570
 	getcmd := action.NewGet(actionConfig)
-	release, err := getcmd.Run(identifier)
+	release, err := getcmd.Run(helmReleaseName.Name)
 	if err != nil {
 		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", helmReleaseName, namespace, err)
 		}
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
 	}
@@ -118,10 +117,7 @@ func GetInstalledPackageResourceRefs(
 	refs, err := ResourceRefsFromManifest(release.Manifest, namespace)
 	if err != nil {
 		return nil, err
+	} else {
+		return refs, nil
 	}
-
-	return &corev1.GetInstalledPackageResourceRefsResponse{
-		Context:      pkgRef.GetContext(),
-		ResourceRefs: refs,
-	}, nil
 }

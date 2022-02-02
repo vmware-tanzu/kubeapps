@@ -335,29 +335,18 @@ func (s *Server) getReleaseViaHelmApi(ctx context.Context, key types.NamespacedN
 		return nil, status.Errorf(codes.FailedPrecondition, "Server is not configured with actionConfigGetter")
 	}
 
-	helmReleaseName := rel.Spec.ReleaseName
-	// according to docs ReleaseName is optional and defaults to a composition of
-	// '[TargetNamespace-]Name'.
-	if helmReleaseName == "" {
-		targetNamespace := rel.Spec.TargetNamespace
-		// according to docs targetNamespace is optional and defaults to the namespace of the HelmRelease
-		if targetNamespace == "" {
-			targetNamespace = key.Namespace
-		}
-		helmReleaseName = fmt.Sprintf("%s-%s", targetNamespace, key.Name)
-	}
-
-	actionConfig, err := s.actionConfigGetter(ctx, key.Namespace)
+	helmRel := helmReleaseName(key, rel)
+	actionConfig, err := s.actionConfigGetter(ctx, helmRel.Namespace)
 	if err != nil || actionConfig == nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config in namespace [%s] due to: %v", key.Namespace, err)
 	}
 	cmd := action.NewGet(actionConfig)
-	release, err := cmd.Run(helmReleaseName)
+	release, err := cmd.Run(helmRel.Name)
 	if err != nil {
 		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release [%s] in namespace [%s]", helmReleaseName, key.Namespace)
+			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release [%s] in namespace [%s]", helmRel, key.Namespace)
 		}
-		return nil, status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s] in namespace [%s]: %v", helmReleaseName, key.Namespace, err)
+		return nil, status.Errorf(codes.NotFound, "Unable to run Helm Get action for release [%s] in namespace [%s]: %v", helmRel, key.Namespace, err)
 	}
 	return release, nil
 }
@@ -675,4 +664,25 @@ func installedPackageAvailablePackageRef(rel *helmv2.HelmRelease) (*corev1.Avail
 		Plugin:     GetPluginDetail(),
 		Context:    &corev1.Context{Namespace: repoNamespace},
 	}, nil
+}
+
+// ref https://fluxcd.io/docs/components/helm/helmreleases/
+func helmReleaseName(key types.NamespacedName, rel *helmv2.HelmRelease) types.NamespacedName {
+	helmReleaseName := rel.Spec.ReleaseName
+	// according to docs ReleaseName is optional and defaults to a composition of
+	// '[TargetNamespace-]Name'.
+	if helmReleaseName == "" {
+		targetNamespace := rel.Spec.TargetNamespace
+		// according to docs targetNamespace is optional and defaults to the namespace of the HelmRelease
+		if targetNamespace == "" {
+			targetNamespace = key.Namespace
+		}
+		helmReleaseName = fmt.Sprintf("%s-%s", targetNamespace, key.Name)
+	}
+
+	helmReleaseNamespace := rel.Spec.TargetNamespace
+	if helmReleaseNamespace == "" {
+		helmReleaseNamespace = key.Namespace
+	}
+	return types.NamespacedName{Name: helmReleaseName, Namespace: helmReleaseNamespace}
 }
