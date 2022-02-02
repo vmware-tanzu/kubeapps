@@ -530,8 +530,9 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, statuserror.FromK8sError("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 
-	// TODO(agamez): some seconds should be enough, however, make it configurable
-	err = wait.PollImmediateWithContext(ctx, time.Second*1, time.Second*5, func(ctx context.Context) (bool, error) {
+	// The package is considered as created once the kapp App gets created,
+	// so we actively wait for the App CR to be present in the cluster before returning OK
+	err = wait.PollImmediateWithContext(ctx, time.Second*1, time.Duration(s.pluginConfig.timeoutSeconds), func(ctx context.Context) (bool, error) {
 		_, err := s.getApp(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
 		if err != nil {
 			if errors.IsNotFound(err) {

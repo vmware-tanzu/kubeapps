@@ -15,6 +15,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
@@ -321,6 +322,15 @@ func isKindInt(src interface{}) bool {
 
 type (
 	kappControllerPluginConfig struct {
+		Core struct {
+			Packages struct {
+				V1alpha1 struct {
+					VersionsInSummary pkgutils.VersionsInSummary
+					TimeoutSeconds    int32 `json:"timeoutSeconds"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"core"`
+
 		KappController struct {
 			Packages struct {
 				V1alpha1 struct {
@@ -332,6 +342,8 @@ type (
 		} `json:"kappController"`
 	}
 	kappControllerPluginParsedConfig struct {
+		versionsInSummary                  pkgutils.VersionsInSummary
+		timeoutSeconds                     int32
 		defaultUpgradePolicy               upgradePolicy
 		defaultPrereleasesVersionSelection []string
 		defaultAllowDowngrades             bool
@@ -339,6 +351,8 @@ type (
 )
 
 var defaultPluginConfig = &kappControllerPluginParsedConfig{
+	versionsInSummary:                  pkgutils.GetDefaultVersionsInSummary(),
+	timeoutSeconds:                     300,
 	defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
 	defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 	defaultAllowDowngrades:             fallbackDefaultAllowDowngrades,
