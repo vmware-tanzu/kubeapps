@@ -537,7 +537,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedRelease:    flux_helm_release_reconcile_options,
 		},
 		{
-			name: "create package (values override)",
+			name: "create package (values JSON override)",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 				Name:                "my-podinfo",
@@ -545,6 +545,25 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Namespace: "test",
 				},
 				Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   create_installed_package_resp_my_podinfo,
+			expectedRelease:    flux_helm_release_values,
+		},
+		{
+			name: "create package (values YAML override)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+				Name:                "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				Values: "# Default values for podinfo.\n---\nui:\n  message: what we do in the shadows",
 			},
 			existingObjs: testSpecCreateInstalledPackage{
 				repoName:      "podinfo",
@@ -683,6 +702,32 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				InstalledPackageRef: my_redis_ref,
 			},
 			expectedRelease: flux_helm_release_updated_target_ns_is_set,
+		},
+		{
+			name: "update package (values JSON override)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				Values:              "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+			},
+			existingK8sObjs:    &redis_existing_spec_completed,
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: my_redis_ref,
+			},
+			expectedRelease: flux_helm_release_updated_2,
+		},
+		{
+			name: "update package (values YAML override)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				Values:              "# Default values.\n---\nui:\n  message: what we do in the shadows",
+			},
+			existingK8sObjs:    &redis_existing_spec_completed,
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: my_redis_ref,
+			},
+			expectedRelease: flux_helm_release_updated_2,
 		},
 	}
 
@@ -1932,6 +1977,33 @@ var (
 				},
 			},
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
+
+	flux_helm_release_updated_2 = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-redis",
+			Namespace:       "test",
+			Generation:      int64(1),
+			ResourceVersion: "1",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Chart: "redis",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "bitnami-1",
+						Namespace: "default",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+			Values:   &v1.JSON{Raw: flux_helm_release_values_values_bytes},
 		},
 	}
 
