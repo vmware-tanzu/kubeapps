@@ -133,7 +133,11 @@ it("renders the repo selection form if not introduced when the app is loaded", (
     repos: {
       repos: [repo1],
     } as IAppRepositoryState,
-    apps: { selected: { name: "foo" }, isFetching: false, error: undefined } as IInstalledPackageState,
+    apps: {
+      selected: { name: "foo" },
+      isFetching: false,
+      error: undefined,
+    } as IInstalledPackageState,
   };
   const wrapper = mountWrapper(
     getStore({
@@ -182,7 +186,11 @@ describe("when an error exists", () => {
       repos: {
         repos: [] as IAppRepository[],
       } as IAppRepositoryState,
-      apps: { selected: { name: "foo" }, isFetching: false, error: undefined } as IInstalledPackageState,
+      apps: {
+        selected: { name: "foo" },
+        isFetching: false,
+        error: undefined,
+      } as IInstalledPackageState,
     };
     const wrapper = mountWrapper(
       getStore({

@@ -65,7 +65,10 @@ export default function PackageView() {
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.availablepackages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
+      actions.availablepackages.fetchAndSelectAvailablePackageDetail(
+        packageReference,
+        packageVersion,
+      ),
     );
     return () => {};
   }, [dispatch, packageReference, packageVersion]);

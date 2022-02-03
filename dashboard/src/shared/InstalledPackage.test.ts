@@ -55,7 +55,9 @@ describe("App", () => {
             } as InstalledPackageReference,
           } as CreateInstalledPackageResponse),
         );
-        jest.spyOn(InstalledPackage, "CreateInstalledPackage").mockImplementation(mockCreateInstalledPackage);
+        jest
+          .spyOn(InstalledPackage, "CreateInstalledPackage")
+          .mockImplementation(mockCreateInstalledPackage);
         const availablePackageSummaries = await InstalledPackage.CreateInstalledPackage(
           t.args.tagetContext,
           t.args.name,
@@ -102,7 +104,9 @@ describe("App", () => {
             } as InstalledPackageReference,
           } as UpdateInstalledPackageResponse),
         );
-        jest.spyOn(InstalledPackage, "UpdateInstalledPackage").mockImplementation(mockUpdateInstalledPackage);
+        jest
+          .spyOn(InstalledPackage, "UpdateInstalledPackage")
+          .mockImplementation(mockUpdateInstalledPackage);
         const availablePackageSummaries = await InstalledPackage.UpdateInstalledPackage(
           t.args.installedPackageRef,
           t.args.pkgVersionReference,
@@ -138,7 +142,9 @@ describe("App", () => {
         const mockDeleteInstalledPackage = jest
           .fn()
           .mockImplementation(() => Promise.resolve({} as DeleteInstalledPackageResponse));
-        jest.spyOn(InstalledPackage, "DeleteInstalledPackage").mockImplementation(mockDeleteInstalledPackage);
+        jest
+          .spyOn(InstalledPackage, "DeleteInstalledPackage")
+          .mockImplementation(mockDeleteInstalledPackage);
         const res = await InstalledPackage.DeleteInstalledPackage(t.args.installedPackageReference);
         expect(res).toStrictEqual({} as DeleteInstalledPackageResponse);
         expect(mockDeleteInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
@@ -165,7 +171,9 @@ describe("rollbackInstalledPackage", () => {
       const mockRollbackInstalledPackage = jest
         .fn()
         .mockImplementation(() => Promise.resolve({} as RollbackInstalledPackageResponse));
-      jest.spyOn(InstalledPackage, "RollbackInstalledPackage").mockImplementation(mockRollbackInstalledPackage);
+      jest
+        .spyOn(InstalledPackage, "RollbackInstalledPackage")
+        .mockImplementation(mockRollbackInstalledPackage);
       const res = await InstalledPackage.RollbackInstalledPackage(
         t.args.installedPackageReference,
         t.args.revision,

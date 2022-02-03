@@ -86,7 +86,10 @@ export default function DeploymentForm() {
   useEffect(() => {
     // Get the package details
     dispatch(
-      actions.availablepackages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
+      actions.availablepackages.fetchAndSelectAvailablePackageDetail(
+        packageReference,
+        packageVersion,
+      ),
     );
     // Populate the rest of packages versions
     dispatch(actions.availablepackages.fetchAvailablePackageVersions(packageReference));

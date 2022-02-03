@@ -24,7 +24,12 @@ import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route } from "react-router-dom";
 import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { CustomInstalledPackageDetail, FetchError, IInstalledPackageState, IPackageState } from "shared/types";
+import {
+  CustomInstalledPackageDetail,
+  FetchError,
+  IInstalledPackageState,
+  IPackageState,
+} from "shared/types";
 import * as url from "shared/url";
 import UpgradeForm from "./UpgradeForm";
 
@@ -337,7 +342,8 @@ it("uses the selected version passed in the component's props", () => {
   const mockDispatch = jest.fn().mockReturnValue(true);
   jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const fetchAndSelectAvailablePackageDetail = jest.fn();
-  actions.availablepackages.fetchAndSelectAvailablePackageDetail = fetchAndSelectAvailablePackageDetail;
+  actions.availablepackages.fetchAndSelectAvailablePackageDetail =
+    fetchAndSelectAvailablePackageDetail;
 
   const state = {
     ...defaultStore,

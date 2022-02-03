@@ -15,7 +15,12 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { InstalledPackage } from "shared/InstalledPackage";
-import { FetchError, IInstalledPackageState, UnprocessableEntity, UpgradeError } from "shared/types";
+import {
+  FetchError,
+  IInstalledPackageState,
+  UnprocessableEntity,
+  UpgradeError,
+} from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -79,7 +84,9 @@ describe("fetches installed packages", () => {
         error: undefined,
       },
     ];
-    await store.dispatch(actions.installedpackages.fetchInstalledPackages("second-cluster", "default"));
+    await store.dispatch(
+      actions.installedpackages.fetchInstalledPackages("second-cluster", "default"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(requestInstalledPackageListMock.mock.calls[0]).toEqual(["second-cluster", "default"]);
   });
@@ -349,7 +356,10 @@ describe("rollbackInstalledPackage", () => {
     const res = await store.dispatch(rollbackInstalledPackageAction);
     expect(res).toBe(true);
 
-    const selectCMD = actions.installedpackages.selectInstalledPackage(installedPackageDetail as any, availablePackageDetail);
+    const selectCMD = actions.installedpackages.selectInstalledPackage(
+      installedPackageDetail as any,
+      availablePackageDetail,
+    );
     const res2 = await store.dispatch(selectCMD);
     expect(res2).not.toBeNull();
 
@@ -413,7 +423,9 @@ describe("getInstalledPkgResourceRefs", () => {
   ] as ResourceRef[];
 
   it("dispatches the resource refs when successful", async () => {
-    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue({ resourceRefs: expectedRefs });
+    InstalledPackage.GetInstalledPackageResourceRefs = jest
+      .fn()
+      .mockReturnValue({ resourceRefs: expectedRefs });
     const expectedActions = [
       { type: getType(actions.installedpackages.requestInstalledPkgResourceRefs) },
       {
@@ -422,7 +434,8 @@ describe("getInstalledPkgResourceRefs", () => {
       },
     ];
 
-    const getInstalledPkgResourceRefsAction = actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef);
+    const getInstalledPkgResourceRefsAction =
+      actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef);
     await store.dispatch(getInstalledPkgResourceRefsAction);
 
     expect(InstalledPackage.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
@@ -442,7 +455,8 @@ describe("getInstalledPkgResourceRefs", () => {
       },
     ];
 
-    const getInstalledPkgResourceRefsAction = actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef);
+    const getInstalledPkgResourceRefsAction =
+      actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef);
     await store.dispatch(getInstalledPkgResourceRefsAction);
 
     expect(InstalledPackage.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);

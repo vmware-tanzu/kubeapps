@@ -35,15 +35,21 @@ export const requestInstalledPackage = createAction("REQUEST_INSTALLED_PACKAGE")
 
 export const requestInstalledPkgResourceRefs = createAction("REQUEST_INSTALLED_PKG_RESOURCE_REFS");
 
-export const receiveInstalledPkgResourceRefs = createAction("RECEIVE_INSTALLED_PKG_RESOURCE_REFS", resolve => {
-  return (refs: ResourceRef[]) => resolve(refs);
-});
+export const receiveInstalledPkgResourceRefs = createAction(
+  "RECEIVE_INSTALLED_PKG_RESOURCE_REFS",
+  resolve => {
+    return (refs: ResourceRef[]) => resolve(refs);
+  },
+);
 
 export const requestInstalledPackageList = createAction("REQUEST_INSTALLED_PACKAGE_LIST");
 
-export const receiveInstalledPackageList = createAction("RECEIVE_INSTALLED_PACKAGE_LIST", resolve => {
-  return (pkgs: InstalledPackageSummary[]) => resolve(pkgs);
-});
+export const receiveInstalledPackageList = createAction(
+  "RECEIVE_INSTALLED_PACKAGE_LIST",
+  resolve => {
+    return (pkgs: InstalledPackageSummary[]) => resolve(pkgs);
+  },
+);
 
 export const requestDeleteInstalledPackage = createAction("REQUEST_DELETE_INSTALLED_PACKAGE");
 
@@ -107,7 +113,9 @@ export function getInstalledPackage(
     dispatch(requestInstalledPackage());
     try {
       // Get the details of an installed package
-      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(installedPackageRef);
+      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
+        installedPackageRef,
+      );
 
       // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
@@ -142,10 +150,14 @@ export function getInstalledPkgResourceRefs(
     dispatch(requestInstalledPkgResourceRefs());
 
     try {
-      const { resourceRefs } = await InstalledPackage.GetInstalledPackageResourceRefs(installedPackageRef);
+      const { resourceRefs } = await InstalledPackage.GetInstalledPackageResourceRefs(
+        installedPackageRef,
+      );
       dispatch(receiveInstalledPkgResourceRefs(resourceRefs));
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new FetchError("Unable to get installed package resources", [e])));
+      dispatch(
+        errorInstalledPackage(new FetchError("Unable to get installed package resources", [e])),
+      );
     }
   };
 }
