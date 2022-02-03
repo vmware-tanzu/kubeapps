@@ -537,7 +537,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedRelease:    flux_helm_release_reconcile_options,
 		},
 		{
-			name: "create package (values override)",
+			name: "create package (values JSON override)",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 				Name:                "my-podinfo",
@@ -545,6 +545,25 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Namespace: "test",
 				},
 				Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   create_installed_package_resp_my_podinfo,
+			expectedRelease:    flux_helm_release_values,
+		},
+		{
+			name: "create package (values YAML override)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+				Name:                "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				Values: "# Default values for podinfo.\n---\nui:\n  message: what we do in the shadows",
 			},
 			existingObjs: testSpecCreateInstalledPackage{
 				repoName:      "podinfo",

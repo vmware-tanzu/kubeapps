@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -365,8 +366,9 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 
 	var values map[string]interface{}
 	if valuesString != "" {
+		// maybe JSON or YAML
 		values = make(map[string]interface{})
-		if err = json.Unmarshal([]byte(valuesString), &values); err != nil {
+		if err = yaml.Unmarshal([]byte(valuesString), &values); err != nil {
 			return nil, err
 		}
 	}
