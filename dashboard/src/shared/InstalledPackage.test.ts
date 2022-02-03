@@ -160,7 +160,7 @@ describe("InstalledPackage", () => {
         const mockRollbackInstalledPackage = jest
           .fn()
           .mockImplementation(() => Promise.resolve({} as RollbackInstalledPackageResponse));
-        setMockHelmClient("RollbackInstalledPackage", mockRollbackInstalledPackage)
+        setMockHelmClient("RollbackInstalledPackage", mockRollbackInstalledPackage);
 
         const res = await InstalledPackage.RollbackInstalledPackage(
           t.args.installedPackageRef,
@@ -181,12 +181,14 @@ describe("InstalledPackage", () => {
     } as InstalledPackageReference;
 
     it("returns the resource references", async () => {
-      const mockClientGetInstalledPackageResourceRefs = jest.fn().mockImplementation(() =>
-        Promise.resolve({
-        } as GetInstalledPackageResourceRefsResponse),
-      );
+      const mockClientGetInstalledPackageResourceRefs = jest
+        .fn()
+        .mockImplementation(() => Promise.resolve({} as GetInstalledPackageResourceRefsResponse));
 
-      setMockCoreClient("GetInstalledPackageResourceRefs", mockClientGetInstalledPackageResourceRefs);
+      setMockCoreClient(
+        "GetInstalledPackageResourceRefs",
+        mockClientGetInstalledPackageResourceRefs,
+      );
 
       const res = await InstalledPackage.GetInstalledPackageResourceRefs(installedPackageReference);
 
@@ -202,9 +204,7 @@ function setMockCoreClient(fnToMock: any, mockFn: jest.Mock<any, any>) {
   // Replace the specified function on the real KubeappsGrpcClient's
   // packages service implementation.
   const mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
-  jest
-    .spyOn(mockClient, fnToMock)
-    .mockImplementation(mockFn);
+  jest.spyOn(mockClient, fnToMock).mockImplementation(mockFn);
   jest.spyOn(InstalledPackage, "coreClient").mockImplementation(() => mockClient);
 }
 
@@ -212,8 +212,6 @@ function setMockHelmClient(fnToMock: any, mockFn: jest.Mock<any, any>) {
   // Replace the specified function on the real KubeappsGrpcClient's
   // helm packages service implementation.
   const mockClient = new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
-  jest
-    .spyOn(mockClient, fnToMock)
-    .mockImplementation(mockFn);
+  jest.spyOn(mockClient, fnToMock).mockImplementation(mockFn);
   jest.spyOn(InstalledPackage, "helmPluginClient").mockImplementation(() => mockClient);
 }
