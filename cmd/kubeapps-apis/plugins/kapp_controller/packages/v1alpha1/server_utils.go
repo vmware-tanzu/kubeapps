@@ -358,7 +358,7 @@ type (
 
 var defaultPluginConfig = &kappControllerPluginParsedConfig{
 	versionsInSummary:                  pkgutils.GetDefaultVersionsInSummary(),
-	timeoutSeconds:                     300,
+	timeoutSeconds:                     fallbackTimeoutSeconds,
 	defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
 	defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 	defaultAllowDowngrades:             fallbackDefaultAllowDowngrades,
