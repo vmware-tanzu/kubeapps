@@ -11,6 +11,7 @@ import (
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -534,7 +535,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 	// The InstalledPackage is considered as created once the associated kapp App gets created,
 	// so we actively wait for the App CR to be present in the cluster before returning OK
-	err = WaitForResource(ctx, resource, newPkgInstall.Name, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
+	err = k8sutils.WaitForResource(ctx, resource, newPkgInstall.Name, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
 	if err != nil {
 		// clean-up the secret if something fails
 		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})

@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -14,14 +13,9 @@ import (
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
 
@@ -308,22 +302,4 @@ func (f *ConfigurableConfigFactoryImpl) ConfigureRESTConfig(config *rest.Config)
 
 func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
 	return f.config, nil
-}
-
-func WaitForResource(ctx context.Context, ri dynamic.ResourceInterface, name string, interval, timeout time.Duration) error {
-	err := wait.PollImmediateWithContext(ctx, interval, timeout, func(ctx context.Context) (bool, error) {
-		_, err := ri.Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			if errors.IsNotFound(err) {
-				// the resource hasn't been created yet
-				return false, nil
-			} else {
-				// any other real error
-				return false, statuserror.FromK8sError("wait", "resource", name, err)
-			}
-		}
-		// the resource is created now
-		return true, nil
-	})
-	return err
 }
