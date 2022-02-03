@@ -17,6 +17,8 @@ import (
 	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
@@ -332,7 +334,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 	// Ensure the selected version can be, actually installed to let the user know before installing
 	elegibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
 	if elegibleVersion == "" || err != nil {
-		return nil, fmt.Errorf("The selected version %q is not elegible to be installed: %v", pkgVersion, err)
+		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not elegible to be installed: %v", pkgVersion, err)
 	}
 
 	pkgInstall := &packagingv1alpha1.PackageInstall{

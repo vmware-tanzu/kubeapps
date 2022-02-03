@@ -82,7 +82,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					// generate the availablePackageSummary from the fetched information
 					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
-						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageSummary: %v", err))
+						return statuserror.FromK8sError("create", "AvailablePackageSummary", pkgMetadata.Name, err)
 					}
 
 					// append the availablePackageSummary to the slice
@@ -507,7 +507,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	// build a new pkgInstall object
 	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions, secret)
 	if err != nil {
-		return nil, statuserror.FromK8sError("create", "PackageInstall", installedPackageName, err)
+		return nil, status.Errorf(status.Code(err), "Unable to create the PackageInstall '%s' due to '%v'", installedPackageName, err)
 	}
 
 	// create the Secret in the cluster
@@ -620,7 +620,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	// Ensure the selected version can be, actually installed to let the user know before installing
 	elegibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
 	if elegibleVersion == "" || err != nil {
-		return nil, fmt.Errorf("The selected version %q is not elegible to be installed: %v", pkgVersion, err)
+		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not elegible to be installed: %v", pkgVersion, err)
 	}
 
 	// Set the versionSelection
