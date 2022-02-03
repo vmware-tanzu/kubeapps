@@ -31,7 +31,7 @@ kubectl create --namespace default serviceaccount kubeapps-operator
 kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
 ```
 
-> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](./access-control.md) documentation to configure fine-grained access control for users.
+> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](../howto/access-control.md) documentation to configure fine-grained access control for users.
 
 To retrieve the token,
 
@@ -116,12 +116,3 @@ If you want to uninstall/delete your WordPress application, you can do so by cli
 
 ![WordPress uninstall](../img/wordpress-uninstall.png)
 
-## Next Steps
-
-Learn more about Kubeapps with the links below:
-
-- [Detailed installation instructions](https://github.com/kubeapps/kubeapps/blob/main/chart/kubeapps/README.md)
-- [Deploying Operators](./operators.md)
-- [Kubeapps Dashboard documentation](./dashboard.md)
-- [Project board](https://github.com/kubeapps/kubeapps/projects/11)
-- [Roadmap](https://github.com/kubeapps/kubeapps/milestones)

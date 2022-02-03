@@ -147,7 +147,7 @@ Under the hood, kapp-controller will create `Package` and `PackageMetadata` CRs 
 
 Installing a Carvel Package in Kubeapps is the same experience as installing any other package (such as a Helm Chart) in Kubeapps.
 
-> **TIP**: Please refer to the [user documentation](./dashboard.md) for more information on how to use Kubeapps as a user.
+> **TIP**: Please refer to the [dashboard documentation](../howto/dashboard.md) for more information on how to use Kubeapps as a user.
 
 Assuming that a Package Repository, such as the `Tanzu Community Edition`, is already installed in the cluster, go to the `Catalog` tab and select the package you want to install.
 
@@ -184,7 +184,7 @@ At this moment, kapp-controller will perform the required actions to start creat
 
 Viewing the installed Carvel Packages in Kubeapps is the same experience as viewing any other installed package (such as a Helm Chart) in Kubeapps.
 
-> **TIP**: Please refer to the [user documentation](./dashboard.md) for more information on how to use Kubeapps as a user.
+> **TIP**: Please refer to the [dashboard documentation](../howto/dashboard.md) for more information on how to use Kubeapps as a user.
 
 Go to the `Applications` tab to see every Application that has been installed in the cluster. Click on _show apps in all namespaces_ to view the ones currently installed in every namespace of the cluster.
 
