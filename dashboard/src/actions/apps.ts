@@ -31,7 +31,13 @@ import { validate } from "../shared/schema";
 
 const { createAction } = deprecated;
 
-export const requestApps = createAction("REQUEST_APPS");
+export const requestApp = createAction("REQUEST_APP");
+
+export const requestAppResourceRefs = createAction("REQUEST_APP_RESOURCE_REFS");
+
+export const receiveAppResourceRefs = createAction("RECEIVE_APP_RESOURCE_REFS", resolve => {
+  return (refs: ResourceRef[]) => resolve(refs);
+});
 
 export const listApps = createAction("REQUEST_APP_LIST");
 
@@ -69,17 +75,16 @@ export const errorApp = createAction("ERROR_APP", resolve => {
 export const clearErrorApp = createAction("CLEAR_ERROR_APP");
 
 export const selectApp = createAction("SELECT_APP", resolve => {
-  return (
-    app: InstalledPackageDetail,
-    resourceRefs: ResourceRef[],
-    details?: AvailablePackageDetail,
-  ) => resolve({ app, resourceRefs, details });
+  return (app: InstalledPackageDetail, details?: AvailablePackageDetail) =>
+    resolve({ app, details });
 });
 
 const allActions = [
   listApps,
-  requestApps,
+  requestApp,
   receiveAppList,
+  requestAppResourceRefs,
+  receiveAppResourceRefs,
   requestDeleteInstalledPackage,
   receiveDeleteInstalledPackage,
   requestInstallPackage,
@@ -99,11 +104,10 @@ export function getApp(
   installedPackageRef?: InstalledPackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestApps());
+    dispatch(requestApp());
     try {
       // Get the details of an installed package
       const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
-      const { resourceRefs } = await App.GetInstalledPackageResourceRefs(installedPackageRef);
 
       // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
@@ -124,9 +128,24 @@ export function getApp(
           ),
         );
       }
-      dispatch(selectApp(installedPackageDetail!, resourceRefs, availablePackageDetail));
+      dispatch(selectApp(installedPackageDetail!, availablePackageDetail));
     } catch (e: any) {
       dispatch(errorApp(new FetchError("Unable to get installed package", [e])));
+    }
+  };
+}
+
+export function getAppResourceRefs(
+  installedPackageRef?: InstalledPackageReference,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
+    dispatch(requestAppResourceRefs());
+
+    try {
+      const { resourceRefs } = await App.GetInstalledPackageResourceRefs(installedPackageRef);
+      dispatch(receiveAppResourceRefs(resourceRefs));
+    } catch (e: any) {
+      dispatch(errorApp(new FetchError("Unable to get installed package resources", [e])));
     }
   };
 }
