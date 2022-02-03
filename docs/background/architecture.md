@@ -1,4 +1,4 @@
-# The Kubeapps Overview
+# Kubeapps architecture
 
 This document describes the Kubeapps architecture at a high level.
 
