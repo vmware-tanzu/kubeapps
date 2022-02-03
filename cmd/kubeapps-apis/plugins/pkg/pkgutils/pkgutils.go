@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -50,7 +50,7 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 
 	// Use a version map to be able to count how many major, minor and patch versions
 	// we have included.
-	version_map := map[int64]map[int64][]int64{}
+	version_map := map[uint64]map[uint64][]uint64{}
 	for _, v := range versions {
 		version, err := semver.NewVersion(v.Version)
 		if err != nil {
@@ -83,7 +83,7 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 		})
 
 		if _, ok := version_map[version.Major()]; !ok {
-			version_map[version.Major()] = map[int64][]int64{}
+			version_map[version.Major()] = map[uint64][]uint64{}
 		}
 		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
 	}
