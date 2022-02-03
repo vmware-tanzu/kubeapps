@@ -36,7 +36,7 @@ const installedPackagesReducer = (
       try {
         // TODO(agamez): verify why the field is not automatically decoded.
         revision = InstalledPackageDetailCustomDataHelm.decode(
-          action.payload.app?.customDetail?.value as unknown as Uint8Array,
+          action.payload.pkg?.customDetail?.value as unknown as Uint8Array,
         ).releaseRevision;
       } catch (error) {
         // If the decoding fails, ignore it and just fall back to "no revisions"
@@ -46,7 +46,7 @@ const installedPackagesReducer = (
         ...state,
         isFetching: false,
         selected: {
-          ...action.payload.app,
+          ...action.payload.pkg,
           // TODO(agamez): remove it once we have a core mechanism for rolling back
           revision: revision,
         },
