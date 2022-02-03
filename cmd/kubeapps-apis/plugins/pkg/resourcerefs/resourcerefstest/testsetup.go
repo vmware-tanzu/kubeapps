@@ -366,7 +366,7 @@ items:
 	// Using the redis_existing_stub_completed data with
 	// different manifests for each test.
 	releaseNamespace := "test"
-	releaseName := "test-my-redis"
+	releaseName := "my-redis"
 
 	TestCases2 = []TestCase{
 		{
@@ -684,6 +684,44 @@ items:
 					Name:       "clusterrole-2",
 					Namespace:  "test",
 					Kind:       "ClusterRole",
+				},
+			},
+		},
+		{
+			Name: "returns resource refs for helm installation in non default ns (flux HelmRelease targetNamespace is set)",
+			ExistingReleases: []TestReleaseStub{
+				{
+					Name:      "test2-my-redis",
+					Namespace: "test2",
+					Manifest: `
+# Source: redis/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-test
+  namespace: test2
+---
+# Source: redis/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-test
+  namespace: test2
+`,
+				},
+			},
+			ExpectedResourceRefs: []*corev1.ResourceRef{
+				{
+					ApiVersion: "v1",
+					Name:       "redis-test",
+					Namespace:  "test2",
+					Kind:       "Service",
+				},
+				{
+					ApiVersion: "apps/v1",
+					Name:       "redis-test",
+					Namespace:  "test2",
+					Kind:       "Deployment",
 				},
 			},
 		},

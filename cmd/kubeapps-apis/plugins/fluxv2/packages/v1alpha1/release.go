@@ -532,7 +532,6 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 					},
 				},
 			},
-			TargetNamespace: targetName.Namespace,
 		},
 	}
 	if versionRef.GetVersion() != "" {
@@ -672,12 +671,13 @@ func helmReleaseName(key types.NamespacedName, rel *helmv2.HelmRelease) types.Na
 	// according to docs ReleaseName is optional and defaults to a composition of
 	// '[TargetNamespace-]Name'.
 	if helmReleaseName == "" {
-		targetNamespace := rel.Spec.TargetNamespace
-		// according to docs targetNamespace is optional and defaults to the namespace of the HelmRelease
-		if targetNamespace == "" {
-			targetNamespace = key.Namespace
+		// according to docs targetNamespace is optional and defaults to the namespace
+		// of the HelmRelease
+		if rel.Spec.TargetNamespace == "" {
+			helmReleaseName = key.Name
+		} else {
+			helmReleaseName = fmt.Sprintf("%s-%s", rel.Spec.TargetNamespace, key.Name)
 		}
-		helmReleaseName = fmt.Sprintf("%s-%s", targetNamespace, key.Name)
 	}
 
 	helmReleaseNamespace := rel.Spec.TargetNamespace
