@@ -6,33 +6,24 @@ import {
   Context,
   CreateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
+  GetInstalledPackageResourceRefsResponse,
   InstalledPackageReference,
   UpdateInstalledPackageResponse,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { RollbackInstalledPackageResponse } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import * as moxios from "moxios";
 import { InstalledPackage } from "./InstalledPackage";
-import { axiosWithAuth } from "./AxiosInstance";
 import { PluginNames } from "./utils";
 
-describe("App", () => {
-  beforeEach(() => {
-    // Import as "any" to avoid typescript syntax error
-    moxios.install(axiosWithAuth as any);
-  });
-  afterEach(() => {
-    moxios.uninstall(axiosWithAuth as any);
-    jest.restoreAllMocks();
-  });
-
+describe("InstalledPackage", () => {
   describe("createInstalledPackage", () => {
     [
       {
         description: "should call to createInstalledPackage",
         args: {
-          tagetContext: { cluster: "my-cluster", namespace: "my-namespace" } as Context,
+          targetContext: { cluster: "my-cluster", namespace: "my-namespace" } as Context,
           name: "",
           availablePackageRef: {
             identifier: "foo/bar",
@@ -55,11 +46,10 @@ describe("App", () => {
             } as InstalledPackageReference,
           } as CreateInstalledPackageResponse),
         );
-        jest
-          .spyOn(InstalledPackage, "CreateInstalledPackage")
-          .mockImplementation(mockCreateInstalledPackage);
+        setMockCoreClient("CreateInstalledPackage", mockCreateInstalledPackage);
+
         const availablePackageSummaries = await InstalledPackage.CreateInstalledPackage(
-          t.args.tagetContext,
+          t.args.targetContext,
           t.args.name,
           t.args.availablePackageRef,
           t.args.pkgVersionReference,
@@ -73,7 +63,7 @@ describe("App", () => {
             plugin: { name: "my.plugin", version: "0.0.1" },
           } as InstalledPackageReference,
         } as CreateInstalledPackageResponse);
-        expect(mockCreateInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
+        expect(mockCreateInstalledPackage).toHaveBeenCalledWith(t.args);
       });
     });
   });
@@ -104,15 +94,15 @@ describe("App", () => {
             } as InstalledPackageReference,
           } as UpdateInstalledPackageResponse),
         );
-        jest
-          .spyOn(InstalledPackage, "UpdateInstalledPackage")
-          .mockImplementation(mockUpdateInstalledPackage);
+        setMockCoreClient("UpdateInstalledPackage", mockUpdateInstalledPackage);
+
         const availablePackageSummaries = await InstalledPackage.UpdateInstalledPackage(
           t.args.installedPackageRef,
           t.args.pkgVersionReference,
           t.args.values,
           t.args.reconciliationOptions,
         );
+
         expect(availablePackageSummaries).toStrictEqual({
           installedPackageRef: {
             context: { cluster: "my-cluster", namespace: "my-namespace" },
@@ -120,7 +110,7 @@ describe("App", () => {
             plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
           } as InstalledPackageReference,
         } as UpdateInstalledPackageResponse);
-        expect(mockUpdateInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
+        expect(mockUpdateInstalledPackage).toHaveBeenCalledWith(t.args);
       });
     });
   });
@@ -151,35 +141,79 @@ describe("App", () => {
       });
     });
   });
-});
 
-describe("rollbackInstalledPackage", () => {
-  [
-    {
-      description: "should call to rollbackInstalledPackage",
-      args: {
-        installedPackageReference: {
-          context: { cluster: "default-c", namespace: "default-ns" },
-          identifier: "foo",
-          plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
-        revision: 1,
+  describe("rollbackInstalledPackage", () => {
+    [
+      {
+        description: "should call to rollbackInstalledPackage",
+        args: {
+          installedPackageRef: {
+            context: { cluster: "default-c", namespace: "default-ns" },
+            identifier: "foo",
+            plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
+          releaseRevision: 1,
+        },
       },
-    },
-  ].forEach(t => {
-    it(t.description, async () => {
-      const mockRollbackInstalledPackage = jest
-        .fn()
-        .mockImplementation(() => Promise.resolve({} as RollbackInstalledPackageResponse));
-      jest
-        .spyOn(InstalledPackage, "RollbackInstalledPackage")
-        .mockImplementation(mockRollbackInstalledPackage);
-      const res = await InstalledPackage.RollbackInstalledPackage(
-        t.args.installedPackageReference,
-        t.args.revision,
+    ].forEach(t => {
+      it(t.description, async () => {
+        const mockRollbackInstalledPackage = jest
+          .fn()
+          .mockImplementation(() => Promise.resolve({} as RollbackInstalledPackageResponse));
+        setMockHelmClient("RollbackInstalledPackage", mockRollbackInstalledPackage)
+
+        const res = await InstalledPackage.RollbackInstalledPackage(
+          t.args.installedPackageRef,
+          t.args.releaseRevision,
+        );
+
+        expect(res).toStrictEqual({} as RollbackInstalledPackageResponse);
+        expect(mockRollbackInstalledPackage).toHaveBeenCalledWith(t.args);
+      });
+    });
+  });
+
+  describe("GetInstalledPackageResourceRefs", () => {
+    const installedPackageReference = {
+      context: { cluster: "default-c", namespace: "default-ns" },
+      identifier: "foo",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+    } as InstalledPackageReference;
+
+    it("returns the resource references", async () => {
+      const mockClientGetInstalledPackageResourceRefs = jest.fn().mockImplementation(() =>
+        Promise.resolve({
+        } as GetInstalledPackageResourceRefsResponse),
       );
-      expect(res).toStrictEqual({} as RollbackInstalledPackageResponse);
-      expect(mockRollbackInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
+
+      setMockCoreClient("GetInstalledPackageResourceRefs", mockClientGetInstalledPackageResourceRefs);
+
+      const res = await InstalledPackage.GetInstalledPackageResourceRefs(installedPackageReference);
+
+      expect(res).toStrictEqual({} as GetInstalledPackageResourceRefsResponse);
+      expect(mockClientGetInstalledPackageResourceRefs).toHaveBeenCalledWith({
+        installedPackageRef: installedPackageReference,
+      });
     });
   });
 });
+
+function setMockCoreClient(fnToMock: any, mockFn: jest.Mock<any, any>) {
+  // Replace the specified function on the real KubeappsGrpcClient's
+  // packages service implementation.
+  const mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  jest
+    .spyOn(mockClient, fnToMock)
+    .mockImplementation(mockFn);
+  jest.spyOn(InstalledPackage, "coreClient").mockImplementation(() => mockClient);
+}
+
+function setMockHelmClient(fnToMock: any, mockFn: jest.Mock<any, any>) {
+  // Replace the specified function on the real KubeappsGrpcClient's
+  // helm packages service implementation.
+  const mockClient = new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
+  jest
+    .spyOn(mockClient, fnToMock)
+    .mockImplementation(mockFn);
+  jest.spyOn(InstalledPackage, "helmPluginClient").mockImplementation(() => mockClient);
+}
