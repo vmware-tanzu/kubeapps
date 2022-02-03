@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
 )
 
@@ -503,7 +502,6 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	secret, err := s.buildSecret(installedPackageName, values, targetNamespace)
 	if err != nil {
 		return nil, statuserror.FromK8sError("create", "Secret", installedPackageName, err)
-
 	}
 
 	// build a new pkgInstall object
@@ -531,23 +529,25 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, statuserror.FromK8sError("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 
-	// TODO(agamez): some seconds should be enough, however, make it configurable
-	err = wait.PollImmediateWithContext(ctx, time.Second*1, time.Second*5, func(ctx context.Context) (bool, error) {
-		_, err := s.getApp(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				// the resource hasn't been created yet
-				return false, nil
-			} else {
-				// any other real error
-				return false, err
-			}
-		}
-		// the resource is created now
-		return true, nil
-	})
+	resource, err := s.getAppResource(ctx, targetCluster, targetNamespace)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "App", newPkgInstall.Name, err)
+		return nil, status.Errorf(codes.Internal, "unable to get the App resource: '%v'", err)
+	}
+	// The InstalledPackage is considered as created once the associated kapp App gets created,
+	// so we actively wait for the App CR to be present in the cluster before returning OK
+	err = WaitForResource(ctx, resource, newPkgInstall.Name, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
+	if err != nil {
+		// clean-up the secret if something fails
+		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return nil, statuserror.FromK8sError("delete", "Secret", secret.Name, err)
+		}
+		// clean-up the package install if something fails
+		err = s.deletePkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
+		if err != nil {
+			return nil, statuserror.FromK8sError("delete", "PackageInstall", newPkgInstall.Name, err)
+		}
+		return nil, status.Errorf(codes.Internal, "timeout exceeded (%v s) waiting for resource to be installed: '%v'", s.pluginConfig.timeoutSeconds, err)
 	}
 
 	// generate the response

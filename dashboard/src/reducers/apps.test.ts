@@ -11,7 +11,7 @@ describe("appsReducer", () => {
 
   const actionTypes = {
     listApps: getType(actions.apps.listApps),
-    requestApps: getType(actions.apps.requestApps),
+    requestApp: getType(actions.apps.requestApp),
   };
 
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe("appsReducer", () => {
       [true, false].forEach(_e => {
         expect(
           appsReducer(undefined, {
-            type: actionTypes.requestApps as any,
+            type: actionTypes.requestApp as any,
           }),
         ).toEqual({ ...initialState, isFetching: true });
       });

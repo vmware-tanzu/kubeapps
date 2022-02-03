@@ -315,6 +315,7 @@ export interface IAppState {
   selected?: CustomInstalledPackageDetail;
   // TODO(agamez): add tests for this new state field
   selectedDetails?: AvailablePackageDetail;
+  resourceRefs?: ResourceRef[];
 }
 
 export interface IStoreState {
@@ -501,6 +502,5 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
 }
 
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
-  apiResourceRefs: ResourceRef[];
   revision: number;
 }

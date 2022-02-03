@@ -9,12 +9,13 @@ import {
   InstalledPackageReference,
   VersionReference,
   ReconciliationOptions,
+  ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { App } from "shared/App";
-import { IAppState, UnprocessableEntity, UpgradeError } from "shared/types";
+import { FetchError, IAppState, UnprocessableEntity, UpgradeError } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -342,28 +343,23 @@ describe("rollbackInstalledPackage", () => {
     const availablePackageDetail = { name: "test" } as AvailablePackageDetail;
 
     App.RollbackInstalledPackage = jest.fn().mockImplementationOnce(() => true);
-    App.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue({ resourceRefs: [] });
     App.GetInstalledPackageDetail = jest.fn().mockReturnValue({
       installedPackageDetail: installedPackageDetail,
     });
     const res = await store.dispatch(rollbackInstalledPackageAction);
     expect(res).toBe(true);
 
-    const selectCMD = actions.apps.selectApp(
-      installedPackageDetail as any,
-      [],
-      availablePackageDetail,
-    );
+    const selectCMD = actions.apps.selectApp(installedPackageDetail as any, availablePackageDetail);
     const res2 = await store.dispatch(selectCMD);
     expect(res2).not.toBeNull();
 
     const expectedActions = [
       { type: getType(actions.apps.requestRollbackInstalledPackage) },
       { type: getType(actions.apps.receiveRollbackInstalledPackage) },
-      { type: getType(actions.apps.requestApps) },
+      { type: getType(actions.apps.requestApp) },
       {
         type: getType(actions.apps.selectApp),
-        payload: { app: installedPackageDetail, resourceRefs: [], details: availablePackageDetail },
+        payload: { app: installedPackageDetail, details: availablePackageDetail },
       },
     ];
 
@@ -376,11 +372,6 @@ describe("rollbackInstalledPackage", () => {
       },
       1,
     );
-    expect(App.GetInstalledPackageResourceRefs).toHaveBeenCalledWith({
-      context: { cluster: "default-c", namespace: "default-ns" },
-      identifier: "my-release",
-      plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" },
-    });
   });
 
   it("dispatches an error if the package is not from one of the supported plugins", async () => {
@@ -402,6 +393,59 @@ describe("rollbackInstalledPackage", () => {
       1,
     );
     await store.dispatch(rollbackInstalledPackageBadAction);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("getAppResourceRefs", () => {
+  const installedPkgRef = {
+    context: { cluster: "default-c", namespace: "default-ns" },
+    identifier: "my-release",
+    plugin: { name: "bad-plugin", version: "0.0.1" } as Plugin,
+  } as InstalledPackageReference;
+  const expectedRefs = [
+    {
+      apiVersion: "apps/v1",
+      kind: "Deployment",
+      name: "my-deployment",
+      namespace: "my-namespace",
+    },
+  ] as ResourceRef[];
+
+  it("dispatches the resource refs when successful", async () => {
+    App.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue({ resourceRefs: expectedRefs });
+    const expectedActions = [
+      { type: getType(actions.apps.requestAppResourceRefs) },
+      {
+        type: getType(actions.apps.receiveAppResourceRefs),
+        payload: expectedRefs,
+      },
+    ];
+
+    const getAppResourceRefsAction = actions.apps.getAppResourceRefs(installedPkgRef);
+    await store.dispatch(getAppResourceRefsAction);
+
+    expect(App.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches a fetch error when unsuccessful", async () => {
+    const e = new Error("Bang!");
+    App.GetInstalledPackageResourceRefs = jest.fn().mockImplementation(() => {
+      throw e;
+    });
+    const expectedActions = [
+      { type: getType(actions.apps.requestAppResourceRefs) },
+      {
+        type: getType(actions.apps.errorApp),
+        payload: new FetchError("Unable to get installed package resources", [e]),
+      },
+    ];
+
+    const getAppResourceRefsAction = actions.apps.getAppResourceRefs(installedPkgRef);
+    await store.dispatch(getAppResourceRefsAction);
+
+    expect(App.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

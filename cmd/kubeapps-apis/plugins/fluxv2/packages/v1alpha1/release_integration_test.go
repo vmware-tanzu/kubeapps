@@ -65,7 +65,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoUrl:              podinfo_repo_url,
 			request:              create_request_basic,
 			expectedDetail:       expected_detail_basic,
-			expectedPodPrefix:    "@TARGET_NS@-my-podinfo-",
+			expectedPodPrefix:    "my-podinfo-",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_basic,
 		},
@@ -74,7 +74,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoUrl:              podinfo_repo_url,
 			request:              create_request_semver_constraint,
 			expectedDetail:       expected_detail_semver_constraint,
-			expectedPodPrefix:    "@TARGET_NS@-my-podinfo-2-",
+			expectedPodPrefix:    "my-podinfo-2-",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_semver_constraint,
 		},
@@ -83,7 +83,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoUrl:              podinfo_repo_url,
 			request:              create_request_reconcile_options,
 			expectedDetail:       expected_detail_reconcile_options,
-			expectedPodPrefix:    "@TARGET_NS@-my-podinfo-3-",
+			expectedPodPrefix:    "my-podinfo-3-",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_reconcile_options,
 		},
@@ -92,7 +92,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoUrl:              podinfo_repo_url,
 			request:              create_request_with_values,
 			expectedDetail:       expected_detail_with_values,
-			expectedPodPrefix:    "@TARGET_NS@-my-podinfo-4-",
+			expectedPodPrefix:    "my-podinfo-4-",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_with_values,
 		},
@@ -153,7 +153,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1,
 				expectedDetail:       expected_detail_podinfo_5_2_1,
-				expectedPodPrefix:    "@TARGET_NS@-my-podinfo-6-",
+				expectedPodPrefix:    "my-podinfo-6-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1,
 			},
 			request:                   update_request_1,
@@ -166,7 +166,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_no_values,
 				expectedDetail:       expected_detail_podinfo_5_2_1_no_values,
-				expectedPodPrefix:    "@TARGET_NS@-my-podinfo-7-",
+				expectedPodPrefix:    "my-podinfo-7-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1_no_values,
 			},
 			request:                   update_request_2,
@@ -179,7 +179,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_2,
 				expectedDetail:       expected_detail_podinfo_5_2_1_values_2,
-				expectedPodPrefix:    "@TARGET_NS@-my-podinfo-8-",
+				expectedPodPrefix:    "my-podinfo-8-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1_values_2,
 			},
 			request:                   update_request_3,
@@ -192,7 +192,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_4,
 				expectedDetail:       expected_detail_podinfo_5_2_1_values_4,
-				expectedPodPrefix:    "@TARGET_NS@-my-podinfo-9-",
+				expectedPodPrefix:    "my-podinfo-9-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1_values_4,
 			},
 			request:                   update_request_4,
@@ -205,7 +205,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_6,
 				expectedDetail:       expected_detail_podinfo_5_2_1_values_6,
-				expectedPodPrefix:    "@TARGET_NS@-my-podinfo-10-",
+				expectedPodPrefix:    "my-podinfo-10-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1_values_6,
 			},
 			request:                   update_request_5,
@@ -218,7 +218,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_7,
 				expectedDetail:       expected_detail_podinfo_7,
-				expectedPodPrefix:    "@TARGET_NS@-my-podinfo-11-",
+				expectedPodPrefix:    "my-podinfo-11-",
 				expectedResourceRefs: expected_resource_refs_podinfo_7,
 			},
 			request:      update_request_6,
@@ -301,22 +301,24 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	testCases := []integrationTestDeleteSpec{
 		{
 			integrationTestCreateSpec: integrationTestCreateSpec{
-				testName:          "delete test (simplest case)",
-				repoUrl:           podinfo_repo_url,
-				request:           create_request_podinfo_for_delete_1,
-				expectedDetail:    expected_detail_podinfo_for_delete_1,
-				expectedPodPrefix: "@TARGET_NS@-my-podinfo-12-",
-				noCleanup:         true,
+				testName:             "delete test (simplest case)",
+				repoUrl:              podinfo_repo_url,
+				request:              create_request_podinfo_for_delete_1,
+				expectedDetail:       expected_detail_podinfo_for_delete_1,
+				expectedPodPrefix:    "my-podinfo-12-",
+				expectedResourceRefs: expected_resource_refs_for_delete_1,
+				noCleanup:            true,
 			},
 		},
 		{
 			integrationTestCreateSpec: integrationTestCreateSpec{
-				testName:          "delete test (unauthorized)",
-				repoUrl:           podinfo_repo_url,
-				request:           create_request_podinfo_for_delete_2,
-				expectedDetail:    expected_detail_podinfo_for_delete_2,
-				expectedPodPrefix: "@TARGET_NS@-my-podinfo-13-",
-				noCleanup:         true,
+				testName:             "delete test (unauthorized)",
+				repoUrl:              podinfo_repo_url,
+				request:              create_request_podinfo_for_delete_2,
+				expectedDetail:       expected_detail_podinfo_for_delete_2,
+				expectedPodPrefix:    "my-podinfo-13-",
+				expectedResourceRefs: expected_resource_refs_for_delete_2,
+				noCleanup:            true,
 			},
 			unauthorized: true,
 		},
@@ -384,8 +386,6 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			// in the targetNamespace, except the namespace itself. Wait to make sure this is done
 			// (https://fluxcd.io/docs/components/helm/) it clearly says: Prunes Helm releases removed
 			// from cluster (garbage collection)
-			expectedPodPrefix := strings.ReplaceAll(
-				tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 			for i := 0; i <= maxWait; i++ {
 				if pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace); err != nil {
 					t.Fatalf("%+v", err)
@@ -393,9 +393,9 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					break
 				} else if len(pods) != 1 {
 					t.Errorf("expected 1 pod, got: %s", pods)
-				} else if !strings.HasPrefix(pods[0], expectedPodPrefix) {
+				} else if !strings.HasPrefix(pods[0], tc.expectedPodPrefix) {
 					t.Errorf("expected pod with prefix [%s] not found in namespace [%s], pods found: [%v]",
-						expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
+						tc.expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
 				} else if i == maxWait {
 					t.Fatalf("Timed out waiting for garbage collection, of [%s], last error: [%v]", pods[0], err)
 				} else {
@@ -913,7 +913,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, flu
 			newR := &corev1.ResourceRef{
 				ApiVersion: r.ApiVersion,
 				Kind:       r.Kind,
-				Name:       strings.ReplaceAll(r.Name, "@TARGET_NS@", tc.request.TargetContext.Namespace),
+				Name:       r.Name,
 				Namespace:  tc.request.TargetContext.Namespace,
 			}
 			expectedRefsCopy = append(expectedRefsCopy, newR)
@@ -1007,19 +1007,19 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo 8080:9898\n",
 	}
 
 	expected_resource_refs_basic = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo",
+			Name:       "my-podinfo",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo",
+			Name:       "my-podinfo",
 		},
 	}
 
@@ -1046,19 +1046,19 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-2 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-2 8080:9898\n",
 	}
 
 	expected_resource_refs_semver_constraint = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-2",
+			Name:       "my-podinfo-2",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-2",
+			Name:       "my-podinfo-2",
 		},
 	}
 
@@ -1092,19 +1092,19 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-3 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-3 8080:9898\n",
 	}
 
 	expected_resource_refs_reconcile_options = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-3",
+			Name:       "my-podinfo-3",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-3",
+			Name:       "my-podinfo-3",
 		},
 	}
 
@@ -1129,7 +1129,7 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-4 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-4 8080:9898\n",
 		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 	}
 
@@ -1137,12 +1137,12 @@ var (
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-4",
+			Name:       "my-podinfo-4",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-4",
+			Name:       "my-podinfo-4",
 		},
 	}
 
@@ -1201,19 +1201,19 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-6 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-6 8080:9898\n",
 	}
 
 	expected_resource_refs_podinfo_5_2_1 = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-6",
+			Name:       "my-podinfo-6",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-6",
+			Name:       "my-podinfo-6",
 		},
 	}
 
@@ -1228,7 +1228,7 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-6 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-6 8080:9898\n",
 	}
 
 	create_request_podinfo_5_2_1_no_values = &corev1.CreateInstalledPackageRequest{
@@ -1254,19 +1254,19 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-7 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-7 8080:9898\n",
 	}
 
 	expected_resource_refs_podinfo_5_2_1_no_values = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-7",
+			Name:       "my-podinfo-7",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-7",
+			Name:       "my-podinfo-7",
 		},
 	}
 
@@ -1282,7 +1282,7 @@ var (
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-7 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-7 8080:9898\n",
 	}
 
 	create_request_podinfo_5_2_1_values_2 = &corev1.CreateInstalledPackageRequest{
@@ -1310,19 +1310,19 @@ var (
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-8 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-8 8080:9898\n",
 	}
 
 	expected_resource_refs_podinfo_5_2_1_values_2 = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-8",
+			Name:       "my-podinfo-8",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-8",
+			Name:       "my-podinfo-8",
 		},
 	}
 
@@ -1338,7 +1338,7 @@ var (
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-8 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-8 8080:9898\n",
 	}
 
 	create_request_podinfo_5_2_1_values_4 = &corev1.CreateInstalledPackageRequest{
@@ -1366,19 +1366,19 @@ var (
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-9 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-9 8080:9898\n",
 	}
 
 	expected_resource_refs_podinfo_5_2_1_values_4 = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-9",
+			Name:       "my-podinfo-9",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-9",
+			Name:       "my-podinfo-9",
 		},
 	}
 
@@ -1393,7 +1393,7 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-9 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-9 8080:9898\n",
 	}
 
 	create_request_podinfo_5_2_1_values_6 = &corev1.CreateInstalledPackageRequest{
@@ -1421,19 +1421,19 @@ var (
 		Status:        statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-10 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-10 8080:9898\n",
 	}
 
 	expected_resource_refs_podinfo_5_2_1_values_6 = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-10",
+			Name:       "my-podinfo-10",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-10",
+			Name:       "my-podinfo-10",
 		},
 	}
 
@@ -1457,19 +1457,19 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-11 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-11 8080:9898\n",
 	}
 
 	expected_resource_refs_podinfo_7 = []*corev1.ResourceRef{
 		{
 			ApiVersion: "v1",
 			Kind:       "Service",
-			Name:       "@TARGET_NS@-my-podinfo-11",
+			Name:       "my-podinfo-11",
 		},
 		{
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       "@TARGET_NS@-my-podinfo-11",
+			Name:       "my-podinfo-11",
 		},
 	}
 
@@ -1543,7 +1543,20 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-12 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-12 8080:9898\n",
+	}
+
+	expected_resource_refs_for_delete_1 = []*corev1.ResourceRef{
+		{
+			ApiVersion: "v1",
+			Kind:       "Service",
+			Name:       "my-podinfo-12",
+		},
+		{
+			ApiVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       "my-podinfo-12",
+		},
 	}
 
 	create_request_podinfo_for_delete_2 = &corev1.CreateInstalledPackageRequest{
@@ -1569,7 +1582,20 @@ var (
 		Status: statusInstalled,
 		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
 			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/@TARGET_NS@-my-podinfo-13 8080:9898\n",
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-13 8080:9898\n",
+	}
+
+	expected_resource_refs_for_delete_2 = []*corev1.ResourceRef{
+		{
+			ApiVersion: "v1",
+			Kind:       "Service",
+			Name:       "my-podinfo-13",
+		},
+		{
+			ApiVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       "my-podinfo-13",
+		},
 	}
 
 	create_request_wrong_cluster = &corev1.CreateInstalledPackageRequest{

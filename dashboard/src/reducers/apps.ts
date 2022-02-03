@@ -18,12 +18,13 @@ const appsReducer = (
   action: AppsAction | LocationChangeAction,
 ): IAppState => {
   switch (action.type) {
-    case getType(actions.apps.requestApps):
+    case getType(actions.apps.requestApp):
       return {
         ...state,
         isFetching: true,
         selected: undefined,
         selectedDetails: undefined,
+        resourceRefs: undefined,
       };
     case getType(actions.apps.errorApp):
       return { ...state, isFetching: false, error: action.payload };
@@ -48,9 +49,13 @@ const appsReducer = (
           ...action.payload.app,
           // TODO(agamez): remove it once we have a core mechanism for rolling back
           revision: revision,
-          apiResourceRefs: action.payload.resourceRefs,
         },
         selectedDetails: action.payload.details,
+      };
+    case getType(actions.apps.receiveAppResourceRefs):
+      return {
+        ...state,
+        resourceRefs: action.payload,
       };
     case getType(actions.apps.listApps):
       return { ...state, isFetching: true };
