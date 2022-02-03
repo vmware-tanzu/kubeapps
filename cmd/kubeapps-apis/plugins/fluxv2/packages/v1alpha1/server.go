@@ -514,8 +514,16 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	} else {
 		return &corev1.GetInstalledPackageResourceRefsResponse{
 			Context: &corev1.Context{
-				Cluster:   s.kubeappsCluster,
-				Namespace: hrName.Namespace,
+				Cluster: s.kubeappsCluster,
+				// TODO (gfichtenholt) it is not specifically called out in the spec why there is a
+				// need for a Context in the response and MORE imporantly what the value of Namespace
+				// field should be. In particular, there is use case when Flux Helm Release in
+				// installed in ns1 but specifies targetNamespace as test2. Should we:
+				//  (a) return ns1 (the namespace where CRs are installed) OR
+				//  (b) return ns2 (the namespace where flux installs the resources specified by the
+				//    release).
+				// For now lets use (a)
+				Namespace: key.Namespace,
 			},
 			ResourceRefs: refs,
 		}, nil
