@@ -15,6 +15,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -614,6 +615,15 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversions.VersionSelectionSemver{
 		Constraints: versionConstraints,
 		Prereleases: prereleases,
+	}
+
+	// Allow this PackageInstall to be downgraded
+	// https://carvel.dev/kapp-controller/docs/v0.32.0/package-consumer-concepts/#downgrading
+	if s.pluginConfig.defaultAllowDowngrades {
+		if pkgInstall.ObjectMeta.Annotations == nil {
+			pkgInstall.ObjectMeta.Annotations = map[string]string{}
+		}
+		pkgInstall.ObjectMeta.Annotations[kappctrlpackageinstall.DowngradableAnnKey] = ""
 	}
 
 	// Update the rest of the fields
