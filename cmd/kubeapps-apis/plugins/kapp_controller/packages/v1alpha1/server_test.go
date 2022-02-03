@@ -2306,6 +2306,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 		request                *corev1.CreateInstalledPackageRequest
 		pluginConfig           *kappControllerPluginParsedConfig
 		existingObjects        []runtime.Object
+		existingTypedObjects   []runtime.Object
 		expectedStatusCode     codes.Code
 		expectedResponse       *corev1.CreateInstalledPackageResponse
 		expectedPackageInstall *packagingv1alpha1.PackageInstall
@@ -2398,6 +2399,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -2513,6 +2529,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.Internal,
 		},
 		{
@@ -2604,6 +2635,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -2748,6 +2794,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -2888,6 +2949,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -3035,6 +3111,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -3179,6 +3270,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -3316,6 +3422,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -3462,6 +3583,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -3602,6 +3738,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -3748,6 +3899,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -3891,6 +4057,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -3963,7 +4144,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			s := Server{
 				pluginConfig: tc.pluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(typfake.NewSimpleClientset(), dynamicClient, nil), nil
+					return clientgetter.NewClientInterfaces(typfake.NewSimpleClientset(tc.existingTypedObjects...), dynamicClient, nil), nil
 				},
 			}
 
@@ -4497,6 +4678,20 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						}},
 					},
 				},
+				// Although it's a typical k8s object, it is retrieved with the dynamic client
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
 			},
 			existingTypedObjects: []runtime.Object{
 				&k8scorev1.ConfigMap{
@@ -4541,6 +4736,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					GroupVersion: "v1",
 					APIResources: []metav1.APIResource{
 						{Name: "pods", Namespaced: true, Kind: "Pod", Verbs: []string{"list", "get"}},
+						{Name: "configmaps", Namespaced: true, Kind: "ConfigMap", Verbs: []string{"list", "get"}},
 					},
 				},
 			}
@@ -4558,7 +4754,8 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 					// If more resources types are added, this will need to be updated accordingly
-					{Group: "", Version: "v1", Resource: "pods"}: "Pod" + "List",
+					{Group: "", Version: "v1", Resource: "pods"}:       "Pod" + "List",
+					{Group: "", Version: "v1", Resource: "configmaps"}: "ConfigMap" + "List",
 				},
 				unstructuredObjects...,
 			)
