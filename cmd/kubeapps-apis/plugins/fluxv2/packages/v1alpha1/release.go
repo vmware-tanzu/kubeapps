@@ -423,8 +423,9 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	}
 
 	if valuesString != "" {
+		// could be JSON or YAML
 		var values map[string]interface{}
-		if err = json.Unmarshal([]byte(valuesString), &values); err != nil {
+		if err = yaml.Unmarshal([]byte(valuesString), &values); err != nil {
 			return nil, err
 		}
 		byteArray, err := json.Marshal(values)
