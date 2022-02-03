@@ -14,7 +14,7 @@ test("Upgrades an application", async ({ page }) => {
 
   // Go to catalog
   await page.click('a.nav-link:has-text("Catalog")');
-  await page.click('.filters-menu label:has-text("bitnami")');  
+  await page.click('.filters-menu label:has-text("bitnami")');
   await page.waitForSelector("input#search");
   await page.locator("input#search").type("apache");
   await page.waitForTimeout(3000);
@@ -62,8 +62,12 @@ test("Upgrades an application", async ({ page }) => {
 
   // Check upgrade result
   await expect(page.locator(".left-menu")).toContainText("Up to date");
-  await page.waitForSelector("css=.application-status-pie-chart-number >> text=2");
-  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");
+  await page.waitForSelector("css=.application-status-pie-chart-number >> text=2", {
+    timeout: utils.getDeploymentTimeout(),
+  });
+  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
+    timeout: utils.getDeploymentTimeout(),
+  });
 
   // Clean up
   await page.locator('cds-button:has-text("Delete")').click();

@@ -6,8 +6,6 @@ const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
 
 test("Deploys package with default values in main cluster", async ({ page }) => {
-  test.setTimeout(120000);
-
   // Log in
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
@@ -29,8 +27,12 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Assertions
-  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1");
-  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");
+  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
+    timeout: utils.getDeploymentTimeout(),
+  });
+  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
+    timeout: utils.getDeploymentTimeout(),
+  });
 
   // Clean up
   await page.locator('cds-button:has-text("Delete")').click();

@@ -7,7 +7,6 @@ const utils = require("../utils/util-functions");
 
 test.describe("Limited user simple deployments", () => {
   test("Regular user fails to deploy package due to missing permissions", async ({ page }) => {
-    test.setTimeout(60000);
 
     // Log in
     const k = new KubeappsLogin(page);
@@ -44,8 +43,6 @@ test.describe("Limited user simple deployments", () => {
   }) => {
     // Explanation: User has permissions to deploy in its namespace, but can't actually deploy
     // if the package is from a repo that has a secret to which the user doesn't have access
-
-    test.setTimeout(60000);
     
     // Log in
     const k = new KubeappsLogin(page);

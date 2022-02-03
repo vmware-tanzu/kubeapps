@@ -14,7 +14,7 @@ test("Rolls back an application", async ({ page }) => {
 
   // Go to catalog
   await page.click('a.nav-link:has-text("Catalog")');
-  await page.click('.filters-menu label:has-text("bitnami")');  
+  await page.click('.filters-menu label:has-text("bitnami")');
   await page.waitForSelector("input#search");
   await page.locator("input#search").type("apache");
   await page.waitForTimeout(3000);
@@ -38,10 +38,10 @@ test("Rolls back an application", async ({ page }) => {
 
   // Check deployment
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
-    timeout: 60000,
+    timeout: utils.getDeploymentTimeout(),
   });
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
-    timeout: 60000,
+    timeout: utils.getDeploymentTimeout(),
   });
 
   // Try rollback
@@ -64,10 +64,10 @@ test("Rolls back an application", async ({ page }) => {
 
   // Check upgrade result
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=2", {
-    timeout: 60000,
+    timeout: utils.getDeploymentTimeout(),
   });
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
-    timeout: 60000,
+    timeout: utils.getDeploymentTimeout(),
   });
 
   //  Rollback to the previous revision (default selected value)

@@ -1,8 +1,6 @@
 // Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-const path = require("path");
-const fs = require("fs");
 const axios = require("axios");
 const https = require('https');
 
@@ -11,6 +9,10 @@ module.exports = {
   getRandomName: base => {
     const randomNumber = Math.floor(Math.random() * Math.floor(100000));
     return base + "-" + randomNumber;
+  },
+
+  getDeploymentTimeout: () => {
+    return process.env.SLOW_ENV ? 120000 : 60000;
   },
 
   getUrl: path => `${process.env.INTEGRATION_ENTRYPOINT}${path}`,

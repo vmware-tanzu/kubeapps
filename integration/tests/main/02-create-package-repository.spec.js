@@ -6,7 +6,6 @@ const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
 
 test("Create a new package repository successfully", async ({ page }) => {
-  test.setTimeout(60000);
 
   // Log in
   const k = new KubeappsLogin(page);

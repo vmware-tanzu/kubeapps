@@ -9,8 +9,6 @@ test.describe("Limited user simple deployments", () => {
   test("Regular user can deploy and delete packages in its own namespace from global repo without secrets", async ({
     page,
   }) => {
-    test.setTimeout(120000);
-
     // Log in as admin to create a repo without password
     const k = new KubeappsLogin(page);
     await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
@@ -63,8 +61,12 @@ test.describe("Limited user simple deployments", () => {
     await page.locator('cds-button:has-text("Deploy")').click();
 
     // Check that package is deployed
-    await page.waitForSelector("css=.application-status-pie-chart-number >> text=1");
-    await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");
+    await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
+      timeout: utils.getDeploymentTimeout(),
+    });
+    await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
+      timeout: utils.getDeploymentTimeout(),
+    });
 
     // Delete deployment
     await page.locator('cds-button:has-text("Delete")').click();

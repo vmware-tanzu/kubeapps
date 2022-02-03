@@ -6,8 +6,6 @@ const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
 
 test("Create a new private package repository successfully", async ({ page }) => {
-  test.setTimeout(120000);
-
   // Log in
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
@@ -67,9 +65,13 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   // Assertions
   await page.waitForTimeout(5000);
-  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1");
-  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");
-  
+  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
+    timeout: utils.getDeploymentTimeout(),
+  });
+  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
+    timeout: utils.getDeploymentTimeout(),
+  });
+
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the resources API to get info of the
   // deployment
@@ -122,11 +124,14 @@ test("Create a new private package repository successfully", async ({ page }) =>
   // Check upgrade result
   await page.waitForSelector(".left-menu");
   await expect(page.locator(".left-menu")).toContainText("Up to date");
-  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1");
-  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");
+  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
+    timeout: utils.getDeploymentTimeout(),
+  });
+  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
+    timeout: utils.getDeploymentTimeout(),
+  });
 
   // Clean up
   await page.locator('cds-button:has-text("Delete")').click();
   await page.locator('cds-modal-actions button:has-text("Delete")').click();
-
 });
