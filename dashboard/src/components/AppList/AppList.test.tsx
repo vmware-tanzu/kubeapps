@@ -31,15 +31,15 @@ import CustomResourceListItem from "./CustomResourceListItem";
 
 let spyOnUseDispatch: jest.SpyInstance;
 const opActions = { ...actions.operators };
-const appActions = { ...actions.apps };
+const appActions = { ...actions.installedpackages };
 beforeEach(() => {
   actions.operators = {
     ...actions.operators,
     getResources: jest.fn(),
   };
-  actions.apps = {
-    ...actions.apps,
-    fetchApps: jest.fn(),
+  actions.installedpackages = {
+    ...actions.installedpackages,
+    fetchInstalledPackages: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -50,7 +50,7 @@ beforeEach(() => {
 
 afterEach(() => {
   actions.operators = { ...opActions };
-  actions.apps = { ...appActions };
+  actions.installedpackages = { ...appActions };
   spyOnUseDispatch.mockRestore();
 });
 
@@ -59,12 +59,12 @@ context("when changing props", () => {
     const state = deepClone(initialState) as IStoreState;
     state.config.featureFlags = { operators: true };
     const store = getStore(state);
-    const fetchApps = jest.fn();
+    const fetchInstalledPackages = jest.fn();
     const getCustomResources = jest.fn();
-    actions.apps.fetchApps = fetchApps;
+    actions.installedpackages.fetchInstalledPackages = fetchInstalledPackages;
     actions.operators.getResources = getCustomResources;
     mountWrapper(store, <AppList />);
-    expect(fetchApps).toHaveBeenCalledWith("default-cluster", "default");
+    expect(fetchInstalledPackages).toHaveBeenCalledWith("default-cluster", "default");
     expect(getCustomResources).toHaveBeenCalledWith("default-cluster", "default");
   });
 
@@ -72,12 +72,12 @@ context("when changing props", () => {
     const state = deepClone(initialState) as IStoreState;
     state.config.featureFlags = { operators: false };
     const store = getStore(state);
-    const fetchApps = jest.fn();
+    const fetchInstalledPackages = jest.fn();
     const getCustomResources = jest.fn();
-    actions.apps.fetchApps = fetchApps;
+    actions.installedpackages.fetchInstalledPackages = fetchInstalledPackages;
     actions.operators.getResources = getCustomResources;
     mountWrapper(store, <AppList />);
-    expect(fetchApps).toHaveBeenCalledWith("default-cluster", "default");
+    expect(fetchInstalledPackages).toHaveBeenCalledWith("default-cluster", "default");
     expect(getCustomResources).not.toHaveBeenCalled();
   });
 
@@ -111,15 +111,15 @@ context("when changing props", () => {
     const state = deepClone(initialState) as IStoreState;
     state.config.featureFlags = { operators: true };
     const store = getStore(state);
-    const fetchApps = jest.fn();
+    const fetchInstalledPackages = jest.fn();
     const getCustomResources = jest.fn();
-    actions.apps.fetchApps = fetchApps;
+    actions.installedpackages.fetchInstalledPackages = fetchInstalledPackages;
     actions.operators.getResources = getCustomResources;
     const wrapper = mountWrapper(store, <AppList />);
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
     });
-    expect(fetchApps).toHaveBeenCalledWith("default-cluster", "");
+    expect(fetchInstalledPackages).toHaveBeenCalledWith("default-cluster", "");
     expect(getCustomResources).toHaveBeenCalledWith("default-cluster", "");
   });
 

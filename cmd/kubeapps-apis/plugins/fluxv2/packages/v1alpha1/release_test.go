@@ -62,7 +62,8 @@ type testSpecGetInstalledPackages struct {
 	releaseSuspend            bool
 	releaseServiceAccountName string
 	releaseStatus             helmv2.HelmReleaseStatus
-	targetNamespace           string
+	// only used to test edge cases now, most tests should not set this
+	targetNamespace string
 }
 
 func TestGetInstalledPackageSummaries(t *testing.T) {
@@ -76,7 +77,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name: "returns installed packages when install fails",
 			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
+				Context: &corev1.Context{Namespace: "test"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_failed,
@@ -91,7 +92,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name: "returns installed packages when install is in progress",
 			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
+				Context: &corev1.Context{Namespace: "test"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_pending,
@@ -106,7 +107,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name: "returns installed packages when install is in progress (2)",
 			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
+				Context: &corev1.Context{Namespace: "test"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_pending_2,
@@ -121,7 +122,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name: "returns installed packages in a specific namespace",
 			request: &corev1.GetInstalledPackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "namespace-1"},
+				Context: &corev1.Context{Namespace: "test"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
@@ -160,13 +161,13 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
+				redis_existing_spec_completed,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					redis_summary_installed,
+					airflow_summary_installed,
 				},
 				NextPageToken: "1",
 			},
@@ -181,13 +182,13 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_completed,
 				airflow_existing_spec_completed,
+				redis_existing_spec_completed,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					airflow_summary_installed,
+					redis_summary_installed,
 				},
 				NextPageToken: "2",
 			},
@@ -241,6 +242,24 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				},
 			},
 		},
+		{
+			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// this is testing a configuration where a customer has manually set a
+			// .targetNamespace field of Flux HelmRelease CR
+			name: "returns installed packages when HelmRelease targetNamespace is set",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "test"},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_target_ns_is_set,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					redis_summary_installed,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -253,6 +272,10 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			defer cleanup()
 
 			for i, existing := range tc.existingObjs {
+				// TODO (gfichtenholt) FIX THIS there is a bug lurking here
+				// when asking for a limited set of results, this will only set the redis
+				// mock expectations for a subset of the repos. There is no guarantee that the
+				// server will return the results in the order that is expected by the test
 				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
 					pageOffset, err := paginate.PageOffsetFromInstalledRequest(tc.request)
 					if err != nil {
@@ -266,7 +289,8 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					}
 				}
 
-				ts2, repo, err := newRepoWithIndex(existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
+				ts2, repo, err := newRepoWithIndex(
+					existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -300,8 +324,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				corev1.InstalledPackageStatus{},
 				corev1.PackageAppVersion{},
 				plugins.Plugin{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			opts2 := cmpopts.SortSlices(lessInstalledPackageSummaryFunc)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
 			}
 
 			// we make sure that all expectations were met
@@ -325,9 +350,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 	testCases := []struct {
 		name               string
 		request            *corev1.GetInstalledPackageDetailRequest
-		existingK8sObjs    []testSpecGetInstalledPackages
-		targetNamespace    string // this is where installation would actually place artifacts
-		existingHelmStubs  []helmReleaseStub
+		existingK8sObjs    testSpecGetInstalledPackages
+		existingHelmStub   helmReleaseStub
 		expectedStatusCode codes.Code
 		expectedDetail     *corev1.InstalledPackageDetail
 	}{
@@ -336,12 +360,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_failed,
-			},
-			existingHelmStubs: []helmReleaseStub{
-				redis_existing_stub_failed,
-			},
+			existingK8sObjs:    redis_existing_spec_failed,
+			existingHelmStub:   redis_existing_stub_failed,
 			expectedStatusCode: codes.OK,
 			expectedDetail:     redis_detail_failed,
 		},
@@ -350,12 +370,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_pending,
-			},
-			existingHelmStubs: []helmReleaseStub{
-				redis_existing_stub_pending,
-			},
+			existingK8sObjs:    redis_existing_spec_pending,
+			existingHelmStub:   redis_existing_stub_pending,
 			expectedStatusCode: codes.OK,
 			expectedDetail:     redis_detail_pending,
 		},
@@ -364,12 +380,8 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_completed,
-			},
-			existingHelmStubs: []helmReleaseStub{
-				redis_existing_stub_completed,
-			},
+			existingK8sObjs:    redis_existing_spec_completed,
+			existingHelmStub:   redis_existing_stub_completed,
 			expectedStatusCode: codes.OK,
 			expectedDetail:     redis_detail_completed,
 		},
@@ -378,9 +390,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: installedRef("dontworrybehappy", "namespace-1"),
 			},
-			existingK8sObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_completed,
-			},
+			existingK8sObjs:    redis_existing_spec_completed,
 			expectedStatusCode: codes.NotFound,
 		},
 		{
@@ -388,22 +398,37 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_completed_with_values_and_reconciliation_options,
-			},
-			existingHelmStubs: []helmReleaseStub{
-				redis_existing_stub_completed,
-			},
+			existingK8sObjs:    redis_existing_spec_completed_with_values_and_reconciliation_options,
+			existingHelmStub:   redis_existing_stub_completed,
 			expectedStatusCode: codes.OK,
 			expectedDetail:     redis_detail_completed_with_values_and_reconciliation_options,
+		},
+		{
+			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// this is testing a configuration where a customer has manually set a
+			// .targetNamespace field of Flux HelmRelease CR
+			name: "returns installed package detail when targetNamespace is set",
+			request: &corev1.GetInstalledPackageDetailRequest{
+				InstalledPackageRef: my_redis_ref,
+			},
+			existingK8sObjs:    redis_existing_spec_target_ns_is_set,
+			existingHelmStub:   redis_existing_stub_target_ns_is_set,
+			expectedStatusCode: codes.OK,
+			expectedDetail:     redis_detail_completed,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
+			runtimeObjs, cleanup := newRuntimeObjects(t, []testSpecGetInstalledPackages{tc.existingK8sObjs})
 			defer cleanup()
-			actionConfig := newHelmActionConfig(t, tc.targetNamespace, tc.existingHelmStubs)
+			helmReleaseNamespace := tc.existingK8sObjs.targetNamespace
+			if helmReleaseNamespace == "" {
+				// this would be most cases now
+				helmReleaseNamespace = tc.existingK8sObjs.releaseNamespace
+			}
+			actionConfig := newHelmActionConfig(
+				t, helmReleaseNamespace, []helmReleaseStub{tc.existingHelmStub})
 			s, mock, _, err := newServerWithChartsAndReleases(t, actionConfig, runtimeObjs...)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -512,7 +537,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedRelease:    flux_helm_release_reconcile_options,
 		},
 		{
-			name: "create package (values override)",
+			name: "create package (values JSON override)",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 				Name:                "my-podinfo",
@@ -520,6 +545,25 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Namespace: "test",
 				},
 				Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+			},
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     "testdata/podinfo-index.yaml",
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   create_installed_package_resp_my_podinfo,
+			expectedRelease:    flux_helm_release_values,
+		},
+		{
+			name: "create package (values YAML override)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+				Name:                "my-podinfo",
+				TargetContext: &corev1.Context{
+					Namespace: "test",
+				},
+				Values: "# Default values for podinfo.\n---\nui:\n  message: what we do in the shadows",
 			},
 			existingObjs: testSpecCreateInstalledPackage{
 				repoName:      "podinfo",
@@ -614,7 +658,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name               string
 		request            *corev1.UpdateInstalledPackageRequest
-		existingK8sObjs    []testSpecGetInstalledPackages
+		existingK8sObjs    *testSpecGetInstalledPackages
 		expectedStatusCode codes.Code
 		expectedResponse   *corev1.UpdateInstalledPackageResponse
 		expectedRelease    *helmv2.HelmRelease
@@ -627,9 +671,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Version: ">14.4.0",
 				},
 			},
-			existingK8sObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_completed,
-			},
+			existingK8sObjs:    &redis_existing_spec_completed,
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
@@ -643,11 +685,59 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			},
 			expectedStatusCode: codes.NotFound,
 		},
+		{
+			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// this is testing a configuration where a customer has manually set a
+			// .targetNamespace field of Flux HelmRelease CR
+			name: "updates a package when targetNamespace is set",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				PkgVersionReference: &corev1.VersionReference{
+					Version: ">14.4.0",
+				},
+			},
+			existingK8sObjs:    &redis_existing_spec_target_ns_is_set,
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: my_redis_ref,
+			},
+			expectedRelease: flux_helm_release_updated_target_ns_is_set,
+		},
+		{
+			name: "update package (values JSON override)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				Values:              "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+			},
+			existingK8sObjs:    &redis_existing_spec_completed,
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: my_redis_ref,
+			},
+			expectedRelease: flux_helm_release_updated_2,
+		},
+		{
+			name: "update package (values YAML override)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				Values:              "# Default values.\n---\nui:\n  message: what we do in the shadows",
+			},
+			existingK8sObjs:    &redis_existing_spec_completed,
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: my_redis_ref,
+			},
+			expectedRelease: flux_helm_release_updated_2,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
+			existingObjs := []testSpecGetInstalledPackages(nil)
+			if tc.existingK8sObjs != nil {
+				existingObjs = []testSpecGetInstalledPackages{*tc.existingK8sObjs}
+			}
+			runtimeObjs, cleanup := newRuntimeObjects(t, existingObjs)
 			defer cleanup()
 			s, mock, _, err := newServerWithChartsAndReleases(t, nil, runtimeObjs...)
 			if err != nil {
@@ -795,9 +885,8 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	// sanity check
-	if len(resourcerefstest.TestCases2) < 11 {
-		t.Fatalf("Expected array [resourcerefstest.TestCases2] size of at least 11")
-		return
+	if len(resourcerefstest.TestCases2) < 12 {
+		t.Fatalf("Expected array [resourcerefstest.TestCases2] size of at least 12")
 	}
 
 	type testCase struct {
@@ -805,29 +894,30 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		request            *corev1.GetInstalledPackageResourceRefsRequest
 		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
 		expectedStatusCode codes.Code
+		targetNamespaceSet bool
 	}
+
+	// Using the redis_existing_stub_completed data with
+	// different manifests for each test.
+	var (
+		flux_obj_namespace = redis_existing_spec_completed.releaseNamespace
+		flux_obj_name      = redis_existing_spec_completed.releaseName
+	)
 
 	// newTestCase is a function to take an existing test-case
 	// (a so-called baseTestCase in pkg/resourcerefs module, which contains a LOT of useful data)
 	// and "enrich" it with some new fields to create a different kind of test case
 	// that tests server.GetInstalledPackageResourceRefs() func
-	newTestCase := func(tc int, response bool, code codes.Code) testCase {
-		// Using the redis_existing_stub_completed data with
-		// different manifests for each test.
-		var (
-			releaseNamespace = redis_existing_stub_completed.namespace
-			releaseName      = redis_existing_stub_completed.name
-		)
-
+	newTestCase := func(tc int, response bool, code codes.Code, targetNamespaceSet bool) testCase {
 		newCase := testCase{
 			baseTestCase: resourcerefstest.TestCases2[tc],
 			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
 						Cluster:   "default",
-						Namespace: releaseNamespace,
+						Namespace: flux_obj_namespace,
 					},
-					Identifier: releaseName,
+					Identifier: flux_obj_name,
 				},
 			},
 		}
@@ -835,29 +925,34 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			newCase.expectedResponse = &corev1.GetInstalledPackageResourceRefsResponse{
 				Context: &corev1.Context{
 					Cluster:   "default",
-					Namespace: releaseNamespace,
+					Namespace: flux_obj_namespace,
 				},
 				ResourceRefs: resourcerefstest.TestCases2[tc].ExpectedResourceRefs,
 			}
 		}
 		newCase.expectedStatusCode = code
+		newCase.targetNamespaceSet = targetNamespaceSet
 		return newCase
 	}
 
 	testCases := []testCase{
-		newTestCase(0, true, codes.OK),
-		newTestCase(1, true, codes.OK),
-		newTestCase(2, true, codes.OK),
-		newTestCase(3, true, codes.OK),
-		newTestCase(4, false, codes.NotFound),
-		newTestCase(5, false, codes.Internal),
+		newTestCase(0, true, codes.OK, false),
+		newTestCase(1, true, codes.OK, false),
+		newTestCase(2, true, codes.OK, false),
+		newTestCase(3, true, codes.OK, false),
+		newTestCase(4, false, codes.NotFound, false),
+		newTestCase(5, false, codes.Internal, false),
 		// See https://github.com/kubeapps/kubeapps/issues/632
-		newTestCase(6, true, codes.OK),
-		newTestCase(7, true, codes.OK),
-		newTestCase(8, true, codes.OK),
+		newTestCase(6, true, codes.OK, false),
+		newTestCase(7, true, codes.OK, false),
+		newTestCase(8, true, codes.OK, false),
 		// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
-		newTestCase(9, true, codes.OK),
-		newTestCase(10, true, codes.OK),
+		newTestCase(9, true, codes.OK, false),
+		newTestCase(10, true, codes.OK, false),
+		// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+		// this is testing a configuration where a customer has manually set a
+		// .targetNamespace field of Flux HelmRelease CR
+		newTestCase(11, true, codes.OK, true),
 	}
 
 	ignoredFields := cmpopts.IgnoreUnexported(
@@ -869,18 +964,32 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	toHelmReleaseStubs := func(in []resourcerefstest.TestReleaseStub) []helmReleaseStub {
 		out := []helmReleaseStub{}
 		for _, r := range in {
-			out = append(out, helmReleaseStub{name: r.Name, namespace: r.Namespace, manifest: r.Manifest})
+			s := helmReleaseStub{
+				name:      r.Name,
+				namespace: r.Namespace,
+				manifest:  r.Manifest,
+			}
+			out = append(out, s)
 		}
 		return out
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.baseTestCase.Name, func(t *testing.T) {
-			runtimeObjs, cleanup := newRuntimeObjects(t, []testSpecGetInstalledPackages{redis_existing_spec_completed})
+			var spec testSpecGetInstalledPackages
+			var helmReleaseNamespace string
+			if !tc.targetNamespaceSet {
+				spec = redis_existing_spec_completed
+				helmReleaseNamespace = flux_obj_namespace
+			} else {
+				spec = redis_existing_spec_target_ns_is_set
+				helmReleaseNamespace = "test2"
+			}
+			runtimeObjs, cleanup := newRuntimeObjects(t, []testSpecGetInstalledPackages{spec})
 			defer cleanup()
 			actionConfig := newHelmActionConfig(
 				t,
-				tc.request.InstalledPackageRef.GetContext().GetNamespace(),
+				helmReleaseNamespace,
 				toHelmReleaseStubs(tc.baseTestCase.ExistingReleases))
 			server, mock, _, err := newServerWithChartsAndReleases(t, actionConfig, runtimeObjs...)
 			if err != nil {
@@ -977,11 +1086,9 @@ func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPacka
 				},
 			},
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
-			Install: &helmv2.Install{
-				CreateNamespace: true,
-			},
 		}
-		if len(existing.targetNamespace) != 0 {
+		if existing.targetNamespace != "" {
+			// now this is only used when Flux CRs are not created by kubeapps
 			releaseSpec.TargetNamespace = existing.targetNamespace
 		}
 		if existing.releaseValues != nil {
@@ -1065,6 +1172,11 @@ func compareJSON(t *testing.T, expectedJSON, actualJSON *v1.JSON) {
 		actualJSONString = string(actualJSON.Raw)
 	}
 	compareJSONStrings(t, expectedJSONString, actualJSONString)
+}
+
+// these are helpers to compare slices ignoring order
+func lessInstalledPackageSummaryFunc(p1, p2 *corev1.InstalledPackageSummary) bool {
+	return p1.Name < p2.Name
 }
 
 func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {
@@ -1208,7 +1320,7 @@ var (
 		UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
 	}
 
-	my_redis_ref = installedRef("my-redis", "namespace-1")
+	my_redis_ref = installedRef("my-redis", "test")
 
 	redis_summary_installed = &corev1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
@@ -1373,7 +1485,7 @@ var (
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
 		releaseName:          "my-redis",
-		releaseNamespace:     "namespace-1",
+		releaseNamespace:     "test",
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1395,11 +1507,10 @@ var (
 			LastAppliedRevision:   "14.4.0",
 			LastAttemptedRevision: "14.4.0",
 		},
-		targetNamespace: "test",
 	}
 
 	redis_existing_stub_completed = helmReleaseStub{
-		name:         "test-my-redis",
+		name:         "my-redis",
 		namespace:    "test",
 		chartVersion: "14.4.0",
 		notes:        "some notes",
@@ -1422,7 +1533,7 @@ var (
 		chartSpecVersion:          "14.4.0",
 		chartArtifactVersion:      "14.4.0",
 		releaseName:               "my-redis",
-		releaseNamespace:          "namespace-1",
+		releaseNamespace:          "test",
 		releaseSuspend:            true,
 		releaseServiceAccountName: "foo",
 		releaseValues:             &v1.JSON{Raw: redis_existing_spec_completed_with_values_and_reconciliation_options_values_bytes},
@@ -1447,7 +1558,6 @@ var (
 			LastAppliedRevision:   "14.4.0",
 			LastAttemptedRevision: "14.4.0",
 		},
-		targetNamespace: "test",
 	}
 
 	redis_existing_spec_failed = testSpecGetInstalledPackages{
@@ -1459,7 +1569,7 @@ var (
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
 		releaseName:          "my-redis",
-		releaseNamespace:     "namespace-1",
+		releaseNamespace:     "test",
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1482,11 +1592,10 @@ var (
 			InstallFailures:       1,
 			LastAttemptedRevision: "14.4.0",
 		},
-		targetNamespace: "test",
 	}
 
 	redis_existing_stub_failed = helmReleaseStub{
-		name:         "test-my-redis",
+		name:         "my-redis",
 		namespace:    "test",
 		chartVersion: "14.4.0",
 		notes:        "some notes",
@@ -1568,7 +1677,7 @@ var (
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
 		releaseName:          "my-redis",
-		releaseNamespace:     "namespace-1",
+		releaseNamespace:     "test",
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1582,7 +1691,6 @@ var (
 			HelmChart:             "default/redis",
 			LastAttemptedRevision: "14.4.0",
 		},
-		targetNamespace: "test",
 	}
 
 	redis_existing_spec_pending_2 = testSpecGetInstalledPackages{
@@ -1594,7 +1702,7 @@ var (
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
 		releaseName:          "my-redis",
-		releaseNamespace:     "namespace-1",
+		releaseNamespace:     "test",
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1612,7 +1720,7 @@ var (
 	}
 
 	redis_existing_stub_pending = helmReleaseStub{
-		name:         "test-my-redis",
+		name:         "my-redis",
 		namespace:    "test",
 		chartVersion: "14.4.0",
 		notes:        "some notes",
@@ -1628,7 +1736,7 @@ var (
 		chartSpecVersion:     "*",
 		chartArtifactVersion: "14.4.0",
 		releaseName:          "my-redis",
-		releaseNamespace:     "namespace-1",
+		releaseNamespace:     "test",
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1755,8 +1863,7 @@ var (
 					},
 				},
 			},
-			Interval:        metav1.Duration{Duration: 1 * time.Minute},
-			TargetNamespace: "test",
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		},
 	}
 
@@ -1781,8 +1888,7 @@ var (
 					Version: "> 5",
 				},
 			},
-			Interval:        metav1.Duration{Duration: 1 * time.Minute},
-			TargetNamespace: "test",
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		},
 	}
 
@@ -1809,7 +1915,6 @@ var (
 			Interval:           metav1.Duration{Duration: 1 * time.Minute},
 			ServiceAccountName: "foo",
 			Suspend:            false,
-			TargetNamespace:    "test",
 		},
 	}
 
@@ -1839,9 +1944,8 @@ var (
 					},
 				},
 			},
-			Interval:        metav1.Duration{Duration: 1 * time.Minute},
-			TargetNamespace: "test",
-			Values:          &v1.JSON{Raw: flux_helm_release_values_values_bytes},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+			Values:   &v1.JSON{Raw: flux_helm_release_values_values_bytes},
 		},
 	}
 
@@ -1856,7 +1960,7 @@ var (
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "my-redis",
-			Namespace:       "namespace-1",
+			Namespace:       "test",
 			Generation:      int64(1),
 			ResourceVersion: "1",
 		},
@@ -1872,11 +1976,104 @@ var (
 					Version: ">14.4.0",
 				},
 			},
-			Install: &helmv2.Install{
-				CreateNamespace: true,
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
+
+	flux_helm_release_updated_2 = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-redis",
+			Namespace:       "test",
+			Generation:      int64(1),
+			ResourceVersion: "1",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Chart: "redis",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "bitnami-1",
+						Namespace: "default",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+			Values:   &v1.JSON{Raw: flux_helm_release_values_values_bytes},
+		},
+	}
+
+	redis_existing_spec_target_ns_is_set = testSpecGetInstalledPackages{
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            "testdata/redis-many-versions.yaml",
+		chartName:            "redis",
+		chartTarGz:           "testdata/redis-14.4.0.tgz",
+		chartSpecVersion:     "14.4.0",
+		chartArtifactVersion: "14.4.0",
+		releaseName:          "my-redis",
+		releaseNamespace:     "test",
+		releaseStatus: helmv2.HelmReleaseStatus{
+			Conditions: []metav1.Condition{
+				{
+					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+					Type:               "Ready",
+					Status:             "True",
+					Reason:             "ReconciliationSucceeded",
+					Message:            "Release reconciliation succeeded",
+				},
+				{
+					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+					Type:               "Released",
+					Status:             "True",
+					Reason:             helmv2.InstallSucceededReason,
+					Message:            "Helm install succeeded",
+				},
+			},
+			HelmChart:             "default/redis",
+			LastAppliedRevision:   "14.4.0",
+			LastAttemptedRevision: "14.4.0",
+		},
+		targetNamespace: "test2",
+	}
+
+	redis_existing_stub_target_ns_is_set = helmReleaseStub{
+		name:         "test2-my-redis",
+		namespace:    "test2",
+		chartVersion: "14.4.0",
+		notes:        "some notes",
+		status:       release.StatusDeployed,
+	}
+
+	flux_helm_release_updated_target_ns_is_set = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-redis",
+			Namespace:       "test",
+			Generation:      int64(1),
+			ResourceVersion: "1",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Chart: "redis",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "bitnami-1",
+						Namespace: "default",
+					},
+					Version: ">14.4.0",
+				},
 			},
 			Interval:        metav1.Duration{Duration: 1 * time.Minute},
-			TargetNamespace: "test",
+			TargetNamespace: "test2",
 		},
 	}
 )

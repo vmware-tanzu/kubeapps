@@ -29,6 +29,7 @@ import (
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -2305,6 +2306,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 		request                *corev1.CreateInstalledPackageRequest
 		pluginConfig           *kappControllerPluginParsedConfig
 		existingObjects        []runtime.Object
+		existingTypedObjects   []runtime.Object
 		expectedStatusCode     codes.Code
 		expectedResponse       *corev1.CreateInstalledPackageResponse
 		expectedPackageInstall *packagingv1alpha1.PackageInstall
@@ -2397,6 +2399,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -2512,6 +2529,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.Internal,
 		},
 		{
@@ -2603,6 +2635,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -2747,6 +2794,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -2819,8 +2881,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: nil,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -2886,6 +2949,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -2962,8 +3040,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: []string{},
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -3029,6 +3108,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -3105,8 +3199,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: []string{"rc"},
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -3172,6 +3267,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -3315,6 +3425,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -3388,7 +3513,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               major,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -3454,6 +3580,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -3530,7 +3671,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               minor,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -3596,6 +3738,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 							Stdout: "inspectStdout",
 							Stderr: "inspectStderr",
 						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
 					},
 				},
 			},
@@ -3672,7 +3829,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               patch,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
@@ -3741,6 +3899,21 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
@@ -3789,6 +3962,165 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "create installed package (defaultAllowDowngrades: true)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1",
+				},
+				Name: "my-installation",
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
+			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             true,
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&kappctrlv1alpha1.App{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       appResource,
+						APIVersion: kappctrlAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: kappctrlv1alpha1.AppSpec{
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					},
+					Status: kappctrlv1alpha1.AppStatus{
+						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+							Stdout: "deployStdout",
+							Stderr: "deployStderr",
+						},
+						Fetch: &kappctrlv1alpha1.AppStatusFetch{
+							Stdout: "fetchStdout",
+							Stderr: "fetchStderr",
+						},
+						Inspect: &kappctrlv1alpha1.AppStatusInspect{
+							Stdout: "inspectStdout",
+							Stderr: "inspectStderr",
+						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.CreateInstalledPackageResponse{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			expectedPackageInstall: &packagingv1alpha1.PackageInstall{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgInstallResource,
+					APIVersion: packagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "default",
+					Name:        "my-installation",
+					Annotations: map[string]string{kappctrlpackageinstall.DowngradableAnnKey: ""},
+				},
+				Spec: packagingv1alpha1.PackageInstallSpec{
+					ServiceAccountName: "default",
+					PackageRef: &packagingv1alpha1.PackageRef{
+						RefName: "tetris.foo.example.com",
+						VersionSelection: &vendirversions.VersionSelectionSemver{
+							Constraints: "1.0.0",
+						},
+					},
+					Values: []packagingv1alpha1.PackageInstallValues{{
+						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+							Name: "my-installation-default-values",
+						},
+					},
+					},
+					Paused:     false,
+					Canceled:   false,
+					SyncPeriod: nil,
+					NoopDelete: false,
+				},
+				Status: packagingv1alpha1.PackageInstallStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						ObservedGeneration:  0,
+						Conditions:          nil,
+						FriendlyDescription: "",
+						UsefulErrorMessage:  "",
+					},
+					Version:              "",
+					LastAttemptedVersion: "",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -3812,7 +4144,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			s := Server{
 				pluginConfig: tc.pluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(typfake.NewSimpleClientset(), dynamicClient, nil), nil
+					return clientgetter.NewClientInterfaces(typfake.NewSimpleClientset(tc.existingTypedObjects...), dynamicClient, nil), nil
 				},
 			}
 
@@ -4346,6 +4678,20 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						}},
 					},
 				},
+				// Although it's a typical k8s object, it is retrieved with the dynamic client
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
 			},
 			existingTypedObjects: []runtime.Object{
 				&k8scorev1.ConfigMap{
@@ -4390,6 +4736,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					GroupVersion: "v1",
 					APIResources: []metav1.APIResource{
 						{Name: "pods", Namespaced: true, Kind: "Pod", Verbs: []string{"list", "get"}},
+						{Name: "configmaps", Namespaced: true, Kind: "ConfigMap", Verbs: []string{"list", "get"}},
 					},
 				},
 			}
@@ -4407,7 +4754,8 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 					// If more resources types are added, this will need to be updated accordingly
-					{Group: "", Version: "v1", Resource: "pods"}: "Pod" + "List",
+					{Group: "", Version: "v1", Resource: "pods"}:       "Pod" + "List",
+					{Group: "", Version: "v1", Resource: "configmaps"}: "ConfigMap" + "List",
 				},
 				unstructuredObjects...,
 			)
@@ -4597,11 +4945,8 @@ kappController:
   packages:
     v1alpha1:
       `),
-			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
-			},
-			expectedErrorStr: "",
+			expectedPluginConfig: defaultPluginConfig,
+			expectedErrorStr:     "",
 		},
 		{
 			name: "defaultUpgradePolicy: major",
@@ -4613,7 +4958,8 @@ kappController:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               major,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			expectedErrorStr: "",
 		},
@@ -4627,7 +4973,8 @@ kappController:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               minor,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			expectedErrorStr: "",
 		},
@@ -4641,7 +4988,8 @@ kappController:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               patch,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			expectedErrorStr: "",
 		},
@@ -4655,7 +5003,8 @@ kappController:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
 				defaultUpgradePolicy:               none,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			expectedErrorStr: "",
 		},
@@ -4667,8 +5016,9 @@ kappController:
     v1alpha1:
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: nil,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			expectedErrorStr: "",
 		},
@@ -4681,8 +5031,9 @@ kappController:
       defaultPrereleasesVersionSelection: null
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: nil,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			expectedErrorStr: "",
 		},
@@ -4695,8 +5046,9 @@ kappController:
       defaultPrereleasesVersionSelection: []
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: []string{},
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			expectedErrorStr: "",
 		},
@@ -4709,8 +5061,9 @@ kappController:
       defaultPrereleasesVersionSelection: ["foo"]
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: []string{"foo"},
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
 			expectedErrorStr: "",
 		},
@@ -4723,8 +5076,39 @@ kappController:
       defaultPrereleasesVersionSelection: ["foo","bar"]
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: []string{"foo", "bar"},
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
+			},
+			expectedErrorStr: "",
+		},
+		{
+			name: "defaultAllowDowngrades: false",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultPrereleasesVersionSelection: false
+        `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: []string{"foo", "bar"},
+				defaultAllowDowngrades:             false,
+			},
+			expectedErrorStr: "",
+		},
+		{
+			name: "defaultAllowDowngrades: true",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultPrereleasesVersionSelection: true
+        `),
+			expectedPluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: []string{"foo", "bar"},
+				defaultAllowDowngrades:             true,
 			},
 			expectedErrorStr: "",
 		},
@@ -4736,11 +5120,8 @@ kappController:
     v1alpha1:
       defaultUpgradePolicy: foo
       `),
-			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
-			},
-			expectedErrorStr: "unable to parse DefaultUpgradePolicy",
+			expectedPluginConfig: defaultPluginConfig,
+			expectedErrorStr:     "unable to parse DefaultUpgradePolicy",
 		},
 		{
 			name: "invalid defaultUpgradePolicy",
@@ -4750,11 +5131,8 @@ kappController:
     v1alpha1:
       defaultUpgradePolicy: 10.09
       `),
-			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
-			},
-			expectedErrorStr: "json: cannot unmarshal",
+			expectedPluginConfig: defaultPluginConfig,
+			expectedErrorStr:     "json: cannot unmarshal",
 		},
 		{
 			name: "invalid defaultPrereleasesVersionSelection",
@@ -4764,11 +5142,8 @@ kappController:
     v1alpha1:
       defaultPrereleasesVersionSelection: trueish
       `),
-			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
-			},
-			expectedErrorStr: "json: cannot unmarshal",
+			expectedPluginConfig: defaultPluginConfig,
+			expectedErrorStr:     "json: cannot unmarshal",
 		},
 		{
 			name: "invalid defaultPrereleasesVersionSelection",
@@ -4778,11 +5153,30 @@ kappController:
     v1alpha1:
       defaultPrereleasesVersionSelection: 10.09
       `),
-			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
-				defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
-			},
-			expectedErrorStr: "json: cannot unmarshal",
+			expectedPluginConfig: defaultPluginConfig,
+			expectedErrorStr:     "json: cannot unmarshal",
+		},
+		{
+			name: "invalid defaultAllowDowngrades",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultAllowDowngrades: trueish
+      `),
+			expectedPluginConfig: defaultPluginConfig,
+			expectedErrorStr:     "json: cannot unmarshal",
+		},
+		{
+			name: "invalid defaultPrereleasesVersionSelection",
+			pluginYAMLConf: []byte(`
+kappController:
+  packages:
+    v1alpha1:
+      defaultAllowDowngrades: 10.09
+      `),
+			expectedPluginConfig: defaultPluginConfig,
+			expectedErrorStr:     "json: cannot unmarshal",
 		},
 	}
 	for _, tc := range testCases {

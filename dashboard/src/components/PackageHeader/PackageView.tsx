@@ -65,7 +65,10 @@ export default function PackageView() {
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.packages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
+      actions.availablepackages.fetchAndSelectAvailablePackageDetail(
+        packageReference,
+        packageVersion,
+      ),
     );
     return () => {};
   }, [dispatch, packageReference, packageVersion]);
@@ -73,7 +76,7 @@ export default function PackageView() {
   // Fetch all versions
   useEffect(() => {
     dispatch(
-      actions.packages.fetchAvailablePackageVersions({
+      actions.availablepackages.fetchAvailablePackageVersions({
         context: { cluster: packageCluster, namespace: packageNamespace },
         plugin: { name: pluginName, version: pluginVersion } as Plugin,
         identifier: packageId,

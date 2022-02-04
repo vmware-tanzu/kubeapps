@@ -230,7 +230,7 @@ describe("AppView", () => {
       ] as ResourceRef[];
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
+        getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -253,7 +253,7 @@ describe("AppView", () => {
       ] as ResourceRef[];
 
       const wrapper = mountWrapper(
-        getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
+        getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -315,7 +315,7 @@ describe("AppView", () => {
   it("forwards statefulsets and daemonsets to the application status", () => {
     const apiResourceRefs = [resourceRefs.statefulset, resourceRefs.daemonset] as ResourceRef[];
     const wrapper = mountWrapper(
-      getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } }),
+      getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <AppView />
@@ -338,7 +338,7 @@ describe("AppView actions", () => {
       resourceRefs.service,
       resourceRefs.secret,
     ] as ResourceRef[];
-    const store = getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } });
+    const store = getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } });
 
     mountWrapper(
       store,
@@ -351,7 +351,10 @@ describe("AppView actions", () => {
 
     expect(store.getActions()).toEqual([
       {
-        type: getType(actions.apps.requestApps),
+        type: getType(actions.installedpackages.requestInstalledPackage),
+      },
+      {
+        type: getType(actions.installedpackages.requestInstalledPkgResourceRefs),
       },
       {
         type: getType(actions.kube.requestResources),
@@ -380,7 +383,7 @@ describe("AppView actions", () => {
   it("closes the watches when unmounted", async () => {
     const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as ResourceRef[];
 
-    const store = getStore({ apps: { selected: { ...installedPackage, apiResourceRefs } } });
+    const store = getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } });
     const wrapper = mountWrapper(
       store,
       <MemoryRouter initialEntries={[routePathParam]}>
@@ -394,7 +397,10 @@ describe("AppView actions", () => {
     const watch = true;
     expect(store.getActions()).toEqual([
       {
-        type: getType(actions.apps.requestApps),
+        type: getType(actions.installedpackages.requestInstalledPackage),
+      },
+      {
+        type: getType(actions.installedpackages.requestInstalledPkgResourceRefs),
       },
       {
         type: getType(actions.kube.requestResources),
