@@ -12,7 +12,7 @@ module.exports = {
   },
 
   getDeploymentTimeout: () => {
-    return process.env.SLOW_ENV ? 120000 : 60000;
+    return process.env.SLOW_ENV ? 240000 : 120000;
   },
 
   getUrl: path => `${process.env.INTEGRATION_ENTRYPOINT}${path}`,
@@ -27,7 +27,7 @@ module.exports = {
     }
   },
 
-  getAxiosInstance: async (page) => {
+  getAxiosInstance: async (page, token) => {
     const cookies = await page.context().cookies(page.url());
     const agent = new https.Agent({  
       rejectUnauthorized: false
@@ -35,6 +35,7 @@ module.exports = {
     const axiosConfig = {
       baseURL: `${process.env.INTEGRATION_ENTRYPOINT}`,
       headers: {
+        Authorization: `Bearer ${token}`,
         Cookie: `${cookies[0] ? cookies[0].name : ""}=${cookies[0] ? cookies[0].value : ""}`,
         Accept: "application/json"
       },

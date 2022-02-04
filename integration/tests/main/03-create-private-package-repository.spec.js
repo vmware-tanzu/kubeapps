@@ -10,6 +10,11 @@ test("Create a new private package repository successfully", async ({ page }) =>
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
 
+  // Change namespace to non-kubeapps
+  await page.click(".kubeapps-dropdown .kubeapps-nav-link");
+  await page.selectOption('select[name="namespaces"]', "default");
+  await page.click('cds-button:has-text("Change Context")');
+
   // Go to repos page
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
   await page.click('a.dropdown-menu-link:has-text("App Repositories")');
@@ -65,6 +70,11 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   // Assertions
   await page.waitForTimeout(5000);
+  await page.click('a.nav-link:has-text("Applications")');
+  await page.locator("input#search").type(appName);
+  await page.waitForTimeout(3000);
+  await page.click(`a .card-title:has-text("${appName}")`);
+
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
     timeout: utils.getDeploymentTimeout(),
   });
@@ -75,7 +85,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the resources API to get info of the
   // deployment
-  const axInstance = await utils.getAxiosInstance(page);
+  const axInstance = await utils.getAxiosInstance(page, k.token);
   const resourceResp = await axInstance.get(
     `/apis/plugins/resources/v1alpha1/helm.packages/v1alpha1/c/default/ns/default/${appName}`,
   );

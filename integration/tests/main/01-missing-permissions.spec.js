@@ -12,6 +12,11 @@ test.describe("Limited user simple deployments", () => {
     const k = new KubeappsLogin(page);
     await k.doLogin("kubeapps-user@example.com", "password", process.env.VIEW_TOKEN);
 
+    // Change to user's namespace using UI
+    await page.click(".kubeapps-dropdown .kubeapps-nav-link");
+    await page.selectOption('select[name="namespaces"]', "default");
+    await page.click('cds-button:has-text("Change Context")');
+
     // Select package to deploy
     await page.click('a.nav-link:has-text("Catalog")');
     await page.click('a .card-title:has-text("apache")');
