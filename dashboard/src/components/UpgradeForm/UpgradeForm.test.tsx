@@ -24,7 +24,12 @@ import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route } from "react-router-dom";
 import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { CustomInstalledPackageDetail, FetchError, IAppState, IPackageState } from "shared/types";
+import {
+  CustomInstalledPackageDetail,
+  FetchError,
+  IInstalledPackageState,
+  IPackageState,
+} from "shared/types";
 import * as url from "shared/url";
 import UpgradeForm from "./UpgradeForm";
 
@@ -201,7 +206,7 @@ it("fetches the available versions", () => {
       selected: installedPkgDetail,
       selectedDetails: availablePkgDetail,
       isFetching: false,
-    } as IAppState,
+    } as IInstalledPackageState,
   };
   mountWrapper(
     getStore({ ...state }),
@@ -228,7 +233,7 @@ it("hides the PackageVersionSelector in the PackageHeader", () => {
       selected: installedPkgDetail,
       selectedDetails: availablePkgDetail,
       isFetching: false,
-    } as IAppState,
+    } as IInstalledPackageState,
     packages: {
       selected: selectedPkg,
     } as IPackageState,
@@ -254,7 +259,7 @@ it("does not fetch the current package version if there is already one in the st
       selected: installedPkgDetail,
       selectedDetails: availablePkgDetail,
       isFetching: false,
-    } as IAppState,
+    } as IInstalledPackageState,
     packages: {
       selected: selectedPkg,
     } as IPackageState,
@@ -279,7 +284,7 @@ describe("renders an error", () => {
         selectedDetails: availablePkgDetail,
         isFetching: false,
         error: new FetchError("wrong format!"),
-      } as IAppState,
+      } as IInstalledPackageState,
       packages: {
         selected: {
           availablePackageDetail: availablePkgDetail,
@@ -316,7 +321,7 @@ it("defaults the upgrade version to the current version", () => {
       selected: installedPkgDetail,
       selectedDetails: availablePkgDetail,
       isFetching: false,
-    } as IAppState,
+    } as IInstalledPackageState,
     packages: {
       selected: selectedPkg,
     } as IPackageState,
@@ -337,7 +342,8 @@ it("uses the selected version passed in the component's props", () => {
   const mockDispatch = jest.fn().mockReturnValue(true);
   jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const fetchAndSelectAvailablePackageDetail = jest.fn();
-  actions.packages.fetchAndSelectAvailablePackageDetail = fetchAndSelectAvailablePackageDetail;
+  actions.availablepackages.fetchAndSelectAvailablePackageDetail =
+    fetchAndSelectAvailablePackageDetail;
 
   const state = {
     ...defaultStore,
@@ -345,7 +351,7 @@ it("uses the selected version passed in the component's props", () => {
       selected: installedPkgDetail,
       selectedDetails: availablePkgDetail,
       isFetching: false,
-    } as IAppState,
+    } as IInstalledPackageState,
     packages: {
       selected: {
         ...selectedPkg,
@@ -383,7 +389,7 @@ it("forwards the appValues when modified", () => {
       selected: { ...installedPkgDetail, valuesApplied: "foo: not-bar" },
       selectedDetails: { ...availablePkgDetail, defaultValues: "# A comment\nfoo: bar\n" },
       isFetching: false,
-    } as IAppState,
+    } as IInstalledPackageState,
     packages: {
       selected: { ...selectedPkg, values: "initial: values" },
     } as IPackageState,
@@ -412,7 +418,7 @@ it("triggers an upgrade when submitting the form", async () => {
   const mockDispatch = jest.fn().mockReturnValue(true);
   jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const updateInstalledPackage = jest.fn();
-  actions.apps.updateInstalledPackage = updateInstalledPackage;
+  actions.installedpackages.updateInstalledPackage = updateInstalledPackage;
 
   const appValues = 'initial: "values"\n"foo": "bar"\n';
   const state = {
@@ -421,7 +427,7 @@ it("triggers an upgrade when submitting the form", async () => {
       selected: { ...installedPkgDetail, valuesApplied: appValues },
       selectedDetails: availablePkgDetail,
       isFetching: false,
-    } as IAppState,
+    } as IInstalledPackageState,
     packages: {
       selected: selectedPkg,
     } as IPackageState,
@@ -476,7 +482,7 @@ describe("when receiving new props", () => {
         selected: { ...installedPkgDetail, valuesApplied: currentValues },
         selectedDetails: { ...availablePkgDetail, defaultValues: deployedValues },
         isFetching: false,
-      } as IAppState,
+      } as IInstalledPackageState,
       packages: {
         selected: { ...selectedPkg, values: defaultValues },
       } as IPackageState,
@@ -508,7 +514,7 @@ describe("when receiving new props", () => {
         selected: { ...installedPkgDetail, valuesApplied: currentValues },
         selectedDetails: { ...availablePkgDetail, defaultValues: deployedValues },
         isFetching: false,
-      } as IAppState,
+      } as IInstalledPackageState,
       packages: {
         selected: { ...selectedPkg, values: defaultValues },
       } as IPackageState,
@@ -535,7 +541,7 @@ describe("when receiving new props", () => {
         selected: installedPkgDetail,
         selectedDetails: availablePkgDetail,
         isFetching: false,
-      } as IAppState,
+      } as IInstalledPackageState,
       packages: {
         selected: selectedPkg,
       } as IPackageState,
@@ -647,7 +653,7 @@ describe("when receiving new props", () => {
           selected: { ...installedPkgDetail, valuesApplied: t.deployedValues },
           selectedDetails: { ...availablePkgDetail, defaultValues: t.defaultValues },
           isFetching: false,
-        } as IAppState,
+        } as IInstalledPackageState,
         packages: {
           selected: { ...selectedPkg, values: "initial: values" },
         } as IPackageState,
@@ -660,7 +666,7 @@ describe("when receiving new props", () => {
             ...state.apps.selected,
             values: t.deployedValues,
           },
-        } as IAppState,
+        } as IInstalledPackageState,
         packages: {
           selected: {
             ...state.packages.selected,
@@ -696,7 +702,7 @@ it("shows, by default, the default values of the deployed package plus any modif
       selected: { ...installedPkgDetail, valuesApplied: currentValues },
       selectedDetails: { ...availablePkgDetail, defaultValues: deployedValues },
       isFetching: false,
-    } as IAppState,
+    } as IInstalledPackageState,
     packages: {
       selected: { ...selectedPkg, values: defaultValues },
     } as IPackageState,
