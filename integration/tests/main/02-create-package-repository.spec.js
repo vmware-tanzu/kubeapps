@@ -6,7 +6,6 @@ const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
 
 test("Create a new package repository successfully", async ({ page }) => {
-
   // Log in
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
@@ -19,8 +18,8 @@ test("Create a new package repository successfully", async ({ page }) => {
   // Add new repo
   console.log('Creating repository "my-repo"');
   await page.click('cds-button:has-text("Add App Repository")');
-  await page.type("input#kubeapps-repo-name", "my-repo");
-  await page.type("input#kubeapps-repo-url", "https://charts.gitlab.io/");
+  await page.fill("input#kubeapps-repo-name", "my-repo");
+  await page.fill("input#kubeapps-repo-url", "https://charts.gitlab.io/");
   await page.click('cds-button:has-text("Install Repo")');
 
   // Wait for new packages to be indexed
@@ -35,6 +34,6 @@ test("Create a new package repository successfully", async ({ page }) => {
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
   await page.click('a.dropdown-menu-link:has-text("App Repositories")');
   await page.waitForTimeout(3000);
-  await page.click('cds-button#delete-repo-my-repo');
+  await page.click("cds-button#delete-repo-my-repo");
   await page.locator('cds-modal-actions button:has-text("Delete")').click();
 });

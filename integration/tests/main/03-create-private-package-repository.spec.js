@@ -6,6 +6,8 @@ const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
 
 test("Create a new private package repository successfully", async ({ page }) => {
+  const deployTimeout = utils.getDeploymentTimeout();
+
   // Log in
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
@@ -24,22 +26,22 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.click('cds-button:has-text("Add App Repository")');
   const repoName = utils.getRandomName("my-repo");
   console.log(`Creating repository "${repoName}"`);
-  await page.type("input#kubeapps-repo-name", repoName);
-  await page.type("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
+  await page.fill("input#kubeapps-repo-name", repoName);
+  await page.fill("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
 
   // Set credentials
   await page.click('label:has-text("Basic Auth")');
-  await page.type("input#kubeapps-repo-username", "admin");
-  await page.type("input#kubeapps-repo-password", "password");
+  await page.fill("input#kubeapps-repo-username", "admin");
+  await page.fill("input#kubeapps-repo-password", "password");
 
   // Create a new secret for Docker repo credentials
   const secretName = utils.getRandomName("my-repo-secret");
   await page.click('.docker-creds-subform-button button:has-text("Add new credentials")');
-  await page.type("input#kubeapps-docker-cred-secret-name", secretName);
-  await page.type("input#kubeapps-docker-cred-server", "https://index.docker.io/v1/");
-  await page.type("input#kubeapps-docker-cred-username", "user");
-  await page.type("input#kubeapps-docker-cred-password", "password");
-  await page.type("input#kubeapps-docker-cred-email", "user@example.com");
+  await page.fill("input#kubeapps-docker-cred-secret-name", secretName);
+  await page.fill("input#kubeapps-docker-cred-server", "https://index.docker.io/v1/");
+  await page.fill("input#kubeapps-docker-cred-username", "user");
+  await page.fill("input#kubeapps-docker-cred-password", "password");
+  await page.fill("input#kubeapps-docker-cred-email", "user@example.com");
   await page.click('.docker-creds-subform button:has-text("Submit")');
 
   // Select the newly created secret
@@ -62,24 +64,26 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await expect(releaseNameLocator).toHaveText("");
   const appName = utils.getRandomName("test-03-release");
   console.log(`Creating release "${appName}"`);
-  await releaseNameLocator.type(appName);
+  await releaseNameLocator.fill(appName);
 
   // Select version and deploy
   await page.locator('select[name="package-versions"]').selectOption("8.6.2");
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Assertions
+  // Wait for the app to be deployed and select it from "Applications"
   await page.waitForTimeout(5000);
   await page.click('a.nav-link:has-text("Applications")');
-  await page.locator("input#search").type(appName);
+  await page.waitForTimeout(3000); // Sometimes typing was too fast to get the result shown
+  await page.locator("input#search").fill(appName);
   await page.waitForTimeout(3000);
   await page.click(`a .card-title:has-text("${appName}")`);
 
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
-    timeout: utils.getDeploymentTimeout(),
+    timeout: deployTimeout,
   });
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
-    timeout: utils.getDeploymentTimeout(),
+    timeout: deployTimeout,
   });
 
   // Now that the deployment has been created, we check that the imagePullSecret
@@ -133,12 +137,19 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   // Check upgrade result
   await page.waitForSelector(".left-menu");
-  await expect(page.locator(".left-menu")).toContainText("Up to date");
+  // Wait for the app to be deployed and select it from "Applications"
+  await expect(page.locator(".left-menu")).toContainText("Up to date", { timeout: deployTimeout });
+  await page.waitForTimeout(5000);
+  await page.click('a.nav-link:has-text("Applications")');
+  await page.waitForTimeout(3000); // Sometimes typing was too fast to get the result shown
+  await page.locator("input#search").fill(appName);
+  await page.waitForTimeout(3000);
+  await page.click(`a .card-title:has-text("${appName}")`);
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
-    timeout: utils.getDeploymentTimeout(),
+    timeout: deployTimeout,
   });
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
-    timeout: utils.getDeploymentTimeout(),
+    timeout: deployTimeout,
   });
 
   // Clean up

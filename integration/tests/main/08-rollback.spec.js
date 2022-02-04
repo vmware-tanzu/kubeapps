@@ -16,7 +16,7 @@ test("Rolls back an application", async ({ page }) => {
   await page.click('a.nav-link:has-text("Catalog")');
   await page.click('.filters-menu label:has-text("bitnami")');
   await page.waitForSelector("input#search");
-  await page.locator("input#search").type("apache");
+  await page.locator("input#search").fill("apache");
   await page.waitForTimeout(3000);
 
   // Select package
@@ -31,7 +31,7 @@ test("Rolls back an application", async ({ page }) => {
   await expect(releaseNameLocator).toHaveText("");
   const releaseName = utils.getRandomName("test-08-rollback");
   console.log(`Creating release "${releaseName}"`);
-  await releaseNameLocator.type(releaseName);
+  await releaseNameLocator.fill(releaseName);
 
   // Trigger deploy
   await page.locator('cds-button:has-text("Deploy")').click();

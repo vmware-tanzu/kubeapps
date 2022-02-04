@@ -27,8 +27,8 @@ test.describe("Limited user simple deployments", () => {
     const repoName = utils.getRandomName("repo-test-09");
     console.log(`Creating repository "${repoName}"`);
     await page.click('cds-button:has-text("Add App Repository")');
-    await page.type("input#kubeapps-repo-name", repoName);
-    await page.type(
+    await page.fill("input#kubeapps-repo-name", repoName);
+    await page.fill(
       "input#kubeapps-repo-url",
       "https://prometheus-community.github.io/helm-charts",
     );
@@ -46,7 +46,7 @@ test.describe("Limited user simple deployments", () => {
 
     // Select package to deploy
     await page.click('a.nav-link:has-text("Catalog")');
-    await page.locator("input#search").type("alertmanager");
+    await page.locator("input#search").fill("alertmanager");
     await page.waitForTimeout(3000);
     await page.click('a:has-text("alertmanager")');
     await page.click('cds-button:has-text("Deploy") >> nth=0');
@@ -57,7 +57,7 @@ test.describe("Limited user simple deployments", () => {
     await expect(releaseNameLocator).toHaveText("");
     const releaseName = utils.getRandomName("test-09-release");
     console.log(`Creating release "${releaseName}"`);
-    await releaseNameLocator.type(releaseName);
+    await releaseNameLocator.fill(releaseName);
     await page.locator('cds-button:has-text("Deploy")').click();
 
     // Check that package is deployed
@@ -75,7 +75,8 @@ test.describe("Limited user simple deployments", () => {
 
     // Search for package deployed
     await page.click('a.nav-link:has-text("Applications")');
-    await page.locator("input#search").type("alertmanager");
+    await page.waitForTimeout(3000); // Sometimes typing was too fast to get the result shown
+    await page.locator("input#search").fill("alertmanager");
     await page.waitForTimeout(3000);
     const packageLocator = page.locator('a:has-text("alertmanager")');
     await expect(packageLocator).toHaveCount(0);
