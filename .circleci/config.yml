@@ -709,7 +709,7 @@ jobs:
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       USE_MULTICLUSTER_OIDC_ENV: "false"
-      SLOW_ENV: "1"
+      TEST_TIMEOUT: 6
       <<: *common_envars
   GKE_REGULAR_VERSION_LATEST_RELEASE:
     <<: *gke_test
@@ -717,14 +717,14 @@ jobs:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
-      SLOW_ENV: "1"
+      TEST_TIMEOUT: 6
       <<: *common_envars
   GKE_STABLE_VERSION_MAIN:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       USE_MULTICLUSTER_OIDC_ENV: "false"
-      SLOW_ENV: "1"
+      TEST_TIMEOUT: 6
       <<: *common_envars
   GKE_STABLE_VERSION_LATEST_RELEASE:
     <<: *gke_test
@@ -732,7 +732,7 @@ jobs:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       TEST_LATEST_RELEASE: 1
       USE_MULTICLUSTER_OIDC_ENV: "false"
-      SLOW_ENV: "1"
+      TEST_TIMEOUT: 6
       <<: *common_envars
   sync_chart_to_bitnami:
     environment:
