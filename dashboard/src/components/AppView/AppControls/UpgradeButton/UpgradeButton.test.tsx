@@ -25,8 +25,8 @@ const defaultProps = {
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.apps = {
-    ...actions.apps,
+  actions.installedpackages = {
+    ...actions.installedpackages,
     updateInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();

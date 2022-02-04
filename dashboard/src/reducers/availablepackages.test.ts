@@ -6,7 +6,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";
-import packageReducer from "./packages";
+import packageReducer from "./availablepackages";
 
 describe("packageReducer", () => {
   let initialState: IPackageState;
@@ -54,7 +54,7 @@ describe("packageReducer", () => {
 
   it("unsets an error when changing namespace", () => {
     const state = packageReducer(undefined, {
-      type: getType(actions.packages.createErrorPackage) as any,
+      type: getType(actions.availablepackages.createErrorPackage) as any,
       payload: error,
     });
     expect(state).toEqual({
@@ -75,7 +75,7 @@ describe("packageReducer", () => {
 
   it("requestAvailablePackageSummaries (without page)", () => {
     const state = packageReducer(undefined, {
-      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
       ...initialState,
@@ -85,7 +85,7 @@ describe("packageReducer", () => {
 
   it("requestAvailablePackageSummaries (with page)", () => {
     const state = packageReducer(undefined, {
-      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
       payload: 2,
     });
     expect(state).toEqual({
@@ -96,7 +96,7 @@ describe("packageReducer", () => {
 
   it("single receiveAvailablePackageSummaries (first page) should be returned", () => {
     const state = packageReducer(undefined, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -119,7 +119,7 @@ describe("packageReducer", () => {
     const state = packageReducer(
       { ...initialState },
       {
-        type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -143,7 +143,7 @@ describe("packageReducer", () => {
     const state = packageReducer(
       { ...initialState },
       {
-        type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -169,7 +169,7 @@ describe("packageReducer", () => {
         ...initialState,
       },
       {
-        type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
@@ -191,7 +191,7 @@ describe("packageReducer", () => {
 
   it("two receiveAvailablePackageSummaries should add items (no dups)", () => {
     const state1 = packageReducer(undefined, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -202,7 +202,7 @@ describe("packageReducer", () => {
       } as IReceivePackagesActionPayload,
     });
     const state2 = packageReducer(state1, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary2],
@@ -224,7 +224,7 @@ describe("packageReducer", () => {
 
   it("requestAvailablePackageSummaries and receiveAvailablePackageSummaries with multiple pages", () => {
     const stateReq1 = packageReducer(initialState, {
-      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
       payload: 1,
     });
     expect(stateReq1).toEqual({
@@ -234,7 +234,7 @@ describe("packageReducer", () => {
       items: [],
     });
     const stateRec1 = packageReducer(stateReq1, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -252,7 +252,7 @@ describe("packageReducer", () => {
       hasFinishedFetching: false,
     });
     const stateReq2 = packageReducer(stateRec1, {
-      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
       payload: 2,
     });
     expect(stateReq2).toEqual({
@@ -263,7 +263,7 @@ describe("packageReducer", () => {
       items: [availablePackageSummary1],
     });
     const stateRec2 = packageReducer(stateReq2, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary2],
@@ -281,7 +281,7 @@ describe("packageReducer", () => {
       items: [availablePackageSummary1, availablePackageSummary2],
     });
     const stateReq3 = packageReducer(stateRec2, {
-      type: getType(actions.packages.requestAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
       payload: 3,
     });
     expect(stateReq3).toEqual({
@@ -292,7 +292,7 @@ describe("packageReducer", () => {
       items: [availablePackageSummary1, availablePackageSummary2],
     });
     const stateRec3 = packageReducer(stateReq3, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -315,7 +315,7 @@ describe("packageReducer", () => {
 
   it("two receiveAvailablePackageSummaries and then createErrorPackage", () => {
     const state1 = packageReducer(undefined, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -326,7 +326,7 @@ describe("packageReducer", () => {
       } as IReceivePackagesActionPayload,
     });
     const state2 = packageReducer(state1, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [],
@@ -337,7 +337,7 @@ describe("packageReducer", () => {
       } as IReceivePackagesActionPayload,
     });
     const state3 = packageReducer(state2, {
-      type: getType(actions.packages.createErrorPackage) as any,
+      type: getType(actions.availablepackages.createErrorPackage) as any,
     });
     expect(state3).toEqual({
       ...initialState,
@@ -349,7 +349,7 @@ describe("packageReducer", () => {
 
   it("clears errors after clearErrorPackage", () => {
     const state1 = packageReducer(undefined, {
-      type: getType(actions.packages.receiveAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
@@ -360,10 +360,10 @@ describe("packageReducer", () => {
       } as IReceivePackagesActionPayload,
     });
     const state2 = packageReducer(state1, {
-      type: getType(actions.packages.createErrorPackage) as any,
+      type: getType(actions.availablepackages.createErrorPackage) as any,
     });
     const state3 = packageReducer(state2, {
-      type: getType(actions.packages.clearErrorPackage) as any,
+      type: getType(actions.availablepackages.clearErrorPackage) as any,
     });
     expect(state3).toEqual({
       ...initialState,
@@ -376,7 +376,7 @@ describe("packageReducer", () => {
 
   it("resetAvailablePackageSummaries resets to the initial", () => {
     const state = packageReducer(undefined, {
-      type: getType(actions.packages.resetAvailablePackageSummaries) as any,
+      type: getType(actions.availablepackages.resetAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
       ...initialState,
@@ -385,7 +385,7 @@ describe("packageReducer", () => {
 
   it("createErrorPackage resets to the initial state", () => {
     const state = packageReducer(undefined, {
-      type: getType(actions.packages.createErrorPackage) as any,
+      type: getType(actions.availablepackages.createErrorPackage) as any,
     });
     expect(state).toEqual({
       ...initialState,

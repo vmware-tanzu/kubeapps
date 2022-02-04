@@ -15,8 +15,8 @@ const defaultProps = {
 
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.packages = {
-    ...actions.packages,
+  actions.availablepackages = {
+    ...actions.availablepackages,
   };
 });
 

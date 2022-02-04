@@ -6,7 +6,7 @@ import { uniqBy } from "lodash";
 import { IPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { PackagesAction } from "../actions/packages";
+import { PackagesAction } from "../actions/availablepackages";
 import { NamespaceAction } from "../actions/namespace";
 
 export const initialState: IPackageState = {
@@ -25,7 +25,7 @@ const selectedPackageReducer = (
   action: PackagesAction | NamespaceAction,
 ): IPackageState["selected"] => {
   switch (action.type) {
-    case getType(actions.packages.receiveSelectedAvailablePackageDetail):
+    case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         error: undefined,
@@ -40,17 +40,17 @@ const selectedPackageReducer = (
             ? (JSON.parse(action.payload.selectedPackage.valuesSchema) as JSONSchemaType<any>)
             : ({} as JSONSchemaType<any>),
       };
-    case getType(actions.packages.receiveSelectedAvailablePackageVersions):
+    case getType(actions.availablepackages.receiveSelectedAvailablePackageVersions):
       return {
         ...state,
         error: undefined,
         versions: action.payload.packageAppVersions,
       };
-    case getType(actions.packages.createErrorPackage):
+    case getType(actions.availablepackages.createErrorPackage):
       return { ...state, error: action.payload };
-    case getType(actions.packages.clearErrorPackage):
+    case getType(actions.availablepackages.clearErrorPackage):
       return { ...state, error: undefined };
-    case getType(actions.packages.resetSelectedAvailablePackageDetail):
+    case getType(actions.availablepackages.resetSelectedAvailablePackageDetail):
       return initialState.selected;
     default:
   }
@@ -62,11 +62,11 @@ const packageReducer = (
   action: PackagesAction | NamespaceAction,
 ): IPackageState => {
   switch (action.type) {
-    case getType(actions.packages.requestAvailablePackageSummaries):
+    case getType(actions.availablepackages.requestAvailablePackageSummaries):
       return { ...state, isFetching: true };
-    case getType(actions.packages.requestSelectedAvailablePackageVersions):
+    case getType(actions.availablepackages.requestSelectedAvailablePackageVersions):
       return { ...state, isFetching: true };
-    case getType(actions.packages.receiveAvailablePackageSummaries): {
+    case getType(actions.availablepackages.receiveAvailablePackageSummaries): {
       const isLastPage =
         action.payload.page >= parseInt(action.payload.response.nextPageToken) ||
         action.payload.response.nextPageToken === "";
@@ -81,31 +81,31 @@ const packageReducer = (
         ),
       };
     }
-    case getType(actions.packages.receiveSelectedAvailablePackageVersions):
+    case getType(actions.availablepackages.receiveSelectedAvailablePackageVersions):
       return {
         ...state,
         isFetching: false,
         selected: selectedPackageReducer(state.selected, action),
       };
-    case getType(actions.packages.requestSelectedAvailablePackageDetail):
+    case getType(actions.availablepackages.requestSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: true,
         selected: selectedPackageReducer(state.selected, action),
       };
-    case getType(actions.packages.receiveSelectedAvailablePackageDetail):
+    case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
         selected: selectedPackageReducer(state.selected, action),
       };
-    case getType(actions.packages.resetAvailablePackageSummaries):
+    case getType(actions.availablepackages.resetAvailablePackageSummaries):
       return {
         ...state,
         hasFinishedFetching: false,
         items: [],
       };
-    case getType(actions.packages.createErrorPackage):
+    case getType(actions.availablepackages.createErrorPackage):
       return {
         ...state,
         isFetching: false,
@@ -113,8 +113,8 @@ const packageReducer = (
         items: state.items,
         selected: selectedPackageReducer(state.selected, action),
       };
-    case getType(actions.packages.resetSelectedAvailablePackageDetail):
-    case getType(actions.packages.clearErrorPackage):
+    case getType(actions.availablepackages.resetSelectedAvailablePackageDetail):
+    case getType(actions.availablepackages.clearErrorPackage):
       return {
         ...state,
         selected: selectedPackageReducer(state.selected, action),
