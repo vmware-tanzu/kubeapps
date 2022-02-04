@@ -1,6 +1,6 @@
 # Configuring Azure Active Directory as an OIDC provider
 
-This document explains how to configure Azure Active Directory as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../using-an-OIDC-provider.md)).
+This document explains how to configure Azure Active Directory as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../../tutorials/using-an-OIDC-provider.md)).
 
 ## AKS-managed Azure Active Directory
 

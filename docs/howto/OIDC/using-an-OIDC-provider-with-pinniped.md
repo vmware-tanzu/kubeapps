@@ -14,7 +14,7 @@ kubectl apply -f https://get.pinniped.dev/latest/install-pinniped-concierge.yaml
 
 Once Pinniped is running, you can add a `JWTAuthenticator` custom resource so that Pinniped knows to trust your OIDC identity provider.
 
-> You can find additional information in this [step-by-step guide](../step-by-step/kubeapps-on-tkg/step-1.md).
+> You can find additional information in this [step-by-step guide](../../tutorials/kubeapps-on-tkg/step-1.md).
 
 ```yaml
 apiVersion: authentication.concierge.pinniped.dev/v1alpha1
@@ -74,7 +74,7 @@ clusters:
       enabled: true
 ```
 
-The [Kubeapps auth-proxy configuration](./using-an-OIDC-provider.md#deploying-an-auth-proxy-to-access-kubeapps) remains the same as for the standard OIDC setup so that Kubeapps knows to deploy the auth-proxy service configured to redirect to your OIDC provider.
+The [Kubeapps auth-proxy configuration](../../tutorials/using-an-OIDC-provider.md#deploying-an-auth-proxy-to-access-kubeapps) remains the same as for the standard OIDC setup so that Kubeapps knows to deploy the auth-proxy service configured to redirect to your OIDC provider.
 
 With those changes, Kubeapps is ready to send any request for a specific cluster via Pinniped so that the OIDC `id_token` can be exchanged for client certificates accepted by the Kubernetes API server.
 
@@ -120,7 +120,7 @@ clusters:
 
 ## Debugging auth failures when using OIDC
 
-For general OIDC issues, have a look at [this OIDC debugging guide](./using-an-OIDC-provider.md#debugging-auth-failures-when-using-OIDC).
+For general OIDC issues, have a look at [this OIDC debugging guide](../../tutorials/using-an-OIDC-provider.md#debugging-auth-failures-when-using-OIDC).
 
 ### Pinniped not trusting your OIDC provider
 

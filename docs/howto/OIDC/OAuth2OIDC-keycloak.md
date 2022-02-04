@@ -1,6 +1,6 @@
 # Configuring Keycloak as an OIDC provider
 
-This document explains how to configure Keycloak as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../using-an-OIDC-provider.md)).
+This document explains how to configure Keycloak as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../../tutorials/using-an-OIDC-provider.md)).
 
 In the case of Keycloak, you can find the parameters in the Keycloak admin console:
 
