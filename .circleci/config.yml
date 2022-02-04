@@ -44,7 +44,7 @@ parameters:
     default: "v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "11.14.0-debian-10-r28"
+    default: "11.14.0-debian-10-r49"
   GKE_STABLE_VERSION:
     type: "string"
     default: "1.20"
