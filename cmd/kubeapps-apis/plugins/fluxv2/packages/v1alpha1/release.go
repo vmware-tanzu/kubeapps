@@ -68,6 +68,13 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) ([
 		return nil, err
 	}
 
+	// TODO (gfichtenholt)
+	// 1) we need to make sure that .List() always returns results in the
+	// same order, otherwise pagination is broken (duplicates maybe returned and some entries
+	// missing).
+	// 2) there is a "consistent snapshot" problem, where the client doesn't want to
+	// see any results created/updated/deleted after the first request is issued
+	// To fix this, we must make use of resourceVersion := unstructuredList.GetResourceVersion()
 	if unstructuredList, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmRelease", namespace+"/*", err)
 	} else {
@@ -114,6 +121,10 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 		// we're going to need this later
 		// TODO (gfichtenholt) for now we get all charts and later find one that helmrelease is using
 		// there is probably a more efficient way to do this
+
+		// TODO (gfichtenholt) how do we ensure that for several calls in succession
+		// we don't return the same result? After all we can't guarantee the order in which
+		// s.listReleasesInCluster will return the results when invoked multiple times in a row
 		chartsFromCluster, err := s.listChartsInCluster(ctx, apiv1.NamespaceAll)
 		if err != nil {
 			return nil, err

@@ -47,7 +47,7 @@ type testSpecGetAvailablePackageSummaries struct {
 	index     string
 }
 
-func TestGetAvailablePackageSummaries(t *testing.T) {
+func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 	testCases := []struct {
 		name              string
 		request           *corev1.GetAvailablePackageSummariesRequest
@@ -389,76 +389,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns only the first page of results",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "0",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					elasticsearch_summary,
-				},
-				NextPageToken: "1",
-			},
-		},
-		{
-			name: "it returns only the requested page of results and includes the next page token",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "1",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					ghost_summary,
-				},
-				NextPageToken: "2",
-			},
-		},
-		{
-			name: "it returns the last page without a next page token",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "2",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
-				NextPageToken:             "",
-			},
-		},
-		{
 			name: "it returns an error if a cluster other than the kubeapps cluster is specified",
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
 				Cluster: "not-kubeapps-cluster",
@@ -512,6 +442,138 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
+	// one big test case that can't really be broken down to smaller cases because
+	// the tests aren't independent/idempotent: there is state that needs to be
+	// kept track from one call to the next
+
+	t.Run("test GetAvailablePackageSummaries with pagination", func(t *testing.T) {
+		existingRepos := []testSpecGetAvailablePackageSummaries{
+			{
+				name:      "index-with-categories-1",
+				namespace: "default",
+				url:       "https://example.repo.com/charts",
+				index:     "testdata/index-with-categories.yaml",
+			},
+		}
+		repos := []sourcev1.HelmRepository{}
+		for _, rs := range existingRepos {
+			ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer ts2.Close()
+			repos = append(repos, *repo)
+		}
+
+		// the index.yaml will contain links to charts but for the purposes
+		// of this test they do not matter
+		s, mock, _, _, err := newServerWithRepos(t, repos, nil, nil)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		request1 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "0",
+				PageSize:  1,
+			},
+		}
+
+		response1, err := s.GetAvailablePackageSummaries(context.Background(), request1)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", got, want)
+		}
+
+		opts := cmpopts.IgnoreUnexported(
+			corev1.GetAvailablePackageSummariesResponse{},
+			corev1.AvailablePackageSummary{},
+			corev1.AvailablePackageReference{},
+			corev1.Context{},
+			plugins.Plugin{},
+			corev1.PackageAppVersion{})
+		opts2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+
+		expectedResp1 := &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				elasticsearch_summary,
+			},
+			NextPageToken: "1",
+		}
+		expectedResp2 := &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				ghost_summary,
+			},
+			NextPageToken: "1",
+		}
+
+		match := false
+		var nextExpectedResp *corev1.GetAvailablePackageSummariesResponse
+		if got, want := response1, expectedResp1; cmp.Equal(want, got, opts, opts2) {
+			match = true
+			nextExpectedResp = expectedResp2
+			nextExpectedResp.NextPageToken = "2"
+		} else if got, want := response1, expectedResp2; cmp.Equal(want, got, opts, opts2) {
+			match = true
+			nextExpectedResp = expectedResp1
+			nextExpectedResp.NextPageToken = "2"
+		}
+		if !match {
+			t.Fatalf("Expected one of:\n%s\n%s, but got:\n%s", expectedResp1, expectedResp2, response1)
+		}
+
+		request2 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "1",
+				PageSize:  1,
+			},
+		}
+
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+		response2, err := s.GetAvailablePackageSummaries(context.Background(), request2)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", err, want)
+		}
+		if got, want := response2, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
+		}
+
+		request3 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "2",
+				PageSize:  1,
+			},
+		}
+		nextExpectedResp = &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			NextPageToken:             "",
+		}
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+		response3, err := s.GetAvailablePackageSummaries(context.Background(), request3)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", err, want)
+		}
+		if got, want := response3, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
 }
 
 func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
