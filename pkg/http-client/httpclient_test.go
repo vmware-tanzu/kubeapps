@@ -4,17 +4,12 @@
 package httpclient
 
 import (
-	"crypto/tls"
 	"crypto/x509"
 	errors "errors"
-	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 const pemCert = `
@@ -96,11 +91,7 @@ func TestSetClientTls(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		tlsConf := &tls.Config{
-			RootCAs:            systemCertPool,
-			InsecureSkipVerify: true,
-		}
-		SetClientTLS(client, tlsConf)
+		SetClientTLS(client, systemCertPool, nil, true)
 
 		if transport.TLSClientConfig == nil {
 			t.Fatal("expected TLS config to have been set but it is nil")
@@ -110,31 +101,6 @@ func TestSetClientTls(t *testing.T) {
 		}
 		if transport.TLSClientConfig.InsecureSkipVerify != true {
 			t.Fatal("expected InsecureSkipVerify to have been set to true")
-		}
-
-		expectedPayload := []byte("Bob's your uncle")
-		ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(200)
-			w.Write(expectedPayload)
-		}))
-		ts.TLS = tlsConf
-		ts.StartTLS()
-		defer ts.Close()
-
-		resp, err := client.Get(ts.URL)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if resp.StatusCode != 200 {
-			t.Fatalf("expected OK, got: %d", resp.StatusCode)
-		}
-
-		payload, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatal(err)
-		} else if got, want := payload, expectedPayload; !cmp.Equal(got, want) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 		}
 	})
 }
@@ -273,7 +239,7 @@ func TestClientWithDefaults(t *testing.T) {
 			// invocation
 			response, err := client.Do(request)
 			if err != nil || response == nil || response.Header == nil {
-				t.Fatal("unexpected error during invocation")
+				t.Fatal("unexpected error durint invocation")
 			}
 
 			// check

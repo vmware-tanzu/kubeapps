@@ -4,7 +4,6 @@
 package kube
 
 import (
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -94,11 +93,7 @@ func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret
 
 	// create client
 	client := httpclient.New()
-	tlsConfig := &tls.Config{
-		RootCAs:            caCertPool,
-		InsecureSkipVerify: appRepo.Spec.TLSInsecureSkipVerify,
-	}
-	if err := httpclient.SetClientTLS(client, tlsConfig); err != nil {
+	if err := httpclient.SetClientTLS(client, caCertPool, nil, appRepo.Spec.TLSInsecureSkipVerify); err != nil {
 		return nil, err
 	}
 	if err := httpclient.SetClientProxy(client, proxyFunc); err != nil {

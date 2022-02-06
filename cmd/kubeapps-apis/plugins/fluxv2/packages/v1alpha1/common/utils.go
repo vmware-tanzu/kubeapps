@@ -301,7 +301,7 @@ func NewHttpClientAndHeaders(clientOptions *ClientOptions) (*http.Client, map[st
 			if err != nil {
 				return nil, nil, err
 			} else {
-				if err = httpclient.SetClientTLS(client, tlsConfig); err != nil {
+				if err = httpclient.SetClientTLS(client, tlsConfig.RootCAs, tlsConfig.Certificates, false); err != nil {
 					return nil, nil, err
 				}
 			}
