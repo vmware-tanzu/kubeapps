@@ -35,7 +35,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.fill("input#kubeapps-repo-password", "password");
 
   // Create a new secret for Docker repo credentials
-  const secretName = utils.getRandomName("my-repo-secret");
+  /*const secretName = utils.getRandomName("my-repo-secret");
   await page.click('.docker-creds-subform-button button:has-text("Add new credentials")');
   await page.fill("input#kubeapps-docker-cred-secret-name", secretName);
   await page.fill("input#kubeapps-docker-cred-server", "https://index.docker.io/v1/");
@@ -45,7 +45,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.click('.docker-creds-subform button:has-text("Submit")');
 
   // Select the newly created secret
-  await page.selectOption("form cds-form-group cds-select select", secretName);
+  await page.selectOption("form cds-form-group cds-select select", secretName);*/
 
   await page.click('cds-button:has-text("Install Repo")');
 
@@ -89,7 +89,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the resources API to get info of the
   // deployment
-  const axInstance = await utils.getAxiosInstance(page, k.token);
+ /* const axInstance = await utils.getAxiosInstance(page, k.token);
   const resourceResp = await axInstance.get(
     `/apis/plugins/resources/v1alpha1/helm.packages/v1alpha1/c/default/ns/default/${appName}`,
   );
@@ -109,7 +109,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
       }
     });
 
-  expect(deployment?.spec?.template?.spec?.imagePullSecrets).toEqual([{ name: secretName }]);
+  expect(deployment?.spec?.template?.spec?.imagePullSecrets).toEqual([{ name: secretName }]);*/
 
   // Prepare and verify the upgrade
   await page.waitForSelector('cds-button:has-text("Upgrade")');
