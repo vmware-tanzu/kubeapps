@@ -127,13 +127,13 @@ workflows:
   kubeapps:
     jobs:
       - test_go:
-          <<: *build_always
+          <<: *build_on_main
       - test_dashboard:
-          <<: *build_always
+          <<: *build_on_main
       - test_pinniped_proxy:
-          <<: *build_always
+          <<: *build_on_main
       - test_chart_render:
-          <<: *build_always
+          <<: *build_on_main
       - build_go_images:
           <<: *build_always
       - build_dashboard:
