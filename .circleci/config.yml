@@ -160,14 +160,14 @@ workflows:
           <<: *build_on_main
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
-          #requires:
+          requires:
           #  - test_go
           #  - test_dashboard
           #  - test_pinniped_proxy
           #  - test_chart_render
-          #  - build_go_images
-          #  - build_dashboard
-          #  - build_pinniped_proxy
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
           #  - sync_chart_from_bitnami
       - GKE_REGULAR_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
@@ -182,14 +182,14 @@ workflows:
             - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
-          #requires:
+          requires:
           #  - test_go
           #  - test_dashboard
           #  - test_pinniped_proxy
           #  - test_chart_render
-          #  - build_go_images
-          #  - build_dashboard
-          #  - build_pinniped_proxy
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
           #  - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
