@@ -160,15 +160,15 @@ workflows:
           <<: *build_on_main
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
-          requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - sync_chart_from_bitnami
+          #requires:
+          #  - test_go
+          #  - test_dashboard
+          #  - test_pinniped_proxy
+          #  - test_chart_render
+          #  - build_go_images
+          #  - build_dashboard
+          #  - build_pinniped_proxy
+          #  - sync_chart_from_bitnami
       - GKE_REGULAR_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
           requires:
@@ -182,15 +182,15 @@ workflows:
             - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
-          requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - sync_chart_from_bitnami
+          #requires:
+          #  - test_go
+          #  - test_dashboard
+          #  - test_pinniped_proxy
+          #  - test_chart_render
+          #  - build_go_images
+          #  - build_dashboard
+          #  - build_pinniped_proxy
+          #  - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
           requires:
@@ -488,7 +488,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $TEST_TIMEOUT; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
