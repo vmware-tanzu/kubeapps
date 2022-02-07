@@ -11,6 +11,7 @@ module.exports = {
   },
 
   getDeploymentTimeout: () => {
+    // TODO(castelblanque) Fine tune this for cases of tests with two deployments or more
     return (process.env.TEST_TIMEOUT ? parseInt(process.env.TEST_TIMEOUT) / 2 : 2) * 60 * 1000;
   },
 

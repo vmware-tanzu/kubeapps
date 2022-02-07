@@ -243,7 +243,7 @@ common_envars: &common_envars
 
 common_gke_envars: &common_gke_envars
   USE_MULTICLUSTER_OIDC_ENV: "false"
-  TEST_TIMEOUT: 6
+  TEST_TIMEOUT: 6 # Timeout minutes for each test
 
 install_gcloud_sdk: &install_gcloud_sdk
   run:
@@ -707,7 +707,7 @@ jobs:
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       TEST_OPERATORS: "1"
-      TEST_TIMEOUT: 4
+      TEST_TIMEOUT: 4 # Timeout minutes for each test
       <<: *common_envars
     parameters:
       number:
