@@ -15,7 +15,18 @@ DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
 DEX_IP=${5:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${6:-"172.18.0.3"}
-TEST_TIMEOUT=${7:-}
+TEST_TIMEOUT=${7:-8}
+
+echo ">> E2E tests configuration <<"
+echo ">> Root dir: ${ROOT_DIR}"
+echo ">> Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
+echo ">> OLM version: ${OLM_VERSION}"
+echo ">> Dev tag: ${DEV_TAG}"
+echo ">> Image modifier: ${IMG_MODIFIER}"
+echo ">> Dex IP: ${DEX_IP}"
+echo ">> Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
+echo ">> Test timeout: ${TEST_TIMEOUT}"
+
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
