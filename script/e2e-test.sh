@@ -15,9 +15,7 @@ DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
 DEX_IP=${5:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${6:-"172.18.0.3"}
-if [[ -n "${7:-}" ]]; then
-  TEST_TIMEOUT=$7
-fi
+TEST_TIMEOUT=${7:-}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
