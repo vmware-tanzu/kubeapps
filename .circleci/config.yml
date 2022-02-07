@@ -710,6 +710,7 @@ jobs:
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       TEST_OPERATORS: "1"
+      TEST_TIMEOUT: 4
       <<: *common_envars
     parameters:
       number:
