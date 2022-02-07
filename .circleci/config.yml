@@ -241,6 +241,12 @@ common_envars: &common_envars
   POSTGRESQL_VERSION: << pipeline.parameters.POSTGRESQL_VERSION >>
   RUST_VERSION: << pipeline.parameters.RUST_VERSION >>
 
+common_gke_envars: &common_gke_envars
+  USE_MULTICLUSTER_OIDC_ENV: "false"
+  TEST_TIMEOUT: 6
+  DEFAULT_DEX_IP: ""
+  ADDITIONAL_CLUSTER_IP: ""
+
 install_gcloud_sdk: &install_gcloud_sdk
   run:
     name: "Install gcloud sdk"
@@ -500,9 +506,6 @@ run_e2e_tests: &run_e2e_tests
 gke_test: &gke_test
   docker:
     - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-  environment:
-    DEFAULT_DEX_IP: ""
-    ADDITIONAL_CLUSTER_IP: ""
   steps:
     - checkout
     - run:
@@ -717,32 +720,24 @@ jobs:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      TEST_TIMEOUT: 6
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_REGULAR_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      TEST_TIMEOUT: 6
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_STABLE_VERSION_MAIN:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      TEST_TIMEOUT: 6
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_STABLE_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      TEST_TIMEOUT: 6
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   sync_chart_to_bitnami:
     environment:
       <<: *common_envars
