@@ -39,9 +39,8 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.click('.docker-creds-subform-button button:has-text("Add new credentials")');
   await page.fill("input#kubeapps-docker-cred-secret-name", secretName);
   await page.fill("input#kubeapps-docker-cred-server", "https://index.docker.io/v1/");
-  await page.fill("input#kubeapps-docker-cred-username", "user");
-  await page.fill("input#kubeapps-docker-cred-password", "password");
-  await page.fill("input#kubeapps-docker-cred-email", "user@example.com");
+  await page.fill("input#kubeapps-docker-cred-username", process.env.DOCKER_USERNAME);
+  await page.fill("input#kubeapps-docker-cred-password", process.env.DOCKER_PASSWORD);
   await page.click('.docker-creds-subform button:has-text("Submit")');
 
   // Select the newly created secret

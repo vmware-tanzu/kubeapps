@@ -15,7 +15,9 @@ DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
 DEX_IP=${5:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${6:-"172.18.0.3"}
-TEST_TIMEOUT=${7:-8}
+DOCKER_USERNAME=${7:-""}
+DOCKER_PASSWORD=${8:-""}
+TEST_TIMEOUT=${9:-4}
 
 echo ">> E2E tests configuration <<"
 echo ">> Root dir: ${ROOT_DIR}"
@@ -25,6 +27,7 @@ echo ">> Dev tag: ${DEV_TAG}"
 echo ">> Image modifier: ${IMG_MODIFIER}"
 echo ">> Dex IP: ${DEX_IP}"
 echo ">> Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
+echo ">> Docker username: ${DOCKER_USERNAME}"
 echo ">> Test timeout: ${TEST_TIMEOUT}"
 
 
@@ -411,7 +414,7 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
 info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=40 TEST_TIMEOUT=${TEST_TIMEOUT} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} TEST_TIMEOUT=${TEST_TIMEOUT} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
