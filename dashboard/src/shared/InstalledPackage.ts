@@ -43,7 +43,7 @@ export class InstalledPackage {
 
   public static async GetInstalledPackageResourceRefs(
     installedPackageRef?: InstalledPackageReference,
-    initialWait: number = 500,
+    initialWait = 500,
   ) {
     // TODO(minelson): The backend plugin may take care of waiting
     // for the required data to become available in which case this
