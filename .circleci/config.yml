@@ -244,8 +244,6 @@ common_envars: &common_envars
 common_gke_envars: &common_gke_envars
   USE_MULTICLUSTER_OIDC_ENV: "false"
   TEST_TIMEOUT: 6
-  DEFAULT_DEX_IP: ""
-  ADDITIONAL_CLUSTER_IP: ""
 
 install_gcloud_sdk: &install_gcloud_sdk
   run:
@@ -496,7 +494,8 @@ run_e2e_tests: &run_e2e_tests
       fi
       echo "Docker username: ${DOCKER_USERNAME}"
       echo "Test timeout: ${TEST_TIMEOUT}"
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP ${DOCKER_USERNAME} ${DOCKER_PASSWORD} $TEST_TIMEOUT; then
+      echo "DEX IP: ${DEFAULT_DEX_IP}"
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
