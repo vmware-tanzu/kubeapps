@@ -1,16 +1,17 @@
 // Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-const path = require("path");
-const fs = require("fs");
 const axios = require("axios");
-const https = require('https');
+const https = require("https");
 
 module.exports = {
-
   getRandomName: base => {
     const randomNumber = Math.floor(Math.random() * Math.floor(100000));
     return base + "-" + randomNumber;
+  },
+
+  getDeploymentTimeout: () => {
+    return (process.env.TEST_TIMEOUT ? parseInt(process.env.TEST_TIMEOUT) / 2 : 2) * 60 * 1000;
   },
 
   getUrl: path => `${process.env.INTEGRATION_ENTRYPOINT}${path}`,
@@ -25,20 +26,21 @@ module.exports = {
     }
   },
 
-  getAxiosInstance: async (page) => {
+  getAxiosInstance: async (page, token) => {
     const cookies = await page.context().cookies(page.url());
-    const agent = new https.Agent({  
-      rejectUnauthorized: false
+    const agent = new https.Agent({
+      rejectUnauthorized: false,
     });
     const axiosConfig = {
       baseURL: `${process.env.INTEGRATION_ENTRYPOINT}`,
       headers: {
+        Authorization: `Bearer ${token}`,
         Cookie: `${cookies[0] ? cookies[0].name : ""}=${cookies[0] ? cookies[0].value : ""}`,
-        Accept: "application/json"
+        Accept: "application/json",
       },
       httpsAgent: agent,
-      timeout: 30000
+      timeout: 30000,
     };
     return await axios.create(axiosConfig);
-  }
+  },
 };

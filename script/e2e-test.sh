@@ -13,8 +13,11 @@ USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.18.2"}
 DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
-DEX_IP=${5:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${6:-"172.18.0.3"}
+DOCKER_USERNAME=${5:-""}
+DOCKER_PASSWORD=${6:-""}
+TEST_TIMEOUT=${7:-4}
+DEX_IP=${8:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -29,6 +32,18 @@ fi
 . "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
+
+info "Root dir: ${ROOT_DIR}"
+info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
+info "OLM version: ${OLM_VERSION}"
+info "Image tag: ${DEV_TAG}"
+info "Image repo suffix: ${IMG_MODIFIER}"
+info "Dex IP: ${DEX_IP}"
+info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
+info "Test timeout: ${TEST_TIMEOUT}"
+info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
+info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
+echo ""
 
 # Auxiliar functions
 
@@ -176,9 +191,9 @@ installOrUpgradeKubeapps() {
     "${img_flags[@]}"
     "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
-    --set frontend.replicaCount=2
-    --set kubeops.replicaCount=2
-    --set dashboard.replicaCount=2
+    --set frontend.replicaCount=1
+    --set kubeops.replicaCount=1
+    --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
     --set kubeops.enabled=true
     --set postgresql.replication.enabled=false
@@ -194,11 +209,6 @@ installOrUpgradeKubeapps() {
   echo "${cmd[@]}"
   "${cmd[@]}"
 }
-
-info "IMAGE TAG TO BE TESTED: $DEV_TAG"
-info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
-info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
-info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
 
 # Use dev images or Bitnami if testing the latest release
 image_prefix="kubeapps/"
@@ -374,11 +384,14 @@ info "Copied tests to integration pod ${pod}"
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
 kubectl create clusterrolebinding kubeapps-repositories-write --clusterrole kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
+kubectl create rolebinding kubeapps-sa-operator-apprepositories-write -n kubeapps-user-namespace --clusterrole=kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
 ## Create view user
 kubectl create serviceaccount kubeapps-view -n kubeapps
 kubectl create role view-secrets --verb=get,list,watch --resource=secrets
 kubectl create rolebinding kubeapps-view-secret --role view-secrets --serviceaccount kubeapps:kubeapps-view
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
+kubectl create rolebinding kubeapps-view-user-apprepo-read -n kubeapps-user-namespace --clusterrole=kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-view
+kubectl create rolebinding kubeapps-view-user -n kubeapps-user-namespace --clusterrole=edit --serviceaccount kubeapps:kubeapps-view
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
@@ -396,7 +409,7 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
 info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=40 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} TEST_TIMEOUT=${TEST_TIMEOUT} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
@@ -423,7 +436,7 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   retry_while isOperatorHubCatalogRunning 24
 
   info "Running operator integration test with k8s API access..."
-  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=20 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=20 TEST_TIMEOUT=${TEST_TIMEOUT} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports
