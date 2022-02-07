@@ -7,6 +7,7 @@ const utils = require("../utils/util-functions");
 
 test("Upgrades an application", async ({ page }) => {
   test.setTimeout(360000);
+  const deployTimeout = utils.getDeploymentTimeout();
 
   // Log in
   const k = new KubeappsLogin(page);
@@ -14,9 +15,9 @@ test("Upgrades an application", async ({ page }) => {
 
   // Go to catalog
   await page.click('a.nav-link:has-text("Catalog")');
-  await page.click('.filters-menu label:has-text("bitnami")');  
+  await page.click('.filters-menu label:has-text("bitnami")');
   await page.waitForSelector("input#search");
-  await page.locator("input#search").type("apache");
+  await page.locator("input#search").fill("apache");
   await page.waitForTimeout(3000);
 
   // Select package
@@ -45,14 +46,14 @@ test("Upgrades an application", async ({ page }) => {
   await expect(releaseNameLocator).toHaveText("");
   const releaseName = utils.getRandomName("test-07-upgrade");
   console.log(`Creating release "${releaseName}"`);
-  await releaseNameLocator.type(releaseName);
+  await releaseNameLocator.fill(releaseName);
 
   // Trigger deploy
   await page.locator('cds-button:has-text("Deploy")').click();
 
   await page.click('cds-button:has-text("Upgrade")');
 
-  await expect(page.locator(".left-menu")).toContainText(olderVersion);
+  await expect(page.locator(".left-menu")).toContainText(olderVersion, { timeout: deployTimeout });
   await page.selectOption('select[name="package-versions"]', defaultVersion);
   await page.waitForTimeout(2000);
   const newSelection = await page.inputValue('select[name="package-versions"]');
@@ -61,9 +62,20 @@ test("Upgrades an application", async ({ page }) => {
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Check upgrade result
-  await expect(page.locator(".left-menu")).toContainText("Up to date");
-  await page.waitForSelector("css=.application-status-pie-chart-number >> text=2");
-  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready");
+  // Wait for the app to be deployed and select it from "Applications"
+  await expect(page.locator(".left-menu")).toContainText("Up to date", { timeout: deployTimeout });
+  await page.waitForTimeout(5000);
+  await page.click('a.nav-link:has-text("Applications")');
+  await page.waitForTimeout(3000); // Sometimes typing was too fast to get the result shown
+  await page.locator("input#search").fill(releaseName);
+  await page.waitForTimeout(3000);
+  await page.click(`a .card-title:has-text("${releaseName}")`);
+  await page.waitForSelector("css=.application-status-pie-chart-number >> text=2", {
+    timeout: deployTimeout,
+  });
+  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
+    timeout: deployTimeout,
+  });
 
   // Clean up
   await page.locator('cds-button:has-text("Delete")').click();
