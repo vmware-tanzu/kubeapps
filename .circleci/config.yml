@@ -127,13 +127,13 @@ workflows:
   kubeapps:
     jobs:
       - test_go:
-          <<: *build_on_main
+          <<: *build_always
       - test_dashboard:
-          <<: *build_on_main
+          <<: *build_always
       - test_pinniped_proxy:
-          <<: *build_on_main
+          <<: *build_always
       - test_chart_render:
-          <<: *build_on_main
+          <<: *build_always
       - build_go_images:
           <<: *build_always
       - build_dashboard:
@@ -161,14 +161,14 @@ workflows:
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
-          #  - test_go
-          #  - test_dashboard
-          #  - test_pinniped_proxy
-          #  - test_chart_render
+            - test_go
+            - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-          #  - sync_chart_from_bitnami
+            - sync_chart_from_bitnami
       - GKE_REGULAR_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
           requires:
@@ -183,14 +183,14 @@ workflows:
       - GKE_STABLE_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
-          #  - test_go
-          #  - test_dashboard
-          #  - test_pinniped_proxy
-          #  - test_chart_render
+            - test_go
+            - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
-          #  - sync_chart_from_bitnami
+            - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
           requires:
@@ -492,9 +492,6 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      echo "Docker username: ${DOCKER_USERNAME}"
-      echo "Test timeout: ${TEST_TIMEOUT}"
-      echo "DEX IP: ${DEFAULT_DEX_IP}"
       if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV

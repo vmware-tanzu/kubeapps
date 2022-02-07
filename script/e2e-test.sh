@@ -19,18 +19,6 @@ TEST_TIMEOUT=${7:-4}
 DEX_IP=${8:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
 
-echo ">> E2E tests configuration <<"
-echo ">> Root dir: ${ROOT_DIR}"
-echo ">> Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
-echo ">> OLM version: ${OLM_VERSION}"
-echo ">> Dev tag: ${DEV_TAG}"
-echo ">> Image modifier: ${IMG_MODIFIER}"
-echo ">> Dex IP: ${DEX_IP}"
-echo ">> Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
-echo ">> Docker username: ${DOCKER_USERNAME}"
-echo ">> Test timeout: ${TEST_TIMEOUT}"
-
-
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
 if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
@@ -44,6 +32,18 @@ fi
 . "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
+
+info "Root dir: ${ROOT_DIR}"
+info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
+info "OLM version: ${OLM_VERSION}"
+info "Image tag: ${DEV_TAG}"
+info "Image repo suffix: ${IMG_MODIFIER}"
+info "Dex IP: ${DEX_IP}"
+info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
+info "Test timeout: ${TEST_TIMEOUT}"
+info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
+info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
+echo ""
 
 # Auxiliar functions
 
@@ -209,11 +209,6 @@ installOrUpgradeKubeapps() {
   echo "${cmd[@]}"
   "${cmd[@]}"
 }
-
-info "IMAGE TAG TO BE TESTED: $DEV_TAG"
-info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
-info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
-info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
 
 # Use dev images or Bitnami if testing the latest release
 image_prefix="kubeapps/"
