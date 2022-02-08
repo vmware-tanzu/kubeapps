@@ -43,6 +43,17 @@ kubectl get --namespace default secret $(kubectl get --namespace default service
 
 ### On Windows:
 
+#### Using Powershell
+
+Open a Powershell terminal and run:
+
+```powershell
+[Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(kubectl get --namespace default secret $(kubectl get --namespace default serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}')))
+```
+
+
+#### Using CMD
+
 Create a file called `GetDashToken.cmd` with the following lines in it:
 
 ```bat

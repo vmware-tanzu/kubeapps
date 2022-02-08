@@ -74,7 +74,7 @@
     "yaml": "^1.10.2"
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.8.1",
+    "@formatjs/cli": "^4.8.2",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.2",
     "@types/enzyme": "^3.10.11",
@@ -97,7 +97,7 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-import-resolver-typescript": "^2.5.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "eslint-plugin-redos": "^4.2.2",
+    "eslint-plugin-redos": "^4.3.0",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
     "mock-socket": "^9.1.2",

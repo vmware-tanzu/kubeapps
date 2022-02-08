@@ -8,15 +8,18 @@ import (
 	"strings"
 	"time"
 
-	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
-
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	kappctrlinstalled "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
+	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
@@ -93,7 +96,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 	readme := buildReadme(pkgMetadata, foundPkgSemver)
 
 	// build default values
-	defaultValues, err := defaultValuesFromSchema(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw, true)
+	defaultValues, err := pkgutils.DefaultValuesFromSchema(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw, true)
 	if err != nil {
 		log.Warningf("Failed to parse default values from schema: %v", err)
 		defaultValues = "# There is an error while parsing the schema."
@@ -324,6 +327,17 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 	}
 	prereleases := prereleasesVersionSelection(s.pluginConfig.defaultPrereleasesVersionSelection)
 
+	versionSelection := &vendirversions.VersionSelectionSemver{
+		Constraints: versionConstraints,
+		Prereleases: prereleases,
+	}
+
+	// Ensure the selected version can be, actually installed to let the user know before installing
+	elegibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
+	if elegibleVersion == "" || err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not elegible to be installed: %v", pkgVersion, err)
+	}
+
 	pkgInstall := &packagingv1alpha1.PackageInstall{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       pkgInstallResource,
@@ -344,11 +358,8 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
 			// },
 			PackageRef: &packagingv1alpha1.PackageRef{
-				RefName: packageRefName,
-				VersionSelection: &vendirversions.VersionSelectionSemver{
-					Constraints: versionConstraints,
-					Prereleases: prereleases,
-				},
+				RefName:          packageRefName,
+				VersionSelection: versionSelection,
 			},
 		},
 	}

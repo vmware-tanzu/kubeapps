@@ -241,6 +241,10 @@ common_envars: &common_envars
   POSTGRESQL_VERSION: << pipeline.parameters.POSTGRESQL_VERSION >>
   RUST_VERSION: << pipeline.parameters.RUST_VERSION >>
 
+common_gke_envars: &common_gke_envars
+  USE_MULTICLUSTER_OIDC_ENV: "false"
+  TEST_TIMEOUT_MINUTES: 6 # Timeout minutes for each test
+
 install_gcloud_sdk: &install_gcloud_sdk
   run:
     name: "Install gcloud sdk"
@@ -364,7 +368,6 @@ install_additional_cluster: &install_additional_cluster
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Additional cluster created"
@@ -375,7 +378,6 @@ install_additional_cluster: &install_additional_cluster
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Additional cluster created"
@@ -490,7 +492,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
@@ -544,6 +546,12 @@ gke_test: &gke_test
         command: |
           ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
     - <<: *install_helm_cli
+    - run:
+        # TODO(castelblanque) Unify shared resources with kubeapps-local-dev-users-rbac.yaml
+        # that only applies to Kind clusters
+        name: Apply customizations to GKE cluster
+        command: |
+          kubectl create namespace kubeapps-user-namespace
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
@@ -699,6 +707,7 @@ jobs:
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       TEST_OPERATORS: "1"
+      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
       <<: *common_envars
     parameters:
       number:
@@ -708,28 +717,24 @@ jobs:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_REGULAR_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_STABLE_VERSION_MAIN:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_STABLE_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   sync_chart_to_bitnami:
     environment:
       <<: *common_envars
