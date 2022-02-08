@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import actions from "actions";
 import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
@@ -102,7 +105,7 @@ it("renders an error if the resource is not populated", () => {
   expect(wrapper.find(Alert)).toIncludeText("Resource my-foo not found");
 });
 
-it("renders only an error error if the resource is not found", () => {
+it("renders only an error if the resource is not found", () => {
   const wrapper = mountWrapper(
     getStore({
       operators: {

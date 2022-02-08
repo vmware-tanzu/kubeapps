@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { shallow } from "enzyme";
 import Differential from "./Differential";
 import DifferentialSelector from "./DifferentialSelector";

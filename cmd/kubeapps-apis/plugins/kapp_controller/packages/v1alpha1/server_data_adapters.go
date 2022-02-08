@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -21,9 +12,11 @@ import (
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	kappctrlinstalled "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
@@ -88,6 +81,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
+	// build maintainers information
 	maintainers := []*corev1.Maintainer{}
 	for _, maintainer := range pkgMetadata.Spec.Maintainers {
 		maintainers = append(maintainers, &corev1.Maintainer{
@@ -95,46 +89,16 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		})
 	}
 
-	readme := fmt.Sprintf(`## Details
+	// build readme
+	readme := buildReadme(pkgMetadata, foundPkgSemver)
 
-
-### Description:
-%s
-
-
-### Capactiy requirements:
-%s
-
-
-### Release Notes:
-%s
-
-
-### Support:
-%s
-
-
-### Licenses:
-%s
-
-
-### ReleasedAt:
-%s
-
-
-`,
-		pkgMetadata.Spec.LongDescription,
-		foundPkgSemver.pkg.Spec.CapactiyRequirementsDescription,
-		foundPkgSemver.pkg.Spec.ReleaseNotes,
-		pkgMetadata.Spec.SupportDescription,
-		foundPkgSemver.pkg.Spec.Licenses,
-		foundPkgSemver.pkg.Spec.ReleasedAt,
-	)
+	// build default values
 	defaultValues, err := defaultValuesFromSchema(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw, true)
 	if err != nil {
 		log.Warningf("Failed to parse default values from schema: %v", err)
 		defaultValues = "# There is an error while parsing the schema."
 	}
+
 	availablePackageDetail := &corev1.AvailablePackageDetail{
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Context: &corev1.Context{
@@ -254,46 +218,8 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 		return nil, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name)
 	}
 
-	deployStdout := ""
-	deployStderr := ""
-	fetchStdout := ""
-	fetchStderr := ""
-
-	if app.Status.Deploy != nil {
-		deployStdout = app.Status.Deploy.Stdout
-		deployStderr = app.Status.Deploy.Stderr
-	}
-	if app.Status.Fetch != nil {
-		fetchStdout = app.Status.Fetch.Stdout
-		fetchStderr = app.Status.Fetch.Stderr
-	}
-
-	// Build some custom installation notes based on the available stdout + stderr
-	// TODO(agamez): this is just a temporary solution until come up with a better UX solution
-	// short-term improvement is to just display those values != ""
-	postInstallationNotes := fmt.Sprintf(`## Installation output
-
-
-### Deploy:
-%s
-
-
-### Fetch:
-%s
-
-
-## Errors
-
-
-### Deploy:
-%s
-
-
-### Fetch:
-%s
-
-
-`, deployStdout, fetchStdout, deployStderr, fetchStderr)
+	// build postInstallationNotes
+	postInstallationNotes := buildPostInstallationNotes(app)
 
 	if len(pkgInstall.Status.Conditions) > 1 {
 		log.Warningf("The package install %s has more than one status conditions. Using the first one: %s", pkgInstall.Name, pkgInstall.Status.Conditions[0])
@@ -378,29 +304,35 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			// TODO(agamez): think about name collisions
-			Name:      fmt.Sprintf("%s-values", installedPackageName),
+			Name:      fmt.Sprintf(kappctrlinstalled.SecretName, installedPackageName, targetNamespace),
 			Namespace: targetNamespace,
 		},
 		Data: map[string][]byte{
-			// TODO(agamez): check the actual value for the key.
-			// Assuming "values.yaml" perhaps is not always true.
-			// Perhaos this info is in the "package" object?
+			// Using "values.yaml" as per:
+			// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L32
 			"values.yaml": []byte(values),
 		},
 		Type: "Opaque",
 	}, nil
 }
 
-func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
+func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions, secret *k8scorev1.Secret) (*packagingv1alpha1.PackageInstall, error) {
+	// Calculate the constraints and prerelease fields
+	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.pluginConfig.defaultUpgradePolicy)
+	if err != nil {
+		return nil, err
+	}
+	prereleases := prereleasesVersionSelection(s.pluginConfig.defaultPrereleasesVersionSelection)
+
 	pkgInstall := &packagingv1alpha1.PackageInstall{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       pkgInstallResource,
 			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installedPackageName,
-			Namespace: targetNamespace,
+			Name:        installedPackageName,
+			Namespace:   targetNamespace,
+			Annotations: map[string]string{},
 		},
 		Spec: packagingv1alpha1.PackageInstallSpec{
 			// This is the Carvel's way of supporting deployments across clusters
@@ -411,24 +343,20 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			// 	Namespace:           targetNamespace,
 			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
 			// },
-			Values: []packagingv1alpha1.PackageInstallValues{
-				{
-					SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-						Name: fmt.Sprintf("%s-values", installedPackageName),
-						Key:  "values.yaml",
-					},
-				},
-			},
 			PackageRef: &packagingv1alpha1.PackageRef{
 				RefName: packageRefName,
 				VersionSelection: &vendirversions.VersionSelectionSemver{
-					Constraints: pkgVersion,
-					// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
-					// This is to allow prereleases to be also installed
-					Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
+					Constraints: versionConstraints,
+					Prereleases: prereleases,
 				},
 			},
 		},
+	}
+
+	// Allow this PackageInstall to be downgraded
+	// https://carvel.dev/kapp-controller/docs/v0.32.0/package-consumer-concepts/#downgrading
+	if s.pluginConfig.defaultAllowDowngrades {
+		pkgInstall.ObjectMeta.Annotations[kappctrlpackageinstall.DowngradableAnnKey] = ""
 	}
 
 	if reconciliationOptions != nil {
@@ -440,6 +368,18 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 		pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
 		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
 	}
+
+	if secret != nil {
+		// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L505
+		pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
+			SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+				// The secret name should have the format: <name>-<namespace> as per:
+				// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+				Name: secret.Name,
+			},
+		}}
+	}
+
 	return pkgInstall, nil
 }
 

@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -24,12 +15,12 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	vendirVersions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
 )
 
@@ -510,11 +501,10 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	secret, err := s.buildSecret(installedPackageName, values, targetNamespace)
 	if err != nil {
 		return nil, statuserror.FromK8sError("create", "Secret", installedPackageName, err)
-
 	}
 
 	// build a new pkgInstall object
-	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions)
+	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions, secret)
 	if err != nil {
 		return nil, statuserror.FromK8sError("create", "PackageInstall", installedPackageName, err)
 	}
@@ -538,23 +528,25 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, statuserror.FromK8sError("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 
-	// TODO(agamez): some seconds should be enough, however, make it configurable
-	err = wait.PollImmediateWithContext(ctx, time.Second*1, time.Second*5, func(ctx context.Context) (bool, error) {
-		_, err := s.getApp(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				// the resource hasn't been created yet
-				return false, nil
-			} else {
-				// any other real error
-				return false, err
-			}
-		}
-		// the resource is created now
-		return true, nil
-	})
+	resource, err := s.getAppResource(ctx, targetCluster, targetNamespace)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "App", newPkgInstall.Name, err)
+		return nil, status.Errorf(codes.Internal, "unable to get the App resource: '%v'", err)
+	}
+	// The InstalledPackage is considered as created once the associated kapp App gets created,
+	// so we actively wait for the App CR to be present in the cluster before returning OK
+	err = WaitForResource(ctx, resource, newPkgInstall.Name, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
+	if err != nil {
+		// clean-up the secret if something fails
+		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return nil, statuserror.FromK8sError("delete", "Secret", secret.Name, err)
+		}
+		// clean-up the package install if something fails
+		err = s.deletePkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
+		if err != nil {
+			return nil, statuserror.FromK8sError("delete", "PackageInstall", newPkgInstall.Name, err)
+		}
+		return nil, status.Errorf(codes.Internal, "timeout exceeded (%v s) waiting for resource to be installed: '%v'", s.pluginConfig.timeoutSeconds, err)
 	}
 
 	// generate the response
@@ -612,8 +604,29 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
 	}
 
+	// Calculate the constraints and prerelease fields
+	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.pluginConfig.defaultUpgradePolicy)
+	if err != nil {
+		return nil, err
+	}
+	prereleases := prereleasesVersionSelection(s.pluginConfig.defaultPrereleasesVersionSelection)
+
+	// Set the versionSelection
+	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversions.VersionSelectionSemver{
+		Constraints: versionConstraints,
+		Prereleases: prereleases,
+	}
+
+	// Allow this PackageInstall to be downgraded
+	// https://carvel.dev/kapp-controller/docs/v0.32.0/package-consumer-concepts/#downgrading
+	if s.pluginConfig.defaultAllowDowngrades {
+		if pkgInstall.ObjectMeta.Annotations == nil {
+			pkgInstall.ObjectMeta.Annotations = map[string]string{}
+		}
+		pkgInstall.ObjectMeta.Annotations[kappctrlpackageinstall.DowngradableAnnKey] = ""
+	}
+
 	// Update the rest of the fields
-	pkgInstall.Spec.PackageRef.VersionSelection = &vendirVersions.VersionSelectionSemver{Constraints: pkgVersion}
 	if reconciliationOptions != nil {
 		if reconciliationOptions.Interval > 0 {
 			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
@@ -627,22 +640,34 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	// update the pkgInstall in the server
 	updatedPkgInstall, err := s.updatePkgInstall(ctx, packageCluster, packageNamespace, pkgInstall)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
+		return nil, statuserror.FromK8sError("update", "PackageInstall", installedPackageName, err)
 	}
 
 	// Update the values.yaml values file if any is passed, otherwise, delete the values
 	if values != "" {
 		secret, err := s.buildSecret(installedPackageName, values, packageNamespace)
 		if err != nil {
-			return nil, statuserror.FromK8sError("upsate", "Secret", secret.Name, err)
+			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
 		}
 		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
 		if updatedSecret == nil || err != nil {
 			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
 		}
+
+		if updatedSecret != nil {
+			// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L505
+			pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
+				SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+					// The secret name should have the format: <name>-<namespace> as per:
+					// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+					Name: updatedSecret.Name,
+				},
+			}}
+		}
+
 	} else {
 		// Delete all the associated secrets
-		// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+		// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
 		// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
@@ -707,7 +732,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	}
 
 	// Delete all the associated secrets
-	// TODO(agamez): maybe it's too aggresive and we should be deleting only those secrets created by this plugin
+	// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
 	// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
 	for _, packageInstallValue := range pkgInstall.Spec.Values {
 		secretId := packageInstallValue.SecretRef.Name

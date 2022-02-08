@@ -1,15 +1,6 @@
-/*
-Copyright © 2022 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package resourcerefstest
 
 import (
@@ -375,7 +366,7 @@ items:
 	// Using the redis_existing_stub_completed data with
 	// different manifests for each test.
 	releaseNamespace := "test"
-	releaseName := "test-my-redis"
+	releaseName := "my-redis"
 
 	TestCases2 = []TestCase{
 		{
@@ -693,6 +684,44 @@ items:
 					Name:       "clusterrole-2",
 					Namespace:  "test",
 					Kind:       "ClusterRole",
+				},
+			},
+		},
+		{
+			Name: "returns resource refs for helm installation in non default ns (flux HelmRelease targetNamespace is set)",
+			ExistingReleases: []TestReleaseStub{
+				{
+					Name:      "test2-my-redis",
+					Namespace: "test2",
+					Manifest: `
+# Source: redis/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-test
+  namespace: test2
+---
+# Source: redis/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-test
+  namespace: test2
+`,
+				},
+			},
+			ExpectedResourceRefs: []*corev1.ResourceRef{
+				{
+					ApiVersion: "v1",
+					Name:       "redis-test",
+					Namespace:  "test2",
+					Kind:       "Service",
+				},
+				{
+					ApiVersion: "apps/v1",
+					Name:       "redis-test",
+					Namespace:  "test2",
+					Kind:       "Deployment",
 				},
 			},
 		},

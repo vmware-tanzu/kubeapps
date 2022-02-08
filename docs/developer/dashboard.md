@@ -1,6 +1,6 @@
 # Kubeapps Dashboard Developer Guide
 
-The dashboard is the main UI component of the Kubeapps project. Written in Javascript, the dashboard uses the React Javascript library for the frontend.
+The dashboard is the main UI component of the Kubeapps project. Written in JavaScript, the dashboard uses the React JavaScript library for the frontend.
 
 ## Prerequisites
 
@@ -82,11 +82,11 @@ You can now access the local development server simply by accessing the dashboar
 
 #### Troubleshooting
 
-In some cases, the 'Create React App' scripts keep listening on the 3000 port, even when you disconnect telepresence. If you see that `localhost:3000` is still serving the dashboard, even with your telepresence down, check if there is a 'Create React App' script process running (`ps aux | grep react`) and kill it.
+In some cases, the 'Create React App' scripts keep listening on the 3000 port, even when you disconnect telepresence. If you see that `localhost:3000` is still serving the dashboard, even with your telepresence down, check if there is a 'Create React App' script process running (`ps aux | grep react`) and stop it.
 
 ### Running tests
 
-Execute the following command within the dashboard directory to start the test runner which will watch for changes and automatically re-run the tests when changes are detected.
+Run the following command within the dashboard directory to start the test runner which will watch for changes and automatically re-run the tests when changes are detected.
 
 ```bash
 yarn run test

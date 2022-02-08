@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import ReactMarkdown from "react-markdown";
@@ -12,8 +15,8 @@ const defaultProps = {
 
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.packages = {
-    ...actions.packages,
+  actions.availablepackages = {
+    ...actions.availablepackages,
   };
 });
 

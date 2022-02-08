@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import carvelIcon from "../icons/carvel.svg";
 import fluxIcon from "../icons/flux.svg";

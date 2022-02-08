@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Import ace first
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ext-searchbox";
@@ -36,9 +39,9 @@ function AppValues(props: IAppValuesProps) {
   }
   return (
     <section aria-labelledby="installation-values">
-      <h5 className="section-title" id="installation-values">
+      <h3 className="section-title" id="installation-values">
         Installation Values
-      </h5>
+      </h3>
       {values}
     </section>
   );

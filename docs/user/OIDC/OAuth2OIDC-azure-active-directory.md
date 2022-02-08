@@ -42,7 +42,7 @@ The following step is to define the permissions that the Application will need. 
 
 Then, in the `APIs my organization uses` enter this value `6dae42f8-4368-4678-94ff-3960e28e3630`. This is a fixed Application ID corresponding to the _Azure Kubernetes Service AAD Server_ globally provided by Azure.
 
-> You can also get this Application ID (`6dae42f8-4368-4678-94ff-3960e28e3630`) by executing `az ad sp list --display-name "Azure Kubernetes Service AAD Server"` and inspecting the `appId` value.
+> You can also get this Application ID (`6dae42f8-4368-4678-94ff-3960e28e3630`) by running `az ad sp list --display-name "Azure Kubernetes Service AAD Server"` and inspecting the `appId` value.
 
 ![Selecting the permissions](../../img/azure-07.png)
 

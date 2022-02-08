@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { AlertGroupTypes, AlertSizes, AlertStatusTypes } from "@cds/core/alert";
 import { CdsAlert, CdsAlertActions, CdsAlertGroup } from "@cds/react/alert";
 import React from "react";

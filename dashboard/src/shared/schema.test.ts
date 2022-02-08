@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { deleteValue, getValue, retrieveBasicFormParams, setValue, validate } from "./schema";
 import { IBasicFormParam } from "./types";
 

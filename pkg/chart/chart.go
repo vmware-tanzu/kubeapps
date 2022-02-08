@@ -1,18 +1,5 @@
-/*
-Copyright (c) 2018 Bitnami
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
 
 package chart
 
@@ -23,14 +10,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
-	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -41,7 +26,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	log "k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/credentialprovider"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -344,7 +331,7 @@ func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Char
 		}
 	} else {
 		// TODO(agamez): remove this branch as it is really expensive and it is solely used in a few places in kubeops
-		log.Printf("calling GetChart without any tarball url, please note this action is memory-expensive")
+		log.Infof("calling GetChart without any tarball url, please note this action is memory-expensive")
 		indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
 		repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
 		if err != nil {
@@ -355,7 +342,7 @@ func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Char
 			return nil, err
 		}
 	}
-	log.Printf("Downloading %s ...", chartURL)
+	log.Infof("Downloading %s ...", chartURL)
 	chart, err := fetchChart(&c.netClient, chartURL)
 	if err != nil {
 		return nil, err

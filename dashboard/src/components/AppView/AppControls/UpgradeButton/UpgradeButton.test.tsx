@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import {
@@ -22,8 +25,8 @@ const defaultProps = {
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.apps = {
-    ...actions.apps,
+  actions.installedpackages = {
+    ...actions.installedpackages,
     updateInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
@@ -35,7 +38,7 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-it("should render a disabled button if when passing an in-progress status", async () => {
+it("should render a deactivated button if when passing an in-progress status", async () => {
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {

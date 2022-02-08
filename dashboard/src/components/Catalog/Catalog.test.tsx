@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { deepClone } from "@cds/core/internal/utils/identity";
 import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";
@@ -161,7 +164,7 @@ it("retrieves csvs in the namespace if operators enabled", () => {
   expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, defaultProps.namespace);
 });
 
-it("not retrieveing csvs in the namespace if operators disabled", () => {
+it("not retrieveing csvs in the namespace if operators deactivated", () => {
   const getCSVs = jest.fn();
   actions.operators.getCSVs = getCSVs;
   const state = deepClone(populatedState) as IStoreState;
@@ -330,7 +333,7 @@ describe("filters by the searched item", () => {
 
   it("filters modifying the search box", () => {
     const fetchAvailablePackageSummaries = jest.fn();
-    actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
     const mockDispatch = jest.fn();
     const mockUseEffect = jest.fn();
 
@@ -453,7 +456,7 @@ describe("filters by application type", () => {
 describe("pagination and package fetching", () => {
   it("sets the initial state page to 0 before fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
-    actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
     const packages = {
       ...defaultPackageState,
@@ -485,7 +488,7 @@ describe("pagination and package fetching", () => {
 
   it("sets the state page when fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
-    actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
     const packages = {
       ...defaultPackageState,
@@ -516,7 +519,7 @@ describe("pagination and package fetching", () => {
 
   it("items are translated to CatalogItems after fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
-    actions.packages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
     const packages = {
       ...defaultPackageState,

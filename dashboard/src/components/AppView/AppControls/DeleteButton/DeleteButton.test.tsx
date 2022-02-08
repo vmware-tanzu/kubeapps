@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
@@ -26,8 +29,8 @@ const defaultProps = {
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.apps = {
-    ...actions.apps,
+  actions.installedpackages = {
+    ...actions.installedpackages,
     deleteInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
@@ -41,7 +44,7 @@ afterEach(() => {
 
 it("deletes an application", async () => {
   const deleteInstalledPackage = jest.fn();
-  actions.apps.deleteInstalledPackage = deleteInstalledPackage;
+  actions.installedpackages.deleteInstalledPackage = deleteInstalledPackage;
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
@@ -71,7 +74,7 @@ it("renders an error", async () => {
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
 });
 
-it("should render a disabled button if when passing an in-progress status", async () => {
+it("should render a deactivated button if when passing an in-progress status", async () => {
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {

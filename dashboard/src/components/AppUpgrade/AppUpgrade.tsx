@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { InstalledPackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -42,9 +45,9 @@ function AppUpgrade() {
 
   // Initial fetch using the params in the URL
   useEffect(() => {
-    dispatch(actions.packages.resetSelectedAvailablePackageDetail());
+    dispatch(actions.availablepackages.resetSelectedAvailablePackageDetail());
     dispatch(
-      actions.apps.getApp({
+      actions.installedpackages.getInstalledPackage({
         context: { cluster: cluster, namespace: namespace },
         identifier: releaseName,
         plugin: pluginObj,

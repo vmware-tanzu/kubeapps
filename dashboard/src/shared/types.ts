@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
 import { Subscription } from "rxjs";
@@ -304,7 +307,7 @@ export interface IAppRepositoryFilter {
   variables?: { [key: string]: string };
 }
 
-export interface IAppState {
+export interface IInstalledPackageState {
   isFetching: boolean;
   error?: FetchError | CreateError | UpgradeError | RollbackError | DeleteError;
   items: InstalledPackageDetail[];
@@ -312,11 +315,12 @@ export interface IAppState {
   selected?: CustomInstalledPackageDetail;
   // TODO(agamez): add tests for this new state field
   selectedDetails?: AvailablePackageDetail;
+  resourceRefs?: ResourceRef[];
 }
 
 export interface IStoreState {
   router: RouterState;
-  apps: IAppState;
+  apps: IInstalledPackageState;
   auth: IAuthState;
   packages: IPackageState;
   config: IConfigState;
@@ -498,6 +502,5 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
 }
 
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
-  apiResourceRefs: ResourceRef[];
   revision: number;
 }

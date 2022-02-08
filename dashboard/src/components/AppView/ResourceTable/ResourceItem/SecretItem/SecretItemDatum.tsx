@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsIcon } from "@cds/react/icon";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
@@ -31,7 +34,7 @@ function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
       }
     };
   }, [copied]);
-  const decodedValue = atob(value);
+  const decodedValue = Buffer.from(value, "base64").toString();
 
   return (
     <Row>

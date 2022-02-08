@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { LOCATION_CHANGE, RouterActionType, RouterLocation } from "connected-react-router";
 import { Location } from "history";
 import context from "jest-plugin-context";

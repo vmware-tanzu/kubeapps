@@ -1,3 +1,6 @@
+# Copyright 2019-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 https:
   enabled: true
 certs:
@@ -116,3 +119,10 @@ volumes:
 volumeMounts:
   - mountPath: /etc/dex/tls/https/server
     name: https-tls
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi

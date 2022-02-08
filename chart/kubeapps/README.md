@@ -1,6 +1,6 @@
 # Kubeapps
 
-[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
+[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/main)
 
 [Kubeapps](https://kubeapps.com) is an in-cluster web-based application that enables users with a one-time installation to deploy, manage, and upgrade applications on a Kubernetes cluster.
 
@@ -10,8 +10,8 @@ With Kubeapps you can:
 - Inspect, upgrade and delete applications installed in the cluster
 - Browse and deploy [Helm](https://github.com/helm/helm) charts from public or private chart repositories (including [VMware Marketplace™](https://marketplace.cloud.vmware.com) and [Bitnami Application Catalog](https://bitnami.com/application-catalog))
 - Browse and deploy [Kubernetes Operators](https://operatorhub.io/)
-- Secure authentication to Kubeapps using a [standalone OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md) or [using Pinniped](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider-with-pinniped.md)
-- Secure authorization based on Kubernetes [Role-Based Access Control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md)
+- Secure authentication to Kubeapps using a [standalone OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md) or [using Pinniped](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider-with-pinniped.md)
+- Secure authorization based on Kubernetes [Role-Based Access Control](https://github.com/kubeapps/kubeapps/blob/main/docs/user/access-control.md)
 
 **_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work.
 
@@ -23,7 +23,7 @@ kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-> Check out the [getting started](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md) to start deploying apps with Kubeapps.
+> Check out the [getting started](https://github.com/kubeapps/kubeapps/blob/main/docs/user/getting-started.md) to start deploying apps with Kubeapps.
 
 ## Introduction
 
@@ -52,7 +52,7 @@ The command deploys Kubeapps on the Kubernetes cluster in the `kubeapps` namespa
 
 > **Caveat**: Only one Kubeapps installation is supported per namespace
 
-Once you have installed Kubeapps follow the [Getting Started Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md) for additional information on how to access and use Kubeapps.
+Once you have installed Kubeapps follow the [Getting Started Guide](https://github.com/kubeapps/kubeapps/blob/main/docs/user/getting-started.md) for additional information on how to access and use Kubeapps.
 
 ## Parameters
 
@@ -484,64 +484,67 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### kubeappsapis parameters
 
-| Name                                                                       | Description                                                                               | Value                    |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------ |
-| `kubeappsapis.enabledPlugins`                                              | Enabled plugins for the Kubeapps-APIs service                                             | `["helm","resources"]`   |
-| `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.major` | Number of major versions to display in the summary                                        | `3`                      |
-| `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.minor` | Number of minor versions to display in the summary                                        | `3`                      |
-| `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.patch` | Number of patch versions to display in the summary                                        | `3`                      |
-| `kubeappsapis.pluginConfig.core.packages.v1alpha1.timeoutSeconds`          | Value to wait for Kubernetes commands to complete                                         | `300`                    |
-| `kubeappsapis.image.registry`                                              | Kubeapps-APIs image registry                                                              | `docker.io`              |
-| `kubeappsapis.image.repository`                                            | Kubeapps-APIs image repository                                                            | `kubeapps/kubeapps-apis` |
-| `kubeappsapis.image.tag`                                                   | Kubeapps-APIs image tag (immutable tags are recommended)                                  | `latest`                 |
-| `kubeappsapis.image.pullPolicy`                                            | Kubeapps-APIs image pull policy                                                           | `IfNotPresent`           |
-| `kubeappsapis.image.pullSecrets`                                           | Kubeapps-APIs image pull secrets                                                          | `[]`                     |
-| `kubeappsapis.replicaCount`                                                | Number of frontend replicas to deploy                                                     | `2`                      |
-| `kubeappsapis.qps`                                                         | KubeappsAPIs Kubernetes API client QPS limit                                              | `50.0`                   |
-| `kubeappsapis.burst`                                                       | KubeappsAPIs Kubernetes API client Burst limit                                            | `100`                    |
-| `kubeappsapis.terminationGracePeriodSeconds`                               | The grace time period for sig term                                                        | `300`                    |
-| `kubeappsapis.extraEnvVars`                                                | Array with extra environment variables to add to the KubeappsAPIs container               | `[]`                     |
-| `kubeappsapis.extraEnvVarsCM`                                              | Name of existing ConfigMap containing extra env vars for the KubeappsAPIs container       | `""`                     |
-| `kubeappsapis.extraEnvVarsSecret`                                          | Name of existing Secret containing extra env vars for the KubeappsAPIs container          | `""`                     |
-| `kubeappsapis.containerPort`                                               | KubeappsAPIs HTTP container port                                                          | `50051`                  |
-| `kubeappsapis.resources.limits.cpu`                                        | The CPU limits for the KubeappsAPIs container                                             | `250m`                   |
-| `kubeappsapis.resources.limits.memory`                                     | The memory limits for the KubeappsAPIs container                                          | `256Mi`                  |
-| `kubeappsapis.resources.requests.cpu`                                      | The requested CPU for the KubeappsAPIs container                                          | `25m`                    |
-| `kubeappsapis.resources.requests.memory`                                   | The requested memory for the KubeappsAPIs container                                       | `32Mi`                   |
-| `kubeappsapis.podSecurityContext.enabled`                                  | Enabled KubeappsAPIs pods' Security Context                                               | `true`                   |
-| `kubeappsapis.podSecurityContext.fsGroup`                                  | Set KubeappsAPIs pod's Security Context fsGroup                                           | `1001`                   |
-| `kubeappsapis.containerSecurityContext.enabled`                            | Enabled KubeappsAPIs containers' Security Context                                         | `true`                   |
-| `kubeappsapis.containerSecurityContext.runAsUser`                          | Set KubeappsAPIs container's Security Context runAsUser                                   | `1001`                   |
-| `kubeappsapis.containerSecurityContext.runAsNonRoot`                       | Set KubeappsAPIs container's Security Context runAsNonRoot                                | `true`                   |
-| `kubeappsapis.livenessProbe.enabled`                                       | Enable livenessProbe                                                                      | `true`                   |
-| `kubeappsapis.livenessProbe.initialDelaySeconds`                           | Initial delay seconds for livenessProbe                                                   | `60`                     |
-| `kubeappsapis.livenessProbe.periodSeconds`                                 | Period seconds for livenessProbe                                                          | `10`                     |
-| `kubeappsapis.livenessProbe.timeoutSeconds`                                | Timeout seconds for livenessProbe                                                         | `5`                      |
-| `kubeappsapis.livenessProbe.failureThreshold`                              | Failure threshold for livenessProbe                                                       | `6`                      |
-| `kubeappsapis.livenessProbe.successThreshold`                              | Success threshold for livenessProbe                                                       | `1`                      |
-| `kubeappsapis.readinessProbe.enabled`                                      | Enable readinessProbe                                                                     | `true`                   |
-| `kubeappsapis.readinessProbe.initialDelaySeconds`                          | Initial delay seconds for readinessProbe                                                  | `0`                      |
-| `kubeappsapis.readinessProbe.periodSeconds`                                | Period seconds for readinessProbe                                                         | `10`                     |
-| `kubeappsapis.readinessProbe.timeoutSeconds`                               | Timeout seconds for readinessProbe                                                        | `5`                      |
-| `kubeappsapis.readinessProbe.failureThreshold`                             | Failure threshold for readinessProbe                                                      | `6`                      |
-| `kubeappsapis.readinessProbe.successThreshold`                             | Success threshold for readinessProbe                                                      | `1`                      |
-| `kubeappsapis.customLivenessProbe`                                         | Custom livenessProbe that overrides the default one                                       | `{}`                     |
-| `kubeappsapis.customReadinessProbe`                                        | Custom readinessProbe that overrides the default one                                      | `{}`                     |
-| `kubeappsapis.lifecycleHooks`                                              | Custom lifecycle hooks for KubeappsAPIs containers                                        | `{}`                     |
-| `kubeappsapis.podLabels`                                                   | Extra labels for KubeappsAPIs pods                                                        | `{}`                     |
-| `kubeappsapis.podAnnotations`                                              | Annotations for KubeappsAPIs pods                                                         | `{}`                     |
-| `kubeappsapis.podAffinityPreset`                                           | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`       | `""`                     |
-| `kubeappsapis.podAntiAffinityPreset`                                       | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`  | `soft`                   |
-| `kubeappsapis.nodeAffinityPreset.type`                                     | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard` | `""`                     |
-| `kubeappsapis.nodeAffinityPreset.key`                                      | Node label key to match. Ignored if `affinity` is set                                     | `""`                     |
-| `kubeappsapis.nodeAffinityPreset.values`                                   | Node label values to match. Ignored if `affinity` is set                                  | `[]`                     |
-| `kubeappsapis.affinity`                                                    | Affinity for pod assignment                                                               | `{}`                     |
-| `kubeappsapis.nodeSelector`                                                | Node labels for pod assignment                                                            | `{}`                     |
-| `kubeappsapis.tolerations`                                                 | Tolerations for pod assignment                                                            | `[]`                     |
-| `kubeappsapis.priorityClassName`                                           | Priority class name for KubeappsAPIs pods                                                 | `""`                     |
-| `kubeappsapis.hostAliases`                                                 | Custom host aliases for KubeappsAPIs pods                                                 | `[]`                     |
-| `kubeappsapis.service.port`                                                | KubeappsAPIs service HTTP port                                                            | `8080`                   |
-| `kubeappsapis.service.annotations`                                         | Additional custom annotations for KubeappsAPIs service                                    | `{}`                     |
+| Name                                                                                            | Description                                                                               | Value                    |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------ |
+| `kubeappsapis.enabledPlugins`                                                                   | Enabled plugins for the Kubeapps-APIs service                                             | `["helm","resources"]`   |
+| `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.major`                      | Number of major versions to display in the summary                                        | `3`                      |
+| `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.minor`                      | Number of minor versions to display in the summary                                        | `3`                      |
+| `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.patch`                      | Number of patch versions to display in the summary                                        | `3`                      |
+| `kubeappsapis.pluginConfig.core.packages.v1alpha1.timeoutSeconds`                               | Value to wait for Kubernetes commands to complete                                         | `300`                    |
+| `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultUpgradePolicy`               | Default upgrade policy generating version constraints                                     | `none`                   |
+| `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultPrereleasesVersionSelection` | Default policy for allowing prereleases containing one of the identifiers                 | `nil`                    |
+| `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultAllowDowngrades`             | Default policy for allowing applications to be downgraded to previous versions            | `false`                  |
+| `kubeappsapis.image.registry`                                                                   | Kubeapps-APIs image registry                                                              | `docker.io`              |
+| `kubeappsapis.image.repository`                                                                 | Kubeapps-APIs image repository                                                            | `kubeapps/kubeapps-apis` |
+| `kubeappsapis.image.tag`                                                                        | Kubeapps-APIs image tag (immutable tags are recommended)                                  | `latest`                 |
+| `kubeappsapis.image.pullPolicy`                                                                 | Kubeapps-APIs image pull policy                                                           | `IfNotPresent`           |
+| `kubeappsapis.image.pullSecrets`                                                                | Kubeapps-APIs image pull secrets                                                          | `[]`                     |
+| `kubeappsapis.replicaCount`                                                                     | Number of frontend replicas to deploy                                                     | `2`                      |
+| `kubeappsapis.qps`                                                                              | KubeappsAPIs Kubernetes API client QPS limit                                              | `50.0`                   |
+| `kubeappsapis.burst`                                                                            | KubeappsAPIs Kubernetes API client Burst limit                                            | `100`                    |
+| `kubeappsapis.terminationGracePeriodSeconds`                                                    | The grace time period for sig term                                                        | `300`                    |
+| `kubeappsapis.extraEnvVars`                                                                     | Array with extra environment variables to add to the KubeappsAPIs container               | `[]`                     |
+| `kubeappsapis.extraEnvVarsCM`                                                                   | Name of existing ConfigMap containing extra env vars for the KubeappsAPIs container       | `""`                     |
+| `kubeappsapis.extraEnvVarsSecret`                                                               | Name of existing Secret containing extra env vars for the KubeappsAPIs container          | `""`                     |
+| `kubeappsapis.containerPort`                                                                    | KubeappsAPIs HTTP container port                                                          | `50051`                  |
+| `kubeappsapis.resources.limits.cpu`                                                             | The CPU limits for the KubeappsAPIs container                                             | `250m`                   |
+| `kubeappsapis.resources.limits.memory`                                                          | The memory limits for the KubeappsAPIs container                                          | `256Mi`                  |
+| `kubeappsapis.resources.requests.cpu`                                                           | The requested CPU for the KubeappsAPIs container                                          | `25m`                    |
+| `kubeappsapis.resources.requests.memory`                                                        | The requested memory for the KubeappsAPIs container                                       | `32Mi`                   |
+| `kubeappsapis.podSecurityContext.enabled`                                                       | Enabled KubeappsAPIs pods' Security Context                                               | `true`                   |
+| `kubeappsapis.podSecurityContext.fsGroup`                                                       | Set KubeappsAPIs pod's Security Context fsGroup                                           | `1001`                   |
+| `kubeappsapis.containerSecurityContext.enabled`                                                 | Enabled KubeappsAPIs containers' Security Context                                         | `true`                   |
+| `kubeappsapis.containerSecurityContext.runAsUser`                                               | Set KubeappsAPIs container's Security Context runAsUser                                   | `1001`                   |
+| `kubeappsapis.containerSecurityContext.runAsNonRoot`                                            | Set KubeappsAPIs container's Security Context runAsNonRoot                                | `true`                   |
+| `kubeappsapis.livenessProbe.enabled`                                                            | Enable livenessProbe                                                                      | `true`                   |
+| `kubeappsapis.livenessProbe.initialDelaySeconds`                                                | Initial delay seconds for livenessProbe                                                   | `60`                     |
+| `kubeappsapis.livenessProbe.periodSeconds`                                                      | Period seconds for livenessProbe                                                          | `10`                     |
+| `kubeappsapis.livenessProbe.timeoutSeconds`                                                     | Timeout seconds for livenessProbe                                                         | `5`                      |
+| `kubeappsapis.livenessProbe.failureThreshold`                                                   | Failure threshold for livenessProbe                                                       | `6`                      |
+| `kubeappsapis.livenessProbe.successThreshold`                                                   | Success threshold for livenessProbe                                                       | `1`                      |
+| `kubeappsapis.readinessProbe.enabled`                                                           | Enable readinessProbe                                                                     | `true`                   |
+| `kubeappsapis.readinessProbe.initialDelaySeconds`                                               | Initial delay seconds for readinessProbe                                                  | `0`                      |
+| `kubeappsapis.readinessProbe.periodSeconds`                                                     | Period seconds for readinessProbe                                                         | `10`                     |
+| `kubeappsapis.readinessProbe.timeoutSeconds`                                                    | Timeout seconds for readinessProbe                                                        | `5`                      |
+| `kubeappsapis.readinessProbe.failureThreshold`                                                  | Failure threshold for readinessProbe                                                      | `6`                      |
+| `kubeappsapis.readinessProbe.successThreshold`                                                  | Success threshold for readinessProbe                                                      | `1`                      |
+| `kubeappsapis.customLivenessProbe`                                                              | Custom livenessProbe that overrides the default one                                       | `{}`                     |
+| `kubeappsapis.customReadinessProbe`                                                             | Custom readinessProbe that overrides the default one                                      | `{}`                     |
+| `kubeappsapis.lifecycleHooks`                                                                   | Custom lifecycle hooks for KubeappsAPIs containers                                        | `{}`                     |
+| `kubeappsapis.podLabels`                                                                        | Extra labels for KubeappsAPIs pods                                                        | `{}`                     |
+| `kubeappsapis.podAnnotations`                                                                   | Annotations for KubeappsAPIs pods                                                         | `{}`                     |
+| `kubeappsapis.podAffinityPreset`                                                                | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`       | `""`                     |
+| `kubeappsapis.podAntiAffinityPreset`                                                            | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`  | `soft`                   |
+| `kubeappsapis.nodeAffinityPreset.type`                                                          | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard` | `""`                     |
+| `kubeappsapis.nodeAffinityPreset.key`                                                           | Node label key to match. Ignored if `affinity` is set                                     | `""`                     |
+| `kubeappsapis.nodeAffinityPreset.values`                                                        | Node label values to match. Ignored if `affinity` is set                                  | `[]`                     |
+| `kubeappsapis.affinity`                                                                         | Affinity for pod assignment                                                               | `{}`                     |
+| `kubeappsapis.nodeSelector`                                                                     | Node labels for pod assignment                                                            | `{}`                     |
+| `kubeappsapis.tolerations`                                                                      | Tolerations for pod assignment                                                            | `[]`                     |
+| `kubeappsapis.priorityClassName`                                                                | Priority class name for KubeappsAPIs pods                                                 | `""`                     |
+| `kubeappsapis.hostAliases`                                                                      | Custom host aliases for KubeappsAPIs pods                                                 | `[]`                     |
+| `kubeappsapis.service.port`                                                                     | KubeappsAPIs service HTTP port                                                            | `8080`                   |
+| `kubeappsapis.service.annotations`                                                              | Additional custom annotations for KubeappsAPIs service                                    | `{}`                     |
 
 
 ### Redis&trade; chart configuration
@@ -551,10 +554,10 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `redis.redisPassword`           | Password used in Redis&trade;                                      | `""`                                                     |
 | `redis.enabled`                 | Enable the Redis&trade; deployment when deploying Kubeapps APIs.   | `false`                                                  |
 | `redis.master.extraFlags`       | Array with additional command line flags for Redis&trade; master   | `["--maxmemory 200mb","--maxmemory-policy allkeys-lru"]` |
-| `redis.master.disableCommands`  | Array with commands to disable on Redis&trade                      | `[]`                                                     |
+| `redis.master.disableCommands`  | Array with commands to deactivate on Redis&trade                   | `[]`                                                     |
 | `redis.replica.replicaCount`    | Number of Redis&trade; replicas to deploy                          | `1`                                                      |
 | `redis.replica.extraFlags`      | Array with additional command line flags for Redis&trade; replicas | `["--maxmemory 200mb","--maxmemory-policy allkeys-lru"]` |
-| `redis.replica.disableCommands` | Array with commands to disable on Redis&trade                      | `[]`                                                     |
+| `redis.replica.disableCommands` | Array with commands to deactivate on Redis&trade                   | `[]`                                                     |
 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
@@ -581,11 +584,11 @@ By default, Kubeapps will track the [Bitnami Application Catalog](https://github
 
 ### Enabling Operators
 
-Since v1.9.0 (and by default since v2.0), Kubeapps supports to deploy and manage Operators within its dashboard. More information about how to enable and use this feature can be found in [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md).
+Since v1.9.0 (and by default since v2.0), Kubeapps supports deploying and managing Operators within its dashboard. More information about how to enable and use this feature can be found in [this guide](https://github.com/kubeapps/kubeapps/blob/main/docs/user/operators.md).
 
 ### Exposing Externally
 
-> **Note**: The Kubeapps frontend sets up a proxy to the Kubernetes API service which means that when exposing the Kubeapps service to a network external to the Kubernetes cluster (perhaps on an internal or public network), the Kubernetes API will also be exposed for authenticated requests from that network. It is highly recommended that you [use an OAuth2/OIDC provider with Kubeapps](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md) to ensure that your authentication proxy is exposed rather than the Kubeapps frontend. This ensures that only the configured users trusted by your Identity Provider will be able to reach the Kubeapps frontend and therefore the Kubernetes API. Kubernetes service token authentication should only be used for users for demonstration purposes only, not production environments.
+> **Note**: The Kubeapps frontend sets up a proxy to the Kubernetes API service which means that when exposing the Kubeapps service to a network external to the Kubernetes cluster (perhaps on an internal or public network), the Kubernetes API will also be exposed for authenticated requests from that network. It is highly recommended that you [use an OAuth2/OIDC provider with Kubeapps](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md) to ensure that your authentication proxy is exposed rather than the Kubeapps frontend. This ensures that only the configured users trusted by your Identity Provider will be able to reach the Kubeapps frontend and therefore the Kubernetes API. Kubernetes service token authentication should only be used for users for demonstration purposes only, not production environments.
 
 #### LoadBalancer Service
 
@@ -616,11 +619,11 @@ For annotations, please see [this document](https://github.com/kubernetes/ingres
 This chart will facilitate the creation of TLS secrets for use with the ingress controller, however, this is not required. There are four common use cases:
 
 - Helm generates/manages certificate secrets based on the parameters.
-- User generates/manages certificates separately.
+- The user generates/manages certificates separately.
 - Helm creates self-signed certificates and generates/manages certificate secrets.
 - An additional tool (like [cert-manager](https://github.com/jetstack/cert-manager/)) manages the secrets for the application.
 
-In the first two cases, it's needed a certificate and a key. We would expect them to look like this:
+In the first two cases, it is needed a certificate and a key. We would expect them to look like this:
 
 - certificate files should look like (and there can be more than one certificate if there is a certificate chain)
 
@@ -642,10 +645,9 @@ In the first two cases, it's needed a certificate and a key. We would expect the
   -----END RSA PRIVATE KEY-----
   ```
 
-- If you are going to use Helm to manage the certificates based on the parameters, please copy these values into the `certificate` and `key` values for a given `ingress.secrets` entry.
-- In case you are going to manage TLS secrets separately, please know that you must use a TLS secret with name _INGRESS_HOSTNAME-tls_ (where _INGRESS_HOSTNAME_ is a placeholder to be replaced with the hostname you set using the `ingress.hostname` parameter).
-- To use self-signed certificates created by Helm, set both `ingress.tls` and `ingress.selfSigned` to `true`.
-- If your cluster has a [cert-manager](https://github.com/jetstack/cert-manager) add-on to automate the management and issuance of TLS certificates, set `ingress.certManager` boolean to true to enable the corresponding annotations for cert-manager.
+If you are going to use Helm to manage the certificates, please copy these values into the `certificate` and `key` values for a given `ingress.secrets` entry.
+
+If you are going to manage TLS secrets outside of Helm, please know that you can create a TLS secret named `INGRESS_HOSTNAME-tls` (where _INGRESS_HOSTNAME_ is a placeholder to be replaced with the hostname you set using the `ingress.hostname` parameter).
 
 ## Upgrading Kubeapps
 
@@ -705,16 +707,16 @@ kubectl delete namespace kubeapps
 
 ### How to install Kubeapps for demo purposes?
 
-Install Kubeapps for exclusively **demo purposes** by simply following the [getting started](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md) docs.
+Install Kubeapps for exclusively **demo purposes** by simply following the [getting started](https://github.com/kubeapps/kubeapps/blob/main/docs/user/getting-started.md) docs.
 
 ### How to install Kubeapps in production scenarios?
 
-For any user-facing installation, you should [configure an OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster.
-Please also refer to the [Access Control](https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md) documentation to configure fine-grained access control for users.
+For any user-facing installation, you should [configure an OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster.
+Please also refer to the [Access Control](https://github.com/kubeapps/kubeapps/blob/main/docs/user/access-control.md) documentation to configure fine-grained access control for users.
 
 ### How to use Kubeapps?
 
-Have a look at the [dashboard documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/dashboard.md) for knowing how to use the Kubeapps dashboard: deploying applications, listing and removing the applications running in your cluster and adding new repositories.
+Have a look at the [dashboard documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/user/dashboard.md) for knowing how to use the Kubeapps dashboard: deploying applications, listing and removing the applications running in your cluster and adding new repositories.
 
 ### How to configure Kubeapps with Ingress
 
@@ -741,7 +743,7 @@ helm install kubeapps bitnami/kubeapps \
   --set ingress.annotations."kubernetes\.io/ingress\.class"=nginx # or your preferred ingress controller
 ```
 
-Besides, if you are using the OAuth2/OIDC login (more information at the [using an OIDC provider documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
+Besides, if you are using the OAuth2/OIDC login (more information at the [using an OIDC provider documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
 
 ```bash
 helm install kubeapps bitnami/kubeapps \
@@ -754,19 +756,19 @@ helm install kubeapps bitnami/kubeapps \
 
 ### Can Kubeapps install apps into more than one cluster?
 
-Yes! Kubeapps 2.0+ supports multicluster environments. Have a look at the [Kubeapps dashboard documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/deploying-to-multiple-clusters.md) to know more.
+Yes! Kubeapps 2.0+ supports multicluster environments. Have a look at the [Kubeapps dashboard documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/user/deploying-to-multiple-clusters.md) to know more.
 
 ### Can Kubeapps be installed without Internet connection?
 
-Yes! Follow the [offline installation documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/offline-installation.md) to discover how to perform an installation in an air-gapped scenario.
+Yes! Follow the [offline installation documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/user/offline-installation.md) to discover how to perform an installation in an air-gapped scenario.
 
 ### Does Kubeapps support private repositories?
 
-Of course! Have a look at the [private app repositories documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
+Of course! Have a look at the [private app repositories documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/user/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
 
 ### Is there any API documentation?
 
-Yes! But it is not definitive and is still subject to change. Check out the [latest API online documentation](https://app.swaggerhub.com/apis/kubeapps/Kubeapps) or download the Kubeapps [OpenAPI Specification yaml file](https://github.com/kubeapps/kubeapps/blob/master/dashboard/public/openapi.yaml) from the repository.
+Yes! But it is not definitive and is still subject to change. Check out the [latest API online documentation](https://app.swaggerhub.com/apis/kubeapps/Kubeapps) or download the Kubeapps [OpenAPI Specification yaml file](https://github.com/kubeapps/kubeapps/blob/main/dashboard/public/openapi.yaml) from the repository.
 
 ### Why can't I configure global private repositories?
 
@@ -780,13 +782,14 @@ You could alternatively ensure that the `imagePullSecret` is available in all na
 
 ### Does Kubeapps support Operators?
 
-Yes! You can get started by following the [operators documentation](https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md).
+Yes! You can get started by following the [operators documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/user/operators.md).
 
 ### Slow response when listing namespaces
 
-Kubeapps uses the currently logged-in user credential to retrieve the list of all namespaces. If the user doesn't have permission to list namespaces, the backend will try again with its own service account to list all namespaces and then iterate through each namespace to check if the user has permissions to get secrets for each namespace (to verify if they should be allowed to use that namespace or not and hence whether it is included in the selector). This can lead to a slow response if the number of namespaces on the cluster is large.
+Kubeapps uses the currently logged-in user credential to retrieve the list of all namespaces. If the user does not have permission to list namespaces, the backend will try again with its own service account. It will list all the namespaces and then will iterate through each namespace to check if the user has permissions to get secrets for each one.
+This can lead to a slow response if the number of namespaces on the cluster is large.
 
-To reduce this time, you can increase the number of checks that Kubeapps will perform in parallel (per connection) setting the value: `kubeops.burst=<desired_number>` and `kubeops.QPS=<desired_number>`. The default value, if not set, is 15 burst requests and 10 QPS afterwards.
+To reduce this response time, you can increase the number of checks that Kubeapps will perform in parallel (per connection) setting the value: `kubeappsapis.burst=<desired_number>` and `kubeappsapis.QPS=<desired_number>`.
 
 ### More questions?
 
@@ -802,7 +805,7 @@ When starting the application with the `--set enableIPv6=true` option, the Nginx
 nginx: [emerg] socket() [::]:8080 failed (97: Address family not supported by protocol)
 ```
 
-This usually means that your cluster is not compatible with IPv6. To disable it, install kubeapps with the flag: `--set enableIPv6=false`.
+This usually means that your cluster is not compatible with IPv6. To deactivate it, install kubeapps with the flag: `--set enableIPv6=false`.
 
 ### Forbidden error while installing the Chart
 
@@ -818,7 +821,7 @@ Or:
 Error: namespaces "kubeapps" is forbidden: User "system:serviceaccount:kube-system:default" cannot get namespaces in the namespace "kubeapps"
 ```
 
-It is possible, though uncommon, that your cluster does not have Role-Based Access Control (RBAC) enabled. To check if your cluster has RBAC you can execute:
+It is possible, though uncommon, that your cluster does not have Role-Based Access Control (RBAC) enabled. To check if your cluster has RBAC you can run the following command:
 
 ```bash
 kubectl api-versions
@@ -853,7 +856,7 @@ helm del --purge kubeapps
 
 3. (Optional) Delete the App Repositories CRD:
 
-> **Warning**: Don't execute this step if you have more than one Kubeapps installation in your cluster.
+> **Warning**: Do not run this step if you have more than one Kubeapps installation in your cluster.
 
 ```bash
 kubectl delete crd apprepositories.kubeapps.com
@@ -861,7 +864,7 @@ kubectl delete crd apprepositories.kubeapps.com
 
 4. (Optional) Clean the Kubeapps namespace:
 
-> **Warning**: Don't execute this step if you have workloads other than Kubeapps in the `kubeapps` namespace.
+> **Warning**: Do not run this step if you have workloads other than Kubeapps in the `kubeapps` namespace.
 
 ```bash
 kubectl delete namespace kubeapps
@@ -889,11 +892,11 @@ In this release, no breaking changes were included in Kubeapps (version 2.3.2). 
 Most of these standardizations simply add new parameters that allow to add more customizations such as adding custom env. variables, volumes or sidecar containers. That said, some of them include breaking changes:
 
 - Chart labels were adapted to follow the [Helm charts standard labels](https://helm.sh/docs/chart_best_practices/labels/#standard-labels).
-- `securityContext.*` parameters are deprecated in favor of `XXX.podSecurityContext.*` and `XXX.containerSecurityContext.*`, where XXX is placeholder you need to replace with the actual component(s). For instance, to modify the container security context for "kubeops" use `kubeops.podSecurityContext` and `kubeops.containerSecurityContext` parameters.
+- `securityContext.*` parameters are deprecated in favor of `XXX.podSecurityContext.*` and `XXX.containerSecurityContext.*`, where _XXX_ is placeholder you need to replace with the actual component(s). For instance, to modify the container security context for "kubeops" use `kubeops.podSecurityContext` and `kubeops.containerSecurityContext` parameters.
 
 ### Upgrading to 2.3.1
 
-Kubeapps 2.3.1 (Chart version 6.0.0) introduces some breaking changes. Helm specific functionality has been removed in order to support other installation methods (like using YAML manifests, [`kapp`](https://carvel.dev/kapp) or `kustomize`(https://kustomize.io/)). Because of that, there are some steps required before upgrading from a previous version:
+Kubeapps 2.3.1 (Chart version 6.0.0) introduces some breaking changes. Helm-specific functionality has been removed in order to support other installation methods (like using YAML manifests, [`kapp`](https://carvel.dev/kapp) or [`kustomize`](https://kustomize.io/)). Because of that, there are some steps required before upgrading from a previous version:
 
 1. Kubeapps will no longer create a database secret for you automatically but rather will rely on the default behavior of the PostgreSQL chart. If you try to upgrade Kubeapps and you installed it without setting a password, you will get the following error:
 
@@ -903,7 +906,7 @@ PASSWORDS ERROR: you must provide your current passwords when upgrade the releas
     'postgresql.postgresqlPassword' must not be empty, please add '--set postgresql.postgresqlPassword=$POSTGRESQL_PASSWORD' to the command. To get the current value:
 ```
 
-The error gives you generic instructions for retrieving the PostgreSQL password, but if you have installed a Kubeapps version prior to 2.3.1, the name of the secret will differ. Execute:
+The error gives you generic instructions for retrieving the PostgreSQL password, but if you have installed a Kubeapps version prior to 2.3.1, the name of the secret will differ. Run the following command:
 
 ```console
 export POSTGRESQL_PASSWORD=$(kubectl get secret --namespace "kubeapps" kubeapps-db -o jsonpath="{.data.postgresql-password}" | base64 --decode)
@@ -913,7 +916,7 @@ export POSTGRESQL_PASSWORD=$(kubectl get secret --namespace "kubeapps" kubeapps-
 
 Make sure that you have stored the password in the variable `$POSTGRESQL_PASSWORD` before continuing with the next issue.
 
-2. The chart initialRepos are no longer installed using [Helm hooks](https://helm.sh/docs/topics/charts_hooks/) which caused these repos to not be handled by Helm after the first installation. Now they will be tracked for every update but if you don't delete the existing ones, it will fail to update with:
+2. The chart `initialRepos` are no longer installed using [Helm hooks](https://helm.sh/docs/topics/charts_hooks/), which caused these repos not to be handled by Helm after the first installation. Now they will be tracked for every update. However, if you do not delete the existing ones, it will fail to update with:
 
 ```console
 Error: UPGRADE FAILED: rendered manifests contain a resource that already exists. Unable to continue with update: AppRepository "bitnami" in namespace "kubeapps" exists and cannot be imported into the current release: invalid ownership metadata; annotation validation error: missing key "meta.helm.sh/release-name": must be set to "kubeapps"; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to "kubeapps"
@@ -945,15 +948,15 @@ $ helm upgrade kubeapps bitnami/kubeapps -n kubeapps --set postgresql.postgresql
 - Move dependency information from the _requirements.yaml_ to the _Chart.yaml_
 - After running `helm dependency update`, a _Chart.lock_ file is generated containing the same structure used in the previous _requirements.lock_
 - The different fields present in the _Chart.yaml_ file has been ordered alphabetically in a homogeneous way for all the Bitnami Helm Charts
-- In the case of PostgreSQL subchart, apart from the same changes that are described in this section, there are also other major changes due to the master/slave nomenclature was replaced by primary/readReplica. [Here](https://github.com/bitnami/charts/pull/4385) you can find more information about the changes introduced.
+- In the case of PostgreSQL subchart, apart from the same changes that are described in this section, there are also other major changes due to the _master/slave_ nomenclature was replaced by _primary/readReplica_. [Here](https://github.com/bitnami/charts/pull/4385) you can find more information about the changes introduced.
 
 **Considerations when upgrading to this version**
 
-- If you want to upgrade to this version using Helm 2, this scenario is not supported as this version doesn't support Helm 2 anymore
+- If you want to upgrade to this version using Helm 2, this scenario is not supported as this version does not support Helm 2 anymore
 - If you installed the previous version with Helm 2 and wants to upgrade to this version with Helm 3, please refer to the [official Helm documentation](https://helm.sh/docs/topics/v2_v3_migration/#migration-use-cases) about migrating from Helm 2 to 3
-- If you want to upgrade to this version from a previous one installed with Helm 3, you shouldn't face any issues related to the new `apiVersion`. Due to the PostgreSQL major version bump, it's necessary to remove the existing statefulsets:
+- If you want to upgrade to this version from a previous one installed with Helm 3, you should not face any issues related to the new `apiVersion`. Due to the PostgreSQL major version bump, it is necessary to remove the existing statefulsets:
 
-> Note: The command below assumes that Kubeapps has been deployed in the kubeapps namespace using "kubeapps" as release name, if that's not the case, adapt the command accordingly.
+> Note: The command below assumes that Kubeapps has been deployed in the kubeapps namespace using "kubeapps" as release name, if that is not the case, adapt the command accordingly.
 
 ```console
 $ kubectl delete statefulset -n kubeapps kubeapps-postgresql-master kubeapps-postgresql-slave
@@ -973,12 +976,12 @@ Kubeapps 2.0 (Chart version 4.0.0) introduces some breaking changes:
 - MongoDB&reg; is no longer supported. Since 2.0, the only database supported is PostgreSQL.
 - PostgreSQL chart dependency has been upgraded to a new major version.
 
-Due to the last point, it's necessary to run a command before upgrading to Kubeapps 2.0:
+Due to the last point, it is necessary to run a command before upgrading to Kubeapps 2.0:
 
-> Note: The command below assumes that Kubeapps has been deployed in the kubeapps namespace using "kubeapps" as release name, if that's not the case, adapt the command accordingly.
+> Note: The command below assumes that Kubeapps has been deployed in the kubeapps namespace using "kubeapps" as release name, if that is not the case, adapt the command accordingly.
 
 ```bash
 kubectl delete statefulset -n kubeapps kubeapps-postgresql-master kubeapps-postgresql-slave
 ```
 
-After that you should be able to upgrade Kubeapps as always and the database will be repopulated.
+After that, you should be able to upgrade Kubeapps as always and the database will be repopulated.

@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import {
@@ -33,7 +36,9 @@ function RollbackButton({
   const closeModal = () => setModalOpen(false);
   const handleRollback = async (r: number) => {
     setLoading(true);
-    const success = await dispatch(actions.apps.rollbackInstalledPackage(installedPackageRef, r));
+    const success = await dispatch(
+      actions.installedpackages.rollbackInstalledPackage(installedPackageRef, r),
+    );
     setLoading(false);
     if (success) {
       closeModal();

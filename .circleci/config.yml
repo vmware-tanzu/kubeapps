@@ -1,38 +1,41 @@
+# Copyright 2018-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.17.3"
+    default: "1.17.6"
   NODE_VERSION:
     type: string
-    default: "16"
+    default: "16.13.2"
   RUST_VERSION:
     type: string
-    default: "1.56.1"
+    default: "1.58.1"
   DOCKER_VERSION:
     type: string
-    default: "20.10.7"
+    default: "20.10.11"
   HELM_VERSION_MIN:
     type: "string"
-    default: "v3.1.0"
+    default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.7.1"
+    default: "v3.8.0"
   OLM_VERSION:
     type: "string"
-    default: "v0.19.1"
+    default: "v0.20.0"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.3"
+    default: "v1.22.6"
   GITHUB_VERSION:
     type: "string"
-    default: "2.2.0"
+    default: "2.4.0"
   SEMVER_VERSION:
     type: "string"
-    default: "3.2.0"
+    default: "3.3.0"
   KIND_VERSION:
     type: "string"
     default: "v0.11.1"
@@ -41,7 +44,7 @@ parameters:
     default: "v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "11.14.0-debian-10-r0"
+    default: "11.14.0-debian-10-r28"
   GKE_STABLE_VERSION:
     type: "string"
     default: "1.20"
@@ -89,7 +92,7 @@ parameters:
     default: "kubeapps/kubeapps"
   BRANCH_KUBEAPPS_REPO:
     type: "string"
-    default: "master"
+    default: "main"
 
 ## Build conditions
 # Build on any branch or tag
@@ -103,7 +106,7 @@ build_on_main: &build_on_main
     tags:
       only: /^v.*/
     branches:
-      only: master
+      only: main
 # Build only on tags (release)
 build_on_tag: &build_on_tag
   filters:
@@ -238,6 +241,10 @@ common_envars: &common_envars
   POSTGRESQL_VERSION: << pipeline.parameters.POSTGRESQL_VERSION >>
   RUST_VERSION: << pipeline.parameters.RUST_VERSION >>
 
+common_gke_envars: &common_gke_envars
+  USE_MULTICLUSTER_OIDC_ENV: "false"
+  TEST_TIMEOUT_MINUTES: 6 # Timeout minutes for each test
+
 install_gcloud_sdk: &install_gcloud_sdk
   run:
     name: "Install gcloud sdk"
@@ -311,7 +318,6 @@ install_cluster: &install_cluster
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Cluster created"
@@ -324,7 +330,6 @@ install_cluster: &install_cluster
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Cluster created"
@@ -363,7 +368,6 @@ install_additional_cluster: &install_additional_cluster
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Additional cluster created"
@@ -374,14 +378,18 @@ install_additional_cluster: &install_additional_cluster
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional delete rolebinding kubeapps-user -n  kubeapps-user-namespace &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
         echo "Additional cluster created"
       } || {
         echo "Error while creating the additional cluster after retry"
       }
-
+load_kind_images: &load_kind_images
+  run:
+    name: "Load needed images into Kind"
+    command:
+      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r74 kubeapps-ci kubeapps-ci-additional &&
+      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional
 copy_apiserver_certificates: &copy_apiserver_certificates
   run:
     name: "Copy apiserver certificates"
@@ -484,7 +492,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
@@ -493,7 +501,7 @@ run_e2e_tests: &run_e2e_tests
       fi
 gke_test: &gke_test
   docker:
-    - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+    - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
   steps:
     - checkout
     - run:
@@ -504,19 +512,20 @@ gke_test: &gke_test
           # In the case of GKE we will only want to build if it is
           # a build of a branch in the kubeapps repository
           if [[ -z "$GKE_ADMIN" ]]; then
-            echo "Step aborted, we are not in the Kubeapps repository"
+            echo "Step cancelled, we are not in the Kubeapps repository"
             circleci step halt
           fi
 
           # Cancel job if this is a test stable release job but
           # the chart version has not been bumped
           if [[ -n "${TEST_LATEST_RELEASE:-}" ]] && ! changedVersion; then
-            echo "Step aborted, we are not releasing a new version of the chart"
+            echo "Step cancelled, we are not releasing a new version of the chart"
             circleci step halt
           fi
     - <<: *exports
     - <<: *install_gcloud_sdk
-    - setup_remote_docker
+    - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
     - run:
         name: Configure Google Cloud
         command: |
@@ -537,6 +546,12 @@ gke_test: &gke_test
         command: |
           ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
     - <<: *install_helm_cli
+    - run:
+        # TODO(castelblanque) Unify shared resources with kubeapps-local-dev-users-rbac.yaml
+        # that only applies to Kind clusters
+        name: Apply customizations to GKE cluster
+        command: |
+          kubectl create namespace kubeapps-user-namespace
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
@@ -559,6 +574,7 @@ local_e2e_steps: &local_e2e_steps
     - <<: *export_cluster_variables
     - <<: *install_mkcert
     - <<: *install_helm_cli
+    - <<: *load_kind_images
     # Load images from other jobs
     - attach_workspace:
         at: /tmp/images
@@ -570,7 +586,7 @@ local_e2e_steps: &local_e2e_steps
     - run:
         name: Print k8s KubeappsAPIs logs if the tests fail
         command: |
-            kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
+          kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
         when: on_fail
     - store_artifacts:
         path: integration/reports
@@ -579,12 +595,12 @@ local_e2e_steps: &local_e2e_steps
 
 jobs:
   test_go:
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
     environment:
       CGO_ENABLED: "0"
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *exports
@@ -592,13 +608,14 @@ jobs:
           name: Run go unit tests
           command: |
             make test
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
       - run:
           name: Run go integration tests for DB
           command: |
             docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
-            docker run --network container:postgresql -d --name tests circleci/golang:${GOLANG_VERSION} tail -f /dev/null
-            docker cp /go tests:/
+            docker run --network container:postgresql -d --name tests cimg/go:${GOLANG_VERSION} tail -f /dev/null
+            docker cp /home/circleci/go tests:/
             docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
   test_dashboard:
     environment:
@@ -607,7 +624,7 @@ jobs:
       # garbage collection to start earlier with 512M per worker.
       NODE_OPTIONS: "--max-old-space-size=512"
     docker:
-      - image: circleci/node:<< pipeline.parameters.NODE_VERSION >>
+      - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
       - checkout
       - run:
@@ -624,7 +641,7 @@ jobs:
             yarn --cwd=dashboard run test --maxWorkers=4 --coverage --logHeapUsage
   test_pinniped_proxy:
     docker:
-      - image: circleci/rust:<< pipeline.parameters.RUST_VERSION >>
+      - image: cimg/rust:<< pipeline.parameters.RUST_VERSION >>
     steps:
       - checkout
       - run:
@@ -635,7 +652,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - <<: *exports
       - checkout
@@ -646,22 +663,22 @@ jobs:
             ./script/chart-template-test.sh
   build_go_images:
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
       IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"
     <<: *build_images
   build_dashboard:
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     environment:
       IMAGES: "dashboard"
     <<: *build_images
   build_pinniped_proxy:
     docker:
       # We're building the image in a docker container anyway so just re-use the golang image already in use.
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
@@ -669,7 +686,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -677,16 +694,20 @@ jobs:
           # Assuming there is a personal access token created in GitHub granted with the scopes
           # "repo:status", "public_repo" and "read:org"
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Execute the create_release script
+          name: Run the create_release script
           command: |
             ./script/create_release.sh ${CIRCLE_TAG} << pipeline.parameters.KUBEAPPS_REPO >>
   local_e2e_tests:
     machine: true
+    # Reference for available machines
+    # https://circleci.com/docs/2.0/configuration-reference/#machine-executor-linux
+    resource_class: large
     environment:
       DEFAULT_DEX_IP: "172.18.0.2"
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       TEST_OPERATORS: "1"
+      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
       <<: *common_envars
     parameters:
       number:
@@ -696,33 +717,29 @@ jobs:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_REGULAR_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
       TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_STABLE_VERSION_MAIN:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   GKE_STABLE_VERSION_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
       TEST_LATEST_RELEASE: 1
-      USE_MULTICLUSTER_OIDC_ENV: "false"
-      <<: *common_envars
+      <<: [*common_envars, *common_gke_envars]
   sync_chart_to_bitnami:
     environment:
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -747,14 +764,14 @@ jobs:
           # Assuming there is a personal access token created in GitHub granted with the scopes
           # "repo:status", "public_repo" and "read:org"
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Execute the chart_sync script
+          name: Run the chart_sync script
           command: |
             ./script/chart_sync.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >>
   sync_chart_from_bitnami:
     environment:
       <<: *common_envars
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -782,14 +799,15 @@ jobs:
           # Assuming there is a personal access token created in GitHub granted with the scopes
           # "repo:status", "public_repo" and "read:org"
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Execute the check_upstream_chart script
+          name: Run the check_upstream_chart script
           command: |
             ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >>
   push_images:
     docker:
-      - image: circleci/golang:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
     steps:
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
       - <<: *exports
       - run:
           name: Push images

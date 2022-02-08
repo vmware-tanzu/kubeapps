@@ -1,18 +1,7 @@
 #!/usr/bin/env bash
 
-# Copyright 2018-2021 VMware. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright 2018-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
 
 set -o errexit
 set -o nounset
@@ -24,8 +13,11 @@ USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.18.2"}
 DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
-DEX_IP=${5:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${6:-"172.18.0.3"}
+DOCKER_USERNAME=${5:-""}
+DOCKER_PASSWORD=${6:-""}
+TEST_TIMEOUT_MINUTES=${7:-4}
+DEX_IP=${8:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -40,6 +32,18 @@ fi
 . "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
+
+info "Root dir: ${ROOT_DIR}"
+info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
+info "OLM version: ${OLM_VERSION}"
+info "Image tag: ${DEV_TAG}"
+info "Image repo suffix: ${IMG_MODIFIER}"
+info "Dex IP: ${DEX_IP}"
+info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
+info "Test timeout: ${TEST_TIMEOUT_MINUTES}"
+info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
+info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
+echo ""
 
 # Auxiliar functions
 
@@ -187,9 +191,9 @@ installOrUpgradeKubeapps() {
     "${img_flags[@]}"
     "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
-    --set frontend.replicaCount=2
-    --set kubeops.replicaCount=2
-    --set dashboard.replicaCount=2
+    --set frontend.replicaCount=1
+    --set kubeops.replicaCount=1
+    --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
     --set kubeops.enabled=true
     --set postgresql.replication.enabled=false
@@ -200,22 +204,11 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set globalReposNamespaceSuffix=-repos-global
-    "${operatorFlags[@]+"${operatorFlags[@]}"}"
     --wait)
 
   echo "${cmd[@]}"
   "${cmd[@]}"
 }
-
-# Operators are not supported in GKE 1.14 and flaky in 1.15
-if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
-  installOLM $OLM_VERSION
-fi
-
-info "IMAGE TAG TO BE TESTED: $DEV_TAG"
-info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
-info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
-info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
 
 # Use dev images or Bitnami if testing the latest release
 image_prefix="kubeapps/"
@@ -276,12 +269,6 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   )
 fi
 
-if [ -n "${TEST_OPERATORS-}" ]; then
-  operatorFlags=(
-    "--set" "featureFlags.operators=true"
-  )
-fi
-
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
@@ -308,7 +295,6 @@ pushChart apache 8.6.3 admin password
 info ""
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$DEV_TAG"
-k8s_ensure_image kubeapps kubeapps-ci-internal-kubeops "$DEV_TAG"
 k8s_ensure_image kubeapps kubeapps-ci-internal-kubeappsapis "$DEV_TAG"
 
 # Wait for Kubeapps Pods
@@ -318,7 +304,6 @@ deployments=(
   "kubeapps-ci-internal-apprepository-controller"
   "kubeapps-ci-internal-dashboard"
   "kubeapps-ci-internal-kubeappsapis"
-  "kubeapps-ci-internal-kubeops"
 )
 for dep in "${deployments[@]}"; do
   k8s_wait_for_deployment kubeapps "$dep"
@@ -342,14 +327,13 @@ svcs=(
   "kubeapps-ci"
   "kubeapps-ci-internal-dashboard"
   "kubeapps-ci-internal-kubeappsapis"
-  "kubeapps-ci-internal-kubeops"
 )
 for svc in "${svcs[@]}"; do
   k8s_wait_for_endpoints kubeapps "$svc" 1
   info "Endpoints for ${svc} available"
 done
 
-# Disable helm tests unless we are testing the latest release until
+# Deactivate helm tests unless we are testing the latest release until
 # we have released the code with per-namespace tests (since the helm
 # tests for assetsvc needs to test the namespaced repo).
 if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
@@ -372,14 +356,7 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
     kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
     exit 1
   fi
-  info "Helm tests succeeded!!"
-fi
-
-# Operators are not supported in GKE 1.14 and flaky in 1.15
-if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
-  ## Wait for the Operator catalog to be populated
-  info "Waiting for the OperatorHub Catalog to be ready ..."
-  retry_while isOperatorHubCatalogRunning 24
+  info "Helm tests succeeded!"
 fi
 
 # Browser tests
@@ -391,31 +368,30 @@ pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
-testsToIgnore=()
-# Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
-# Also skip the multicluster scenario
-if [[ -n "${GKE_BRANCH-}" ]]; then
-  testsToIgnore=("operator-deployment.js" "add-multicluster-deployment.js")
-elif [[ -z "${TEST_OPERATORS-}" ]]; then
-  testsToIgnore=("operator-deployment.js")
+
+# Set tests to be run
+# Playwright does not allow to ignore tests on command line, only in config file
+testsToRun=("tests/main/")
+# Skip the multicluster scenario for GKE
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  testsToRun+=("tests/multicluster/")
 fi
-ignoreFlag=""
-if [[ "${#testsToIgnore[@]}" > "0" ]]; then
-  # Join tests to ignore
-  testsToIgnore=$(printf "|%s" "${testsToIgnore[@]}")
-  testsToIgnore=${testsToIgnore:1}
-  ignoreFlag="--testPathIgnorePatterns '$testsToIgnore'"
-fi
-kubectl cp ./use-cases "${pod}:/app/"
+testsArgs="$(printf "%s " "${testsToRun[@]}")"
+
+kubectl cp ./tests "${pod}:/app/"
+info "Copied tests to integration pod ${pod}"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
 kubectl create clusterrolebinding kubeapps-repositories-write --clusterrole kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
+kubectl create rolebinding kubeapps-sa-operator-apprepositories-write -n kubeapps-user-namespace --clusterrole=kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
 ## Create view user
 kubectl create serviceaccount kubeapps-view -n kubeapps
 kubectl create role view-secrets --verb=get,list,watch --resource=secrets
 kubectl create rolebinding kubeapps-view-secret --role view-secrets --serviceaccount kubeapps:kubeapps-view
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
+kubectl create rolebinding kubeapps-view-user-apprepo-read -n kubeapps-user-namespace --clusterrole=kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-view
+kubectl create rolebinding kubeapps-view-user -n kubeapps-user-namespace --clusterrole=edit --serviceaccount kubeapps:kubeapps-view
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
@@ -432,12 +408,40 @@ admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps service
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
-## Run tests
-info "Running Integration tests..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_RETRY_ATTEMPTS=3 INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
+info "Running main Integration tests without k8s API access..."
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
   exit 1
 fi
-info "Integration tests succeeded!!"
+info "Main integration tests succeeded!!"
+
+## Upgrade and run operator test
+# Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
+if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
+  installOLM "${OLM_VERSION}"
+
+  # Update Kubeapps settings to enable operators and hence proxying
+  # to k8s API server.
+  info "Installing latest Kubeapps chart available"
+  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "featureFlags.operators=true"
+
+  info "Waiting for Kubeapps components to be ready (bitnami chart)..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+
+  ## Wait for the Operator catalog to be populated
+  info "Waiting for the OperatorHub Catalog to be ready ..."
+  retry_while isOperatorHubCatalogRunning 24
+
+  info "Running operator integration test with k8s API access..."
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Operator integration tests (with k8s API access) succeeded!!"
+fi
+info "Integration tests succeeded!"

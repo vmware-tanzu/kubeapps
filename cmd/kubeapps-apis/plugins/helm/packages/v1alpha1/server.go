@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -49,6 +40,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
@@ -176,7 +168,17 @@ func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Int
 	if s.clientGetter == nil {
 		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	typedClient, dynamicClient, err := s.clientGetter(ctx, cluster)
+	// TODO (gfichtenholt) Today this function returns 2 different
+	// clients (typed and dynamic). Now if one looks at the callers, it is clear that
+	// only one client is actually needed for a given scenario.
+	// So for now, in order not to make too many changes, I am going to do more work than
+	// is actually needed by getting *all* clients and returning them.
+	// But we should think about refactoring the callers to ask for only what's needed
+	dynamicClient, err := s.clientGetter.Dynamic(ctx, cluster)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+	}
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
@@ -1012,5 +1014,15 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		}
 		return actionGetter, nil
 	}
-	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, fn)
+
+	refs, err := resourcerefs.GetInstalledPackageResourceRefs(
+		ctx, types.NamespacedName{Name: identifier, Namespace: pkgRef.Context.Namespace}, fn)
+	if err != nil {
+		return nil, err
+	} else {
+		return &corev1.GetInstalledPackageResourceRefsResponse{
+			Context:      pkgRef.GetContext(),
+			ResourceRefs: refs,
+		}, nil
+	}
 }

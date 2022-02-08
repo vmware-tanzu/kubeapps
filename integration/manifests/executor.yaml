@@ -1,3 +1,6 @@
+# Copyright 2019-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,8 +21,14 @@ spec:
             - tail
             - -f
             - /dev/null
-          image: kubeapps/integration-tests:v1.0.3
+          image: kubeapps/integration-tests-pw:v1.0.1
           name: integration
+          # TODO (castelblanque) Adjust properly the resources. 
+          # Current values are not empirically demonstrated.
           resources:
             requests:
-              memory: 100Mi
+              memory: 300Mi
+              cpu: 250m
+            limits:
+              memory: 600Mi
+              cpu: 500m

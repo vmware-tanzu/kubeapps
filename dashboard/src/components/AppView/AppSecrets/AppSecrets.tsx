@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import LoadingWrapper from "components/LoadingWrapper";
 import { isEmpty } from "lodash";
 import { useSelector } from "react-redux";

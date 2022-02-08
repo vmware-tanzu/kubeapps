@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package helm
 
 import (
@@ -17,15 +8,15 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	helmrepo "helm.sh/helm/v3/pkg/repo"
+	"helm.sh/helm/v3/pkg/repo"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
-func parseRepoIndex(contents []byte) (*helmrepo.IndexFile, error) {
-	var index helmrepo.IndexFile
+func parseRepoIndex(contents []byte) (*repo.IndexFile, error) {
+	var index repo.IndexFile
 	err := yaml.Unmarshal(contents, &index)
 	if err != nil {
 		return nil, err
@@ -36,11 +27,11 @@ func parseRepoIndex(contents []byte) (*helmrepo.IndexFile, error) {
 
 // Takes an entry from the index and constructs a model representation of the
 // object.
-func newChart(entry helmrepo.ChartVersions, r *models.Repo, shallow bool) models.Chart {
+func newChart(entry repo.ChartVersions, r *models.Repo, shallow bool) models.Chart {
 	var c models.Chart
 	copier.Copy(&c, entry[0])
 	if shallow {
-		copier.Copy(&c.ChartVersions, []helmrepo.ChartVersion{*entry[0]})
+		copier.Copy(&c.ChartVersions, []repo.ChartVersion{*entry[0]})
 	} else {
 		copier.Copy(&c.ChartVersions, entry)
 	}

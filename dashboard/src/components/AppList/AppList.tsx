@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
@@ -69,7 +72,7 @@ function AppList() {
   }, [allNS, currentNamespace]);
 
   useEffect(() => {
-    dispatch(actions.apps.fetchApps(cluster, namespace));
+    dispatch(actions.installedpackages.fetchInstalledPackages(cluster, namespace));
     if (featureFlags?.operators) {
       dispatch(actions.operators.getResources(cluster, namespace));
     }
@@ -131,7 +134,7 @@ function AppList() {
         className="margin-t-xl"
       >
         {error ? (
-          <ErrorAlert>{error}</ErrorAlert>
+          <ErrorAlert error={error} />
         ) : (
           <AppListGrid
             appList={listOverview}

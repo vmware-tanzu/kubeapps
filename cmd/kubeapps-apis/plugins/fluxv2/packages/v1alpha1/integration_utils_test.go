@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -27,9 +18,13 @@ import (
 	"testing"
 	"time"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	"github.com/fluxcd/pkg/apis/meta"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -170,30 +165,36 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 // the design
 func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
-	unstructuredRepo := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": fmt.Sprintf("%s/%s", fluxGroup, fluxVersion),
-			"kind":       fluxHelmRepository,
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": namespace,
-			},
-			"spec": map[string]interface{}{
-				"url":      url,
-				"interval": "1m",
-			},
+	repo := sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL: url,
 		},
 	}
 
 	if secretName != "" {
-		unstructured.SetNestedField(unstructuredRepo.Object, secretName, "spec", "secretRef", "name")
+		repo.Spec.SecretRef = &meta.LocalObjectReference{
+			Name: secretName,
+		}
+	}
+
+	u, err := common.ToUnstructured(&repo)
+	if err != nil {
+		t.Fatalf("%v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
 		return err
-	} else if _, err := ifc.Create(ctx, &unstructuredRepo, metav1.CreateOptions{}); err != nil {
+	} else if _, err := ifc.Create(ctx, u, metav1.CreateOptions{}); err != nil {
 		return err
 	} else {
 		return nil
@@ -228,7 +229,11 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 						return errors.New("Could not cast to unstructured.Unstructured")
 					} else {
 						hour, minute, second := time.Now().Clock()
-						complete, success, reason := isHelmRepositoryReady(unstructuredRepo.Object)
+						repo := sourcev1.HelmRepository{}
+						if err := common.FromUnstructured(unstructuredRepo, &repo); err != nil {
+							return err
+						}
+						complete, success, reason := isHelmRepositoryReady(repo)
 						t.Logf("[%d:%d:%d] Got event: type: [%v], reason [%s]", hour, minute, second, event.Type, reason)
 						if complete && success {
 							return nil
@@ -554,8 +559,8 @@ func kubeGetHelmReleaseResourceInterface(namespace string) (dynamic.ResourceInte
 		return nil, err
 	}
 	relResource := schema.GroupVersionResource{
-		Group:    fluxHelmReleaseGroup,
-		Version:  fluxHelmReleaseVersion,
+		Group:    helmv2.GroupVersion.Group,
+		Version:  helmv2.GroupVersion.Version,
 		Resource: fluxHelmReleases,
 	}
 	return clientset.Resource(relResource).Namespace(namespace), nil
@@ -567,8 +572,8 @@ func kubeGetHelmRepositoryResourceInterface(namespace string) (dynamic.ResourceI
 		return nil, err
 	}
 	repoResource := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
 		Resource: fluxHelmRepositories,
 	}
 	return clientset.Resource(repoResource).Namespace(namespace), nil
@@ -706,8 +711,8 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	})
 	t.Logf("redisCli: %s", redisCli)
 
-	// sanity check, we expect the cache to be empty at this point
-	// if it's not, it's likely that some cleanup didn't happen due to earlier an aborted test
+	// confidence test, we expect the cache to be empty at this point
+	// if it's not, it's likely that some cleanup didn't happen due to earlier an stopped test
 	// and you should be able to clean up manually
 	// $ kubectl delete helmrepositories --all
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {

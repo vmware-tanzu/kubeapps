@@ -2,7 +2,7 @@
 
 ### Kubeapps dashboard
 
-The dashboard is the main UI component of the Kubeapps project. Written in Javascript, the dashboard uses the React Javascript library for the frontend.
+The dashboard is the main UI component of the Kubeapps project. Written in JavaScript, the dashboard uses the React JavaScript library for the frontend.
 
 Please refer to the [Kubeapps Dashboard Developer Guide](dashboard.md) for the developer setup.
 

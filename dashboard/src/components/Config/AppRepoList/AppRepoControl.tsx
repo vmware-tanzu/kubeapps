@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
@@ -68,7 +71,12 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
       >
         {refreshing ? "Refreshing" : "Refresh"}
       </CdsButton>
-      <CdsButton status="danger" onClick={openModal} action="outline">
+      <CdsButton
+        id={`delete-repo-${repo.metadata.name}`}
+        status="danger"
+        onClick={openModal}
+        action="outline"
+      >
         Delete
       </CdsButton>
     </div>

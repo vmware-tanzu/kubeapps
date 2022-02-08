@@ -1,6 +1,11 @@
+# Copyright 2017-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 *.*~
 telepresence.log
 devel/*
+integration/reports/*
+!integration/reports/.notempty
 
 # OSX
 .DS_Store

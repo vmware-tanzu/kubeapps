@@ -1,15 +1,6 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package common
 
 import (
@@ -24,6 +15,8 @@ import (
 	"strings"
 	"sync"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
@@ -35,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -61,7 +55,7 @@ func init() {
 //
 // miscellaneous utility funcs
 //
-func PrettyPrintObject(o runtime.Object) string {
+func PrettyPrint(o interface{}) string {
 	prettyBytes, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("%v", o)
@@ -69,36 +63,60 @@ func PrettyPrintObject(o runtime.Object) string {
 	return string(prettyBytes)
 }
 
-func PrettyPrintMap(m map[string]interface{}) string {
-	prettyBytes, err := json.MarshalIndent(m, "", "  ")
+func FromUnstructured(unstructuredObj *unstructured.Unstructured, obj interface{}) error {
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, obj)
 	if err != nil {
-		return fmt.Sprintf("%v", m)
+		return status.Errorf(codes.Internal,
+			"failed to convert unstructured content for %s to a typed: %v",
+			PrettyPrint(unstructuredObj), err)
 	}
-	return string(prettyBytes)
+	return nil
 }
 
-// Confirm the state we are observing is for the current generation
-// returns true if object's status.observedGeneration == metadata.generation
-// false otherwise
-func CheckGeneration(unstructuredObj map[string]interface{}) bool {
-	observedGeneration, found, err := unstructured.NestedInt64(unstructuredObj, "status", "observedGeneration")
-	if err != nil || !found {
-		return false
+func ToUnstructured(obj interface{}) (*unstructured.Unstructured, error) {
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to convert typed content for %s to unstructured: %v",
+			PrettyPrint(obj), err)
 	}
-	generation, found, err := unstructured.NestedInt64(unstructuredObj, "metadata", "generation")
-	if err != nil || !found {
+	return &unstructured.Unstructured{Object: unstructuredObj}, nil
+}
+
+func CheckGeneration(obj ctrlclient.Object) bool {
+	generation := obj.GetGeneration()
+	var observedGeneration int64
+	if repo, ok := obj.(*sourcev1.HelmRepository); ok {
+		observedGeneration = repo.Status.ObservedGeneration
+	} else if rel, ok := obj.(*helmv2.HelmRelease); ok {
+		observedGeneration = rel.Status.ObservedGeneration
+	} else {
+		log.Errorf("Unsupported object type in CheckGeneration: %#v", obj)
 		return false
 	}
 	return generation == observedGeneration
 }
 
-func NamespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedName, error) {
+func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
+	name := obj.GetName()
+	namespace := obj.GetNamespace()
+	if name != "" && namespace != "" {
+		return &types.NamespacedName{Name: name, Namespace: namespace}, nil
+	} else {
+		return nil,
+			status.Errorf(codes.Internal,
+				"required fields 'metadata.name' and/or 'metadata.namespace' not found on resource: %v",
+				PrettyPrint(obj))
+	}
+}
+
+func NamespacedNameForUnstructured(unstructuredObj map[string]interface{}) (*types.NamespacedName, error) {
 	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
 	if err != nil || !found {
 		return nil,
 			status.Errorf(codes.Internal, "required field 'metadata.name' not found on resource: %v:\n%s",
 				err,
-				PrettyPrintMap(unstructuredObj))
+				PrettyPrint(unstructuredObj))
 	}
 
 	namespace, found, err := unstructured.NestedString(unstructuredObj, "metadata", "namespace")
@@ -106,14 +124,14 @@ func NamespacedName(unstructuredObj map[string]interface{}) (*types.NamespacedNa
 		return nil,
 			status.Errorf(codes.Internal, "required field 'metadata.namespace' not found on resource: %v:\n%s",
 				err,
-				PrettyPrintMap(unstructuredObj))
+				PrettyPrint(unstructuredObj))
 	}
 	return &types.NamespacedName{Name: name, Namespace: namespace}, nil
 }
 
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
 // I understand this is not really "kosher" in general for production usage,
-// but in one specific case (cache populateWith() func) it's okay as a sanity check
+// but in one specific case (cache populateWith() func) it's okay as a confidence test
 // if it turns out not, I can always remove this check, it's not critical
 const mutexLocked = 1
 
@@ -161,7 +179,7 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 		DB:       REDIS_DB_NUM,
 	})
 
-	// sanity check that the redis client is connected
+	// confidence test that the redis client is connected
 	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
 		return nil, err
 	} else {

@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import actions from "actions";
 import { push } from "connected-react-router";
 import {
@@ -25,12 +28,12 @@ function CustomAppView({ resourceRefs, app, appDetails }: ICustomAppViewProps) {
   const dispatch = useDispatch();
 
   const handleDelete = useCallback(
-    () => dispatch(actions.apps.deleteInstalledPackage(app.installedPackageRef!)),
+    () => dispatch(actions.installedpackages.deleteInstalledPackage(app.installedPackageRef!)),
     [dispatch, app.installedPackageRef],
   );
 
   const handleRollback = useCallback(
-    () => dispatch(actions.apps.rollbackInstalledPackage(app.installedPackageRef!, 1)),
+    () => dispatch(actions.installedpackages.rollbackInstalledPackage(app.installedPackageRef!, 1)),
     [dispatch, app.installedPackageRef],
   );
 

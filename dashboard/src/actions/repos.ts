@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import {
   AvailablePackageReference,
   InstalledPackageDetail,
@@ -16,7 +19,7 @@ import {
   NotFoundError,
 } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-import { createErrorPackage } from "./packages";
+import { createErrorPackage } from "./availablepackages";
 
 const { createAction } = deprecated;
 

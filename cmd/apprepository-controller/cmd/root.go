@@ -1,30 +1,17 @@
-/*
-Copyright 2021 VMware. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
 
 package cmd
 
 import (
-	"fmt"
-	"os"
+	"flag"
 	"strings"
 
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
 	corev1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
@@ -62,10 +49,17 @@ func Execute() {
 }
 
 func init() {
+	log.InitFlags(nil)
 	cobra.OnInitialize(initConfig)
 	rootCmd = newRootCmd()
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
+	//set initial value of verbosity
+	err := flag.Set("v", "3")
+	if err != nil {
+		log.Errorf("Error parsing verbosity: %v", viper.ConfigFileUsed())
+	}
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
 	serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
 	serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
@@ -73,7 +67,7 @@ func init() {
 
 func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
-	c.Flags().StringVar(&serveOpts.MasterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
+	c.Flags().StringVar(&serveOpts.APIServerURL, "apiserver", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	c.Flags().StringVar(&serveOpts.RepoSyncImage, "repo-sync-image", "docker.io/kubeapps/asset-syncer:latest", "container repo/image to use in CronJobs")
 	c.Flags().StringSliceVar(&serveOpts.RepoSyncImagePullSecrets, "repo-sync-image-pullsecrets", nil, "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
 	c.Flags().StringVar(&serveOpts.RepoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
@@ -102,7 +96,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
+		home, err := homedir.Dir()
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".kubeops" (without extension).
@@ -115,7 +109,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		log.Errorf("Using config file: %v", viper.ConfigFileUsed())
 	}
 }
 
@@ -138,7 +132,7 @@ func parseLabelsAnnotations(textArr []string) map[string]string {
 		if text != "" {
 			parts := strings.Split(text, "=")
 			if len(parts) != 2 {
-				log.Fatalf("Cannot parse '%s'", text)
+				log.Errorf("Cannot parse '%s'", text)
 			}
 			textMap[parts[0]] = parts[1]
 		}

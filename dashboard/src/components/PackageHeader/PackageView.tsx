@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
@@ -62,7 +65,10 @@ export default function PackageView() {
   // Fetch the selected/latest version on the initial load
   useEffect(() => {
     dispatch(
-      actions.packages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
+      actions.availablepackages.fetchAndSelectAvailablePackageDetail(
+        packageReference,
+        packageVersion,
+      ),
     );
     return () => {};
   }, [dispatch, packageReference, packageVersion]);
@@ -70,7 +76,7 @@ export default function PackageView() {
   // Fetch all versions
   useEffect(() => {
     dispatch(
-      actions.packages.fetchAvailablePackageVersions({
+      actions.availablepackages.fetchAvailablePackageVersions({
         context: { cluster: packageCluster, namespace: packageNamespace },
         plugin: { name: pluginName, version: pluginVersion } as Plugin,
         identifier: packageId,

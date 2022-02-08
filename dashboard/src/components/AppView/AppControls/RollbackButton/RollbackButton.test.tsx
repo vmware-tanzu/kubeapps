@@ -1,3 +1,6 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
@@ -29,8 +32,8 @@ const defaultProps = {
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.apps = {
-    ...actions.apps,
+  actions.installedpackages = {
+    ...actions.installedpackages,
     rollbackInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
@@ -44,7 +47,7 @@ afterEach(() => {
 
 it("rolls back an application", async () => {
   const rollbackInstalledPackage = jest.fn();
-  actions.apps.rollbackInstalledPackage = rollbackInstalledPackage;
+  actions.installedpackages.rollbackInstalledPackage = rollbackInstalledPackage;
   const wrapper = mountWrapper(defaultStore, <RollbackButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
@@ -78,7 +81,7 @@ it("renders an error", async () => {
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
 });
 
-it("should render a disabled button if when passing an in-progress status", async () => {
+it("should render a deactivated button if when passing an in-progress status", async () => {
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {

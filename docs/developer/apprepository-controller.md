@@ -67,7 +67,7 @@ kubectl -n kubeapps scale deployment kubeapps-internal-apprepository-controller 
 
 > **NOTE** Remember to scale the deployment back to `1` replica when you are done
 
-You can now execute the `apprepository-controller` binary on the developer host with:
+You can now run the `apprepository-controller` binary on the developer host with:
 
 ```bash
 ./apprepository-controller --repo-sync-image=docker.io/kubeapps/asset-syncer:myver --kubeconfig ~/.kube/config
@@ -77,7 +77,7 @@ Performing application repository actions in the Kubeapps dashboard will now tri
 
 ### Running tests
 
-To start the tests on the `apprepository-controller` execute the following command:
+To start the tests on the `apprepository-controller` run the following command:
 
 ```bash
 go test

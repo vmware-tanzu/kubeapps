@@ -1,3 +1,6 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
@@ -34,7 +37,9 @@ export default function DeleteButton({
   const closeModal = () => setModal(false);
   const handleDeleteClick = async () => {
     setDeleting(true);
-    const deleted = await dispatch(actions.apps.deleteInstalledPackage(installedPackageRef));
+    const deleted = await dispatch(
+      actions.installedpackages.deleteInstalledPackage(installedPackageRef),
+    );
     setDeleting(false);
     if (deleted) {
       dispatch(

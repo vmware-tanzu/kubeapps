@@ -1,3 +1,6 @@
+// Copyright 2018-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsSelect } from "@cds/react/select";
@@ -83,10 +86,13 @@ export default function DeploymentForm() {
   useEffect(() => {
     // Get the package details
     dispatch(
-      actions.packages.fetchAndSelectAvailablePackageDetail(packageReference, packageVersion),
+      actions.availablepackages.fetchAndSelectAvailablePackageDetail(
+        packageReference,
+        packageVersion,
+      ),
     );
     // Populate the rest of packages versions
-    dispatch(actions.packages.fetchAvailablePackageVersions(packageReference));
+    dispatch(actions.availablepackages.fetchAvailablePackageVersions(packageReference));
     return () => {};
   }, [dispatch, packageReference, packageVersion]);
 
@@ -126,7 +132,7 @@ export default function DeploymentForm() {
     if (selectedPackage.availablePackageDetail) {
       const deployed = await dispatch(
         // Installation always happen in the cluster/namespace passed in the URL
-        actions.apps.installPackage(
+        actions.installedpackages.installPackage(
           targetCluster,
           targetNamespace,
           selectedPackage.availablePackageDetail,

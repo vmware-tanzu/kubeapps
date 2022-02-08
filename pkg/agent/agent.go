@@ -1,12 +1,13 @@
+// Copyright 2019-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package agent
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -17,6 +18,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	log "k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
 
@@ -130,7 +132,7 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Upgrading release %s", name)
+	log.Infof("Upgrading release %s", name)
 	cmd := action.NewUpgrade(actionConfig)
 	if timeoutSeconds > 0 {
 		// Given that `cmd.Wait` is not used, this timeout will only affect pre/post hooks
@@ -154,7 +156,7 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 
 // RollbackRelease rolls back a release to the specified revision.
 func RollbackRelease(actionConfig *action.Configuration, releaseName string, revision int, timeoutSeconds int32) (*release.Release, error) {
-	log.Printf("Rolling back %s to revision %d.", releaseName, revision)
+	log.Infof("Rolling back %s to revision %d.", releaseName, revision)
 	rollback := action.NewRollback(actionConfig)
 	rollback.Version = revision
 	if timeoutSeconds > 0 {
@@ -255,7 +257,7 @@ func ParseDriverType(raw string) (StorageForDriver, error) {
 	case "memory":
 		return StorageForMemory, nil
 	default:
-		return nil, errors.New("Invalid Helm driver type: " + raw)
+		return nil, fmt.Errorf("Invalid Helm driver type: %s", raw)
 	}
 }
 

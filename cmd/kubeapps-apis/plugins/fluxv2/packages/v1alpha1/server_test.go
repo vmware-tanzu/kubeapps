@@ -1,27 +1,18 @@
-/*
-Copyright © 2021 VMware
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
 
 package main
 
 import (
 	"context"
 	"crypto/subtle"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -36,69 +27,27 @@ import (
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
 
 const KubeappsCluster = "default"
 
-func TestBadClientGetter(t *testing.T) {
-	testCases := []struct {
-		name         string
-		clientGetter clientgetter.ClientGetterWithApiExtFunc
-		statusCode   codes.Code
-	}{
-		{
-			name:         "returns internal error status when no getter configured",
-			clientGetter: nil,
-			statusCode:   codes.Internal,
-		},
-		{
-			name: "returns failed-precondition when clientGetter itself errors",
-			clientGetter: func(context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-				return nil, nil, nil, fmt.Errorf("Bang!")
-			},
-			statusCode: codes.FailedPrecondition,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			s := Server{clientGetter: tc.clientGetter}
-
-			_, _, _, err := s.GetClients(context.Background())
-			if err == nil && tc.statusCode != codes.OK {
-				t.Fatalf("got: nil, want: error")
-			}
-
-			if got, want := status.Code(err), tc.statusCode; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
-			}
-
-		})
-	}
-}
-
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name       string
-		repo       runtime.Object
+		repo       sourcev1.HelmRepository
 		statusCode codes.Code
 	}{
 		{
 			name: "returns without error if response status does not contain conditions",
 			repo: newRepo("test", "default",
-				map[string]interface{}{
-					"url":      "http://example.com",
-					"interval": "1m0s",
+				&sourcev1.HelmRepositorySpec{
+					URL:      "http://example.com",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
 				nil),
 			statusCode: codes.OK,
@@ -106,83 +55,106 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		{
 			name: "returns without error if response status does not contain conditions (2)",
 			repo: newRepo("test", "default",
-				map[string]interface{}{
-					"url":      "http://example.com",
-					"interval": "1m0s",
+				&sourcev1.HelmRepositorySpec{
+					URL:      "http://example.com",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
-				map[string]interface{}{
-					"zot": "xyz",
-				}),
+				&sourcev1.HelmRepositoryStatus{}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if response does not contain ready repos",
 			repo: newRepo("test", "default",
-				map[string]interface{}{
-					"url":      "http://example.com",
-					"interval": "1m0s",
+				&sourcev1.HelmRepositorySpec{
+					URL:      "http://example.com",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
-				map[string]interface{}{
-					"conditions": []interface{}{
-						map[string]interface{}{
-							"type":   "Ready",
-							"status": "False",
-							"reason": "IndexationFailed",
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "False",
+							Reason: "IndexationFailed",
 						},
-					}}),
+					},
+				}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain namespace",
-			repo: newRepo("test", "", nil, map[string]interface{}{
-				"conditions": []interface{}{
-					map[string]interface{}{
-						"type":   "Ready",
-						"status": "True",
-						"reason": "IndexationSucceed",
+			repo: newRepo("test", "",
+				nil,
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "IndexationSucceed",
+						},
 					},
-				}}),
+				}),
+			statusCode: codes.OK,
+		},
+		{
+			name: "returns without error if repo object contains default spec",
+			repo: newRepo("test", "default",
+				nil,
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "IndexationSucceed",
+						},
+					},
+				}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain spec url",
-			repo: newRepo("test", "default", nil, map[string]interface{}{
-				"conditions": []interface{}{
-					map[string]interface{}{
-						"type":   "Ready",
-						"status": "True",
-						"reason": "IndexationSucceed",
+			repo: newRepo("test", "default",
+				&sourcev1.HelmRepositorySpec{},
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "IndexationSucceed",
+						},
 					},
-				}}),
+				}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if repo object does not contain status url",
-			repo: newRepo("test", "default", map[string]interface{}{
-				"url":      "http://example.com",
-				"interval": "1m0s",
-			}, map[string]interface{}{
-				"conditions": []interface{}{
-					map[string]interface{}{
-						"type":   "Ready",
-						"status": "True",
-						"reason": "IndexationSucceed",
+			repo: newRepo("test", "default",
+				&sourcev1.HelmRepositorySpec{
+					URL:      "http://example.com",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
+				},
+				&sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "IndexationSucceed",
+						},
 					},
-				}}),
+				}),
 			statusCode: codes.OK,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, []runtime.Object{tc.repo}, nil, nil)
+			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{tc.repo}, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
 			// these (negative) tests are all testing very unlikely scenarios which were kind of hard to fit into
 			// redisMockBeforeCallToGetAvailablePackageSummaries() so I put special logic here instead
-			if isRepoReady(tc.repo.(*unstructured.Unstructured).Object) {
+			if isRepoReady(tc.repo) {
 				if key, err := redisKeyForRepo(tc.repo); err == nil {
 					// TODO explain why 3 calls to ExpectGet. It has to do with the way
 					// the caching internals work: a call such as GetAvailablePackageSummaries
@@ -376,9 +348,9 @@ type testSpecChartWithUrl struct {
 // (unlike charts or releases) is that repos are treated special because
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
 func newServer(t *testing.T,
-	clientGetter clientgetter.ClientGetterWithApiExtFunc,
+	clientGetter clientgetter.ClientGetterFunc,
 	actionConfig *action.Configuration,
-	repos []runtime.Object,
+	repos []sourcev1.HelmRepository,
 	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
 
 	stopCh := make(chan struct{})
@@ -390,24 +362,28 @@ func newServer(t *testing.T,
 	if clientGetter != nil {
 		// if client getter returns an error, FLUSHDB call does not take place, because
 		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
-		if _, _, _, err := clientGetter(context.TODO()); err == nil {
+		if _, err := clientGetter(context.TODO(), ""); err == nil {
 			mock.ExpectFlushDB().SetVal("OK")
 		}
 	}
 
-	cs := repoEventSink{
-		clientGetter: clientGetter,
+	backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return clientGetter(ctx, KubeappsCluster)
+	}
+
+	sink := repoEventSink{
+		clientGetter: backgroundClientGetter,
 		chartCache:   nil,
 	}
 
 	okRepos := sets.String{}
 	for _, r := range repos {
-		if isRepoReady(r.(*unstructured.Unstructured).Object) {
-			// we are willfully ignoring any errors coming from redisMockSetValueForRepo()
+		if isRepoReady(r) {
+			// we are willfully just logging any errors coming from redisMockSetValueForRepo()
 			// here and just skipping over to next repo. This is done for test
 			// TestGetAvailablePackagesStatus where we make sure that even if the flux CRD happens
 			// to be invalid flux plug in can still operate
-			key, _, err := cs.redisMockSetValueForRepo(mock, r)
+			key, _, err := sink.redisMockSetValueForRepo(mock, r)
 			if err != nil {
 				t.Logf("Skipping repo [%s] due to %+v", key, err)
 			} else {
@@ -428,6 +404,8 @@ func newServer(t *testing.T,
 		}
 		t.Cleanup(func() { chartCache.Shutdown() })
 
+		sink.chartCache = chartCache
+
 		// for now we only cache latest version of each chart
 		for _, c := range charts {
 			// very simple logic for now, relies on the order of elements in the array
@@ -447,7 +425,7 @@ func newServer(t *testing.T,
 					for i := 0; i < c.numRetries; i++ {
 						mock.ExpectExists(key).SetVal(0)
 					}
-					err = cs.redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
+					err = sink.redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
 					if err != nil {
 						return nil, mock, err
 					}
@@ -456,20 +434,16 @@ func newServer(t *testing.T,
 				}
 			}
 		}
-		cs = repoEventSink{
-			clientGetter: clientGetter,
-			chartCache:   chartCache,
-		}
 	}
 
 	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 		Gvr:          repositoriesGvr,
-		ClientGetter: clientGetter,
-		OnAddFunc:    cs.onAddRepo,
-		OnModifyFunc: cs.onModifyRepo,
-		OnGetFunc:    cs.onGetRepo,
-		OnDeleteFunc: cs.onDeleteRepo,
-		OnResyncFunc: cs.onResync,
+		ClientGetter: backgroundClientGetter,
+		OnAddFunc:    sink.onAddRepo,
+		OnModifyFunc: sink.onModifyRepo,
+		OnGetFunc:    sink.onGetRepo,
+		OnDeleteFunc: sink.onDeleteRepo,
+		OnResyncFunc: sink.onResync,
 	}
 
 	repoCache, err := cache.NewNamespacedResourceWatcherCache(

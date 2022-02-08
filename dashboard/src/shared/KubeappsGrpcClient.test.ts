@@ -1,3 +1,6 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 import { grpc } from "@improbable-eng/grpc-web";
 import { FakeTransportBuilder } from "@improbable-eng/grpc-web-fake-transport";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";

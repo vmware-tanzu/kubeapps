@@ -1,3 +1,6 @@
+# Copyright 2018-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 [submodule "code-generator"]
 	path = cmd/apprepository-controller/vendor/k8s.io/code-generator
 	url = https://github.com/kubernetes/code-generator
