@@ -16,6 +16,7 @@ import (
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
@@ -329,8 +330,9 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installedPackageName,
-			Namespace: targetNamespace,
+			Name:        installedPackageName,
+			Namespace:   targetNamespace,
+			Annotations: map[string]string{},
 		},
 		Spec: packagingv1alpha1.PackageInstallSpec{
 			// This is the Carvel's way of supporting deployments across clusters
@@ -349,6 +351,12 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 				},
 			},
 		},
+	}
+
+	// Allow this PackageInstall to be downgraded
+	// https://carvel.dev/kapp-controller/docs/v0.32.0/package-consumer-concepts/#downgrading
+	if s.pluginConfig.defaultAllowDowngrades {
+		pkgInstall.ObjectMeta.Annotations[kappctrlpackageinstall.DowngradableAnnKey] = ""
 	}
 
 	if reconciliationOptions != nil {

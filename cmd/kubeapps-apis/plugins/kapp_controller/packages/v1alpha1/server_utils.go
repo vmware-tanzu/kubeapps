@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -15,13 +16,19 @@ import (
 	"github.com/Masterminds/semver/v3"
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" doesn't work: https://github.com/kubeapps/kubeapps/pull/4050
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
 
@@ -321,24 +328,40 @@ func isKindInt(src interface{}) bool {
 
 type (
 	kappControllerPluginConfig struct {
+		Core struct {
+			Packages struct {
+				V1alpha1 struct {
+					VersionsInSummary pkgutils.VersionsInSummary
+					TimeoutSeconds    int32 `json:"timeoutSeconds"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"core"`
+
 		KappController struct {
 			Packages struct {
 				V1alpha1 struct {
 					DefaultUpgradePolicy               string   `json:"defaultUpgradePolicy"`
 					DefaultPrereleasesVersionSelection []string `json:"defaultPrereleasesVersionSelection"`
+					DefaultAllowDowngrades             bool     `json:"defaultAllowDowngrades"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"kappController"`
 	}
 	kappControllerPluginParsedConfig struct {
+		versionsInSummary                  pkgutils.VersionsInSummary
+		timeoutSeconds                     int32
 		defaultUpgradePolicy               upgradePolicy
 		defaultPrereleasesVersionSelection []string
+		defaultAllowDowngrades             bool
 	}
 )
 
 var defaultPluginConfig = &kappControllerPluginParsedConfig{
+	versionsInSummary:                  pkgutils.GetDefaultVersionsInSummary(),
+	timeoutSeconds:                     300,
 	defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
 	defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
+	defaultAllowDowngrades:             fallbackDefaultAllowDowngrades,
 }
 
 // Create a upgradePolicy enum-alike
@@ -441,4 +464,22 @@ func (f *ConfigurableConfigFactoryImpl) ConfigureRESTConfig(config *rest.Config)
 
 func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
 	return f.config, nil
+}
+
+func WaitForResource(ctx context.Context, ri dynamic.ResourceInterface, name string, interval, timeout time.Duration) error {
+	err := wait.PollImmediateWithContext(ctx, interval, timeout, func(ctx context.Context) (bool, error) {
+		_, err := ri.Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				// the resource hasn't been created yet
+				return false, nil
+			} else {
+				// any other real error
+				return false, statuserror.FromK8sError("wait", "resource", name, err)
+			}
+		}
+		// the resource is created now
+		return true, nil
+	})
+	return err
 }

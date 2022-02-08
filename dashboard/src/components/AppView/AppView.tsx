@@ -152,31 +152,32 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: app, selectedDetails: appDetails },
+    apps: { error, selected: app, resourceRefs, selectedDetails: appDetails },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
   useEffect(() => {
-    dispatch(
-      actions.apps.getApp({
-        context: { cluster: cluster, namespace: namespace },
-        identifier: releaseName,
-        plugin: pluginObj,
-      } as InstalledPackageReference),
-    );
+    const installedPkgRef = {
+      context: { cluster: cluster, namespace: namespace },
+      identifier: releaseName,
+      plugin: pluginObj,
+    } as InstalledPackageReference;
+
+    dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
+    dispatch(actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef));
   }, [cluster, dispatch, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
-    if (!app?.apiResourceRefs) {
+    if (!resourceRefs) {
       return () => {};
     }
 
-    const parsedRefs = parseResources(app.apiResourceRefs);
+    const parsedRefs = parseResources(resourceRefs);
     setAppViewResourceRefs(parsedRefs);
     return () => {};
-  }, [app?.apiResourceRefs]);
+  }, [resourceRefs]);
 
   useEffect(() => {
     if (!app?.installedPackageRef) {
@@ -205,9 +206,9 @@ export default function AppView() {
   }, [dispatch, app?.installedPackageRef, appViewResourceRefs]);
 
   const forceRetry = () => {
-    dispatch(actions.apps.clearErrorApp());
+    dispatch(actions.installedpackages.clearErrorInstalledPackage());
     dispatch(
-      actions.apps.getApp({
+      actions.installedpackages.getInstalledPackage({
         context: { cluster: cluster, namespace: namespace },
         identifier: releaseName,
         plugin: pluginObj,

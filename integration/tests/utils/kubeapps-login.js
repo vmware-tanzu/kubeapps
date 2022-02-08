@@ -7,12 +7,14 @@ exports.KubeappsLogin = class KubeappsLogin {
   constructor(page) {
     this.page = page;
     this.oidc = process.env.USE_MULTICLUSTER_OIDC_ENV === "true";
+    this.token = "";
   }
 
   isOidc = () => this.oidc;
 
   setToken(token) {
-    if ((token.match(/Bearer/g)).length > 1) {
+    let bearerMatch = token.match(/Bearer/g);
+    if (bearerMatch && bearerMatch.length > 1) {
       token = token.split(",")[0];
     }
     this.token = token.trim().startsWith("Bearer") ? token.trim().substring(7) : token;
@@ -34,6 +36,14 @@ exports.KubeappsLogin = class KubeappsLogin {
       return;
     }
     console.log("Logged into Kubeapps!");
+  }
+
+  async doLogout() {
+    console.log("Logging out of Kubeapps");
+    await this.page.click(".dropdown.kubeapps-menu .kubeapps-nav-link");
+    await this.page.click('cds-button:has-text("Log out")');
+    await this.page.waitForLoadState("networkidle");
+    console.log("Logged out of Kubeapps");
   }
 
   async doOidcLogin(username, pwd) {
@@ -71,8 +81,8 @@ exports.KubeappsLogin = class KubeappsLogin {
     await this.page.goto(utils.getUrl("/"));
     await this.page.waitForLoadState("networkidle");
 
-    const formLocator = page.locator("form");
-    await formLocator.type("input[name=token]", token);
+    const inputLocator = this.page.locator("form input[name=token]");
+    await inputLocator.fill(token);
     await this.page.click("#login-submit-button");
 
     await this.page.waitForLoadState("networkidle");

@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -365,8 +366,9 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 
 	var values map[string]interface{}
 	if valuesString != "" {
+		// maybe JSON or YAML
 		values = make(map[string]interface{})
-		if err = json.Unmarshal([]byte(valuesString), &values); err != nil {
+		if err = yaml.Unmarshal([]byte(valuesString), &values); err != nil {
 			return nil, err
 		}
 	}
@@ -421,8 +423,9 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	}
 
 	if valuesString != "" {
+		// could be JSON or YAML
 		var values map[string]interface{}
-		if err = json.Unmarshal([]byte(valuesString), &values); err != nil {
+		if err = yaml.Unmarshal([]byte(valuesString), &values); err != nil {
 			return nil, err
 		}
 		byteArray, err := json.Marshal(values)
@@ -532,7 +535,6 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 					},
 				},
 			},
-			TargetNamespace: targetName.Namespace,
 		},
 	}
 	if versionRef.GetVersion() != "" {
@@ -672,12 +674,13 @@ func helmReleaseName(key types.NamespacedName, rel *helmv2.HelmRelease) types.Na
 	// according to docs ReleaseName is optional and defaults to a composition of
 	// '[TargetNamespace-]Name'.
 	if helmReleaseName == "" {
-		targetNamespace := rel.Spec.TargetNamespace
-		// according to docs targetNamespace is optional and defaults to the namespace of the HelmRelease
-		if targetNamespace == "" {
-			targetNamespace = key.Namespace
+		// according to docs targetNamespace is optional and defaults to the namespace
+		// of the HelmRelease
+		if rel.Spec.TargetNamespace == "" {
+			helmReleaseName = key.Name
+		} else {
+			helmReleaseName = fmt.Sprintf("%s-%s", rel.Spec.TargetNamespace, key.Name)
 		}
-		helmReleaseName = fmt.Sprintf("%s-%s", targetNamespace, key.Name)
 	}
 
 	helmReleaseNamespace := rel.Spec.TargetNamespace

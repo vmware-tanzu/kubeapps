@@ -47,10 +47,10 @@ require (
 	github.com/containerd/containerd v1.5.9
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/disintegration/imaging v1.6.2
-	github.com/distribution/distribution v2.7.1+incompatible
+	github.com/distribution/distribution v2.8.0+incompatible
 	github.com/fluxcd/helm-controller/api v0.16.0
 	github.com/fluxcd/pkg/apis/meta v0.10.2
-	github.com/fluxcd/source-controller/api v0.21.1
+	github.com/fluxcd/source-controller/api v0.21.2
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.7
@@ -213,6 +213,7 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
@@ -220,7 +221,7 @@ require (
 	gopkg.in/ini.v1 v1.66.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiserver v0.23.1 // indirect
-	k8s.io/component-base v0.23.0 // indirect
+	k8s.io/component-base v0.23.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
 	k8s.io/kubectl v0.23.1 // indirect
 	k8s.io/utils v0.0.0-20211208161948-7d6a63dca704 // indirect

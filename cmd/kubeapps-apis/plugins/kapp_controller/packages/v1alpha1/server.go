@@ -30,8 +30,9 @@ import (
 type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
-	globalPackagingNamespace                   = "kapp-controller-packaging-global"
-	fallbackDefaultUpgradePolicy upgradePolicy = none
+	globalPackagingNamespace                     = "kapp-controller-packaging-global"
+	fallbackDefaultUpgradePolicy   upgradePolicy = none
+	fallbackDefaultAllowDowngrades               = false
 )
 
 func fallbackDefaultPrereleasesVersionSelection() []string {
@@ -74,8 +75,11 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 	}
 
 	// override the defaults with the loaded configuration
+	config.timeoutSeconds = pluginConfig.Core.Packages.V1alpha1.TimeoutSeconds
+	config.versionsInSummary = pluginConfig.Core.Packages.V1alpha1.VersionsInSummary
 	config.defaultUpgradePolicy = upgradePolicyMapping[pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
 	config.defaultPrereleasesVersionSelection = pluginConfig.KappController.Packages.V1alpha1.DefaultPrereleasesVersionSelection
+	config.defaultAllowDowngrades = pluginConfig.KappController.Packages.V1alpha1.DefaultAllowDowngrades
 
 	return config, nil
 }
