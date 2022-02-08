@@ -19,8 +19,8 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { getPluginsSupportingRollback } from "./utils";
 
 export class InstalledPackage {
-  private static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
-  private static helmPluginClient = () =>
+  public static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static helmPluginClient = () =>
     new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
 
   public static async GetInstalledPackageSummaries(
