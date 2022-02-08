@@ -47,7 +47,7 @@ require (
 	github.com/containerd/containerd v1.5.9
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/disintegration/imaging v1.6.2
-	github.com/distribution/distribution v2.7.1+incompatible
+	github.com/distribution/distribution v2.8.0+incompatible
 	github.com/fluxcd/helm-controller/api v0.16.0
 	github.com/fluxcd/pkg/apis/meta v0.10.2
 	github.com/fluxcd/source-controller/api v0.21.1
