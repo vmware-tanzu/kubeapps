@@ -7,11 +7,14 @@ const utils = require("../utils/util-functions");
 
 test.describe("Limited user simple deployments", () => {
   test("Regular user fails to deploy package due to missing permissions", async ({ page }) => {
-    test.setTimeout(60000);
-
     // Log in
     const k = new KubeappsLogin(page);
     await k.doLogin("kubeapps-user@example.com", "password", process.env.VIEW_TOKEN);
+
+    // Change to user's namespace using UI
+    await page.click(".kubeapps-dropdown .kubeapps-nav-link");
+    await page.selectOption('select[name="namespaces"]', "default");
+    await page.click('cds-button:has-text("Change Context")');
 
     // Select package to deploy
     await page.click('a.nav-link:has-text("Catalog")');
@@ -22,7 +25,7 @@ test.describe("Limited user simple deployments", () => {
     const releaseNameLocator = page.locator("#releaseName");
     await releaseNameLocator.waitFor();
     await expect(releaseNameLocator).toHaveText("");
-    await releaseNameLocator.type(utils.getRandomName("test-01-release"));
+    await releaseNameLocator.fill(utils.getRandomName("test-01-release"));
     await page.locator('cds-button:has-text("Deploy")').click();
 
     const errorLocator = page.locator(".alert-items .alert-text");
@@ -45,8 +48,6 @@ test.describe("Limited user simple deployments", () => {
     // Explanation: User has permissions to deploy in its namespace, but can't actually deploy
     // if the package is from a repo that has a secret to which the user doesn't have access
 
-    test.setTimeout(60000);
-    
     // Log in
     const k = new KubeappsLogin(page);
     await k.doLogin("kubeapps-user@example.com", "password", process.env.VIEW_TOKEN);
@@ -65,7 +66,7 @@ test.describe("Limited user simple deployments", () => {
     const releaseNameLocator = page.locator("#releaseName");
     await releaseNameLocator.waitFor();
     await expect(releaseNameLocator).toHaveText("");
-    await releaseNameLocator.type(utils.getRandomName("test-01-release"));
+    await releaseNameLocator.fill(utils.getRandomName("test-01-release"));
     await page.locator('cds-button:has-text("Deploy")').click();
 
     const errorLocator = page.locator(".alert-items .alert-text");
