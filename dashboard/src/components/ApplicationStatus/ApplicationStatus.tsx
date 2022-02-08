@@ -135,7 +135,8 @@ export default function ApplicationStatus({
     );
   }
   if (info?.status?.reason) {
-    // If the status code is different than "Deployed", display that status
+    // If the status code is different than "Deployed" or "Pending",
+    // display that status.
     const packageStatus = codeToString(info.status);
     if (
       ![
