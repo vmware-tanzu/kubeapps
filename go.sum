@@ -561,8 +561,8 @@ github.com/fluxcd/pkg/apis/meta v0.10.2 h1:pnDBBEvfs4HaKiVAYgz+e/AQ8dLvcgmVfSeBr
 github.com/fluxcd/pkg/apis/meta v0.10.2/go.mod h1:KQ2er9xa6koy7uoPMZjIjNudB5p4tXs+w0GO6fRcy7I=
 github.com/fluxcd/pkg/runtime v0.12.3 h1:h21AZ3YG5MAP7DxFF9hfKrP+vFzys2L7CkUbPFjbP/0=
 github.com/fluxcd/pkg/runtime v0.12.3/go.mod h1:imJ2xYy/d4PbSinX2IefmZk+iS2c1P5fY0js8mCE4SM=
-github.com/fluxcd/source-controller/api v0.21.1 h1:7X39YQHmB1vmIBrHxU+YAqxwtdC9Zh+tdtMKREW3xiQ=
-github.com/fluxcd/source-controller/api v0.21.1/go.mod h1:Ab2qDmAUz6ZCp8UaHYLYzxyFrC1FQqEqjxiROb/Rdiw=
+github.com/fluxcd/source-controller/api v0.21.2 h1:J0S5NN4V8FPLrkSMXIUoUvj1X/RuTpVJSjIRF414wmc=
+github.com/fluxcd/source-controller/api v0.21.2/go.mod h1:Ab2qDmAUz6ZCp8UaHYLYzxyFrC1FQqEqjxiROb/Rdiw=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoDwaVPLA+WlJuPGy+QneDUgJi2k=
