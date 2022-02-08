@@ -29,8 +29,8 @@ const defaultProps = {
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.apps = {
-    ...actions.apps,
+  actions.installedpackages = {
+    ...actions.installedpackages,
     deleteInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
@@ -44,7 +44,7 @@ afterEach(() => {
 
 it("deletes an application", async () => {
   const deleteInstalledPackage = jest.fn();
-  actions.apps.deleteInstalledPackage = deleteInstalledPackage;
+  actions.installedpackages.deleteInstalledPackage = deleteInstalledPackage;
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
