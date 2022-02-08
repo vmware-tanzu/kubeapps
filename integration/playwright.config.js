@@ -25,7 +25,7 @@ const config = {
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  //reporter: [ ['list'], ['html', { open: 'never', outputFolder: 'reports/' }] ],
+  reporter: [ ['list'], ['html', { open: 'never', outputFolder: 'reports-html/' }] ],
   outputDir: 'reports/',
 };
 

@@ -72,7 +72,7 @@ kubectl apply -f manifests/executor.yaml
 pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 
 # Copy latest tests
-kubectl cp ./use-cases ${pod}:/app/
+kubectl cp ./tests ${pod}:/app/
 
 # If you also modify the test configuration, you will need to update the files
 # for f in *.js; do   kubectl cp "./${f}" "${pod}:/app/"; done
