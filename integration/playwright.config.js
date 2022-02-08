@@ -8,8 +8,8 @@ const { devices } = require("@playwright/test");
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   globalSetup: require.resolve('./global-setup'),
-  globalTimeout: (process.env.CI_TIMEOUT ? parseInt(process.env.CI_TIMEOUT) : 10) * 60 * 1000, // Global timeout for the whole execution
-  timeout: (process.env.TEST_TIMEOUT ? parseInt(process.env.TEST_TIMEOUT) : 4) * 60 * 1000, // Default timeout for each test
+  globalTimeout: (process.env.CI_TIMEOUT_MINUTES ? parseInt(process.env.CI_TIMEOUT_MINUTES) : 10) * 60 * 1000, // Global timeout for the whole execution
+  timeout: (process.env.TEST_TIMEOUT_MINUTES ? parseInt(process.env.TEST_TIMEOUT_MINUTES) : 4) * 60 * 1000, // Default timeout for each test
   retries: 2,
   use: {
     headless: true,

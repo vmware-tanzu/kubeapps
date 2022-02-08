@@ -15,7 +15,7 @@ DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
 DOCKER_USERNAME=${5:-""}
 DOCKER_PASSWORD=${6:-""}
-TEST_TIMEOUT=${7:-4}
+TEST_TIMEOUT_MINUTES=${7:-4}
 DEX_IP=${8:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
 
@@ -40,7 +40,7 @@ info "Image tag: ${DEV_TAG}"
 info "Image repo suffix: ${IMG_MODIFIER}"
 info "Dex IP: ${DEX_IP}"
 info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
-info "Test timeout: ${TEST_TIMEOUT}"
+info "Test timeout: ${TEST_TIMEOUT_MINUTES}"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
 info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
 echo ""
@@ -409,7 +409,7 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
 info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} TEST_TIMEOUT=${TEST_TIMEOUT} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
@@ -436,7 +436,7 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   retry_while isOperatorHubCatalogRunning 24
 
   info "Running operator integration test with k8s API access..."
-  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT=20 TEST_TIMEOUT=${TEST_TIMEOUT} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports
