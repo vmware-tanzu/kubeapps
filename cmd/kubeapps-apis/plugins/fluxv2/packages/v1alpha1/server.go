@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -530,11 +531,19 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	}
 }
 
-// convinience func mostly used by unit tests
+// convenience func mostly used by unit tests
 func (s *Server) newBackgroundClientGetter() clientgetter.BackgroundClientGetterFunc {
 	return func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
 		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
+}
+
+func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Client, error) {
+	client, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+	if err != nil {
+		return nil, err
+	}
+	return ctrlclient.NewNamespacedClient(client, namespace), nil
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.

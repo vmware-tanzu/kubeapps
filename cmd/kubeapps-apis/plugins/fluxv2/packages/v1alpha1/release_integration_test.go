@@ -966,7 +966,7 @@ func waitUntilInstallCompletes(
 	if actualDetailResp == nil {
 		t.Fatalf("Timed out waiting for task to complete")
 	} else if actualDetailResp.InstalledPackageDetail.Status.Ready {
-		t.Logf("Getting installed package resource refs for [installedPackageRef]...")
+		t.Logf("Getting installed package resource refs for [%s]...", installedPackageRef)
 		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
 		var err error

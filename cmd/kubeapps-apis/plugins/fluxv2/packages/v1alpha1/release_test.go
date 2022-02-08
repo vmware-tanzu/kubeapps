@@ -4,13 +4,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -22,7 +20,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
@@ -37,14 +34,12 @@ import (
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic/fake"
-	typfake "k8s.io/client-go/kubernetes/fake"
-	k8stesting "k8s.io/client-go/testing"
+	"k8s.io/apimachinery/pkg/types"
+	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 type testSpecGetInstalledPackages struct {
@@ -202,8 +197,8 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingObjs)
-			s, mock, _, err := newServerWithChartsAndReleases(t, nil, runtimeObjs...)
+			charts, releases, cleanup := newChartsAndReleases(t, tc.existingObjs)
+			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -266,8 +261,8 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 			redis_existing_spec_completed,
 			airflow_existing_spec_completed,
 		}
-		runtimeObjs, cleanup := newRuntimeObjects(t, existingObjs)
-		s, mock, _, err := newServerWithChartsAndReleases(t, nil, runtimeObjs...)
+		charts, releases, cleanup := newChartsAndReleases(t, existingObjs)
+		s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -471,7 +466,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runtimeObjs, cleanup := newRuntimeObjects(t, []testSpecGetInstalledPackages{tc.existingK8sObjs})
+			charts, repos, cleanup := newChartsAndReleases(t, []testSpecGetInstalledPackages{tc.existingK8sObjs})
 			defer cleanup()
 			helmReleaseNamespace := tc.existingK8sObjs.targetNamespace
 			if helmReleaseNamespace == "" {
@@ -480,7 +475,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			}
 			actionConfig := newHelmActionConfig(
 				t, helmReleaseNamespace, []helmReleaseStub{tc.existingHelmStub})
-			s, mock, _, err := newServerWithChartsAndReleases(t, actionConfig, runtimeObjs...)
+			s, mock, err := newServerWithChartsAndReleases(t, actionConfig, charts, repos)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -636,7 +631,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -675,32 +670,23 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been created
-			dynamicClient, err := s.clientGetter.Dynamic(context.Background(), s.kubeappsCluster)
-			if err != nil {
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(context.Background(), s.kubeappsCluster); err != nil {
 				t.Fatal(err)
-			}
+			} else {
+				key := types.NamespacedName{Namespace: tc.request.TargetContext.Namespace, Name: tc.request.Name}
+				var actualRel helmv2.HelmRelease
+				if err = ctrlClient.Get(context.Background(), key, &actualRel); err != nil {
+					t.Fatal(err)
+				} else {
+					// Values are JSON string and need to be compared as such
+					opts = cmpopts.IgnoreFields(helmv2.HelmReleaseSpec{}, "Values")
 
-			u, err := dynamicClient.Resource(releasesGvr).
-				Namespace(tc.request.TargetContext.Namespace).Get(
-				context.Background(),
-				tc.request.Name,
-				metav1.GetOptions{})
-			if err != nil {
-				t.Fatalf("%+v", err)
+					if got, want := &actualRel, tc.expectedRelease; !cmp.Equal(want, got, opts) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+					}
+					compareJSON(t, tc.expectedRelease.Spec.Values, actualRel.Spec.Values)
+				}
 			}
-
-			actualRel := &helmv2.HelmRelease{}
-			if err := common.FromUnstructured(u, &actualRel); err != nil {
-				t.Fatalf("%+v", err)
-			}
-
-			// Values are JSON string and need to be compared as such
-			opts = cmpopts.IgnoreFields(helmv2.HelmReleaseSpec{}, "Values")
-
-			if got, want := actualRel, tc.expectedRelease; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
-			compareJSON(t, tc.expectedRelease.Spec.Values, actualRel.Spec.Values)
 		})
 	}
 }
@@ -788,9 +774,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			if tc.existingK8sObjs != nil {
 				existingObjs = []testSpecGetInstalledPackages{*tc.existingK8sObjs}
 			}
-			runtimeObjs, cleanup := newRuntimeObjects(t, existingObjs)
+			charts, repos, cleanup := newChartsAndReleases(t, existingObjs)
 			defer cleanup()
-			s, mock, _, err := newServerWithChartsAndReleases(t, nil, runtimeObjs...)
+			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, repos)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -822,29 +808,22 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been updated
-			dynamicClient, err := s.clientGetter.Dynamic(context.Background(), s.kubeappsCluster)
-			if err != nil {
+			key := types.NamespacedName{
+				Namespace: tc.expectedResponse.InstalledPackageRef.Context.Namespace,
+				Name:      tc.expectedResponse.InstalledPackageRef.Identifier,
+			}
+			ctx := context.Background()
+			var actualRel helmv2.HelmRelease
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
-			}
-
-			u, err := dynamicClient.Resource(releasesGvr).
-				Namespace(tc.expectedResponse.InstalledPackageRef.Context.Namespace).Get(
-				context.Background(),
-				tc.expectedResponse.InstalledPackageRef.Identifier,
-				metav1.GetOptions{})
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
-
-			actualRel := &helmv2.HelmRelease{}
-			if err := common.FromUnstructured(u, &actualRel); err != nil {
-				t.Fatalf("%+v", err)
+			} else if err = ctrlClient.Get(ctx, key, &actualRel); err != nil {
+				t.Fatal(err)
 			}
 
 			// Values are JSON string and need to be compared as such
 			opts = cmpopts.IgnoreFields(helmv2.HelmReleaseSpec{}, "Values")
 
-			if got, want := actualRel, tc.expectedRelease; !cmp.Equal(want, got, opts) {
+			if got, want := &actualRel, tc.expectedRelease; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 			compareJSON(t, tc.expectedRelease.Spec.Values, actualRel.Spec.Values)
@@ -887,9 +866,9 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			runtimeObjs, cleanup := newRuntimeObjects(t, tc.existingK8sObjs)
+			charts, repos, cleanup := newChartsAndReleases(t, tc.existingK8sObjs)
 			defer cleanup()
-			s, mock, _, err := newServerWithChartsAndReleases(t, nil, runtimeObjs...)
+			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, repos)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -916,18 +895,16 @@ func TestDeleteInstalledPackage(t *testing.T) {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 
-			// check expected HelmReleass CRD has been updated
-			dynamicClient, err := s.clientGetter.Dynamic(context.Background(), s.kubeappsCluster)
-			if err != nil {
-				t.Fatal(err)
+			// check expected HelmRelease CRD has been deleted
+			key := types.NamespacedName{
+				Namespace: tc.request.InstalledPackageRef.Context.Namespace,
+				Name:      tc.request.InstalledPackageRef.Identifier,
 			}
-
-			_, err = dynamicClient.Resource(releasesGvr).
-				Namespace(tc.request.InstalledPackageRef.Context.Namespace).Get(
-				context.Background(),
-				tc.request.InstalledPackageRef.Identifier,
-				metav1.GetOptions{})
-			if !errors.IsNotFound(err) {
+			ctx := context.Background()
+			var actualRel helmv2.HelmRelease
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+				t.Fatal(err)
+			} else if err = ctrlClient.Get(ctx, key, &actualRel); !errors.IsNotFound(err) {
 				t.Errorf("mismatch expected, NotFound, got %+v", err)
 			}
 		})
@@ -1036,13 +1013,13 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				spec = redis_existing_spec_target_ns_is_set
 				helmReleaseNamespace = "test2"
 			}
-			runtimeObjs, cleanup := newRuntimeObjects(t, []testSpecGetInstalledPackages{spec})
+			charts, releases, cleanup := newChartsAndReleases(t, []testSpecGetInstalledPackages{spec})
 			defer cleanup()
 			actionConfig := newHelmActionConfig(
 				t,
 				helmReleaseNamespace,
 				toHelmReleaseStubs(tc.baseTestCase.ExistingReleases))
-			server, mock, _, err := newServerWithChartsAndReleases(t, actionConfig, runtimeObjs...)
+			server, mock, err := newServerWithChartsAndReleases(t, actionConfig, charts, releases)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1065,13 +1042,15 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	}
 }
 
-func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (runtimeObjs []runtime.Object, cleanup func()) {
+func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (charts []sourcev1.HelmChart, releases []helmv2.HelmRelease, cleanup func()) {
 	httpServers := []*httptest.Server{}
 	cleanup = func() {
 		for _, ts := range httpServers {
 			ts.Close()
 		}
 	}
+	charts = []sourcev1.HelmChart{}
+	releases = []helmv2.HelmRelease{}
 
 	for _, existing := range existingK8sObjs {
 		tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
@@ -1117,12 +1096,7 @@ func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPacka
 			URL: ts.URL,
 		}
 		chart := newChart(existing.chartName, existing.repoNamespace, chartSpec, chartStatus)
-
-		unstructuredObj, err := common.ToUnstructured(&chart)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		runtimeObjs = append(runtimeObjs, unstructuredObj)
+		charts = append(charts, chart)
 
 		releaseSpec := &helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -1153,13 +1127,9 @@ func newRuntimeObjects(t *testing.T, existingK8sObjs []testSpecGetInstalledPacka
 		}
 
 		release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, &existing.releaseStatus)
-		unstructuredObj, err = common.ToUnstructured(&release)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		runtimeObjs = append(runtimeObjs, unstructuredObj)
+		releases = append(releases, release)
 	}
-	return runtimeObjs, cleanup
+	return charts, releases, cleanup
 }
 
 func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actualResp *corev1.GetInstalledPackageDetailResponse, expectedResp *corev1.GetInstalledPackageDetailResponse) {
@@ -1187,49 +1157,6 @@ func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actu
 	compareJSONStrings(t, expectedResp.InstalledPackageDetail.ValuesApplied, actualResp.InstalledPackageDetail.ValuesApplied)
 }
 
-func compareJSONStrings(t *testing.T, expectedJSONString, actualJSONString string) {
-	var expected interface{}
-	if expectedJSONString != "" {
-		if err := json.Unmarshal([]byte(expectedJSONString), &expected); err != nil {
-			t.Fatal(err)
-		}
-	}
-	var actual interface{}
-	if actualJSONString != "" {
-		if err := json.Unmarshal([]byte(actualJSONString), &actual); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if !reflect.DeepEqual(actual, expected) {
-		var buf bytes.Buffer
-		enc := json.NewEncoder(&buf)
-		enc.SetIndent("", "  ")
-		if err := enc.Encode(actual); err != nil {
-			t.Fatal(err)
-		}
-		if expected != buf.String() {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(expectedJSONString, buf.String()))
-		}
-	}
-}
-
-func compareJSON(t *testing.T, expectedJSON, actualJSON *v1.JSON) {
-	expectedJSONString, actualJSONString := "", ""
-	if expectedJSON != nil {
-		expectedJSONString = string(expectedJSON.Raw)
-	}
-	if actualJSON != nil {
-		actualJSONString = string(actualJSON.Raw)
-	}
-	compareJSONStrings(t, expectedJSONString, actualJSONString)
-}
-
-// these are helpers to compare slices ignoring order
-func lessInstalledPackageSummaryFunc(p1, p2 *corev1.InstalledPackageSummary) bool {
-	return p1.Name < p2.Name
-}
-
 func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {
 	helmRelease := helmv2.HelmRelease{
 		TypeMeta: metav1.TypeMeta{
@@ -1237,9 +1164,8 @@ func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, sta
 			APIVersion: helmv2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Generation:      int64(1),
-			ResourceVersion: "1",
+			Name:       name,
+			Generation: int64(1),
 		},
 	}
 	if namespace != "" {
@@ -1257,46 +1183,45 @@ func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, sta
 	return helmRelease
 }
 
-func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, chartOrRelease ...runtime.Object) (*Server, redismock.ClientMock, *watch.FakeWatcher, error) {
-	typedClient := typfake.NewSimpleClientset()
-	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
-		map[schema.GroupVersionResource]string{
-			{Group: sourcev1.GroupVersion.Group, Version: sourcev1.GroupVersion.Version, Resource: fluxHelmCharts}:       fluxHelmChartList,
-			{Group: helmv2.GroupVersion.Group, Version: helmv2.GroupVersion.Version, Resource: fluxHelmReleases}:         fluxHelmReleaseList,
-			{Group: sourcev1.GroupVersion.Group, Version: sourcev1.GroupVersion.Version, Resource: fluxHelmRepositories}: fluxHelmRepositoryList,
-		},
-		chartOrRelease...)
-
+func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) (*Server, redismock.ClientMock, error) {
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 
+	// register the GitOps Toolkit schema definitions
+	scheme := runtime.NewScheme()
+	_ = sourcev1.AddToScheme(scheme)
+	_ = helmv2.AddToScheme(scheme)
+
+	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{sourcev1.GroupVersion, helmv2.GroupVersion})
+	rm.Add(schema.GroupVersionKind{
+		Group:   sourcev1.GroupVersion.Group,
+		Version: sourcev1.GroupVersion.Version,
+		Kind:    sourcev1.HelmRepositoryKind},
+		apimeta.RESTScopeNamespace)
+	rm.Add(schema.GroupVersionKind{
+		Group:   sourcev1.GroupVersion.Group,
+		Version: sourcev1.GroupVersion.Version,
+		Kind:    sourcev1.HelmChartKind},
+		apimeta.RESTScopeNamespace)
+	rm.Add(schema.GroupVersionKind{
+		Group:   helmv2.GroupVersion.Group,
+		Version: helmv2.GroupVersion.Version,
+		Kind:    helmv2.HelmReleaseKind},
+		apimeta.RESTScopeNamespace)
+
+	ctrlClientBuilder := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRESTMapper(rm)
+	if len(charts) > 0 {
+		ctrlClientBuilder = ctrlClientBuilder.WithLists(&sourcev1.HelmChartList{Items: charts})
+	}
+	if len(releases) > 0 {
+		ctrlClientBuilder = ctrlClientBuilder.WithLists(&helmv2.HelmReleaseList{Items: releases})
+	}
+	ctrlClient := &withWatchWrapper{delegate: ctrlClientBuilder.Build()}
+
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(typedClient, dynamicClient, apiextIfc), nil
+		return clientgetter.NewClientInterfaces(nil, nil, apiextIfc, ctrlClient), nil
 	}
 
-	watcher := watch.NewFake()
-
-	// see chart_test.go for explanation
-	reactor := dynamicClient.Fake.ReactionChain[0]
-	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
-		func(action k8stesting.Action) (bool, runtime.Object, error) {
-			handled, ret, err := reactor.React(action)
-			ulist, ok := ret.(*unstructured.UnstructuredList)
-			if ok && ulist != nil {
-				ulist.SetResourceVersion("1")
-			}
-			return handled, ret, err
-		})
-
-	dynamicClient.Fake.PrependWatchReactor(
-		fluxHelmCharts,
-		k8stesting.DefaultWatchReactor(watcher, nil))
-
-	s, mock, err := newServer(t, clientGetter, actionConfig, nil, nil)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	return s, mock, watcher, nil
+	return newServer(t, clientGetter, actionConfig, nil, nil)
 }
 
 // newHelmActionConfig returns an action.Configuration with fake clients and memory storage.
@@ -1344,17 +1269,6 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 	memDriver.SetNamespace(namespace)
 
 	return actionConfig
-}
-
-func installedRef(id, namespace string) *corev1.InstalledPackageReference {
-	return &corev1.InstalledPackageReference{
-		Context: &corev1.Context{
-			Namespace: namespace,
-			Cluster:   KubeappsCluster,
-		},
-		Identifier: id,
-		Plugin:     fluxPlugin,
-	}
 }
 
 // misc global vars that get re-used in multiple tests scenarios
@@ -1900,8 +1814,9 @@ var (
 			APIVersion: helmv2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-podinfo",
-			Namespace: "test",
+			Name:            "my-podinfo",
+			Namespace:       "test",
+			ResourceVersion: "1",
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -1924,8 +1839,9 @@ var (
 			APIVersion: helmv2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-podinfo",
-			Namespace: "test",
+			Name:            "my-podinfo",
+			Namespace:       "test",
+			ResourceVersion: "1",
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -1949,8 +1865,9 @@ var (
 			APIVersion: helmv2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-podinfo",
-			Namespace: "test",
+			Name:            "my-podinfo",
+			Namespace:       "test",
+			ResourceVersion: "1",
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -1981,8 +1898,9 @@ var (
 			APIVersion: helmv2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-podinfo",
-			Namespace: "test",
+			Name:            "my-podinfo",
+			Namespace:       "test",
+			ResourceVersion: "1",
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -2013,7 +1931,7 @@ var (
 			Name:            "my-redis",
 			Namespace:       "test",
 			Generation:      int64(1),
-			ResourceVersion: "1",
+			ResourceVersion: "1000",
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -2040,7 +1958,7 @@ var (
 			Name:            "my-redis",
 			Namespace:       "test",
 			Generation:      int64(1),
-			ResourceVersion: "1",
+			ResourceVersion: "1000",
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{
@@ -2109,7 +2027,7 @@ var (
 			Name:            "my-redis",
 			Namespace:       "test",
 			Generation:      int64(1),
-			ResourceVersion: "1",
+			ResourceVersion: "1000",
 		},
 		Spec: helmv2.HelmReleaseSpec{
 			Chart: helmv2.HelmChartTemplate{

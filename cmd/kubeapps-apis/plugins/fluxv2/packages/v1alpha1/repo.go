@@ -27,10 +27,7 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
 )
 
@@ -41,59 +38,29 @@ const (
 	fluxHelmRepositoryList = "HelmRepositoryList"
 )
 
-func (s *Server) getRepoResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := s.clientGetter.Dynamic(ctx, s.kubeappsCluster)
-	if err != nil {
-		return nil, err
-	}
-
-	repositoriesResource := schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
-		Resource: fluxHelmRepositories,
-	}
-
-	return client.Resource(repositoriesResource).Namespace(namespace), nil
-}
-
 // namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
 func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]sourcev1.HelmRepository, error) {
-	resourceIfc, err := s.getRepoResourceInterface(ctx, namespace)
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if unstructuredList, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
+	var repoList sourcev1.HelmRepositoryList
+	if err := client.List(ctx, &repoList); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmRepository", namespace+"/*", err)
 	} else {
-		repoArray := []sourcev1.HelmRepository{}
-		for _, u := range unstructuredList.Items {
-			repo := sourcev1.HelmRepository{}
-			if err := common.FromUnstructured(&u, &repo); err != nil {
-				return nil, err
-			}
-			repoArray = append(repoArray, repo)
-		}
-		return repoArray, nil
+		return repoList.Items, nil
 	}
 }
 
 func (s *Server) getRepoInCluster(ctx context.Context, key types.NamespacedName) (*sourcev1.HelmRepository, error) {
-	resourceIfc, err := s.getRepoResourceInterface(ctx, key.Namespace)
+	client, err := s.getClient(ctx, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
-
-	u, err := resourceIfc.Get(ctx, key.Name, metav1.GetOptions{})
-	if err != nil {
+	var repo sourcev1.HelmRepository
+	if err = client.Get(ctx, key, &repo); err != nil {
 		return nil, statuserror.FromK8sError("get", "HelmRepository", key.String(), err)
-	} else if u == nil {
-		return nil, status.Errorf(codes.NotFound, "unable to find HelmRepository [%s]", key)
-	}
-
-	repo := sourcev1.HelmRepository{}
-	if err := common.FromUnstructured(u, &repo); err != nil {
-		return nil, err
 	}
 	return &repo, nil
 }
@@ -208,14 +175,9 @@ type repoCacheEntryValue struct {
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
-func (s *repoEventSink) onAddRepo(key string, unstructuredRepo unstructured.Unstructured) (interface{}, bool, error) {
+func (s *repoEventSink) onAddRepo(key string, repo sourcev1.HelmRepository) (interface{}, bool, error) {
 	log.V(4).Info("+onAddRepo()")
 	defer log.V(4).Info("-onAddRepo()")
-
-	repo := sourcev1.HelmRepository{}
-	if err := common.FromUnstructured(&unstructuredRepo, &repo); err != nil {
-		return nil, false, err
-	}
 
 	// first, check the repo is ready
 	if isRepoReady(repo) {
@@ -338,12 +300,7 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 }
 
 // onModifyRepo essentially tells the cache whether or not to and what to store for a given key
-func (s *repoEventSink) onModifyRepo(key string, unstructuredRepo unstructured.Unstructured, oldValue interface{}) (interface{}, bool, error) {
-	repo := sourcev1.HelmRepository{}
-	if err := common.FromUnstructured(&unstructuredRepo, &repo); err != nil {
-		return nil, false, err
-	}
-
+func (s *repoEventSink) onModifyRepo(key string, repo sourcev1.HelmRepository, oldValue interface{}) (interface{}, bool, error) {
 	// first check the repo is ready
 	if isRepoReady(repo) {
 		// We should to compare checksums on what's stored in the cache
@@ -437,7 +394,7 @@ func (s *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 
 // this is only until https://github.com/kubeapps/kubeapps/issues/3496
 // "Investigate and propose package repositories API with similar core interface to packages API"
-// gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
+// gets implemented. After that, the auth should be part of some kind of packageRepositoryFromCtrlObject()
 // The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
 // ChartCache
 func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.ClientOptions, error) {

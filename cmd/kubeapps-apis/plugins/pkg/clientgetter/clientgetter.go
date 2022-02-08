@@ -6,6 +6,8 @@ package clientgetter
 import (
 	"context"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"google.golang.org/grpc/codes"
@@ -13,10 +15,12 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type HelmActionConfigGetterFunc func(ctx context.Context, namespace string) (*action.Configuration, error)
@@ -33,14 +37,19 @@ type ClientInterfaces interface {
 	// returns k8s API Extensions client interface, that can be used to query the
 	// status of particular CRD in a cluster
 	ApiExt() (apiext.Interface, error)
+	// returns an instance of https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Client
+	// that also supports Watch operations
+	ControllerRuntime() (client.WithWatch, error)
 }
 
 // very basic implementation to start with. Will enhance later as needed
 // such as lazy/on-demand loading of clients, caching when possible, etc.
+
 type clientInterfacesType struct {
 	typed kubernetes.Interface
 	dyn   dynamic.Interface
 	apiex apiext.Interface
+	ctrl  client.WithWatch
 }
 
 func (c *clientInterfacesType) Typed() (kubernetes.Interface, error) {
@@ -53,6 +62,10 @@ func (c *clientInterfacesType) Dynamic() (dynamic.Interface, error) {
 
 func (c *clientInterfacesType) ApiExt() (apiext.Interface, error) {
 	return c.apiex, nil
+}
+
+func (c *clientInterfacesType) ControllerRuntime() (client.WithWatch, error) {
+	return c.ctrl, nil
 }
 
 func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster string) HelmActionConfigGetterFunc {
@@ -151,6 +164,17 @@ func (cg BackgroundClientGetterFunc) Dynamic(ctx context.Context) (dynamic.Inter
 	}
 }
 
+// just a convenience func as a shortcut to get client.WithWatch client in one line
+func (cg BackgroundClientGetterFunc) ControllerRuntime(ctx context.Context) (client.WithWatch, error) {
+	if clientInterfaces, err := cg(ctx); err != nil {
+		return nil, err
+	} else if ctrl, err := clientInterfaces.ControllerRuntime(); err != nil {
+		return nil, err
+	} else {
+		return ctrl, nil
+	}
+}
+
 // just a convenience func as a shortcut to get kubernetes.Interface client in one line
 func (cg ClientGetterFunc) Typed(ctx context.Context, cluster string) (kubernetes.Interface, error) {
 	if clientInterfaces, err := cg(ctx, cluster); err != nil {
@@ -170,6 +194,17 @@ func (cg ClientGetterFunc) Dynamic(ctx context.Context, cluster string) (dynamic
 		return nil, err
 	} else {
 		return dyn, nil
+	}
+}
+
+// just a convenience func as a shortcut to get client.WithWatch client in one line
+func (cg ClientGetterFunc) ControllerRuntime(ctx context.Context, cluster string) (client.WithWatch, error) {
+	if clientInterfaces, err := cg(ctx, cluster); err != nil {
+		return nil, err
+	} else if ctrl, err := clientInterfaces.ControllerRuntime(); err != nil {
+		return nil, err
+	} else {
+		return ctrl, nil
 	}
 }
 
@@ -197,13 +232,32 @@ func clientGetterHelper(config *rest.Config) (ClientInterfaces, error) {
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
 	}
-	return NewClientInterfaces(typedClient, dynamicClient, apiExtensions), nil
+
+	// register the GitOps Toolkit schema definitions
+	scheme := runtime.NewScheme()
+	_ = sourcev1.AddToScheme(scheme)
+	_ = helmv2.AddToScheme(scheme)
+
+	ctrlRuntime, err := client.NewWithWatch(config, client.Options{Scheme: scheme})
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "unable to get controller runtime client due to: %v", err)
+	}
+
+	return NewClientInterfaces(typedClient, dynamicClient, apiExtensions, ctrlRuntime), nil
 }
 
 // convenience func exported only for unit tests in plugins
-func NewClientInterfaces(typedClient kubernetes.Interface, dynamicClient dynamic.Interface, apiExtensions apiext.Interface) ClientInterfaces {
+// TODO (gfichtenholt) switch to use a builder pattern like
+// https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/fake/client.go
+// its cleaner and more future-proof
+func NewClientInterfaces(
+	typedClient kubernetes.Interface,
+	dynamicClient dynamic.Interface,
+	apiExtensions apiext.Interface,
+	ctrlRuntime client.WithWatch) ClientInterfaces {
 	return &clientInterfacesType{
 		typedClient,
 		dynamicClient,
-		apiExtensions}
+		apiExtensions,
+		ctrlRuntime}
 }

@@ -5,8 +5,6 @@ package main
 
 import (
 	"context"
-	"crypto/subtle"
-	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -17,8 +15,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
@@ -26,15 +22,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	log "k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
-
-const KubeappsCluster = "default"
 
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
@@ -147,7 +140,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{tc.repo}, nil, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{tc.repo}, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -473,47 +466,4 @@ func newServer(t *testing.T,
 		versionsInSummary: pkgutils.GetDefaultVersionsInSummary(),
 	}
 	return s, mock, nil
-}
-
-// these are helpers to compare slices ignoring order
-func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
-	return p1.DisplayName < p2.DisplayName
-}
-
-func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
-	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
-}
-
-// ref: https://stackoverflow.com/questions/21936332/idiomatic-way-of-requiring-http-basic-auth-in-go
-func basicAuth(handler http.HandlerFunc, username, password, realm string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
-		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-			w.WriteHeader(401)
-			w.Write([]byte("Unauthorised.\n"))
-			return
-		}
-		handler(w, r)
-	}
-}
-
-// misc global vars that get re-used in multiple tests
-var fluxPlugin = &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}
-var fluxHelmRepositoryCRD = &apiextv1.CustomResourceDefinition{
-	TypeMeta: metav1.TypeMeta{
-		Kind:       "CustomResourceDefinition",
-		APIVersion: "apiextensions.k8s.io/v1",
-	},
-	ObjectMeta: metav1.ObjectMeta{
-		Name: "helmrepositories.source.toolkit.fluxcd.io",
-	},
-	Status: apiextv1.CustomResourceDefinitionStatus{
-		Conditions: []apiextv1.CustomResourceDefinitionCondition{
-			{
-				Type:   "Established",
-				Status: "True",
-			},
-		},
-	},
 }

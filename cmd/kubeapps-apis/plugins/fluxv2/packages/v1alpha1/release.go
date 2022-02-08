@@ -29,9 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
@@ -46,24 +44,9 @@ var (
 	defaultReconcileInterval = metav1.Duration{Duration: 1 * time.Minute}
 )
 
-func (s *Server) getReleasesResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := s.clientGetter.Dynamic(ctx, s.kubeappsCluster)
-	if err != nil {
-		return nil, err
-	}
-
-	releasesResource := schema.GroupVersionResource{
-		Group:    helmv2.GroupVersion.Group,
-		Version:  helmv2.GroupVersion.Version,
-		Resource: fluxHelmReleases,
-	}
-
-	return client.Resource(releasesResource).Namespace(namespace), nil
-}
-
 // namespace maybe "", in which case releases from all namespaces are returned
 func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) ([]helmv2.HelmRelease, error) {
-	resourceIfc, err := s.getReleasesResourceInterface(ctx, namespace)
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -74,38 +57,24 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) ([
 	// missing).
 	// 2) there is a "consistent snapshot" problem, where the client doesn't want to
 	// see any results created/updated/deleted after the first request is issued
-	// To fix this, we must make use of resourceVersion := unstructuredList.GetResourceVersion()
-	if unstructuredList, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
+	// To fix this, we must make use of resourceVersion := relList.GetResourceVersion()
+	var relList helmv2.HelmReleaseList
+	if err = client.List(ctx, &relList); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmRelease", namespace+"/*", err)
 	} else {
-		relArray := []helmv2.HelmRelease{}
-		for _, u := range unstructuredList.Items {
-			rel := helmv2.HelmRelease{}
-			if err := common.FromUnstructured(&u, &rel); err != nil {
-				return nil, err
-			}
-			relArray = append(relArray, rel)
-		}
-		return relArray, nil
+		return relList.Items, nil
 	}
 }
 
 func (s *Server) getReleaseInCluster(ctx context.Context, key types.NamespacedName) (*helmv2.HelmRelease, error) {
-	resourceIfc, err := s.getReleasesResourceInterface(ctx, key.Namespace)
+	client, err := s.getClient(ctx, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	u, err := resourceIfc.Get(ctx, key.Name, metav1.GetOptions{})
-	if err != nil {
+	var rel helmv2.HelmRelease
+	if err = client.Get(ctx, key, &rel); err != nil {
 		return nil, statuserror.FromK8sError("get", "HelmRelease", key.String(), err)
-	} else if u == nil {
-		return nil, status.Errorf(codes.NotFound, "unable to find HelmRelease [%s]", key)
-	}
-
-	rel := helmv2.HelmRelease{}
-	if err := common.FromUnstructured(u, &rel); err != nil {
-		return nil, err
 	}
 	return &rel, nil
 }
@@ -389,23 +358,15 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	// convert to unstructured so we can pass it to dynamic.Interface
-	// kind of a hack to be converting it here, but it's temporary
-	u, err := common.ToUnstructured(fluxRelease)
-	if err != nil {
-		return nil, err
-	}
-
 	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
 	// the helm release CR to also be created in the target namespace (where the helm
 	// release itself is currently created)
-	resourceIfc, err := s.getReleasesResourceInterface(ctx, targetName.Namespace)
+	client, err := s.getClient(ctx, targetName.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = resourceIfc.Create(ctx, u, metav1.CreateOptions{})
-	if err != nil {
+	if err = client.Create(ctx, fluxRelease); err != nil {
 		return nil, statuserror.FromK8sError("create", "HelmRelease", targetName.String(), err)
 	}
 
@@ -477,20 +438,12 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	// even other changes made by the user.
 	rel.Status = helmv2.HelmReleaseStatus{}
 
-	// replace the object in k8s with a new desired state
-	// convert to unstructured so we can pass it to dynamic.Interface
-	unstructuredRel, err := common.ToUnstructured(rel)
+	client, err := s.getClient(ctx, packageRef.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = ifc.Update(ctx, unstructuredRel, metav1.UpdateOptions{})
-	if err != nil {
+	if err = client.Update(ctx, rel); err != nil {
 		return nil, statuserror.FromK8sError("update", "HelmRelease", key.String(), err)
 	}
 
@@ -507,14 +460,21 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 }
 
 func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference) error {
-	ifc, err := s.getReleasesResourceInterface(ctx, packageRef.Context.Namespace)
+	client, err := s.getClient(ctx, packageRef.Context.Namespace)
 	if err != nil {
 		return err
 	}
 
 	log.V(4).Infof("Deleting release: [%s]", packageRef.Identifier)
 
-	if err = ifc.Delete(ctx, packageRef.Identifier, metav1.DeleteOptions{}); err != nil {
+	rel := &helmv2.HelmRelease{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      packageRef.Identifier,
+			Namespace: packageRef.Context.Namespace,
+		},
+	}
+
+	if err = client.Delete(ctx, rel); err != nil {
 		return statuserror.FromK8sError("delete", "HelmRelease", packageRef.Identifier, err)
 	}
 	return nil
