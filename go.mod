@@ -50,7 +50,7 @@ require (
 	github.com/distribution/distribution v2.7.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.16.0
 	github.com/fluxcd/pkg/apis/meta v0.10.2
-	github.com/fluxcd/source-controller/api v0.21.1
+	github.com/fluxcd/source-controller/api v0.21.2
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.7
