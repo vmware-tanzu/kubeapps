@@ -82,7 +82,7 @@ exports.KubeappsLogin = class KubeappsLogin {
     await this.page.waitForLoadState("networkidle");
 
     const inputLocator = this.page.locator("form input[name=token]");
-    await inputLocator.type(token);
+    await inputLocator.fill(token);
     await this.page.click("#login-submit-button");
 
     await this.page.waitForLoadState("networkidle");
