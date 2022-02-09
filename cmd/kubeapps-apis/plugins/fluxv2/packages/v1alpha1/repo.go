@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -175,12 +176,14 @@ type repoCacheEntryValue struct {
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
-func (s *repoEventSink) onAddRepo(key string, repo sourcev1.HelmRepository) (interface{}, bool, error) {
-	log.V(4).Info("+onAddRepo()")
+func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{}, bool, error) {
+	log.V(4).Info("+onAddRepo(%s)", key)
 	defer log.V(4).Info("-onAddRepo()")
 
-	// first, check the repo is ready
-	if isRepoReady(repo) {
+	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+	} else if isRepoReady(*repo) {
+		// first, check the repo is ready
 		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 		if artifact := repo.GetArtifact(); artifact != nil {
 			if checksum := artifact.Checksum; checksum == "" {
@@ -188,7 +191,7 @@ func (s *repoEventSink) onAddRepo(key string, repo sourcev1.HelmRepository) (int
 					"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
 					common.PrettyPrint(repo))
 			} else {
-				return s.indexAndEncode(checksum, repo)
+				return s.indexAndEncode(checksum, *repo)
 			}
 		} else {
 			return nil, false, status.Errorf(codes.Internal,
@@ -300,9 +303,11 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 }
 
 // onModifyRepo essentially tells the cache whether or not to and what to store for a given key
-func (s *repoEventSink) onModifyRepo(key string, repo sourcev1.HelmRepository, oldValue interface{}) (interface{}, bool, error) {
-	// first check the repo is ready
-	if isRepoReady(repo) {
+func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue interface{}) (interface{}, bool, error) {
+	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+	} else if isRepoReady(*repo) {
+		// first check the repo is ready
 		// We should to compare checksums on what's stored in the cache
 		// vs the modified object to see if the contents has really changed before embarking on
 		// expensive operation indexOneRepo() below.
@@ -335,7 +340,7 @@ func (s *repoEventSink) onModifyRepo(key string, repo sourcev1.HelmRepository, o
 		}
 
 		if cacheEntry.Checksum != newChecksum {
-			return s.indexAndEncode(newChecksum, repo)
+			return s.indexAndEncode(newChecksum, *repo)
 		} else {
 			// skip because the content did not change
 			return nil, false, nil

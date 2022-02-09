@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-redis/redis/v8"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
@@ -88,10 +87,14 @@ type NamespacedResourceWatcherCache struct {
 }
 
 type ValueGetterFunc func(key string, cachedValue interface{}) (rawValue interface{}, err error)
-type ValueAdderFunc func(key string, obj sourcev1.HelmRepository) (cachedValue interface{}, setValue bool, err error)
-type ValueModifierFunc func(key string, obj sourcev1.HelmRepository, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
+type ValueAdderFunc func(key string, obj ctrlclient.Object) (cachedValue interface{}, setValue bool, err error)
+type ValueModifierFunc func(key string, obj ctrlclient.Object, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
 type KeyDeleterFunc func(key string) (deleteValue bool, err error)
 type ResyncFunc func() error
+
+type NewObjectFunc func() ctrlclient.Object
+type NewObjectListFunc func() ctrlclient.ObjectList
+type GetListItemsFunc func(ctrlclient.ObjectList) []ctrlclient.Object
 
 type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
@@ -122,6 +125,10 @@ type NamespacedResourceWatcherCacheConfig struct {
 	OnDeleteFunc KeyDeleterFunc
 	// OnResync hook is called when the cache is resynced
 	OnResyncFunc ResyncFunc
+
+	NewObjFunc    NewObjectFunc
+	NewListFunc   NewObjectListFunc
+	ListItemsFunc GetListItemsFunc
 }
 
 func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client, stopCh <-chan struct{}) (*NamespacedResourceWatcherCache, error) {
@@ -135,7 +142,10 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		config.OnModifyFunc == nil ||
 		config.OnDeleteFunc == nil ||
 		config.OnGetFunc == nil ||
-		config.OnResyncFunc == nil {
+		config.OnResyncFunc == nil ||
+		config.NewObjFunc == nil ||
+		config.NewListFunc == nil ||
+		config.ListItemsFunc == nil {
 		return nil, fmt.Errorf("server not configured with expected cache hooks")
 	}
 
@@ -354,7 +364,7 @@ func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watc
 	}
 
 	// this will start a watcher on all namespaces
-	return ctrlClient.Watch(ctx, &sourcev1.HelmRepositoryList{}, &ctrlclient.ListOptions{
+	return ctrlClient.Watch(ctx, c.config.NewListFunc(), &ctrlclient.ListOptions{
 		Namespace: apiv1.NamespaceAll,
 		Raw:       &options,
 	})
@@ -412,24 +422,26 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
 	// For Get() and List(), the semantics of resource version unset are to get the most recent
 	// version
-	var listItems sourcev1.HelmRepositoryList
-	err = ctrlClient.List(ctx, &listItems, &ctrlclient.ListOptions{Namespace: apiv1.NamespaceAll})
+	listObj := c.config.NewListFunc()
+	err = ctrlClient.List(ctx, listObj, &ctrlclient.ListOptions{Namespace: apiv1.NamespaceAll})
 	if err != nil {
 		return "", err
 	}
 
+	listItems := c.config.ListItemsFunc(listObj)
+
 	// for debug only, will remove later
 	log.Infof("List(%s) returned list with [%d] items, object:\n%s",
-		c.config.Gvr.Resource, len(listItems.Items), common.PrettyPrint(listItems))
+		c.config.Gvr.Resource, len(listItems), common.PrettyPrint(listObj))
 
-	rv := listItems.GetResourceVersion()
+	rv := listObj.GetResourceVersion()
 	if rv == "" {
 		// fail fast, without a valid resource version the whole workflow breaks down
 		return "", status.Errorf(codes.Internal, "List() call response does not contain resource version")
 	}
 
 	// re-populate the cache with current state from k8s
-	if err = c.populateWith(listItems.Items); err != nil {
+	if err = c.populateWith(listItems); err != nil {
 		// we don't want to fail the whole re-sync process and trigger retries
 		// if, for example, just one of the repos fails to sync to cache, so
 		// for now log the error(s)
@@ -470,10 +482,12 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
-		if obj, ok := event.Object.(*sourcev1.HelmRepository); !ok {
-			runtime.HandleError(fmt.Errorf("could not cast %s to *sourcev1.HelmRepository", reflect.TypeOf(event.Object)))
+		if obj, ok := event.Object.(ctrlclient.Object); !ok {
+			runtime.HandleError(fmt.Errorf("could not cast %s to *ctrlclient.Object", reflect.TypeOf(event.Object)))
+		} else if key, err := c.keyFor(obj); err != nil {
+			runtime.HandleError(err)
 		} else {
-			c.queue.AddRateLimited(c.keyFor(*obj))
+			c.queue.AddRateLimited(key)
 		}
 	case watch.Error:
 		// will let RetryWatcher deal with it, which will close the channel
@@ -510,8 +524,8 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 	// If an error occurs during Get/Create/Update/Delete, we'll requeue the item so we can
 	// attempt processing again later. This could have been caused by a temporary network
 	// failure, or any other transient reason.
-	var obj sourcev1.HelmRepository
-	err = ctrlClient.Get(ctx, *name, &obj)
+	obj := c.config.NewObjFunc()
+	err = ctrlClient.Get(ctx, *name, obj)
 	if err != nil {
 		// The resource may no longer exist, in which case we stop processing.
 		if errors.IsNotFound(err) {
@@ -524,11 +538,14 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 }
 
 // this is effectively a cache SET operation
-func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, obj sourcev1.HelmRepository) (err error) {
+func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, obj ctrlclient.Object) (err error) {
 	log.V(4).Infof("+onAddOrModify")
 	defer log.V(4).Infof("-onAddOrModify")
 
-	key := c.keyFor(obj)
+	var key string
+	if key, err = c.keyFor(obj); err != nil {
+		return err
+	}
 
 	var oldValue []byte
 	if checkOldValue {
@@ -811,8 +828,12 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
 // for generating a cache key given an object
 // some kind of 'KeyFunc(obj) string'
-func (c *NamespacedResourceWatcherCache) keyFor(obj sourcev1.HelmRepository) string {
-	return c.KeyForNamespacedName(types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name})
+func (c *NamespacedResourceWatcherCache) keyFor(obj ctrlclient.Object) (string, error) {
+	if n, err := common.NamespacedName(obj); err != nil {
+		return "", err
+	} else {
+		return c.KeyForNamespacedName(*n), nil
+	}
 }
 
 func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.NamespacedName) string {
@@ -844,7 +865,7 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 // Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
-func (c *NamespacedResourceWatcherCache) populateWith(items []sourcev1.HelmRepository) error {
+func (c *NamespacedResourceWatcherCache) populateWith(items []ctrlclient.Object) error {
 	// confidence test: I'd like to make sure this is called within the context
 	// of resync, i.e. resync.Cond.L is locked by this goroutine.
 	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
@@ -855,7 +876,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []sourcev1.HelmRepos
 	const maxWorkers = 10
 
 	type populateJob struct {
-		item sourcev1.HelmRepository
+		item ctrlclient.Object
 	}
 
 	type populateJobResult struct {

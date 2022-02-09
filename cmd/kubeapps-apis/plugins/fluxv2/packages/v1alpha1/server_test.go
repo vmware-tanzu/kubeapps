@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -437,6 +439,23 @@ func newServer(t *testing.T,
 		OnGetFunc:    sink.onGetRepo,
 		OnDeleteFunc: sink.onDeleteRepo,
 		OnResyncFunc: sink.onResync,
+		NewObjFunc: func() ctrlclient.Object {
+			return &sourcev1.HelmRepository{}
+		},
+		NewListFunc: func() ctrlclient.ObjectList {
+			return &sourcev1.HelmRepositoryList{}
+		},
+		ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
+			ret := []ctrlclient.Object{}
+			if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
+				t.Fatalf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+			} else {
+				for _, hr := range hl.Items {
+					ret = append(ret, hr.DeepCopy())
+				}
+			}
+			return ret
+		},
 	}
 
 	repoCache, err := cache.NewNamespacedResourceWatcherCache(

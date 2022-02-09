@@ -1383,7 +1383,6 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: int64(1),
-			//			ResourceVersion: "1",
 		},
 	}
 	if namespace != "" {
@@ -1495,7 +1494,7 @@ func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key 
 		// onAddRepo to compute the value that *WOULD* be stored in the cache
 		var byteArray interface{}
 		var add bool
-		byteArray, add, err = sink.onAddRepo(key, r)
+		byteArray, add, err = sink.onAddRepo(key, &r)
 		if err != nil {
 			return key, nil, err
 		} else if !add {

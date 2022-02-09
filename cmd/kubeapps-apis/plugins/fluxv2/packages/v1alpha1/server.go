@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
@@ -102,6 +103,23 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			OnGetFunc:    s.onGetRepo,
 			OnDeleteFunc: s.onDeleteRepo,
 			OnResyncFunc: s.onResync,
+			NewObjFunc: func() ctrlclient.Object {
+				return &sourcev1.HelmRepository{}
+			},
+			NewListFunc: func() ctrlclient.ObjectList {
+				return &sourcev1.HelmRepositoryList{}
+			},
+			ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
+				ret := []ctrlclient.Object{}
+				if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
+					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+				} else {
+					for _, hr := range hl.Items {
+						ret = append(ret, hr.DeepCopy())
+					}
+				}
+				return ret
+			},
 		}
 		if repoCache, err := cache.NewNamespacedResourceWatcherCache(
 			"repoCache", repoCacheConfig, redisCli, stopCh); err != nil {
@@ -110,12 +128,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return &Server{
 				clientGetter: clientgetter.NewClientGetter(
 					configGetter, clientgetter.Options{Scheme: scheme}),
-				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
-				repoCache:          repoCache,
-				chartCache:         chartCache,
-				kubeappsCluster:    kubeappsCluster,
-				versionsInSummary:  versionsInSummary,
-				timeoutSeconds:     timeoutSecs,
+				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(
+					configGetter, kubeappsCluster),
+				repoCache:         repoCache,
+				chartCache:        chartCache,
+				kubeappsCluster:   kubeappsCluster,
+				versionsInSummary: versionsInSummary,
+				timeoutSeconds:    timeoutSecs,
 			}, nil
 		}
 	}
