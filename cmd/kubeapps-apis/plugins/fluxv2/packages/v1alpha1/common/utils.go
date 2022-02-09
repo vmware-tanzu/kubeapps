@@ -24,8 +24,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -63,26 +61,6 @@ func PrettyPrint(o interface{}) string {
 	return string(prettyBytes)
 }
 
-func FromUnstructured(unstructuredObj *unstructured.Unstructured, obj interface{}) error {
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, obj)
-	if err != nil {
-		return status.Errorf(codes.Internal,
-			"failed to convert unstructured content for %s to a typed: %v",
-			PrettyPrint(unstructuredObj), err)
-	}
-	return nil
-}
-
-func ToUnstructured(obj interface{}) (*unstructured.Unstructured, error) {
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"failed to convert typed content for %s to unstructured: %v",
-			PrettyPrint(obj), err)
-	}
-	return &unstructured.Unstructured{Object: unstructuredObj}, nil
-}
-
 func CheckGeneration(obj ctrlclient.Object) bool {
 	generation := obj.GetGeneration()
 	var observedGeneration int64
@@ -108,25 +86,6 @@ func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
 				"required fields 'metadata.name' and/or 'metadata.namespace' not found on resource: %v",
 				PrettyPrint(obj))
 	}
-}
-
-func NamespacedNameForUnstructured(unstructuredObj map[string]interface{}) (*types.NamespacedName, error) {
-	name, found, err := unstructured.NestedString(unstructuredObj, "metadata", "name")
-	if err != nil || !found {
-		return nil,
-			status.Errorf(codes.Internal, "required field 'metadata.name' not found on resource: %v:\n%s",
-				err,
-				PrettyPrint(unstructuredObj))
-	}
-
-	namespace, found, err := unstructured.NestedString(unstructuredObj, "metadata", "namespace")
-	if err != nil || !found {
-		return nil,
-			status.Errorf(codes.Internal, "required field 'metadata.namespace' not found on resource: %v:\n%s",
-				err,
-				PrettyPrint(unstructuredObj))
-	}
-	return &types.NamespacedName{Name: name, Namespace: namespace}, nil
 }
 
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
@@ -301,7 +260,7 @@ func NewHttpClientAndHeaders(clientOptions *ClientOptions) (*http.Client, map[st
 			if err != nil {
 				return nil, nil, err
 			} else {
-				if err = httpclient.SetClientTLS(client, tlsConfig.RootCAs, tlsConfig.Certificates, false); err != nil {
+				if err = httpclient.SetClientTLS(client, tlsConfig); err != nil {
 					return nil, nil, err
 				}
 			}

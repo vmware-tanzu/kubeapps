@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -28,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 type testSpecChartWithFile struct {
@@ -199,7 +201,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -294,7 +296,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -360,7 +362,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	// I don't need any repos/charts to test these scenarios
 	for _, tc := range negativeTestCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, nil, nil, nil)
+			s, mock, err := newServerWithRepos(t, nil, nil, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -465,7 +467,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -551,7 +553,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, nil, nil, nil)
+			s, mock, err := newServerWithRepos(t, nil, nil, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -644,7 +646,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -691,9 +693,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 // this test is focused on the chart cache work queue
 func TestChartCacheResyncNotIdle(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the chart cache needs to resync", func(t *testing.T) {
+
 		// start with an empty server that only has an empty repo cache
 		// passing in []testSpecChartWithUrl{} instead of nil will add support for chart cache
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil)
+		s, mock, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -746,16 +749,6 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		unstructuredRepo, err := common.ToUnstructured(&r)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(context.Background(), unstructuredRepo, metav1.CreateOptions{})
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		repoKey, repoBytes, err := s.redisKeyValueForRepo(*r)
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -764,7 +757,6 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		redisMockSetValueForRepo(mock, repoKey, repoBytes)
 
 		opts := &common.ClientOptions{}
-
 		chartCacheKeys := []string{}
 		var chartBytes []byte
 		for i := 0; i < NUM_CHARTS; i++ {
@@ -784,9 +776,22 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			s.chartCache.ExpectAdd(chartCacheKey)
 			chartCacheKeys = append(chartCacheKeys, chartCacheKey)
 		}
+
 		s.repoCache.ExpectAdd(repoKey)
 
-		watcher.Add(unstructuredRepo)
+		ctx := context.Background()
+		var watcher *watch.RaceFreeFakeWatcher
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			t.Fatal(err)
+		} else if err = ctrlClient.Create(ctx, r); err != nil {
+			// unlike dynamic.Interface.Create, client.Create will create an object in k8s
+			// and an Add event will be fired
+			t.Fatal(err)
+		} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
+			t.Fatalf("Unexpected condition: %s", reflect.TypeOf(ww))
+		} else if watcher = ww.watcher; watcher == nil {
+			t.Fatalf("Unexpected condition watcher is nil")
+		}
 
 		done := make(chan int, 1)
 
@@ -870,7 +875,6 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            name,
 			Generation:      int64(1),
-			ResourceVersion: "1",
 		},
 	}
 	if namespace != "" {
@@ -887,17 +891,6 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 	}
 
 	return helmChart
-}
-
-func availableRef(id, namespace string) *corev1.AvailablePackageReference {
-	return &corev1.AvailablePackageReference{
-		Identifier: id,
-		Context: &corev1.Context{
-			Namespace: namespace,
-			Cluster:   KubeappsCluster,
-		},
-		Plugin: fluxPlugin,
-	}
 }
 
 func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
