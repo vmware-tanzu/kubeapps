@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -82,9 +84,15 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			log.Infof("+fluxv2 using default config since pluginConfigPath is empty")
 		}
 
+		// register the GitOps Toolkit schema definitions
+		scheme := runtime.NewScheme()
+		_ = sourcev1.AddToScheme(scheme)
+		_ = helmv2.AddToScheme(scheme)
+
 		s := repoEventSink{
-			clientGetter: clientgetter.NewBackgroundClientGetter(configGetter),
-			chartCache:   chartCache,
+			clientGetter: clientgetter.NewBackgroundClientGetter(
+				configGetter, clientgetter.Options{Scheme: scheme}),
+			chartCache: chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 			Gvr:          repositoriesGvr,
@@ -100,7 +108,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return nil, err
 		} else {
 			return &Server{
-				clientGetter:       clientgetter.NewClientGetter(configGetter),
+				clientGetter: clientgetter.NewClientGetter(
+					configGetter, clientgetter.Options{Scheme: scheme}),
 				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
 				repoCache:          repoCache,
 				chartCache:         chartCache,

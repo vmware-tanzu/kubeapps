@@ -142,7 +142,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	}
 
 	return &Server{
-		clientGetter: clientgetter.NewClientGetter(configGetter),
+		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases

@@ -6,8 +6,6 @@ package clientgetter
 import (
 	"context"
 
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"google.golang.org/grpc/codes"
@@ -15,6 +13,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -40,6 +39,15 @@ type ClientInterfaces interface {
 	// returns an instance of https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Client
 	// that also supports Watch operations
 	ControllerRuntime() (client.WithWatch, error)
+}
+
+// Options are creation options for a Client.
+type Options struct {
+	// Scheme, if provided, will be used to map go structs to GroupVersionKinds
+	Scheme *runtime.Scheme
+
+	// Mapper, if provided, will be used to map GroupVersionKinds to Resources
+	Mapper meta.RESTMapper
 }
 
 // very basic implementation to start with. Will enhance later as needed
@@ -96,7 +104,7 @@ func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster
 	}
 }
 
-func NewClientGetter(configGetter core.KubernetesConfigGetter) ClientGetterFunc {
+func NewClientGetter(configGetter core.KubernetesConfigGetter, options Options) ClientGetterFunc {
 	return func(ctx context.Context, cluster string) (ClientInterfaces, error) {
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
@@ -110,7 +118,7 @@ func NewClientGetter(configGetter core.KubernetesConfigGetter) ClientGetterFunc 
 			}
 			return nil, status.Errorf(code, "unable to get in cluster config due to: %v", err)
 		}
-		return clientGetterHelper(config)
+		return clientGetterHelper(config, options)
 	}
 }
 
@@ -122,7 +130,7 @@ func NewClientGetter(configGetter core.KubernetesConfigGetter) ClientGetterFunc 
 // Although we've already ensured that if the flux plugin is selected, that the service account
 // will be granted additional read privileges, we also need to ensure that the plugin can get a
 // config based on the service account rather than the request context
-func NewBackgroundClientGetter(configGetter core.KubernetesConfigGetter) BackgroundClientGetterFunc {
+func NewBackgroundClientGetter(configGetter core.KubernetesConfigGetter, options Options) BackgroundClientGetterFunc {
 	return func(ctx context.Context) (ClientInterfaces, error) {
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
@@ -137,7 +145,7 @@ func NewBackgroundClientGetter(configGetter core.KubernetesConfigGetter) Backgro
 			}
 			return nil, status.Errorf(code, "unable to get in cluster config due to: %v", err)
 		} else {
-			return clientGetterHelper(config)
+			return clientGetterHelper(config, options)
 		}
 	}
 }
@@ -219,7 +227,7 @@ func (cg BackgroundClientGetterFunc) Typed(ctx context.Context) (kubernetes.Inte
 	}
 }
 
-func clientGetterHelper(config *rest.Config) (ClientInterfaces, error) {
+func clientGetterHelper(config *rest.Config, options Options) (ClientInterfaces, error) {
 	typedClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client due to: %v", err)
@@ -233,15 +241,15 @@ func clientGetterHelper(config *rest.Config) (ClientInterfaces, error) {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
 	}
 
-	// register the GitOps Toolkit schema definitions
-	scheme := runtime.NewScheme()
-	_ = sourcev1.AddToScheme(scheme)
-	_ = helmv2.AddToScheme(scheme)
+	ctrlOpts := client.Options{}
+	if options.Scheme != nil {
+		ctrlOpts.Scheme = options.Scheme
+	}
+	if options.Mapper != nil {
+		ctrlOpts.Mapper = options.Mapper
+	}
 
-	// TODO (gfichtenholt) do we need to set up a RESTMapper?
-	// kind of like in release_test.go newServerWithChartsAndReleases()
-
-	ctrlRuntime, err := client.NewWithWatch(config, client.Options{Scheme: scheme})
+	ctrlClient, err := client.NewWithWatch(config, ctrlOpts)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get controller runtime client due to: %v", err)
 	}
@@ -250,7 +258,7 @@ func clientGetterHelper(config *rest.Config) (ClientInterfaces, error) {
 		WithTyped(typedClient).
 		WithDynamic(dynamicClient).
 		WithApiExt(apiExtensions).
-		WithControllerRuntime(ctrlRuntime).
+		WithControllerRuntime(ctrlClient).
 		Build(), nil
 }
 
