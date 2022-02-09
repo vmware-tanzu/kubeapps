@@ -238,26 +238,63 @@ func clientGetterHelper(config *rest.Config) (ClientInterfaces, error) {
 	_ = sourcev1.AddToScheme(scheme)
 	_ = helmv2.AddToScheme(scheme)
 
+	// TODO (gfichtenholt) do we need to set up a RESTMapper?
+	// kind of like in release_test.go newServerWithChartsAndReleases()
+
 	ctrlRuntime, err := client.NewWithWatch(config, client.Options{Scheme: scheme})
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get controller runtime client due to: %v", err)
 	}
 
-	return NewClientInterfaces(typedClient, dynamicClient, apiExtensions, ctrlRuntime), nil
+	return NewBuilder().
+		WithTyped(typedClient).
+		WithDynamic(dynamicClient).
+		WithApiExt(apiExtensions).
+		WithControllerRuntime(ctrlRuntime).
+		Build(), nil
 }
 
-// convenience func exported only for unit tests in plugins
-// TODO (gfichtenholt) switch to use a builder pattern like
-// https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/client/fake/client.go
-// its cleaner and more future-proof
-func NewClientInterfaces(
-	typedClient kubernetes.Interface,
-	dynamicClient dynamic.Interface,
-	apiExtensions apiext.Interface,
-	ctrlRuntime client.WithWatch) ClientInterfaces {
+// ClientBuilder builds a ClientInterfaces instance.
+// convenience funcs exported only for unit tests in plugins
+type Builder struct {
+	clientInterfacesType
+}
+
+// NewBuilder returns a new builder
+func NewBuilder() *Builder {
+	return &Builder{}
+}
+
+func (b *Builder) WithDynamic(i dynamic.Interface) *Builder {
+	b.dyn = i
+	return b
+}
+
+func (b *Builder) WithTyped(i kubernetes.Interface) *Builder {
+	b.typed = i
+	return b
+}
+
+func (b *Builder) WithApiExt(a apiext.Interface) *Builder {
+	b.apiex = a
+	return b
+}
+
+func (b *Builder) WithControllerRuntime(c client.WithWatch) *Builder {
+	b.ctrl = c
+	return b
+}
+
+// Build builds and returns a new instance of ClientInterfaces.
+func (b *Builder) Build() ClientInterfaces {
+	return b
+}
+
+// convinience func exported only for unit tests in plugins
+func NewClientInterfaces(typedClient kubernetes.Interface, dynamicClient dynamic.Interface, apiExtensions apiext.Interface) ClientInterfaces {
 	return &clientInterfacesType{
 		typedClient,
 		dynamicClient,
 		apiExtensions,
-		ctrlRuntime}
+		nil}
 }

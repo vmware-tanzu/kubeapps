@@ -1363,7 +1363,12 @@ func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []
 	ctrlClient := &withWatchWrapper{delegate: ctrlClientBuilder.Build()}
 
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(typedClient, nil, apiextIfc, ctrlClient), nil
+		return clientgetter.
+			NewBuilder().
+			WithTyped(typedClient).
+			WithApiExt(apiextIfc).
+			WithControllerRuntime(ctrlClient).
+			Build(), nil
 	}
 
 	return newServer(t, clientGetter, nil, repos, charts)

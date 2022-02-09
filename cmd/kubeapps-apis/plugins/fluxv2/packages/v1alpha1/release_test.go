@@ -1218,7 +1218,11 @@ func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configura
 	ctrlClient := &withWatchWrapper{delegate: ctrlClientBuilder.Build()}
 
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(nil, nil, apiextIfc, ctrlClient), nil
+		return clientgetter.
+			NewBuilder().
+			WithApiExt(apiextIfc).
+			WithControllerRuntime(ctrlClient).
+			Build(), nil
 	}
 
 	return newServer(t, clientGetter, actionConfig, nil, nil)
