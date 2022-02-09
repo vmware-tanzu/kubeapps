@@ -13756,10 +13756,10 @@ svgo@^1.0.0, svgo@^1.2.2:
     unquote "~1.1.1"
     util.promisify "~1.0.0"
 
-swagger-client@^3.18.3:
-  version "3.18.3"
-  resolved "https://registry.yarnpkg.com/swagger-client/-/swagger-client-3.18.3.tgz#2e0dd6f79a72c7f4b027ba836a41182bd6addc70"
-  integrity sha512-IA2kiEe0ek2r1lwIyj73zcsaZ6aIOyGm00OB+VEgCAaTBz1AOTIbTQL2HCfqvEtMThGcvxVv+e1UJhHODOx3Ew==
+swagger-client@^3.18.4:
+  version "3.18.4"
+  resolved "https://registry.yarnpkg.com/swagger-client/-/swagger-client-3.18.4.tgz#71be9df585157a3335a542c407733d2134fa75e9"
+  integrity sha512-Wj26oEctONq/u0uM+eSj18675YM5e2vFnx7Kr4neLeXEHKUsfceVQ/OdtrBXdrT3VbtdBbZfMTfl1JOBpix2MA==
   dependencies:
     "@babel/runtime-corejs3" "^7.11.2"
     btoa "^1.2.1"
@@ -13776,10 +13776,10 @@ swagger-client@^3.18.3:
     traverse "~0.6.6"
     url "~0.11.0"
 
-swagger-ui-react@^4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.4.1.tgz#9bad244680bad3ffc9b5431e3aadbc60dbee5e12"
-  integrity sha512-GiDLHB7EMdP+/QK4CVZYmvZ7KzBsHeP1cxRdDmtR6pFjpzdfCz+uv1wy+x3MMlRHAxgn+nDpcLoTASCwfZ+nmA==
+swagger-ui-react@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.5.0.tgz#e79253d112a18fbf28874792c6ead47dee160074"
+  integrity sha512-fcLvjudm4u0GjKtuMCB2hFFkJ5Dqtv4PcP4e0h4HbnZ6MVU4v/J6gMK0e9/5VnGlana5TpXbU32muO59cEt5/w==
   dependencies:
     "@babel/runtime-corejs3" "^7.16.8"
     "@braintree/sanitize-url" "^5.0.2"
@@ -13808,7 +13808,7 @@ swagger-ui-react@^4.4.1:
     reselect "^4.1.5"
     serialize-error "^8.1.0"
     sha.js "^2.4.11"
-    swagger-client "^3.18.3"
+    swagger-client "^3.18.4"
     url-parse "^1.5.3"
     xml "=1.0.1"
     xml-but-prettier "^1.0.1"
