@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	typfake "k8s.io/client-go/kubernetes/fake"
+	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestGetClient(t *testing.T) {
@@ -28,10 +29,11 @@ func TestGetClient(t *testing.T) {
 				},
 			),
 			apiextfake.NewSimpleClientset(),
+			ctrlfake.NewClientBuilder().Build(),
 		}, nil
 	}
 	badClientGetter := func(context.Context, string) (ClientInterfaces, error) {
-		return &clientInterfacesType{nil, nil, nil}, fmt.Errorf("Bang!")
+		return &clientInterfacesType{nil, nil, nil, nil}, fmt.Errorf("Bang!")
 	}
 
 	testCases := []struct {
@@ -79,6 +81,13 @@ func TestGetClient(t *testing.T) {
 					t.Fatal(err)
 				} else if apiExClient == nil {
 					t.Errorf("got: nil, want: clientset.Interface")
+				}
+
+				ctrlClient, err := ifcs.ControllerRuntime()
+				if err != nil {
+					t.Fatal(err)
+				} else if ctrlClient == nil {
+					t.Errorf("got: nil, want: client.WithWatch")
 				}
 			}
 		})

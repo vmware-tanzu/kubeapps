@@ -100,7 +100,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 		log.Infof("+kapp-controller using default config since pluginConfigPath is empty")
 	}
 	return &Server{
-		clientGetter:             clientgetter.NewClientGetter(configGetter),
+		clientGetter:             clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		pluginConfig:             pluginConfig,

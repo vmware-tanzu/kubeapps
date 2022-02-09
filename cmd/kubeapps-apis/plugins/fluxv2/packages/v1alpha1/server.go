@@ -8,8 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -26,6 +29,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -81,9 +85,15 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			log.Infof("+fluxv2 using default config since pluginConfigPath is empty")
 		}
 
+		// register the GitOps Toolkit schema definitions
+		scheme := runtime.NewScheme()
+		_ = sourcev1.AddToScheme(scheme)
+		_ = helmv2.AddToScheme(scheme)
+
 		s := repoEventSink{
-			clientGetter: clientgetter.NewBackgroundClientGetter(configGetter),
-			chartCache:   chartCache,
+			clientGetter: clientgetter.NewBackgroundClientGetter(
+				configGetter, clientgetter.Options{Scheme: scheme}),
+			chartCache: chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 			Gvr:          repositoriesGvr,
@@ -93,19 +103,35 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			OnGetFunc:    s.onGetRepo,
 			OnDeleteFunc: s.onDeleteRepo,
 			OnResyncFunc: s.onResync,
+			NewObjFunc:   func() ctrlclient.Object { return &sourcev1.HelmRepository{} },
+			NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
+			ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
+				if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
+					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+					return nil
+				} else {
+					ret := make([]ctrlclient.Object, len(hl.Items))
+					for i, hr := range hl.Items {
+						ret[i] = hr.DeepCopy()
+					}
+					return ret
+				}
+			},
 		}
 		if repoCache, err := cache.NewNamespacedResourceWatcherCache(
 			"repoCache", repoCacheConfig, redisCli, stopCh); err != nil {
 			return nil, err
 		} else {
 			return &Server{
-				clientGetter:       clientgetter.NewClientGetter(configGetter),
-				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
-				repoCache:          repoCache,
-				chartCache:         chartCache,
-				kubeappsCluster:    kubeappsCluster,
-				versionsInSummary:  versionsInSummary,
-				timeoutSeconds:     timeoutSecs,
+				clientGetter: clientgetter.NewClientGetter(
+					configGetter, clientgetter.Options{Scheme: scheme}),
+				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(
+					configGetter, kubeappsCluster),
+				repoCache:         repoCache,
+				chartCache:        chartCache,
+				kubeappsCluster:   kubeappsCluster,
+				versionsInSummary: versionsInSummary,
+				timeoutSeconds:    timeoutSecs,
 			}, nil
 		}
 	}
@@ -530,11 +556,19 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	}
 }
 
-// convinience func mostly used by unit tests
+// convenience func mostly used by unit tests
 func (s *Server) newBackgroundClientGetter() clientgetter.BackgroundClientGetterFunc {
 	return func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
 		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
+}
+
+func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Client, error) {
+	client, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+	if err != nil {
+		return nil, err
+	}
+	return ctrlclient.NewNamespacedClient(client, namespace), nil
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.

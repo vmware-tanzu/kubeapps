@@ -81,16 +81,14 @@ var kappctrlAPIVersion = fmt.Sprintf("%s/%s", kappctrlv1alpha1.SchemeGroupVersio
 
 func TestGetClient(t *testing.T) {
 	testClientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(
-			typfake.NewSimpleClientset(),
-			dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		return clientgetter.NewBuilder().
+			WithTyped(typfake.NewSimpleClientset()).
+			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 				runtime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: "foo", Version: "bar", Resource: "baz"}: "fooList",
 				},
-			),
-			nil,
-		), nil
+			)).Build(), nil
 	}
 
 	testCases := []struct {
@@ -490,18 +488,15 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -653,17 +648,14 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}: pkgResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -948,18 +940,15 @@ Some support information
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 			availablePackageDetail, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
@@ -1789,9 +1778,8 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
@@ -1799,9 +1787,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -2271,18 +2257,16 @@ fetchStderr
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						typfake.NewSimpleClientset(tc.existingTypedObjects...),
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 			installedPackageDetail, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
@@ -4261,7 +4245,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 			s := Server{
 				pluginConfig: tc.pluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(typfake.NewSimpleClientset(tc.existingTypedObjects...), dynamicClient, nil), nil
+					return clientgetter.NewBuilder().
+						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
+						WithDynamic(dynamicClient).
+						Build(), nil
 				},
 			}
 
@@ -4612,9 +4599,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						typfake.NewSimpleClientset(tc.existingTypedObjects...),
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
@@ -4622,9 +4609,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -4817,9 +4802,9 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						typfake.NewSimpleClientset(tc.existingTypedObjects...),
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
@@ -4827,9 +4812,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -5014,7 +4997,10 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(typedClient, dynClient, nil), nil
+					return clientgetter.NewBuilder().
+						WithTyped(typedClient).
+						WithDynamic(dynClient).
+						Build(), nil
 				},
 				kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 					// Create a fake Kapp DepsFactory and configure there the fake k8s clients the hereinbefore created
@@ -5142,17 +5128,14 @@ func TestGetPackageRepositories(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)), nil
 				},
 			}
 
