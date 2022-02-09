@@ -439,22 +439,19 @@ func newServer(t *testing.T,
 		OnGetFunc:    sink.onGetRepo,
 		OnDeleteFunc: sink.onDeleteRepo,
 		OnResyncFunc: sink.onResync,
-		NewObjFunc: func() ctrlclient.Object {
-			return &sourcev1.HelmRepository{}
-		},
-		NewListFunc: func() ctrlclient.ObjectList {
-			return &sourcev1.HelmRepositoryList{}
-		},
+		NewObjFunc:   func() ctrlclient.Object { return &sourcev1.HelmRepository{} },
+		NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
 		ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
-			ret := []ctrlclient.Object{}
 			if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
 				t.Fatalf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+				return nil
 			} else {
-				for _, hr := range hl.Items {
-					ret = append(ret, hr.DeepCopy())
+				ret := make([]ctrlclient.Object, len(hl.Items))
+				for i, hr := range hl.Items {
+					ret[i] = hr.DeepCopy()
 				}
+				return ret
 			}
-			return ret
 		},
 	}
 

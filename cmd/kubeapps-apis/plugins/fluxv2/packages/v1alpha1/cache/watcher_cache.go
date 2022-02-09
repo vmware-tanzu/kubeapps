@@ -126,6 +126,8 @@ type NamespacedResourceWatcherCacheConfig struct {
 	// OnResync hook is called when the cache is resynced
 	OnResyncFunc ResyncFunc
 
+	// These funcs are needed to manipulate API-specific objects, such as flux's
+	// sourcev1.HelmRepository in a generic fashion
 	NewObjFunc    NewObjectFunc
 	NewListFunc   NewObjectListFunc
 	ListItemsFunc GetListItemsFunc

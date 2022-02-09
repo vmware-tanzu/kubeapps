@@ -103,22 +103,19 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			OnGetFunc:    s.onGetRepo,
 			OnDeleteFunc: s.onDeleteRepo,
 			OnResyncFunc: s.onResync,
-			NewObjFunc: func() ctrlclient.Object {
-				return &sourcev1.HelmRepository{}
-			},
-			NewListFunc: func() ctrlclient.ObjectList {
-				return &sourcev1.HelmRepositoryList{}
-			},
+			NewObjFunc:   func() ctrlclient.Object { return &sourcev1.HelmRepository{} },
+			NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
 			ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
-				ret := []ctrlclient.Object{}
 				if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
 					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+					return nil
 				} else {
-					for _, hr := range hl.Items {
-						ret = append(ret, hr.DeepCopy())
+					ret := make([]ctrlclient.Object, len(hl.Items))
+					for i, hr := range hl.Items {
+						ret[i] = hr.DeepCopy()
 					}
+					return ret
 				}
-				return ret
 			},
 		}
 		if repoCache, err := cache.NewNamespacedResourceWatcherCache(
