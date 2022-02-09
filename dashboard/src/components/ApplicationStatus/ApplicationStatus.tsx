@@ -134,10 +134,16 @@ export default function ApplicationStatus({
       </div>
     );
   }
-  if (info && info.status) {
-    // If the status code is different than "Deployed", display that status
+  if (info?.status?.reason) {
+    // If the status code is different than "Deployed" or "Pending",
+    // display that status.
     const packageStatus = codeToString(info.status);
-    if (info.status.reason !== InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED) {
+    if (
+      ![
+        InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+        InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      ].includes(info?.status?.reason)
+    ) {
       return (
         <div className="center">
           <div className="color-icon-warning">

@@ -84,6 +84,7 @@ describe("isFetching", () => {
     deployed: boolean;
     totalPods: number;
     readyPods: number;
+    infoReason: InstalledPackageStatus_StatusReason;
   }> = [
     {
       title: "shows a warning if no workloads are present",
@@ -93,6 +94,7 @@ describe("isFetching", () => {
       deployed: false,
       totalPods: 0,
       readyPods: 0,
+      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
     },
     {
       title: "shows a deploying status if there is a non deployed deployment",
@@ -115,6 +117,7 @@ describe("isFetching", () => {
       deployed: false,
       totalPods: 1,
       readyPods: 0,
+      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
     },
     {
       title: "shows a deploying status if there is a non deployed statefulset",
@@ -137,6 +140,7 @@ describe("isFetching", () => {
       deployed: false,
       totalPods: 1,
       readyPods: 0,
+      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
     },
     {
       title: "shows a deploying status if there is a non deployed daemonset",
@@ -157,6 +161,7 @@ describe("isFetching", () => {
       deployed: false,
       totalPods: 1,
       readyPods: 0,
+      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
     },
     {
       title: "shows a deployed status if it has a daemonset, deployment and statefulset deployed",
@@ -203,6 +208,7 @@ describe("isFetching", () => {
       deployed: true,
       totalPods: 3,
       readyPods: 3,
+      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
     },
     {
       title:
@@ -250,6 +256,7 @@ describe("isFetching", () => {
       deployed: true,
       totalPods: 3,
       readyPods: 2,
+      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
     },
     {
       title:
@@ -309,6 +316,7 @@ describe("isFetching", () => {
       deployed: true,
       totalPods: 3,
       readyPods: 2,
+      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
     },
   ];
   tests.forEach(t => {
@@ -318,6 +326,11 @@ describe("isFetching", () => {
         deployments: t.deployments,
         statefulsets: t.statefulsets,
         daemonsets: t.daemonsets,
+        info: {
+          status: {
+            reason: t.infoReason,
+          } as InstalledPackageStatus,
+        } as InstalledPackageDetail,
       });
       wrapper.update();
       const getItem = (i?: IResource | IK8sList<IResource, {}>): IResource => {

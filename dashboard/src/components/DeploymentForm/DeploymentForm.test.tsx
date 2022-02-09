@@ -73,7 +73,7 @@ afterEach(() => {
 
 it("fetches the available versions", () => {
   const fetchAvailablePackageVersions = jest.fn();
-  actions.packages.fetchAndSelectAvailablePackageDetail = fetchAvailablePackageVersions;
+  actions.availablepackages.fetchAndSelectAvailablePackageDetail = fetchAvailablePackageVersions;
 
   mountWrapper(
     getStore({}),
@@ -232,7 +232,7 @@ describe("renders an error", () => {
   it("triggers a deployment when submitting the form", async () => {
     const installPackage = jest.fn().mockReturnValue(true);
     const push = jest.fn();
-    actions.apps.installPackage = installPackage;
+    actions.installedpackages.installPackage = installPackage;
     spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
 
     const appValues = "foo: bar";

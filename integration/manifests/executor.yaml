@@ -21,7 +21,7 @@ spec:
             - tail
             - -f
             - /dev/null
-          image: kubeapps/integration-tests-pw:v1.0.0
+          image: kubeapps/integration-tests-pw:v1.0.1
           name: integration
           # TODO (castelblanque) Adjust properly the resources. 
           # Current values are not empirically demonstrated.

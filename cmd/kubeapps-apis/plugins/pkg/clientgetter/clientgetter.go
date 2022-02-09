@@ -289,12 +289,3 @@ func (b *Builder) WithControllerRuntime(c client.WithWatch) *Builder {
 func (b *Builder) Build() ClientInterfaces {
 	return b
 }
-
-// convinience func exported only for unit tests in plugins
-func NewClientInterfaces(typedClient kubernetes.Interface, dynamicClient dynamic.Interface, apiExtensions apiext.Interface) ClientInterfaces {
-	return &clientInterfacesType{
-		typedClient,
-		dynamicClient,
-		apiExtensions,
-		nil}
-}
