@@ -7,9 +7,9 @@ import { cloneDeep, merge } from "lodash";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
-import { initialState as appsInitialState } from "reducers/apps";
+import { initialState as installedPackagesInitialState } from "reducers/installedpackages";
 import { initialState as authInitialState } from "reducers/auth";
-import { initialState as packagesInitialState } from "reducers/packages";
+import { initialState as availablePackagesInitialState } from "reducers/availablepackages";
 import { initialState as clustersInitialState } from "reducers/cluster";
 import { initialState as configInitialState } from "reducers/config";
 import { initialState as kubeInitialState } from "reducers/kube";
@@ -23,9 +23,9 @@ import { IStoreState } from "shared/types";
 const mockStore = configureMockStore([thunk]);
 
 export const initialState = {
-  apps: cloneDeep(appsInitialState),
+  apps: cloneDeep(installedPackagesInitialState),
   auth: cloneDeep(authInitialState),
-  packages: cloneDeep(packagesInitialState),
+  packages: cloneDeep(availablePackagesInitialState),
   config: {
     ...cloneDeep(configInitialState),
     kubeappsCluster: "default-cluster",

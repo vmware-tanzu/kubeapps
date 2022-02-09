@@ -71,7 +71,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
     // the list of versions does not depend on anything else
     if (selectedPackage.versions.length === 0) {
       dispatch(
-        actions.packages.fetchAvailablePackageVersions(
+        actions.availablepackages.fetchAvailablePackageVersions(
           installedAppInstalledPackageDetail?.availablePackageRef,
         ),
       );
@@ -79,7 +79,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
         // Additionally, mark the current installed package version as the selected,
         // next time, the selection will be handled by selectVersion()
         dispatch(
-          actions.packages.receiveSelectedAvailablePackageDetail(
+          actions.availablepackages.receiveSelectedAvailablePackageDetail(
             installedAppAvailablePackageDetail,
           ),
         );
@@ -87,7 +87,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
       // If a version has been manually selected (eg. in the URL), fetch it explicitly
       if (props.version) {
         dispatch(
-          actions.packages.fetchAndSelectAvailablePackageDetail(
+          actions.availablepackages.fetchAndSelectAvailablePackageDetail(
             installedAppInstalledPackageDetail?.availablePackageRef,
             props.version,
           ),
@@ -152,7 +152,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
-      actions.packages.fetchAndSelectAvailablePackageDetail(
+      actions.availablepackages.fetchAndSelectAvailablePackageDetail(
         installedAppInstalledPackageDetail?.availablePackageRef,
         e.currentTarget.value,
       ),
@@ -168,7 +168,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
       installedAppInstalledPackageDetail?.availablePackageRef?.context?.namespace
     ) {
       const deployedSuccess = await dispatch(
-        actions.apps.updateInstalledPackage(
+        actions.installedpackages.updateInstalledPackage(
           installedAppInstalledPackageDetail?.installedPackageRef,
           availablePackageDetail,
           appValues,

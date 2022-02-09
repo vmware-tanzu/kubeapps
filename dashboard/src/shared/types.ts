@@ -307,7 +307,7 @@ export interface IAppRepositoryFilter {
   variables?: { [key: string]: string };
 }
 
-export interface IAppState {
+export interface IInstalledPackageState {
   isFetching: boolean;
   error?: FetchError | CreateError | UpgradeError | RollbackError | DeleteError;
   items: InstalledPackageDetail[];
@@ -320,7 +320,7 @@ export interface IAppState {
 
 export interface IStoreState {
   router: RouterState;
-  apps: IAppState;
+  apps: IInstalledPackageState;
   auth: IAuthState;
   packages: IPackageState;
   config: IConfigState;

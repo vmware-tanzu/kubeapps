@@ -4,11 +4,7 @@
 package main
 
 import (
-	"bufio"
-	"context"
 	"fmt"
-	"reflect"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -17,18 +13,9 @@ import (
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
-	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" doesn't work: https://github.com/kubeapps/kubeapps/pull/4050
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
 
@@ -109,23 +96,6 @@ func simpleUserReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) str
 	return "Unknown"
 }
 
-// extracts the value for a key from a JSON-formatted string
-// body - the JSON-response as a string. Usually retrieved via the request body
-// key - the key for which the value should be extracted
-// returns - the value for the given key
-// https://stackoverflow.com/questions/17452722/how-to-get-the-key-value-from-a-json-string-in-go/37332972
-func extractValue(body string, key string) string {
-	keystr := "\"" + key + "\":[^,;\\]}]*"
-	r, _ := regexp.Compile(keystr)
-	match := r.FindString(body)
-	keyValMatch := strings.Split(match, ":")
-	value := ""
-	if len(keyValMatch) > 1 {
-		value = strings.ReplaceAll(keyValMatch[1], "\"", "")
-	}
-	return value
-}
-
 // buildReadme generates a readme based on the information there is available
 func buildReadme(pkgMetadata *datapackagingv1alpha1.PackageMetadata, foundPkgSemver *pkgSemver) string {
 	var readmeSB strings.Builder
@@ -194,138 +164,6 @@ func buildPostInstallationNotes(app *kappctrlv1alpha1.App) string {
 	return postInstallNotesSB.String()
 }
 
-// defaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
-func defaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error) {
-	if len(schema) == 0 {
-		return "", nil
-	}
-	// Deserialize the schema passed into the function
-	jsonSchemaProps := &apiextensions.JSONSchemaProps{}
-	if err := yaml.Unmarshal(schema, jsonSchemaProps); err != nil {
-		return "", err
-	}
-	structural, err := structuralschema.NewStructural(jsonSchemaProps)
-	if err != nil {
-		return "", err
-	}
-
-	// Generate the default values
-	unstructuredDefaultValues := make(map[string]interface{})
-	defaultValues(unstructuredDefaultValues, structural)
-	yamlDefaultValues, err := yaml.Marshal(unstructuredDefaultValues)
-	if err != nil {
-		return "", err
-	}
-	strYamlDefaultValues := string(yamlDefaultValues)
-
-	// If isCommentedOut, add a yaml comment character '#' to the beginning of each line
-	if isCommentedOut {
-		var sb strings.Builder
-		scanner := bufio.NewScanner(strings.NewReader(strYamlDefaultValues))
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			sb.WriteString("# ")
-			sb.WriteString(fmt.Sprintln(scanner.Text()))
-		}
-		strYamlDefaultValues = sb.String()
-	}
-	return strYamlDefaultValues, nil
-}
-
-// Default does defaulting of x depending on default values in s.
-// Based upon https://github.com/kubernetes/apiextensions-apiserver/blob/release-1.21/pkg/apiserver/schema/defaulting/algorithm.go
-// Plus modifications from https://github.com/vmware-tanzu/tanzu-framework/pull/1422
-// In short, it differs from upstream in that:
-// -- 1. Prevent deep copy of int as it panics
-// -- 2. For type object scan the first level properties for any defaults to create an empty map to populate
-// -- 3. If the property does not have a default, add one based on the type ("", false, etc)
-func defaultValues(x interface{}, s *structuralschema.Structural) {
-	if s == nil {
-		return
-	}
-
-	switch x := x.(type) {
-	case map[string]interface{}:
-		for k, prop := range s.Properties { //nolint
-			// if Default for object is nil, scan first level of properties for any defaults to create an empty default
-			if prop.Default.Object == nil {
-				createDefault := false
-				if prop.Properties != nil {
-					for _, v := range prop.Properties { //nolint
-						if v.Default.Object != nil {
-							createDefault = true
-							break
-						}
-					}
-				}
-				if createDefault {
-					prop.Default.Object = make(map[string]interface{})
-					// If not generating an empty object, fall back to the data type's defaults
-				} else {
-					switch prop.Type {
-					case "string":
-						prop.Default.Object = ""
-					case "number":
-						prop.Default.Object = 0
-					case "integer":
-						prop.Default.Object = 0
-					case "boolean":
-						prop.Default.Object = false
-					case "array":
-						prop.Default.Object = []interface{}{}
-					case "object":
-						prop.Default.Object = make(map[string]interface{})
-					}
-				}
-			}
-			if _, found := x[k]; !found || isNonNullableNull(x[k], &prop) {
-				if isKindInt(prop.Default.Object) {
-					x[k] = prop.Default.Object
-				} else {
-					x[k] = runtime.DeepCopyJSONValue(prop.Default.Object)
-				}
-			}
-		}
-		for k := range x {
-			if prop, found := s.Properties[k]; found {
-				defaultValues(x[k], &prop)
-			} else if s.AdditionalProperties != nil {
-				if isNonNullableNull(x[k], s.AdditionalProperties.Structural) {
-					if isKindInt(s.AdditionalProperties.Structural.Default.Object) {
-						x[k] = s.AdditionalProperties.Structural.Default.Object
-					} else {
-						x[k] = runtime.DeepCopyJSONValue(s.AdditionalProperties.Structural.Default.Object)
-					}
-				}
-				defaultValues(x[k], s.AdditionalProperties.Structural)
-			}
-		}
-	case []interface{}:
-		for i := range x {
-			if isNonNullableNull(x[i], s.Items) {
-				if isKindInt(s.Items.Default.Object) {
-					x[i] = s.Items.Default.Object
-				} else {
-					x[i] = runtime.DeepCopyJSONValue(s.Items.Default.Object)
-				}
-			}
-			defaultValues(x[i], s.Items)
-		}
-	default:
-		// scalars, do nothing
-	}
-}
-
-// isNonNullalbeNull returns true if the item is nil AND it's nullable
-func isNonNullableNull(x interface{}, s *structuralschema.Structural) bool {
-	return x == nil && s != nil && !s.Generic.Nullable
-}
-
-// isKindInt returns true if the item is an int
-func isKindInt(src interface{}) bool {
-	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
-}
-
 type (
 	kappControllerPluginConfig struct {
 		Core struct {
@@ -358,7 +196,7 @@ type (
 
 var defaultPluginConfig = &kappControllerPluginParsedConfig{
 	versionsInSummary:                  pkgutils.GetDefaultVersionsInSummary(),
-	timeoutSeconds:                     300,
+	timeoutSeconds:                     fallbackTimeoutSeconds,
 	defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
 	defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 	defaultAllowDowngrades:             fallbackDefaultAllowDowngrades,
@@ -464,22 +302,4 @@ func (f *ConfigurableConfigFactoryImpl) ConfigureRESTConfig(config *rest.Config)
 
 func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
 	return f.config, nil
-}
-
-func WaitForResource(ctx context.Context, ri dynamic.ResourceInterface, name string, interval, timeout time.Duration) error {
-	err := wait.PollImmediateWithContext(ctx, interval, timeout, func(ctx context.Context) (bool, error) {
-		_, err := ri.Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			if errors.IsNotFound(err) {
-				// the resource hasn't been created yet
-				return false, nil
-			} else {
-				// any other real error
-				return false, statuserror.FromK8sError("wait", "resource", name, err)
-			}
-		}
-		// the resource is created now
-		return true, nil
-	})
-	return err
 }

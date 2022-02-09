@@ -33,6 +33,7 @@ const (
 	globalPackagingNamespace                     = "kapp-controller-packaging-global"
 	fallbackDefaultUpgradePolicy   upgradePolicy = none
 	fallbackDefaultAllowDowngrades               = false
+	fallbackTimeoutSeconds                       = 300
 )
 
 func fallbackDefaultPrereleasesVersionSelection() []string {

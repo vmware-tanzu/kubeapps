@@ -18,9 +18,9 @@ import {
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { getPluginsSupportingRollback } from "./utils";
 
-export class App {
-  private static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
-  private static helmPluginClient = () =>
+export class InstalledPackage {
+  public static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static helmPluginClient = () =>
     new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
 
   public static async GetInstalledPackageSummaries(
@@ -43,10 +43,20 @@ export class App {
 
   public static async GetInstalledPackageResourceRefs(
     installedPackageRef?: InstalledPackageReference,
+    initialWait = 500,
   ) {
-    return await this.coreClient().GetInstalledPackageResourceRefs({
-      installedPackageRef: installedPackageRef,
-    });
+    // TODO(minelson): The backend plugin may take care of waiting
+    // for the required data to become available in which case this
+    // can be removed.
+    // See https://github.com/kubeapps/kubeapps/issues/4213
+    // Note: initialWait is set with a default value so it can be
+    // tested with a value of 0 (because I couldn't get jest's mock
+    // timers to work with promises here.)
+    const fn = async () =>
+      this.coreClient().GetInstalledPackageResourceRefs({
+        installedPackageRef: installedPackageRef,
+      });
+    return await callWithRetry(fn, initialWait);
   }
 
   public static async CreateInstalledPackage(
@@ -105,3 +115,21 @@ export class App {
     } as DeleteInstalledPackageRequest);
   }
 }
+
+// Helpers to be able to call with a retry backing off exponentially
+// with 500ms, 1000ms, 2000ms, 4000ms etc.
+const wait = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+const callWithRetry = async (fn: any, initialWait: number, depth = 0): Promise<any> => {
+  try {
+    return await fn();
+  } catch (e) {
+    if (depth >= 4) {
+      throw e;
+    }
+    // Wait for initialWait ms first time, doubling each time.
+    await wait(initialWait * 2 ** depth);
+
+    return callWithRetry(fn, initialWait, depth + 1);
+  }
+};

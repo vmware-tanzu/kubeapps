@@ -24,7 +24,7 @@ import {
   CustomInstalledPackageDetail,
   FetchError,
   IAppRepository,
-  IAppState,
+  IInstalledPackageState,
   IPackageState,
   UpgradeError,
 } from "shared/types";
@@ -115,7 +115,7 @@ it("renders the repo selection form if not introduced", () => {
   const state = {
     apps: {
       isFetching: true,
-    } as IAppState,
+    } as IInstalledPackageState,
   };
   const wrapper = mountWrapper(
     getStore({ ...defaultStore, ...state }),
@@ -133,7 +133,11 @@ it("renders the repo selection form if not introduced when the app is loaded", (
     repos: {
       repos: [repo1],
     } as IAppRepositoryState,
-    apps: { selected: { name: "foo" }, isFetching: false, error: undefined } as IAppState,
+    apps: {
+      selected: { name: "foo" },
+      isFetching: false,
+      error: undefined,
+    } as IInstalledPackageState,
   };
   const wrapper = mountWrapper(
     getStore({
@@ -156,7 +160,7 @@ describe("when an error exists", () => {
     const state = {
       apps: {
         error: new FetchError("foo does not exist"),
-      } as IAppState,
+      } as IInstalledPackageState,
     };
     const wrapper = mountWrapper(
       getStore({
@@ -182,7 +186,11 @@ describe("when an error exists", () => {
       repos: {
         repos: [] as IAppRepository[],
       } as IAppRepositoryState,
-      apps: { selected: { name: "foo" }, isFetching: false, error: undefined } as IAppState,
+      apps: {
+        selected: { name: "foo" },
+        isFetching: false,
+        error: undefined,
+      } as IInstalledPackageState,
     };
     const wrapper = mountWrapper(
       getStore({
@@ -208,7 +216,7 @@ describe("when an error exists", () => {
         error: upgradeError,
         selected: installedPackage1,
         selectedDetails: availablePackageDetail,
-      } as IAppState,
+      } as IInstalledPackageState,
       packages: { selected: selectedPackage } as IPackageState,
     };
 
@@ -229,17 +237,17 @@ describe("when an error exists", () => {
 });
 
 it("renders the upgrade form when the repo is available, clears state and fetches app", () => {
-  const getApp = jest.fn();
-  actions.apps.getApp = getApp;
+  const getInstalledPackage = jest.fn();
+  actions.installedpackages.getInstalledPackage = getInstalledPackage;
   const resetSelectedAvailablePackageDetail = jest
-    .spyOn(actions.packages, "resetSelectedAvailablePackageDetail")
+    .spyOn(actions.availablepackages, "resetSelectedAvailablePackageDetail")
     .mockImplementation(jest.fn());
 
   const state = {
     apps: {
       selected: installedPackage1,
       selectedDetails: availablePackageDetail,
-    } as IAppState,
+    } as IInstalledPackageState,
     repos: {
       repo: repo1,
       repos: [repo1],
@@ -263,7 +271,7 @@ it("renders the upgrade form when the repo is available, clears state and fetche
   expect(wrapper.find(SelectRepoForm)).not.toExist();
 
   expect(resetSelectedAvailablePackageDetail).toHaveBeenCalled();
-  expect(getApp).toHaveBeenCalledWith({
+  expect(getInstalledPackage).toHaveBeenCalledWith({
     context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
     identifier: defaultProps.releaseName,
     plugin: defaultProps.plugin,
@@ -275,7 +283,7 @@ it("renders the upgrade form with the version property", () => {
     apps: {
       selected: installedPackage1,
       selectedDetails: availablePackageDetail,
-    } as IAppState,
+    } as IInstalledPackageState,
     repos: {
       repo: repo1,
       repos: [repo1],
@@ -303,7 +311,7 @@ it("skips the repo selection form if the app contains upgrade info", () => {
     apps: {
       selected: installedPackage1,
       selectedDetails: availablePackageDetail,
-    } as IAppState,
+    } as IInstalledPackageState,
     repos: {
       repo: repo1,
       repos: [repo1],
