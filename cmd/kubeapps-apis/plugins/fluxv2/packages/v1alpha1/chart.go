@@ -12,7 +12,6 @@ import (
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -20,77 +19,35 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
 
-// chart-related utilities
-
-const (
-	// see docs at https://fluxcd.io/docs/components/source/
-	fluxHelmChart     = "HelmChart"
-	fluxHelmCharts    = "helmcharts"
-	fluxHelmChartList = "HelmChartList"
-)
-
-func (s *Server) getChartsResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := s.clientGetter.Dynamic(ctx, s.kubeappsCluster)
-	if err != nil {
-		return nil, err
-	}
-
-	chartsResource := schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
-		Resource: fluxHelmCharts,
-	}
-
-	return client.Resource(chartsResource).Namespace(namespace), nil
-}
-
 func (s *Server) listChartsInCluster(ctx context.Context, namespace string) ([]sourcev1.HelmChart, error) {
-	resourceIfc, err := s.getChartsResourceInterface(ctx, namespace)
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if unstructuredList, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
+	var chartList sourcev1.HelmChartList
+	if err = client.List(ctx, &chartList); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmChart", namespace+"/*", err)
 	} else {
-		chartArray := []sourcev1.HelmChart{}
-		for _, u := range unstructuredList.Items {
-			chart := sourcev1.HelmChart{}
-			if err := common.FromUnstructured(&u, &chart); err != nil {
-				return nil, err
-			}
-			chartArray = append(chartArray, chart)
-		}
-		return chartArray, nil
+		return chartList.Items, nil
 	}
 }
 
 func (s *Server) getChartInCluster(ctx context.Context, key types.NamespacedName) (*sourcev1.HelmChart, error) {
-	resourceIfc, err := s.getChartsResourceInterface(ctx, key.Namespace)
+	client, err := s.getClient(ctx, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
-
-	u, err := resourceIfc.Get(ctx, key.Name, metav1.GetOptions{})
-	if err != nil {
+	var chartObj sourcev1.HelmChart
+	if err = client.Get(ctx, key, &chartObj); err != nil {
 		return nil, statuserror.FromK8sError("get", "HelmChart", key.String(), err)
-	} else if u == nil {
-		return nil, status.Errorf(codes.NotFound, "unable to find HelmChart [%s]", key)
 	}
-
-	chart := sourcev1.HelmChart{}
-	if err := common.FromUnstructured(u, &chart); err != nil {
-		return nil, err
-	}
-	return &chart, nil
+	return &chartObj, nil
 }
 
 func (s *Server) availableChartDetail(ctx context.Context, repoName types.NamespacedName, chartName, chartVersion string) (*corev1.AvailablePackageDetail, error) {

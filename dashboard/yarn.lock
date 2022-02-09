@@ -1120,7 +1120,7 @@
     "@cds/city" "^1.1.0"
     modern-normalize "^1.1.0"
 
-"@clr/ui@^13.0.0":
+"@clr/ui@^13.0.1":
   version "13.0.1"
   resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-13.0.1.tgz#315ebd0b095cfdeb4ef5b414b135a21367ec328d"
   integrity sha512-rxAMAaqm1TyPCemO2XSZzFeGcfOllg5UCjIqwm0w2FPd4C2onNGC1SsJH+k+ImQk1rCRUzlF0J5imMt5UodcYQ==
@@ -2939,7 +2939,7 @@ ajv@^6.1.0, ajv@^6.10.0, ajv@^6.10.2, ajv@^6.12.3, ajv@^6.12.4, ajv@^6.12.5:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-ajv@^8.0.1, ajv@^8.9.0:
+ajv@^8.0.1, ajv@^8.10.0:
   version "8.10.0"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.10.0.tgz#e573f719bd3af069017e3b66538ab968d040e54d"
   integrity sha512-bzqAEZOjkrUMl2afH8dknrq5KEk2SrwdBROR+vH1EKVQTqaUbJVPdc/gEdggTMM0Se+s+Ja4ju4TlNcStKl2Hw==
@@ -11904,7 +11904,7 @@ react-inspector@^5.1.1:
     is-dom "^1.0.0"
     prop-types "^15.0.0"
 
-react-intl@^5.24.4:
+react-intl@^5.24.6:
   version "5.24.6"
   resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-5.24.6.tgz#d3dcd07ff967f804504cfdfd5dfa4ee1f64b4f80"
   integrity sha512-6gUhQwNAeAoRpN6F3N+bR66aot/mI6yduRwQS5ajfmXHX/YFvOfINkgMFTTrcbf3+qjBhACNU3ek4wFt6cn2ww==
@@ -12736,7 +12736,7 @@ run-queue@^1.0.0, run-queue@^1.0.3:
   dependencies:
     aproba "^1.1.1"
 
-rxjs@^7.5.2:
+rxjs@^7.5.3:
   version "7.5.3"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.5.3.tgz#1359f8a4704797bee74357d65a125dbc7d8f4a91"
   integrity sha512-6162iC/N7L7K8q3UvdOMWix1ju+esADGrDaPrTu5XJmCv69YNdYoUaop/iatN8GHK+YHOdszPP+qygA0yi04zQ==
@@ -13661,7 +13661,7 @@ stylelint-scss@^4.0.0, stylelint-scss@^4.1.0:
     postcss-selector-parser "^6.0.6"
     postcss-value-parser "^4.1.0"
 
-stylelint@^14.3.0:
+stylelint@^14.4.0:
   version "14.4.0"
   resolved "https://registry.yarnpkg.com/stylelint/-/stylelint-14.4.0.tgz#9ac2fb3681c5e84046cc0d08b6c60a115d61b5a7"
   integrity sha512-F6H2frcmdpB5ZXPjvHKSZRmszuYz7bsbl2NXyE+Pn+1P6PMD3dYMKjXci6yEzj9+Yf2ZinxBMaXYvSzYjaHtog==
@@ -13798,7 +13798,7 @@ swagger-client@^3.18.4:
     traverse "~0.6.6"
     url "~0.11.0"
 
-swagger-ui-react@^4.4.1:
+swagger-ui-react@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.5.0.tgz#e79253d112a18fbf28874792c6ead47dee160074"
   integrity sha512-fcLvjudm4u0GjKtuMCB2hFFkJ5Dqtv4PcP4e0h4HbnZ6MVU4v/J6gMK0e9/5VnGlana5TpXbU32muO59cEt5/w==

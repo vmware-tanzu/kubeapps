@@ -9,35 +9,35 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	"github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	k8scorev1 "k8s.io/api/core/v1"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic/fake"
 	typfake "k8s.io/client-go/kubernetes/fake"
-	k8stesting "k8s.io/client-go/testing"
+	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 type testSpecGetAvailablePackageSummaries struct {
@@ -47,7 +47,7 @@ type testSpecGetAvailablePackageSummaries struct {
 	index     string
 }
 
-func TestGetAvailablePackageSummaries(t *testing.T) {
+func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 	testCases := []struct {
 		name              string
 		request           *corev1.GetAvailablePackageSummariesRequest
@@ -389,76 +389,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns only the first page of results",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "0",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					elasticsearch_summary,
-				},
-				NextPageToken: "1",
-			},
-		},
-		{
-			name: "it returns only the requested page of results and includes the next page token",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "1",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					ghost_summary,
-				},
-				NextPageToken: "2",
-			},
-		},
-		{
-			name: "it returns the last page without a next page token",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "2",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
-				NextPageToken:             "",
-			},
-		},
-		{
 			name: "it returns an error if a cluster other than the kubeapps cluster is specified",
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
 				Cluster: "not-kubeapps-cluster",
@@ -482,7 +412,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			// the index.yaml will contain links to charts but for the purposes
 			// of this test they do not matter
-			s, mock, _, _, err := newServerWithRepos(t, repos, nil, nil)
+			s, mock, err := newServerWithRepos(t, repos, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -512,6 +442,138 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
+	// one big test case that can't really be broken down to smaller cases because
+	// the tests aren't independent/idempotent: there is state that needs to be
+	// kept track from one call to the next
+
+	t.Run("test GetAvailablePackageSummaries with pagination", func(t *testing.T) {
+		existingRepos := []testSpecGetAvailablePackageSummaries{
+			{
+				name:      "index-with-categories-1",
+				namespace: "default",
+				url:       "https://example.repo.com/charts",
+				index:     "testdata/index-with-categories.yaml",
+			},
+		}
+		repos := []sourcev1.HelmRepository{}
+		for _, rs := range existingRepos {
+			ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer ts2.Close()
+			repos = append(repos, *repo)
+		}
+
+		// the index.yaml will contain links to charts but for the purposes
+		// of this test they do not matter
+		s, mock, err := newServerWithRepos(t, repos, nil, nil)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		request1 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "0",
+				PageSize:  1,
+			},
+		}
+
+		response1, err := s.GetAvailablePackageSummaries(context.Background(), request1)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", got, want)
+		}
+
+		opts := cmpopts.IgnoreUnexported(
+			corev1.GetAvailablePackageSummariesResponse{},
+			corev1.AvailablePackageSummary{},
+			corev1.AvailablePackageReference{},
+			corev1.Context{},
+			plugins.Plugin{},
+			corev1.PackageAppVersion{})
+		opts2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+
+		expectedResp1 := &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				elasticsearch_summary,
+			},
+			NextPageToken: "1",
+		}
+		expectedResp2 := &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				ghost_summary,
+			},
+			NextPageToken: "1",
+		}
+
+		match := false
+		var nextExpectedResp *corev1.GetAvailablePackageSummariesResponse
+		if got, want := response1, expectedResp1; cmp.Equal(want, got, opts, opts2) {
+			match = true
+			nextExpectedResp = expectedResp2
+			nextExpectedResp.NextPageToken = "2"
+		} else if got, want := response1, expectedResp2; cmp.Equal(want, got, opts, opts2) {
+			match = true
+			nextExpectedResp = expectedResp1
+			nextExpectedResp.NextPageToken = "2"
+		}
+		if !match {
+			t.Fatalf("Expected one of:\n%s\n%s, but got:\n%s", expectedResp1, expectedResp2, response1)
+		}
+
+		request2 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "1",
+				PageSize:  1,
+			},
+		}
+
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+		response2, err := s.GetAvailablePackageSummaries(context.Background(), request2)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", err, want)
+		}
+		if got, want := response2, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
+		}
+
+		request3 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "2",
+				PageSize:  1,
+			},
+		}
+		nextExpectedResp = &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			NextPageToken:             "",
+		}
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+		response3, err := s.GetAvailablePackageSummaries(context.Background(), request3)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", err, want)
+		}
+		if got, want := response3, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
 }
 
 func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
@@ -563,9 +625,10 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			URL: ts.URL,
 		}
 
-		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
+		repoName := types.NamespacedName{Namespace: "ns2", Name: "testrepo"}
+		repo := newRepo(repoName.Name, repoName.Namespace, repoSpec, repoStatus)
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{repo}, nil, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -604,56 +667,53 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		updateHappened = true
-		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
-		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		repo.ObjectMeta.ResourceVersion = "2"
-		repo.Status.Artifact.Checksum = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
-		repo.Status.Artifact.Revision = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
+		ctx := context.Background()
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			t.Fatal(err)
+		} else if err = ctrlClient.Get(ctx, repoName, &repo); err != nil {
+			t.Fatal(err)
+		} else {
+			updateHappened = true
+			// now we are going to simulate flux seeing an update of the index.yaml and modifying the
+			// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
+			repo.Status.Artifact.Checksum = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
+			repo.Status.Artifact.Revision = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
 
-		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
-		mock.ExpectGet(key).SetVal(string(oldValue))
-		key, newValue, err := s.redisMockSetValueForRepo(mock, repo)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
+			// there will be a GET to retrieve the old value from the cache followed by a SET to new value
+			mock.ExpectGet(key).SetVal(string(oldValue))
+			key, newValue, err := s.redisMockSetValueForRepo(mock, repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			s.repoCache.ExpectAdd(key)
 
-		unstructuredRepo, err := common.ToUnstructured(&repo)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
+			if err = ctrlClient.Update(ctx, &repo); err != nil {
+				// unlike dynamic.Interface.Update, client.Update will update an object in k8s
+				// and an Modified event will be fired
+				t.Fatal(err)
+			}
+			s.repoCache.WaitUntilForgotten(key)
 
-		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(
-			context.Background(),
-			unstructuredRepo,
-			metav1.UpdateOptions{})
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
 
-		s.repoCache.ExpectAdd(key)
-		watcher.Modify(unstructuredRepo)
-		s.repoCache.WaitUntilForgotten(key)
+			mock.ExpectGet(key).SetVal(string(newValue))
 
-		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
-		}
+			responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
+				context.Background(),
+				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
 
-		mock.ExpectGet(key).SetVal(string(newValue))
+			if got, want := responsePackagesAfterUpdate.AvailablePackageSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
 
-		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
-			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
-		if got, want := responsePackagesAfterUpdate.AvailablePackageSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
-
-		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
 		}
 	})
 }
@@ -690,7 +750,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		defer ts.Close()
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -744,11 +804,6 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if err = dyncli.Resource(repositoriesGvr).Namespace(repoName.Namespace).Delete(
-			context.Background(), repoName.Name, metav1.DeleteOptions{}); err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		chartCacheKeys := []string{}
 		for _, c := range chartsInCache {
 			chartCacheKeys = append(chartCacheKeys, fmt.Sprintf("helmcharts:%s:%s/%s", repoName.Namespace, repoName.Name, c))
@@ -759,11 +814,13 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			s.chartCache.ExpectAdd(k)
 		}
 
-		unstructuredObj, err := common.ToUnstructured(repo)
-		if err != nil {
-			t.Fatalf("%v", err)
+		ctx := context.Background()
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			t.Fatal(err)
+		} else if err = ctrlClient.Delete(ctx, repo); err != nil {
+			t.Fatal(err)
 		}
-		watcher.Delete(unstructuredObj)
+
 		s.repoCache.WaitUntilForgotten(repoKey)
 		for _, k := range chartCacheKeys {
 			s.chartCache.WaitUntilForgotten(k)
@@ -799,7 +856,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -839,6 +896,16 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
 		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
 		// background: a FLUSHDB followed by a SET
+		ctx := context.Background()
+		var watcher *watch.RaceFreeFakeWatcher
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			t.Fatal(err)
+		} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
+			t.Fatalf("Unexpected condition: %s", reflect.TypeOf(ww))
+		} else if watcher = ww.watcher; watcher == nil {
+			t.Fatalf("Unexpected condition: watcher is nil")
+		}
+
 		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
 
 		// wait for the server to start the resync process. Don't care how big the work queue is
@@ -885,13 +952,13 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the repo cache needs to resync", func(t *testing.T) {
 		// start with an empty server that only has an empty repo cache
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, nil, nil)
+		s, mock, err := newServerWithRepos(t, nil, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
 		// first, I'd like to fill up the work queue with a whole bunch of work items
-		repos := []*unstructured.Unstructured{}
+		repos := []*sourcev1.HelmRepository{}
 		mapReposCached := make(map[string][]byte)
 		keysInOrder := []string{}
 
@@ -915,23 +982,26 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			keysInOrder = append(keysInOrder, key)
 			mock.ExpectGet(key).RedisNil()
 			redisMockSetValueForRepo(mock, key, byteArray)
-			unstructuredObj, err := common.ToUnstructured(repo)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-			repos = append(repos, unstructuredObj)
-		}
-
-		for _, r := range repos {
-			if _, err = dyncli.Resource(repositoriesGvr).Namespace("default").
-				Create(context.Background(), r, metav1.CreateOptions{}); err != nil {
-				t.Fatalf("%v", err)
-			}
+			repos = append(repos, repo)
 		}
 
 		s.repoCache.ExpectAdd(keysInOrder[0])
-		for _, r := range repos {
-			watcher.Add(r)
+
+		var watcher *watch.RaceFreeFakeWatcher
+		ctx := context.Background()
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			t.Fatal(err)
+		} else {
+			for _, r := range repos {
+				if err = ctrlClient.Create(ctx, r); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
+				t.Fatalf("Unexpected condition: %s", reflect.TypeOf(ww))
+			} else if watcher = ww.watcher; watcher == nil {
+				t.Fatalf("Unexpected condition watcher is nil")
+			}
 		}
 
 		done := make(chan int, 1)
@@ -1030,7 +1100,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the repo cache needs to resync (idle queue)", func(t *testing.T) {
 		// start with an empty server that only has an empty repo cache
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, nil, nil)
+		s, mock, err := newServerWithRepos(t, nil, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -1054,18 +1124,19 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		mock.ExpectGet(key).RedisNil()
 		redisMockSetValueForRepo(mock, key, byteArray)
 
-		unstructuredRepo, err := common.ToUnstructured(repo)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(context.Background(), unstructuredRepo, metav1.CreateOptions{})
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		s.repoCache.ExpectAdd(key)
-		watcher.Add(unstructuredRepo)
+
+		var watcher *watch.RaceFreeFakeWatcher
+		ctx := context.Background()
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			t.Fatal(err)
+		} else if err = ctrlClient.Create(ctx, repo); err != nil {
+			t.Fatal(err)
+		} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
+			t.Fatalf("Unexpected condition: %s", reflect.TypeOf(ww))
+		} else if watcher = ww.watcher; watcher == nil {
+			t.Fatalf("Unexpected condition: watcher is nil")
+		}
 
 		done := make(chan int, 1)
 
@@ -1233,7 +1304,7 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, newRepos(tc.repoSpecs, tc.repoNamespace), nil, nil)
+			s, mock, err := newServerWithRepos(t, newRepos(tc.repoSpecs, tc.repoNamespace), nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -1264,61 +1335,43 @@ func TestGetPackageRepositories(t *testing.T) {
 	}
 }
 
-func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
+func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, error) {
 	typedClient := typfake.NewSimpleClientset(secrets...)
-
-	initObjs := []runtime.Object{}
-	for _, r := range repos {
-		unstructuredRepo, err := common.ToUnstructured(&r)
-		if err != nil {
-			return nil, nil, nil, nil, err
-		}
-		initObjs = append(initObjs, unstructuredRepo)
-	}
-
-	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
-		map[schema.GroupVersionResource]string{
-			repositoriesGvr: fluxHelmRepositoryList,
-		},
-		initObjs...)
-
-	// here we are essentially adding on to how List() works for HelmRepository objects
-	// this is done so that the item list returned by List() command with fake client contains
-	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
-	// is critical
-	reactor := dynamicClient.Fake.ReactionChain[0]
-
-	// here we are essentially adding on to how List() works for HelmRepository objects
-	// this is done so that the the item list returned by List() command with fake client contains
-	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
-	// is critical
-	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
-		func(action k8stesting.Action) (bool, runtime.Object, error) {
-			handled, ret, err := reactor.React(action)
-			if err == nil {
-				ulist, ok := ret.(*unstructured.UnstructuredList)
-				if ok && ulist != nil {
-					ulist.SetResourceVersion("1")
-				}
-			}
-			return handled, ret, err
-		})
-
-	watcher := watch.NewFake()
-
-	dynamicClient.Fake.PrependWatchReactor(
-		fluxHelmRepositories,
-		k8stesting.DefaultWatchReactor(watcher, nil))
-
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 
+	// register the GitOps Toolkit schema definitions
+	scheme := runtime.NewScheme()
+	_ = sourcev1.AddToScheme(scheme)
+	_ = helmv2.AddToScheme(scheme)
+
+	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{sourcev1.GroupVersion, helmv2.GroupVersion})
+	rm.Add(schema.GroupVersionKind{
+		Group:   sourcev1.GroupVersion.Group,
+		Version: sourcev1.GroupVersion.Version,
+		Kind:    sourcev1.HelmRepositoryKind},
+		apimeta.RESTScopeNamespace)
+	rm.Add(schema.GroupVersionKind{
+		Group:   helmv2.GroupVersion.Group,
+		Version: helmv2.GroupVersion.Version,
+		Kind:    helmv2.HelmReleaseKind},
+		apimeta.RESTScopeNamespace)
+
+	ctrlClientBuilder := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRESTMapper(rm)
+	if len(repos) > 0 {
+		ctrlClientBuilder = ctrlClientBuilder.WithLists(&sourcev1.HelmRepositoryList{Items: repos})
+	}
+	ctrlClient := &withWatchWrapper{delegate: ctrlClientBuilder.Build()}
+
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(typedClient, dynamicClient, apiextIfc), nil
+		return clientgetter.
+			NewBuilder().
+			WithTyped(typedClient).
+			WithApiExt(apiextIfc).
+			WithControllerRuntime(ctrlClient).
+			Build(), nil
 	}
 
-	s, mock, err := newServer(t, clientGetter, nil, repos, charts)
-	return s, mock, dynamicClient, watcher, err
+	return newServer(t, clientGetter, nil, repos, charts)
 }
 
 func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
@@ -1328,9 +1381,8 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 			APIVersion: sourcev1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Generation:      int64(1),
-			ResourceVersion: "1",
+			Name:       name,
+			Generation: int64(1),
 		},
 	}
 	if namespace != "" {
@@ -1368,58 +1420,6 @@ func newRepos(specs map[string]sourcev1.HelmRepositorySpec, namespace string) []
 		repos = append(repos, repo)
 	}
 	return repos
-}
-
-// ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
-func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secret {
-	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: k8scorev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"username": []byte(user),
-			"password": []byte(password),
-		},
-	}
-}
-
-// Note that according to https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
-// TLS secrets need to look one way, but according to
-// https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
-// in a different format:
-// certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
-func newTlsSecret(name, namespace string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: k8scorev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"certFile": pub,
-			"keyFile":  priv,
-			"caFile":   ca,
-		},
-	}, nil
-}
-
-func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: k8scorev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"username": []byte(user),
-			"password": []byte(password),
-			"certFile": pub,
-			"keyFile":  priv,
-			"caFile":   ca,
-		},
-	}, nil
 }
 
 // these functiosn should affect only unit test, not production code
@@ -1490,16 +1490,11 @@ func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key 
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {
-		unstructuredObj, err := common.ToUnstructured(&r)
-		if err != nil {
-			return key, nil, err
-		}
-
 		// we are not really adding anything to the cache here, rather just calling a
 		// onAddRepo to compute the value that *WOULD* be stored in the cache
 		var byteArray interface{}
 		var add bool
-		byteArray, add, err = sink.onAddRepo(key, *unstructuredObj)
+		byteArray, add, err = sink.onAddRepo(key, &r)
 		if err != nil {
 			return key, nil, err
 		} else if !add {

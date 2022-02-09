@@ -80,16 +80,14 @@ func TestGetClient(t *testing.T) {
 		log.Fatalf("%s", err)
 	}
 	testClientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(
-			typfake.NewSimpleClientset(),
-			dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		return clientgetter.NewBuilder().
+			WithTyped(typfake.NewSimpleClientset()).
+			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 				runtime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
 				},
-			),
-			nil,
-		), nil
+			)).Build(), nil
 	}
 
 	testCases := []struct {
@@ -251,7 +249,10 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		}, nil
 	})
 	clientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(clientSet, dynamicClient, nil), nil
+		return clientgetter.NewBuilder().
+			WithTyped(clientSet).
+			WithDynamic(dynamicClient).
+			Build(), nil
 	}
 
 	// Creating the SQL mock manager
