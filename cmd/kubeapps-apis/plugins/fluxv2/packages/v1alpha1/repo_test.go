@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	"github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 
@@ -29,7 +28,6 @@ import (
 	"google.golang.org/grpc/status"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,7 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
 	typfake "k8s.io/client-go/kubernetes/fake"
-	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 type testSpecGetAvailablePackageSummaries struct {
@@ -1338,39 +1335,15 @@ func TestGetPackageRepositories(t *testing.T) {
 func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, error) {
 	typedClient := typfake.NewSimpleClientset(secrets...)
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
-
-	// register the GitOps Toolkit schema definitions
-	scheme := runtime.NewScheme()
-	_ = sourcev1.AddToScheme(scheme)
-	_ = helmv2.AddToScheme(scheme)
-
-	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{sourcev1.GroupVersion, helmv2.GroupVersion})
-	rm.Add(schema.GroupVersionKind{
-		Group:   sourcev1.GroupVersion.Group,
-		Version: sourcev1.GroupVersion.Version,
-		Kind:    sourcev1.HelmRepositoryKind},
-		apimeta.RESTScopeNamespace)
-	rm.Add(schema.GroupVersionKind{
-		Group:   helmv2.GroupVersion.Group,
-		Version: helmv2.GroupVersion.Version,
-		Kind:    helmv2.HelmReleaseKind},
-		apimeta.RESTScopeNamespace)
-
-	ctrlClientBuilder := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRESTMapper(rm)
-	if len(repos) > 0 {
-		ctrlClientBuilder = ctrlClientBuilder.WithLists(&sourcev1.HelmRepositoryList{Items: repos})
-	}
-	ctrlClient := &withWatchWrapper{delegate: ctrlClientBuilder.Build()}
-
+	ctrlClient := newCtrlClient(repos, nil, nil)
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
 		return clientgetter.
 			NewBuilder().
 			WithTyped(typedClient).
 			WithApiExt(apiextIfc).
-			WithControllerRuntime(ctrlClient).
+			WithControllerRuntime(&ctrlClient).
 			Build(), nil
 	}
-
 	return newServer(t, clientGetter, nil, repos, charts)
 }
 
