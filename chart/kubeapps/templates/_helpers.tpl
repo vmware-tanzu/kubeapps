@@ -222,6 +222,10 @@ kubeapps: ingress.tls
 # Validate values of common mistakes in kubeappsapis.enabledPlugins
 */}}
 {{- define "kubeapps.validateValues.kubeappsapis.enabledPlugins" -}}
+    {{- if not (has "resources" .Values.kubeappsapis.enabledPlugins) }}
+    kubeapps: kubeappsapis.enabledPlugins
+        The 'resources' plugin is required for Kubeapps to work properly. Please add it to the enabledPlugins list.
+    {{- end -}}
     {{- if has "flux" .Values.kubeappsapis.enabledPlugins }}
     kubeapps: kubeappsapis.enabledPlugins
         You enter "flux", perhaps you meant "fluxv2"?
