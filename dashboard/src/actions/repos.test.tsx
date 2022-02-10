@@ -995,7 +995,7 @@ describe("findPackageInRepo", () => {
         type: getType(repoActions.requestRepo),
       },
       {
-        type: getType(actions.packages.createErrorPackage),
+        type: getType(actions.availablepackages.createErrorPackage),
         payload: new NotFoundError(
           "Package my-repo/my-package not found in the repository other-namespace.",
         ),

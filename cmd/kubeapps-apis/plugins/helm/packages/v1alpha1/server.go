@@ -40,6 +40,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
@@ -141,7 +142,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	}
 
 	return &Server{
-		clientGetter: clientgetter.NewClientGetter(configGetter),
+		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases
@@ -167,7 +168,17 @@ func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Int
 	if s.clientGetter == nil {
 		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	typedClient, dynamicClient, err := s.clientGetter(ctx, cluster)
+	// TODO (gfichtenholt) Today this function returns 2 different
+	// clients (typed and dynamic). Now if one looks at the callers, it is clear that
+	// only one client is actually needed for a given scenario.
+	// So for now, in order not to make too many changes, I am going to do more work than
+	// is actually needed by getting *all* clients and returning them.
+	// But we should think about refactoring the callers to ask for only what's needed
+	dynamicClient, err := s.clientGetter.Dynamic(ctx, cluster)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
+	}
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
@@ -1003,5 +1014,15 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		}
 		return actionGetter, nil
 	}
-	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, fn)
+
+	refs, err := resourcerefs.GetInstalledPackageResourceRefs(
+		ctx, types.NamespacedName{Name: identifier, Namespace: pkgRef.Context.Namespace}, fn)
+	if err != nil {
+		return nil, err
+	} else {
+		return &corev1.GetInstalledPackageResourceRefsResponse{
+			Context:      pkgRef.GetContext(),
+			ResourceRefs: refs,
+		}, nil
+	}
 }

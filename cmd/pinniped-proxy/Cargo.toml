@@ -15,10 +15,10 @@ anyhow = "1.0"
 base64 = "0.13"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
-kube = { version = "0.67.0" }
-kube-derive = { version = "0.67.0"}
-kube-runtime = "0.67.0"
-k8s-openapi = { version = "0.14.0", default-features = false, features = ["v1_22"] }
+kube = { version = "0.68.0" }
+kube-derive = { version = "0.68.0"}
+kube-runtime = "0.68.0"
+k8s-openapi = { version = "0.14.0", default-features = false}
 log = "0.4"
 native-tls = "0.2"
 openssl = "0.10"
@@ -32,6 +32,16 @@ tokio = { version = "1", features = ["full"] }
 tokio-native-tls = "0.3"
 url = "2.2"
 http = "0.2.6"
+
+[features]
+default = ["v1_22"]
+
+# k8s target version when compiling k8s-openapi
+# See https://doc.rust-lang.org/cargo/reference/features.html#dependency-features
+v1_20 = ["k8s-openapi/v1_20"]
+v1_21 = ["k8s-openapi/v1_21"]
+v1_22 = ["k8s-openapi/v1_22"]
+v1_23 = ["k8s-openapi/v1_23"]
 
 [dev-dependencies]
 tokio-test = "0.4"

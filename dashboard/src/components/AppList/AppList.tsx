@@ -72,7 +72,7 @@ function AppList() {
   }, [allNS, currentNamespace]);
 
   useEffect(() => {
-    dispatch(actions.apps.fetchApps(cluster, namespace));
+    dispatch(actions.installedpackages.fetchInstalledPackages(cluster, namespace));
     if (featureFlags?.operators) {
       dispatch(actions.operators.getResources(cluster, namespace));
     }
@@ -134,7 +134,7 @@ function AppList() {
         className="margin-t-xl"
       >
         {error ? (
-          <ErrorAlert>{error}</ErrorAlert>
+          <ErrorAlert error={error} />
         ) : (
           <AppListGrid
             appList={listOverview}

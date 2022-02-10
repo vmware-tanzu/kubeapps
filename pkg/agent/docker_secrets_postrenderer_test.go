@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" is not used because we're dealing with unstructured yaml directly
 )
 
 func TestNewDockerSecretsPostRenderer(t *testing.T) {
@@ -104,21 +104,21 @@ other: doc
 			output: bytes.NewBuffer([]byte(`apiVersion: v1
 kind: Pod
 metadata:
-  annotations:
-    annotation-1: some-annotation
-  name: image-secret-test
+    annotations:
+        annotation-1: some-annotation
+    name: image-secret-test
 spec:
-  containers:
-  - command:
-    - sh
-    - -c
-    - echo 'foo'
-    env:
-    - name: SOME_ENV
-      value: env_value
-    image: example.com/bitnami/nginx:1.16.1-debian-10-r42
-    name: container-name
-  restartPolicy: Never
+    containers:
+        - command:
+            - sh
+            - -c
+            - echo 'foo'
+          env:
+            - name: SOME_ENV
+              value: env_value
+          image: example.com/bitnami/nginx:1.16.1-debian-10-r42
+          name: container-name
+    restartPolicy: Never
 ---
 kind: Unknown
 other: doc
@@ -152,23 +152,23 @@ other: doc
 			output: bytes.NewBuffer([]byte(`apiVersion: v1
 kind: Pod
 metadata:
-  annotations:
-    annotation-1: some-annotation
-  name: image-secret-test
+    annotations:
+        annotation-1: some-annotation
+    name: image-secret-test
 spec:
-  containers:
-  - command:
-    - sh
-    - -c
-    - echo 'foo'
-    env:
-    - name: SOME_ENV
-      value: env_value
-    image: example.com/bitnami/nginx:1.16.1-debian-10-r42
-    name: container-name
-  imagePullSecrets:
-  - name: secret-1
-  restartPolicy: Never
+    containers:
+        - command:
+            - sh
+            - -c
+            - echo 'foo'
+          env:
+            - name: SOME_ENV
+              value: env_value
+          image: example.com/bitnami/nginx:1.16.1-debian-10-r42
+          name: container-name
+    imagePullSecrets:
+        - name: secret-1
+    restartPolicy: Never
 ---
 kind: Unknown
 other: doc
@@ -218,43 +218,43 @@ other: doc
 `)),
 			output: bytes.NewBuffer([]byte(`apiVersion: v1
 items:
-- kind: PodTemplate
-  template:
-    spec:
-      containers:
-      - command:
-        - sh
-        - -c
-        - echo 'foo'
-        env:
-        - name: SOME_ENV
-          value: env_value
-        image: example.com/bitnami/nginx:1.16.1-debian-10-r42
-        name: container-name
-      imagePullSecrets:
-      - name: secret-1
-      restartPolicy: Never
-- kind: PodTemplate
-  template:
-    spec:
-      containers:
-      - command:
-        - sh
-        - -c
-        - echo 'bar'
-        env:
-        - name: SOME_ENV
-          value: env_value
-        image: example.com/bitnami/nginx:1.16.1-debian-10-r42
-        name: container-name
-      imagePullSecrets:
-      - name: secret-1
-      restartPolicy: Never
+    - kind: PodTemplate
+      template:
+        spec:
+            containers:
+                - command:
+                    - sh
+                    - -c
+                    - echo 'foo'
+                  env:
+                    - name: SOME_ENV
+                      value: env_value
+                  image: example.com/bitnami/nginx:1.16.1-debian-10-r42
+                  name: container-name
+            imagePullSecrets:
+                - name: secret-1
+            restartPolicy: Never
+    - kind: PodTemplate
+      template:
+        spec:
+            containers:
+                - command:
+                    - sh
+                    - -c
+                    - echo 'bar'
+                  env:
+                    - name: SOME_ENV
+                      value: env_value
+                  image: example.com/bitnami/nginx:1.16.1-debian-10-r42
+                  name: container-name
+            imagePullSecrets:
+                - name: secret-1
+            restartPolicy: Never
 kind: PodTemplateList
 metadata:
-  annotations:
-    annotation-1: some-annotation
-  name: image-secret-test
+    annotations:
+        annotation-1: some-annotation
+    name: image-secret-test
 ---
 kind: Unknown
 other: doc
@@ -423,7 +423,9 @@ imagePullSecrets:
 				t.Fatalf("%+v", err)
 			}
 
-			var podSpec map[interface{}]interface{}
+			podSpec := make(map[string]interface{})
+
+			// var podSpec interface{}
 			err = yaml.Unmarshal([]byte(tc.podSpec), &podSpec)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -441,13 +443,13 @@ func TestGetResourcePodSpec(t *testing.T) {
 	testCases := []struct {
 		name     string
 		kind     string
-		resource map[interface{}]interface{}
-		result   map[interface{}]interface{}
+		resource map[string]interface{}
+		result   map[string]interface{}
 	}{
 		{
 			name: "it ignores an invalid doc with a non-map spec",
 			kind: "Pod",
-			resource: map[interface{}]interface{}{
+			resource: map[string]interface{}{
 				"spec": "not a map",
 			},
 			result: nil,
@@ -455,53 +457,53 @@ func TestGetResourcePodSpec(t *testing.T) {
 		{
 			name: "it returns the pod spec from a pod",
 			kind: "Pod",
-			resource: map[interface{}]interface{}{
-				"spec": map[interface{}]interface{}{"some": "spec"},
+			resource: map[string]interface{}{
+				"spec": map[string]interface{}{"some": "spec"},
 			},
-			result: map[interface{}]interface{}{
+			result: map[string]interface{}{
 				"some": "spec",
 			},
 		},
 		{
 			name: "it returns the pod spec from a daemon set",
 			kind: "DaemonSet",
-			resource: map[interface{}]interface{}{
+			resource: map[string]interface{}{
 				"kind": "DaemonSet",
-				"spec": map[interface{}]interface{}{
-					"template": map[interface{}]interface{}{
-						"spec": map[interface{}]interface{}{"some": "spec"},
+				"spec": map[string]interface{}{
+					"template": map[string]interface{}{
+						"spec": map[string]interface{}{"some": "spec"},
 					},
 				},
 			},
-			result: map[interface{}]interface{}{
+			result: map[string]interface{}{
 				"some": "spec",
 			},
 		},
 		{
 			name: "it returns the pod spec from a deployment",
 			kind: "Deployment",
-			resource: map[interface{}]interface{}{
+			resource: map[string]interface{}{
 				"kind": "Deployment",
-				"spec": map[interface{}]interface{}{
-					"template": map[interface{}]interface{}{
-						"spec": map[interface{}]interface{}{"some": "spec"},
+				"spec": map[string]interface{}{
+					"template": map[string]interface{}{
+						"spec": map[string]interface{}{"some": "spec"},
 					},
 				},
 			},
-			result: map[interface{}]interface{}{
+			result: map[string]interface{}{
 				"some": "spec",
 			},
 		},
 		{
 			name: "it returns the pod spec from a CronJob",
 			kind: "CronJob",
-			resource: map[interface{}]interface{}{
+			resource: map[string]interface{}{
 				"kind": "CronJob",
-				"spec": map[interface{}]interface{}{
-					"jobTemplate": map[interface{}]interface{}{
-						"spec": map[interface{}]interface{}{
-							"template": map[interface{}]interface{}{
-								"spec": map[interface{}]interface{}{
+				"spec": map[string]interface{}{
+					"jobTemplate": map[string]interface{}{
+						"spec": map[string]interface{}{
+							"template": map[string]interface{}{
+								"spec": map[string]interface{}{
 									"some": "spec",
 								},
 							},
@@ -509,7 +511,7 @@ func TestGetResourcePodSpec(t *testing.T) {
 					},
 				},
 			},
-			result: map[interface{}]interface{}{
+			result: map[string]interface{}{
 				"some": "spec",
 			},
 		},

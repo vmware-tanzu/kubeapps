@@ -46,9 +46,7 @@ import (
 	authorizationv1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 	log "k8s.io/klog/v2"
@@ -81,13 +79,15 @@ func TestGetClient(t *testing.T) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	testClientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
-			runtime.NewScheme(),
-			map[schema.GroupVersionResource]string{
-				{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
-			},
-		), nil
+	testClientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+		return clientgetter.NewBuilder().
+			WithTyped(typfake.NewSimpleClientset()).
+			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				runtime.NewScheme(),
+				map[schema.GroupVersionResource]string{
+					{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
+				},
+			)).Build(), nil
 	}
 
 	testCases := []struct {
@@ -121,8 +121,8 @@ func TestGetClient(t *testing.T) {
 		{
 			name:    "it returns failed-precondition when configGetter itself errors",
 			manager: manager,
-			clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-				return nil, nil, fmt.Errorf("Bang!")
+			clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+				return nil, fmt.Errorf("Bang!")
 			},
 			statusCodeClient:  codes.FailedPrecondition,
 			statusCodeManager: codes.OK,
@@ -248,8 +248,11 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: authorized},
 		}, nil
 	})
-	clientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-		return clientSet, dynamicClient, nil
+	clientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+		return clientgetter.NewBuilder().
+			WithTyped(clientSet).
+			WithDynamic(dynamicClient).
+			Build(), nil
 	}
 
 	// Creating the SQL mock manager

@@ -17,7 +17,6 @@ import (
 	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/kube"
-	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -34,6 +33,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+	log "k8s.io/klog/v2"
 )
 
 const controllerAgentName = "apprepository-controller"

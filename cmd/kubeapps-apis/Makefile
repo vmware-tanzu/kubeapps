@@ -26,7 +26,7 @@ generate:
 	buf generate
 
 run: build-plugins
-	go run main.go --plugin-dir devel/ --unsafe-use-demo-sa=true --unsafe-local-dev-kubeconfig=true
+	go run main.go --plugin-dir devel/ --unsafe-local-dev-kubeconfig=true
 
 test:
 	go test ./...

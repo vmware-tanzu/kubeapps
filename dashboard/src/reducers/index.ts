@@ -5,9 +5,9 @@ import { connectRouter } from "connected-react-router";
 import { History } from "history";
 import { combineReducers } from "redux";
 import { IStoreState } from "shared/types";
-import appsReducer from "./apps";
+import installedPackagesReducer from "./installedpackages";
 import authReducer from "./auth";
-import packageReducer from "./packages";
+import packageReducer from "./availablepackages";
 import clusterReducer from "./cluster";
 import configReducer from "./config";
 import kubeReducer from "./kube";
@@ -17,7 +17,7 @@ import reposReducer from "./repos";
 const rootReducer = (history: History) =>
   combineReducers<IStoreState>({
     router: connectRouter(history),
-    apps: appsReducer,
+    apps: installedPackagesReducer,
     auth: authReducer,
     packages: packageReducer,
     config: configReducer,

@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
@@ -24,83 +25,61 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	// see docs at https://fluxcd.io/docs/components/source/ and
 	// https://fluxcd.io/docs/components/helm/api/
-	fluxGroup              = "source.toolkit.fluxcd.io"
-	fluxVersion            = "v1beta1"
-	fluxHelmRepository     = "HelmRepository"
 	fluxHelmRepositories   = "helmrepositories"
 	fluxHelmRepositoryList = "HelmRepositoryList"
 )
 
-func (s *Server) getRepoResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	_, client, _, err := s.GetClients(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	repositoriesResource := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
-		Resource: fluxHelmRepositories,
-	}
-
-	return client.Resource(repositoriesResource).Namespace(namespace), nil
-}
-
 // namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
-func (s *Server) listReposInNamespace(ctx context.Context, namespace string) (*unstructured.UnstructuredList, error) {
-	resourceIfc, err := s.getRepoResourceInterface(ctx, namespace)
+func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]sourcev1.HelmRepository, error) {
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if repos, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
+	var repoList sourcev1.HelmRepositoryList
+	if err := client.List(ctx, &repoList); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmRepository", namespace+"/*", err)
 	} else {
-		return repos, nil
+		return repoList.Items, nil
 	}
 }
 
-func (s *Server) getRepoInCluster(ctx context.Context, name types.NamespacedName) (*unstructured.Unstructured, error) {
-	resourceIfc, err := s.getRepoResourceInterface(ctx, name.Namespace)
+func (s *Server) getRepoInCluster(ctx context.Context, key types.NamespacedName) (*sourcev1.HelmRepository, error) {
+	client, err := s.getClient(ctx, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
-
-	result, err := resourceIfc.Get(ctx, name.Name, metav1.GetOptions{})
-	if err != nil {
-		return nil, statuserror.FromK8sError("get", "HelmRepository", name.String(), err)
-	} else if result == nil {
-		return nil, status.Errorf(codes.NotFound, "unable to find HelmRepository [%s]", name)
+	var repo sourcev1.HelmRepository
+	if err = client.Get(ctx, key, &repo); err != nil {
+		return nil, statuserror.FromK8sError("get", "HelmRepository", key.String(), err)
 	}
-	return result, nil
+	return &repo, nil
 }
 
 // regexp expressions are used for matching actual names against expected patters
-func (s *Server) filterReadyReposByName(repoList *unstructured.UnstructuredList, match []string) ([]string, error) {
+func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) ([]string, error) {
 	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
 	resultKeys := make([]string, 0)
-	for _, repo := range repoList.Items {
+	for _, repo := range repoList {
 		// first check if repo is in ready state
-		if !isRepoReady(repo.Object) {
+		if !isRepoReady(repo) {
 			// just skip it
 			continue
 		}
-		name, err := common.NamespacedName(repo.Object)
+		name, err := common.NamespacedName(&repo)
 		if err != nil {
 			// just skip it
 			continue
@@ -160,8 +139,8 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 	return chartsTyped, nil
 }
 
-func (s *Server) clientOptionsForRepo(ctx context.Context, repo types.NamespacedName) (*common.ClientOptions, error) {
-	unstructuredRepo, err := s.getRepoInCluster(ctx, repo)
+func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.NamespacedName) (*common.ClientOptions, error) {
+	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
 		return nil, err
 	}
@@ -173,19 +152,19 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repo types.Namespaced
 	// I don't think it's necessarily a bad thing if the incoming user's RBAC
 	// settings are more permissive than that of the default RBAC for
 	// kubeapps-internal-kubeappsapis account. If we don't like that behavior,
-	// I can easily switch to using common.NewBackgroundClientGetter here
-	callSite := repoEventSink{
-		clientGetter: s.clientGetter,
+	// I can easily switch to BackgroundClientGetter here
+	sink := repoEventSink{
+		clientGetter: s.newBackgroundClientGetter(),
 		chartCache:   s.chartCache,
 	}
-	return callSite.clientOptionsForRepo(ctx, unstructuredRepo.Object)
+	return sink.clientOptionsForRepo(ctx, *repo)
 }
 
 //
 // implements plug-in specific cache-related functionality
 //
 type repoEventSink struct {
-	clientGetter clientgetter.ClientGetterWithApiExtFunc
+	clientGetter clientgetter.BackgroundClientGetterFunc
 	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
 }
 
@@ -197,24 +176,28 @@ type repoCacheEntryValue struct {
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
-func (s *repoEventSink) onAddRepo(key string, unstructuredRepo map[string]interface{}) (interface{}, bool, error) {
-	log.V(4).Info("+onAddRepo()")
+func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{}, bool, error) {
+	log.V(4).Info("+onAddRepo(%s)", key)
 	defer log.V(4).Info("-onAddRepo()")
 
-	// TODO (gfichtenholt) use
-	// runtime.DefaultUnstructuredConverter.FromUnstructured to convert to flux typed API
-	// https://fluxcd.io/docs/components/source/api/#source.toolkit.fluxcd.io/v1beta1.HelmRepository
-
-	// first, check the repo is ready
-	if isRepoReady(unstructuredRepo) {
+	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+	} else if isRepoReady(*repo) {
+		// first, check the repo is ready
 		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-		checksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
-		if err != nil || !found {
+		if artifact := repo.GetArtifact(); artifact != nil {
+			if checksum := artifact.Checksum; checksum == "" {
+				return nil, false, status.Errorf(codes.Internal,
+					"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
+					common.PrettyPrint(repo))
+			} else {
+				return s.indexAndEncode(checksum, *repo)
+			}
+		} else {
 			return nil, false, status.Errorf(codes.Internal,
-				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
-				common.PrettyPrintMap(unstructuredRepo), err)
+				"expected field status.artifact not found on HelmRepository\n[%s]",
+				common.PrettyPrint(repo))
 		}
-		return s.indexAndEncode(checksum, unstructuredRepo)
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
@@ -223,8 +206,8 @@ func (s *repoEventSink) onAddRepo(key string, unstructuredRepo map[string]interf
 	}
 }
 
-func (s *repoEventSink) indexAndEncode(checksum string, unstructuredRepo map[string]interface{}) ([]byte, bool, error) {
-	charts, err := s.indexOneRepo(unstructuredRepo)
+func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmRepository) ([]byte, bool, error) {
+	charts, err := s.indexOneRepo(repo)
 	if err != nil {
 		return nil, false, err
 	}
@@ -242,7 +225,7 @@ func (s *repoEventSink) indexAndEncode(checksum string, unstructuredRepo map[str
 	}
 
 	if s.chartCache != nil {
-		if opts, err := s.clientOptionsForRepo(context.Background(), unstructuredRepo); err != nil {
+		if opts, err := s.clientOptionsForRepo(context.Background(), repo); err != nil {
 			// ref: https://github.com/kubeapps/kubeapps/pull/3899#issuecomment-990446931
 			// I don't want this func to fail onAdd/onModify() if we can't read
 			// the corresponding secret due to something like default RBAC settings:
@@ -260,20 +243,20 @@ func (s *repoEventSink) indexAndEncode(checksum string, unstructuredRepo map[str
 
 // it is assumed the caller has already checked that this repo is ready
 // At present, there is only one caller of indexOneRepo() and this check is already done by it
-func (s *repoEventSink) indexOneRepo(unstructuredRepo map[string]interface{}) ([]models.Chart, error) {
+func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Chart, error) {
 	startTime := time.Now()
 
-	repo, err := packageRepositoryFromUnstructured(unstructuredRepo)
+	pkgRepo, err := packageRepositoryFromFlux(repo)
 	if err != nil {
 		return nil, err
 	}
 
 	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-	indexUrl, found, err := unstructured.NestedString(unstructuredRepo, "status", "url")
-	if err != nil || !found {
+	indexUrl := repo.Status.URL
+	if indexUrl == "" {
 		return nil, status.Errorf(codes.Internal,
-			"expected field status.url not found on HelmRepository\n[%s], error %v",
-			repo.Name, err)
+			"expected field status.url not found on HelmRepository\n[%s]",
+			repo.Name)
 	}
 
 	log.Infof("+indexOneRepo: [%s], index URL: [%s]", repo.Name, indexUrl)
@@ -292,9 +275,9 @@ func (s *repoEventSink) indexOneRepo(unstructuredRepo map[string]interface{}) ([
 	}
 
 	modelRepo := &models.Repo{
-		Namespace: repo.Namespace,
-		Name:      repo.Name,
-		URL:       repo.Url,
+		Namespace: pkgRepo.Namespace,
+		Name:      pkgRepo.Name,
+		URL:       pkgRepo.Url,
 		Type:      "helm",
 	}
 
@@ -319,20 +302,28 @@ func (s *repoEventSink) indexOneRepo(unstructuredRepo map[string]interface{}) ([
 	return charts, nil
 }
 
-// onModifyRepo essentially tells the cache whether to and what to store for a given key
-func (s *repoEventSink) onModifyRepo(key string, unstructuredRepo map[string]interface{}, oldValue interface{}) (interface{}, bool, error) {
-	// first check the repo is ready
-	if isRepoReady(unstructuredRepo) {
+// onModifyRepo essentially tells the cache whether or not to and what to store for a given key
+func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue interface{}) (interface{}, bool, error) {
+	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+	} else if isRepoReady(*repo) {
+		// first check the repo is ready
 		// We should to compare checksums on what's stored in the cache
 		// vs the modified object to see if the contents has really changed before embarking on
 		// expensive operation indexOneRepo() below.
 		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-		newChecksum, found, err := unstructured.NestedString(unstructuredRepo, "status", "artifact", "checksum")
-		if err != nil || !found {
-			return nil, false, status.Errorf(
-				codes.Internal,
-				"expected field status.artifact.checksum not found on HelmRepository\n[%s], error %v",
-				common.PrettyPrintMap(unstructuredRepo), err)
+		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+		var newChecksum string
+		if artifact := repo.GetArtifact(); artifact != nil {
+			if newChecksum = artifact.Checksum; newChecksum == "" {
+				return nil, false, status.Errorf(codes.Internal,
+					"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
+					common.PrettyPrint(repo))
+			}
+		} else {
+			return nil, false, status.Errorf(codes.Internal,
+				"expected field status.artifact not found on HelmRepository\n[%s]",
+				common.PrettyPrint(repo))
 		}
 
 		cacheEntryUntyped, err := s.onGetRepo(key, oldValue)
@@ -349,7 +340,7 @@ func (s *repoEventSink) onModifyRepo(key string, unstructuredRepo map[string]int
 		}
 
 		if cacheEntry.Checksum != newChecksum {
-			return s.indexAndEncode(newChecksum, unstructuredRepo)
+			return s.indexAndEncode(newChecksum, *repo)
 		} else {
 			// skip because the content did not change
 			return nil, false, nil
@@ -398,7 +389,7 @@ func (s *repoEventSink) onResync() error {
 // TODO (gfichtenholt) low priority: don't really like the fact that these 4 lines of code
 // basically repeat same logic as NamespacedResourceWatcherCache.fromKey() but can't
 // quite come up with with a more elegant alternative right now
-func (c *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
+func (s *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, cache.KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != fluxHelmRepositories || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
@@ -406,35 +397,33 @@ func (c *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-// unstructuredRepo is passed as map[string]interface{}
 // this is only until https://github.com/kubeapps/kubeapps/issues/3496
 // "Investigate and propose package repositories API with similar core interface to packages API"
-// gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
+// gets implemented. After that, the auth should be part of some kind of packageRepositoryFromCtrlObject()
 // The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
 // ChartCache
-func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, unstructuredRepo map[string]interface{}) (*common.ClientOptions, error) {
-	secretName, found, err := unstructured.NestedString(unstructuredRepo, "spec", "secretRef", "name")
-	if !found || err != nil || secretName == "" {
+func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.ClientOptions, error) {
+	if repo.Spec.SecretRef == nil {
+		return nil, nil
+	}
+	secretName := repo.Spec.SecretRef.Name
+	if secretName == "" {
 		return nil, nil
 	}
 	if s == nil || s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
 	}
-	typedClient, _, _, err := s.clientGetter(ctx)
+	typedClient, err := s.clientGetter.Typed(ctx)
 	if err != nil {
 		return nil, err
 	}
-	repoName, err := common.NamespacedName(unstructuredRepo)
+	repoName, err := common.NamespacedName(&repo)
 	if err != nil {
 		return nil, err
 	}
 	secret, err := typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsForbidden(err) || errors.IsUnauthorized(err) {
-			return nil, status.Errorf(codes.Unauthenticated, "unable to get secret due to %v", err)
-		} else {
-			return nil, status.Errorf(codes.Internal, "unable to get secret due to %v", err)
-		}
+		return nil, statuserror.FromK8sError("get", "secret", secretName, err)
 	}
 	return common.ClientOptionsFromSecret(*secret)
 }
@@ -443,28 +432,29 @@ func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, unstructuredRe
 // repo-related utilities
 //
 
-func isRepoReady(unstructuredRepo map[string]interface{}) bool {
+func isRepoReady(repo sourcev1.HelmRepository) bool {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
 	// Confirm the state we are observing is for the current generation
-	if !common.CheckGeneration(unstructuredRepo) {
+	if !common.CheckGeneration(&repo) {
 		return false
 	}
 
-	completed, success, _ := isHelmRepositoryReady(unstructuredRepo)
+	completed, success, _ := isHelmRepositoryReady(repo)
 	return completed && success
 }
 
-func packageRepositoryFromUnstructured(unstructuredRepo map[string]interface{}) (*v1alpha1.PackageRepository, error) {
-	name, err := common.NamespacedName(unstructuredRepo)
+func packageRepositoryFromFlux(repo sourcev1.HelmRepository) (*v1alpha1.PackageRepository, error) {
+	name, err := common.NamespacedName(&repo)
 	if err != nil {
 		return nil, err
 	}
 
-	url, found, err := unstructured.NestedString(unstructuredRepo, "spec", "url")
-	if err != nil || !found {
+	url := repo.Spec.URL
+	if url == "" {
 		return nil, status.Errorf(
 			codes.Internal,
-			"required field spec.url not found on HelmRepository:\n%s, error: %v", common.PrettyPrintMap(unstructuredRepo), err)
+			"required field spec.url not found on HelmRepository:\n%s",
+			common.PrettyPrint(repo))
 	}
 	return &v1alpha1.PackageRepository{
 		Name:      name.Name,
@@ -479,41 +469,31 @@ func packageRepositoryFromUnstructured(unstructuredRepo map[string]interface{}) 
 // - reason, if present
 // docs:
 // 1. https://fluxcd.io/docs/components/source/helmrepositories/#status-examples
-func isHelmRepositoryReady(unstructuredObj map[string]interface{}) (complete bool, success bool, reason string) {
-	if !common.CheckGeneration(unstructuredObj) {
+func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success bool, reason string) {
+	if !common.CheckGeneration(&repo) {
 		return false, false, ""
 	}
 
-	conditions, found, err := unstructured.NestedSlice(unstructuredObj, "status", "conditions")
-	if err != nil || !found {
-		return false, false, ""
-	}
-
-	for _, conditionUnstructured := range conditions {
-		if conditionAsMap, ok := conditionUnstructured.(map[string]interface{}); ok {
-			if typeString, ok := conditionAsMap["type"]; ok && typeString == "Ready" {
-				// this could be something like
-				// "reason": "ChartPullFailed"
-				// i.e. not super-useful
-				if reasonString, ok := conditionAsMap["reason"]; ok {
-					reason = fmt.Sprintf("%v", reasonString)
-				}
-				// whereas this could be something like:
-				// "message": 'invalid chart URL format'
-				// i.e. a little more useful, so we'll just return them both
-				if messageString, ok := conditionAsMap["message"]; ok {
-					reason += fmt.Sprintf(": %v", messageString)
-				}
-				if statusString, ok := conditionAsMap["status"]; ok {
-					if statusString == "True" {
-						return true, true, reason
-					} else if statusString == "False" {
-						return true, false, reason
-					}
-					// statusString == "Unknown" falls in here
-				}
-				break
-			}
+	readyCond := meta.FindStatusCondition(*repo.GetStatusConditions(), "Ready")
+	if readyCond != nil {
+		if readyCond.Reason != "" {
+			// this could be something like
+			// "reason": "ChartPullFailed"
+			// i.e. not super-useful
+			reason = readyCond.Reason
+		}
+		if readyCond.Message != "" {
+			// whereas this could be something like:
+			// "message": 'invalid chart URL format'
+			// i.e. a little more useful, so we'll just return them both
+			reason += ": " + readyCond.Message
+		}
+		switch readyCond.Status {
+		case metav1.ConditionTrue:
+			return true, true, reason
+		case metav1.ConditionFalse:
+			return true, false, reason
+			// metav1.ConditionUnknown falls through
 		}
 	}
 	return false, false, reason
