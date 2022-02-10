@@ -97,8 +97,10 @@ export function getResources(
   // it once after a bunch of resources have been processed is enough.
   // To do this, we use the lodash debounce function so that the status is refreshed
   // 2s after the last resource is processed.
-  const dispatchGetInstalledPkgStatus = (dispatch: ThunkDispatch<IStoreState, null, KubeAction>, pkg: InstalledPackageReference) =>
-    dispatch(actions.installedpackages.getInstalledPkgStatus(pkg));
+  const dispatchGetInstalledPkgStatus = (
+    dispatch: ThunkDispatch<IStoreState, null, KubeAction>,
+    pkg: InstalledPackageReference,
+  ) => dispatch(actions.installedpackages.getInstalledPkgStatus(pkg));
   const debouncedGetInstalledPkgStatus = debounce(dispatchGetInstalledPkgStatus, 2000);
   return dispatch => {
     dispatch(
