@@ -41,12 +41,12 @@ make kubeapps/asset-syncer
         * Another way to do so is to start the environment with `make cluster-kind` and manually verify the IP address by running `kubectl --namespace=kube-system get pods -o wide | grep kube-apiserver-kubeapps-control-plane  | awk '{print $6}'`, but you will need to re-create the cluster after you've updated the config files (below) by running `make delete-cluster-kind`, as some of these files (the apiserver-config ones) are config for the cluster apiserver itself, which has to know where to find dex.
 
   - Then, replace `172.18.0.2` with the previous IP the following files:
-    - [script/makefiles/deploy-dev.mk](../../script/makefiles/deploy-dev.mk)
-    - [kubeapps-local-dev-additional-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
-    - [kubeapps-local-dev-additional-kind-cluster.yaml](../user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
-    - [kubeapps-local-dev-apiserver-config.yaml](../user/manifests/kubeapps-local-dev-apiserver-config.yaml)
-    - [kubeapps-local-dev-auth-proxy-values.yaml](../user/manifests/kubeapps-local-dev-auth-proxy-values.yaml)
-    - [kubeapps-local-dev-dex-values.yaml](../user/manifests/kubeapps-local-dev-dex-values.yaml)
+    - [script/makefiles/deploy-dev.mk](../../../script/makefiles/deploy-dev.mk)
+    - [kubeapps-local-dev-additional-apiserver-config.yaml](../../howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
+    - [kubeapps-local-dev-additional-kind-cluster.yaml](../../howto/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
+    - [kubeapps-local-dev-apiserver-config.yaml](../../howto/manifests/kubeapps-local-dev-apiserver-config.yaml)
+    - [kubeapps-local-dev-auth-proxy-values.yaml](../../howto/manifests/kubeapps-local-dev-auth-proxy-values.yaml)
+    - [kubeapps-local-dev-dex-values.yaml](../../howto/manifests/kubeapps-local-dev-dex-values.yaml)
 
 ### Commands
 

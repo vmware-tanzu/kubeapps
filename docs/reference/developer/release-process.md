@@ -11,15 +11,15 @@ It consists of four main stages: update the development images, update the CI, u
 
 For building the [development container images](https://hub.docker.com/u/kubeapps), a number of base images are used in the build stage Specifically:
 
-- The [dashboard/Dockerfile](../../dashboard/Dockerfile) uses:
+- The [dashboard/Dockerfile](../../../dashboard/Dockerfile) uses:
   - [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) for building the static files for production.
   - [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags) for serving the HTML and JS files as a simple web server.
 - Those services written in Golang use the same image for building the binary, but then a [scratch](https://hub.docker.com/_/scratch) image is used for actually running it. These Dockerfiles are:
-  - [apprepository-controller/Dockerfile](../../cmd/apprepository-controller/Dockerfile).
-  - [asset-syncer/Dockerfile](../../cmd/asset-syncer/Dockerfile).
-  - [assetsvc/Dockerfile](../../cmd/assetsvc/Dockerfile).
-  - [kubeops/Dockerfile](../../cmd/kubeops/Dockerfile).
-- The [pinniped-proxy/Dockerfile](../../cmd/pinniped-proxy/Dockerfile) uses:
+  - [apprepository-controller/Dockerfile](../../../cmd/apprepository-controller/Dockerfile).
+  - [asset-syncer/Dockerfile](../../../cmd/asset-syncer/Dockerfile).
+  - [assetsvc/Dockerfile](../../../cmd/assetsvc/Dockerfile).
+  - [kubeops/Dockerfile](../../../cmd/kubeops/Dockerfile).
+- The [pinniped-proxy/Dockerfile](../../../cmd/pinniped-proxy/Dockerfile) uses:
   - [\_/rust](https://hub.docker.com/_/rust) for building the binary.
   - [bitnami/minideb:buster](https://hub.docker.com/r/bitnami/minideb) for running it.
 
@@ -30,21 +30,21 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
 ### 0.2 - CI configuration and images
 
 In order to be in sync with the container images while running the different CI jobs, it is necessary to also update the CI image versions.
-Find further information in the [CI configuration](./ci.md) and the [e2e tests documentation](./end-to-end-tests.md).
+Find further information in the [CI configuration](../testing/ci.md) and the [e2e tests documentation](../testing/end-to-end-tests.md).
 
 #### 0.2.1 - CI configuration
 
-In the [CircleCI configuration](../../.circleci/config.yml) we have an initial declaration of the variables used along with the file.
+In the [CircleCI configuration](../../../.circleci/config.yml) we have an initial declaration of the variables used along with the file.
 The versions used there _must_ match the ones used for building the container images. Consequently, these variables _must_ be changed accordingly:
 
-- `GOLANG_VERSION` _must_ match the versions used by our services written in Golang, for instance, [kubeops](../../cmd/kubeops/Dockerfile).
-- `NODE_VERSION` _must_ match the **major** version used by the [dashboard](../../dashboard/Dockerfile).
-- `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](../../dashboard/Dockerfile).
+- `GOLANG_VERSION` _must_ match the versions used by our services written in Golang, for instance, [kubeops](../../../cmd/kubeops/Dockerfile).
+- `NODE_VERSION` _must_ match the **major** version used by the [dashboard](../../../dashboard/Dockerfile).
+- `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](../../../dashboard/Dockerfile).
 - `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml).
 
 Besides, the `GKE_STABLE_VERSION_XX` and the `GKE_REGULAR_VERSION_XX` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 
-> **NOTE**: at least one of those `GKE_STABLE_VERSION_XX` or `GKE_REGULAR_VERSION_XX` versions _must_ match the Kubernetes-related dependencies in [Go](../../go.mod) and [Rust](../../cmd/pinniped-proxy/Cargo.toml).
+> **NOTE**: at least one of those `GKE_STABLE_VERSION_XX` or `GKE_REGULAR_VERSION_XX` versions _must_ match the Kubernetes-related dependencies in [Go](../../../go.mod) and [Rust](../../../cmd/pinniped-proxy/Cargo.toml).
 
 > As part of this release process, these variables _must_ be updated accordingly. Other variable changes _should_ be tracked in a separate PR.
 
@@ -52,18 +52,18 @@ Besides, the `GKE_STABLE_VERSION_XX` and the `GKE_REGULAR_VERSION_XX` might have
 
 We use a separate integration image for running the e2e tests consisting of a simple Node image with a set of dependencies. Therefore, upgrading it includes:
 
-- The [integration dependencies](../../dashboard/package.json) can be updated by running:
+- The [integration dependencies](../../../dashboard/package.json) can be updated by running:
 
 ```bash
 cd integration
 yarn upgrade
 ```
 
-- The [integration/Dockerfile](../../integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
+- The [integration/Dockerfile](../../../integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
 
 > As part of this release process, this Node image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR. Analogously, its dependencies _may_ also be updated, but in case of a major change, it _should_ be tracked in a separate PR.
 
-> **Note**: this image is not being built automatically. Consequently, a [manual build process](./end-to-end-tests.md#building-the-kubeappsintegration-tests-image) _must_ be triggered if you happen to upgrade the integration image or its dependencies.
+> **Note**: this image is not being built automatically. Consequently, a [manual build process](../testing/end-to-end-tests.md#building-the-kubeappsintegration-tests-image) _must_ be triggered if you happen to upgrade the integration image or its dependencies.
 
 ### 0.3 - Development chart
 
@@ -71,7 +71,7 @@ Even though the official [Bitnami chart](https://github.com/bitnami/charts/tree/
 
 #### 0.3.1 - Chart images
 
-Currently, the [values.yaml](../../chart/kubeapps/values.yaml) uses the following container images:
+Currently, the [values.yaml](../../../chart/kubeapps/values.yaml) uses the following container images:
 
 - [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags)
 - [bitnami/oauth2-proxy](https://hub.docker.com/r/bitnami/oauth2-proxy/tags)
@@ -80,7 +80,7 @@ Currently, the [values.yaml](../../chart/kubeapps/values.yaml) uses the followin
 
 #### 0.3.2 - Chart dependencies
 
-The chart [dependencies](../../chart/kubeapps/Chart.yaml) _must_ be checked to ensure the version includes the latest dependent charts.
+The chart [dependencies](../../../chart/kubeapps/Chart.yaml) _must_ be checked to ensure the version includes the latest dependent charts.
 
 - Check if the latest versions are already included by running:
 
@@ -122,11 +122,11 @@ npx prettier --write  ../../dashboard/src/
 
 ### 0.5 - Upgrading the code dependencies
 
-Currently, we have three types of dependencies: the [dashboard dependencies](../../dashboard/package.json), the [golang dependencies](../../go.mod), and the [rust dependencies](../../cmd/pinniped-proxy/Cargo.toml). They _must_ be upgraded to the latest minor/patch version to get the latest bug and security fixes.
+Currently, we have three types of dependencies: the [dashboard dependencies](../../../dashboard/package.json), the [golang dependencies](../../../go.mod), and the [rust dependencies](../../../cmd/pinniped-proxy/Cargo.toml). They _must_ be upgraded to the latest minor/patch version to get the latest bug and security fixes.
 
 #### Dashboard dependencies
 
-Upgrade the [dashboard dependencies](../../dashboard/package.json) by running:
+Upgrade the [dashboard dependencies](../../../dashboard/package.json) by running:
 
 ```bash
 cd dashboard
@@ -135,7 +135,7 @@ yarn upgrade
 
 #### Golang dependencies
 
-Check the outdated [golang dependencies](../../go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
+Check the outdated [golang dependencies](../../../go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
 
 ```bash
 go mod tidy
@@ -152,7 +152,7 @@ go get -u ./...
 
 #### Rust dependencies
 
-Upgrade the [rust dependencies](../../cmd/pinniped-proxy/Cargo.toml) by running:
+Upgrade the [rust dependencies](../../../cmd/pinniped-proxy/Cargo.toml) by running:
 
 ```bash
 cd cmd/pinniped-proxy/
@@ -220,9 +220,9 @@ git push origin ${VERSION_NAME} # replace `origin` by your remote name
 > export VERSION_NAME="v$(semver bump <major|minor|patch> $(git fetch --tags && git describe --tags $(git rev-list --tags --max-count=1)))"
 > ```
 
-A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](./ci.md). An example of the triggered workflow is depicted below:
+A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](../testing/ci.md). An example of the triggered workflow is depicted below:
 
-![CircleCI workflow after pushing a new tag](../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
+![CircleCI workflow after pushing a new tag](../../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
 
 > When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Bitnami Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
 > Please note that this workflow is run outside the control of the Kubeapps release process
@@ -239,7 +239,7 @@ Then, save the draft and **do not publish it yet** and get these notes reviewed 
 
 Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
 
-To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](./ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
+To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](../testing/ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
 Once the PR has been created, have a look at it (eg. remove any development changes that should not be released) and wait for someone from the Bitnami team to review and accept it.
 
 > Some issues can arise here, so please check the app versions are being properly updated at once and ensure you have the latest changes in the PR branch. Note that the [bitnami-bot](https://github.com/bitnami-bot) usually performs some automated commits to the main branch that might collide with the changes in our PR. In particular, it will release a new version of the chart with the updated images.
