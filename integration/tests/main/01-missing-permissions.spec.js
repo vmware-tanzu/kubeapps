@@ -28,6 +28,8 @@ test.describe("Limited user simple deployments", () => {
     await releaseNameLocator.fill(utils.getRandomName("test-01-release"));
     await page.locator('cds-button:has-text("Deploy")').click();
 
+    // Assertions
+    await page.waitForSelector(".alert-items .alert-text");
     const errorLocator = page.locator(".alert-items .alert-text");
     await expect(errorLocator).toHaveCount(1);
     await page.waitForTimeout(5000);
@@ -69,6 +71,8 @@ test.describe("Limited user simple deployments", () => {
     await releaseNameLocator.fill(utils.getRandomName("test-01-release"));
     await page.locator('cds-button:has-text("Deploy")').click();
 
+    // Assertions
+    await page.waitForSelector(".alert-items .alert-text");
     const errorLocator = page.locator(".alert-items .alert-text");
     await expect(errorLocator).toHaveCount(1);
     await page.waitForTimeout(5000);

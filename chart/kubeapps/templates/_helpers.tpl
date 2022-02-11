@@ -223,16 +223,20 @@ kubeapps: ingress.tls
 */}}
 {{- define "kubeapps.validateValues.kubeappsapis.enabledPlugins" -}}
     {{- if has "flux" .Values.kubeappsapis.enabledPlugins }}
-    kubeapps: kubeappsapis.enabledPlugins 
+    kubeapps: kubeappsapis.enabledPlugins
         You enter "flux", perhaps you meant "fluxv2"?
     {{- end -}}
     {{- if has "kapp_controller" .Values.kubeappsapis.enabledPlugins }}
-    kubeapps: kubeappsapis.enabledPlugins 
+    kubeapps: kubeappsapis.enabledPlugins
         You enter "kapp_controller", perhaps you meant "kapp-controller"?
     {{- end -}}
     {{- if and (has "fluxv2" .Values.kubeappsapis.enabledPlugins) (not .Values.redis.enabled) }}
-    kubeapps: kubeappsapis.enabledPlugins 
+    kubeapps: kubeappsapis.enabledPlugins
         If you enable the "fluxv2" plugin, you must also set redis.enabled=true
+    {{- end -}}
+    {{- if and (has "fluxv2" .Values.kubeappsapis.enabledPlugins) (has "helm" .Values.kubeappsapis.enabledPlugins) }}
+    kubeapps: kubeappsapis.enabledPlugins
+        Please choose just one of the flux2 and helm plugins, since they both operate on Helm releases.
     {{- end -}}
 {{- end -}}
 
