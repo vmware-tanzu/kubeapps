@@ -7,6 +7,7 @@ import {
   Context,
   InstalledPackageDetail,
   InstalledPackageReference,
+  InstalledPackageStatus,
   InstalledPackageSummary,
   ReconciliationOptions,
   ResourceRef,
@@ -73,6 +74,15 @@ export const receiveRollbackInstalledPackage = createAction(
   "RECEIVE_ROLLBACK_INSTALLED_PACKAGE_CONFIRMATION",
 );
 
+export const requestInstalledPackageStatus = createAction("REQUEST_INSTALLED_PACKAGE_STATUS");
+
+export const receiveInstalledPackageStatus = createAction(
+  "RECEIVE_INSTALLED_PACKAGE_STATUS",
+  resolve => {
+    return (status: InstalledPackageStatus) => resolve(status);
+  },
+);
+
 export const errorInstalledPackage = createAction("ERROR_INSTALLED_PACKAGE", resolve => {
   return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError) =>
     resolve(err);
@@ -89,6 +99,8 @@ const allActions = [
   requestInstalledPackageList,
   requestInstalledPackage,
   receiveInstalledPackageList,
+  requestInstalledPackageStatus,
+  receiveInstalledPackageStatus,
   requestInstalledPkgResourceRefs,
   receiveInstalledPkgResourceRefs,
   requestDeleteInstalledPackage,
@@ -139,6 +151,23 @@ export function getInstalledPackage(
       dispatch(selectInstalledPackage(installedPackageDetail!, availablePackageDetail));
     } catch (e: any) {
       dispatch(errorInstalledPackage(new FetchError("Unable to get installed package", [e])));
+    }
+  };
+}
+
+export function getInstalledPkgStatus(
+  installedPackageRef?: InstalledPackageReference,
+): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
+  return async dispatch => {
+    dispatch(requestInstalledPackageStatus());
+    try {
+      // Get the details of an installed package for the status.
+      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
+        installedPackageRef,
+      );
+      dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
+    } catch (e: any) {
+      dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
     }
   };
 }

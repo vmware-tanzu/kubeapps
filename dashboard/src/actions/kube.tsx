@@ -11,6 +11,8 @@ import {
   InstalledPackageReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+import actions from "actions";
+import { debounce } from "lodash";
 
 const { createAction } = deprecated;
 
@@ -89,6 +91,17 @@ export function getResources(
   refs: APIResourceRef[],
   watch: boolean,
 ): ThunkAction<void, IStoreState, null, KubeAction> {
+  // After resources are processed, we want to refresh the status of the
+  // installed package (since other UX components rely on the status), but
+  // we don't need to do this after every resource is processed, rather doing
+  // it once after a bunch of resources have been processed is enough.
+  // To do this, we use the lodash debounce function so that the status is refreshed
+  // 2s after the last resource is processed.
+  const dispatchGetInstalledPkgStatus = (
+    dispatch: ThunkDispatch<IStoreState, null, KubeAction>,
+    pkg: InstalledPackageReference,
+  ) => dispatch(actions.installedpackages.getInstalledPkgStatus(pkg));
+  const debouncedGetInstalledPkgStatus = debounce(dispatchGetInstalledPkgStatus, 2000);
   return dispatch => {
     dispatch(
       requestResources(
@@ -97,6 +110,7 @@ export function getResources(
         watch,
         (r: GetResourcesResponse) => {
           processGetResourcesResponse(r, dispatch);
+          debouncedGetInstalledPkgStatus(dispatch, pkg);
         },
         (e: any) => {
           dispatch(receiveResourcesError(e));
