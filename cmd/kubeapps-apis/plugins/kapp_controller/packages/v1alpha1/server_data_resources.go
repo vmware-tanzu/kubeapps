@@ -6,11 +6,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
+	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -395,8 +400,24 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 
 // inspectKappK8sResources returns the list of k8s resources matching the given listOptions
 func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
-	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.31.0/pkg/deploy/kapp.go#L151
+	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
 	appName := fmt.Sprintf("%s-ctrl", packageId)
+
+	_, dynClient, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+	}
+
+	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
+	resource := dynClient.Resource(gvr).Namespace(namespace)
+
+	// In order to be able to fetch the resources created by the kapp-controller, we need to fetch a ConfigMap
+	// that contains the label (the application id) used for query the k8s resources.
+	// We actively wait for this ConfigMap to be present in the cluster before returning the list of resources
+	err = k8sutils.WaitForResource(ctx, resource, appName, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "timeout exceeded (%v s) waiting for resource to be installed: '%v'", s.pluginConfig.timeoutSeconds, err)
+	}
 
 	refs := []*corev1.ResourceRef{}
 
@@ -428,7 +449,7 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 	}
 
 	// List the k8s resources that match the label selector
-	resources, err := resourcesClient.List(labelSelector, nil)
+	resources, err := resourcesClient.List(labelSelector, nil, ctlres.IdentifiedResourcesListOpts{})
 	if err != nil {
 		return nil, err
 	}

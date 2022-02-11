@@ -8,13 +8,18 @@ import (
 	"strings"
 	"time"
 
-	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
-
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	kappctrlinstalled "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
+	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
+	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
@@ -91,7 +96,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 	readme := buildReadme(pkgMetadata, foundPkgSemver)
 
 	// build default values
-	defaultValues, err := defaultValuesFromSchema(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw, true)
+	defaultValues, err := pkgutils.DefaultValuesFromSchema(foundPkgSemver.pkg.Spec.ValuesSchema.OpenAPIv3.Raw, true)
 	if err != nil {
 		log.Warningf("Failed to parse default values from schema: %v", err)
 		defaultValues = "# There is an error while parsing the schema."
@@ -302,24 +307,35 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			// TODO(agamez): think about name collisions
-			Name:      fmt.Sprintf("%s-values", installedPackageName),
+			Name:      fmt.Sprintf(kappctrlinstalled.SecretName, installedPackageName, targetNamespace),
 			Namespace: targetNamespace,
 		},
 		Data: map[string][]byte{
-			// TODO(agamez): check the actual value for the key.
-			// Assuming "values.yaml" perhaps is not always true.
-			// Perhaos this info is in the "package" object?
+			// Using "values.yaml" as per:
+			// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L32
 			"values.yaml": []byte(values),
 		},
 		Type: "Opaque",
 	}, nil
 }
 
-func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions) (*packagingv1alpha1.PackageInstall, error) {
-	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.defaultUpgradePolicy)
+func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions, secret *k8scorev1.Secret) (*packagingv1alpha1.PackageInstall, error) {
+	// Calculate the constraints and prerelease fields
+	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.pluginConfig.defaultUpgradePolicy)
 	if err != nil {
 		return nil, err
+	}
+	prereleases := prereleasesVersionSelection(s.pluginConfig.defaultPrereleasesVersionSelection)
+
+	versionSelection := &vendirversions.VersionSelectionSemver{
+		Constraints: versionConstraints,
+		Prereleases: prereleases,
+	}
+
+	// Ensure the selected version can be, actually installed to let the user know before installing
+	elegibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
+	if elegibleVersion == "" || err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not elegible to be installed: %v", pkgVersion, err)
 	}
 
 	pkgInstall := &packagingv1alpha1.PackageInstall{
@@ -328,8 +344,9 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installedPackageName,
-			Namespace: targetNamespace,
+			Name:        installedPackageName,
+			Namespace:   targetNamespace,
+			Annotations: map[string]string{},
 		},
 		Spec: packagingv1alpha1.PackageInstallSpec{
 			// This is the Carvel's way of supporting deployments across clusters
@@ -340,24 +357,17 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			// 	Namespace:           targetNamespace,
 			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},
 			// },
-			Values: []packagingv1alpha1.PackageInstallValues{
-				{
-					SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
-						Name: fmt.Sprintf("%s-values", installedPackageName),
-						Key:  "values.yaml",
-					},
-				},
-			},
 			PackageRef: &packagingv1alpha1.PackageRef{
-				RefName: packageRefName,
-				VersionSelection: &vendirversions.VersionSelectionSemver{
-					Constraints: versionConstraints,
-					// https://github.com/vmware-tanzu/carvel-kapp-controller/issues/116
-					// This is to allow prereleases to be also installed
-					Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
-				},
+				RefName:          packageRefName,
+				VersionSelection: versionSelection,
 			},
 		},
+	}
+
+	// Allow this PackageInstall to be downgraded
+	// https://carvel.dev/kapp-controller/docs/v0.32.0/package-consumer-concepts/#downgrading
+	if s.pluginConfig.defaultAllowDowngrades {
+		pkgInstall.ObjectMeta.Annotations[kappctrlpackageinstall.DowngradableAnnKey] = ""
 	}
 
 	if reconciliationOptions != nil {
@@ -369,6 +379,18 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 		pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
 		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
 	}
+
+	if secret != nil {
+		// Similar logic as in https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/create_or_update.go#L505
+		pkgInstall.Spec.Values = []packagingv1alpha1.PackageInstallValues{{
+			SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+				// The secret name should have the format: <name>-<namespace> as per:
+				// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+				Name: secret.Name,
+			},
+		}}
+	}
+
 	return pkgInstall, nil
 }
 

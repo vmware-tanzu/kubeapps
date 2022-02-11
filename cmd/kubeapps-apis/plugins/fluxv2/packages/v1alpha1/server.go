@@ -8,13 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
@@ -43,7 +44,7 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter       clientgetter.ClientGetterWithApiExtFunc
+	clientGetter       clientgetter.ClientGetterFunc
 	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
@@ -60,8 +61,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 		kubeappsCluster, pluginConfigPath)
 
 	repositoriesGvr := schema.GroupVersionResource{
-		Group:    fluxGroup,
-		Version:  fluxVersion,
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
 		Resource: fluxHelmRepositories,
 	}
 
@@ -84,9 +85,15 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			log.Infof("+fluxv2 using default config since pluginConfigPath is empty")
 		}
 
+		// register the GitOps Toolkit schema definitions
+		scheme := runtime.NewScheme()
+		_ = sourcev1.AddToScheme(scheme)
+		_ = helmv2.AddToScheme(scheme)
+
 		s := repoEventSink{
-			clientGetter: clientgetter.NewBackgroundClientGetter(),
-			chartCache:   chartCache,
+			clientGetter: clientgetter.NewBackgroundClientGetter(
+				configGetter, clientgetter.Options{Scheme: scheme}),
+			chartCache: chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 			Gvr:          repositoriesGvr,
@@ -96,39 +103,38 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			OnGetFunc:    s.onGetRepo,
 			OnDeleteFunc: s.onDeleteRepo,
 			OnResyncFunc: s.onResync,
+			NewObjFunc:   func() ctrlclient.Object { return &sourcev1.HelmRepository{} },
+			NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
+			ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
+				if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
+					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+					return nil
+				} else {
+					ret := make([]ctrlclient.Object, len(hl.Items))
+					for i, hr := range hl.Items {
+						ret[i] = hr.DeepCopy()
+					}
+					return ret
+				}
+			},
 		}
 		if repoCache, err := cache.NewNamespacedResourceWatcherCache(
 			"repoCache", repoCacheConfig, redisCli, stopCh); err != nil {
 			return nil, err
 		} else {
 			return &Server{
-				clientGetter:       clientgetter.NewClientGetterWithApiExt(configGetter, kubeappsCluster),
-				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(configGetter, kubeappsCluster),
-				repoCache:          repoCache,
-				chartCache:         chartCache,
-				kubeappsCluster:    kubeappsCluster,
-				versionsInSummary:  versionsInSummary,
-				timeoutSeconds:     timeoutSecs,
+				clientGetter: clientgetter.NewClientGetter(
+					configGetter, clientgetter.Options{Scheme: scheme}),
+				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(
+					configGetter, kubeappsCluster),
+				repoCache:         repoCache,
+				chartCache:        chartCache,
+				kubeappsCluster:   kubeappsCluster,
+				versionsInSummary: versionsInSummary,
+				timeoutSeconds:    timeoutSecs,
 			}, nil
 		}
 	}
-}
-
-// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context) (kubernetes.Interface, dynamic.Interface, apiext.Interface, error) {
-	if s.clientGetter == nil {
-		return nil, nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
-	}
-	typedClient, dynamicClient, apiExtClient, err := s.clientGetter(ctx)
-	if err != nil {
-		if status.Code(err) == codes.Unknown {
-			return nil, nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
-		} else {
-			// this could be codes.Unauthorized which we want to pass through
-			return nil, nil, nil, err
-		}
-	}
-	return typedClient, dynamicClient, apiExtClient, nil
 }
 
 // ===== general note on error handling ========
@@ -166,8 +172,8 @@ func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.G
 	}
 
 	responseRepos := []*v1alpha1.PackageRepository{}
-	for _, repoUnstructured := range repos.Items {
-		repo, err := packageRepositoryFromUnstructured(repoUnstructured.Object)
+	for _, repo := range repos {
+		repo, err := packageRepositoryFromFlux(repo)
 		if err != nil {
 			return nil, err
 		}
@@ -258,29 +264,29 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	repoN, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
 	// check specified repo exists and is in ready state
-	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
+	repoName := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoN}
 
 	// this verifies that the repo exists
-	repoUnstructured, err := s.getRepoInCluster(ctx, repo)
+	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
 		return nil, err
 	}
 
-	pkgDetail, err := s.availableChartDetail(ctx, repo, chartName, request.GetPkgVersion())
+	pkgDetail, err := s.availableChartDetail(ctx, repoName, chartName, request.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
 
 	// fix up a couple of fields that don't come from the chart tarball
-	repoUrl, found, err := unstructured.NestedString(repoUnstructured.Object, "spec", "url")
-	if err != nil || !found {
-		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repo)
+	repoUrl := repo.Spec.URL
+	if repoUrl == "" {
+		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repoName)
 	}
 	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
@@ -399,8 +405,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	name := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
-	pkgDetail, err := s.installedPackageDetail(ctx, name)
+	key := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
+	pkgDetail, err := s.installedPackageDetail(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +528,47 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	identifier := pkgRef.GetIdentifier()
 	log.Infof("+fluxv2 GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
 
-	return resourcerefs.GetInstalledPackageResourceRefs(ctx, request, s.actionConfigGetter)
+	key := types.NamespacedName{Namespace: pkgRef.Context.Namespace, Name: identifier}
+	rel, err := s.getReleaseInCluster(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	hrName := helmReleaseName(key, rel)
+	refs, err := resourcerefs.GetInstalledPackageResourceRefs(ctx, hrName, s.actionConfigGetter)
+	if err != nil {
+		return nil, err
+	} else {
+		return &corev1.GetInstalledPackageResourceRefsResponse{
+			Context: &corev1.Context{
+				Cluster: s.kubeappsCluster,
+				// TODO (gfichtenholt) it is not specifically called out in the spec why there is a
+				// need for a Context in the response and MORE imporantly what the value of Namespace
+				// field should be. In particular, there is use case when Flux Helm Release in
+				// installed in ns1 but specifies targetNamespace as test2. Should we:
+				//  (a) return ns1 (the namespace where CRs are installed) OR
+				//  (b) return ns2 (the namespace where flux installs the resources specified by the
+				//    release).
+				// For now lets use (a)
+				Namespace: key.Namespace,
+			},
+			ResourceRefs: refs,
+		}, nil
+	}
+}
+
+// convenience func mostly used by unit tests
+func (s *Server) newBackgroundClientGetter() clientgetter.BackgroundClientGetterFunc {
+	return func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
+	}
+}
+
+func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Client, error) {
+	client, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+	if err != nil {
+		return nil, err
+	}
+	return ctrlclient.NewNamespacedClient(client, namespace), nil
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.

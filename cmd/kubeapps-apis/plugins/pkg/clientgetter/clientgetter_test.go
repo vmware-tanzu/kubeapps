@@ -10,25 +10,30 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
+	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestGetClient(t *testing.T) {
-	testClientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-		return typfake.NewSimpleClientset(), dynfake.NewSimpleDynamicClientWithCustomListKinds(
-			runtime.NewScheme(),
-			map[schema.GroupVersionResource]string{
-				{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
-			},
-		), nil
+	testClientGetter := func(context.Context, string) (ClientInterfaces, error) {
+		return &clientInterfacesType{
+			typfake.NewSimpleClientset(),
+			dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				runtime.NewScheme(),
+				map[schema.GroupVersionResource]string{
+					{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
+				},
+			),
+			apiextfake.NewSimpleClientset(),
+			ctrlfake.NewClientBuilder().Build(),
+		}, nil
 	}
-	badClientGetter := func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-		return nil, nil, fmt.Errorf("Bang!")
+	badClientGetter := func(context.Context, string) (ClientInterfaces, error) {
+		return &clientInterfacesType{nil, nil, nil, nil}, fmt.Errorf("Bang!")
 	}
 
 	testCases := []struct {
@@ -50,18 +55,39 @@ func TestGetClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			typedClient, dynamicClient, err := tc.clientGetter(context.Background(), "")
+			ifcs, err := tc.clientGetter(context.Background(), "")
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
 			// If there is no error, the client should be a dynamic.Interface implementation.
 			if tc.statusCode == codes.OK {
-				if dynamicClient == nil {
+				dynamicClient, err := ifcs.Dynamic()
+				if err != nil {
+					t.Fatal(err)
+				} else if dynamicClient == nil {
 					t.Errorf("got: nil, want: dynamic.Interface")
 				}
-				if typedClient == nil {
+
+				typedClient, err := ifcs.Typed()
+				if err != nil {
+					t.Fatal(err)
+				} else if typedClient == nil {
 					t.Errorf("got: nil, want: kubernetes.Interface")
+				}
+
+				apiExClient, err := ifcs.ApiExt()
+				if err != nil {
+					t.Fatal(err)
+				} else if apiExClient == nil {
+					t.Errorf("got: nil, want: clientset.Interface")
+				}
+
+				ctrlClient, err := ifcs.ControllerRuntime()
+				if err != nil {
+					t.Fatal(err)
+				} else if ctrlClient == nil {
+					t.Errorf("got: nil, want: client.WithWatch")
 				}
 			}
 		})

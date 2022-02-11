@@ -4,14 +4,14 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
+	"flag"
 	"strings"
 
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
 	corev1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
@@ -49,10 +49,17 @@ func Execute() {
 }
 
 func init() {
+	log.InitFlags(nil)
 	cobra.OnInitialize(initConfig)
 	rootCmd = newRootCmd()
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
+	//set initial value of verbosity
+	err := flag.Set("v", "3")
+	if err != nil {
+		log.Errorf("Error parsing verbosity: %v", viper.ConfigFileUsed())
+	}
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
 	serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
 	serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
@@ -89,7 +96,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
+		home, err := homedir.Dir()
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".kubeops" (without extension).
@@ -102,7 +109,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		log.Errorf("Using config file: %v", viper.ConfigFileUsed())
 	}
 }
 
@@ -125,7 +132,7 @@ func parseLabelsAnnotations(textArr []string) map[string]string {
 		if text != "" {
 			parts := strings.Split(text, "=")
 			if len(parts) != 2 {
-				log.Fatalf("Cannot parse '%s'", text)
+				log.Errorf("Cannot parse '%s'", text)
 			}
 			textMap[parts[0]] = parts[1]
 		}

@@ -19,7 +19,7 @@ import {
   NotFoundError,
 } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
-import { createErrorPackage } from "./packages";
+import { createErrorPackage } from "./availablepackages";
 
 const { createAction } = deprecated;
 

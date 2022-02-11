@@ -32,8 +32,8 @@ const defaultProps = {
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
 beforeEach(() => {
-  actions.apps = {
-    ...actions.apps,
+  actions.installedpackages = {
+    ...actions.installedpackages,
     rollbackInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
@@ -47,7 +47,7 @@ afterEach(() => {
 
 it("rolls back an application", async () => {
   const rollbackInstalledPackage = jest.fn();
-  actions.apps.rollbackInstalledPackage = rollbackInstalledPackage;
+  actions.installedpackages.rollbackInstalledPackage = rollbackInstalledPackage;
   const wrapper = mountWrapper(defaultStore, <RollbackButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();

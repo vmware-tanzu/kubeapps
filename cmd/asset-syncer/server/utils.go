@@ -24,7 +24,6 @@ import (
 	semver "github.com/Masterminds/semver/v3"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/disintegration/imaging"
-	"github.com/ghodss/yaml"
 	"github.com/itchyny/gojq"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -32,11 +31,12 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"github.com/kubeapps/kubeapps/pkg/tarutil"
-	log "github.com/sirupsen/logrus"
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
 	"helm.sh/helm/v3/pkg/chart"
-	h3chart "helm.sh/helm/v3/pkg/chart"
+	helmregistry "helm.sh/helm/v3/pkg/registry"
+	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -344,7 +344,7 @@ func (o *ociAPICli) TagList(appName string, userAgent string) (*TagList, error) 
 func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 	repoURL := *o.url
 	repoURL.Path = path.Join("v2", repoURL.Path, appName, "manifests", tag)
-	log.Debugf("getting tag %s", repoURL.String())
+	log.V(4).Infof("getting tag %s", repoURL.String())
 	manifestData, err := doReq(
 		repoURL.String(),
 		o.netClient,
@@ -360,7 +360,7 @@ func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return manifest.Config.MediaType == helm.HelmChartConfigMediaType, nil
+	return manifest.Config.MediaType == helmregistry.ConfigMediaType, nil
 }
 
 func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
@@ -473,7 +473,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 	if err != nil {
 		return nil, err
 	}
-	chartMetadata := h3chart.Metadata{}
+	chartMetadata := chart.Metadata{}
 	err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
 	if err != nil {
 		return nil, err
@@ -519,7 +519,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 
 func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullChartJob, resultChan chan pullChartResult) {
 	for j := range chartJobs {
-		log.WithFields(log.Fields{"name": j.AppName, "tag": j.Tag}).Debug("pulling chart")
+		log.V(4).Infof("pulling chart, name=%s, tag=%s", j.AppName, j.Tag)
 		chart, err := pullAndExtract(repoURL, j.AppName, j.Tag, r.puller, r)
 		resultChan <- pullChartResult{chart, err}
 	}
@@ -616,7 +616,7 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 		close(chartResults)
 	}()
 
-	log.Debugf("starting %d workers", numWorkers)
+	log.V(4).Infof("starting %d workers", numWorkers)
 	go func() {
 		for _, appName := range r.repositories {
 			if fetchLatestOnly {
@@ -634,7 +634,7 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	for res := range chartResults {
 		if res.Error == nil {
 			ch := res.Chart
-			log.Debugf("received chart %s from channel", ch.ID)
+			log.V(4).Infof("received chart %s from channel", ch.ID)
 			if r, ok := result[ch.ID]; ok {
 				// Chart already exists, append version
 				r.ChartVersions = append(result[ch.ID].ChartVersions, ch.ChartVersions...)
@@ -676,7 +676,7 @@ func parseFilters(filters string) (*apprepov1alpha1.FilterRuleSpec, error) {
 func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient httpclient.Client, userAgent string) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
-		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
+		log.Errorf("failed to parse URL, url=%s: %v", repoURL, err)
 		return nil, err
 	}
 
@@ -701,7 +701,7 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *a
 func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, ociRepos []string, netClient *http.Client) (Repo, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
-		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
+		log.Errorf("failed to parse URL, url=%s: %v", repoURL, err)
 		return nil, err
 	}
 	headers := http.Header{}
@@ -722,7 +722,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 func fetchRepoIndex(url, authHeader string, cli httpclient.Client, userAgent string) ([]byte, error) {
 	indexURL, err := parseRepoURL(url)
 	if err != nil {
-		log.WithFields(log.Fields{"url": url}).WithError(err).Error("failed to parse URL")
+		log.Errorf("failed to parse URL, url=%s: %v", url, err)
 		return nil, err
 	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
@@ -752,7 +752,7 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo, userAgent st
 	chartFilesJobs := make(chan importChartFilesJob, numWorkers)
 	var wg sync.WaitGroup
 
-	log.Debugf("starting %d workers", numWorkers)
+	log.V(4).Infof("starting %d workers", numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go f.importWorker(&wg, iconJobs, chartFilesJobs, repo, userAgent, passCredentials)
@@ -792,22 +792,22 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo, userAgent st
 func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Chart, chartFiles <-chan importChartFilesJob, repo Repo, userAgent string, passCredentials bool) {
 	defer wg.Done()
 	for c := range icons {
-		log.WithFields(log.Fields{"name": c.Name}).Debug("importing icon")
+		log.V(4).Infof("importing icon, name=%s", c.Name)
 		if err := f.fetchAndImportIcon(c, repo.Repo(), userAgent, passCredentials); err != nil {
-			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to import icon")
+			log.Errorf("failed to import icon, name=%s: %v", c.Name, err)
 		}
 	}
 	for j := range chartFiles {
-		log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
+		log.V(4).Infof("importing readme and values, name=%s, version=%s", j.Name, j.ChartVersion.Version)
 		if err := f.fetchAndImportFiles(j.Name, repo, j.ChartVersion, userAgent, passCredentials); err != nil {
-			log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
+			log.Errorf("failed to import files, name=%s, version=%s: %v", j.Name, j.ChartVersion.Version, err)
 		}
 	}
 }
 
 func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal, userAgent string, passCredentials bool) error {
 	if c.Icon == "" {
-		log.WithFields(log.Fields{"name": c.Name}).Info("icon not found")
+		log.Info("icon not found, name=%s", c.Name)
 		return nil
 	}
 
@@ -831,7 +831,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 		// if the icon is an SVG, it requires special processing
 		icon, err := oksvg.ReadIconStream(reader)
 		if err != nil {
-			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to decode icon")
+			log.Errorf("failed to decode icon, name=%s: %v", c.Name, err)
 			return err
 		}
 		w, h := int(icon.ViewBox.W), int(icon.ViewBox.H)
@@ -842,7 +842,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	} else {
 		img, err = imaging.Decode(reader)
 		if err != nil {
-			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to decode icon")
+			log.Errorf("failed to decode icon, name=%s: %v", c.Name, err)
 			return err
 		}
 	}
@@ -852,7 +852,7 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	var buf bytes.Buffer
 	err = imaging.Encode(&buf, resizedImg, imaging.PNG)
 	if err != nil {
-		log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to encode icon")
+		log.Errorf("failed to encode icon, name=%s: %v", c.Name, err)
 		return err
 	}
 	b := buf.Bytes()
@@ -868,10 +868,10 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 
 	// Check if we already have indexed files for this chart version and digest
 	if f.manager.filesExist(models.Repo{Namespace: r.Namespace, Name: r.Name}, chartFilesID, cv.Digest) {
-		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Debug("skipping existing files")
+		log.V(4).Infof("skipping existing files, name: %s, version: %s", name, cv.Version)
 		return nil
 	}
-	log.WithFields(log.Fields{"name": name, "version": cv.Version}).Debug("fetching files")
+	log.V(4).Infof("fetching files, name=%s, version=%s", name, cv.Version)
 
 	files, err := repo.FetchFiles(name, cv, userAgent, passCredentials)
 	if err != nil {
@@ -882,17 +882,17 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 	if v, ok := files[models.ReadmeKey]; ok {
 		chartFiles.Readme = v
 	} else {
-		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("README.md not found")
+		log.Info("README.md not found, name=%s, version=%s", name, cv.Version)
 	}
 	if v, ok := files[models.ValuesKey]; ok {
 		chartFiles.Values = v
 	} else {
-		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.yaml not found")
+		log.Info("values.yaml not found, name=%s, version=%s", name, cv.Version)
 	}
 	if v, ok := files[models.SchemaKey]; ok {
 		chartFiles.Schema = v
 	} else {
-		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.schema.json not found")
+		log.Info("values.schema.json not found, name=%s, version=%s", name, cv.Version)
 	}
 
 	// inserts the chart files if not already indexed, or updates the existing

@@ -7,6 +7,7 @@ import {
   Context,
   InstalledPackageDetail,
   InstalledPackageReference,
+  InstalledPackageStatus,
   InstalledPackageSummary,
   ReconciliationOptions,
   ResourceRef,
@@ -26,18 +27,30 @@ import {
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
-import { App } from "../shared/App";
+import { InstalledPackage } from "../shared/InstalledPackage";
 import { validate } from "../shared/schema";
 
 const { createAction } = deprecated;
 
-export const requestApps = createAction("REQUEST_APPS");
+export const requestInstalledPackage = createAction("REQUEST_INSTALLED_PACKAGE");
 
-export const listApps = createAction("REQUEST_APP_LIST");
+export const requestInstalledPkgResourceRefs = createAction("REQUEST_INSTALLED_PKG_RESOURCE_REFS");
 
-export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
-  return (apps: InstalledPackageSummary[]) => resolve(apps);
-});
+export const receiveInstalledPkgResourceRefs = createAction(
+  "RECEIVE_INSTALLED_PKG_RESOURCE_REFS",
+  resolve => {
+    return (refs: ResourceRef[]) => resolve(refs);
+  },
+);
+
+export const requestInstalledPackageList = createAction("REQUEST_INSTALLED_PACKAGE_LIST");
+
+export const receiveInstalledPackageList = createAction(
+  "RECEIVE_INSTALLED_PACKAGE_LIST",
+  resolve => {
+    return (pkgs: InstalledPackageSummary[]) => resolve(pkgs);
+  },
+);
 
 export const requestDeleteInstalledPackage = createAction("REQUEST_DELETE_INSTALLED_PACKAGE");
 
@@ -61,25 +74,35 @@ export const receiveRollbackInstalledPackage = createAction(
   "RECEIVE_ROLLBACK_INSTALLED_PACKAGE_CONFIRMATION",
 );
 
-export const errorApp = createAction("ERROR_APP", resolve => {
+export const requestInstalledPackageStatus = createAction("REQUEST_INSTALLED_PACKAGE_STATUS");
+
+export const receiveInstalledPackageStatus = createAction(
+  "RECEIVE_INSTALLED_PACKAGE_STATUS",
+  resolve => {
+    return (status: InstalledPackageStatus) => resolve(status);
+  },
+);
+
+export const errorInstalledPackage = createAction("ERROR_INSTALLED_PACKAGE", resolve => {
   return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError) =>
     resolve(err);
 });
 
-export const clearErrorApp = createAction("CLEAR_ERROR_APP");
+export const clearErrorInstalledPackage = createAction("CLEAR_ERROR_INSTALLED_PACKAGE");
 
-export const selectApp = createAction("SELECT_APP", resolve => {
-  return (
-    app: InstalledPackageDetail,
-    resourceRefs: ResourceRef[],
-    details?: AvailablePackageDetail,
-  ) => resolve({ app, resourceRefs, details });
+export const selectInstalledPackage = createAction("SELECT_INSTALLED_PACKAGE", resolve => {
+  return (pkg: InstalledPackageDetail, details?: AvailablePackageDetail) =>
+    resolve({ pkg, details });
 });
 
 const allActions = [
-  listApps,
-  requestApps,
-  receiveAppList,
+  requestInstalledPackageList,
+  requestInstalledPackage,
+  receiveInstalledPackageList,
+  requestInstalledPackageStatus,
+  receiveInstalledPackageStatus,
+  requestInstalledPkgResourceRefs,
+  receiveInstalledPkgResourceRefs,
   requestDeleteInstalledPackage,
   receiveDeleteInstalledPackage,
   requestInstallPackage,
@@ -88,22 +111,23 @@ const allActions = [
   receiveUpdateInstalledPackage,
   requestRollbackInstalledPackage,
   receiveRollbackInstalledPackage,
-  errorApp,
-  clearErrorApp,
-  selectApp,
+  errorInstalledPackage,
+  clearErrorInstalledPackage,
+  selectInstalledPackage,
 ];
 
-export type AppsAction = ActionType<typeof allActions[number]>;
+export type InstalledPackagesAction = ActionType<typeof allActions[number]>;
 
-export function getApp(
+export function getInstalledPackage(
   installedPackageRef?: InstalledPackageReference,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
-    dispatch(requestApps());
+    dispatch(requestInstalledPackage());
     try {
       // Get the details of an installed package
-      const { installedPackageDetail } = await App.GetInstalledPackageDetail(installedPackageRef);
-      const { resourceRefs } = await App.GetInstalledPackageResourceRefs(installedPackageRef);
+      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
+        installedPackageRef,
+      );
 
       // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
@@ -117,58 +141,88 @@ export function getApp(
         availablePackageDetail = resp.availablePackageDetail;
       } catch (e: any) {
         dispatch(
-          errorApp(
+          errorInstalledPackage(
             new FetchWarning(
               "this package has missing information, some actions might not be available.",
             ),
           ),
         );
       }
-      dispatch(selectApp(installedPackageDetail!, resourceRefs, availablePackageDetail));
+      dispatch(selectInstalledPackage(installedPackageDetail!, availablePackageDetail));
     } catch (e: any) {
-      dispatch(errorApp(new FetchError(e.message)));
+      dispatch(errorInstalledPackage(new FetchError("Unable to get installed package", [e])));
+    }
+  };
+}
+
+export function getInstalledPkgStatus(
+  installedPackageRef?: InstalledPackageReference,
+): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
+  return async dispatch => {
+    dispatch(requestInstalledPackageStatus());
+    try {
+      // Get the details of an installed package for the status.
+      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
+        installedPackageRef,
+      );
+      dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
+    } catch (e: any) {
+      dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
+    }
+  };
+}
+
+export function getInstalledPkgResourceRefs(
+  installedPackageRef?: InstalledPackageReference,
+): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
+  return async dispatch => {
+    dispatch(requestInstalledPkgResourceRefs());
+
+    try {
+      const { resourceRefs } = await InstalledPackage.GetInstalledPackageResourceRefs(
+        installedPackageRef,
+      );
+      dispatch(receiveInstalledPkgResourceRefs(resourceRefs));
+    } catch (e: any) {
+      dispatch(
+        errorInstalledPackage(new FetchError("Unable to get installed package resources", [e])),
+      );
     }
   };
 }
 
 export function deleteInstalledPackage(
   installedPackageRef: InstalledPackageReference,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestDeleteInstalledPackage());
     try {
-      await App.DeleteInstalledPackage(installedPackageRef);
+      await InstalledPackage.DeleteInstalledPackage(installedPackageRef);
       dispatch(receiveDeleteInstalledPackage());
       return true;
     } catch (e: any) {
-      dispatch(errorApp(new DeleteError(e.message)));
+      dispatch(errorInstalledPackage(new DeleteError(e.message)));
       return false;
     }
   };
 }
 
-// fetchApps returns a list of apps for other actions to compose on top of it
-export function fetchApps(
+// fetchInstalledPackages returns a list of apps for other actions to compose on top of it
+export function fetchInstalledPackages(
   cluster: string,
   namespace?: string,
-): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<InstalledPackageSummary[]>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
-    dispatch(listApps());
+    dispatch(requestInstalledPackageList());
     let installedPackageSummaries: InstalledPackageSummary[];
     try {
-      const res = await App.GetInstalledPackageSummaries(cluster, namespace);
+      const res = await InstalledPackage.GetInstalledPackageSummaries(cluster, namespace);
       installedPackageSummaries = res?.installedPackageSummaries;
 
-      dispatch(receiveAppList(installedPackageSummaries));
+      dispatch(receiveInstalledPackageList(installedPackageSummaries));
       return installedPackageSummaries;
     } catch (e: any) {
-      dispatch(
-        errorApp(
-          e instanceof Error
-            ? new FetchError("Unable to list apps", [e])
-            : new FetchError("Unable to list apps: " + e.message),
-        ),
-      );
+      dispatch(errorInstalledPackage(new FetchError("Unable to list apps", [e])));
       return [];
     }
   };
@@ -182,7 +236,7 @@ export function installPackage(
   values?: string,
   schema?: JSONSchemaType<any>,
   reconciliationOptions?: ReconciliationOptions,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestInstallPackage());
     try {
@@ -201,7 +255,7 @@ export function installPackage(
         availablePackageDetail?.availablePackageRef &&
         availablePackageDetail?.version?.pkgVersion
       ) {
-        await App.CreateInstalledPackage(
+        await InstalledPackage.CreateInstalledPackage(
           { cluster: targetCluster, namespace: targetNamespace } as Context,
           releaseName,
           availablePackageDetail.availablePackageRef,
@@ -213,14 +267,14 @@ export function installPackage(
         return true;
       } else {
         dispatch(
-          errorApp(
+          errorInstalledPackage(
             new CreateError("This package does not contain enough information to be installed"),
           ),
         );
         return false;
       }
     } catch (e: any) {
-      dispatch(errorApp(new CreateError(e.message)));
+      dispatch(errorInstalledPackage(new CreateError(e.message)));
       return false;
     }
   };
@@ -231,7 +285,7 @@ export function updateInstalledPackage(
   availablePackageDetail: AvailablePackageDetail,
   values?: string,
   schema?: JSONSchemaType<any>,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     dispatch(requestUpdateInstalledPackage());
     try {
@@ -247,7 +301,7 @@ export function updateInstalledPackage(
         }
       }
       if (availablePackageDetail?.version?.pkgVersion) {
-        await App.UpdateInstalledPackage(
+        await InstalledPackage.UpdateInstalledPackage(
           installedPackageRef,
           { version: availablePackageDetail.version.pkgVersion } as VersionReference,
           values,
@@ -256,14 +310,14 @@ export function updateInstalledPackage(
         return true;
       } else {
         dispatch(
-          errorApp(
+          errorInstalledPackage(
             new UpgradeError("This package does not contain enough information to be installed"),
           ),
         );
         return false;
       }
     } catch (e: any) {
-      dispatch(errorApp(new UpgradeError(e.message)));
+      dispatch(errorInstalledPackage(new UpgradeError(e.message)));
       return false;
     }
   };
@@ -272,7 +326,7 @@ export function updateInstalledPackage(
 export function rollbackInstalledPackage(
   installedPackageRef: InstalledPackageReference,
   revision: number,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
     // rollbackInstalledPackage is currently only available for Helm packages
     if (
@@ -281,17 +335,17 @@ export function rollbackInstalledPackage(
     ) {
       dispatch(requestRollbackInstalledPackage());
       try {
-        await App.RollbackInstalledPackage(installedPackageRef, revision);
+        await InstalledPackage.RollbackInstalledPackage(installedPackageRef, revision);
         dispatch(receiveRollbackInstalledPackage());
-        dispatch(getApp(installedPackageRef));
+        dispatch(getInstalledPackage(installedPackageRef));
         return true;
       } catch (e: any) {
-        dispatch(errorApp(new RollbackError(e.message)));
+        dispatch(errorInstalledPackage(new RollbackError(e.message)));
         return false;
       }
     } else {
       dispatch(
-        errorApp(
+        errorInstalledPackage(
           new RollbackError(
             "This package cannot be rolled back; this operation is only available for Helm packages",
           ),
