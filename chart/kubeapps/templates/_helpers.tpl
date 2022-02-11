@@ -217,6 +217,34 @@ kubeapps: ingress.tls
 {{- end -}}
 {{- end -}}
 
+{{/*
+# Calculate the kubeappsapis enabledPlugins.
+*/}}
+{{- define "kubeapps.kubeappsapis.enabledPlugins" -}}
+    {{- if and .Values.plugins.flux.enabled .Values.plugins.helm.enabled }}
+    {{- fail "plugins: Please enable only one of the flux and helm plugins, since they both operate on Helm releases." }}
+    {{- end -}}
+    {{- $enabledPlugins := list }}
+    {{- $enabledPlugins = append $enabledPlugins "resources" }}
+    {{- range $plugin, $options := .Values.plugins }}
+      {{- if $options.enabled }}
+        {{- if eq $plugin "carvel" }}
+          {{- $enabledPlugins = append $enabledPlugins "kapp-controller" }}
+        {{- else if eq $plugin "flux" }}
+          {{- $enabledPlugins = append $enabledPlugins "fluxv2" }}
+        {{- else if eq $plugin "helm" }}
+          {{- $enabledPlugins = append $enabledPlugins "helm" }}
+        {{- else }}
+    kubeapps: plugins
+        Unsupported plugin: {{ $plugin }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- $enabledPlugins | toJson }}
+{{- end -}}
+{{/*
+TODO: update to include values from deprecated kubeappsapis.enabledPlugins
+*/}}
 
 {{/*
 # Validate values of common mistakes in kubeappsapis.enabledPlugins
@@ -229,10 +257,6 @@ kubeapps: ingress.tls
     {{- if has "kapp_controller" .Values.kubeappsapis.enabledPlugins }}
     kubeapps: kubeappsapis.enabledPlugins
         You enter "kapp_controller", perhaps you meant "kapp-controller"?
-    {{- end -}}
-    {{- if and (has "fluxv2" .Values.kubeappsapis.enabledPlugins) (not .Values.redis.enabled) }}
-    kubeapps: kubeappsapis.enabledPlugins
-        If you enable the "fluxv2" plugin, you must also set redis.enabled=true
     {{- end -}}
     {{- if and (has "fluxv2" .Values.kubeappsapis.enabledPlugins) (has "helm" .Values.kubeappsapis.enabledPlugins) }}
     kubeapps: kubeappsapis.enabledPlugins

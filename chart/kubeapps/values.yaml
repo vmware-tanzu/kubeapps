@@ -136,6 +136,23 @@ ingress:
   ##
   secrets: []
 
+## @section Kubeapps plugin options
+## Note: the helm and flux plugins are mutually exclusive, you can only
+## enable one or the other since they both operate on Helm release objects.
+plugins:
+  ## Default helm plugin
+  ## @param plugins.helm.enabled Enable the standard helm plugin.
+  helm:
+    enabled: true
+  ## Carvel plugin
+  ## @param plugins.carvel.enabled Enable the carvel plugin.
+  carvel:
+    enabled: false
+  ## Flux (v2) plugin
+  ## @param plugins.flux.enabled Enable the Flux plugin.
+  flux:
+    enabled: false
+
 ## @section Frontend parameters
 
 ## Frontend parameters
@@ -1610,15 +1627,9 @@ postgresql:
 ## @section kubeappsapis parameters
 kubeappsapis:
   ## @param kubeappsapis.enabledPlugins Enabled plugins for the Kubeapps-APIs service
-  ## e.g:
-  ## enabledPlugins:
-  ## - helm
-  ## - fluxv2
-  ## - kapp-controller
+  ## DEPRECATED: use the top-level `plugins` value instead.
   ##
   enabledPlugins:
-    - helm
-    - resources
   pluginConfig:
     core:
       packages:
@@ -1641,7 +1652,7 @@ kubeappsapis:
           ## @param kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultPrereleasesVersionSelection Default policy for allowing prereleases containing one of the identifiers
           ## ref: https://carvel.dev/kapp-controller/docs/latest/package-consumer-concepts/#prereleases
           ## e.g:
-          # defaultPrereleasesVersionSelection: 
+          # defaultPrereleasesVersionSelection:
           # - rc
           defaultPrereleasesVersionSelection: null
           ## @param kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultAllowDowngrades Default policy for allowing applications to be downgraded to previous versions
