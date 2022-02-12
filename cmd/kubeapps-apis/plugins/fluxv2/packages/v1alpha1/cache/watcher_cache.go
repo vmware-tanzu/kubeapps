@@ -105,14 +105,16 @@ type NamespacedResourceWatcherCacheConfig struct {
 	// corresponding entry. Note this maybe happen as a result of a newly created k8s object
 	// or a modified object for which there was no entry in the cache
 	// This allows the call site to return information about WHETHER OR NOT and WHAT is to be stored
-	// in the cache for a given k8s object (passed in as a TODO).
+	// in the cache for a given k8s object (passed in as a ctrlclient.Object).
+	// ref https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Object
 	// The call site may return []byte, but it doesn't have to be that.
 	// The list of all types actually supported by redis you can find in
 	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
 	OnAddFunc ValueAdderFunc
 	// 'OnModifyFunc' hook is called when an object for which there is a corresponding cache entry
 	// is modified. This allows the call site to return information about WHETHER OR NOT and WHAT
-	// is to be stored in the cache for a given k8s object (passed in as a TODO).
+	// in the cache for a given k8s object (passed in as a ctrlclient.Object).
+	// ref https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Object
 	// The call site may return []byte, but it doesn't have to be that.
 	// The list of all types actually supported by redis you can find in
 	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
@@ -127,7 +129,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	OnResyncFunc ResyncFunc
 
 	// These funcs are needed to manipulate API-specific objects, such as flux's
-	// sourcev1.HelmRepository in a generic fashion
+	// sourcev1.HelmRepository, in a generic fashion
 	NewObjFunc    NewObjectFunc
 	NewListFunc   NewObjectListFunc
 	ListItemsFunc GetListItemsFunc
@@ -163,6 +165,11 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		return nil, err
 	}
 
+	// this will launch a single worker that processes items on the work queue as they come in
+	// runWorker will loop until "something bad" happens.  The .Until() func will
+	// then rekick the worker after one second
+	go wait.Until(c.runWorker, time.Second, stopCh)
+
 	// let's do the initial sync and creating a new RetryWatcher here so
 	// bootstrap errors, if any, are flagged early synchronously and the
 	// caller does not end up with a partially initialized cache
@@ -174,13 +181,6 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 	if err != nil {
 		return nil, err
 	}
-
-	// this will launch a single worker that processes items on the work queue as they come in
-	// runWorker will loop until "something bad" happens.  The .Until will
-	// then rekick the worker after one second
-	// We should be able to launch multiple workers, and the workqueue will make sure that
-	// only a single worker works on an item with a given key.
-	go wait.Until(c.runWorker, time.Second, stopCh)
 
 	go c.watchLoop(watcher, stopCh)
 	return &c, nil
@@ -236,8 +236,8 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 	}
 
 	// ref https://go101.org/article/concurrent-synchronization-more.html
-	c.resyncCond.L.(*sync.RWMutex).RLock()
-	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
+	//c.resyncCond.L.(*sync.RWMutex).RLock()
+	//defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
 	// We must remember to call Done so the queue knows we have finished
 	// processing this item. We also must remember to call Forget if we
@@ -536,11 +536,11 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 			return status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
 		}
 	}
-	return c.onAddOrModify(true, obj)
+	return c.onAddOrModify(obj)
 }
 
-// this is effectively a cache SET operation
-func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, obj ctrlclient.Object) (err error) {
+// this is effectively a cache GET followed by SET operation
+func (c *NamespacedResourceWatcherCache) onAddOrModify(obj ctrlclient.Object) (err error) {
 	log.V(4).Infof("+onAddOrModify")
 	defer log.V(4).Infof("-onAddOrModify")
 
@@ -550,12 +550,10 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, obj c
 	}
 
 	var oldValue []byte
-	if checkOldValue {
-		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
-			return fmt.Errorf("onAddOrModify() failed to get value for key [%s] in cache due to: %v", key, err)
-		} else {
-			log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(oldValue))
-		}
+	if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
+		return fmt.Errorf("onAddOrModify() failed to get value for key [%s] in cache due to: %v", key, err)
+	} else {
+		log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(oldValue))
 	}
 
 	var setVal bool
@@ -863,7 +861,7 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 
 // This func is only called in the context of a resync() operation,
 // after emptying the cache via FLUSHDB, i.e. on startup or after
-// some major (network) failure. It writes directly into redis cache, bypassing the work queue.
+// some major (network) failure.
 // Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
 // so we will do this in a concurrent fashion to minimize the time window and performance
 // impact of doing so
@@ -877,19 +875,9 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []ctrlclient.Object)
 	// max number of concurrent workers computing cache values at the same time
 	const maxWorkers = 10
 
-	type populateJob struct {
-		item ctrlclient.Object
-	}
-
-	type populateJobResult struct {
-		populateJob
-		err error
-	}
-
 	var wg sync.WaitGroup
 	numWorkers := int(math.Min(float64(len(items)), float64(maxWorkers)))
-	requestChan := make(chan populateJob, numWorkers)
-	responseChan := make(chan populateJobResult, numWorkers)
+	requestChan := make(chan string, numWorkers)
 
 	// Process only at most maxWorkers at a time
 	for i := 0; i < numWorkers; i++ {
@@ -897,37 +885,29 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []ctrlclient.Object)
 		go func() {
 			// The following loop will only terminate when the request channel is
 			// closed (and there are no more items)
-			for job := range requestChan {
+			for key := range requestChan {
 				// don't need to check old value since we just flushed the whole cache
-				err := c.onAddOrModify(false, job.item)
-				responseChan <- populateJobResult{job, err}
+				c.queue.Add(key)
+				c.queue.WaitUntilForgotten(key)
 			}
 			wg.Done()
 		}()
 	}
 
 	go func() {
-		wg.Wait()
-		close(responseChan)
-	}()
-
-	go func() {
 		for _, item := range items {
-			requestChan <- populateJob{item}
+			if key, err := c.keyFor(item); err != nil {
+				runtime.HandleError(err)
+			} else {
+				requestChan <- key
+			}
 		}
 		close(requestChan)
 	}()
 
-	// Start receiving results
-	// The following loop will only terminate when the response channel is closed, i.e.
-	// after the all the requests have been processed
-	errs := []error{}
-	for resp := range responseChan {
-		if resp.err != nil {
-			errs = append(errs, resp.err)
-		}
-	}
-	return errorutil.NewAggregate(errs)
+	// wait until all all items have been processed
+	wg.Wait()
+	return nil
 }
 
 // GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the

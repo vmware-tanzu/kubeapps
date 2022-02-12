@@ -278,6 +278,19 @@ func newCtrlClient(repos []sourcev1.HelmRepository, charts []sourcev1.HelmChart,
 	return withWatchWrapper{delegate: ctrlClientBuilder.Build()}
 }
 
+func ctrlClientAndWatcher(t *testing.T, s *Server) (client.WithWatch, *watch.RaceFreeFakeWatcher, error) {
+	ctx := context.Background()
+	if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+		return nil, nil, err
+	} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
+		return nil, nil, fmt.Errorf("Could not cast %s to: *withWatchWrapper", reflect.TypeOf(ctrlClient))
+	} else if watcher := ww.watcher; watcher == nil {
+		return nil, nil, fmt.Errorf("Unexpected condition watcher is nil")
+	} else {
+		return ctrlClient, watcher, nil
+	}
+}
+
 // misc global vars that get re-used in multiple tests
 var fluxPlugin = &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}
 var fluxHelmRepositoryCRD = &apiextv1.CustomResourceDefinition{

@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -33,7 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/watch"
 	typfake "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -634,8 +632,9 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
+		ctx := context.Background()
 		responseBeforeUpdate, err := s.GetAvailablePackageSummaries(
-			context.Background(),
+			ctx,
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
@@ -664,8 +663,8 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		ctx := context.Background()
-		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+		ctrlClient, _, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
 			t.Fatal(err)
 		} else if err = ctrlClient.Get(ctx, repoName, &repo); err != nil {
 			t.Fatal(err)
@@ -676,9 +675,9 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			repo.Status.Artifact.Checksum = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
 			repo.Status.Artifact.Revision = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
 
-			// there will be a GET to retrieve the old value from the cache followed by a SET to new value
-			mock.ExpectGet(key).SetVal(string(oldValue))
-			key, newValue, err := s.redisMockSetValueForRepo(mock, repo)
+			// there will be a GET to retrieve the old value from the cache followed by a SET
+			// to new value
+			_, newValue, err := s.redisMockSetValueForRepo(mock, repo, oldValue)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -698,7 +697,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			mock.ExpectGet(key).SetVal(string(newValue))
 
 			responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
-				context.Background(),
+				ctx,
 				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 			if err != nil {
 				t.Fatalf("%v", err)
@@ -890,17 +889,13 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
-		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
+		// now lets try to simulate HTTP 410 GONE exception which should force
+		// RetryWatcher to stop and force a cache resync. The ERROR event which
+		// we'll send below should trigger a re-sync of the cache in the
 		// background: a FLUSHDB followed by a SET
-		ctx := context.Background()
-		var watcher *watch.RaceFreeFakeWatcher
-		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+		_, watcher, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
 			t.Fatal(err)
-		} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
-			t.Fatalf("Unexpected condition: %s", reflect.TypeOf(ww))
-		} else if watcher = ww.watcher; watcher == nil {
-			t.Fatalf("Unexpected condition: watcher is nil")
 		}
 
 		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
@@ -910,7 +905,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		// set up expectations
 		mock.ExpectFlushDB().SetVal("OK")
-		if _, _, err := s.redisMockSetValueForRepo(mock, *repo); err != nil {
+		if _, _, err := s.redisMockSetValueForRepo(mock, *repo, nil); err != nil {
 			t.Fatalf("%+v", err)
 		}
 
@@ -944,8 +939,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 }
 
 // test that causes RetryWatcher to stop and the cache needs to resync when there are
-// lots of pending work items
-// this test is focused on the repo cache work queue
+// lots of pending work items. this test is focused on the repo cache work queue
 func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the repo cache needs to resync", func(t *testing.T) {
 		// start with an empty server that only has an empty repo cache
@@ -977,27 +971,21 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			}
 			mapReposCached[key] = byteArray
 			keysInOrder = append(keysInOrder, key)
-			mock.ExpectGet(key).RedisNil()
-			redisMockSetValueForRepo(mock, key, byteArray)
+			redisMockSetValueForRepo(mock, key, byteArray, nil)
 			repos = append(repos, repo)
 		}
 
 		s.repoCache.ExpectAdd(keysInOrder[0])
 
-		var watcher *watch.RaceFreeFakeWatcher
-		ctx := context.Background()
-		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+		ctrlClient, watcher, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
 			t.Fatal(err)
 		} else {
+			ctx := context.Background()
 			for _, r := range repos {
 				if err = ctrlClient.Create(ctx, r); err != nil {
 					t.Fatal(err)
 				}
-			}
-			if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
-				t.Fatalf("Unexpected condition: %s", reflect.TypeOf(ww))
-			} else if watcher = ww.watcher; watcher == nil {
-				t.Fatalf("Unexpected condition watcher is nil")
 			}
 		}
 
@@ -1030,7 +1018,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 				// populateWith() which will re-populate the cache from scratch based on
 				// the current state in k8s (all MAX_REPOS repos).
 				for i := 0; i <= (MAX_REPOS - len); i++ {
-					redisMockSetValueForRepo(mock, keysInOrder[i], mapReposCached[keysInOrder[i]])
+					redisMockSetValueForRepo(mock, keysInOrder[i], mapReposCached[keysInOrder[i]], nil)
 				}
 				// now we can signal to the server it's ok to proceed
 				resyncCh <- 0
@@ -1118,21 +1106,15 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-		mock.ExpectGet(key).RedisNil()
-		redisMockSetValueForRepo(mock, key, byteArray)
+		redisMockSetValueForRepo(mock, key, byteArray, nil)
 
 		s.repoCache.ExpectAdd(key)
 
-		var watcher *watch.RaceFreeFakeWatcher
-		ctx := context.Background()
-		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+		ctrlClient, watcher, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
 			t.Fatal(err)
-		} else if err = ctrlClient.Create(ctx, repo); err != nil {
+		} else if err = ctrlClient.Create(context.Background(), repo); err != nil {
 			t.Fatal(err)
-		} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
-			t.Fatalf("Unexpected condition: %s", reflect.TypeOf(ww))
-		} else if watcher = ww.watcher; watcher == nil {
-			t.Fatalf("Unexpected condition: watcher is nil")
 		}
 
 		done := make(chan int, 1)
@@ -1158,7 +1140,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 				t.Errorf("ERROR: Expected empty repo work queue!")
 			} else {
 				mock.ExpectFlushDB().SetVal("OK")
-				redisMockSetValueForRepo(mock, key, byteArray)
+				redisMockSetValueForRepo(mock, key, byteArray, nil)
 				// now we can signal to the server it's ok to proceed
 				resyncCh <- 0
 				s.repoCache.WaitUntilResyncComplete()
@@ -1422,7 +1404,7 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 	return nil
 }
 
-func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository) (key string, bytes []byte, err error) {
+func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, bytes []byte, err error) {
 	backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
 		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
@@ -1430,24 +1412,34 @@ func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo source
 		clientGetter: backgroundClientGetter,
 		chartCache:   nil,
 	}
-	return sink.redisMockSetValueForRepo(mock, repo)
+	return sink.redisMockSetValueForRepo(mock, repo, oldValue)
 }
 
-func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
+func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {
 	if key, err = redisKeyForRepo(repo); err != nil {
 		return key, nil, err
 	}
-	if key, byteArray, err = sink.redisKeyValueForRepo(repo); err != nil {
+	if key, newValue, err = sink.redisKeyValueForRepo(repo); err != nil {
+		if oldValue == nil {
+			mock.ExpectGet(key).RedisNil()
+		} else {
+			mock.ExpectGet(key).SetVal(string(oldValue))
+		}
 		mock.ExpectDel(key).SetVal(0)
 		return key, nil, err
 	} else {
-		redisMockSetValueForRepo(mock, key, byteArray)
-		return key, byteArray, nil
+		redisMockSetValueForRepo(mock, key, newValue, oldValue)
+		return key, newValue, nil
 	}
 }
 
-func redisMockSetValueForRepo(mock redismock.ClientMock, key string, byteArray []byte) {
-	mock.ExpectSet(key, byteArray, 0).SetVal("OK")
+func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, oldValue []byte) {
+	if oldValue == nil {
+		mock.ExpectGet(key).RedisNil()
+	} else {
+		mock.ExpectGet(key).SetVal(string(oldValue))
+	}
+	mock.ExpectSet(key, newValue, 0).SetVal("OK")
 	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
 }
 

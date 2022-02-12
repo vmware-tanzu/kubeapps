@@ -373,17 +373,24 @@ func newServer(t *testing.T,
 
 	okRepos := sets.String{}
 	for _, r := range repos {
+		key, err := redisKeyForRepo(r)
+		if err != nil {
+			t.Logf("Skipping repo [%s] due to %+v", key, err)
+			continue
+		}
 		if isRepoReady(r) {
 			// we are willfully just logging any errors coming from redisMockSetValueForRepo()
 			// here and just skipping over to next repo. This is done for test
 			// TestGetAvailablePackagesStatus where we make sure that even if the flux CRD happens
 			// to be invalid flux plug in can still operate
-			key, _, err := sink.redisMockSetValueForRepo(mock, r)
+			_, _, err = sink.redisMockSetValueForRepo(mock, r, nil)
 			if err != nil {
 				t.Logf("Skipping repo [%s] due to %+v", key, err)
 			} else {
 				okRepos.Insert(key)
 			}
+		} else {
+			mock.ExpectGet(key).RedisNil()
 		}
 	}
 
