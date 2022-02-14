@@ -3,15 +3,16 @@
 
 import { CdsIcon } from "@cds/react/icon";
 import { Location } from "history";
+import qs from "qs";
 import { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
-import { Redirect } from "react-router-dom";
+import { useSelector } from "react-redux";
+import * as ReactRouter from "react-router-dom";
+import { IStoreState } from "shared/types";
 import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.css";
 import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
-import { useSelector } from "react-redux";
-import { IStoreState } from "shared/types";
 
 export interface ILoginFormProps {
   cluster: string;
@@ -30,7 +31,12 @@ function LoginForm(props: ILoginFormProps) {
   const intl = useIntl();
   const [token, setToken] = useState("");
   const [cookieChecked, setCookieChecked] = useState(false);
+  const [queryParamTokenAttempted, setQueryParamTokenAttempted] = useState(false);
   const { checkCookieAuthentication } = props;
+
+  const location = ReactRouter.useLocation();
+  const queryParamToken =
+    qs.parse(location.search, { ignoreQueryPrefix: true }).token?.toString() || "";
 
   const {
     config: { authProxyEnabled },
@@ -44,6 +50,20 @@ function LoginForm(props: ILoginFormProps) {
     }
   }, [authProxyEnabled, checkCookieAuthentication, props.cluster]);
 
+  useEffect(() => {
+    // In token auth, if not yet authenticated, if the token is passed in the query param,
+    // use it straight away; if it fails, stop don't retry
+    if (
+      !props.oauthLoginURI &&
+      !props.authenticated &&
+      !queryParamTokenAttempted &&
+      queryParamToken !== ""
+    ) {
+      setQueryParamTokenAttempted(true);
+      props.authenticate(props.cluster, queryParamToken);
+    }
+  }, [props, queryParamToken, queryParamTokenAttempted]);
+
   if (props.authenticating || !cookieChecked) {
     return (
       <LoadingWrapper
@@ -55,7 +75,7 @@ function LoginForm(props: ILoginFormProps) {
   }
   if (props.authenticated) {
     const { from } = (props.location.state as any) || { from: { pathname: "/" } };
-    return <Redirect to={from} />;
+    return <ReactRouter.Redirect to={from} />;
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
