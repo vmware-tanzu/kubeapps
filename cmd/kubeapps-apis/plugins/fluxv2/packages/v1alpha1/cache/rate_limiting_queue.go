@@ -95,7 +95,7 @@ func (q *rateLimitingType) ExpectAdd(item string) {
 	q.queue.expectAdd(item)
 }
 
-// used in unit test and production code, when a repo/chart needs to be loaded on demand
+// used in unit test AND production code, when a repo/chart needs to be loaded on demand
 func (q *rateLimitingType) WaitUntilForgotten(item string) {
 	q.queue.waitUntilDone(item)
 	// q.queue might be done with the item, but it may have been
