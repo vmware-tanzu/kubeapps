@@ -3,7 +3,6 @@
 
 import LoadingWrapper from "components/LoadingWrapper";
 import { Location } from "history";
-import qs from "qs";
 import { act } from "react-dom/test-utils";
 import { MemoryRouter, Redirect } from "react-router-dom";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
