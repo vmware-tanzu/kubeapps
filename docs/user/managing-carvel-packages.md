@@ -79,8 +79,6 @@ In the [values.yaml](../../chart/kubeapps/values.yaml) file, under `kubeappsapis
 kubeappsapis:
   ...
   enabledPlugins:
-    - helm
-    - resources
   - resources
   - helm
   - kapp-controller # add this one

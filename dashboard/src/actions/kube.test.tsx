@@ -128,8 +128,40 @@ describe("getResources", () => {
     store.dispatch(actions.kube.getResources(pkg, refs, watch));
     expect(store.getActions()).toEqual(expectedActions);
 
-    const expectedCompletionActions = [
+    const expectedResource = {
+      apiVersion: "v1",
+      kind: "Service",
+      metadata: {
+        name: "foo",
+        namespace: "default",
+      },
+    } as IResource;
+    const getResourcesResponse = {
+      resourceRef: {
+        apiVersion: "v1",
+        kind: "Service",
+        name: "foo",
+        namespace: "default",
+      } as APIResourceRef,
+      manifest: JSON.stringify(expectedResource),
+    } as GetResourcesResponse;
+
+    const expectedHandlerActions = [
       expectedActions[0],
+      {
+        type: getType(actions.kube.receiveResource),
+        payload: {
+          key: "v1/Service/default/foo",
+          resource: expectedResource,
+        },
+      },
+    ];
+    const handler = store.getActions()[0].payload.handler;
+    handler(getResourcesResponse);
+    expect(store.getActions()).toEqual(expectedHandlerActions);
+
+    const expectedCompletionActions = [
+      ...expectedHandlerActions,
       {
         type: getType(actions.kube.closeRequestResources),
         payload: pkg,
