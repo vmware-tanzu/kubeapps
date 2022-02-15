@@ -4,7 +4,7 @@
 import LoadingWrapper from "components/LoadingWrapper";
 import { Location } from "history";
 import { act } from "react-dom/test-utils";
-import { Redirect } from "react-router-dom";
+import { MemoryRouter, Redirect } from "react-router-dom";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
@@ -114,6 +114,44 @@ describe("token login form", () => {
       wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
     });
     expect(authenticate).toBeCalledWith(defaultCluster, "f00b4r");
+  });
+
+  it("calls the authenticate handler if a token is passed as query param", () => {
+    const authenticate = jest.fn();
+    mountWrapper(
+      defaultStore,
+      <MemoryRouter initialEntries={["/login?token=f00b4r"]}>
+        <LoginForm {...defaultProps} authenticate={authenticate} />
+      </MemoryRouter>,
+    );
+    expect(authenticate).toBeCalledWith(defaultCluster, "f00b4r");
+  });
+
+  it("calls the authenticate handler just once if a failed token is passed as query param", () => {
+    const authenticate = jest.fn();
+    mountWrapper(
+      defaultStore,
+      <MemoryRouter initialEntries={["/login?token=bad-token"]}>
+        <LoginForm
+          {...defaultProps}
+          authenticate={authenticate}
+          authenticationError={authenticationError}
+        />
+      </MemoryRouter>,
+    );
+    expect(authenticate).toBeCalledWith(defaultCluster, "bad-token");
+    expect(authenticate).toBeCalledTimes(1);
+  });
+
+  it("does not call the authenticate handler in oauth login if token is passed as query param", () => {
+    const authenticate = jest.fn();
+    mountWrapper(
+      defaultStore,
+      <MemoryRouter initialEntries={["/login?token=f00b4r"]}>
+        <LoginForm {...defaultProps} authenticate={authenticate} oauthLoginURI={"/sign/in"} />
+      </MemoryRouter>,
+    );
+    expect(authenticate).not.toBeCalled();
   });
 
   it("displays an error if the authentication error is passed", () => {
