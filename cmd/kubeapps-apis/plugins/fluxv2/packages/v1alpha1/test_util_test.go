@@ -241,8 +241,8 @@ func installedRef(id, namespace string) *corev1.InstalledPackageReference {
 func newCtrlClient(repos []sourcev1.HelmRepository, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) withWatchWrapper {
 	// register the flux GitOps Toolkit schema definitions
 	scheme := runtime.NewScheme()
-	_ = sourcev1.AddToScheme(scheme)
-	_ = helmv2.AddToScheme(scheme)
+	sourcev1.AddToScheme(scheme)
+	helmv2.AddToScheme(scheme)
 
 	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{sourcev1.GroupVersion, helmv2.GroupVersion})
 	rm.Add(schema.GroupVersionKind{

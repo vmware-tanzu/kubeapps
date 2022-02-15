@@ -40,8 +40,8 @@ const (
 	// max number of attempts to resync before giving up
 	maxWatcherCacheResyncBackoff = 2
 	KeySegmentsSeparator         = ":"
-	// max number of concurrent workers computing or retrieving retrieving cache
-	// values at the same time
+	// max number of concurrent workers computing or retrieving cache values at
+	// the same time
 	maxWorkers = 10
 )
 
