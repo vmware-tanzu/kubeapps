@@ -63,7 +63,7 @@ type ChartCache struct {
 	// significant in that it flushes the whole redis cache and re-populates the state from k8s.
 	// When that happens we don't really want any concurrent access to the cache until the resync()
 	// operation is complete. In other words, we want to:
-	//  - be able to have multiple concurrent readers (goroutines doing GetForOne()/GetForMultiple())
+	//  - be able to have multiple concurrent readers (goroutines doing GetForOne())
 	//  - only a single writer (goroutine doing a resync()) is allowed, and while its doing its job
 	//    no readers are allowed
 	resyncCond *sync.Cond

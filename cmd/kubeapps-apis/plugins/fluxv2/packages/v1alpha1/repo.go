@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	log "k8s.io/klog/v2"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -67,12 +68,12 @@ func (s *Server) getRepoInCluster(ctx context.Context, key types.NamespacedName)
 }
 
 // regexp expressions are used for matching actual names against expected patters
-func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) ([]string, error) {
+func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) (sets.String, error) {
 	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	resultKeys := make([]string, 0)
+	resultKeys := sets.String{}
 	for _, repo := range repoList {
 		// first check if repo is in ready state
 		if !isRepoReady(repo) {
@@ -96,7 +97,7 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 			matched = true
 		}
 		if matched {
-			resultKeys = append(resultKeys, s.repoCache.KeyForNamespacedName(*name))
+			resultKeys.Insert(s.repoCache.KeyForNamespacedName(*name))
 		}
 	}
 	return resultKeys, nil
