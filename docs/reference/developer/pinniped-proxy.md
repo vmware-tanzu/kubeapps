@@ -59,16 +59,16 @@ cargo test
 
 First of all, run `docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway'` (adapt this line as you require, you only will need the Kind Gateway IP), get the IP and use the next one. For example, if you get `172.18.0.1` in your command, you will need `172.18.0.2`.
 
-Next, follow the steps in [/docs/developer/using-makefiles.md](./using-makefiles.md) to modify the proper yaml files by replacing with this value.
+Next, follow the steps in [/docs/reference/developer/using-makefiles.md](./using-makefiles.md) to modify the proper yaml files by replacing with this value.
 
 Next, replace `172.18.0.2` with the previous IP (and `172.18.0.3` with the next one) the following files: - [script/makefiles/deploy-dev.mk](../../../script/makefiles/deploy-dev.mk) - [kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../../howto/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) - [kubeapps-local-dev-auth-proxy-values.yaml](../../howto/manifests/kubeapps-local-dev-auth-proxy-values.yaml) - [kubeapps-local-dev-dex-values.yaml](../../howto/manifests/kubeapps-local-dev-dex-values.yaml)
 
 ### Launching the multi-cluster dev environment
 
 - Run `make multi-cluster-kind-for-pinniped`.
-- Update [/docs/user/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../../howto/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) copying the certificate-authority-data from the additional cluster (`~/.kube/kind-config-kubeapps-additional`) to the `certificate-authority-data` of the second cluster.
+- Update [/docs/howto/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](../../howto/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) copying the certificate-authority-data from the additional cluster (`~/.kube/kind-config-kubeapps-additional`) to the `certificate-authority-data` of the second cluster.
 - Run `make deploy-dev-for-pinniped`.
-- Edit [/docs/user/manifests/kubeapps-pinniped-jwt-authenticator.yaml](../../howto/manifests/kubeapps-pinniped-jwt-authenticator.yaml) with the `certificate-authority-data` from the main cluster (`~/.kube/kind-config-kubeapps`).
+- Edit [/docs/howto/manifests/kubeapps-pinniped-jwt-authenticator.yaml](../../howto/manifests/kubeapps-pinniped-jwt-authenticator.yaml) with the `certificate-authority-data` from the main cluster (`~/.kube/kind-config-kubeapps`).
 - Run `make add-pinniped-jwt-authenticator`.
 - Open https://localhost/ and login with `kubeapps-operator@example.com`/`password`
 
@@ -111,7 +111,7 @@ Also, please verify that you have modified the Kind node IP accordingly and the 
 Find below some typical problems with a possible workaround:
 
 - Missing permissions to access any namespace:
-  - Add RBAC config by running `kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml`
+  - Add RBAC config by running `kubectl apply -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml`
 - Not logging in even if everything is correct:
   - Delete and create the jwt authenticator: `make delete-pinniped-jwt-authenticator add-pinniped-jwt-authenticator`
   - If still not working, remove Pinniped and create it again: `make delete-pinniped make deploy-pinniped deploy-pinniped-additional`.
