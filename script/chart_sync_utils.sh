@@ -209,7 +209,7 @@ commitAndSendExternalPR() {
     sed -i.bk -e "s/<EMAIL>/$(git config user.email)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     git checkout -b "${TARGET_BRANCH}"
     git add --all .
-    git commit -m "kubeapps: bump chart version to ${CHART_VERSION}"
+    git commit --signoff -m "kubeapps: bump chart version to ${CHART_VERSION}"
     # NOTE: This expects to have a loaded SSH key
     if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         git push -u origin "${TARGET_BRANCH}"
@@ -242,7 +242,7 @@ commitAndSendInternalPR() {
     fi
     git checkout -b "${TARGET_BRANCH}"
     git add --all .
-    git commit -m "bump chart version to ${CHART_VERSION}"
+    git commit --signoff -m "bump chart version to ${CHART_VERSION}"
     # NOTE: This expects to have a loaded SSH key
     if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         git push -u origin "${TARGET_BRANCH}"
