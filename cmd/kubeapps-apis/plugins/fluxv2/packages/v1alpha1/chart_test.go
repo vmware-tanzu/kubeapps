@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -29,7 +28,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
 )
 
 type testSpecChartWithFile struct {
@@ -752,9 +750,9 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		repoKey, repoBytes, err := s.redisKeyValueForRepo(*r)
 		if err != nil {
 			t.Fatalf("%+v", err)
+		} else {
+			redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
 		}
-		mock.ExpectGet(repoKey).RedisNil()
-		redisMockSetValueForRepo(mock, repoKey, repoBytes)
 
 		opts := &common.ClientOptions{}
 		chartCacheKeys := []string{}
@@ -779,18 +777,11 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 
 		s.repoCache.ExpectAdd(repoKey)
 
-		ctx := context.Background()
-		var watcher *watch.RaceFreeFakeWatcher
-		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+		ctrlClient, watcher, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
 			t.Fatal(err)
-		} else if err = ctrlClient.Create(ctx, r); err != nil {
-			// unlike dynamic.Interface.Create, client.Create will create an object in k8s
-			// and an Add event will be fired
+		} else if err = ctrlClient.Create(context.Background(), r); err != nil {
 			t.Fatal(err)
-		} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
-			t.Fatalf("Unexpected condition: %s", reflect.TypeOf(ww))
-		} else if watcher = ww.watcher; watcher == nil {
-			t.Fatalf("Unexpected condition watcher is nil")
 		}
 
 		done := make(chan int, 1)
@@ -823,7 +814,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 				t.Errorf("ERROR: Expected empty repo work queue!")
 			} else {
 				mock.ExpectFlushDB().SetVal("OK")
-				redisMockSetValueForRepo(mock, repoKey, repoBytes)
+				redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
 				// now we can signal to the server it's ok to proceed
 				repoResyncCh <- 0
 
@@ -873,8 +864,8 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 			APIVersion: sourcev1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Generation:      int64(1),
+			Name:       name,
+			Generation: int64(1),
 		},
 	}
 	if namespace != "" {

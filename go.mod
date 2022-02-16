@@ -91,7 +91,7 @@ require (
 	k8s.io/klog/v2 v2.40.1
 	k8s.io/kubernetes v1.22.6
 	oras.land/oras-go v1.1.0
-	sigs.k8s.io/controller-runtime v0.11.0
+	sigs.k8s.io/controller-runtime v0.11.1
 	sigs.k8s.io/yaml v1.3.0
 )
 

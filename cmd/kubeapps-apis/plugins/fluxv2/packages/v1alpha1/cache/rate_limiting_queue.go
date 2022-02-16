@@ -17,6 +17,10 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+// Inspired by https://github.com/kubernetes/client-go/blob/master/util/workqueue/queue.go and
+//         by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/rate_limiting_queue.go
+//	but adds a few funcs, like Name(), ExpectAdd(), WaitUntilForgotten() and Reset()
+
 // RateLimitingInterface is an interface that rate limits items being added to the queue.
 type RateLimitingInterface interface {
 	workqueue.RateLimitingInterface
@@ -83,11 +87,9 @@ func (q *rateLimitingType) Reset() {
 
 	q.queue.reset()
 
-	// this way we "forget" about ratelimit failures
+	// this way we "forget" about ratelimit failures, i.e. the items queued up
+	// via previous call(s) to .AddRateLimited() (i.e. via q.DelayingInterface.AddAfter)
 	q.rateLimiter = workqueue.DefaultControllerRateLimiter()
-
-	// TODO (gfichtenholt) Also need to "forget" the items queued up via previous call(s)
-	// to .AddRateLimited() (i.e. via q.DelayingInterface.AddAfter) ?
 }
 
 // only used in unit tests
@@ -95,7 +97,7 @@ func (q *rateLimitingType) ExpectAdd(item string) {
 	q.queue.expectAdd(item)
 }
 
-// used in unit test and production code, when a repo/chart needs to be loaded on demand
+// used in unit test AND production code, when a repo/chart needs to be loaded on demand
 func (q *rateLimitingType) WaitUntilForgotten(item string) {
 	q.queue.waitUntilDone(item)
 	// q.queue might be done with the item, but it may have been
