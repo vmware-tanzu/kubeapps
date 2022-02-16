@@ -470,10 +470,10 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
-"@playwright/test@^1.19.0":
-  version "1.19.0"
-  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.19.0.tgz#233d635f6caa7212e1281b379ba8c8cf9aa195cb"
-  integrity sha512-jDuWUYlasAmEdGZPz1esq8OkYanp/3fMGub4HRn5B0zlwi4aHbwhEi3DvIKjp76Ig8ygb0A9RyhDcs9pZxKWbQ==
+"@playwright/test@^1.19.1":
+  version "1.19.1"
+  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.19.1.tgz#92bc39e2693d461841d376f3e210daf8f802ba64"
+  integrity sha512-NGWqJWP4N2HFyXlOSDwQSfgmige94p9KQvml62fJ5wg4sknfkyw+CnFeLUze8qvnGlS0PbVISMRV5JOE8EdxjQ==
   dependencies:
     "@babel/code-frame" "7.16.7"
     "@babel/core" "7.16.12"
@@ -507,7 +507,7 @@
     open "8.4.0"
     pirates "4.0.4"
     pixelmatch "5.2.1"
-    playwright-core "1.19.0"
+    playwright-core "1.19.1"
     pngjs "6.0.0"
     rimraf "3.0.2"
     source-map-support "0.4.18"
@@ -1231,28 +1231,6 @@ pkg-up@^3.1.0:
   integrity sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==
   dependencies:
     find-up "^3.0.0"
-
-playwright-core@1.19.0:
-  version "1.19.0"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.19.0.tgz#54fb197d1820d6821b4e800857c7cda19e6b45fe"
-  integrity sha512-mlT/2pHUQbcZumVIKD4iwIKtO2k/BFHYmOAwOepdEvHLgqJrmsCgHvDgpehM6wDh5chksh2sJZIp8dZQ6158Yw==
-  dependencies:
-    commander "8.3.0"
-    debug "4.3.3"
-    extract-zip "2.0.1"
-    https-proxy-agent "5.0.0"
-    jpeg-js "0.4.3"
-    mime "3.0.0"
-    pngjs "6.0.0"
-    progress "2.0.3"
-    proper-lockfile "4.1.2"
-    proxy-from-env "1.1.0"
-    rimraf "3.0.2"
-    socks-proxy-agent "6.1.1"
-    stack-utils "2.0.5"
-    ws "8.4.2"
-    yauzl "2.10.0"
-    yazl "2.5.1"
 
 playwright-core@1.19.1:
   version "1.19.1"
