@@ -136,10 +136,13 @@ ingress:
   ##
   secrets: []
 
-## @section Kubeapps plugin options
+## @section Kubeapps packaging options
 ## Note: the helm and flux plugins are mutually exclusive, you can only
 ## enable one or the other since they both operate on Helm release objects.
-plugins:
+## Enabling carvel or flux does *not* install the required related Carvel or
+## Flux controllers on your cluster. Please read the documentation for running
+## Kubeapps with Carvel or Flux support.
+packaging:
   ## Default helm plugin
   ## @param plugins.helm.enabled Enable the standard helm plugin.
   helm:
@@ -1626,8 +1629,13 @@ postgresql:
 
 ## @section kubeappsapis parameters
 kubeappsapis:
-  ## @param kubeappsapis.enabledPlugins Enabled plugins for the Kubeapps-APIs service
-  ## DEPRECATED: use the top-level `plugins` value instead.
+  ## @param kubeappsapis.enabledPlugins Manually override which plugins are
+  ## enabled for the Kubeapps-APIs service
+  ##
+  ## NOTE: normally this should remain blank, with the top-level `packaging`
+  ## value automatically determining which plugins should be enabled. Only
+  ## set this value if you want to manually override the list of plugins
+  ## enabled for the service.
   ##
   enabledPlugins:
   pluginConfig:
