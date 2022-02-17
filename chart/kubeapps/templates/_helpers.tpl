@@ -236,8 +236,8 @@ kubeapps: ingress.tls
           {{- else if eq $plugin "helm" }}
             {{- $enabledPlugins = append $enabledPlugins "helm" }}
           {{- else }}
-      kubeapps: plugins
-          Unsupported plugin: {{ $plugin }}
+            {{ $msg := printf "packaging: Unsupported packaging option: %s" $plugin }}
+            {{- fail $msg }}
           {{- end }}
         {{- end }}
       {{- end }}
