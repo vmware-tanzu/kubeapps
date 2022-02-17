@@ -72,19 +72,17 @@ This `kapp-controller` plugin is currently being built by default in the Kubeapp
 
 > **TIP**: Please refer to the [getting started documentation](./getting-started.md) for more information on how to install Kubeapps and pass custom configuration values.
 
-In the [values.yaml](../../chart/kubeapps/values.yaml) file, under `kubeappsapis.enabledPlugins` add
-`kapp-controller` to the list of enabled plugins. For example:
+In the [values.yaml](../../chart/kubeapps/values.yaml) file, enable the `packaging.carvel` option (and disable helm, depending on your needs):
 
 ```yaml
-kubeappsapis:
-  ...
-  enabledPlugins:
-  - resources
-  - helm
-  - kapp-controller # add this one
+packaging:
+  helm:
+    enabled: false
+  carvel:
+    enabled: true
 ```
 
-Additionally, you can pass the following configuration values to the `kapp-controller` plugin:
+If required, you can additionally pass the following configuration values to modify the defaults used by Kubeapps for the Carvel support. These are options passed to the `kapp-controller` plugin that handles the Carvel packaging support:
 
 - `defaultUpgradePolicy`: represents the default upgrade policy for the packages. If other than `none` is selected, the kapp-controller will automatically upgrade the packages to the latest matching semantic version. For instance, assuming we installed the version `1.2.3`:
   - With `major` selected, the package will be upgraded to `>=1.2.3`, for example, `2.0.0`, for
