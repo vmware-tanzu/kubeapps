@@ -72,12 +72,10 @@ This `kapp-controller` plugin is currently being built by default in the Kubeapp
 
 > **TIP**: Please refer to the [getting started documentation](./getting-started.md) for more information on how to install Kubeapps and pass custom configuration values.
 
-In the [values.yaml](../../chart/kubeapps/values.yaml) file, enable the `packaging.carvel` option (and disable helm, depending on your needs):
+In the [values.yaml](../../chart/kubeapps/values.yaml) file, enable the `packaging.carvel` option:
 
 ```yaml
 packaging:
-  helm:
-    enabled: false
   carvel:
     enabled: true
 ```

@@ -143,16 +143,16 @@ ingress:
 ## Flux controllers on your cluster. Please read the documentation for running
 ## Kubeapps with Carvel or Flux support.
 packaging:
-  ## Default helm plugin
-  ## @param plugins.helm.enabled Enable the standard helm plugin.
+  ## Default helm packaging
+  ## @param packaging.helm.enabled Enable the standard Helm packaging.
   helm:
     enabled: true
-  ## Carvel plugin
-  ## @param plugins.carvel.enabled Enable the carvel plugin.
+  ## Carvel packaging
+  ## @param packaging.carvel.enabled Enable support for the Carvel (kapp-controller) packaging.
   carvel:
     enabled: false
-  ## Flux (v2) plugin
-  ## @param plugins.flux.enabled Enable the Flux plugin.
+  ## Flux (v2) packaging
+  ## @param packaging.flux.enabled Enable support for Flux (v2) packaging.
   flux:
     enabled: false
 
