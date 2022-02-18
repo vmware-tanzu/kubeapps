@@ -251,12 +251,21 @@ Eventually, as the Kubeapps code continues to evolve, some changes are often int
 
 > As part of this release process, each Kubeapps component's Dockerfile _must_ compared against the one in the previous release. If they functionally differ each other, the Bitnami Content team _must_ be notified.
 
-## 6 - Publish the GitHub release
+## 6 - Check released version is in Bitnami repository
+
+Make sure the version is now publicly available in Bitnami repository.
+The correct app and chart versions should appear when performing a search:
+
+```bash
+helm repo update && helm search repo kubeapps
+```
+
+## 7 - Publish the GitHub release
 
 Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/kubeapps/kubeapps/releases).
 
 > Take into account that the chart version will be eventually published as part of the usual Bitnami release cycle. So expect this step to take a certain amount of time.
 
-## 7 - Promote the release
+## 8 - Promote the release
 
 Tell the community about the new release by using our Kubernetes slack [#kubeapps channel](https://kubernetes.slack.com/messages/kubeapps). If it includes major features, you might consider promoting it on social media.
