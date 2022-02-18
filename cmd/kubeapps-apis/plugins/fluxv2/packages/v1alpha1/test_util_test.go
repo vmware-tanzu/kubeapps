@@ -15,8 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	k8scorev1 "k8s.io/api/core/v1"
+	apiv1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -103,10 +102,6 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 	return p1.DisplayName < p2.DisplayName
 }
 
-func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
-	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
-}
-
 // these are helpers to compare slices ignoring order
 func lessInstalledPackageSummaryFunc(p1, p2 *corev1.InstalledPackageSummary) bool {
 	return p1.Name < p2.Name
@@ -165,13 +160,13 @@ func basicAuth(handler http.HandlerFunc, username, password, realm string) http.
 }
 
 // ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
-func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secret {
-	return &k8scorev1.Secret{
+func newBasicAuthSecret(name, namespace, user, password string) *apiv1.Secret {
+	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: k8scorev1.SecretTypeOpaque,
+		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"username": []byte(user),
 			"password": []byte(password),
@@ -184,28 +179,28 @@ func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secre
 // https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
 // in a different format:
 // certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
-func newTlsSecret(name, namespace string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
+func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
+	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: k8scorev1.SecretTypeOpaque,
+		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"certFile": pub,
 			"keyFile":  priv,
 			"caFile":   ca,
 		},
-	}, nil
+	}
 }
 
-func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
+func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) *apiv1.Secret {
+	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: k8scorev1.SecretTypeOpaque,
+		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"username": []byte(user),
 			"password": []byte(password),
@@ -213,7 +208,7 @@ func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca
 			"keyFile":  priv,
 			"caFile":   ca,
 		},
-	}, nil
+	}
 }
 
 func availableRef(id, namespace string) *corev1.AvailablePackageReference {

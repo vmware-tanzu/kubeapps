@@ -41,7 +41,7 @@ const (
 	podinfo_basic_auth_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth"
 )
 
-type integrationTestCreateSpec struct {
+type integrationTestCreatePackageSpec struct {
 	testName          string
 	repoUrl           string
 	request           *corev1.CreateInstalledPackageRequest
@@ -57,9 +57,9 @@ type integrationTestCreateSpec struct {
 }
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
-	fluxPluginClient := checkEnv(t)
+	fluxPluginClient, _ := checkEnv(t)
 
-	testCases := []integrationTestCreateSpec{
+	testCases := []integrationTestCreatePackageSpec{
 		{
 			testName:             "create test (simplest case)",
 			repoUrl:              podinfo_repo_url,
@@ -134,8 +134,8 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 	}
 }
 
-type integrationTestUpdateSpec struct {
-	integrationTestCreateSpec
+type integrationTestUpdatePackageSpec struct {
+	integrationTestCreatePackageSpec
 	request *corev1.UpdateInstalledPackageRequest
 	// this is expected AFTER the update call completes
 	expectedDetailAfterUpdate *corev1.InstalledPackageDetail
@@ -144,11 +144,11 @@ type integrationTestUpdateSpec struct {
 }
 
 func TestKindClusterUpdateInstalledPackage(t *testing.T) {
-	fluxPluginClient := checkEnv(t)
+	fluxPluginClient, _ := checkEnv(t)
 
-	testCases := []integrationTestUpdateSpec{
+	testCases := []integrationTestUpdatePackageSpec{
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (simplest case)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1,
@@ -161,7 +161,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (add values)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_no_values,
@@ -174,7 +174,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_no_values,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (change values)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_2,
@@ -187,7 +187,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_2,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (remove values)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_4,
@@ -200,7 +200,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_4,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (values dont change)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_6,
@@ -213,7 +213,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_6,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update unauthorized test",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_7,
@@ -233,7 +233,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 
 			installedRef := createAndWaitForHelmRelease(
-				t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
+				t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
 			ctx := grpcContext
@@ -254,15 +254,15 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedRef, false)
 
 			tc.expectedDetailAfterUpdate.InstalledPackageRef = installedRef
-			tc.expectedDetailAfterUpdate.Name = tc.integrationTestCreateSpec.request.Name
+			tc.expectedDetailAfterUpdate.Name = tc.integrationTestCreatePackageSpec.request.Name
 			tc.expectedDetailAfterUpdate.ReconciliationOptions = &corev1.ReconciliationOptions{
 				Interval: 60,
 			}
-			tc.expectedDetailAfterUpdate.AvailablePackageRef = tc.integrationTestCreateSpec.request.AvailablePackageRef
+			tc.expectedDetailAfterUpdate.AvailablePackageRef = tc.integrationTestCreatePackageSpec.request.AvailablePackageRef
 			tc.expectedDetailAfterUpdate.PostInstallationNotes = strings.ReplaceAll(
 				tc.expectedDetailAfterUpdate.PostInstallationNotes,
 				"@TARGET_NS@",
-				tc.integrationTestCreateSpec.request.TargetContext.Namespace)
+				tc.integrationTestCreatePackageSpec.request.TargetContext.Namespace)
 
 			expectedResp := &corev1.GetInstalledPackageDetailResponse{
 				InstalledPackageDetail: tc.expectedDetailAfterUpdate,
@@ -276,8 +276,8 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 					newR := &corev1.ResourceRef{
 						ApiVersion: r.ApiVersion,
 						Kind:       r.Kind,
-						Name:       strings.ReplaceAll(r.Name, "@TARGET_NS@", tc.integrationTestCreateSpec.request.TargetContext.Namespace),
-						Namespace:  tc.integrationTestCreateSpec.request.TargetContext.Namespace,
+						Name:       strings.ReplaceAll(r.Name, "@TARGET_NS@", tc.integrationTestCreatePackageSpec.request.TargetContext.Namespace),
+						Namespace:  tc.integrationTestCreatePackageSpec.request.TargetContext.Namespace,
 					}
 					expectedRefsCopy = append(expectedRefsCopy, newR)
 				}
@@ -290,17 +290,17 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	}
 }
 
-type integrationTestDeleteSpec struct {
-	integrationTestCreateSpec
+type integrationTestDeletePackageSpec struct {
+	integrationTestCreatePackageSpec
 	unauthorized bool
 }
 
 func TestKindClusterDeleteInstalledPackage(t *testing.T) {
-	fluxPluginClient := checkEnv(t)
+	fluxPluginClient, _ := checkEnv(t)
 
-	testCases := []integrationTestDeleteSpec{
+	testCases := []integrationTestDeletePackageSpec{
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "delete test (simplest case)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_for_delete_1,
@@ -311,7 +311,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			},
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "delete test (unauthorized)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_for_delete_2,
@@ -328,7 +328,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
+			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
 
 			ctx := grpcContext
 			if tc.unauthorized {
@@ -420,7 +420,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 // -rw-rw-rw-@ 1 gfichtenholt  staff  10394218 Nov  7 19:41 bitnami_index.yaml
 // Also now we are caching helmcharts themselves for each repo so that will affect how many will fit too
 func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *testing.T) {
-	fluxPlugin := checkEnv(t)
+	fluxPlugin, _ := checkEnv(t)
 
 	redisCli, err := newRedisClientForIntegrationTest(t)
 	if err != nil {
@@ -627,7 +627,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 // The goal is to make sure that the events are processed by the cache fully in the order
 // they were received and the cache does not end up in inconsistent state
 func TestKindClusterAddThenDeleteRepo(t *testing.T) {
-	_ = checkEnv(t)
+	checkEnv(t)
 
 	redisCli, err := newRedisClientForIntegrationTest(t)
 	if err != nil {
@@ -662,7 +662,7 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 }
 
 func TestKindClusterRepoWithBasicAuth(t *testing.T) {
-	fluxPluginClient := checkEnv(t)
+	fluxPluginClient, _ := checkEnv(t)
 
 	secretName := "podinfo-basic-auth-secret"
 	repoName := "podinfo-basic-auth"
@@ -755,7 +755,52 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	compareActualVsExpectedAvailablePackageDetail(t, resp.AvailablePackageDetail, expected_detail_podinfo_basic_auth.AvailablePackageDetail)
 }
 
-func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
+type integrationTestAddRepoSpec struct {
+	testName           string
+	request            *corev1.AddPackageRepositoryRequest
+	expectedStatusCode codes.Code
+}
+
+func TestKindClusterAddPackageRepository(t *testing.T) {
+	_, fluxPluginReposClient := checkEnv(t)
+
+	testCases := []integrationTestAddRepoSpec{
+		{
+			testName: "add repo test (simplest case)",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "my-podinfo",
+				Context: &corev1.Context{Namespace: "default"},
+				Type:    "helm",
+				Url:     podinfo_repo_url,
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	grpcContext := newGrpcAdminContext(t, "test-add-repo-admin")
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			t.Cleanup(func() {
+				err := kubeDeleteHelmRepository(t, tc.request.Name, tc.request.Context.Namespace)
+				if err != nil {
+					t.Logf("Failed to delete helm source due to [%v]", err)
+				}
+			})
+
+			ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+			_, err := fluxPluginReposClient.AddPackageRepository(ctx, tc.request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// TODO: wait for reconcile. To do it properly, we need "R" in CRUD to be
+			// designed and implemented
+		})
+	}
+}
+
+func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
 	err := kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "")

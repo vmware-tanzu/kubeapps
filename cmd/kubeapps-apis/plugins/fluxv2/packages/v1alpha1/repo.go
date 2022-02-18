@@ -13,8 +13,9 @@ import (
 	"strings"
 	"time"
 
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
@@ -38,6 +39,11 @@ const (
 	// https://fluxcd.io/docs/components/helm/api/
 	fluxHelmRepositories   = "helmrepositories"
 	fluxHelmRepositoryList = "HelmRepositoryList"
+)
+
+var (
+	// default poll interval is 10 min
+	defaultPollInterval = metav1.Duration{Duration: 10 * time.Minute}
 )
 
 // namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
@@ -161,6 +167,75 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.Namesp
 	return sink.clientOptionsForRepo(ctx, *repo)
 }
 
+func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, url string, interval uint32, tlsConfig *corev1.PackageRepositoryTlsConfig) error {
+	if url == "" {
+		return status.Errorf(codes.InvalidArgument, "repository url may not be empty")
+	}
+
+	var secret *apiv1.Secret
+	if tlsConfig != nil {
+		if tlsConfig.InsecureSkipVerify {
+			return status.Errorf(codes.Unimplemented, "TLS flag insecureSkipVerify is not supported")
+		}
+		caCert := tlsConfig.GetCertAuthority()
+		if caCert != "" {
+			secret = newLocalTlsSecret(targetName.Name+"-", []byte(caCert))
+		}
+	}
+
+	// create a secret first, if applicable
+	secretRef := ""
+	if secret != nil {
+		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+			return err
+		} else if secret, err = typedClient.CoreV1().Secrets(targetName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
+			return statuserror.FromK8sError("create", "secret", secret.GetName(), err)
+		} else {
+			secretRef = secret.GetName()
+		}
+	} else if tlsConfig != nil && tlsConfig.GetSecretRef().GetName() != "" {
+		secretRef = tlsConfig.GetSecretRef().GetName()
+	}
+
+	if fluxRepo, err := s.newFluxHelmRepo(targetName, url, interval, secretRef); err != nil {
+		return err
+	} else if client, err := s.getClient(ctx, targetName.Namespace); err != nil {
+		return err
+	} else if err = client.Create(ctx, fluxRepo); err != nil {
+		return statuserror.FromK8sError("create", "HelmRepository", targetName.String(), err)
+	}
+
+	return nil
+}
+
+// ref https://fluxcd.io/docs/components/source/helmrepositories/
+func (s *Server) newFluxHelmRepo(targetName types.NamespacedName, url string, interval uint32, secretRef string) (*sourcev1.HelmRepository, error) {
+	pollInterval := defaultPollInterval
+	if interval > 0 {
+		pollInterval = metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	}
+	fluxRepo := &sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      targetName.Name,
+			Namespace: targetName.Namespace,
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      url,
+			Interval: pollInterval,
+		},
+	}
+	if secretRef != "" {
+		fluxRepo.Spec.SecretRef = &fluxmeta.LocalObjectReference{
+			Name: secretRef,
+		}
+	}
+	return fluxRepo, nil
+}
+
 //
 // implements plug-in specific cache-related functionality
 //
@@ -247,11 +322,6 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Chart, error) {
 	startTime := time.Now()
 
-	pkgRepo, err := packageRepositoryFromFlux(repo)
-	if err != nil {
-		return nil, err
-	}
-
 	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 	indexUrl := repo.Status.URL
 	if indexUrl == "" {
@@ -276,9 +346,9 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 	}
 
 	modelRepo := &models.Repo{
-		Namespace: pkgRepo.Namespace,
-		Name:      pkgRepo.Name,
-		URL:       pkgRepo.Url,
+		Namespace: repo.Namespace,
+		Name:      repo.Name,
+		URL:       indexUrl,
 		Type:      "helm",
 	}
 
@@ -444,26 +514,6 @@ func isRepoReady(repo sourcev1.HelmRepository) bool {
 	return completed && success
 }
 
-func packageRepositoryFromFlux(repo sourcev1.HelmRepository) (*v1alpha1.PackageRepository, error) {
-	name, err := common.NamespacedName(&repo)
-	if err != nil {
-		return nil, err
-	}
-
-	url := repo.Spec.URL
-	if url == "" {
-		return nil, status.Errorf(
-			codes.Internal,
-			"required field spec.url not found on HelmRepository:\n%s",
-			common.PrettyPrint(repo))
-	}
-	return &v1alpha1.PackageRepository{
-		Name:      name.Name,
-		Namespace: name.Namespace,
-		Url:       url,
-	}, nil
-}
-
 // returns 3 things:
 // - complete whether the operation was completed
 // - success (only applicable when complete == true) whether the operation was successful or failed
@@ -498,4 +548,21 @@ func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success
 		}
 	}
 	return false, false, reason
+}
+
+// Note that according to https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
+// TLS secrets need to look one way, but according to
+// https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
+// in a different format:
+// certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
+func newLocalTlsSecret(name string, ca []byte) *apiv1.Secret {
+	return &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: name,
+		},
+		Type: apiv1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"caFile": ca,
+		},
+	}
 }

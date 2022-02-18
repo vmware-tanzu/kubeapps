@@ -65,7 +65,7 @@ func TestPluginsAvailable(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ps := pluginsServer{
+			ps := PluginsServer{
 				pluginsWithServers: tc.configuredPlugins,
 			}
 
