@@ -1294,7 +1294,6 @@ func TestAddPackageRepository(t *testing.T) {
 					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
 						SecretRef: &corev1.SecretKeyReference{
 							Name: "secret-1",
-							Key:  "bar",
 						},
 					},
 				},

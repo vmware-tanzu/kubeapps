@@ -93,15 +93,9 @@ export interface ListValue {
 const baseStruct: object = {};
 
 export const Struct = {
-  encode(
-    message: Struct,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
+  encode(message: Struct, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     Object.entries(message.fields).forEach(([key, value]) => {
-      Struct_FieldsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(10).fork()
-      ).ldelim();
+      Struct_FieldsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).ldelim();
     });
     return writer;
   },
@@ -167,10 +161,7 @@ export const Struct = {
 const baseStruct_FieldsEntry: object = { key: "" };
 
 export const Struct_FieldsEntry = {
-  encode(
-    message: Struct_FieldsEntry,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
+  encode(message: Struct_FieldsEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -337,22 +328,14 @@ export const Value = {
     const obj: any = {};
     message.nullValue !== undefined &&
       (obj.nullValue =
-        message.nullValue !== undefined
-          ? nullValueToJSON(message.nullValue)
-          : undefined);
-    message.numberValue !== undefined &&
-      (obj.numberValue = message.numberValue);
-    message.stringValue !== undefined &&
-      (obj.stringValue = message.stringValue);
+        message.nullValue !== undefined ? nullValueToJSON(message.nullValue) : undefined);
+    message.numberValue !== undefined && (obj.numberValue = message.numberValue);
+    message.stringValue !== undefined && (obj.stringValue = message.stringValue);
     message.boolValue !== undefined && (obj.boolValue = message.boolValue);
     message.structValue !== undefined &&
-      (obj.structValue = message.structValue
-        ? Struct.toJSON(message.structValue)
-        : undefined);
+      (obj.structValue = message.structValue ? Struct.toJSON(message.structValue) : undefined);
     message.listValue !== undefined &&
-      (obj.listValue = message.listValue
-        ? ListValue.toJSON(message.listValue)
-        : undefined);
+      (obj.listValue = message.listValue ? ListValue.toJSON(message.listValue) : undefined);
     return obj;
   },
 
@@ -395,10 +378,7 @@ export const Value = {
 const baseListValue: object = {};
 
 export const ListValue = {
-  encode(
-    message: ListValue,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
+  encode(message: ListValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     for (const v of message.values) {
       Value.encode(v!, writer.uint32(10).fork()).ldelim();
     }
@@ -438,7 +418,7 @@ export const ListValue = {
   toJSON(message: ListValue): unknown {
     const obj: any = {};
     if (message.values) {
-      obj.values = message.values.map((e) => (e ? Value.toJSON(e) : undefined));
+      obj.values = message.values.map(e => (e ? Value.toJSON(e) : undefined));
     } else {
       obj.values = [];
     }
@@ -457,14 +437,7 @@ export const ListValue = {
   },
 };
 
-type Builtin =
-  | Date
-  | Function
-  | Uint8Array
-  | string
-  | number
-  | boolean
-  | undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>

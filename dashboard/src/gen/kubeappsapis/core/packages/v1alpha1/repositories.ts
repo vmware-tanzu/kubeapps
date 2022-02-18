@@ -112,7 +112,7 @@ const baseAddPackageRepositoryRequest: object = {
 export const AddPackageRepositoryRequest = {
   encode(
     message: AddPackageRepositoryRequest,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
@@ -136,10 +136,7 @@ export const AddPackageRepositoryRequest = {
       writer.uint32(56).uint32(message.interval);
     }
     if (message.tlsConfig !== undefined) {
-      PackageRepositoryTlsConfig.encode(
-        message.tlsConfig,
-        writer.uint32(66).fork()
-      ).ldelim();
+      PackageRepositoryTlsConfig.encode(message.tlsConfig, writer.uint32(66).fork()).ldelim();
     }
     if (message.plugin !== undefined) {
       Plugin.encode(message.plugin, writer.uint32(82).fork()).ldelim();
@@ -147,10 +144,7 @@ export const AddPackageRepositoryRequest = {
     return writer;
   },
 
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): AddPackageRepositoryRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): AddPackageRepositoryRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -181,10 +175,7 @@ export const AddPackageRepositoryRequest = {
           message.interval = reader.uint32();
           break;
         case 8:
-          message.tlsConfig = PackageRepositoryTlsConfig.decode(
-            reader,
-            reader.uint32()
-          );
+          message.tlsConfig = PackageRepositoryTlsConfig.decode(reader, reader.uint32());
           break;
         case 10:
           message.plugin = Plugin.decode(reader, reader.uint32());
@@ -216,10 +207,7 @@ export const AddPackageRepositoryRequest = {
     } else {
       message.description = "";
     }
-    if (
-      object.namespaceScoped !== undefined &&
-      object.namespaceScoped !== null
-    ) {
+    if (object.namespaceScoped !== undefined && object.namespaceScoped !== null) {
       message.namespaceScoped = Boolean(object.namespaceScoped);
     } else {
       message.namespaceScoped = false;
@@ -255,14 +243,10 @@ export const AddPackageRepositoryRequest = {
   toJSON(message: AddPackageRepositoryRequest): unknown {
     const obj: any = {};
     message.context !== undefined &&
-      (obj.context = message.context
-        ? Context.toJSON(message.context)
-        : undefined);
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     message.name !== undefined && (obj.name = message.name);
-    message.description !== undefined &&
-      (obj.description = message.description);
-    message.namespaceScoped !== undefined &&
-      (obj.namespaceScoped = message.namespaceScoped);
+    message.description !== undefined && (obj.description = message.description);
+    message.namespaceScoped !== undefined && (obj.namespaceScoped = message.namespaceScoped);
     message.type !== undefined && (obj.type = message.type);
     message.url !== undefined && (obj.url = message.url);
     message.interval !== undefined && (obj.interval = message.interval);
@@ -275,9 +259,7 @@ export const AddPackageRepositoryRequest = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<AddPackageRepositoryRequest>
-  ): AddPackageRepositoryRequest {
+  fromPartial(object: DeepPartial<AddPackageRepositoryRequest>): AddPackageRepositoryRequest {
     const message = {
       ...baseAddPackageRepositoryRequest,
     } as AddPackageRepositoryRequest;
@@ -296,10 +278,7 @@ export const AddPackageRepositoryRequest = {
     } else {
       message.description = "";
     }
-    if (
-      object.namespaceScoped !== undefined &&
-      object.namespaceScoped !== null
-    ) {
+    if (object.namespaceScoped !== undefined && object.namespaceScoped !== null) {
       message.namespaceScoped = object.namespaceScoped;
     } else {
       message.namespaceScoped = false;
@@ -320,9 +299,7 @@ export const AddPackageRepositoryRequest = {
       message.interval = 0;
     }
     if (object.tlsConfig !== undefined && object.tlsConfig !== null) {
-      message.tlsConfig = PackageRepositoryTlsConfig.fromPartial(
-        object.tlsConfig
-      );
+      message.tlsConfig = PackageRepositoryTlsConfig.fromPartial(object.tlsConfig);
     } else {
       message.tlsConfig = undefined;
     }
@@ -340,7 +317,7 @@ const basePackageRepositoryTlsConfig: object = { insecureSkipVerify: false };
 export const PackageRepositoryTlsConfig = {
   encode(
     message: PackageRepositoryTlsConfig,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.insecureSkipVerify === true) {
       writer.uint32(8).bool(message.insecureSkipVerify);
@@ -349,18 +326,12 @@ export const PackageRepositoryTlsConfig = {
       writer.uint32(18).string(message.certAuthority);
     }
     if (message.secretRef !== undefined) {
-      SecretKeyReference.encode(
-        message.secretRef,
-        writer.uint32(26).fork()
-      ).ldelim();
+      SecretKeyReference.encode(message.secretRef, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): PackageRepositoryTlsConfig {
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryTlsConfig {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -376,10 +347,7 @@ export const PackageRepositoryTlsConfig = {
           message.certAuthority = reader.string();
           break;
         case 3:
-          message.secretRef = SecretKeyReference.decode(
-            reader,
-            reader.uint32()
-          );
+          message.secretRef = SecretKeyReference.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -393,10 +361,7 @@ export const PackageRepositoryTlsConfig = {
     const message = {
       ...basePackageRepositoryTlsConfig,
     } as PackageRepositoryTlsConfig;
-    if (
-      object.insecureSkipVerify !== undefined &&
-      object.insecureSkipVerify !== null
-    ) {
+    if (object.insecureSkipVerify !== undefined && object.insecureSkipVerify !== null) {
       message.insecureSkipVerify = Boolean(object.insecureSkipVerify);
     } else {
       message.insecureSkipVerify = false;
@@ -418,8 +383,7 @@ export const PackageRepositoryTlsConfig = {
     const obj: any = {};
     message.insecureSkipVerify !== undefined &&
       (obj.insecureSkipVerify = message.insecureSkipVerify);
-    message.certAuthority !== undefined &&
-      (obj.certAuthority = message.certAuthority);
+    message.certAuthority !== undefined && (obj.certAuthority = message.certAuthority);
     message.secretRef !== undefined &&
       (obj.secretRef = message.secretRef
         ? SecretKeyReference.toJSON(message.secretRef)
@@ -427,16 +391,11 @@ export const PackageRepositoryTlsConfig = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<PackageRepositoryTlsConfig>
-  ): PackageRepositoryTlsConfig {
+  fromPartial(object: DeepPartial<PackageRepositoryTlsConfig>): PackageRepositoryTlsConfig {
     const message = {
       ...basePackageRepositoryTlsConfig,
     } as PackageRepositoryTlsConfig;
-    if (
-      object.insecureSkipVerify !== undefined &&
-      object.insecureSkipVerify !== null
-    ) {
+    if (object.insecureSkipVerify !== undefined && object.insecureSkipVerify !== null) {
       message.insecureSkipVerify = object.insecureSkipVerify;
     } else {
       message.insecureSkipVerify = false;
@@ -458,10 +417,7 @@ export const PackageRepositoryTlsConfig = {
 const baseSecretKeyReference: object = { name: "", key: "" };
 
 export const SecretKeyReference = {
-  encode(
-    message: SecretKeyReference,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
+  encode(message: SecretKeyReference, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
@@ -533,17 +489,11 @@ export const SecretKeyReference = {
 const baseAddPackageRepositoryResponse: object = {};
 
 export const AddPackageRepositoryResponse = {
-  encode(
-    _: AddPackageRepositoryResponse,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
+  encode(_: AddPackageRepositoryResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     return writer;
   },
 
-  decode(
-    input: _m0.Reader | Uint8Array,
-    length?: number
-  ): AddPackageRepositoryResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): AddPackageRepositoryResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = {
@@ -572,9 +522,7 @@ export const AddPackageRepositoryResponse = {
     return obj;
   },
 
-  fromPartial(
-    _: DeepPartial<AddPackageRepositoryResponse>
-  ): AddPackageRepositoryResponse {
+  fromPartial(_: DeepPartial<AddPackageRepositoryResponse>): AddPackageRepositoryResponse {
     const message = {
       ...baseAddPackageRepositoryResponse,
     } as AddPackageRepositoryResponse;
@@ -586,7 +534,7 @@ export const AddPackageRepositoryResponse = {
 export interface RepositoriesService {
   AddPackageRepository(
     request: DeepPartial<AddPackageRepositoryRequest>,
-    metadata?: grpc.Metadata
+    metadata?: grpc.Metadata,
   ): Promise<AddPackageRepositoryResponse>;
 }
 
@@ -600,12 +548,12 @@ export class RepositoriesServiceClientImpl implements RepositoriesService {
 
   AddPackageRepository(
     request: DeepPartial<AddPackageRepositoryRequest>,
-    metadata?: grpc.Metadata
+    metadata?: grpc.Metadata,
   ): Promise<AddPackageRepositoryResponse> {
     return this.rpc.unary(
       RepositoriesServiceAddPackageRepositoryDesc,
       AddPackageRepositoryRequest.fromPartial(request),
-      metadata
+      metadata,
     );
   }
 }
@@ -614,31 +562,29 @@ export const RepositoriesServiceDesc = {
   serviceName: "kubeappsapis.core.packages.v1alpha1.RepositoriesService",
 };
 
-export const RepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefinitionish =
-  {
-    methodName: "AddPackageRepository",
-    service: RepositoriesServiceDesc,
-    requestStream: false,
-    responseStream: false,
-    requestType: {
-      serializeBinary() {
-        return AddPackageRepositoryRequest.encode(this).finish();
-      },
-    } as any,
-    responseType: {
-      deserializeBinary(data: Uint8Array) {
-        return {
-          ...AddPackageRepositoryResponse.decode(data),
-          toObject() {
-            return this;
-          },
-        };
-      },
-    } as any,
-  };
+export const RepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "AddPackageRepository",
+  service: RepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return AddPackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...AddPackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
 
-interface UnaryMethodDefinitionishR
-  extends grpc.UnaryMethodDefinition<any, any> {
+interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
@@ -649,7 +595,7 @@ interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     request: any,
-    metadata: grpc.Metadata | undefined
+    metadata: grpc.Metadata | undefined,
   ): Promise<any>;
 }
 
@@ -669,7 +615,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-    }
+    },
   ) {
     this.host = host;
     this.options = options;
@@ -678,7 +624,7 @@ export class GrpcWebImpl {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
     _request: any,
-    metadata: grpc.Metadata | undefined
+    metadata: grpc.Metadata | undefined,
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -710,14 +656,7 @@ export class GrpcWebImpl {
   }
 }
 
-type Builtin =
-  | Date
-  | Function
-  | Uint8Array
-  | string
-  | number
-  | boolean
-  | undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
