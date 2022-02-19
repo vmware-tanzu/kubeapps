@@ -550,7 +550,8 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		return nil, status.Errorf(codes.Unimplemented, "repository type [%s] not supported", request.GetType())
 	}
 
-	if err := s.newRepo(ctx, name, request.GetUrl(), request.GetInterval(), request.GetTlsConfig()); err != nil {
+	if err := s.newRepo(ctx, name, request.GetUrl(),
+		request.GetInterval(), request.GetTlsConfig(), request.GetAuth()); err != nil {
 		return nil, err
 	} else {
 		return &corev1.AddPackageRepositoryResponse{}, nil

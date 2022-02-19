@@ -66,6 +66,9 @@ message AddPackageRepositoryRequest {
   // TLS-specific parameters for connecting to a repository. Optional 
   PackageRepositoryTlsConfig tls_config = 8;
 
+  // authentication parameters for connecting to a repository. Optional 
+  PackageRepositoryAuth auth = 9;
+
   // The plugin used to interact with this package repository.
   // This field should be omitted when the request is in the context of a
   // specific plugin.
@@ -87,6 +90,95 @@ message PackageRepositoryTlsConfig {
     // a reference to an existing secret that contains custom CA
     SecretKeyReference secret_ref = 3;
   }
+}
+
+// PackageRepositoryAuth
+//
+// Authentication/authorization to provide client’s identity when connecting
+// to a package repository.
+// There are 6 total distinct use cases we may support:
+// 1) None (Public)
+// 2) Basic Auth
+// 3) Bearer Token 
+// 4) Custom Authorization Header
+// 5) Docker Registry Credentials (for OCI only)
+// 6) TLS certificate and key
+// 
+// Note that (1)-(4) may be done over HTTP or HTTPs without any custom 
+// certificates or certificate authority 
+// (1) is handled by not not having PackageRepositoryAuth field on
+//     the parent object
+// a given plug-in may or may not support a given authentication type. 
+// For example
+//  - direct-helm plug-in does not currently support (6), while flux does
+//  - flux plug-in does not support (3) or (4) while direct-helm does 
+message PackageRepositoryAuth {
+  enum PackageRepositoryAuthType {
+    BASIC_AUTH = 0;
+    TLS = 1;
+    BEARER = 2;
+    CUSTOM = 3;
+    DOCKER_CONFIG_JSON = 4;
+  }
+  PackageRepositoryAuthType type = 1;
+  
+  oneof package_repo_auth_one_of {
+    // username and plain text password
+    UsernamePassword username_password = 2;
+    
+    // certificate and key for TLS-based authentication
+    TlsCertKey tls_cert_key = 3;
+
+    // docker credentials
+    DockerCredentials docker_creds = 4;
+
+    // for Bearer Auth token value
+    // for Custom Auth, complete value of "Authorization" header
+    string header = 5; 
+
+    // a reference to an existing secret
+    SecretKeyReference secret_ref = 6;
+  }
+
+  // pass_credentials allows the credentials from the SecretRef to be passed
+  // on to a host that does not match the host as defined in URL.
+  // This flag controls whether or not it is allowed to passing credentials
+  // with requests to other domains linked from the repository.
+  // This may be needed if the host of the advertised chart URLs in the
+  // index differs from the defined URL. Optional
+  bool pass_credentials = 7;
+}
+
+
+// UsernamePassword
+//
+message UsernamePassword {
+  // In clear text
+  string username = 1;
+  // In clear text
+  string password = 2;
+}
+
+// TlsCertKey
+//
+message TlsCertKey {
+  // certificate (identity). In clear text
+  string cert = 1;
+  // certificate key. In clear text
+  string key = 2;
+}
+
+// DockerCredentials
+//
+message DockerCredentials {
+  // server name
+  string server = 1;
+  // username.
+  string username = 2;
+  // password. In clear text
+  string password = 3;
+  // email address
+  string email = 4;
 }
 
 // SecretKeyReference

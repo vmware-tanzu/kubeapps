@@ -23,6 +23,7 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1191,18 +1192,25 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 
 func TestAddPackageRepository(t *testing.T) {
 
-	ca, err := ioutil.ReadFile("testdata/rootCA.crt")
-	if err != nil {
-		t.Fatal(err)
+	var ca, pub, priv []byte
+	var err error
+	if ca, err = ioutil.ReadFile("testdata/rootCA.crt"); err != nil {
+		t.Fatalf("%+v", err)
+	} else if pub, err = ioutil.ReadFile("testdata/crt.pem"); err != nil {
+		t.Fatalf("%+v", err)
+	} else if priv, err = ioutil.ReadFile("testdata/key.pem"); err != nil {
+		t.Fatalf("%+v", err)
 	}
+	ca = ca
 
 	testCases := []struct {
-		name             string
-		request          *corev1.AddPackageRepositoryRequest
-		expectedResponse *corev1.AddPackageRepositoryResponse
-		expectedRepo     *sourcev1.HelmRepository
-		statusCode       codes.Code
-		secretExists     bool
+		name                  string
+		request               *corev1.AddPackageRepositoryRequest
+		expectedResponse      *corev1.AddPackageRepositoryResponse
+		expectedRepo          *sourcev1.HelmRepository
+		statusCode            codes.Code
+		existingSecret        *apiv1.Secret
+		expectedCreatedSecret *apiv1.Secret
 	}{
 		{
 			name:       "returns error if no namespace is provided",
@@ -1279,9 +1287,10 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{},
-			expectedRepo:     &add_repo_2,
-			statusCode:       codes.OK,
+			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newTlsSecret("bar-", "foo", nil, nil, ca),
+			statusCode:            codes.OK,
 		},
 		{
 			name: "package repository with secret key reference",
@@ -1301,25 +1310,166 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse: &corev1.AddPackageRepositoryResponse{},
 			expectedRepo:     &add_repo_3,
 			statusCode:       codes.OK,
-			secretExists:     true,
+			existingSecret:   newTlsSecret("secret-1", "foo", nil, nil, ca),
+		},
+		{
+			name: "failes when package repository links to non-existing secret",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
+				},
+			},
+			statusCode: codes.NotFound,
+		},
+		{
+			name: "package repository with basic auth",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+						UsernamePassword: &corev1.UsernamePassword{
+							Username: "baz",
+							Password: "zot",
+						},
+					},
+				},
+			},
+			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newBasicAuthSecret("bar-", "foo", "baz", "zot"),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "package repository with TLS authentication",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_TLS,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
+						TlsCertKey: &corev1.TlsCertKey{
+							Cert: string(pub),
+							Key:  string(priv),
+						},
+					},
+				},
+			},
+			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newTlsSecret("bar-", "foo", pub, priv, nil),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "errors for package repository with bearer token",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foobarzot",
+					},
+				},
+			},
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "errors for package repository with custom auth token",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foobarzot",
+					},
+				},
+			},
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "package repository with docker config JSON authentication",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_DOCKER_CONFIG_JSON,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+						DockerCreds: &corev1.DockerCredentials{
+							Server:   "your.private.registry.example.com",
+							Username: "janedoe",
+							Password: "xxxxxxxx",
+							Email:    "jdoe@example.com",
+						},
+					},
+				},
+			},
+			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newDockerConfigJSONSecret("bar-", "foo", "your.private.registry.example.com", "janedoe", "xxxxxxxx", "jdoe@example.com"),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "package repository with basic auth and existing secret",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
+				},
+			},
+			expectedResponse: &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:     &add_repo_3,
+			existingSecret:   newBasicAuthSecret("secret-1", "foo", "baz", "zot"),
+			statusCode:       codes.OK,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			secrets := []runtime.Object{}
-			if tc.secretExists {
-				secret := newTlsSecret(
-					tc.request.TlsConfig.GetSecretRef().Name,
-					tc.request.Context.Namespace,
-					nil,
-					nil,
-					ca)
-				secrets = append(secrets, secret)
+			if tc.existingSecret != nil {
+				secrets = append(secrets, tc.existingSecret)
 			}
 			s, mock, err := newServerWithRepos(t, nil, nil, secrets)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
+			if tc.statusCode == codes.OK {
+				key, err := redisKeyForRepoNamespacedName(nsname)
+				if err != nil {
+					t.Fatal(err)
+				}
+				mock.ExpectGet(key).RedisNil()
 			}
 
 			ctx := context.Background()
@@ -1343,9 +1493,10 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 			}
 
-			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
-			}
+			// purposefully not calling mock.ExpectationsWereMet() here because
+			// AddPackageRepository will trigger an ADD event that will be processed
+			// asynchronously, so it may or may not have enough time to get to the
+			// point where the cache worker does a GET
 
 			// We don't need to check anything else for non-OK codes.
 			if tc.statusCode != codes.OK {
@@ -1356,29 +1507,33 @@ func TestAddPackageRepository(t *testing.T) {
 			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {
-				key := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
 				var actualRepo sourcev1.HelmRepository
-				if err = ctrlClient.Get(ctx, key, &actualRepo); err != nil {
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
 					t.Fatal(err)
 				} else {
 					opt1 := cmpopts.IgnoreFields(sourcev1.HelmRepositorySpec{}, "SecretRef")
 
 					if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got, opt1) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, opt1))
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 
-					if tc.expectedRepo.Spec.SecretRef != nil {
+					if tc.expectedCreatedSecret != nil {
 						if !strings.HasPrefix(actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name) {
 							t.Errorf("SecretRef [%s] was expected to start with [%s]",
 								actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name)
 						}
-						if !tc.secretExists {
-							// check expected secret has been created
-							if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-								t.Fatal(err)
-							} else if _, err := typedClient.CoreV1().Secrets(key.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
-								t.Fatal(err)
-							}
+						opt1 := cmpopts.IgnoreFields(
+							metav1.ObjectMeta{}, "Name", "GenerateName")
+						// check expected secret has been created
+						if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+							t.Fatal(err)
+						} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
+							t.Fatal(err)
+						} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt1) {
+							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+						} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
+							t.Errorf("Secret Name [%s] was expected to start with [%s]",
+								secret.Name, tc.expectedCreatedSecret.Name)
 						}
 					}
 				}

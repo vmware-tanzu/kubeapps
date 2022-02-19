@@ -2879,6 +2879,17 @@
       "description": "Generic reasons why an installed package may be ready or not.\nThese should make sense across different packaging plugins.",
       "title": "StatusReason"
     },
+    "PackageRepositoryAuthPackageRepositoryAuthType": {
+      "type": "string",
+      "enum": [
+        "BASIC_AUTH",
+        "TLS",
+        "BEARER",
+        "CUSTOM",
+        "DOCKER_CONFIG_JSON"
+      ],
+      "default": "BASIC_AUTH"
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -2947,6 +2958,10 @@
         "tlsConfig": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
           "title": "TLS-specific parameters for connecting to a repository. Optional"
+        },
+        "auth": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+          "title": "authentication parameters for connecting to a repository. Optional"
         },
         "plugin": {
           "$ref": "#/definitions/v1alpha1Plugin",
@@ -3201,6 +3216,28 @@
       "type": "object",
       "description": "Response for DeleteInstalledPackage",
       "title": "DeleteInstalledPackageResponse"
+    },
+    "v1alpha1DockerCredentials": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "type": "string",
+          "title": "server name"
+        },
+        "username": {
+          "type": "string",
+          "description": "username."
+        },
+        "password": {
+          "type": "string",
+          "title": "password. In clear text"
+        },
+        "email": {
+          "type": "string",
+          "title": "email address"
+        }
+      },
+      "title": "DockerCredentials"
     },
     "v1alpha1FilterOptions": {
       "type": "object",
@@ -3677,6 +3714,40 @@
       "description": "A PackageRepository defines a repository of packages for installation.",
       "title": "PackageRepository"
     },
+    "v1alpha1PackageRepositoryAuth": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/PackageRepositoryAuthPackageRepositoryAuthType"
+        },
+        "usernamePassword": {
+          "$ref": "#/definitions/v1alpha1UsernamePassword",
+          "title": "username and plain text password"
+        },
+        "tlsCertKey": {
+          "$ref": "#/definitions/v1alpha1TlsCertKey",
+          "title": "certificate and key for TLS-based authentication"
+        },
+        "dockerCreds": {
+          "$ref": "#/definitions/v1alpha1DockerCredentials",
+          "title": "docker credentials"
+        },
+        "header": {
+          "type": "string",
+          "title": "for Bearer Auth token value\nfor Custom Auth, complete value of \"Authorization\" header"
+        },
+        "secretRef": {
+          "$ref": "#/definitions/v1alpha1SecretKeyReference",
+          "title": "a reference to an existing secret"
+        },
+        "passCredentials": {
+          "type": "boolean",
+          "title": "pass_credentials allows the credentials from the SecretRef to be passed\non to a host that does not match the host as defined in URL.\nThis flag controls whether or not it is allowed to passing credentials\nwith requests to other domains linked from the repository.\nThis may be needed if the host of the advertised chart URLs in the\nindex differs from the defined URL. Optional"
+        }
+      },
+      "description": "Authentication/authorization to provide client’s identity when connecting\nto a package repository.\nThere are 6 total distinct use cases we may support:\n1) None (Public)\n2) Basic Auth\n3) Bearer Token \n4) Custom Authorization Header\n5) Docker Registry Credentials (for OCI only)\n6) TLS certificate and key\n\nNote that (1)-(4) may be done over HTTP or HTTPs without any custom \ncertificates or certificate authority \n(1) is handled by not not having PackageRepositoryAuth field on\n    the parent object\na given plug-in may or may not support a given authentication type. \nFor example\n - direct-helm plug-in does not currently support (6), while flux does\n - flux plug-in does not support (3) or (4) while direct-helm does",
+      "title": "PackageRepositoryAuth"
+    },
     "v1alpha1PackageRepositoryTlsConfig": {
       "type": "object",
       "properties": {
@@ -3812,7 +3883,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "title": "The name of an existing secret in the pod namespace containing \nauthentication credentials for the package repository.\n- For HTTP/S basic auth the secret must be of type \n  \"kubernetes.io/basic-auth\" and contain username and\n  password fields.\n- For TLS the secret must be of type \"kubernetes.io/tls\" \n  contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and \n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson”\nFor more details, refer to \nhttps://kubernetes.io/docs/concepts/configuration/secret/"
+          "title": "The name of an existing secret in the same namespace as the object \nthat refers to it (e.g. PackageRepository), containing authentication \ncredentials for the said package repository.\n- For HTTP/S basic auth the secret must be of type \n  \"kubernetes.io/basic-auth\" and contain username and\n  password fields.\n- For TLS the secret must be of type \"kubernetes.io/tls\" \n  contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and \n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson”\nFor more details, refer to \nhttps://kubernetes.io/docs/concepts/configuration/secret/"
         },
         "key": {
           "type": "string",
@@ -3836,6 +3907,20 @@
       "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
       "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
       "title": "SecretType"
+    },
+    "v1alpha1TlsCertKey": {
+      "type": "object",
+      "properties": {
+        "cert": {
+          "type": "string",
+          "title": "certificate (identity). In clear text"
+        },
+        "key": {
+          "type": "string",
+          "title": "certificate key. In clear text"
+        }
+      },
+      "title": "TlsCertKey"
     },
     "v1alpha1UpdateInstalledPackageRequest": {
       "type": "object",
@@ -3869,6 +3954,20 @@
       },
       "description": "Response for UpdateInstalledPackage",
       "title": "UpdateInstalledPackageResponse"
+    },
+    "v1alpha1UsernamePassword": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "In clear text"
+        },
+        "password": {
+          "type": "string",
+          "title": "In clear text"
+        }
+      },
+      "title": "UsernamePassword"
     },
     "v1alpha1VersionReference": {
       "type": "object",

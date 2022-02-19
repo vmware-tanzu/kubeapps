@@ -48,6 +48,8 @@ export interface AddPackageRepositoryRequest {
   interval: number;
   /** TLS-specific parameters for connecting to a repository. Optional */
   tlsConfig?: PackageRepositoryTlsConfig;
+  /** authentication parameters for connecting to a repository. Optional */
+  auth?: PackageRepositoryAuth;
   /**
    * The plugin used to interact with this package repository.
    * This field should be omitted when the request is in the context of a
@@ -70,11 +72,142 @@ export interface PackageRepositoryTlsConfig {
   secretRef?: SecretKeyReference | undefined;
 }
 
+/**
+ * PackageRepositoryAuth
+ *
+ * Authentication/authorization to provide client’s identity when connecting
+ * to a package repository.
+ * There are 6 total distinct use cases we may support:
+ * 1) None (Public)
+ * 2) Basic Auth
+ * 3) Bearer Token
+ * 4) Custom Authorization Header
+ * 5) Docker Registry Credentials (for OCI only)
+ * 6) TLS certificate and key
+ *
+ * Note that (1)-(4) may be done over HTTP or HTTPs without any custom
+ * certificates or certificate authority
+ * (1) is handled by not not having PackageRepositoryAuth field on
+ *     the parent object
+ * a given plug-in may or may not support a given authentication type.
+ * For example
+ *  - direct-helm plug-in does not currently support (6), while flux does
+ *  - flux plug-in does not support (3) or (4) while direct-helm does
+ */
+export interface PackageRepositoryAuth {
+  type: PackageRepositoryAuth_PackageRepositoryAuthType;
+  /** username and plain text password */
+  usernamePassword?: UsernamePassword | undefined;
+  /** certificate and key for TLS-based authentication */
+  tlsCertKey?: TlsCertKey | undefined;
+  /** docker credentials */
+  dockerCreds?: DockerCredentials | undefined;
+  /**
+   * for Bearer Auth token value
+   * for Custom Auth, complete value of "Authorization" header
+   */
+  header: string | undefined;
+  /** a reference to an existing secret */
+  secretRef?: SecretKeyReference | undefined;
+  /**
+   * pass_credentials allows the credentials from the SecretRef to be passed
+   * on to a host that does not match the host as defined in URL.
+   * This flag controls whether or not it is allowed to passing credentials
+   * with requests to other domains linked from the repository.
+   * This may be needed if the host of the advertised chart URLs in the
+   * index differs from the defined URL. Optional
+   */
+  passCredentials: boolean;
+}
+
+export enum PackageRepositoryAuth_PackageRepositoryAuthType {
+  BASIC_AUTH = 0,
+  TLS = 1,
+  BEARER = 2,
+  CUSTOM = 3,
+  DOCKER_CONFIG_JSON = 4,
+  UNRECOGNIZED = -1,
+}
+
+export function packageRepositoryAuth_PackageRepositoryAuthTypeFromJSON(
+  object: any,
+): PackageRepositoryAuth_PackageRepositoryAuthType {
+  switch (object) {
+    case 0:
+    case "BASIC_AUTH":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH;
+    case 1:
+    case "TLS":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.TLS;
+    case 2:
+    case "BEARER":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.BEARER;
+    case 3:
+    case "CUSTOM":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.CUSTOM;
+    case 4:
+    case "DOCKER_CONFIG_JSON":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED;
+  }
+}
+
+export function packageRepositoryAuth_PackageRepositoryAuthTypeToJSON(
+  object: PackageRepositoryAuth_PackageRepositoryAuthType,
+): string {
+  switch (object) {
+    case PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH:
+      return "BASIC_AUTH";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.TLS:
+      return "TLS";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.BEARER:
+      return "BEARER";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.CUSTOM:
+      return "CUSTOM";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON:
+      return "DOCKER_CONFIG_JSON";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+/** UsernamePassword */
+export interface UsernamePassword {
+  /** In clear text */
+  username: string;
+  /** In clear text */
+  password: string;
+}
+
+/** TlsCertKey */
+export interface TlsCertKey {
+  /** certificate (identity). In clear text */
+  cert: string;
+  /** certificate key. In clear text */
+  key: string;
+}
+
+/** DockerCredentials */
+export interface DockerCredentials {
+  /** server name */
+  server: string;
+  /** username. */
+  username: string;
+  /** password. In clear text */
+  password: string;
+  /** email address */
+  email: string;
+}
+
 /** SecretKeyReference */
 export interface SecretKeyReference {
   /**
-   * The name of an existing secret in the pod namespace containing
-   * authentication credentials for the package repository.
+   * The name of an existing secret in the same namespace as the object
+   * that refers to it (e.g. PackageRepository), containing authentication
+   * credentials for the said package repository.
    * - For HTTP/S basic auth the secret must be of type
    *   "kubernetes.io/basic-auth" and contain username and
    *   password fields.
@@ -138,6 +271,9 @@ export const AddPackageRepositoryRequest = {
     if (message.tlsConfig !== undefined) {
       PackageRepositoryTlsConfig.encode(message.tlsConfig, writer.uint32(66).fork()).ldelim();
     }
+    if (message.auth !== undefined) {
+      PackageRepositoryAuth.encode(message.auth, writer.uint32(74).fork()).ldelim();
+    }
     if (message.plugin !== undefined) {
       Plugin.encode(message.plugin, writer.uint32(82).fork()).ldelim();
     }
@@ -176,6 +312,9 @@ export const AddPackageRepositoryRequest = {
           break;
         case 8:
           message.tlsConfig = PackageRepositoryTlsConfig.decode(reader, reader.uint32());
+          break;
+        case 9:
+          message.auth = PackageRepositoryAuth.decode(reader, reader.uint32());
           break;
         case 10:
           message.plugin = Plugin.decode(reader, reader.uint32());
@@ -232,6 +371,11 @@ export const AddPackageRepositoryRequest = {
     } else {
       message.tlsConfig = undefined;
     }
+    if (object.auth !== undefined && object.auth !== null) {
+      message.auth = PackageRepositoryAuth.fromJSON(object.auth);
+    } else {
+      message.auth = undefined;
+    }
     if (object.plugin !== undefined && object.plugin !== null) {
       message.plugin = Plugin.fromJSON(object.plugin);
     } else {
@@ -254,6 +398,8 @@ export const AddPackageRepositoryRequest = {
       (obj.tlsConfig = message.tlsConfig
         ? PackageRepositoryTlsConfig.toJSON(message.tlsConfig)
         : undefined);
+    message.auth !== undefined &&
+      (obj.auth = message.auth ? PackageRepositoryAuth.toJSON(message.auth) : undefined);
     message.plugin !== undefined &&
       (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
     return obj;
@@ -302,6 +448,11 @@ export const AddPackageRepositoryRequest = {
       message.tlsConfig = PackageRepositoryTlsConfig.fromPartial(object.tlsConfig);
     } else {
       message.tlsConfig = undefined;
+    }
+    if (object.auth !== undefined && object.auth !== null) {
+      message.auth = PackageRepositoryAuth.fromPartial(object.auth);
+    } else {
+      message.auth = undefined;
     }
     if (object.plugin !== undefined && object.plugin !== null) {
       message.plugin = Plugin.fromPartial(object.plugin);
@@ -409,6 +560,429 @@ export const PackageRepositoryTlsConfig = {
       message.secretRef = SecretKeyReference.fromPartial(object.secretRef);
     } else {
       message.secretRef = undefined;
+    }
+    return message;
+  },
+};
+
+const basePackageRepositoryAuth: object = { type: 0, passCredentials: false };
+
+export const PackageRepositoryAuth = {
+  encode(message: PackageRepositoryAuth, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.type !== 0) {
+      writer.uint32(8).int32(message.type);
+    }
+    if (message.usernamePassword !== undefined) {
+      UsernamePassword.encode(message.usernamePassword, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.tlsCertKey !== undefined) {
+      TlsCertKey.encode(message.tlsCertKey, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.dockerCreds !== undefined) {
+      DockerCredentials.encode(message.dockerCreds, writer.uint32(34).fork()).ldelim();
+    }
+    if (message.header !== undefined) {
+      writer.uint32(42).string(message.header);
+    }
+    if (message.secretRef !== undefined) {
+      SecretKeyReference.encode(message.secretRef, writer.uint32(50).fork()).ldelim();
+    }
+    if (message.passCredentials === true) {
+      writer.uint32(56).bool(message.passCredentials);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryAuth {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...basePackageRepositoryAuth } as PackageRepositoryAuth;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.type = reader.int32() as any;
+          break;
+        case 2:
+          message.usernamePassword = UsernamePassword.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.tlsCertKey = TlsCertKey.decode(reader, reader.uint32());
+          break;
+        case 4:
+          message.dockerCreds = DockerCredentials.decode(reader, reader.uint32());
+          break;
+        case 5:
+          message.header = reader.string();
+          break;
+        case 6:
+          message.secretRef = SecretKeyReference.decode(reader, reader.uint32());
+          break;
+        case 7:
+          message.passCredentials = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryAuth {
+    const message = { ...basePackageRepositoryAuth } as PackageRepositoryAuth;
+    if (object.type !== undefined && object.type !== null) {
+      message.type = packageRepositoryAuth_PackageRepositoryAuthTypeFromJSON(object.type);
+    } else {
+      message.type = 0;
+    }
+    if (object.usernamePassword !== undefined && object.usernamePassword !== null) {
+      message.usernamePassword = UsernamePassword.fromJSON(object.usernamePassword);
+    } else {
+      message.usernamePassword = undefined;
+    }
+    if (object.tlsCertKey !== undefined && object.tlsCertKey !== null) {
+      message.tlsCertKey = TlsCertKey.fromJSON(object.tlsCertKey);
+    } else {
+      message.tlsCertKey = undefined;
+    }
+    if (object.dockerCreds !== undefined && object.dockerCreds !== null) {
+      message.dockerCreds = DockerCredentials.fromJSON(object.dockerCreds);
+    } else {
+      message.dockerCreds = undefined;
+    }
+    if (object.header !== undefined && object.header !== null) {
+      message.header = String(object.header);
+    } else {
+      message.header = undefined;
+    }
+    if (object.secretRef !== undefined && object.secretRef !== null) {
+      message.secretRef = SecretKeyReference.fromJSON(object.secretRef);
+    } else {
+      message.secretRef = undefined;
+    }
+    if (object.passCredentials !== undefined && object.passCredentials !== null) {
+      message.passCredentials = Boolean(object.passCredentials);
+    } else {
+      message.passCredentials = false;
+    }
+    return message;
+  },
+
+  toJSON(message: PackageRepositoryAuth): unknown {
+    const obj: any = {};
+    message.type !== undefined &&
+      (obj.type = packageRepositoryAuth_PackageRepositoryAuthTypeToJSON(message.type));
+    message.usernamePassword !== undefined &&
+      (obj.usernamePassword = message.usernamePassword
+        ? UsernamePassword.toJSON(message.usernamePassword)
+        : undefined);
+    message.tlsCertKey !== undefined &&
+      (obj.tlsCertKey = message.tlsCertKey ? TlsCertKey.toJSON(message.tlsCertKey) : undefined);
+    message.dockerCreds !== undefined &&
+      (obj.dockerCreds = message.dockerCreds
+        ? DockerCredentials.toJSON(message.dockerCreds)
+        : undefined);
+    message.header !== undefined && (obj.header = message.header);
+    message.secretRef !== undefined &&
+      (obj.secretRef = message.secretRef
+        ? SecretKeyReference.toJSON(message.secretRef)
+        : undefined);
+    message.passCredentials !== undefined && (obj.passCredentials = message.passCredentials);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<PackageRepositoryAuth>): PackageRepositoryAuth {
+    const message = { ...basePackageRepositoryAuth } as PackageRepositoryAuth;
+    if (object.type !== undefined && object.type !== null) {
+      message.type = object.type;
+    } else {
+      message.type = 0;
+    }
+    if (object.usernamePassword !== undefined && object.usernamePassword !== null) {
+      message.usernamePassword = UsernamePassword.fromPartial(object.usernamePassword);
+    } else {
+      message.usernamePassword = undefined;
+    }
+    if (object.tlsCertKey !== undefined && object.tlsCertKey !== null) {
+      message.tlsCertKey = TlsCertKey.fromPartial(object.tlsCertKey);
+    } else {
+      message.tlsCertKey = undefined;
+    }
+    if (object.dockerCreds !== undefined && object.dockerCreds !== null) {
+      message.dockerCreds = DockerCredentials.fromPartial(object.dockerCreds);
+    } else {
+      message.dockerCreds = undefined;
+    }
+    if (object.header !== undefined && object.header !== null) {
+      message.header = object.header;
+    } else {
+      message.header = undefined;
+    }
+    if (object.secretRef !== undefined && object.secretRef !== null) {
+      message.secretRef = SecretKeyReference.fromPartial(object.secretRef);
+    } else {
+      message.secretRef = undefined;
+    }
+    if (object.passCredentials !== undefined && object.passCredentials !== null) {
+      message.passCredentials = object.passCredentials;
+    } else {
+      message.passCredentials = false;
+    }
+    return message;
+  },
+};
+
+const baseUsernamePassword: object = { username: "", password: "" };
+
+export const UsernamePassword = {
+  encode(message: UsernamePassword, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.username !== "") {
+      writer.uint32(10).string(message.username);
+    }
+    if (message.password !== "") {
+      writer.uint32(18).string(message.password);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): UsernamePassword {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseUsernamePassword } as UsernamePassword;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.username = reader.string();
+          break;
+        case 2:
+          message.password = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UsernamePassword {
+    const message = { ...baseUsernamePassword } as UsernamePassword;
+    if (object.username !== undefined && object.username !== null) {
+      message.username = String(object.username);
+    } else {
+      message.username = "";
+    }
+    if (object.password !== undefined && object.password !== null) {
+      message.password = String(object.password);
+    } else {
+      message.password = "";
+    }
+    return message;
+  },
+
+  toJSON(message: UsernamePassword): unknown {
+    const obj: any = {};
+    message.username !== undefined && (obj.username = message.username);
+    message.password !== undefined && (obj.password = message.password);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<UsernamePassword>): UsernamePassword {
+    const message = { ...baseUsernamePassword } as UsernamePassword;
+    if (object.username !== undefined && object.username !== null) {
+      message.username = object.username;
+    } else {
+      message.username = "";
+    }
+    if (object.password !== undefined && object.password !== null) {
+      message.password = object.password;
+    } else {
+      message.password = "";
+    }
+    return message;
+  },
+};
+
+const baseTlsCertKey: object = { cert: "", key: "" };
+
+export const TlsCertKey = {
+  encode(message: TlsCertKey, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.cert !== "") {
+      writer.uint32(10).string(message.cert);
+    }
+    if (message.key !== "") {
+      writer.uint32(18).string(message.key);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): TlsCertKey {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseTlsCertKey } as TlsCertKey;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.cert = reader.string();
+          break;
+        case 2:
+          message.key = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TlsCertKey {
+    const message = { ...baseTlsCertKey } as TlsCertKey;
+    if (object.cert !== undefined && object.cert !== null) {
+      message.cert = String(object.cert);
+    } else {
+      message.cert = "";
+    }
+    if (object.key !== undefined && object.key !== null) {
+      message.key = String(object.key);
+    } else {
+      message.key = "";
+    }
+    return message;
+  },
+
+  toJSON(message: TlsCertKey): unknown {
+    const obj: any = {};
+    message.cert !== undefined && (obj.cert = message.cert);
+    message.key !== undefined && (obj.key = message.key);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<TlsCertKey>): TlsCertKey {
+    const message = { ...baseTlsCertKey } as TlsCertKey;
+    if (object.cert !== undefined && object.cert !== null) {
+      message.cert = object.cert;
+    } else {
+      message.cert = "";
+    }
+    if (object.key !== undefined && object.key !== null) {
+      message.key = object.key;
+    } else {
+      message.key = "";
+    }
+    return message;
+  },
+};
+
+const baseDockerCredentials: object = {
+  server: "",
+  username: "",
+  password: "",
+  email: "",
+};
+
+export const DockerCredentials = {
+  encode(message: DockerCredentials, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.server !== "") {
+      writer.uint32(10).string(message.server);
+    }
+    if (message.username !== "") {
+      writer.uint32(18).string(message.username);
+    }
+    if (message.password !== "") {
+      writer.uint32(26).string(message.password);
+    }
+    if (message.email !== "") {
+      writer.uint32(34).string(message.email);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): DockerCredentials {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseDockerCredentials } as DockerCredentials;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.server = reader.string();
+          break;
+        case 2:
+          message.username = reader.string();
+          break;
+        case 3:
+          message.password = reader.string();
+          break;
+        case 4:
+          message.email = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DockerCredentials {
+    const message = { ...baseDockerCredentials } as DockerCredentials;
+    if (object.server !== undefined && object.server !== null) {
+      message.server = String(object.server);
+    } else {
+      message.server = "";
+    }
+    if (object.username !== undefined && object.username !== null) {
+      message.username = String(object.username);
+    } else {
+      message.username = "";
+    }
+    if (object.password !== undefined && object.password !== null) {
+      message.password = String(object.password);
+    } else {
+      message.password = "";
+    }
+    if (object.email !== undefined && object.email !== null) {
+      message.email = String(object.email);
+    } else {
+      message.email = "";
+    }
+    return message;
+  },
+
+  toJSON(message: DockerCredentials): unknown {
+    const obj: any = {};
+    message.server !== undefined && (obj.server = message.server);
+    message.username !== undefined && (obj.username = message.username);
+    message.password !== undefined && (obj.password = message.password);
+    message.email !== undefined && (obj.email = message.email);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<DockerCredentials>): DockerCredentials {
+    const message = { ...baseDockerCredentials } as DockerCredentials;
+    if (object.server !== undefined && object.server !== null) {
+      message.server = object.server;
+    } else {
+      message.server = "";
+    }
+    if (object.username !== undefined && object.username !== null) {
+      message.username = object.username;
+    } else {
+      message.username = "";
+    }
+    if (object.password !== undefined && object.password !== null) {
+      message.password = object.password;
+    } else {
+      message.password = "";
+    }
+    if (object.email !== undefined && object.email !== null) {
+      message.email = object.email;
+    } else {
+      message.email = "";
     }
     return message;
   },
