@@ -121,11 +121,12 @@ export interface PackageRepositoryAuth {
 }
 
 export enum PackageRepositoryAuth_PackageRepositoryAuthType {
-  BASIC_AUTH = 0,
-  TLS = 1,
-  BEARER = 2,
-  CUSTOM = 3,
-  DOCKER_CONFIG_JSON = 4,
+  PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED = 0,
+  PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH = 1,
+  PACKAGE_REPOSITORY_AUTH_TYPE_TLS = 2,
+  PACKAGE_REPOSITORY_AUTH_TYPE_BEARER = 3,
+  PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM = 4,
+  PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON = 5,
   UNRECOGNIZED = -1,
 }
 
@@ -134,20 +135,23 @@ export function packageRepositoryAuth_PackageRepositoryAuthTypeFromJSON(
 ): PackageRepositoryAuth_PackageRepositoryAuthType {
   switch (object) {
     case 0:
-    case "BASIC_AUTH":
-      return PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH;
+    case "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED;
     case 1:
-    case "TLS":
-      return PackageRepositoryAuth_PackageRepositoryAuthType.TLS;
+    case "PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH;
     case 2:
-    case "BEARER":
-      return PackageRepositoryAuth_PackageRepositoryAuthType.BEARER;
+    case "PACKAGE_REPOSITORY_AUTH_TYPE_TLS":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS;
     case 3:
-    case "CUSTOM":
-      return PackageRepositoryAuth_PackageRepositoryAuthType.CUSTOM;
+    case "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER;
     case 4:
-    case "DOCKER_CONFIG_JSON":
-      return PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON;
+    case "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM;
+    case 5:
+    case "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -159,16 +163,18 @@ export function packageRepositoryAuth_PackageRepositoryAuthTypeToJSON(
   object: PackageRepositoryAuth_PackageRepositoryAuthType,
 ): string {
   switch (object) {
-    case PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH:
-      return "BASIC_AUTH";
-    case PackageRepositoryAuth_PackageRepositoryAuthType.TLS:
-      return "TLS";
-    case PackageRepositoryAuth_PackageRepositoryAuthType.BEARER:
-      return "BEARER";
-    case PackageRepositoryAuth_PackageRepositoryAuthType.CUSTOM:
-      return "CUSTOM";
-    case PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON:
-      return "DOCKER_CONFIG_JSON";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
+      return "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+      return "PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+      return "PACKAGE_REPOSITORY_AUTH_TYPE_TLS";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
+      return "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
+      return "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+      return "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON";
     default:
       return "UNKNOWN";
   }

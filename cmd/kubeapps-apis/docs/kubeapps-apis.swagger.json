@@ -2882,13 +2882,14 @@
     "PackageRepositoryAuthPackageRepositoryAuthType": {
       "type": "string",
       "enum": [
-        "BASIC_AUTH",
-        "TLS",
-        "BEARER",
-        "CUSTOM",
-        "DOCKER_CONFIG_JSON"
+        "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_TLS",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON"
       ],
-      "default": "BASIC_AUTH"
+      "default": "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED"
     },
     "protobufAny": {
       "type": "object",

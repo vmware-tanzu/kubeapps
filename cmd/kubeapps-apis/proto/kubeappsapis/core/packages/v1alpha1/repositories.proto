@@ -114,11 +114,12 @@ message PackageRepositoryTlsConfig {
 //  - flux plug-in does not support (3) or (4) while direct-helm does 
 message PackageRepositoryAuth {
   enum PackageRepositoryAuthType {
-    BASIC_AUTH = 0;
-    TLS = 1;
-    BEARER = 2;
-    CUSTOM = 3;
-    DOCKER_CONFIG_JSON = 4;
+    PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED = 0;
+    PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH = 1;
+    PACKAGE_REPOSITORY_AUTH_TYPE_TLS = 2;
+    PACKAGE_REPOSITORY_AUTH_TYPE_BEARER = 3;
+    PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM = 4;
+    PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON = 5;
   }
   PackageRepositoryAuthType type = 1;
   

@@ -190,23 +190,23 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 			secret = newLocalOpaqueSecret(targetName.Name + "-")
 		}
 		switch auth.Type {
-		case corev1.PackageRepositoryAuth_BASIC_AUTH:
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 			if unp := auth.GetUsernamePassword(); unp != nil {
 				secret.Data["username"] = []byte(unp.Username)
 				secret.Data["password"] = []byte(unp.Password)
 			} else {
 				return status.Errorf(codes.Internal, "Username/Password configuration is missing")
 			}
-		case corev1.PackageRepositoryAuth_TLS:
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
 			if ck := auth.GetTlsCertKey(); ck != nil {
 				secret.Data["certFile"] = []byte(ck.Cert)
 				secret.Data["keyFile"] = []byte(ck.Key)
 			} else {
 				return status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
 			}
-		case corev1.PackageRepositoryAuth_BEARER, corev1.PackageRepositoryAuth_CUSTOM:
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
 			return status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
-		case corev1.PackageRepositoryAuth_DOCKER_CONFIG_JSON:
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 			if dc := auth.GetDockerCreds(); dc != nil {
 				secret.Type = apiv1.SecretTypeDockerConfigJson
 				// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/

@@ -1201,7 +1201,6 @@ func TestAddPackageRepository(t *testing.T) {
 	} else if priv, err = ioutil.ReadFile("testdata/key.pem"); err != nil {
 		t.Fatalf("%+v", err)
 	}
-	ca = ca
 
 	testCases := []struct {
 		name                  string
@@ -1337,7 +1336,7 @@ func TestAddPackageRepository(t *testing.T) {
 				Type:    "helm",
 				Url:     "http://example.com",
 				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_BASIC_AUTH,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
 						UsernamePassword: &corev1.UsernamePassword{
 							Username: "baz",
@@ -1359,7 +1358,7 @@ func TestAddPackageRepository(t *testing.T) {
 				Type:    "helm",
 				Url:     "http://example.com",
 				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_TLS,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
 						TlsCertKey: &corev1.TlsCertKey{
 							Cert: string(pub),
@@ -1381,7 +1380,7 @@ func TestAddPackageRepository(t *testing.T) {
 				Type:    "helm",
 				Url:     "http://example.com",
 				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_BEARER,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
 						Header: "foobarzot",
 					},
@@ -1397,7 +1396,7 @@ func TestAddPackageRepository(t *testing.T) {
 				Type:    "helm",
 				Url:     "http://example.com",
 				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
 						Header: "foobarzot",
 					},
@@ -1413,7 +1412,7 @@ func TestAddPackageRepository(t *testing.T) {
 				Type:    "helm",
 				Url:     "http://example.com",
 				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_DOCKER_CONFIG_JSON,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
 						DockerCreds: &corev1.DockerCredentials{
 							Server:   "your.private.registry.example.com",
@@ -1437,7 +1436,7 @@ func TestAddPackageRepository(t *testing.T) {
 				Type:    "helm",
 				Url:     "http://example.com",
 				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_BASIC_AUTH,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
 						SecretRef: &corev1.SecretKeyReference{
 							Name: "secret-1",
