@@ -59,7 +59,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.6
 	github.com/jinzhu/copier v0.3.5
-	github.com/k14s/kapp v0.45.0
+	github.com/k14s/kapp v0.46.0
 	github.com/lib/pq v1.10.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.2
@@ -89,7 +89,7 @@ require (
 	k8s.io/cli-runtime v0.23.1
 	k8s.io/client-go v0.23.1
 	k8s.io/klog/v2 v2.40.1
-	k8s.io/kubernetes v1.22.6
+	k8s.io/kubernetes v1.22.7
 	oras.land/oras-go v1.1.0
 	sigs.k8s.io/controller-runtime v0.11.1
 	sigs.k8s.io/yaml v1.3.0
