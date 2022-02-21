@@ -59,7 +59,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.6
 	github.com/jinzhu/copier v0.3.5
-	github.com/k14s/kapp v0.45.0
+	github.com/k14s/kapp v0.46.0
 	github.com/lib/pq v1.10.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.2
