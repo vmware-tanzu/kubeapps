@@ -6,12 +6,12 @@
 
 1. [Introduction](#introduction)
 2. [Installing Flux in your Cluster](#installing-the-flux-controllers-in-your-cluster)
-   1. [Quick overview of the Flux CRs](#quick-overview-of-the-relevant-flux-custom-resourcesu)
+   1. [Quick overview of the Flux CRs](#quick-overview-of-the-relevant-flux-custom-resources)
 3. [Using Kubeapps for Managing Flux Packages](#using-kubeapps-to-manage-flux-helm-releases)
    1. [Configuring Kubeapps to Support Flux Packages](#configuring-kubeapps-to-support-flux-helm-releases)
    2. [Installing a Package Repository](#installing-a-helm-repository)
    3. [Installing a Package](#installing-a-package)
-   4. [Viewing the Installed Applications](#viewing-the-installed-applications)
+   4. [Viewing the Installed Applications](#viewing-the-installed-packages)
 4. [Conclusions](#conclusions)
 
 ---
@@ -166,3 +166,45 @@ NAME          READY     STATUS                       AGE
 test-apache   Unknown   Reconciliation in progress   8s
 ```
 
+### Viewing the Installed Packages
+
+Viewing the installed Flux Packages in Kubeapps is the same experience as viewing any other installed package (such as a Helm Chart) in Kubeapps.
+
+> **TIP**: Please refer to the [user documentation](./dashboard.md) for more information on how to use Kubeapps as a user.
+
+Go to the `Applications` tab to see every Application that has been installed in the cluster. Click on _show apps in all namespaces_ to view the ones currently installed in every namespace of the cluster.
+
+The following example shows an example of the Applications page with Apache installed as a Flux packages:
+
+![Installed applications page](../img/flux-apps.png)
+
+Since the reconciliation process can eventually fail for several reasons, this page will show the current reconciliation status of each application.
+
+Next, click on the application you want to view, for example, `test-apache` to go to the details page, as depicted in the following image:
+
+![Details page of an installed Flux Package](../img/flux-details.png)
+
+As in any other packaging format, this page will display those Kubernetes resources that have been created as a result of the Package installation.
+Besides, the current values are shown at the end of the page.
+
+Next, you can click on the `Delete` button to uninstall the application or the `Upgrade` button to edit the values of the application or update it to another version.
+
+> **NOTE**: as opposed to Helm Charts, Flux Packages cannot be rolled back, hence there is no `Rollback` button.
+
+Finally, note that every Flux Package installed through Kubeapps can also be managed by `kubectl` or the [flux](https://fluxcd.io/docs/cmd/) CLI using the `flux get helmrelease` command. For example:
+
+```bash
+flux get -n kubeapps-user-namespace helmrelease test-apache
+NAME            READY   MESSAGE                                 REVISION        SUSPENDED
+test-apache     True    Release reconciliation succeeded        9.0.3           False
+```
+
+## Conclusions
+
+This guide has covered how to manage Flux Packages in Kubeapps, starting from [how to configure Kubeapps itself](#configuring-kubeapps-to-support-flux-helm-releases), then how to [add Helm Package Repositories](#installing-a-helm-repository) for Flux, next [how to browse and install Flux Packages](#installing-a-package), and finally [how to view the installed Flux Packages](#viewing-the-installed-packages).
+
+Some additional resources and references include:
+
+- [Getting Started with Flux](https://fluxcd.io/docs/get-started/)
+
+Finally, we are [currently working](https://github.com/kubeapps/kubeapps/milestone/17) on this Flux plugin for managing Flux Packages, so if you encounter any problems, please [file an issue](https://github.com/kubeapps/kubeapps/issues/new) in the Kubeapps repository.
