@@ -66,7 +66,7 @@ The following image depicts the relationship between the different kapp-controll
 
 ### Configuring Kubeapps to Support Carvel Packages
 
-As any other packaging format, the kapp-controller support is brought into Kubeapps by means of a plugin.
+As with any other packaging format, the kapp-controller support is brought into Kubeapps by means of a plugin.
 
 This `kapp-controller` plugin is currently being built by default in the Kubeapps release and it is just a matter of enabling it when installing Kubeapps.
 
