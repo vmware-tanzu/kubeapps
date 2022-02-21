@@ -42,7 +42,7 @@ kubectl apply -f https://github.com/fluxcd/flux2/releases/latest/download/instal
 After running this command, you should have everything you need to try out Kubeapps' Flux support. You can check on the progress of the Flux installation with:
 
 ```bash
-kubectl --namespace flux-system get po
+kubectl --namespace flux-system get pod
 ```
 
 ### Quick overview of the relevant Flux Custom Resources
@@ -156,8 +156,6 @@ In Kubeapps, a dropdown will allow you to select which `ServiceAccount` you want
 
 > **TIP**: For the Apache package, ensure that the ServiceType is set to an option supported by your cluster. For instance, for a local Kind cluster, you will want to choose `ClusterIP` rather than `LoadBalancer`.
 
-> **TIP**: you can uncomment a set of lines easily by selecting them and typing `Ctrl + /`.
-
 Finally, after clicking the `Install` button, the Flux `HelmRelease` be installed in the cluster. At this moment, Flux will perform the required actions to deploy the related Helm chart and its related resources. This process is known as _reconciliation_. You can check the CLI for more details about the reconciliation:
 
 ```bash
@@ -174,7 +172,7 @@ Viewing the installed Flux Packages in Kubeapps is the same experience as viewin
 
 Go to the `Applications` tab to see every Application that has been installed in the cluster. Click on _show apps in all namespaces_ to view the ones currently installed in every namespace of the cluster.
 
-The following example shows an example of the Applications page with Apache installed as a Flux packages:
+The following example shows an example of the Applications page with Apache installed as a Flux package:
 
 ![Installed applications page](../img/flux-apps.png)
 
