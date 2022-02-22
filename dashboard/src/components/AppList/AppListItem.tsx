@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Tooltip from "components/js/Tooltip";
-import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  InstalledPackageSummary,
+  InstalledPackageStatus_StatusReason,
+  installedPackageStatus_StatusReasonToJSON,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { getPluginIcon } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
@@ -14,10 +18,19 @@ export interface IAppListItemProps {
   cluster: string;
 }
 
+function getAppStatusLabel(
+  statusReason: InstalledPackageStatus_StatusReason = InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED,
+): string {
+  // The JSON versions of the reasons are forced to follow the standard
+  // pattern STATUS_REASON_<reason> by buf.
+  const jsonReason = installedPackageStatus_StatusReasonToJSON(statusReason);
+  return jsonReason.replace("STATUS_REASON_", "").toLowerCase();
+}
+
 function AppListItem(props: IAppListItemProps) {
   const { app } = props;
   const icon = app.iconUrl ?? placeholder;
-  const appStatus = app.status?.userReason?.toLocaleLowerCase();
+  const appStatus = getAppStatusLabel(app.status?.reason);
   const appReady = app.status?.ready ?? false;
   let tooltipContent;
 
