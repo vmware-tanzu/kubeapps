@@ -13799,10 +13799,10 @@ swagger-client@^3.18.4:
     traverse "~0.6.6"
     url "~0.11.0"
 
-swagger-ui-react@^4.5.1:
-  version "4.5.1"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.5.1.tgz#8dd36f56a4bca47778539a1637d73578794ad1f6"
-  integrity sha512-nQ+erop7oiUvkYgUplGjDOs5LPBarnNNC4OW1IWqwo1avWFOhzATDlEOXbiE2SSDu5opC5HePX7cKIajBoQu9Q==
+swagger-ui-react@^4.5.2:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.5.2.tgz#0724a822a0201138e5edc090c0c9e83b27a2bf64"
+  integrity sha512-XDkBmnkjrdKdMQT6ckbztwsXJGreeb4fS+ljCTuOTw3cB36n7Yn4aFgDRPwH7TO7Sy6UPkmXmPGw5UHuYD+vIQ==
   dependencies:
     "@babel/runtime-corejs3" "^7.16.8"
     "@braintree/sanitize-url" "^5.0.2"
