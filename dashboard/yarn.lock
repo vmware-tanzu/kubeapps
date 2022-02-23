@@ -13662,10 +13662,10 @@ stylelint-scss@^4.0.0, stylelint-scss@^4.1.0:
     postcss-selector-parser "^6.0.6"
     postcss-value-parser "^4.1.0"
 
-stylelint@^14.5.1:
-  version "14.5.1"
-  resolved "https://registry.yarnpkg.com/stylelint/-/stylelint-14.5.1.tgz#2b2575ccaf14bb057209d48fc87c17d5b684f8db"
-  integrity sha512-8Hf4HtnhxlWlf7iXF9zFfhSc3X0teRnVzl6PqPs2JEFx+dy/mhMhghZfiTDW4QG0ihDw9+WP7GZw5Nzx7cQF5A==
+stylelint@^14.5.2:
+  version "14.5.2"
+  resolved "https://registry.yarnpkg.com/stylelint/-/stylelint-14.5.2.tgz#1d4c34449c831a9989c8948282df191be993632f"
+  integrity sha512-ZmZhIosMgFgAEe7+F8z4rlJq+12mmqPK0cN3SyNZhMiHZrZzfsd7WJ2WFZ14AMgQFZ61Dn6RYkEy51U/Lg4MQA==
   dependencies:
     balanced-match "^2.0.0"
     colord "^2.9.2"
