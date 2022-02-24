@@ -197,25 +197,6 @@ describe("InstalledPackage", () => {
         installedPackageRef: installedPackageReference,
       });
     });
-
-    it("retries up to five times before returning error", async () => {
-      const mockClientGetInstalledPackageResourceRefs = jest
-        .fn()
-        .mockImplementation(() => Promise.reject(new Error("Bang!")));
-      setMockCoreClient(
-        "GetInstalledPackageResourceRefs",
-        mockClientGetInstalledPackageResourceRefs,
-      );
-
-      await expect(
-        InstalledPackage.GetInstalledPackageResourceRefs(installedPackageReference, 0),
-      ).rejects.toThrowError("Bang!");
-
-      expect(mockClientGetInstalledPackageResourceRefs).toHaveBeenCalledTimes(5);
-      expect(mockClientGetInstalledPackageResourceRefs).toHaveBeenLastCalledWith({
-        installedPackageRef: installedPackageReference,
-      });
-    });
   });
 });
 
