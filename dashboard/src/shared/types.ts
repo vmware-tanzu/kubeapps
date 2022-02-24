@@ -67,8 +67,6 @@ export class RollbackError extends CustomError {}
 
 export class DeleteError extends CustomError {}
 
-export class ResourceRefsNotFound extends CustomError {}
-
 export type DeploymentEvent = "install" | "upgrade";
 
 export interface IRepo {
