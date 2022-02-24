@@ -261,13 +261,11 @@ describe("AppView", () => {
         resourceRefs.ingress,
         resourceRefs.secret,
       ] as ResourceRef[];
-      InstalledPackage.GetInstalledPackageResourceRefs = jest
-        .fn()
-        .mockReturnValue(
-          Promise.resolve({
-            resourceRefs: apiResourceRefs,
-          } as GetInstalledPackageResourceRefsResponse),
-        );
+      InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+        Promise.resolve({
+          resourceRefs: apiResourceRefs,
+        } as GetInstalledPackageResourceRefsResponse),
+      );
 
       let wrapper: any;
       await act(async () => {
@@ -295,13 +293,11 @@ describe("AppView", () => {
         resourceRefs.configMap,
         resourceRefs.secret,
       ] as ResourceRef[];
-      InstalledPackage.GetInstalledPackageResourceRefs = jest
-        .fn()
-        .mockReturnValue(
-          Promise.resolve({
-            resourceRefs: apiResourceRefs,
-          } as GetInstalledPackageResourceRefsResponse),
-        );
+      InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+        Promise.resolve({
+          resourceRefs: apiResourceRefs,
+        } as GetInstalledPackageResourceRefsResponse),
+      );
 
       let wrapper: any;
       await act(async () => {
@@ -381,13 +377,11 @@ describe("AppView", () => {
 
   it("forwards statefulsets and daemonsets to the application status", async () => {
     const apiResourceRefs = [resourceRefs.statefulset, resourceRefs.daemonset] as ResourceRef[];
-    InstalledPackage.GetInstalledPackageResourceRefs = jest
-      .fn()
-      .mockReturnValue(
-        Promise.resolve({
-          resourceRefs: apiResourceRefs,
-        } as GetInstalledPackageResourceRefsResponse),
-      );
+    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+      Promise.resolve({
+        resourceRefs: apiResourceRefs,
+      } as GetInstalledPackageResourceRefsResponse),
+    );
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
@@ -416,13 +410,11 @@ describe("AppView actions", () => {
       resourceRefs.service,
       resourceRefs.secret,
     ] as ResourceRef[];
-    InstalledPackage.GetInstalledPackageResourceRefs = jest
-      .fn()
-      .mockReturnValue(
-        Promise.resolve({
-          resourceRefs: apiResourceRefs,
-        } as GetInstalledPackageResourceRefsResponse),
-      );
+    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+      Promise.resolve({
+        resourceRefs: apiResourceRefs,
+      } as GetInstalledPackageResourceRefsResponse),
+    );
     const store = getStore({ apps: { selected: installedPackage } });
 
     await act(async () => {
@@ -466,13 +458,11 @@ describe("AppView actions", () => {
   });
   it("closes the watches when unmounted", async () => {
     const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as ResourceRef[];
-    InstalledPackage.GetInstalledPackageResourceRefs = jest
-      .fn()
-      .mockReturnValue(
-        Promise.resolve({
-          resourceRefs: apiResourceRefs,
-        } as GetInstalledPackageResourceRefsResponse),
-      );
+    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+      Promise.resolve({
+        resourceRefs: apiResourceRefs,
+      } as GetInstalledPackageResourceRefsResponse),
+    );
 
     const store = getStore({ apps: { selected: installedPackage } });
     let wrapper: any;

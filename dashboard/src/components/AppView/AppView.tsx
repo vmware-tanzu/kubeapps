@@ -177,14 +177,14 @@ export default function AppView() {
   }, [dispatch, installedPkgRef]);
 
   useEffect(() => {
-    // We're fetching the resource refs directly (rather than using redux),
-    // which is inline with the general direction of React components, but here
-    // particularly important as we need to handle the retrying of fetching
-    // resource refs when they are not found.  This is because it is not
-    // possible currently to tell whether resource refs are unavailable because
-    // the package is being installed (ie.  Package is "Pending" the actual
-    // installation) or the package is currently unable to be installed because
-    // the RBAC isn't yet correct (ie. Package is "Pending" required RBAC).
+    // TODO(minelson): currently it is not possible for a client to determine
+    // whether resource refs are unavailable because the package is being
+    // installed (ie.  Package is "Pending" the actual installation) or the
+    // package is currently unable to be installed because the RBAC isn't yet
+    // correct (ie. Package is "Pending" required RBAC). The work-around here
+    // is to continue polling for the resource refs every two seconds as long
+    // as a `NotFound` is returned.
+    // See https://github.com/kubeapps/kubeapps/issues/4337
     let abort = false;
     const fetchResourceRefs = async () => {
       while (!abort) {
