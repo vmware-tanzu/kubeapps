@@ -54,7 +54,7 @@ it("renders an app item", () => {
   const wrapper = mountWrapper(defaultStore, <PackageInfo {...defaultProps} />);
   // Renders info about the description and versions
   const subsections = wrapper.find(".left-menu-subsection");
-  expect(subsections).toHaveLength(2);
+  expect(subsections).toHaveLength(3);
 });
 
 context("PackageUpdateInfo: when information about updates is available", () => {
