@@ -10,7 +10,6 @@ import {
   InstalledPackageStatus,
   InstalledPackageSummary,
   ReconciliationOptions,
-  ResourceRef,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
