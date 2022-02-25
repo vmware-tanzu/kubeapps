@@ -10,6 +10,8 @@ import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
 import {
   AvailablePackageReference,
   Context,
+  GetAvailablePackageDetailResponse,
+  GetInstalledPackageDetailResponse,
   GetInstalledPackageResourceRefsResponse,
   InstalledPackageDetail,
   InstalledPackageReference,
@@ -35,6 +37,7 @@ import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
 import { InstalledPackage } from "shared/InstalledPackage";
+import PackagesService from "shared/PackagesService";
 
 const routeParams = {
   cluster: "cluster-1",
@@ -117,6 +120,16 @@ beforeEach(() => {
     .mockReturnValue(
       Promise.resolve({ resourceRefs: [] } as GetInstalledPackageResourceRefsResponse),
     );
+  InstalledPackage.GetInstalledPackageDetail = jest.fn().mockReturnValue(
+    Promise.resolve({
+      installedPackageDetail: {},
+    } as GetInstalledPackageDetailResponse),
+  );
+  PackagesService.getAvailablePackageDetail = jest.fn().mockReturnValue(
+    Promise.resolve({
+      availablePackageDetail: {},
+    } as GetAvailablePackageDetailResponse),
+  );
 });
 afterEach(() => {
   jest.resetAllMocks();
@@ -433,6 +446,13 @@ describe("AppView actions", () => {
         type: getType(actions.installedpackages.requestInstalledPackage),
       },
       {
+        type: getType(actions.installedpackages.selectInstalledPackage),
+        payload: {
+          pkg: {},
+          details: {},
+        },
+      },
+      {
         type: getType(actions.kube.requestResources),
         payload: {
           pkg: installedPackage.installedPackageRef,
@@ -484,6 +504,13 @@ describe("AppView actions", () => {
     expect(store.getActions()).toEqual([
       {
         type: getType(actions.installedpackages.requestInstalledPackage),
+      },
+      {
+        type: getType(actions.installedpackages.selectInstalledPackage),
+        payload: {
+          pkg: {},
+          details: {},
+        },
       },
       {
         type: getType(actions.kube.requestResources),
