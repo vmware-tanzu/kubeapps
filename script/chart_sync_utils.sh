@@ -166,8 +166,8 @@ updateRepoWithRemoteChanges() {
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
 
     # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
-    git -C "${TARGET_REPO}" config --local core.sshCommand "ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME} -F /dev/null"
-    git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
+    # git -C "${TARGET_REPO}" config --local core.sshCommand "ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME} -F /dev/null"
+    GIT_SSH_COMMAND="ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME}" git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
 
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
