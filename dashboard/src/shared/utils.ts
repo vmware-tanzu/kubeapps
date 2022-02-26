@@ -2,6 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import {
+  InstalledPackageStatus_StatusReason,
+  installedPackageStatus_StatusReasonToJSON,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import carvelIcon from "../icons/carvel.svg";
 import fluxIcon from "../icons/flux.svg";
 import helmIcon from "../icons/helm.svg";
@@ -135,4 +139,13 @@ export function getPluginsRequiringSA(): string[] {
 
 export function getPluginsSupportingRollback(): string[] {
   return [PluginNames.PACKAGES_HELM];
+}
+
+export function getAppStatusLabel(
+  statusReason: InstalledPackageStatus_StatusReason = InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED,
+): string {
+  // The JSON versions of the reasons are forced to follow the standard
+  // pattern STATUS_REASON_<reason> by buf.
+  const jsonReason = installedPackageStatus_StatusReasonToJSON(statusReason);
+  return jsonReason.replace("STATUS_REASON_", "").toLowerCase();
 }
