@@ -94,11 +94,6 @@ func Serve(serveOpts core.ServeOptions) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
-	// Ask the plugins server for plugins with GRPC servers that fulfil the core
-	// packaging v1alpha1 API, then pass to the constructor below.
-	// The argument for the reflect.TypeOf is based on what grpc-go
-	// does itself at:
-	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
 	if err = registerPluginsServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
 		return err
 	} else if err = registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
@@ -178,6 +173,11 @@ func registerPluginsServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1
 }
 
 func registerPackagesServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
+	// Ask the plugins server for plugins with GRPC servers that fulfil the core
+	// packaging v1alpha1 API, then pass to the constructor below.
+	// The argument for the reflect.TypeOf is based on what grpc-go
+	// does itself at:
+	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
 	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.PackagesServiceServer)(nil)).Elem())
 
 	// Create the core.packages server and register it for both grpc and http.
@@ -194,6 +194,7 @@ func registerPackagesServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv
 }
 
 func registerRepositoriesServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
+	// see comment in registerPackagesServiceServer
 	repositoriesPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.RepositoriesServiceServer)(nil)).Elem())
 
 	// Create the core.packages server and register it for both grpc and http.

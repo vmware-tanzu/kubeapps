@@ -84,7 +84,7 @@ service FluxV2RepositoriesService {
   // 'fluxv2' plugin
   rpc AddPackageRepository(kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse) {
     option (google.api.http) = {
-      post: "/core/packages/v1alpha1/repositories"
+      post: "/plugins/fluxv2/packages/v1alpha1/repositories"
       body: "*"
     };
    }
