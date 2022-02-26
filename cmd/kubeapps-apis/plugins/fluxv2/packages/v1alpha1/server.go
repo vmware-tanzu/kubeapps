@@ -34,6 +34,7 @@ import (
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
+var _ corev1.RepositoriesServiceServer = (*Server)(nil)
 
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
@@ -148,41 +149,6 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 // be codes.Unknown which is translated to a 500. you might have a helper
 // function that returns an error, then your actual handler function handles
 // that error by returning a status.Errorf with the appropriate code
-
-// GetPackageRepositories returns the package repositories based on the request.
-// note that this func currently returns ALL repositories, not just those in 'ready' (reconciled) state
-func (s *Server) GetPackageRepositories(ctx context.Context, request *v1alpha1.GetPackageRepositoriesRequest) (*v1alpha1.GetPackageRepositoriesResponse, error) {
-	log.Infof("+fluxv2 GetPackageRepositories(request: [%v])", request)
-
-	if request == nil || request.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no context provided")
-	}
-
-	cluster := request.GetContext().GetCluster()
-	if cluster != "" && cluster != s.kubeappsCluster {
-		return nil, status.Errorf(
-			codes.Unimplemented,
-			"not supported yet: request.Context.Cluster: [%v]",
-			request.Context.Cluster)
-	}
-
-	repos, err := s.listReposInNamespace(ctx, request.Context.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	responseRepos := []*v1alpha1.PackageRepository{}
-	for _, repo := range repos {
-		repo, err := packageRepositoryFromFlux(repo)
-		if err != nil {
-			return nil, err
-		}
-		responseRepos = append(responseRepos, repo)
-	}
-	return &v1alpha1.GetPackageRepositoriesResponse{
-		Repositories: responseRepos,
-	}, nil
-}
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 // Note that currently packages are returned only from repos that are in a 'Ready'
@@ -553,6 +519,42 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 			},
 			ResourceRefs: refs,
 		}, nil
+	}
+}
+
+func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
+	log.Infof("+fluxv2 AddPackageRepository [%v]", request)
+	if request == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
+	}
+	if request.Context == nil || request.Context.Namespace == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request Context namespace provided")
+	}
+	cluster := request.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.Context.Cluster: [%v]",
+			request.Context.Cluster)
+	}
+
+	if request.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
+	}
+
+	name := types.NamespacedName{Name: request.Name, Namespace: request.Context.Namespace}
+
+	if request.GetNamespaceScoped() {
+		return nil, status.Errorf(codes.Unimplemented, "Namespaced-scoped repositories are not supported")
+	} else if request.GetType() != "helm" {
+		return nil, status.Errorf(codes.Unimplemented, "repository type [%s] not supported", request.GetType())
+	}
+
+	if err := s.newRepo(ctx, name, request.GetUrl(),
+		request.GetInterval(), request.GetTlsConfig(), request.GetAuth()); err != nil {
+		return nil, err
+	} else {
+		return &corev1.AddPackageRepositoryResponse{}, nil
 	}
 }
 

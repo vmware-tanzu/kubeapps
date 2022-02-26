@@ -13,18 +13,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fluxcd/pkg/apis/meta"
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +31,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/storage/names"
 	typfake "k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 type testSpecGetAvailablePackageSummaries struct {
@@ -1189,106 +1190,289 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 	})
 }
 
-func TestGetPackageRepositories(t *testing.T) {
+func TestAddPackageRepository(t *testing.T) {
+
+	var ca, pub, priv []byte
+	var err error
+	if ca, err = ioutil.ReadFile("testdata/rootCA.crt"); err != nil {
+		t.Fatalf("%+v", err)
+	} else if pub, err = ioutil.ReadFile("testdata/crt.pem"); err != nil {
+		t.Fatalf("%+v", err)
+	} else if priv, err = ioutil.ReadFile("testdata/key.pem"); err != nil {
+		t.Fatalf("%+v", err)
+	}
+
 	testCases := []struct {
-		name                        string
-		request                     *v1alpha1.GetPackageRepositoriesRequest
-		repoNamespace               string
-		repoSpecs                   map[string]sourcev1.HelmRepositorySpec
-		expectedPackageRepositories []*v1alpha1.PackageRepository
-		statusCode                  codes.Code
+		name                  string
+		request               *corev1.AddPackageRepositoryRequest
+		expectedResponse      *corev1.AddPackageRepositoryResponse
+		expectedRepo          *sourcev1.HelmRepository
+		statusCode            codes.Code
+		existingSecret        *apiv1.Secret
+		expectedCreatedSecret *apiv1.Secret
 	}{
 		{
-			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
-			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
-			repoNamespace: "default",
-			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
-				"repo-1": {},
-			},
-			statusCode: codes.Internal,
+			name:       "returns error if no namespace is provided",
+			request:    &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{}},
+			statusCode: codes.InvalidArgument,
 		},
 		{
-			name:          "returns expected repositories",
-			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
-			repoNamespace: "default",
-			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
-				"repo-1": {
-					URL: "https://charts.bitnami.com/bitnami",
-				},
-				"repo-2": {
-					URL: "https://charts.helm.sh/stable",
-				},
-			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{
-				{
-					Name:      "repo-1",
-					Namespace: "default",
-					Url:       "https://charts.bitnami.com/bitnami",
-				},
-				{
-					Name:      "repo-2",
-					Namespace: "default",
-					Url:       "https://charts.helm.sh/stable",
-				},
-			},
+			name:       "returns error if no name is provided",
+			request:    &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{Namespace: "foo"}},
+			statusCode: codes.InvalidArgument,
 		},
 		{
-			name: "returns expected repositories in specific namespace",
-			request: &v1alpha1.GetPackageRepositoriesRequest{
-				Context: &corev1.Context{
-					Namespace: "default",
-				},
+			name: "returns error if namespaced scoped",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:            "bar",
+				Context:         &corev1.Context{Namespace: "foo"},
+				NamespaceScoped: true,
 			},
-			repoNamespace: "non-default",
-			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
-				"repo-1": {
-					URL: "https://charts.bitnami.com/bitnami",
-				},
-				"repo-2": {
-					URL: "https://charts.helm.sh/stable",
-				},
-			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
+			statusCode: codes.Unimplemented,
 		},
 		{
-			name: "returns expected repositories in specific namespace (2)",
-			request: &v1alpha1.GetPackageRepositoriesRequest{
-				Context: &corev1.Context{
-					Namespace: "default",
+			name: "returns error if wrong type",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "foobar",
+			},
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "returns error if no url",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+			},
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			name: "returns error if insecureskipverify is set",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					InsecureSkipVerify: true,
 				},
 			},
-			repoNamespace: "default",
-			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
-				"repo-1": {
-					URL: "https://charts.bitnami.com/bitnami",
-				},
-				"repo-2": {
-					URL: "https://charts.helm.sh/stable",
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "simple add package repository scenario",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+			},
+			expectedResponse: &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:     &add_repo_1,
+			statusCode:       codes.OK,
+		},
+		{
+			name: "package repository with tls cert authority",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_CertAuthority{
+						CertAuthority: string(ca),
+					},
 				},
 			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{
-				{
-					Name:      "repo-1",
-					Namespace: "default",
-					Url:       "https://charts.bitnami.com/bitnami",
-				},
-				{
-					Name:      "repo-2",
-					Namespace: "default",
-					Url:       "https://charts.helm.sh/stable",
+			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newTlsSecret("bar-", "foo", nil, nil, ca),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "package repository with secret key reference",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
 				},
 			},
+			expectedResponse: &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:     &add_repo_3,
+			statusCode:       codes.OK,
+			existingSecret:   newTlsSecret("secret-1", "foo", nil, nil, ca),
+		},
+		{
+			name: "failes when package repository links to non-existing secret",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
+				},
+			},
+			statusCode: codes.NotFound,
+		},
+		{
+			name: "package repository with basic auth",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+						UsernamePassword: &corev1.UsernamePassword{
+							Username: "baz",
+							Password: "zot",
+						},
+					},
+				},
+			},
+			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newBasicAuthSecret("bar-", "foo", "baz", "zot"),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "package repository with TLS authentication",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
+						TlsCertKey: &corev1.TlsCertKey{
+							Cert: string(pub),
+							Key:  string(priv),
+						},
+					},
+				},
+			},
+			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newTlsSecret("bar-", "foo", pub, priv, nil),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "errors for package repository with bearer token",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foobarzot",
+					},
+				},
+			},
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "errors for package repository with custom auth token",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foobarzot",
+					},
+				},
+			},
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "package repository with docker config JSON authentication",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+						DockerCreds: &corev1.DockerCredentials{
+							Server:   "your.private.registry.example.com",
+							Username: "janedoe",
+							Password: "xxxxxxxx",
+							Email:    "jdoe@example.com",
+						},
+					},
+				},
+			},
+			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newDockerConfigJSONSecret("bar-", "foo", "your.private.registry.example.com", "janedoe", "xxxxxxxx", "jdoe@example.com"),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "package repository with basic auth and existing secret",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
+				},
+			},
+			expectedResponse: &corev1.AddPackageRepositoryResponse{},
+			expectedRepo:     &add_repo_3,
+			existingSecret:   newBasicAuthSecret("secret-1", "foo", "baz", "zot"),
+			statusCode:       codes.OK,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, err := newServerWithRepos(t, newRepos(tc.repoSpecs, tc.repoNamespace), nil, nil)
+			secrets := []runtime.Object{}
+			if tc.existingSecret != nil {
+				secrets = append(secrets, tc.existingSecret)
+			}
+			s, mock, err := newServerWithRepos(t, nil, nil, secrets)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			response, err := s.GetPackageRepositories(context.Background(), tc.request)
+			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
+			if tc.statusCode == codes.OK {
+				key, err := redisKeyForRepoNamespacedName(nsname)
+				if err != nil {
+					t.Fatal(err)
+				}
+				mock.ExpectGet(key).RedisNil()
+			}
+
+			ctx := context.Background()
+			response, err := s.AddPackageRepository(ctx, tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1299,16 +1483,59 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
-					opt2 := cmpopts.SortSlices(lessPackageRepositoryFunc)
-					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1, opt2) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+					opt1 := cmpopts.IgnoreUnexported(
+						corev1.AddPackageRepositoryResponse{},
+						corev1.Context{})
+					if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
 			}
 
-			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+			// purposefully not calling mock.ExpectationsWereMet() here because
+			// AddPackageRepository will trigger an ADD event that will be processed
+			// asynchronously, so it may or may not have enough time to get to the
+			// point where the cache worker does a GET
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.statusCode != codes.OK {
+				return
+			}
+
+			// check expected HelmReleass CRD has been created
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+				t.Fatal(err)
+			} else {
+				var actualRepo sourcev1.HelmRepository
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
+					t.Fatal(err)
+				} else {
+					opt1 := cmpopts.IgnoreFields(sourcev1.HelmRepositorySpec{}, "SecretRef")
+
+					if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+					}
+
+					if tc.expectedCreatedSecret != nil {
+						if !strings.HasPrefix(actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name) {
+							t.Errorf("SecretRef [%s] was expected to start with [%s]",
+								actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name)
+						}
+						opt1 := cmpopts.IgnoreFields(
+							metav1.ObjectMeta{}, "Name", "GenerateName")
+						// check expected secret has been created
+						if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+							t.Fatal(err)
+						} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
+							t.Fatal(err)
+						} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt1) {
+							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+						} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
+							t.Errorf("Secret Name [%s] was expected to start with [%s]",
+								secret.Name, tc.expectedCreatedSecret.Name)
+						}
+					}
+				}
 			}
 		})
 	}
@@ -1316,6 +1543,22 @@ func TestGetPackageRepositories(t *testing.T) {
 
 func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, error) {
 	typedClient := typfake.NewSimpleClientset(secrets...)
+
+	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
+	typedClient.PrependReactor(
+		"create", "*",
+		func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+			ret = action.(k8stesting.CreateAction).GetObject()
+			meta, ok := ret.(metav1.Object)
+			if !ok {
+				return
+			}
+			if meta.GetName() == "" && meta.GetGenerateName() != "" {
+				meta.SetName(names.SimpleNameGenerator.GenerateName(meta.GetGenerateName()))
+			}
+			return
+		})
+
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 	ctrlClient := newCtrlClient(repos, nil, nil)
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
@@ -1365,16 +1608,6 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 	}
 
 	return helmRepository
-}
-
-// newRepos takes a map of specs keyed by object name converting them to typed flux HelmRepository objects.
-func newRepos(specs map[string]sourcev1.HelmRepositorySpec, namespace string) []sourcev1.HelmRepository {
-	repos := []sourcev1.HelmRepository{}
-	for name, spec := range specs {
-		repo := newRepo(name, namespace, &spec, nil)
-		repos = append(repos, repo)
-	}
-	return repos
 }
 
 // these functiosn should affect only unit test, not production code
@@ -1515,7 +1748,7 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 	}
 
 	if secretRef != "" {
-		repoSpec.SecretRef = &meta.LocalObjectReference{Name: secretRef}
+		repoSpec.SecretRef = &fluxmeta.LocalObjectReference{Name: secretRef}
 	}
 
 	lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
@@ -1543,182 +1776,234 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 }
 
 // misc global vars that get re-used in multiple tests scenarios
-var repositoriesGvr = schema.GroupVersionResource{
-	Group:    sourcev1.GroupVersion.Group,
-	Version:  sourcev1.GroupVersion.Version,
-	Resource: fluxHelmRepositories,
-}
+var (
+	repositoriesGvr = schema.GroupVersionResource{
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
+		Resource: fluxHelmRepositories,
+	}
 
-var valid_index_charts_spec = []testSpecChartWithFile{
-	{
-		name:     "acs-engine-autoscaler",
-		tgzFile:  "testdata/acs-engine-autoscaler-2.1.1.tgz",
-		revision: "2.1.1",
-	},
-	{
-		name:     "wordpress",
-		tgzFile:  "testdata/wordpress-0.7.5.tgz",
-		revision: "0.7.5",
-	},
-	{
-		name:     "wordpress",
-		tgzFile:  "testdata/wordpress-0.7.4.tgz",
-		revision: "0.7.4",
-	},
-}
-
-var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
-	{
-		Name:        "acs-engine-autoscaler",
-		DisplayName: "acs-engine-autoscaler",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "2.1.1",
-			AppVersion: "2.1.1",
+	valid_index_charts_spec = []testSpecChartWithFile{
+		{
+			name:     "acs-engine-autoscaler",
+			tgzFile:  "testdata/acs-engine-autoscaler-2.1.1.tgz",
+			revision: "2.1.1",
 		},
-		IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-		ShortDescription: "Scales worker nodes within agent pools",
+		{
+			name:     "wordpress",
+			tgzFile:  "testdata/wordpress-0.7.5.tgz",
+			revision: "0.7.5",
+		},
+		{
+			name:     "wordpress",
+			tgzFile:  "testdata/wordpress-0.7.4.tgz",
+			revision: "0.7.4",
+		},
+	}
+
+	valid_index_package_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "acs-engine-autoscaler",
+			DisplayName: "acs-engine-autoscaler",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "2.1.1",
+				AppVersion: "2.1.1",
+			},
+			IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+			ShortDescription: "Scales worker nodes within agent pools",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "bitnami-1/acs-engine-autoscaler",
+				Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+		{
+			Name:        "wordpress",
+			DisplayName: "wordpress",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "0.7.5",
+				AppVersion: "4.9.1",
+			},
+			IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+			ShortDescription: "new description!",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "bitnami-1/wordpress",
+				Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+	}
+
+	cert_manager_summary = &corev1.AvailablePackageSummary{
+		Name:        "cert-manager",
+		DisplayName: "cert-manager",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "v1.4.0",
+			AppVersion: "v1.4.0",
+		},
+		IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+		ShortDescription: "A Helm chart for cert-manager",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "bitnami-1/acs-engine-autoscaler",
+			Identifier: "jetstack-1/cert-manager",
+			Context:    &corev1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
+			Plugin:     fluxPlugin,
+		},
+		Categories: []string{""},
+	}
+
+	elasticsearch_summary = &corev1.AvailablePackageSummary{
+		Name:        "elasticsearch",
+		DisplayName: "elasticsearch",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "15.5.0",
+			AppVersion: "7.13.2",
+		},
+		IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
+		ShortDescription: "A highly scalable open-source full-text search and analytics engine",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "index-with-categories-1/elasticsearch",
 			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
-		Categories: []string{""},
-	},
-	{
-		Name:        "wordpress",
-		DisplayName: "wordpress",
+		Categories: []string{"Analytics"},
+	}
+
+	ghost_summary = &corev1.AvailablePackageSummary{
+		Name:        "ghost",
+		DisplayName: "ghost",
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "0.7.5",
-			AppVersion: "4.9.1",
+			PkgVersion: "13.0.14",
+			AppVersion: "4.7.0",
 		},
-		IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-		ShortDescription: "new description!",
+		IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
+		ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "bitnami-1/wordpress",
+			Identifier: "index-with-categories-1/ghost",
 			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
-		Categories: []string{""},
-	},
-}
+		Categories: []string{"CMS"},
+	}
 
-var cert_manager_summary = &corev1.AvailablePackageSummary{
-	Name:        "cert-manager",
-	DisplayName: "cert-manager",
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "v1.4.0",
-		AppVersion: "v1.4.0",
-	},
-	IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-	ShortDescription: "A Helm chart for cert-manager",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "jetstack-1/cert-manager",
-		Context:    &corev1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
-		Plugin:     fluxPlugin,
-	},
-	Categories: []string{""},
-}
+	index_with_categories_summaries = []*corev1.AvailablePackageSummary{
+		elasticsearch_summary,
+		ghost_summary,
+	}
 
-var elasticsearch_summary = &corev1.AvailablePackageSummary{
-	Name:        "elasticsearch",
-	DisplayName: "elasticsearch",
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "15.5.0",
-		AppVersion: "7.13.2",
-	},
-	IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
-	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "index-with-categories-1/elasticsearch",
-		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
-		Plugin:     fluxPlugin,
-	},
-	Categories: []string{"Analytics"},
-}
+	index_before_update_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "alpine",
+			DisplayName: "alpine",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "0.2.0",
+			},
+			IconUrl:          "",
+			ShortDescription: "Deploy a basic Alpine Linux pod",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "testrepo/alpine",
+				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+		{
+			Name:        "nginx",
+			DisplayName: "nginx",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "1.1.0",
+			},
+			IconUrl:          "",
+			ShortDescription: "Create a basic nginx HTTP server",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "testrepo/nginx",
+				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+	}
 
-var ghost_summary = &corev1.AvailablePackageSummary{
-	Name:        "ghost",
-	DisplayName: "ghost",
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "13.0.14",
-		AppVersion: "4.7.0",
-	},
-	IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
-	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "index-with-categories-1/ghost",
-		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
-		Plugin:     fluxPlugin,
-	},
-	Categories: []string{"CMS"},
-}
+	index_after_update_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "alpine",
+			DisplayName: "alpine",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "0.3.0",
+			},
+			IconUrl:          "",
+			ShortDescription: "Deploy a basic Alpine Linux pod",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "testrepo/alpine",
+				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+		{
+			Name:        "nginx",
+			DisplayName: "nginx",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "1.1.0",
+			},
+			IconUrl:          "",
+			ShortDescription: "Create a basic nginx HTTP server",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "testrepo/nginx",
+				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		}}
 
-var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
-	elasticsearch_summary,
-	ghost_summary,
-}
+	add_repo_1 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+		},
+	}
 
-var index_before_update_summaries = []*corev1.AvailablePackageSummary{
-	{
-		Name:        "alpine",
-		DisplayName: "alpine",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "0.2.0",
+	add_repo_2 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
 		},
-		IconUrl:          "",
-		ShortDescription: "Deploy a basic Alpine Linux pod",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-			Plugin:     fluxPlugin,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
 		},
-		Categories: []string{""},
-	},
-	{
-		Name:        "nginx",
-		DisplayName: "nginx",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "1.1.0",
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:       "http://example.com",
+			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			SecretRef: &fluxmeta.LocalObjectReference{Name: "bar-"},
 		},
-		IconUrl:          "",
-		ShortDescription: "Create a basic nginx HTTP server",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-			Plugin:     fluxPlugin,
-		},
-		Categories: []string{""},
-	},
-}
+	}
 
-var index_after_update_summaries = []*corev1.AvailablePackageSummary{
-	{
-		Name:        "alpine",
-		DisplayName: "alpine",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "0.3.0",
+	add_repo_3 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
 		},
-		IconUrl:          "",
-		ShortDescription: "Deploy a basic Alpine Linux pod",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-			Plugin:     fluxPlugin,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
 		},
-		Categories: []string{""},
-	},
-	{
-		Name:        "nginx",
-		DisplayName: "nginx",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "1.1.0",
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:       "http://example.com",
+			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			SecretRef: &fluxmeta.LocalObjectReference{Name: "secret-1"},
 		},
-		IconUrl:          "",
-		ShortDescription: "Create a basic nginx HTTP server",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-			Plugin:     fluxPlugin,
-		},
-		Categories: []string{""},
-	}}
+	}
+)

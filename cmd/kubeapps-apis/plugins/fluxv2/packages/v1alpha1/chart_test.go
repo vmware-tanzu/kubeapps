@@ -175,21 +175,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			secretObjs := []runtime.Object{}
 			if tc.basicAuth && tc.tls {
 				secretRef = "both-credentials"
-				if secret, err := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca); err != nil {
-					t.Fatalf("%+v", err)
-				} else {
-					secretObjs = append(secretObjs, secret)
-				}
+				secret := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca)
+				secretObjs = append(secretObjs, secret)
 			} else if tc.basicAuth {
 				secretRef = "http-credentials"
 				secretObjs = append(secretObjs, newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar"))
 			} else if tc.tls {
 				secretRef = "https-credentials"
-				if secret, err := newTlsSecret(secretRef, repoNamespace, pub, priv, ca); err != nil {
-					t.Fatalf("%+v", err)
-				} else {
-					secretObjs = append(secretObjs, secret)
-				}
+				secret := newTlsSecret(secretRef, repoNamespace, pub, priv, ca)
+				secretObjs = append(secretObjs, secret)
 			}
 
 			ts2, repo, err := newRepoWithIndex(

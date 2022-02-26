@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/subtle"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,10 +16,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	k8scorev1 "k8s.io/api/core/v1"
+	apiv1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -103,16 +102,12 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 	return p1.DisplayName < p2.DisplayName
 }
 
-func lessPackageRepositoryFunc(p1, p2 *v1alpha1.PackageRepository) bool {
-	return p1.Name < p2.Name && p1.Namespace < p2.Namespace
-}
-
 // these are helpers to compare slices ignoring order
 func lessInstalledPackageSummaryFunc(p1, p2 *corev1.InstalledPackageSummary) bool {
 	return p1.Name < p2.Name
 }
 
-func compareJSON(t *testing.T, expectedJSON, actualJSON *v1.JSON) {
+func compareJSON(t *testing.T, expectedJSON, actualJSON *apiextv1.JSON) {
 	expectedJSONString, actualJSONString := "", ""
 	if expectedJSON != nil {
 		expectedJSONString = string(expectedJSON.Raw)
@@ -165,13 +160,13 @@ func basicAuth(handler http.HandlerFunc, username, password, realm string) http.
 }
 
 // ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
-func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secret {
-	return &k8scorev1.Secret{
+func newBasicAuthSecret(name, namespace, user, password string) *apiv1.Secret {
+	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: k8scorev1.SecretTypeOpaque,
+		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{
 			"username": []byte(user),
 			"password": []byte(password),
@@ -184,36 +179,70 @@ func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secre
 // https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
 // in a different format:
 // certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
-func newTlsSecret(name, namespace string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
+func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
+	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: k8scorev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"certFile": pub,
-			"keyFile":  priv,
-			"caFile":   ca,
-		},
-	}, nil
+		Type: apiv1.SecretTypeOpaque,
+		Data: map[string][]byte{},
+	}
+	if pub != nil {
+		s.Data["certFile"] = pub
+	}
+	if priv != nil {
+		s.Data["keyFile"] = priv
+	}
+	if ca != nil {
+		s.Data["caFile"] = ca
+	}
+	return s
 }
 
-func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
+func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) *apiv1.Secret {
+	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Type: k8scorev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"username": []byte(user),
-			"password": []byte(password),
-			"certFile": pub,
-			"keyFile":  priv,
-			"caFile":   ca,
+		Type: apiv1.SecretTypeOpaque,
+		Data: map[string][]byte{},
+	}
+	if pub != nil {
+		s.Data["certFile"] = pub
+	}
+	if priv != nil {
+		s.Data["keyFile"] = priv
+	}
+	if ca != nil {
+		s.Data["caFile"] = ca
+	}
+	if user != "" {
+		s.Data["username"] = []byte(user)
+	}
+	if password != "" {
+		s.Data["password"] = []byte(password)
+	}
+	return s
+}
+
+func newDockerConfigJSONSecret(name, namespace, server, username, password, email string) *apiv1.Secret {
+	// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+	authStr := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	configStr := fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
+		server, username, password, email, authStr)
+	s := &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
 		},
-	}, nil
+		Type: apiv1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{
+			".dockerconfigjson": []byte(base64.StdEncoding.EncodeToString([]byte(configStr))),
+		},
+	}
+	return s
 }
 
 func availableRef(id, namespace string) *corev1.AvailablePackageReference {

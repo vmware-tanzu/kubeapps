@@ -79,7 +79,7 @@ func Serve(serveOpts core.ServeOptions) error {
 	defer cancel()
 	gw, err := gatewayMux()
 	if err != nil {
-		return fmt.Errorf("Failed to create gateway: %v", err)
+		return fmt.Errorf("failed to create gateway: %v", err)
 	}
 	gwArgs := core.GatewayHandlerArgs{
 		Ctx:         ctx,
@@ -94,28 +94,12 @@ func Serve(serveOpts core.ServeOptions) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
-	pluginsGRPCv1alpha1.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
-	err = pluginsGRPCv1alpha1.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
-	if err != nil {
-		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
-	}
-
-	// Ask the plugins server for plugins with GRPC servers that fulfil the core
-	// packaging v1alpha1 API, then pass to the constructor below.
-	// The argument for the reflect.TypeOf is based on what grpc-go
-	// does itself at:
-	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
-	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.PackagesServiceServer)(nil)).Elem())
-
-	// Create the core.packages server and register it for both grpc and http.
-	packagesServer, err := packagesv1alpha1.NewPackagesServer(packagingPlugins)
-	if err != nil {
-		return fmt.Errorf("failed to create core.packages.v1alpha1 server: %w", err)
-	}
-	packagesGRPCv1alpha1.RegisterPackagesServiceServer(grpcSrv, packagesServer)
-	err = packagesGRPCv1alpha1.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
-	if err != nil {
-		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)
+	if err = registerPluginsServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
+		return err
+	} else if err = registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
+		return err
+	} else if err = registerRepositoriesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
+		return err
 	}
 
 	lis, err := net.Listen("tcp", listenAddr)
@@ -176,6 +160,53 @@ func Serve(serveOpts core.ServeOptions) error {
 		return fmt.Errorf("failed to serve: %v", err)
 	}
 
+	return nil
+}
+
+func registerPluginsServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
+	pluginsGRPCv1alpha1.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
+	err := pluginsGRPCv1alpha1.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
+	if err != nil {
+		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
+	}
+	return nil
+}
+
+func registerPackagesServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
+	// Ask the plugins server for plugins with GRPC servers that fulfil the core
+	// packaging v1alpha1 API, then pass to the constructor below.
+	// The argument for the reflect.TypeOf is based on what grpc-go
+	// does itself at:
+	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
+	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.PackagesServiceServer)(nil)).Elem())
+
+	// Create the core.packages server and register it for both grpc and http.
+	packagesServer, err := packagesv1alpha1.NewPackagesServer(packagingPlugins)
+	if err != nil {
+		return fmt.Errorf("failed to create core.packages.v1alpha1 server: %w", err)
+	}
+	packagesGRPCv1alpha1.RegisterPackagesServiceServer(grpcSrv, packagesServer)
+	err = packagesGRPCv1alpha1.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
+	if err != nil {
+		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)
+	}
+	return nil
+}
+
+func registerRepositoriesServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
+	// see comment in registerPackagesServiceServer
+	repositoriesPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.RepositoriesServiceServer)(nil)).Elem())
+
+	// Create the core.packages server and register it for both grpc and http.
+	repoServer, err := packagesv1alpha1.NewRepositoriesServer(repositoriesPlugins)
+	if err != nil {
+		return fmt.Errorf("failed to create core.packages.v1alpha1 server: %w", err)
+	}
+	packagesGRPCv1alpha1.RegisterRepositoriesServiceServer(grpcSrv, repoServer)
+	err = packagesGRPCv1alpha1.RegisterRepositoriesServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
+	if err != nil {
+		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)
+	}
 	return nil
 }
 

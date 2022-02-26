@@ -51,7 +51,7 @@ const (
 	defaultContextTimeout      = 30 * time.Second
 )
 
-func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
+func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient) {
 	enableEnvVar := os.Getenv(envVarFluxIntegrationTests)
 	runTests := false
 	if enableEnvVar != "" {
@@ -68,9 +68,10 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
 			t.Fatalf("Failed to find local kind cluster due to: [%v]", err)
 		}
-		var fluxPluginClient fluxplugin.FluxV2PackagesServiceClient
+		var fluxPluginPackagesClient fluxplugin.FluxV2PackagesServiceClient
+		var fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient
 		var err error
-		if fluxPluginClient, err = getFluxPluginClient(t); err != nil {
+		if fluxPluginPackagesClient, fluxPluginReposClient, err = getFluxPluginClients(t); err != nil {
 			t.Fatalf("Failed to get fluxv2 plugin due to: [%v]", err)
 		}
 
@@ -89,9 +90,9 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		}
 
 		rand.Seed(time.Now().UnixNano())
-		return fluxPluginClient
+		return fluxPluginPackagesClient, fluxPluginReposClient
 	}
-	return nil
+	return nil, nil
 }
 
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
@@ -128,8 +129,8 @@ func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	}
 }
 
-func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, error) {
-	t.Logf("+getFluxPluginClient")
+func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
+	t.Logf("+getFluxPluginClients")
 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
@@ -155,9 +156,9 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("kubeapps Flux v2 plugin is not registered")
+		return nil, nil, fmt.Errorf("kubeapps Flux v2 plugin is not registered")
 	}
-	return fluxplugin.NewFluxV2PackagesServiceClient(conn), nil
+	return fluxplugin.NewFluxV2PackagesServiceClient(conn), fluxplugin.NewFluxV2RepositoriesServiceClient(conn), nil
 }
 
 // This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
