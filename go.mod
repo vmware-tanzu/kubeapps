@@ -12,31 +12,31 @@ replace (
 	// k8s.io/kubernetes is not intended to be used as a module, so versions are not being properly resolved.
 	// This replacement is required, see https://github.com/kubernetes/kubernetes/issues/79384
 	// As we support new k8s versions, this replacements should be also updated accordingly.
-	k8s.io/api => k8s.io/api v0.22.6
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.22.6
-	k8s.io/apimachinery => k8s.io/apimachinery v0.22.6
-	k8s.io/apiserver => k8s.io/apiserver v0.22.6
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.22.6
-	k8s.io/client-go => k8s.io/client-go v0.22.6
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.22.6
-	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.22.6
-	k8s.io/code-generator => k8s.io/code-generator v0.22.6
-	k8s.io/component-base => k8s.io/component-base v0.22.6
-	k8s.io/component-helpers => k8s.io/component-helpers v0.22.6
-	k8s.io/controller-manager => k8s.io/controller-manager v0.22.6
-	k8s.io/cri-api => k8s.io/cri-api v0.22.6
-	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.22.6
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.22.6
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.22.6
-	k8s.io/kube-proxy => k8s.io/kube-proxy v0.22.6
-	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.22.6
-	k8s.io/kubectl => k8s.io/kubectl v0.22.6
-	k8s.io/kubelet => k8s.io/kubelet v0.22.6
-	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.22.6
-	k8s.io/metrics => k8s.io/metrics v0.22.6
-	k8s.io/mount-utils => k8s.io/mount-utils v0.22.6
-	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.6
-	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.22.6
+	k8s.io/api => k8s.io/api v0.22.7
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.22.7
+	k8s.io/apimachinery => k8s.io/apimachinery v0.22.7
+	k8s.io/apiserver => k8s.io/apiserver v0.22.7
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.22.7
+	k8s.io/client-go => k8s.io/client-go v0.22.7
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.22.7
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.22.7
+	k8s.io/code-generator => k8s.io/code-generator v0.22.7
+	k8s.io/component-base => k8s.io/component-base v0.22.7
+	k8s.io/component-helpers => k8s.io/component-helpers v0.22.7
+	k8s.io/controller-manager => k8s.io/controller-manager v0.22.7
+	k8s.io/cri-api => k8s.io/cri-api v0.22.7
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.22.7
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.22.7
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.22.7
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.22.7
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.22.7
+	k8s.io/kubectl => k8s.io/kubectl v0.22.7
+	k8s.io/kubelet => k8s.io/kubelet v0.22.7
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.22.7
+	k8s.io/metrics => k8s.io/metrics v0.22.7
+	k8s.io/mount-utils => k8s.io/mount-utils v0.22.7
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.7
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.22.7
 )
 
 require (
@@ -47,7 +47,7 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.0+incompatible
-	github.com/fluxcd/helm-controller/api v0.17.0
+	github.com/fluxcd/helm-controller/api v0.17.1
 	github.com/fluxcd/pkg/apis/meta v0.10.2
 	github.com/fluxcd/source-controller/api v0.21.2
 	github.com/go-redis/redis/v8 v8.11.4
@@ -59,7 +59,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.6
 	github.com/jinzhu/copier v0.3.5
-	github.com/k14s/kapp v0.45.0
+	github.com/k14s/kapp v0.46.0
 	github.com/lib/pq v1.10.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.2
@@ -89,7 +89,7 @@ require (
 	k8s.io/cli-runtime v0.23.1
 	k8s.io/client-go v0.23.1
 	k8s.io/klog/v2 v2.40.1
-	k8s.io/kubernetes v1.22.6
+	k8s.io/kubernetes v1.22.7
 	oras.land/oras-go v1.1.0
 	sigs.k8s.io/controller-runtime v0.11.1
 	sigs.k8s.io/yaml v1.3.0
@@ -127,7 +127,7 @@ require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.0.3 // indirect
 	github.com/fluxcd/pkg/apis/kustomize v0.3.1 // indirect
-	github.com/fluxcd/pkg/runtime v0.12.4 // indirect
+	github.com/fluxcd/pkg/runtime v0.12.5 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect

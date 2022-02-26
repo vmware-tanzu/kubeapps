@@ -9,10 +9,10 @@
    1. [Quick overview of the kapp-controller CRs](#quick-overview-of-the-kapp-controller-crs)
 3. [Using Kubeapps for Managing Carvel Packages
    ](#using-kubeapps-for-managing-carvel-packages)
-   1. [Configuring Kubeapps to Cupport Carvel Packages](#configuring-kubeapps-to-support-carvel-packages)
+   1. [Configuring Kubeapps to Support Carvel Packages](#configuring-kubeapps-to-support-carvel-packages)
    2. [Installing a Package Repository](#installing-a-package-repository)
    3. [Installing a Package](#installing-a-package)
-   4. [Viewing the Installed Applications](#viewing-the-installed-applications)
+   4. [Viewing the Installed Packages](#viewing-the-installed-packages)
 4. [Conclusions](#conclusions)
 
 ---
@@ -66,7 +66,7 @@ The following image depicts the relationship between the different kapp-controll
 
 ### Configuring Kubeapps to Support Carvel Packages
 
-As any other packaging format, the kapp-controller support is brought into Kubeapps by means of a plugin.
+As with any other packaging format, the kapp-controller support is brought into Kubeapps by means of a plugin.
 
 This `kapp-controller` plugin is currently being built by default in the Kubeapps release and it is just a matter of enabling it when installing Kubeapps.
 
@@ -183,7 +183,7 @@ In Kubeapps, we work around this decision by generating some default values base
 Finally, after clicking the `Install` button, the required CRs will be installed in the cluster (`PackageInstall` and the `Secret` holding the passed values).
 At this moment, kapp-controller will perform the required actions to start creating the Kubernetes resources defined by the package. This process is known as _reconciliation_.
 
-### Viewing the Installed Applications
+### Viewing the Installed Packages
 
 Viewing the installed Carvel Packages in Kubeapps is the same experience as viewing any other installed package (such as a Helm Chart) in Kubeapps.
 
@@ -206,9 +206,9 @@ Besides, the current values are shown at the end of the page.
 
 Next, you can click on the `Delete` button to uninstall the application or the `Upgrade` button to edit the values of the application or update it to another version.
 
-> **NOTE**: as opossed to Helm Charts, Carvel Packages cannot be rolled back, hence there is no `Rollback` button.
+> **NOTE**: as opposed to Helm Charts, Carvel Packages cannot be rolled back, hence there is no `Rollback` button.
 
-Finally, note that every installed Carvel Package through Kubeapps can also be managed by the [kapp](https://carvel.dev/kapp/) CLI using the `kapp inspect -a <APPLICATION_NAME>` command. For example:
+Finally, note that every Carvel Package installed through Kubeapps can also be managed by the [kapp](https://carvel.dev/kapp/) CLI using the `kapp inspect -a <APPLICATION_NAME>` command. For example:
 
 ```bash
 kapp inspect -a my-test-ctrl
