@@ -18,7 +18,13 @@
       "name": "PackagesService"
     },
     {
+      "name": "RepositoriesService"
+    },
+    {
       "name": "FluxV2PackagesService"
+    },
+    {
+      "name": "FluxV2RepositoriesService"
     },
     {
       "name": "HelmPackagesService"
@@ -630,6 +636,43 @@
         ]
       }
     },
+    "/core/packages/v1alpha1/repositories": {
+      "post": {
+        "summary": "AddPackageRepository add an existing package repository to the set of ones already managed by the \n'fluxv2' plugin",
+        "operationId": "FluxV2RepositoriesService_AddPackageRepository",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1AddPackageRepositoryResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1AddPackageRepositoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FluxV2RepositoriesService"
+        ]
+      }
+    },
     "/core/plugins/v1alpha1/configured-plugins": {
       "get": {
         "summary": "GetConfiguredPlugins returns a map of short and longnames for the configured plugins.",
@@ -1229,49 +1272,6 @@
           {
             "name": "installedPackageRef.plugin.version",
             "description": "Plugin version. The version of the plugin, such as v1alpha1",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "FluxV2PackagesService"
-        ]
-      }
-    },
-    "/plugins/fluxv2/packages/v1alpha1/packagerepositories": {
-      "get": {
-        "summary": "GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin",
-        "operationId": "FluxV2PackagesService_GetPackageRepositories",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse"
-            }
-          },
-          "401": {
-            "description": "Returned when the user does not have permission to access the resource.",
-            "schema": {}
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2512,7 +2512,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pluginskapp_controllerpackagesv1alpha1GetPackageRepositoriesResponse"
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoriesResponse"
             }
           },
           "401": {
@@ -2609,13 +2609,6 @@
             "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
-            "in": "query",
-            "required": false,
             "type": "string"
           }
         ],
@@ -2742,31 +2735,6 @@
             "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "type",
-            "description": "Type. The type of the secret. Valid values are defined by the Type enumeration.",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": [
-              "SECRET_TYPE_OPAQUE_UNSPECIFIED",
-              "SECRET_TYPE_SERVICE_ACCOUNT_TOKEN",
-              "SECRET_TYPE_DOCKER_CONFIG",
-              "SECRET_TYPE_DOCKER_CONFIG_JSON",
-              "SECRET_TYPE_BASIC_AUTH",
-              "SECRET_TYPE_SSH_AUTH",
-              "SECRET_TYPE_TLS",
-              "SECRET_TYPE_BOOTSTRAP_TOKEN"
-            ],
-            "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED"
-          },
-          {
-            "name": "name",
-            "description": "Name. The name of the secret.",
-            "in": "query",
-            "required": false,
             "type": "string"
           }
         ],
@@ -2911,117 +2879,31 @@
       "description": "Generic reasons why an installed package may be ready or not.\nThese should make sense across different packaging plugins.",
       "title": "StatusReason"
     },
-    "pluginsfluxv2packagesv1alpha1GetPackageRepositoriesResponse": {
-      "type": "object",
-      "example": {
-        "repositories": [
-          {
-            "name": "repo-name.example.com",
-            "namespace": "",
-            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
-          }
-        ]
-      },
-      "properties": {
-        "repositories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/pluginsfluxv2packagesv1alpha1PackageRepository"
-          },
-          "description": "List of PackageRepository",
-          "title": "Repositories"
-        }
-      },
-      "description": "Response for GetPackageRepositories",
-      "title": "GetPackageRepositories"
-    },
-    "pluginsfluxv2packagesv1alpha1PackageRepository": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name identifying package repository on the cluster.",
-          "title": "Package repository name"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "An optional namespace for namespaced package repositories.",
-          "title": "Package repository namespace"
-        },
-        "url": {
-          "type": "string",
-          "description": "A url identifying the package repository location.",
-          "title": "Package repository URL"
-        },
-        "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this package repository.",
-          "title": "Package repository plugin"
-        }
-      },
-      "description": "A PackageRepository defines a repository of packages for installation.",
-      "title": "PackageRepository"
-    },
-    "pluginskapp_controllerpackagesv1alpha1GetPackageRepositoriesResponse": {
-      "type": "object",
-      "example": {
-        "repositories": [
-          {
-            "name": "repo-name.example.com",
-            "namespace": "",
-            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
-          }
-        ]
-      },
-      "properties": {
-        "repositories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/pluginskapp_controllerpackagesv1alpha1PackageRepository"
-          },
-          "description": "List of PackageRepository",
-          "title": "Repositories"
-        }
-      },
-      "description": "Response for GetPackageRepositories",
-      "title": "GetPackageRepositories"
-    },
-    "pluginskapp_controllerpackagesv1alpha1PackageRepository": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name identifying package repository on the cluster.",
-          "title": "Package repository name"
-        },
-        "namespace": {
-          "type": "string",
-          "description": "An optional namespace for namespaced package repositories.",
-          "title": "Package repository namespace"
-        },
-        "url": {
-          "type": "string",
-          "description": "A url identifying the package repository location.",
-          "title": "Package repository URL"
-        },
-        "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this package repository.",
-          "title": "Package repository plugin"
-        }
-      },
-      "description": "A PackageRepository defines a repository of packages for installation.",
-      "title": "PackageRepository"
+    "PackageRepositoryAuthPackageRepositoryAuthType": {
+      "type": "string",
+      "enum": [
+        "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_TLS",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON"
+      ],
+      "default": "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED"
     },
     "protobufAny": {
       "type": "object",
       "properties": {
-        "@type": {
+        "typeUrl": {
           "type": "string",
           "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        },
+        "value": {
+          "type": "string",
+          "format": "byte",
+          "description": "Must be a valid serialized protocol buffer of the above specified type."
         }
       },
-      "additionalProperties": {},
       "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
     },
     "rpcStatus": {
@@ -3041,6 +2923,59 @@
           }
         }
       }
+    },
+    "v1alpha1AddPackageRepositoryRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1alpha1Context",
+          "description": "The target context where the package repository is intended to be \ninstalled."
+        },
+        "name": {
+          "type": "string",
+          "title": "A user-provided name for the package repository (e.g. bitnami)"
+        },
+        "description": {
+          "type": "string",
+          "title": "A user-provided description. Optional"
+        },
+        "namespaceScoped": {
+          "type": "boolean",
+          "title": "Whether this repository is global or namespace-scoped. Optional.\nBy default, the value is false, i.e. the repository is global"
+        },
+        "type": {
+          "type": "string",
+          "title": "Package storage type \nIn general, each plug-in will define an acceptable set of valid types \n- for direct helm plug-in valid values are: helm, oci\n- for flux plug-in currently only supported value is helm. In the\n  future, we may add support for git and/or AWS s3-style buckets"
+        },
+        "url": {
+          "type": "string",
+          "title": "A URL identifying the package repository location. Must contain at \nleast a protocol and host"
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int64",
+          "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
+        },
+        "tlsConfig": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+          "title": "TLS-specific parameters for connecting to a repository. Optional"
+        },
+        "auth": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+          "title": "authentication parameters for connecting to a repository. Optional"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+        }
+      },
+      "description": "Request for AddPackageRepository",
+      "title": "AddPackageRepositoryRequest"
+    },
+    "v1alpha1AddPackageRepositoryResponse": {
+      "type": "object",
+      "description": "Response for AddPackageRepositoryRequest",
+      "title": "AddPackageRepositoryResponse"
     },
     "v1alpha1AvailablePackageDetail": {
       "type": "object",
@@ -3283,6 +3218,28 @@
       "description": "Response for DeleteInstalledPackage",
       "title": "DeleteInstalledPackageResponse"
     },
+    "v1alpha1DockerCredentials": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "type": "string",
+          "title": "server name"
+        },
+        "username": {
+          "type": "string",
+          "description": "username."
+        },
+        "password": {
+          "type": "string",
+          "title": "password. In clear text"
+        },
+        "email": {
+          "type": "string",
+          "title": "email address"
+        }
+      },
+      "title": "DockerCredentials"
+    },
     "v1alpha1FilterOptions": {
       "type": "object",
       "properties": {
@@ -3461,6 +3418,30 @@
       },
       "description": "Response for GetNamespaceNames",
       "title": "GetNamespaceNamesResponse"
+    },
+    "v1alpha1GetPackageRepositoriesResponse": {
+      "type": "object",
+      "example": {
+        "repositories": [
+          {
+            "name": "repo-name.example.com",
+            "namespace": "",
+            "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"
+          }
+        ]
+      },
+      "properties": {
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1PackageRepository"
+          },
+          "description": "List of PackageRepository",
+          "title": "Repositories"
+        }
+      },
+      "description": "Response for GetPackageRepositories",
+      "title": "GetPackageRepositories"
     },
     "v1alpha1GetResourcesResponse": {
       "type": "object",
@@ -3707,6 +3688,85 @@
       "description": "PackageAppVersion conveys both the package version and the packaged app version.",
       "title": "Package AppVersion"
     },
+    "v1alpha1PackageRepository": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name identifying package repository on the cluster.",
+          "title": "Package repository name"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "An optional namespace for namespaced package repositories.",
+          "title": "Package repository namespace"
+        },
+        "url": {
+          "type": "string",
+          "description": "A url identifying the package repository location.",
+          "title": "Package repository URL"
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository.",
+          "title": "Package repository plugin"
+        }
+      },
+      "description": "A PackageRepository defines a repository of packages for installation.",
+      "title": "PackageRepository"
+    },
+    "v1alpha1PackageRepositoryAuth": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/PackageRepositoryAuthPackageRepositoryAuthType"
+        },
+        "usernamePassword": {
+          "$ref": "#/definitions/v1alpha1UsernamePassword",
+          "title": "username and plain text password"
+        },
+        "tlsCertKey": {
+          "$ref": "#/definitions/v1alpha1TlsCertKey",
+          "title": "certificate and key for TLS-based authentication"
+        },
+        "dockerCreds": {
+          "$ref": "#/definitions/v1alpha1DockerCredentials",
+          "title": "docker credentials"
+        },
+        "header": {
+          "type": "string",
+          "title": "for Bearer Auth token value\nfor Custom Auth, complete value of \"Authorization\" header"
+        },
+        "secretRef": {
+          "$ref": "#/definitions/v1alpha1SecretKeyReference",
+          "title": "a reference to an existing secret"
+        },
+        "passCredentials": {
+          "type": "boolean",
+          "title": "pass_credentials allows the credentials from the SecretRef to be passed\non to a host that does not match the host as defined in URL.\nThis flag controls whether or not it is allowed to passing credentials\nwith requests to other domains linked from the repository.\nThis may be needed if the host of the advertised chart URLs in the\nindex differs from the defined URL. Optional"
+        }
+      },
+      "description": "Authentication/authorization to provide client’s identity when connecting\nto a package repository.\nThere are 6 total distinct use cases we may support:\n1) None (Public)\n2) Basic Auth\n3) Bearer Token \n4) Custom Authorization Header\n5) Docker Registry Credentials (for OCI only)\n6) TLS certificate and key\n\nNote that (1)-(4) may be done over HTTP or HTTPs without any custom \ncertificates or certificate authority \n(1) is handled by not not having PackageRepositoryAuth field on\n    the parent object\na given plug-in may or may not support a given authentication type. \nFor example\n - direct-helm plug-in does not currently support (6), while flux does\n - flux plug-in does not support (3) or (4) while direct-helm does",
+      "title": "PackageRepositoryAuth"
+    },
+    "v1alpha1PackageRepositoryTlsConfig": {
+      "type": "object",
+      "properties": {
+        "insecureSkipVerify": {
+          "type": "boolean",
+          "title": "whether or not to skip TLS verification\nnote that fluxv2 does not currently support this and will raise an\nerror should this flag be set to true"
+        },
+        "certAuthority": {
+          "type": "string",
+          "title": "certificate authority. Optional"
+        },
+        "secretRef": {
+          "$ref": "#/definitions/v1alpha1SecretKeyReference",
+          "title": "a reference to an existing secret that contains custom CA"
+        }
+      },
+      "title": "PackageRepositoryTlsConfig"
+    },
     "v1alpha1PaginationOptions": {
       "type": "object",
       "properties": {
@@ -3819,6 +3879,20 @@
       "description": "Response for RollbackInstalledPackage",
       "title": "RollbackInstalledPackageResponse"
     },
+    "v1alpha1SecretKeyReference": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "The name of an existing secret in the same namespace as the object \nthat refers to it (e.g. PackageRepository), containing authentication \ncredentials for the said package repository.\n- For HTTP/S basic auth the secret must be of type \n  \"kubernetes.io/basic-auth\" and contain username and\n  password fields.\n- For TLS the secret must be of type \"kubernetes.io/tls\" \n  contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and \n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson”\nFor more details, refer to \nhttps://kubernetes.io/docs/concepts/configuration/secret/"
+        },
+        "key": {
+          "type": "string",
+          "title": "Optional. Must be provided when name refers to an opaque secret"
+        }
+      },
+      "title": "SecretKeyReference"
+    },
     "v1alpha1SecretType": {
       "type": "string",
       "enum": [
@@ -3834,6 +3908,20 @@
       "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
       "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
       "title": "SecretType"
+    },
+    "v1alpha1TlsCertKey": {
+      "type": "object",
+      "properties": {
+        "cert": {
+          "type": "string",
+          "title": "certificate (identity). In clear text"
+        },
+        "key": {
+          "type": "string",
+          "title": "certificate key. In clear text"
+        }
+      },
+      "title": "TlsCertKey"
     },
     "v1alpha1UpdateInstalledPackageRequest": {
       "type": "object",
@@ -3867,6 +3955,20 @@
       },
       "description": "Response for UpdateInstalledPackage",
       "title": "UpdateInstalledPackageResponse"
+    },
+    "v1alpha1UsernamePassword": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "In clear text"
+        },
+        "password": {
+          "type": "string",
+          "title": "In clear text"
+        }
+      },
+      "title": "UsernamePassword"
     },
     "v1alpha1VersionReference": {
       "type": "object",

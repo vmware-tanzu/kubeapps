@@ -31,6 +31,7 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.Kubernete
 		return nil, err
 	}
 	v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)
+	v1alpha1.RegisterFluxV2RepositoriesServiceServer(s, svr)
 	return svr, nil
 }
 
@@ -38,5 +39,10 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.Kubernete
 // handler to translate to the gRPC request.
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	log.Infof("+fluxv2 RegisterHTTPHandlerFromEndpoint")
-	return v1alpha1.RegisterFluxV2PackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	err := v1alpha1.RegisterFluxV2PackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	if err != nil {
+		return err
+	} else {
+		return v1alpha1.RegisterFluxV2RepositoriesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	}
 }

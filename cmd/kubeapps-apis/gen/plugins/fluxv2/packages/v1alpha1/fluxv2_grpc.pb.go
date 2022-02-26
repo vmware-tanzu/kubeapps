@@ -25,8 +25,6 @@ type FluxV2PackagesServiceClient interface {
 	GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 	// GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
 	GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
-	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
-	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
 	// GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
 	GetInstalledPackageSummaries(ctx context.Context, in *v1alpha1.GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 	// GetInstalledPackageDetail returns the requested installed package managed by the 'fluxv2' plugin
@@ -71,15 +69,6 @@ func (c *fluxV2PackagesServiceClient) GetAvailablePackageDetail(ctx context.Cont
 func (c *fluxV2PackagesServiceClient) GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error) {
 	out := new(v1alpha1.GetAvailablePackageVersionsResponse)
 	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetAvailablePackageVersions", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *fluxV2PackagesServiceClient) GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error) {
-	out := new(GetPackageRepositoriesResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetPackageRepositories", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -150,8 +139,6 @@ type FluxV2PackagesServiceServer interface {
 	GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error)
 	// GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
 	GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
-	// GetPackageRepositories returns the repositories managed by the 'fluxv2' plugin
-	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
 	// GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
 	GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error)
 	// GetInstalledPackageDetail returns the requested installed package managed by the 'fluxv2' plugin
@@ -179,9 +166,6 @@ func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackageDetail(contex
 }
 func (UnimplementedFluxV2PackagesServiceServer) GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageVersions not implemented")
-}
-func (UnimplementedFluxV2PackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
 func (UnimplementedFluxV2PackagesServiceServer) GetInstalledPackageSummaries(context.Context, *v1alpha1.GetInstalledPackageSummariesRequest) (*v1alpha1.GetInstalledPackageSummariesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageSummaries not implemented")
@@ -263,24 +247,6 @@ func _FluxV2PackagesService_GetAvailablePackageVersions_Handler(srv interface{},
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FluxV2PackagesServiceServer).GetAvailablePackageVersions(ctx, req.(*v1alpha1.GetAvailablePackageVersionsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _FluxV2PackagesService_GetPackageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPackageRepositoriesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FluxV2PackagesServiceServer).GetPackageRepositories(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService/GetPackageRepositories",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FluxV2PackagesServiceServer).GetPackageRepositories(ctx, req.(*GetPackageRepositoriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -413,10 +379,6 @@ var FluxV2PackagesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FluxV2PackagesService_GetAvailablePackageVersions_Handler,
 		},
 		{
-			MethodName: "GetPackageRepositories",
-			Handler:    _FluxV2PackagesService_GetPackageRepositories_Handler,
-		},
-		{
 			MethodName: "GetInstalledPackageSummaries",
 			Handler:    _FluxV2PackagesService_GetInstalledPackageSummaries_Handler,
 		},
@@ -439,6 +401,94 @@ var FluxV2PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInstalledPackageResourceRefs",
 			Handler:    _FluxV2PackagesService_GetInstalledPackageResourceRefs_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2.proto",
+}
+
+// FluxV2RepositoriesServiceClient is the client API for FluxV2RepositoriesService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type FluxV2RepositoriesServiceClient interface {
+	// AddPackageRepository add an existing package repository to the set of ones already managed by the
+	// 'fluxv2' plugin
+	AddPackageRepository(ctx context.Context, in *v1alpha1.AddPackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.AddPackageRepositoryResponse, error)
+}
+
+type fluxV2RepositoriesServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewFluxV2RepositoriesServiceClient(cc grpc.ClientConnInterface) FluxV2RepositoriesServiceClient {
+	return &fluxV2RepositoriesServiceClient{cc}
+}
+
+func (c *fluxV2RepositoriesServiceClient) AddPackageRepository(ctx context.Context, in *v1alpha1.AddPackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.AddPackageRepositoryResponse, error) {
+	out := new(v1alpha1.AddPackageRepositoryResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/AddPackageRepository", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// FluxV2RepositoriesServiceServer is the server API for FluxV2RepositoriesService service.
+// All implementations should embed UnimplementedFluxV2RepositoriesServiceServer
+// for forward compatibility
+type FluxV2RepositoriesServiceServer interface {
+	// AddPackageRepository add an existing package repository to the set of ones already managed by the
+	// 'fluxv2' plugin
+	AddPackageRepository(context.Context, *v1alpha1.AddPackageRepositoryRequest) (*v1alpha1.AddPackageRepositoryResponse, error)
+}
+
+// UnimplementedFluxV2RepositoriesServiceServer should be embedded to have forward compatible implementations.
+type UnimplementedFluxV2RepositoriesServiceServer struct {
+}
+
+func (UnimplementedFluxV2RepositoriesServiceServer) AddPackageRepository(context.Context, *v1alpha1.AddPackageRepositoryRequest) (*v1alpha1.AddPackageRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddPackageRepository not implemented")
+}
+
+// UnsafeFluxV2RepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FluxV2RepositoriesServiceServer will
+// result in compilation errors.
+type UnsafeFluxV2RepositoriesServiceServer interface {
+	mustEmbedUnimplementedFluxV2RepositoriesServiceServer()
+}
+
+func RegisterFluxV2RepositoriesServiceServer(s grpc.ServiceRegistrar, srv FluxV2RepositoriesServiceServer) {
+	s.RegisterService(&FluxV2RepositoriesService_ServiceDesc, srv)
+}
+
+func _FluxV2RepositoriesService_AddPackageRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.AddPackageRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2RepositoriesServiceServer).AddPackageRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/AddPackageRepository",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2RepositoriesServiceServer).AddPackageRepository(ctx, req.(*v1alpha1.AddPackageRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// FluxV2RepositoriesService_ServiceDesc is the grpc.ServiceDesc for FluxV2RepositoriesService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var FluxV2RepositoriesService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService",
+	HandlerType: (*FluxV2RepositoriesServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddPackageRepository",
+			Handler:    _FluxV2RepositoriesService_AddPackageRepository_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -44,7 +44,7 @@ type PluginWithServer struct {
 }
 
 // coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
-type pluginsServer struct {
+type PluginsServer struct {
 	plugins.UnimplementedPluginsServiceServer
 
 	// The slice of pluginsWithServers is initialised when registering pluginsWithServers during NewPluginsServer.
@@ -54,7 +54,7 @@ type pluginsServer struct {
 	clustersConfig kube.ClustersConfig
 }
 
-func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs) (*pluginsServer, error) {
+func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs) (*PluginsServer, error) {
 	// Store the serveOptions in the global 'pluginsServeOpts' variable
 
 	// Find all .so plugins in the specified plugins directory.
@@ -63,7 +63,7 @@ func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistr
 		log.Fatalf("failed to check for plugins: %v", err)
 	}
 
-	ps := &pluginsServer{}
+	ps := &PluginsServer{}
 
 	// get the parsed kube.ClustersConfig from the serveOpts
 	clustersConfig, err := getClustersConfigFromServeOpts(serveOpts)
@@ -88,7 +88,7 @@ func sortPlugins(p []PluginWithServer) {
 }
 
 // GetConfiguredPlugins returns details for each configured plugin.
-func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
+func (s *PluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
 	// this gets logged twice (liveness and readiness checks) every 10 seconds and
 	// really adds a lot of noise to the logs, so lowering verbosity
 	log.V(4).Infof("+core GetConfiguredPlugins")
@@ -102,18 +102,18 @@ func (s *pluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.Ge
 }
 
 // registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
-func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs, serveOpts core.ServeOptions) error {
+func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs, serveOpts core.ServeOptions) error {
 	pluginsWithServers := []PluginWithServer{}
 
 	configGetter, err := createConfigGetter(serveOpts, s.clustersConfig)
 	if err != nil {
-		fmt.Errorf("unable to create a ClientGetter: %w", err)
+		return fmt.Errorf("unable to create a ClientGetter: %w", err)
 	}
 
 	for _, pluginPath := range pluginPaths {
 		p, err := plugin.Open(pluginPath)
 		if err != nil {
-			fmt.Errorf("unable to open plugin %q: %w", pluginPath, err)
+			return fmt.Errorf("unable to open plugin %q: %w", pluginPath, err)
 		}
 
 		var pluginDetail *plugins.Plugin
@@ -145,7 +145,7 @@ func (s *pluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar,
+func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar,
 	clientGetter core.KubernetesConfigGetter, pluginConfigPath string) (interface{}, error) {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
@@ -174,7 +174,7 @@ func (s *pluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 // GetPluginsSatisfyingInterface returns the registered plugins which satisfy a
 // particular interface. Currently this is used to return the plugins that satisfy
 // the core.packaging interface for the core packaging server.
-func (s *pluginsServer) GetPluginsSatisfyingInterface(targetInterface reflect.Type) []PluginWithServer {
+func (s *PluginsServer) GetPluginsSatisfyingInterface(targetInterface reflect.Type) []PluginWithServer {
 	satisfiedPlugins := []PluginWithServer{}
 	for _, pluginSrv := range s.pluginsWithServers {
 		// The following check if the service implements an interface is what
