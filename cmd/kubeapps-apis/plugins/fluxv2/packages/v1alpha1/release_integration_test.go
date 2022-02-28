@@ -18,6 +18,7 @@ import (
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
@@ -667,7 +668,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	secretName := "podinfo-basic-auth-secret"
 	repoName := "podinfo-basic-auth"
 
-	if err := kubeCreateBasicAuthSecret(t, "default", secretName, "foo", "bar"); err != nil {
+	if err := kubeCreateSecret(t, newBasicAuthSecret(secretName, "default", "foo", "bar")); err != nil {
 		t.Fatalf("%v", err)
 	}
 	t.Cleanup(func() {
@@ -758,6 +759,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 type integrationTestAddRepoSpec struct {
 	testName                 string
 	request                  *corev1.AddPackageRepositoryRequest
+	existingSecret           *apiv1.Secret
 	expectedResponse         *corev1.AddPackageRepositoryResponse
 	expectedStatusCode       codes.Code
 	expectedReconcileFailure bool
@@ -846,6 +848,35 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			expectedStatusCode:       codes.OK,
 			expectedReconcileFailure: true,
 		},
+		{
+			testName: "package repository with basic auth and existing secret",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "my-podinfo-4",
+				Context: &corev1.Context{Namespace: "default"},
+				Type:    "helm",
+				Url:     podinfo_basic_auth_repo_url,
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
+				},
+			},
+			existingSecret: newBasicAuthSecret("secret-1", "default", "foo", "bar"),
+			expectedResponse: &corev1.AddPackageRepositoryResponse{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   KubeappsCluster,
+					},
+					Identifier: "my-podinfo-4",
+					Plugin:     fluxPlugin,
+				},
+			},
+			expectedStatusCode: codes.OK,
+		},
 	}
 
 	grpcContext := newGrpcAdminContext(t, "test-add-repo-admin")
@@ -854,6 +885,17 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 			defer cancel()
+			if tc.existingSecret != nil {
+				if err := kubeCreateSecret(t, tc.existingSecret); err != nil {
+					t.Fatalf("%v", err)
+				}
+				t.Cleanup(func() {
+					err := kubeDeleteSecret(t, tc.existingSecret.Namespace, tc.existingSecret.Name)
+					if err != nil {
+						t.Logf("Failed to delete secret due to [%v]", err)
+					}
+				})
+			}
 			resp, err := fluxPluginReposClient.AddPackageRepository(ctx, tc.request)
 			if tc.expectedStatusCode != codes.OK {
 				if status.Code(err) != tc.expectedStatusCode {

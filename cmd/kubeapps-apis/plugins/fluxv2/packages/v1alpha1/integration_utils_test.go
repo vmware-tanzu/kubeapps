@@ -31,6 +31,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	apiv1 "k8s.io/api/core/v1"
 	kubecorev1 "k8s.io/api/core/v1"
 	kuberbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -479,17 +480,17 @@ func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error
 	}
 }
 
-func kubeCreateBasicAuthSecret(t *testing.T, namespace, name, user, password string) error {
-	t.Logf("+kubeCreateBasicAuthSecret(%s, %s, %s)", namespace, name, user)
+func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
+	t.Logf("+kubeCreateSecret(%s, %s", secret.Namespace, secret.Name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().Secrets(namespace).Create(
+	_, err = typedClient.CoreV1().Secrets(secret.Namespace).Create(
 		ctx,
-		newBasicAuthSecret(name, namespace, user, password),
+		secret,
 		metav1.CreateOptions{})
 	return err
 }
