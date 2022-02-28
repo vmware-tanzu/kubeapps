@@ -473,7 +473,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == 0; totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
+			if err = kubeAddHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
 				t.Fatalf("%v", err)
 			}
 			t.Cleanup(func() {
@@ -561,7 +561,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == evictedCopy.Len(); totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
+			if err = kubeAddHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
 				t.Fatalf("%v", err)
 			}
 			t.Cleanup(func() {
@@ -637,7 +637,7 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 	// now load some large repos (bitnami)
 	// I didn't want to store a large (10MB) copy of bitnami repo in our git,
 	// so for now let it fetch from bitnami website
-	if err = kubeCreateHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
+	if err = kubeAddHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
 		t.Fatalf("%v", err)
 	}
 	// wait until this repo reaches 'Ready' state so that long indexation process kicks in
@@ -677,7 +677,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		}
 	})
 
-	if err := kubeCreateHelmRepository(t, repoName, podinfo_basic_auth_repo_url, "default", secretName); err != nil {
+	if err := kubeAddHelmRepository(t, repoName, podinfo_basic_auth_repo_url, "default", secretName); err != nil {
 		t.Fatalf("%v", err)
 	}
 	t.Cleanup(func() {
@@ -756,9 +756,11 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 }
 
 type integrationTestAddRepoSpec struct {
-	testName           string
-	request            *corev1.AddPackageRepositoryRequest
-	expectedStatusCode codes.Code
+	testName                 string
+	request                  *corev1.AddPackageRepositoryRequest
+	expectedResponse         *corev1.AddPackageRepositoryResponse
+	expectedStatusCode       codes.Code
+	expectedReconcileFailure bool
 }
 
 func TestKindClusterAddPackageRepository(t *testing.T) {
@@ -773,7 +775,76 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 				Type:    "helm",
 				Url:     podinfo_repo_url,
 			},
+			expectedResponse: &corev1.AddPackageRepositoryResponse{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   KubeappsCluster,
+					},
+					Identifier: "my-podinfo",
+					Plugin:     fluxPlugin,
+				},
+			},
 			expectedStatusCode: codes.OK,
+		},
+		{
+			testName: "package repository with basic auth",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "my-podinfo-2",
+				Context: &corev1.Context{Namespace: "default"},
+				Type:    "helm",
+				Url:     podinfo_basic_auth_repo_url,
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+						UsernamePassword: &corev1.UsernamePassword{
+							Username: "foo",
+							Password: "bar",
+						},
+					},
+				},
+			},
+			expectedResponse: &corev1.AddPackageRepositoryResponse{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   KubeappsCluster,
+					},
+					Identifier: "my-podinfo-2",
+					Plugin:     fluxPlugin,
+				},
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			testName: "package repository with wrong basic auth fails",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "my-podinfo-3",
+				Context: &corev1.Context{Namespace: "default"},
+				Type:    "helm",
+				Url:     podinfo_basic_auth_repo_url,
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+						UsernamePassword: &corev1.UsernamePassword{
+							Username: "foo",
+							Password: "bar-2",
+						},
+					},
+				},
+			},
+			expectedResponse: &corev1.AddPackageRepositoryResponse{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   KubeappsCluster,
+					},
+					Identifier: "my-podinfo-3",
+					Plugin:     fluxPlugin,
+				},
+			},
+			expectedStatusCode:       codes.OK,
+			expectedReconcileFailure: true,
 		},
 	}
 
@@ -781,21 +852,41 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+			resp, err := fluxPluginReposClient.AddPackageRepository(ctx, tc.request)
+			if tc.expectedStatusCode != codes.OK {
+				if status.Code(err) != tc.expectedStatusCode {
+					t.Fatalf("Expected %v, got: %v", tc.expectedStatusCode, err)
+				}
+				return // done, nothing more to check
+			} else if err != nil {
+				t.Fatal(err)
+			}
 			t.Cleanup(func() {
 				err := kubeDeleteHelmRepository(t, tc.request.Name, tc.request.Context.Namespace)
 				if err != nil {
 					t.Logf("Failed to delete helm source due to [%v]", err)
 				}
 			})
-
-			ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			_, err := fluxPluginReposClient.AddPackageRepository(ctx, tc.request)
-			if err != nil {
-				t.Fatal(err)
+			opt1 := cmpopts.IgnoreUnexported(
+				corev1.AddPackageRepositoryResponse{},
+				corev1.Context{},
+				corev1.PackageRepositoryReference{},
+				plugins.Plugin{},
+			)
+			if got, want := resp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 			}
-			// TODO: wait for reconcile. To do it properly, we need "R" in CRUD to be
+
+			// TODO wait for reconcile. To do it properly, we need "R" in CRUD to be
 			// designed and implemented
+			err = kubeWaitUntilHelmRepositoryIsReady(t, tc.request.Name, tc.request.Context.Namespace)
+			if err != nil && !tc.expectedReconcileFailure {
+				t.Fatal(err)
+			} else if err == nil && tc.expectedReconcileFailure {
+				t.Fatalf("Expected error got nil")
+			}
 		})
 	}
 }
@@ -803,7 +894,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
-	err := kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "")
+	err := kubeAddHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "")
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}

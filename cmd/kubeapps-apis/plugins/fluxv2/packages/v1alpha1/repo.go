@@ -169,15 +169,15 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.Namesp
 }
 
 func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, url string, interval uint32,
-	tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) error {
+	tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
 	if url == "" {
-		return status.Errorf(codes.InvalidArgument, "repository url may not be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
 
 	var secret *apiv1.Secret
 	if tlsConfig != nil {
 		if tlsConfig.InsecureSkipVerify {
-			return status.Errorf(codes.Unimplemented, "TLS flag insecureSkipVerify is not supported")
+			return nil, status.Errorf(codes.Unimplemented, "TLS flag insecureSkipVerify is not supported")
 		}
 		caCert := tlsConfig.GetCertAuthority()
 		if caCert != "" {
@@ -195,17 +195,17 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 				secret.Data["username"] = []byte(unp.Username)
 				secret.Data["password"] = []byte(unp.Password)
 			} else {
-				return status.Errorf(codes.Internal, "Username/Password configuration is missing")
+				return nil, status.Errorf(codes.Internal, "Username/Password configuration is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
 			if ck := auth.GetTlsCertKey(); ck != nil {
 				secret.Data["certFile"] = []byte(ck.Cert)
 				secret.Data["keyFile"] = []byte(ck.Key)
 			} else {
-				return status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
+				return nil, status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
-			return status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
+			return nil, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 			if dc := auth.GetDockerCreds(); dc != nil {
 				secret.Type = apiv1.SecretTypeDockerConfigJson
@@ -215,50 +215,58 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 					dc.Server, dc.Username, dc.Password, dc.Email, authStr)
 				secret.Data[".dockerconfigjson"] = []byte(base64.StdEncoding.EncodeToString([]byte(configStr)))
 			} else {
-				return status.Errorf(codes.Internal, "Docker credentials configuration is missing")
+				return nil, status.Errorf(codes.Internal, "Docker credentials configuration is missing")
 			}
 		default:
-			return status.Errorf(codes.Internal, "Unexpected package repository authentication type: %q", auth.Type)
+			return nil, status.Errorf(codes.Internal, "Unexpected package repository authentication type: %q", auth.Type)
 		}
 	}
 
-	secretRef := ""
+	secretRef, checkSecret := "", false
 	if secret != nil {
 		// create a secret first, if applicable
 		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-			return err
+			return nil, err
 		} else if secret, err = typedClient.CoreV1().Secrets(targetName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
-			return statuserror.FromK8sError("create", "secret", secret.GetName(), err)
+			return nil, statuserror.FromK8sError("create", "secret", secret.GetName(), err)
 		} else {
 			secretRef = secret.GetName()
 		}
 	} else if tlsConfig != nil && tlsConfig.GetSecretRef().GetName() != "" {
 		// check that the specified secret exists
-		secretRef = tlsConfig.GetSecretRef().GetName()
-		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-			return err
-		} else if _, err = typedClient.CoreV1().Secrets(targetName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
-			return statuserror.FromK8sError("get", "secret", secretRef, err)
-		}
+		secretRef, checkSecret = tlsConfig.GetSecretRef().GetName(), true
 	} else if auth != nil && auth.GetSecretRef().GetName() != "" {
+		secretRef, checkSecret = auth.GetSecretRef().GetName(), true
+	}
+
+	if secretRef != "" && checkSecret {
 		// check that the specified secret exists
-		secretRef = auth.GetSecretRef().GetName()
 		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-			return err
+			return nil, err
 		} else if _, err = typedClient.CoreV1().Secrets(targetName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
-			return statuserror.FromK8sError("get", "secret", secretRef, err)
+			return nil, statuserror.FromK8sError("get", "secret", secretRef, err)
 		}
+		// TODO (gfichtenholt) also check that the secret type corresponds to specified auth type,
+		// e.g. if AuthType is PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+		// check that the secret has "username" and "password" fields, etc.
 	}
 
 	if fluxRepo, err := s.newFluxHelmRepo(targetName, url, interval, secretRef); err != nil {
-		return err
+		return nil, err
 	} else if client, err := s.getClient(ctx, targetName.Namespace); err != nil {
-		return err
+		return nil, err
 	} else if err = client.Create(ctx, fluxRepo); err != nil {
-		return statuserror.FromK8sError("create", "HelmRepository", targetName.String(), err)
+		return nil, statuserror.FromK8sError("create", "HelmRepository", targetName.String(), err)
+	} else {
+		return &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: fluxRepo.Namespace,
+				Cluster:   s.kubeappsCluster,
+			},
+			Identifier: fluxRepo.Name,
+			Plugin:     GetPluginDetail(),
+		}, nil
 	}
-
-	return nil
 }
 
 // ref https://fluxcd.io/docs/components/source/helmrepositories/

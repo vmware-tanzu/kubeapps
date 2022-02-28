@@ -1231,7 +1231,7 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.Unimplemented,
 		},
 		{
-			name: "returns error if wrong type",
+			name: "returns error if wrong repository type",
 			request: &corev1.AddPackageRepositoryRequest{
 				Name:    "bar",
 				Context: &corev1.Context{Namespace: "foo"},
@@ -1269,7 +1269,7 @@ func TestAddPackageRepository(t *testing.T) {
 				Type:    "helm",
 				Url:     "http://example.com",
 			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{},
+			expectedResponse: add_repo_expected_resp,
 			expectedRepo:     &add_repo_1,
 			statusCode:       codes.OK,
 		},
@@ -1286,7 +1286,7 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_2,
 			expectedCreatedSecret: newTlsSecret("bar-", "foo", nil, nil, ca),
 			statusCode:            codes.OK,
@@ -1306,7 +1306,7 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{},
+			expectedResponse: add_repo_expected_resp,
 			expectedRepo:     &add_repo_3,
 			statusCode:       codes.OK,
 			existingSecret:   newTlsSecret("secret-1", "foo", nil, nil, ca),
@@ -1345,7 +1345,7 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_2,
 			expectedCreatedSecret: newBasicAuthSecret("bar-", "foo", "baz", "zot"),
 			statusCode:            codes.OK,
@@ -1367,7 +1367,7 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_2,
 			expectedCreatedSecret: newTlsSecret("bar-", "foo", pub, priv, nil),
 			statusCode:            codes.OK,
@@ -1423,7 +1423,7 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse:      &corev1.AddPackageRepositoryResponse{},
+			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_2,
 			expectedCreatedSecret: newDockerConfigJSONSecret("bar-", "foo", "your.private.registry.example.com", "janedoe", "xxxxxxxx", "jdoe@example.com"),
 			statusCode:            codes.OK,
@@ -1444,7 +1444,7 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{},
+			expectedResponse: add_repo_expected_resp,
 			expectedRepo:     &add_repo_3,
 			existingSecret:   newBasicAuthSecret("secret-1", "foo", "baz", "zot"),
 			statusCode:       codes.OK,
@@ -1485,7 +1485,10 @@ func TestAddPackageRepository(t *testing.T) {
 				} else {
 					opt1 := cmpopts.IgnoreUnexported(
 						corev1.AddPackageRepositoryResponse{},
-						corev1.Context{})
+						corev1.Context{},
+						corev1.PackageRepositoryReference{},
+						plugins.Plugin{},
+					)
 					if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
@@ -2004,6 +2007,17 @@ var (
 			URL:       "http://example.com",
 			Interval:  metav1.Duration{Duration: 10 * time.Minute},
 			SecretRef: &fluxmeta.LocalObjectReference{Name: "secret-1"},
+		},
+	}
+
+	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "foo",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "bar",
+			Plugin:     fluxPlugin,
 		},
 	}
 )

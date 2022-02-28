@@ -638,8 +638,7 @@
     },
     "/core/packages/v1alpha1/repositories": {
       "post": {
-        "summary": "AddPackageRepository add an existing package repository to the set of ones already managed by the \n'fluxv2' plugin",
-        "operationId": "FluxV2RepositoriesService_AddPackageRepository",
+        "operationId": "RepositoriesService_AddPackageRepository",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -669,7 +668,7 @@
           }
         ],
         "tags": [
-          "FluxV2RepositoriesService"
+          "RepositoriesService"
         ]
       }
     },
@@ -1279,6 +1278,43 @@
         ],
         "tags": [
           "FluxV2PackagesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/repositories": {
+      "post": {
+        "summary": "AddPackageRepository add an existing package repository to the set of ones already managed by the \n'fluxv2' plugin",
+        "operationId": "FluxV2RepositoriesService_AddPackageRepository",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1AddPackageRepositoryResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1alpha1AddPackageRepositoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FluxV2RepositoriesService"
         ]
       }
     },
@@ -2974,6 +3010,12 @@
     },
     "v1alpha1AddPackageRepositoryResponse": {
       "type": "object",
+      "properties": {
+        "packageRepoRef": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
+          "title": "TODO: add example for API docs\noption (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n  example: '{\"package_repo_ref\": {}}'\n};"
+        }
+      },
       "description": "Response for AddPackageRepositoryRequest",
       "title": "AddPackageRepositoryResponse"
     },
@@ -3748,6 +3790,25 @@
       },
       "description": "Authentication/authorization to provide client’s identity when connecting\nto a package repository.\nThere are 6 total distinct use cases we may support:\n1) None (Public)\n2) Basic Auth\n3) Bearer Token \n4) Custom Authorization Header\n5) Docker Registry Credentials (for OCI only)\n6) TLS certificate and key\n\nNote that (1)-(4) may be done over HTTP or HTTPs without any custom \ncertificates or certificate authority \n(1) is handled by not not having PackageRepositoryAuth field on\n    the parent object\na given plug-in may or may not support a given authentication type. \nFor example\n - direct-helm plug-in does not currently support (6), while flux does\n - flux plug-in does not support (3) or (4) while direct-helm does",
       "title": "PackageRepositoryAuth"
+    },
+    "v1alpha1PackageRepositoryReference": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1alpha1Context",
+          "description": "The context (cluster/namespace) for the repository."
+        },
+        "identifier": {
+          "type": "string",
+          "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context)."
+        },
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+        }
+      },
+      "description": "A PackageRepositoryReference has the minimum information required to\nuniquely identify a package repository.",
+      "title": "PackageRepositoryReference"
     },
     "v1alpha1PackageRepositoryTlsConfig": {
       "type": "object",

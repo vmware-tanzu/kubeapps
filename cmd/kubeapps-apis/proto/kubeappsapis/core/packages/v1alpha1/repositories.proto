@@ -150,7 +150,6 @@ message PackageRepositoryAuth {
   bool pass_credentials = 7;
 }
 
-
 // UsernamePassword
 //
 message UsernamePassword {
@@ -208,9 +207,31 @@ message SecretKeyReference {
 
 // -- Start definitions of the response messages --
 
+// PackageRepositoryReference
+//
+// A PackageRepositoryReference has the minimum information required to
+// uniquely identify a package repository. 
+message PackageRepositoryReference {
+  // The context (cluster/namespace) for the repository.
+  Context context = 1;
+  
+  // The fully qualified identifier for the repository
+  // (i.e. a unique name for the context).
+  string identifier = 2;
+
+  // The plugin used to interact with this available package.
+  // This field should be omitted when the request is in the context of a
+  // specific plugin.
+  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 3;
+}
+
 // AddPackageRepositoryResponse
 //
 // Response for AddPackageRepositoryRequest
 message AddPackageRepositoryResponse {
+  // TODO: add example for API docs
+  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+  //   example: '{"package_repo_ref": {}}'
+  // };
+  PackageRepositoryReference package_repo_ref = 1;
 }
-

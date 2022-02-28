@@ -81,7 +81,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			if err != nil {
 				log.Fatalf("%s", err)
 			}
-			log.Infof("+fluxv2 using custom packages config with %v\n", versionsInSummary)
+			log.Infof("+fluxv2 using custom packages config with versions: [%v]", versionsInSummary)
 		} else {
 			log.Infof("+fluxv2 using default config since pluginConfigPath is empty")
 		}
@@ -550,11 +550,11 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		return nil, status.Errorf(codes.Unimplemented, "repository type [%s] not supported", request.GetType())
 	}
 
-	if err := s.newRepo(ctx, name, request.GetUrl(),
+	if repoRef, err := s.newRepo(ctx, name, request.GetUrl(),
 		request.GetInterval(), request.GetTlsConfig(), request.GetAuth()); err != nil {
 		return nil, err
 	} else {
-		return &corev1.AddPackageRepositoryResponse{}, nil
+		return &corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}, nil
 	}
 }
 
@@ -586,7 +586,7 @@ func parsePluginConfig(pluginConfigPath string) (pkgutils.VersionsInSummary, int
 
 	// In the flux plugin, for example, we are interested in config for the
 	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
-	type fluxConfig struct {
+	type fluxPluginConfig struct {
 		Core struct {
 			Packages struct {
 				V1alpha1 struct {
@@ -596,7 +596,7 @@ func parsePluginConfig(pluginConfigPath string) (pkgutils.VersionsInSummary, int
 			} `json:"packages"`
 		} `json:"core"`
 	}
-	var config fluxConfig
+	var config fluxPluginConfig
 
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
