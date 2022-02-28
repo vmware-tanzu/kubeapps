@@ -12,9 +12,10 @@ import {
   InstalledPackageReference,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { InstalledPackage } from "shared/InstalledPackage";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
 import { Action } from "redux";
@@ -40,6 +41,7 @@ import AppValues from "./AppValues/AppValues";
 import CustomAppView from "./CustomAppView";
 import PackageInfo from "./PackageInfo/PackageInfo";
 import ResourceTabs from "./ResourceTabs";
+import { grpc } from "@improbable-eng/grpc-web";
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
@@ -152,25 +154,67 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: app, resourceRefs, selectedDetails: appDetails },
+    apps: { error, selected: app, selectedDetails: appDetails },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
+  const [fetchError, setFetchError] = useState(error);
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
+  const [resourceRefs, setResourceRefs] = useState([] as ResourceRef[]);
 
-  useEffect(() => {
-    const installedPkgRef = {
-      context: { cluster: cluster, namespace: namespace },
+  // useMemo used so that when installedPkgRef is a dependency of other effects,
+  // it does not trigger the effect on every render.
+  const installedPkgRef = useMemo(() => {
+    return {
+      context: { cluster, namespace },
       identifier: releaseName,
       plugin: pluginObj,
     } as InstalledPackageReference;
-
-    dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
-    dispatch(actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef));
-  }, [cluster, dispatch, namespace, releaseName, pluginObj]);
+  }, [cluster, namespace, releaseName, pluginObj]);
 
   useEffect(() => {
-    if (!resourceRefs) {
+    dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
+  }, [dispatch, installedPkgRef]);
+
+  useEffect(() => {
+    // TODO(minelson): currently it is not possible for a client to determine
+    // whether resource refs are unavailable because the package is being
+    // installed (ie.  Package is "Pending" the actual installation) or the
+    // package is currently unable to be installed because the RBAC isn't yet
+    // correct (ie. Package is "Pending" required RBAC). The work-around here
+    // is to continue polling for the resource refs every two seconds as long
+    // as a `NotFound` is returned.
+    // See https://github.com/kubeapps/kubeapps/issues/4337
+    let abort = false;
+    const fetchResourceRefs = async () => {
+      while (!abort) {
+        try {
+          const response = await InstalledPackage.GetInstalledPackageResourceRefs(installedPkgRef);
+          if (abort) {
+            return;
+          }
+          setResourceRefs(response.resourceRefs);
+          return;
+        } catch (e: any) {
+          if (e.code !== grpc.Code.NotFound) {
+            // If we get any other error, we want the user to know about it.
+            setFetchError(new FetchError("unable to fetch resource references", [e]));
+            return;
+          }
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+    };
+    fetchResourceRefs();
+
+    // Ensure we abort fetching resource refs when unmounted.
+    return () => {
+      abort = true;
+    };
+  }, [installedPkgRef]);
+
+  useEffect(() => {
+    if (resourceRefs.length === 0) {
       return () => {};
     }
 
@@ -207,24 +251,20 @@ export default function AppView() {
 
   const forceRetry = () => {
     dispatch(actions.installedpackages.clearErrorInstalledPackage());
-    dispatch(
-      actions.installedpackages.getInstalledPackage({
-        context: { cluster: cluster, namespace: namespace },
-        identifier: releaseName,
-        plugin: pluginObj,
-      } as InstalledPackageReference),
-    );
+    dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
   };
 
-  if (error && error.constructor === FetchError) {
-    return (
-      <ErrorAlert error={error}>
-        <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
-          {" "}
-          Try again{" "}
-        </CdsButton>
-      </ErrorAlert>
-    );
+  if (fetchError) {
+    if (fetchError.constructor === FetchError) {
+      return (
+        <ErrorAlert error={fetchError}>
+          <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
+            {" "}
+            Try again{" "}
+          </CdsButton>
+        </ErrorAlert>
+      );
+    }
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
     appViewResourceRefs;
@@ -243,7 +283,6 @@ export default function AppView() {
   ) {
     return <CustomAppView resourceRefs={appViewResourceRefs} app={app!} appDetails={appDetails!} />;
   }
-
   return (
     <LoadingWrapper loaded={!!app} loadingText="Retrieving application..." className="margin-t-xl">
       {!app || !app?.installedPackageRef ? (

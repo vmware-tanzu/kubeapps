@@ -10,6 +10,9 @@ import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
 import {
   AvailablePackageReference,
   Context,
+  GetAvailablePackageDetailResponse,
+  GetInstalledPackageDetailResponse,
+  GetInstalledPackageResourceRefsResponse,
   InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageStatus,
@@ -20,6 +23,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { MemoryRouter, Route } from "react-router-dom";
+import { act } from "react-dom/test-utils";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError } from "shared/types";
 import { PluginNames } from "shared/utils";
@@ -32,6 +36,8 @@ import AppView from "./AppView";
 import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
 import ResourceTabs from "./ResourceTabs";
+import { InstalledPackage } from "shared/InstalledPackage";
+import PackagesService from "shared/PackagesService";
 
 const routeParams = {
   cluster: "cluster-1",
@@ -108,109 +114,149 @@ const validState = {
   },
 };
 
+beforeEach(() => {
+  InstalledPackage.GetInstalledPackageResourceRefs = jest
+    .fn()
+    .mockReturnValue(
+      Promise.resolve({ resourceRefs: [] } as GetInstalledPackageResourceRefsResponse),
+    );
+  InstalledPackage.GetInstalledPackageDetail = jest.fn().mockReturnValue(
+    Promise.resolve({
+      installedPackageDetail: {},
+    } as GetInstalledPackageDetailResponse),
+  );
+  PackagesService.getAvailablePackageDetail = jest.fn().mockReturnValue(
+    Promise.resolve({
+      availablePackageDetail: {},
+    } as GetAvailablePackageDetailResponse),
+  );
+});
+afterEach(() => {
+  jest.resetAllMocks();
+});
+
 describe("AppView", () => {
-  it("renders a loading wrapper", () => {
-    const wrapper = mountWrapper(defaultStore, <AppView />);
+  it("renders a loading wrapper", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(defaultStore, <AppView />);
+    });
     expect(wrapper.find(LoadingWrapper)).toExist();
   });
 
-  it("renders a fetch error only", () => {
-    const wrapper = mountWrapper(
-      getStore({ apps: { error: new FetchError("boom!") } }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
-    );
+  it("renders a fetch error only", async () => {
+    let wrapper: any;
+
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({ apps: { error: new FetchError("boom!") } }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
     expect(wrapper.find(Alert)).toExist();
     expect(wrapper.find(PageHeader)).not.toExist();
   });
 
-  it("renders a custom component when package is in customAppViews", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        apps: { selected: { ...installedPackage } },
-        config: {
-          customAppViews: [
-            {
-              name: "1",
-              plugin: PluginNames.PACKAGES_HELM,
-              repository: "apache",
-            },
-          ],
-        },
-      }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
-    );
+  it("renders a custom component when package is in customAppViews", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          apps: { selected: { ...installedPackage } },
+          config: {
+            customAppViews: [
+              {
+                name: "1",
+                plugin: PluginNames.PACKAGES_HELM,
+                repository: "apache",
+              },
+            ],
+          },
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
     expect(wrapper.find(CustomAppView)).toExist();
   });
 
-  it("does not render a custom component when package is not in customAppViews", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        apps: { selected: { ...installedPackage } },
-        config: {
-          customAppViews: [
-            {
-              name: "demo-chart",
-              plugin: PluginNames.PACKAGES_HELM,
-              repository: "demo-repo",
-            },
-          ],
-        },
-      }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
-    );
+  it("does not render a custom component when package is not in customAppViews", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          apps: { selected: { ...installedPackage } },
+          config: {
+            customAppViews: [
+              {
+                name: "demo-chart",
+                plugin: PluginNames.PACKAGES_HELM,
+                repository: "demo-repo",
+              },
+            ],
+          },
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
     expect(wrapper.find(CustomAppView)).not.toExist();
   });
 
-  it("renders a RollBack button if the installedPackage is from PACKAGES_HELM", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        apps: {
-          selected: {
-            ...installedPackage,
-            installedPackageRef: {
-              ...installedPackage.installedPackageRef,
-              plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" } as Plugin,
-            } as InstalledPackageReference,
+  it("renders a RollBack button if the installedPackage is from PACKAGES_HELM", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          apps: {
+            selected: {
+              ...installedPackage,
+              installedPackageRef: {
+                ...installedPackage.installedPackageRef,
+                plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" } as Plugin,
+              } as InstalledPackageReference,
+            },
           },
-        },
-        config: {},
-      }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
-    );
+          config: {},
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
 
     expect(wrapper.find(UpgradeButton)).toExist();
     expect(wrapper.find(RollbackButton)).toExist();
     expect(wrapper.find(DeleteButton)).toExist();
   });
 
-  it("does not render a RollBack button if the installedPackage is not from PACKAGES_HELM", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        apps: { selected: { ...installedPackage } },
-        config: {},
-      }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
-    );
+  it("does not render a RollBack button if the installedPackage is not from PACKAGES_HELM", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          apps: { selected: { ...installedPackage } },
+          config: {},
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
     expect(wrapper.find(UpgradeButton)).toExist();
     expect(wrapper.find(RollbackButton)).not.toExist();
     expect(wrapper.find(DeleteButton)).toExist();
@@ -220,7 +266,7 @@ describe("AppView", () => {
     /*
       The imported resource refs contain one deployment, one service, one config map and some bogus manifests.
     */
-    it("sets ResourceRefs for its deployments, services, ingresses and secrets", () => {
+    it("sets ResourceRefs for its deployments, services, ingresses and secrets", async () => {
       const apiResourceRefs = [
         resourceRefs.deployment,
         resourceRefs.service,
@@ -228,15 +274,24 @@ describe("AppView", () => {
         resourceRefs.ingress,
         resourceRefs.secret,
       ] as ResourceRef[];
-
-      const wrapper = mountWrapper(
-        getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } }),
-        <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
-        </MemoryRouter>,
+      InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+        Promise.resolve({
+          resourceRefs: apiResourceRefs,
+        } as GetInstalledPackageResourceRefsResponse),
       );
+
+      let wrapper: any;
+      await act(async () => {
+        wrapper = mountWrapper(
+          getStore({ apps: { selected: installedPackage } }),
+          <MemoryRouter initialEntries={[routePathParam]}>
+            <Route path={routePath}>
+              <AppView />
+            </Route>
+          </MemoryRouter>,
+        );
+      });
+      wrapper.update();
 
       const tabs = wrapper.find(ResourceTabs);
       expect(tabs.prop("deployments")).toEqual([resourceRefs.deployment]);
@@ -244,22 +299,31 @@ describe("AppView", () => {
       expect(tabs.prop("secrets")).toEqual([resourceRefs.secret]);
     });
 
-    it("stores other k8s resources", () => {
+    it("stores other k8s resources", async () => {
       const apiResourceRefs = [
         resourceRefs.deployment,
         resourceRefs.service,
         resourceRefs.configMap,
         resourceRefs.secret,
       ] as ResourceRef[];
-
-      const wrapper = mountWrapper(
-        getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } }),
-        <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
-        </MemoryRouter>,
+      InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+        Promise.resolve({
+          resourceRefs: apiResourceRefs,
+        } as GetInstalledPackageResourceRefsResponse),
       );
+
+      let wrapper: any;
+      await act(async () => {
+        wrapper = mountWrapper(
+          getStore({ apps: { selected: installedPackage } }),
+          <MemoryRouter initialEntries={[routePathParam]}>
+            <Route path={routePath}>
+              <AppView />
+            </Route>
+          </MemoryRouter>,
+        );
+      });
+      wrapper.update();
 
       const tabs = wrapper.find(ResourceTabs);
       const otherResources: ResourceRef[] = tabs.prop("otherResources");
@@ -273,8 +337,11 @@ describe("AppView", () => {
   });
 
   describe("renderization", () => {
-    it("renders all the elements of an application", () => {
-      const wrapper = mountWrapper(getStore(validState), <AppView />);
+    it("renders all the elements of an application", async () => {
+      let wrapper: any;
+      await act(async () => {
+        wrapper = mountWrapper(getStore(validState), <AppView />);
+      });
       expect(wrapper.find(PackageInfo)).toExist();
       expect(wrapper.find(ApplicationStatusContainer)).toExist();
       expect(wrapper.find(".control-buttons")).toExist();
@@ -283,45 +350,63 @@ describe("AppView", () => {
       expect(wrapper.find(AccessURLTable)).toExist();
     });
 
-    it("renders an error if error prop is set", () => {
-      const wrapper = mountWrapper(
-        getStore({ ...validState, apps: { ...validState.apps, error: new Error("Boom!") } }),
-        <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
-        </MemoryRouter>,
-      );
+    it("renders an error if error prop is set", async () => {
+      let wrapper: any;
+      await act(async () => {
+        wrapper = mountWrapper(
+          getStore({ ...validState, apps: { ...validState.apps, error: new Error("Boom!") } }),
+          <MemoryRouter initialEntries={[routePathParam]}>
+            <Route path={routePath}>
+              <AppView />
+            </Route>
+          </MemoryRouter>,
+        );
+      });
       const err = wrapper.find(Alert);
       expect(err).toExist();
       expect(err.html()).toContain("Boom!");
     });
 
-    it("renders a delete-error", () => {
-      const wrapper = mountWrapper(
-        getStore({ ...validState, apps: { ...validState.apps, error: new DeleteError("Boom!") } }),
-        <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
-        </MemoryRouter>,
-      );
+    it("renders a delete-error", async () => {
+      let wrapper: any;
+      await act(async () => {
+        wrapper = mountWrapper(
+          getStore({
+            ...validState,
+            apps: { ...validState.apps, error: new DeleteError("Boom!") },
+          }),
+          <MemoryRouter initialEntries={[routePathParam]}>
+            <Route path={routePath}>
+              <AppView />
+            </Route>
+          </MemoryRouter>,
+        );
+      });
       const err = wrapper.find(Alert);
       expect(err).toExist();
       expect(err.html()).toContain("Unable to delete the application. Received: Boom!");
     });
   });
 
-  it("forwards statefulsets and daemonsets to the application status", () => {
+  it("forwards statefulsets and daemonsets to the application status", async () => {
     const apiResourceRefs = [resourceRefs.statefulset, resourceRefs.daemonset] as ResourceRef[];
-    const wrapper = mountWrapper(
-      getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } }),
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
+    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+      Promise.resolve({
+        resourceRefs: apiResourceRefs,
+      } as GetInstalledPackageResourceRefsResponse),
     );
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({ apps: { selected: installedPackage } }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
+    wrapper.update();
 
     const applicationStatus = wrapper.find(ApplicationStatusContainer);
     expect(applicationStatus).toExist();
@@ -338,23 +423,34 @@ describe("AppView actions", () => {
       resourceRefs.service,
       resourceRefs.secret,
     ] as ResourceRef[];
-    const store = getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } });
-
-    mountWrapper(
-      store,
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
+    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+      Promise.resolve({
+        resourceRefs: apiResourceRefs,
+      } as GetInstalledPackageResourceRefsResponse),
     );
+    const store = getStore({ apps: { selected: installedPackage } });
+
+    await act(async () => {
+      mountWrapper(
+        store,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
 
     expect(store.getActions()).toEqual([
       {
         type: getType(actions.installedpackages.requestInstalledPackage),
       },
       {
-        type: getType(actions.installedpackages.requestInstalledPkgResourceRefs),
+        type: getType(actions.installedpackages.selectInstalledPackage),
+        payload: {
+          pkg: {},
+          details: {},
+        },
       },
       {
         type: getType(actions.kube.requestResources),
@@ -382,17 +478,27 @@ describe("AppView actions", () => {
   });
   it("closes the watches when unmounted", async () => {
     const apiResourceRefs = [resourceRefs.deployment, resourceRefs.service] as ResourceRef[];
-
-    const store = getStore({ apps: { selected: installedPackage, resourceRefs: apiResourceRefs } });
-    const wrapper = mountWrapper(
-      store,
-      <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppView />
-        </Route>
-      </MemoryRouter>,
+    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockReturnValue(
+      Promise.resolve({
+        resourceRefs: apiResourceRefs,
+      } as GetInstalledPackageResourceRefsResponse),
     );
-    wrapper.unmount();
+
+    const store = getStore({ apps: { selected: installedPackage } });
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        store,
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
+    await act(async () => {
+      wrapper.unmount();
+    });
 
     const watch = true;
     expect(store.getActions()).toEqual([
@@ -400,7 +506,11 @@ describe("AppView actions", () => {
         type: getType(actions.installedpackages.requestInstalledPackage),
       },
       {
-        type: getType(actions.installedpackages.requestInstalledPkgResourceRefs),
+        type: getType(actions.installedpackages.selectInstalledPackage),
+        payload: {
+          pkg: {},
+          details: {},
+        },
       },
       {
         type: getType(actions.kube.requestResources),
