@@ -4,6 +4,7 @@ import { grpc } from "@improbable-eng/grpc-web";
 import _m0 from "protobufjs/minimal";
 import { Context } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Any } from "../../../../google/protobuf/any";
 import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
@@ -56,6 +57,23 @@ export interface AddPackageRepositoryRequest {
    * specific plugin.
    */
   plugin?: Plugin;
+  /**
+   * Custom data added by the plugin
+   * A plugin can define custom details for data which is not yet, or
+   * never will be specified in the core AddPackageRepositoryRequest
+   * fields. The use of an `Any` field means that each plugin can define
+   * the structure of this message as required, while still satisfying the
+   * core interface.
+   * See https://developers.google.com/protocol-buffers/docs/proto3#any
+   * Just for reference, some of the examples that have been chosen not to
+   * be part of the core API but rather plugin-specific details are:
+   *   direct-helm:
+   *      - image pull secrets
+   *      - list of oci repositories
+   *      - filter rules
+   *      - sync job pod template
+   */
+  customDetail?: Any;
 }
 
 /** PackageRepositoryTlsConfig */
@@ -313,6 +331,9 @@ export const AddPackageRepositoryRequest = {
     if (message.plugin !== undefined) {
       Plugin.encode(message.plugin, writer.uint32(82).fork()).ldelim();
     }
+    if (message.customDetail !== undefined) {
+      Any.encode(message.customDetail, writer.uint32(90).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -354,6 +375,9 @@ export const AddPackageRepositoryRequest = {
           break;
         case 10:
           message.plugin = Plugin.decode(reader, reader.uint32());
+          break;
+        case 11:
+          message.customDetail = Any.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -417,6 +441,11 @@ export const AddPackageRepositoryRequest = {
     } else {
       message.plugin = undefined;
     }
+    if (object.customDetail !== undefined && object.customDetail !== null) {
+      message.customDetail = Any.fromJSON(object.customDetail);
+    } else {
+      message.customDetail = undefined;
+    }
     return message;
   },
 
@@ -438,6 +467,8 @@ export const AddPackageRepositoryRequest = {
       (obj.auth = message.auth ? PackageRepositoryAuth.toJSON(message.auth) : undefined);
     message.plugin !== undefined &&
       (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
+    message.customDetail !== undefined &&
+      (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
     return obj;
   },
 
@@ -494,6 +525,11 @@ export const AddPackageRepositoryRequest = {
       message.plugin = Plugin.fromPartial(object.plugin);
     } else {
       message.plugin = undefined;
+    }
+    if (object.customDetail !== undefined && object.customDetail !== null) {
+      message.customDetail = Any.fromPartial(object.customDetail);
+    } else {
+      message.customDetail = undefined;
     }
     return message;
   },
