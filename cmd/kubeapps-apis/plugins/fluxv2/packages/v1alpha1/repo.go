@@ -249,6 +249,13 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 		// TODO (gfichtenholt) also check that the secret type corresponds to specified auth type,
 		// e.g. if AuthType is PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 		// check that the secret has "username" and "password" fields, etc.
+
+		// TODO (gfichtenholt)
+		// ref https://github.com/kubeapps/kubeapps/pull/4353#discussion_r816332595
+		// check whether flux supports typed secrets in addition to opaque secrets
+		// https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
+		// If so, that cause certain validation to be done on the data (ie. ensuring that
+		//	the "username" and "password" fields are present).
 	}
 
 	if fluxRepo, err := s.newFluxHelmRepo(targetName, url, interval, secretRef); err != nil {
