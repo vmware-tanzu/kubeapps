@@ -4,6 +4,7 @@ import { grpc } from "@improbable-eng/grpc-web";
 import _m0 from "protobufjs/minimal";
 import { Context } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Any } from "../../../../google/protobuf/any";
 import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
@@ -56,6 +57,23 @@ export interface AddPackageRepositoryRequest {
    * specific plugin.
    */
   plugin?: Plugin;
+  /**
+   * Custom data added by the plugin
+   * A plugin can define custom details for data which is not yet, or
+   * never will be specified in the core AddPackageRepositoryRequest
+   * fields. The use of an `Any` field means that each plugin can define
+   * the structure of this message as required, while still satisfying the
+   * core interface.
+   * See https://developers.google.com/protocol-buffers/docs/proto3#any
+   * Just for reference, some of the examples that have been chosen not to
+   * be part of the core API but rather plugin-specific details are:
+   *   direct-helm:
+   *      - image pull secrets
+   *      - list of oci repositories
+   *      - filter rules
+   *      - sync job pod template
+   */
+  customDetail?: Any;
 }
 
 /** PackageRepositoryTlsConfig */
@@ -233,11 +251,41 @@ export interface SecretKeyReference {
 }
 
 /**
+ * PackageRepositoryReference
+ *
+ * A PackageRepositoryReference has the minimum information required to
+ * uniquely identify a package repository.
+ */
+export interface PackageRepositoryReference {
+  /** The context (cluster/namespace) for the repository. */
+  context?: Context;
+  /**
+   * The fully qualified identifier for the repository
+   * (i.e. a unique name for the context).
+   */
+  identifier: string;
+  /**
+   * The plugin used to interact with this available package.
+   * This field should be omitted when the request is in the context of a
+   * specific plugin.
+   */
+  plugin?: Plugin;
+}
+
+/**
  * AddPackageRepositoryResponse
  *
  * Response for AddPackageRepositoryRequest
  */
-export interface AddPackageRepositoryResponse {}
+export interface AddPackageRepositoryResponse {
+  /**
+   * TODO: add example for API docs
+   * option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+   *   example: '{"package_repo_ref": {}}'
+   * };
+   */
+  packageRepoRef?: PackageRepositoryReference;
+}
 
 const baseAddPackageRepositoryRequest: object = {
   name: "",
@@ -283,6 +331,9 @@ export const AddPackageRepositoryRequest = {
     if (message.plugin !== undefined) {
       Plugin.encode(message.plugin, writer.uint32(82).fork()).ldelim();
     }
+    if (message.customDetail !== undefined) {
+      Any.encode(message.customDetail, writer.uint32(90).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -324,6 +375,9 @@ export const AddPackageRepositoryRequest = {
           break;
         case 10:
           message.plugin = Plugin.decode(reader, reader.uint32());
+          break;
+        case 11:
+          message.customDetail = Any.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -387,6 +441,11 @@ export const AddPackageRepositoryRequest = {
     } else {
       message.plugin = undefined;
     }
+    if (object.customDetail !== undefined && object.customDetail !== null) {
+      message.customDetail = Any.fromJSON(object.customDetail);
+    } else {
+      message.customDetail = undefined;
+    }
     return message;
   },
 
@@ -408,6 +467,8 @@ export const AddPackageRepositoryRequest = {
       (obj.auth = message.auth ? PackageRepositoryAuth.toJSON(message.auth) : undefined);
     message.plugin !== undefined &&
       (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
+    message.customDetail !== undefined &&
+      (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
     return obj;
   },
 
@@ -464,6 +525,11 @@ export const AddPackageRepositoryRequest = {
       message.plugin = Plugin.fromPartial(object.plugin);
     } else {
       message.plugin = undefined;
+    }
+    if (object.customDetail !== undefined && object.customDetail !== null) {
+      message.customDetail = Any.fromPartial(object.customDetail);
+    } else {
+      message.customDetail = undefined;
     }
     return message;
   },
@@ -1066,10 +1132,116 @@ export const SecretKeyReference = {
   },
 };
 
+const basePackageRepositoryReference: object = { identifier: "" };
+
+export const PackageRepositoryReference = {
+  encode(
+    message: PackageRepositoryReference,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.identifier !== "") {
+      writer.uint32(18).string(message.identifier);
+    }
+    if (message.plugin !== undefined) {
+      Plugin.encode(message.plugin, writer.uint32(26).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryReference {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...basePackageRepositoryReference,
+    } as PackageRepositoryReference;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.identifier = reader.string();
+          break;
+        case 3:
+          message.plugin = Plugin.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryReference {
+    const message = {
+      ...basePackageRepositoryReference,
+    } as PackageRepositoryReference;
+    if (object.context !== undefined && object.context !== null) {
+      message.context = Context.fromJSON(object.context);
+    } else {
+      message.context = undefined;
+    }
+    if (object.identifier !== undefined && object.identifier !== null) {
+      message.identifier = String(object.identifier);
+    } else {
+      message.identifier = "";
+    }
+    if (object.plugin !== undefined && object.plugin !== null) {
+      message.plugin = Plugin.fromJSON(object.plugin);
+    } else {
+      message.plugin = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: PackageRepositoryReference): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.identifier !== undefined && (obj.identifier = message.identifier);
+    message.plugin !== undefined &&
+      (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<PackageRepositoryReference>): PackageRepositoryReference {
+    const message = {
+      ...basePackageRepositoryReference,
+    } as PackageRepositoryReference;
+    if (object.context !== undefined && object.context !== null) {
+      message.context = Context.fromPartial(object.context);
+    } else {
+      message.context = undefined;
+    }
+    if (object.identifier !== undefined && object.identifier !== null) {
+      message.identifier = object.identifier;
+    } else {
+      message.identifier = "";
+    }
+    if (object.plugin !== undefined && object.plugin !== null) {
+      message.plugin = Plugin.fromPartial(object.plugin);
+    } else {
+      message.plugin = undefined;
+    }
+    return message;
+  },
+};
+
 const baseAddPackageRepositoryResponse: object = {};
 
 export const AddPackageRepositoryResponse = {
-  encode(_: AddPackageRepositoryResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: AddPackageRepositoryResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.packageRepoRef !== undefined) {
+      PackageRepositoryReference.encode(message.packageRepoRef, writer.uint32(10).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -1082,6 +1254,9 @@ export const AddPackageRepositoryResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.packageRepoRef = PackageRepositoryReference.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -1090,22 +1265,36 @@ export const AddPackageRepositoryResponse = {
     return message;
   },
 
-  fromJSON(_: any): AddPackageRepositoryResponse {
+  fromJSON(object: any): AddPackageRepositoryResponse {
     const message = {
       ...baseAddPackageRepositoryResponse,
     } as AddPackageRepositoryResponse;
+    if (object.packageRepoRef !== undefined && object.packageRepoRef !== null) {
+      message.packageRepoRef = PackageRepositoryReference.fromJSON(object.packageRepoRef);
+    } else {
+      message.packageRepoRef = undefined;
+    }
     return message;
   },
 
-  toJSON(_: AddPackageRepositoryResponse): unknown {
+  toJSON(message: AddPackageRepositoryResponse): unknown {
     const obj: any = {};
+    message.packageRepoRef !== undefined &&
+      (obj.packageRepoRef = message.packageRepoRef
+        ? PackageRepositoryReference.toJSON(message.packageRepoRef)
+        : undefined);
     return obj;
   },
 
-  fromPartial(_: DeepPartial<AddPackageRepositoryResponse>): AddPackageRepositoryResponse {
+  fromPartial(object: DeepPartial<AddPackageRepositoryResponse>): AddPackageRepositoryResponse {
     const message = {
       ...baseAddPackageRepositoryResponse,
     } as AddPackageRepositoryResponse;
+    if (object.packageRepoRef !== undefined && object.packageRepoRef !== null) {
+      message.packageRepoRef = PackageRepositoryReference.fromPartial(object.packageRepoRef);
+    } else {
+      message.packageRepoRef = undefined;
+    }
     return message;
   },
 };

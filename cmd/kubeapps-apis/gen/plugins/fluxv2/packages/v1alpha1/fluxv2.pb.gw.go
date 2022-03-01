@@ -1058,7 +1058,7 @@ func RegisterFluxV2RepositoriesServiceHandlerServer(ctx context.Context, mux *ru
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/AddPackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/AddPackageRepository", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/repositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1381,7 +1381,7 @@ func RegisterFluxV2RepositoriesServiceHandlerClient(ctx context.Context, mux *ru
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/AddPackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/AddPackageRepository", runtime.WithHTTPPathPattern("/plugins/fluxv2/packages/v1alpha1/repositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1401,7 +1401,7 @@ func RegisterFluxV2RepositoriesServiceHandlerClient(ctx context.Context, mux *ru
 }
 
 var (
-	pattern_FluxV2RepositoriesService_AddPackageRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"core", "packages", "v1alpha1", "repositories"}, ""))
+	pattern_FluxV2RepositoriesService_AddPackageRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "fluxv2", "packages", "v1alpha1", "repositories"}, ""))
 )
 
 var (
