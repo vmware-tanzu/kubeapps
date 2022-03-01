@@ -29,7 +29,9 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	apiv1 "k8s.io/api/core/v1"
 	kubecorev1 "k8s.io/api/core/v1"
 	kuberbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -133,7 +135,7 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 	t.Logf("+getFluxPluginClients")
 
 	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	opts = append(opts, grpc.WithBlock())
 	target := "localhost:8080"
 	conn, err := grpc.Dial(target, opts...)
@@ -145,6 +147,7 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	response, err := pluginsCli.GetConfiguredPlugins(ctx, &plugins.GetConfiguredPluginsRequest{})
+
 	if err != nil {
 		t.Fatalf("failed to GetConfiguredPlugins due to: %v", err)
 	}
@@ -156,14 +159,14 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 		}
 	}
 	if !found {
-		return nil, nil, fmt.Errorf("kubeapps Flux v2 plugin is not registered")
+		return nil, nil, fmt.Errorf("kubeapps Fluxv2 plugin is not registered, found these plugins: %v", response.Plugins)
 	}
 	return fluxplugin.NewFluxV2PackagesServiceClient(conn), fluxplugin.NewFluxV2RepositoriesServiceClient(conn), nil
 }
 
-// This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
-// the design
-func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
+// This creates a flux helm repository CRD. The usage of this func should be minimized as much as
+// possible in favor of flux Plugin's AddPackageRepository() call
+func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
 	repo := sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
@@ -227,6 +230,8 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 						t.Logf("[%d:%d:%d] Got event: type: [%v], reason [%s]", hour, minute, second, event.Type, reason)
 						if complete && success {
 							return nil
+						} else if complete && !success {
+							return errors.New(reason)
 						}
 					}
 				}
@@ -475,17 +480,17 @@ func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error
 	}
 }
 
-func kubeCreateBasicAuthSecret(t *testing.T, namespace, name, user, password string) error {
-	t.Logf("+kubeCreateBasicAuthSecret(%s, %s, %s)", namespace, name, user)
+func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
+	t.Logf("+kubeCreateSecret(%s, %s", secret.Namespace, secret.Name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().Secrets(namespace).Create(
+	_, err = typedClient.CoreV1().Secrets(secret.Namespace).Create(
 		ctx,
-		newBasicAuthSecret(name, namespace, user, password),
+		secret,
 		metav1.CreateOptions{})
 	return err
 }
