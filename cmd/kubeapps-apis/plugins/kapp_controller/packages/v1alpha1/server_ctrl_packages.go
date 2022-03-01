@@ -74,13 +74,11 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
 					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
 					if err != nil {
-						log.Errorf("Error: %+v", err)
 						errs <- statuserror.FromK8sError("get", "Package", pkgMetadata.Name, err)
 						return
 					}
 					pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 					if err != nil {
-						log.Errorf("Error: %+v", err)
 						errs <- err
 						return
 					}
@@ -88,7 +86,6 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 					// generate the availablePackageSummary from the fetched information
 					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
-						log.Errorf("Error: %+v", err)
 						errs <- statuserror.FromK8sError("create", "AvailablePackageSummary", pkgMetadata.Name, err)
 						return
 					}
