@@ -726,7 +726,11 @@ func fetchRepoIndex(url, authHeader string, cli httpclient.Client, userAgent str
 		return nil, err
 	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
-	return doReq(indexURL.String(), cli, map[string]string{"Authorization": authHeader}, userAgent)
+	headers := map[string]string{}
+	if authHeader != "" {
+		headers["Authorization"] = authHeader
+	}
+	return doReq(indexURL.String(), cli, headers, userAgent)
 }
 
 func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {
