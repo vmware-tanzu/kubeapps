@@ -151,33 +151,12 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		expectedStatusCode codes.Code
 	}{
 		{
-			name: "it returns a not found error status if a package meta does not contain spec.displayName",
-			existingObjects: []runtime.Object{
-				&datapackagingv1alpha1.PackageMetadata{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       pkgMetadataResource,
-						APIVersion: datapackagingAPIVersion,
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "tetris.foo.example.com",
-					},
-					Spec: datapackagingv1alpha1.PackageMetadataSpec{
-						DisplayName:        "Classic Tetris",
-						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
-						ShortDescription:   "A great game for arcade gamers",
-						LongDescription:    "A few sentences but not really a readme",
-						Categories:         []string{"logging", "daemon-set"},
-						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
-						SupportDescription: "Some support information",
-						ProviderName:       "Tetris inc.",
-					},
-				},
-			},
-			expectedStatusCode: codes.NotFound,
+			name:               "it returns without error if there are no packages available",
+			expectedPackages:   []*corev1.AvailablePackageSummary{},
+			expectedStatusCode: codes.OK,
 		},
 		{
-			name: "it returns an not found error status if a package does not contain version",
+			name: "it returns an internal error status if there is no corresponding package for a package metadata",
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -200,7 +179,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedStatusCode: codes.Internal,
 		},
 		{
 			name: "it returns carvel package summaries with basic info from the cluster",

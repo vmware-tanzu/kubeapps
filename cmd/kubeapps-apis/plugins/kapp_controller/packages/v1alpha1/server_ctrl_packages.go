@@ -53,8 +53,10 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// paginate the list of results
 	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, len(pkgMetadatas))
 
-	// create the waiting group for processing each item aynchronously
-	var wg sync.WaitGroup
+	// Create a channel to receive any errors. The channel is also used as a
+	// natural waitgroup to synchronize the results.
+	errs := make(chan error)
+	numRoutines := 0
 
 	// TODO(agamez): DRY up this logic (cf GetInstalledPackageSummaries)
 	if len(pkgMetadatas) > 0 {
@@ -63,32 +65,35 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			startAt = int(pageSize) * pageOffset
 		}
 		for i, pkgMetadata := range pkgMetadatas {
-			wg.Add(1)
 			if startAt <= i {
-				go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) error {
-					defer wg.Done()
+				numRoutines++
+				go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) {
 					// fetch the associated packages
 					// Use the field selector to return only Package CRs that match on the spec.refName.
 					// TODO(agamez): perhaps we better fetch all the packages and filter ourselves to reduce the k8s calls
 					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
 					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
 					if err != nil {
-						return statuserror.FromK8sError("get", "Package", pkgMetadata.Name, err)
+						errs <- statuserror.FromK8sError("get", "Package", pkgMetadata.Name, err)
+						return
 					}
 					pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 					if err != nil {
-						return err
+						errs <- err
+						return
 					}
 
 					// generate the availablePackageSummary from the fetched information
 					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
 					if err != nil {
-						return statuserror.FromK8sError("create", "AvailablePackageSummary", pkgMetadata.Name, err)
+						errs <- statuserror.FromK8sError("create", "AvailablePackageSummary", pkgMetadata.Name, err)
+						return
 					}
 
 					// append the availablePackageSummary to the slice
 					availablePackageSummaries[i] = availablePackageSummary
-					return nil
+					// Ensure we signal a completion.
+					errs <- nil
 				}(i, pkgMetadata)
 			}
 			// if we've reached the end of the page, stop iterating
@@ -97,7 +102,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			}
 		}
 	}
-	wg.Wait() // Wait until each goroutine has finished
+	// Return an error if any is found. We continue only if there were no
+	// errors.
+	for i := 0; i < numRoutines; i++ {
+		err := <-errs
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected error while gathering available packages: %v", err))
+		}
+	}
 
 	// TODO(agamez): the slice with make is filled with <nil>, in case of an error in the
 	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
@@ -113,10 +125,6 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			categories = append(categories, availablePackageSummary.Categories...)
 
 		}
-	}
-	// if no results whatsoever, throw an error
-	if len(availablePackageSummariesNilSafe) == 0 {
-		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("no available packages: %v", err))
 	}
 
 	// Only return a next page token if the request was for pagination and
