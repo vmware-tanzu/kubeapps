@@ -33,7 +33,7 @@ func init() {
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
-	svr, err := NewServer(opts.ConfigGetter)
+	svr, err := NewServer(opts.ConfigGetter, opts.ClientQPS, opts.ClientBurst)
 	if err != nil {
 		return nil, err
 	}
