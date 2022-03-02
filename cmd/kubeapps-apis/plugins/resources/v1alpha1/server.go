@@ -33,6 +33,11 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 )
 
+const (
+	DISCOVERY_CLIENT_QPS   = 50.0
+	DISCOVERY_CLIENT_BURST = 100
+)
+
 type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
 
 // Currently just a stub unimplemented server. More to come in following PRs.
@@ -70,9 +75,12 @@ func createRESTMapper() (meta.RESTMapper, error) {
 	config.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
 	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
 
-	// Avoid client-side throttling while the rest mapper initializes.
-	config.QPS = 50.0
-	config.Burst = 100
+	// Avoid client-side throttling while the rest mapper discovers the
+	// available APIs on the K8s api server.  Note that this is only used for
+	// the discovery client below to return the rest mapper. The configured
+	// values for QPS and Burst are used for the client used for user requests.
+	config.QPS = DISCOVERY_CLIENT_QPS
+	config.Burst = DISCOVERY_CLIENT_BURST
 
 	client, err := rest.RESTClientFor(config)
 	if err != nil {
