@@ -33,11 +33,6 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 )
 
-const (
-	DISCOVERY_CLIENT_QPS   = 50.0
-	DISCOVERY_CLIENT_BURST = 100
-)
-
 type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
 
 // Currently just a stub unimplemented server. More to come in following PRs.
@@ -65,7 +60,7 @@ type Server struct {
 // createRESTMapper returns a rest mapper configured with the APIs of the
 // local k8s API server. This is used to convert between the GroupVersionKinds
 // of the resource references to the GroupVersionResource used by the API server.
-func createRESTMapper() (meta.RESTMapper, error) {
+func createRESTMapper(clientQPS float32, clientBurst int) (meta.RESTMapper, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -79,8 +74,8 @@ func createRESTMapper() (meta.RESTMapper, error) {
 	// available APIs on the K8s api server.  Note that this is only used for
 	// the discovery client below to return the rest mapper. The configured
 	// values for QPS and Burst are used for the client used for user requests.
-	config.QPS = DISCOVERY_CLIENT_QPS
-	config.Burst = DISCOVERY_CLIENT_BURST
+	config.QPS = clientQPS
+	config.Burst = clientBurst
 
 	client, err := rest.RESTClientFor(config)
 	if err != nil {
@@ -94,8 +89,8 @@ func createRESTMapper() (meta.RESTMapper, error) {
 	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter) (*Server, error) {
-	mapper, err := createRESTMapper()
+func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int) (*Server, error) {
+	mapper, err := createRESTMapper(clientQPS, clientBurst)
 	if err != nil {
 		return nil, err
 	}
