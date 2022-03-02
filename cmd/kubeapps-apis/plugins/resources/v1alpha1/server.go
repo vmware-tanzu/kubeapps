@@ -69,6 +69,11 @@ func createRESTMapper() (meta.RESTMapper, error) {
 	// See https://github.com/kubernetes/client-go/issues/657#issuecomment-842960258
 	config.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
 	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+
+	// Avoid client-side throttling while the rest mapper initializes.
+	config.QPS = 50.0
+	config.Burst = 100
+
 	client, err := rest.RESTClientFor(config)
 	if err != nil {
 		return nil, err
