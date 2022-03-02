@@ -7,7 +7,7 @@ Kubeapps is a web-based UI for launching and managing applications on Kubernetes
 [Overview of Kubeapps](https://kubeapps.com)
 
 
-                           
+
 ## TL;DR
 
 ```bash
@@ -20,7 +20,7 @@ helm install kubeapps --namespace kubeapps bitnami/kubeapps
 
 ## Introduction
 
-[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
+[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/main)
 
 This chart bootstraps a [Kubeapps](https://kubeapps.com) deployment on a [Kubernetes](https://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
@@ -35,7 +35,7 @@ With Kubeapps you can:
 
 **_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work.
 
-It also packages the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/tree/master/bitnami/postgresql), which is required for bootstrapping a deployment for the database requirements of the Kubeapps application.
+It also packages the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/tree/main/bitnami/postgresql), which is required for bootstrapping a deployment for the database requirements of the Kubeapps application.
 
 ## Prerequisites
 
@@ -58,7 +58,7 @@ The command deploys Kubeapps on the Kubernetes cluster in the `kubeapps` namespa
 
 > **Caveat**: Only one Kubeapps installation is supported per namespace
 
-Once you have installed Kubeapps follow the [Getting Started Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md) for additional information on how to access and use Kubeapps.
+Once you have installed Kubeapps follow the [Getting Started Guide](https://github.com/kubeapps/kubeapps/blob/main/docs/user/getting-started.md) for additional information on how to access and use Kubeapps.
 
 ## Parameters
 
