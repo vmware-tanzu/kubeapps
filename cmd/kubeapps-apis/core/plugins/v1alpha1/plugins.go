@@ -37,6 +37,16 @@ const (
 	clustersCAFilesPrefix   = "/etc/additional-clusters-cafiles"
 )
 
+// GRPCPluginRegistrationOptions defines the single argument that
+// a plugin's RegisterWithGRPCServer function must accept. This allows
+// the arguments to be defined (or modified) in the one place.
+type GRPCPluginRegistrationOptions struct {
+	Registrar        grpc.ServiceRegistrar
+	ConfigGetter     core.KubernetesConfigGetter
+	ClustersConfig   kube.ClustersConfig
+	PluginConfigPath string
+}
+
 // PluginWithServer keeps a record of a GRPC server and its plugin detail.
 type PluginWithServer struct {
 	Plugin *plugins.Plugin
@@ -151,17 +161,17 @@ func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 	if err != nil {
 		return nil, fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
 	}
-	type grpcRegisterFunctionType = func(grpc.ServiceRegistrar, core.KubernetesConfigGetter, kube.ClustersConfig, string) (interface{}, error)
+	type grpcRegisterFunctionType = func(GRPCPluginRegistrationOptions) (interface{}, error)
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var stubFn grpcRegisterFunctionType = func(grpc.ServiceRegistrar, core.KubernetesConfigGetter, kube.ClustersConfig, string) (interface{}, error) {
+		var stubFn grpcRegisterFunctionType = func(GRPCPluginRegistrationOptions) (interface{}, error) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, stubFn, grpcRegFn)
 	}
 
-	server, err := grpcFn(registrar, clientGetter, s.clustersConfig, pluginConfigPath)
+	server, err := grpcFn(GRPCPluginRegistrationOptions{registrar, clientGetter, s.clustersConfig, pluginConfigPath})
 	if err != nil {
 		return nil, fmt.Errorf("plug-in %q failed to register due to: %v", pluginDetail, err)
 	} else if server == nil {
