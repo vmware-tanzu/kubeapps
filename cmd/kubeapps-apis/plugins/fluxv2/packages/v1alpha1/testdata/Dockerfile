@@ -16,3 +16,9 @@ COPY ./podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo/
 COPY ./podinfo-basic-auth-index.yaml /usr/share/nginx/html/podinfo-basic-auth/index.yaml
 COPY ./podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo-basic-auth/
 COPY ./podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo-basic-auth/
+
+COPY ./ssl-bundle.pem /etc/ssl/certs/
+COPY ./server-key.pem /etc/ssl/certs/
+COPY ./podinfo-tls-index.yaml /usr/share/nginx/html/podinfo-tls/index.yaml
+COPY ./podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo-tls/
+COPY ./podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo-tls/

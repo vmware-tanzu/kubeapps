@@ -1192,15 +1192,9 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 
 func TestAddPackageRepository(t *testing.T) {
 
-	var ca, pub, priv []byte
-	var err error
-	if ca, err = ioutil.ReadFile("testdata/rootCA.crt"); err != nil {
-		t.Fatalf("%+v", err)
-	} else if pub, err = ioutil.ReadFile("testdata/crt.pem"); err != nil {
-		t.Fatalf("%+v", err)
-	} else if priv, err = ioutil.ReadFile("testdata/key.pem"); err != nil {
-		t.Fatalf("%+v", err)
-	}
+	// these will be used further on for TLS-related scenarios. Init
+	// byte arrays up front so they can be re-used in multiple places later
+	ca, pub, priv := getCertsForTesting(t)
 
 	testCases := []struct {
 		name                  string
@@ -1329,7 +1323,7 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.NotFound,
 		},
 		{
-			name: "package repository with basic auth",
+			name: "package repository with basic auth and pass_credentials flag",
 			request: &corev1.AddPackageRepositoryRequest{
 				Name:    "bar",
 				Context: &corev1.Context{Namespace: "foo"},
@@ -1343,10 +1337,11 @@ func TestAddPackageRepository(t *testing.T) {
 							Password: "zot",
 						},
 					},
+					PassCredentials: true,
 				},
 			},
 			expectedResponse:      add_repo_expected_resp,
-			expectedRepo:          &add_repo_2,
+			expectedRepo:          &add_repo_4,
 			expectedCreatedSecret: newBasicAuthSecret("bar-", "foo", "baz", "zot"),
 			statusCode:            codes.OK,
 		},
@@ -2007,6 +2002,24 @@ var (
 			URL:       "http://example.com",
 			Interval:  metav1.Duration{Duration: 10 * time.Minute},
 			SecretRef: &fluxmeta.LocalObjectReference{Name: "secret-1"},
+		},
+	}
+
+	add_repo_4 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:             "http://example.com",
+			Interval:        metav1.Duration{Duration: 10 * time.Minute},
+			SecretRef:       &fluxmeta.LocalObjectReference{Name: "bar-"},
+			PassCredentials: true,
 		},
 	}
 

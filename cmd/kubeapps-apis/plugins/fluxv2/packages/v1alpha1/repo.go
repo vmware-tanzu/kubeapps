@@ -222,6 +222,8 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 		}
 	}
 
+	passCredentials := auth != nil && auth.PassCredentials
+
 	secretRef, checkSecret := "", false
 	if secret != nil {
 		// create a secret first, if applicable
@@ -246,8 +248,9 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 		} else if _, err = typedClient.CoreV1().Secrets(targetName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
 			return nil, statuserror.FromK8sError("get", "secret", secretRef, err)
 		}
-		// TODO (gfichtenholt) also check that the secret type corresponds to specified auth type,
-		// e.g. if AuthType is PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+		// TODO (gfichtenholt) also check that the data in the opaque secret corresponds
+		// to specified auth type, e.g. if AuthType is
+		// PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 		// check that the secret has "username" and "password" fields, etc.
 
 		// TODO (gfichtenholt)
@@ -258,7 +261,7 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 		//	the "username" and "password" fields are present).
 	}
 
-	if fluxRepo, err := s.newFluxHelmRepo(targetName, url, interval, secretRef); err != nil {
+	if fluxRepo, err := s.newFluxHelmRepo(targetName, url, interval, secretRef, passCredentials); err != nil {
 		return nil, err
 	} else if client, err := s.getClient(ctx, targetName.Namespace); err != nil {
 		return nil, err
@@ -277,7 +280,12 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 }
 
 // ref https://fluxcd.io/docs/components/source/helmrepositories/
-func (s *Server) newFluxHelmRepo(targetName types.NamespacedName, url string, interval uint32, secretRef string) (*sourcev1.HelmRepository, error) {
+func (s *Server) newFluxHelmRepo(
+	targetName types.NamespacedName,
+	url string,
+	interval uint32,
+	secretRef string,
+	passCredentials bool) (*sourcev1.HelmRepository, error) {
 	pollInterval := defaultPollInterval
 	if interval > 0 {
 		pollInterval = metav1.Duration{Duration: time.Duration(interval) * time.Second}
@@ -300,6 +308,9 @@ func (s *Server) newFluxHelmRepo(targetName types.NamespacedName, url string, in
 		fluxRepo.Spec.SecretRef = &fluxmeta.LocalObjectReference{
 			Name: secretRef,
 		}
+	}
+	if passCredentials {
+		fluxRepo.Spec.PassCredentials = true
 	}
 	return fluxRepo, nil
 }
