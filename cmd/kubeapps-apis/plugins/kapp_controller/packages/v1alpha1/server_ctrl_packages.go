@@ -57,55 +57,68 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	if pageSize > 0 {
 		startAt = int(pageSize) * pageOffset
 		if startAt > len(pkgMetadatas) {
-			// bad request.
+			return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions())
 		}
 		pkgMetadatas = pkgMetadatas[startAt:]
 		if len(pkgMetadatas) > int(pageSize) {
 			pkgMetadatas = pkgMetadatas[:pageSize]
 		}
 	}
-	// TODO: update so pkgMetadatas is just the page of results and get
-	// rid of checks below. Then update to fetch all packages for those
-	// metas and work from there.
 
-	// Create a channel to receive any results. The channel is also used as a
-	// natural waitgroup to synchronize the results.
-	type fetchResult struct {
-		index                   int
-		availablePackageSummary *corev1.AvailablePackageSummary
-		err                     error
+	// Create a channel to receive all packages available in the namespace
+	getPkgsChannel := make(chan *datapackagingv1alpha1.Package)
+	var getPkgsError error
+	go func() {
+		getPkgsError = s.getPkgs(ctx, cluster, namespace, getPkgsChannel)
+	}()
+
+	// Skip through the packages until we get to the first item in our
+	// paginated results.
+	currentPkg := <-getPkgsChannel
+	for currentPkg != nil && currentPkg.Spec.RefName != pkgMetadatas[0].Name {
+		currentPkg = <-getPkgsChannel
 	}
-	fetchResults := make(chan fetchResult)
-	numFetched := 0
 
-	// TODO(agamez): DRY up this logic (cf GetInstalledPackageSummaries)
-	for i, pkgMetadata := range pkgMetadatas {
-		numFetched++
-		go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) {
-			availablePackageSummary, err := s.fetchPackageSummaryForMeta(ctx, cluster, namespace, pkgMetadata)
-
-			// The index of this result is relative to the page.
-			fetchResults <- fetchResult{i, availablePackageSummary, err}
-		}(i, pkgMetadata)
-	}
-	// Return an error if any is found. We continue only if there were no
-	// errors.
-	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, numFetched)
+	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, len(pkgMetadatas))
 	categories := []string{}
-	for i := 0; i < numFetched; i++ {
-		fetchResult := <-fetchResults
-		if fetchResult.err != nil {
-			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected error while gathering available packages: %v", err))
+	for i, pkgMetadata := range pkgMetadatas {
+		// currentPkg will be nil if the channel is closed and there's no
+		// more items to consume.
+		if currentPkg == nil {
+			return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name))
 		}
-		// append the availablePackageSummary to the slice
-		availablePackageSummaries[fetchResult.index] = fetchResult.availablePackageSummary
-		categories = append(categories, fetchResult.availablePackageSummary.Categories...)
+		// The kapp-controller returns both packages and package metadata
+		// in order.
+		if currentPkg.Spec.RefName != pkgMetadata.Name {
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+		}
+		// Skip ahead until we get the last version for this package name.
+		// TODO(minelson): check if kapp-controller also returns packages
+		// in version order (not just alphanumeric). If so, a small change
+		// will be required here.
+		// Asked at https://kubernetes.slack.com/archives/CH8KCCKA5/p1646285201181119
+		nextPkg := <-getPkgsChannel
+		for nextPkg != nil && nextPkg.Spec.RefName == pkgMetadata.Name {
+			currentPkg = nextPkg
+			nextPkg = <-getPkgsChannel
+		}
+		// At this point, currentPkg is the last package with the matching
+		// ref name.
+		availablePackageSummary := s.buildAvailablePackageSummary(pkgMetadata, currentPkg.Spec.Version, cluster)
+		availablePackageSummaries[i] = availablePackageSummary
+		categories = append(categories, availablePackageSummary.Categories...)
+		currentPkg = nextPkg
+	}
+
+	// Verify no error during go routine.
+	if getPkgsError != nil {
+		return nil, statuserror.FromK8sError("get", "Package", "", err)
 	}
 
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
-	if pageSize > 0 && numFetched == int(pageSize) {
+	if pageSize > 0 && len(availablePackageSummaries) == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	response := &corev1.GetAvailablePackageSummariesResponse{
@@ -114,29 +127,6 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		NextPageToken:             nextPageToken,
 	}
 	return response, nil
-}
-
-func (s *Server) fetchPackageSummaryForMeta(ctx context.Context, cluster, namespace string, pkgMetadata *datapackagingv1alpha1.PackageMetadata) (*corev1.AvailablePackageSummary, error) {
-	// fetch the associated packages
-	// Use the field selector to return only Package CRs that match on the spec.refName.
-	// TODO(agamez): perhaps we better fetch all the packages and filter ourselves to reduce the k8s calls
-	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
-	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
-	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, err)
-	}
-	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
-	if err != nil {
-		return nil, err
-	}
-
-	// generate the availablePackageSummary from the fetched information
-	availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
-	if err != nil {
-		return nil, statuserror.FromK8sError("create", "AvailablePackageSummary", pkgMetadata.Name, err)
-	}
-
-	return availablePackageSummary, nil
 }
 
 // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin

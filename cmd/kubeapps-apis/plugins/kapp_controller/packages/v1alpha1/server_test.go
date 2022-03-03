@@ -183,6 +183,36 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			expectedStatusCode: codes.Internal,
 		},
 		{
+			name: "it returns an invalid argument error status if a page is requested that doesn't exist",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+			},
+			paginationOptions: corev1.PaginationOptions{
+				PageToken: "2",
+				PageSize:  1,
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
 			name: "it returns carvel package summaries with basic info from the cluster",
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
