@@ -26,6 +26,8 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+const PACKAGES_CHANNEL_BUFFER_SIZE = 20
+
 // GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	// Retrieve parameters from the request
@@ -65,8 +67,10 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		}
 	}
 
-	// Create a channel to receive all packages available in the namespace
-	getPkgsChannel := make(chan *datapackagingv1alpha1.Package)
+	// Create a channel to receive all packages available in the namespace.
+	// Using a buffered channel so that we don't block the network request if we
+	// can't process fast enough.
+	getPkgsChannel := make(chan *datapackagingv1alpha1.Package, PACKAGES_CHANNEL_BUFFER_SIZE)
 	var getPkgsError error
 	go func() {
 		getPkgsError = s.getPkgs(ctx, cluster, namespace, getPkgsChannel)
