@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
+import { cloneDeep } from "lodash";
 import DeploymentFormBody from "components/DeploymentFormBody/DeploymentFormBody";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
@@ -309,6 +310,32 @@ describe("renders an error", () => {
     expect(wrapper.find(Alert).exists()).toBe(true);
     expect(wrapper.find(Alert).first()).toIncludeText("wrong format!");
   });
+});
+
+it("empty values applied is allowed", () => {
+  const installedPackageDetails = cloneDeep(installedPkgDetail);
+  installedPackageDetails.valuesApplied = "";
+  const state = {
+    ...defaultStore,
+    apps: {
+      selected: installedPackageDetails,
+      selectedDetails: availablePkgDetail,
+      isFetching: false,
+    } as IInstalledPackageState,
+    packages: {
+      selected: selectedPkg,
+    } as IPackageState,
+  };
+
+  const wrapper = mountWrapper(
+    getStore({ ...state }),
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Route path={routePath}>
+        <UpgradeForm />,
+      </Route>
+    </MemoryRouter>,
+  );
+  expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("1.0.0");
 });
 
 it("defaults the upgrade version to the current version", () => {
