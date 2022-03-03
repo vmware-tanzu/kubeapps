@@ -50,87 +50,87 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 	}
 
-	// paginate the list of results
-	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, len(pkgMetadatas))
-
-	// create the waiting group for processing each item aynchronously
-	var wg sync.WaitGroup
+	// Create a channel to receive any results. The channel is also used as a
+	// natural waitgroup to synchronize the results.
+	type fetchResult struct {
+		index                   int
+		availablePackageSummary *corev1.AvailablePackageSummary
+		err                     error
+	}
+	fetchResults := make(chan fetchResult)
+	numFetched := 0
 
 	// TODO(agamez): DRY up this logic (cf GetInstalledPackageSummaries)
 	if len(pkgMetadatas) > 0 {
-		startAt := -1
+		startAt := 0
 		if pageSize > 0 {
 			startAt = int(pageSize) * pageOffset
 		}
 		for i, pkgMetadata := range pkgMetadatas {
-			wg.Add(1)
 			if startAt <= i {
-				go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) error {
-					defer wg.Done()
-					// fetch the associated packages
-					// Use the field selector to return only Package CRs that match on the spec.refName.
-					// TODO(agamez): perhaps we better fetch all the packages and filter ourselves to reduce the k8s calls
-					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
-					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
-					if err != nil {
-						return statuserror.FromK8sError("get", "Package", pkgMetadata.Name, err)
-					}
-					pkgVersionsMap, err := getPkgVersionsMap(pkgs)
-					if err != nil {
-						return err
-					}
+				numFetched++
+				go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) {
+					availablePackageSummary, err := s.fetchPackageSummaryForMeta(ctx, cluster, namespace, pkgMetadata)
 
-					// generate the availablePackageSummary from the fetched information
-					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
-					if err != nil {
-						return statuserror.FromK8sError("create", "AvailablePackageSummary", pkgMetadata.Name, err)
-					}
-
-					// append the availablePackageSummary to the slice
-					availablePackageSummaries[i] = availablePackageSummary
-					return nil
+					// The index of this result is relative to the page.
+					fetchResults <- fetchResult{i - startAt, availablePackageSummary, err}
 				}(i, pkgMetadata)
 			}
 			// if we've reached the end of the page, stop iterating
-			if pageSize > 0 && len(availablePackageSummaries) == int(pageSize) {
+			if pageSize > 0 && numFetched == int(pageSize) {
 				break
 			}
 		}
 	}
-	wg.Wait() // Wait until each goroutine has finished
-
-	// TODO(agamez): the slice with make is filled with <nil>, in case of an error in the
-	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
-	// been able so far.
-	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
-	// However, should we just return an error if so? See https://github.com/kubeapps/kubeapps/pull/3784#discussion_r754836475
-	// filter out <nil> values
-	availablePackageSummariesNilSafe := []*corev1.AvailablePackageSummary{}
+	// Return an error if any is found. We continue only if there were no
+	// errors.
+	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, numFetched)
 	categories := []string{}
-	for _, availablePackageSummary := range availablePackageSummaries {
-		if availablePackageSummary != nil {
-			availablePackageSummariesNilSafe = append(availablePackageSummariesNilSafe, availablePackageSummary)
-			categories = append(categories, availablePackageSummary.Categories...)
-
+	for i := 0; i < numFetched; i++ {
+		fetchResult := <-fetchResults
+		if fetchResult.err != nil {
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected error while gathering available packages: %v", err))
 		}
-	}
-	// if no results whatsoever, throw an error
-	if len(availablePackageSummariesNilSafe) == 0 {
-		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("no available packages: %v", err))
+		// append the availablePackageSummary to the slice
+		availablePackageSummaries[fetchResult.index] = fetchResult.availablePackageSummary
+		categories = append(categories, fetchResult.availablePackageSummary.Categories...)
 	}
 
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
-	if pageSize > 0 && len(availablePackageSummariesNilSafe) == int(pageSize) {
+	if pageSize > 0 && numFetched == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	response := &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: availablePackageSummariesNilSafe,
+		AvailablePackageSummaries: availablePackageSummaries,
 		Categories:                categories,
 		NextPageToken:             nextPageToken,
 	}
 	return response, nil
+}
+
+func (s *Server) fetchPackageSummaryForMeta(ctx context.Context, cluster, namespace string, pkgMetadata *datapackagingv1alpha1.PackageMetadata) (*corev1.AvailablePackageSummary, error) {
+	// fetch the associated packages
+	// Use the field selector to return only Package CRs that match on the spec.refName.
+	// TODO(agamez): perhaps we better fetch all the packages and filter ourselves to reduce the k8s calls
+	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
+	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+	if err != nil {
+		return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, err)
+	}
+	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
+	if err != nil {
+		return nil, err
+	}
+
+	// generate the availablePackageSummary from the fetched information
+	availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
+	if err != nil {
+		return nil, statuserror.FromK8sError("create", "AvailablePackageSummary", pkgMetadata.Name, err)
+	}
+
+	return availablePackageSummary, nil
 }
 
 // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin

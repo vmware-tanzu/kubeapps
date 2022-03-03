@@ -139,10 +139,10 @@ EOF
 Then, you need to apply the `PackageRepository` CR to your cluster using `kubectl` (or, alternatively, the `kapp` CLI), by running the following command:
 
 ```bash
-kubectl apply -f repo.yaml
+kubectl apply --namespace kapp-controller-packaging-global -f repo.yaml
 ```
 
-Under the hood, kapp-controller will create `Package` and `PackageMetadata` CRs for each of the packages in the repository.
+Under the hood, kapp-controller will create `Package` and `PackageMetadata` CRs for each of the packages in the repository in the global packaging namespace for kapp-controller, enabling those packages to be installed via Kubeapps in any namespace. Note you can instead install the repository in a different namespace if the packages should only be available for install via Kubeapps in a particular namespace.
 
 > **TIP**: Run `kubectl get packagerepository`, `kubectl get packages` and `kubectl get packagemetadatas` to get the created CRs.
 

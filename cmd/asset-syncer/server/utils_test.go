@@ -59,6 +59,13 @@ func (h *goodHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	if strings.HasPrefix(req.URL.Path, "//") {
 		w.WriteHeader(500)
 	}
+
+	// Sending an empty Authorization header is not valid for http spec,
+	// some servers returning 401 for public resources in this case.
+	if v, ok := req.Header["Authorization"]; ok && len(v) == 1 && v[0] == "" {
+		w.WriteHeader(401)
+	}
+
 	// If subpath repo URL test, check that index.yaml is correctly added to the
 	// subpath
 	if req.URL.Host == "subpath.test" && req.URL.Path != "/subpath/index.yaml" {
