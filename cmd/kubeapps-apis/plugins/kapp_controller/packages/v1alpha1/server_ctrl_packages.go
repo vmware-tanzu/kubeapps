@@ -45,10 +45,28 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		cluster = s.globalPackagingCluster
 	}
 	// fetch all the package metadatas
+	// TODO(minelson): We should be grabbing only the requested page
+	// of results here.
 	pkgMetadatas, err := s.getPkgMetadatas(ctx, cluster, namespace)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 	}
+	// Until the above request uses the pagination, update the slice
+	// to be the correct page of results.
+	startAt := 0
+	if pageSize > 0 {
+		startAt = int(pageSize) * pageOffset
+		if startAt > len(pkgMetadatas) {
+			// bad request.
+		}
+		pkgMetadatas = pkgMetadatas[startAt:]
+		if len(pkgMetadatas) > int(pageSize) {
+			pkgMetadatas = pkgMetadatas[:pageSize]
+		}
+	}
+	// TODO: update so pkgMetadatas is just the page of results and get
+	// rid of checks below. Then update to fetch all packages for those
+	// metas and work from there.
 
 	// Create a channel to receive any results. The channel is also used as a
 	// natural waitgroup to synchronize the results.
@@ -61,26 +79,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	numFetched := 0
 
 	// TODO(agamez): DRY up this logic (cf GetInstalledPackageSummaries)
-	if len(pkgMetadatas) > 0 {
-		startAt := 0
-		if pageSize > 0 {
-			startAt = int(pageSize) * pageOffset
-		}
-		for i, pkgMetadata := range pkgMetadatas {
-			if startAt <= i {
-				numFetched++
-				go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) {
-					availablePackageSummary, err := s.fetchPackageSummaryForMeta(ctx, cluster, namespace, pkgMetadata)
+	for i, pkgMetadata := range pkgMetadatas {
+		numFetched++
+		go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) {
+			availablePackageSummary, err := s.fetchPackageSummaryForMeta(ctx, cluster, namespace, pkgMetadata)
 
-					// The index of this result is relative to the page.
-					fetchResults <- fetchResult{i - startAt, availablePackageSummary, err}
-				}(i, pkgMetadata)
-			}
-			// if we've reached the end of the page, stop iterating
-			if pageSize > 0 && numFetched == int(pageSize) {
-				break
-			}
-		}
+			// The index of this result is relative to the page.
+			fetchResults <- fetchResult{i, availablePackageSummary, err}
+		}(i, pkgMetadata)
 	}
 	// Return an error if any is found. We continue only if there were no
 	// errors.
