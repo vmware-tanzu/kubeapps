@@ -680,7 +680,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 
 		// what I need is a single repo with a whole bunch of unique charts (packages)
-		tarGzBytes, err := ioutil.ReadFile("./testdata/redis-14.4.0.tgz")
+		tarGzBytes, err := ioutil.ReadFile("./testdata/charts/redis-14.4.0.tgz")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -719,7 +719,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		repoName := "multitude-of-charts"
 		repoNamespace := "default"
 		replaceUrls := make(map[string]string)
-		replaceUrls["{{testdata/redis-14.4.0.tgz}}"] = ts.URL
+		replaceUrls["{{testdata/charts/redis-14.4.0.tgz}}"] = ts.URL
 		ts2, r, err := newRepoWithIndex(
 			tmpFile.Name(), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
@@ -963,12 +963,12 @@ func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.
 var redis_charts_spec = []testSpecChartWithFile{
 	{
 		name:     "redis",
-		tgzFile:  "testdata/redis-14.4.0.tgz",
+		tgzFile:  "testdata/charts/redis-14.4.0.tgz",
 		revision: "14.4.0",
 	},
 	{
 		name:     "redis",
-		tgzFile:  "testdata/redis-14.3.4.tgz",
+		tgzFile:  "testdata/charts/redis-14.3.4.tgz",
 		revision: "14.3.4",
 	},
 }

@@ -149,11 +149,11 @@ func compareJSONStrings(t *testing.T, expectedJSONString, actualJSONString strin
 // generate-cert.sh script in testdata directory is used to generate these files
 func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 	var err error
-	if ca, err = ioutil.ReadFile("testdata/ca.pem"); err != nil {
+	if ca, err = ioutil.ReadFile("testdata/cert/ca.pem"); err != nil {
 		t.Fatalf("%+v", err)
-	} else if pub, err = ioutil.ReadFile("testdata/server.pem"); err != nil {
+	} else if pub, err = ioutil.ReadFile("testdata/cert/server.pem"); err != nil {
 		t.Fatalf("%+v", err)
-	} else if priv, err = ioutil.ReadFile("testdata/server-key.pem"); err != nil {
+	} else if priv, err = ioutil.ReadFile("testdata/cert/server-key.pem"); err != nil {
 		t.Fatalf("%+v", err)
 	}
 	return ca, pub, priv

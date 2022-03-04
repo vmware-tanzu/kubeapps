@@ -1784,17 +1784,17 @@ var (
 	valid_index_charts_spec = []testSpecChartWithFile{
 		{
 			name:     "acs-engine-autoscaler",
-			tgzFile:  "testdata/acs-engine-autoscaler-2.1.1.tgz",
+			tgzFile:  "testdata/charts/acs-engine-autoscaler-2.1.1.tgz",
 			revision: "2.1.1",
 		},
 		{
 			name:     "wordpress",
-			tgzFile:  "testdata/wordpress-0.7.5.tgz",
+			tgzFile:  "testdata/charts/wordpress-0.7.5.tgz",
 			revision: "0.7.5",
 		},
 		{
 			name:     "wordpress",
-			tgzFile:  "testdata/wordpress-0.7.4.tgz",
+			tgzFile:  "testdata/charts/wordpress-0.7.4.tgz",
 			revision: "0.7.4",
 		},
 	}
