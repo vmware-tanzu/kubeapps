@@ -85,6 +85,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, len(pkgMetadatas))
 	categories := []string{}
+	pkgsForMeta := []*datapackagingv1alpha1.Package{}
 	for i, pkgMetadata := range pkgMetadatas {
 		// currentPkg will be nil if the channel is closed and there's no
 		// more items to consume.
@@ -96,22 +97,29 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		if currentPkg.Spec.RefName != pkgMetadata.Name {
 			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
 		}
-		// Skip ahead until we get the last version for this package name.
-		// TODO(minelson): check if kapp-controller also returns packages
-		// in version order (not just alphanumeric). If so, a small change
-		// will be required here.
-		// Asked at https://kubernetes.slack.com/archives/CH8KCCKA5/p1646285201181119
-		nextPkg := <-getPkgsChannel
-		for nextPkg != nil && nextPkg.Spec.RefName == pkgMetadata.Name {
-			currentPkg = nextPkg
-			nextPkg = <-getPkgsChannel
+		// Collect the packages for a particular refName to be able to send the
+		// latest semver version. For the moment, kapp-controller just returns
+		// CRs with the default alpha sorting of the CR name.
+		// Ref https://kubernetes.slack.com/archives/CH8KCCKA5/p1646285201181119
+		pkgsForMeta = append(pkgsForMeta, currentPkg)
+		currentPkg = <-getPkgsChannel
+		for currentPkg != nil && currentPkg.Spec.RefName == pkgMetadata.Name {
+			pkgsForMeta = append(pkgsForMeta, currentPkg)
+			currentPkg = <-getPkgsChannel
 		}
-		// At this point, currentPkg is the last package with the matching
-		// ref name.
-		availablePackageSummary := s.buildAvailablePackageSummary(pkgMetadata, currentPkg.Spec.Version, cluster)
+		// At this point, we have all the packages collected that match
+		// this ref name, and currentPkg is for the next meta name.
+		pkgVersionMap, err := getPkgVersionsMap(pkgsForMeta)
+		if err != nil || len(pkgVersionMap[pkgMetadata.Name]) == 0 {
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to calculate package versions map for packages: %v, err: %v", pkgsForMeta, err))
+		}
+		latestVersion := pkgVersionMap[pkgMetadata.Name][0].version.String()
+		availablePackageSummary := s.buildAvailablePackageSummary(pkgMetadata, latestVersion, cluster)
 		availablePackageSummaries[i] = availablePackageSummary
 		categories = append(categories, availablePackageSummary.Categories...)
-		currentPkg = nextPkg
+
+		// Reset the packages for the current meta name.
+		pkgsForMeta = pkgsForMeta[:0]
 	}
 
 	// Verify no error during go routine.

@@ -389,7 +389,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns the latest semver version in the latest version field",
+			name: "it returns the latest semver version in the latest version field without relying on default alpha sorting",
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -436,11 +436,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "tetris.foo.example.com.1.2.7",
+						Name:      "tetris.foo.example.com.1.2.10",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
 						RefName:                         "tetris.foo.example.com",
-						Version:                         "1.2.7",
+						Version:                         "1.2.10",
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
@@ -476,8 +476,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Name:        "tetris.foo.example.com",
 					DisplayName: "Classic Tetris",
 					LatestVersion: &corev1.PackageAppVersion{
-						PkgVersion: "1.2.7",
-						AppVersion: "1.2.7",
+						PkgVersion: "1.2.10",
+						AppVersion: "1.2.10",
 					},
 					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 					ShortDescription: "A great game for arcade gamers",
