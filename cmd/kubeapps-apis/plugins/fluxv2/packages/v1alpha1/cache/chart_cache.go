@@ -387,7 +387,11 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 
 // this is effectively a cache GET operation
 func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
+	c.resyncCond.L.(*sync.RWMutex).RLock()
+	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
+
 	log.Infof("+FetchForOne(%s)", key)
+
 	// read back from cache: should be either:
 	//  - what we previously wrote OR
 	//  - redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry
