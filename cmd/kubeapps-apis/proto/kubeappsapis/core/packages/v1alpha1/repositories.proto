@@ -204,10 +204,10 @@ message SecretKeyReference {
   // that refers to it (e.g. PackageRepository), containing authentication 
   // credentials for the said package repository.
   // - For HTTP/S basic auth the secret must be of type 
-  //   "kubernetes.io/basic-auth" and contain username and
-  //   password fields.
-  // - For TLS the secret must be of type "kubernetes.io/tls" 
-  //   contain a certFile and keyFile, and/or
+  //   "kubernetes.io/basic-auth" or opaque and contain username and
+  //   password fields
+  // - For TLS the secret must be of type "kubernetes.io/tls" or opaque 
+  //   and contain a certFile and keyFile, and/or
   //   caCert fields.
   // - For Bearer or Custom Auth, the secret must be opaque, and 
   //   the key must be provided

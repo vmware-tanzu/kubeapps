@@ -95,15 +95,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 	// these will be used further on for TLS-related scenarios. Init
 	// byte arrays up front so they can be re-used in multiple places later
-	var ca, pub, priv []byte
-	var err error
-	if ca, err = ioutil.ReadFile("testdata/rootCA.crt"); err != nil {
-		t.Fatalf("%+v", err)
-	} else if pub, err = ioutil.ReadFile("testdata/crt.pem"); err != nil {
-		t.Fatalf("%+v", err)
-	} else if priv, err = ioutil.ReadFile("testdata/key.pem"); err != nil {
-		t.Fatalf("%+v", err)
-	}
+	ca, pub, priv := getCertsForTesting(t)
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -140,12 +132,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}
 				var ts *httptest.Server
 				if tc.tls {
-					// I cheated a bit in this test. Instead of generating my own certificates
-					// and keys using openssl tool, which I found time consuming and overly complicated,
-					// I just copied the ones being used by helm.sh tool for testing purposes
-					// from https://github.com/helm/helm/tree/main/testdata
-					// in order to save some time. Should n't affect any functionality of productionn
-					// code
 					ts = httptest.NewUnstartedServer(handler)
 					tlsConf, err := httpclient.NewClientTLS(pub, priv, ca)
 					if err != nil {
@@ -694,7 +680,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 
 		// what I need is a single repo with a whole bunch of unique charts (packages)
-		tarGzBytes, err := ioutil.ReadFile("./testdata/redis-14.4.0.tgz")
+		tarGzBytes, err := ioutil.ReadFile("./testdata/charts/redis-14.4.0.tgz")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -733,7 +719,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		repoName := "multitude-of-charts"
 		repoNamespace := "default"
 		replaceUrls := make(map[string]string)
-		replaceUrls["{{testdata/redis-14.4.0.tgz}}"] = ts.URL
+		replaceUrls["{{testdata/charts/redis-14.4.0.tgz}}"] = ts.URL
 		ts2, r, err := newRepoWithIndex(
 			tmpFile.Name(), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
@@ -977,12 +963,12 @@ func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.
 var redis_charts_spec = []testSpecChartWithFile{
 	{
 		name:     "redis",
-		tgzFile:  "testdata/redis-14.4.0.tgz",
+		tgzFile:  "testdata/charts/redis-14.4.0.tgz",
 		revision: "14.4.0",
 	},
 	{
 		name:     "redis",
-		tgzFile:  "testdata/redis-14.3.4.tgz",
+		tgzFile:  "testdata/charts/redis-14.3.4.tgz",
 		revision: "14.3.4",
 	},
 }

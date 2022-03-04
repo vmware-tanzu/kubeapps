@@ -51,6 +51,19 @@ const (
 	// EnvvarFluxIntegrationTests enables tests that run against a local kind cluster
 	envVarFluxIntegrationTests = "ENABLE_FLUX_INTEGRATION_TESTS"
 	defaultContextTimeout      = 30 * time.Second
+
+	// This is local copy of the first few entries
+	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
+	// urls modified to link to .tgz files also within the local cluster.
+	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
+	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/kind-cluster-setup.sh
+	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo"
+
+	// same as above but requires HTTP basic authentication: user: foo, password: bar
+	podinfo_basic_auth_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth"
+
+	// same as above but requires TLS
+	podinfo_tls_repo_url = "https://fluxv2plugin-testdata-ssl-svc.default.svc.cluster.local:443"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient) {
