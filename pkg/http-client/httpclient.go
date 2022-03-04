@@ -68,7 +68,10 @@ func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 
 	// Return client with TLS skipVerify but no additional certs
 	client := New()
-	if err := SetClientTLS(client, nil, nil, skipTLS); err != nil {
+	config := &tls.Config{
+		InsecureSkipVerify: skipTLS,
+	}
+	if err := SetClientTLS(client, config); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +88,11 @@ func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
 
 	// create and configure client
 	client := New()
-	if err := SetClientTLS(client, caCertPool, nil, skipTLS); err != nil {
+	config := &tls.Config{
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: skipTLS,
+	}
+	if err := SetClientTLS(client, config); err != nil {
 		return nil, err
 	}
 
@@ -124,20 +131,15 @@ func SetClientProxy(client *http.Client, proxy func(*http.Request) (*url.URL, er
 }
 
 // configure the given tls on the given client
-// TODO (gfichtenholt) the signature of this func should be changed to accept an
-// instance of *tls.Config instead. For now I am trying to keep the changes to a minimum
-func SetClientTLS(client *http.Client, caCertPool *x509.CertPool, certs []tls.Certificate, skipTLS bool) error {
+func SetClientTLS(client *http.Client, config *tls.Config) error {
 	transport, ok := client.Transport.(*http.Transport)
 	if !ok {
 		return fmt.Errorf("transport was not an http.Transport")
 	}
-	transport.TLSClientConfig = &tls.Config{
-		RootCAs:            caCertPool,
-		InsecureSkipVerify: skipTLS,
+	if config == nil {
+		return fmt.Errorf("invalid argument: config may not be nil")
 	}
-	if len(certs) > 0 {
-		transport.TLSClientConfig.Certificates = certs
-	}
+	transport.TLSClientConfig = config.Clone()
 	return nil
 }
 

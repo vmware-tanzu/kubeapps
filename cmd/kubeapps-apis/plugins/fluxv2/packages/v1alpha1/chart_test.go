@@ -95,15 +95,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 	// these will be used further on for TLS-related scenarios. Init
 	// byte arrays up front so they can be re-used in multiple places later
-	var ca, pub, priv []byte
-	var err error
-	if ca, err = ioutil.ReadFile("testdata/rootCA.crt"); err != nil {
-		t.Fatalf("%+v", err)
-	} else if pub, err = ioutil.ReadFile("testdata/crt.pem"); err != nil {
-		t.Fatalf("%+v", err)
-	} else if priv, err = ioutil.ReadFile("testdata/key.pem"); err != nil {
-		t.Fatalf("%+v", err)
-	}
+	ca, pub, priv := getCertsForTesting(t)
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -140,12 +132,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}
 				var ts *httptest.Server
 				if tc.tls {
-					// I cheated a bit in this test. Instead of generating my own certificates
-					// and keys using openssl tool, which I found time consuming and overly complicated,
-					// I just copied the ones being used by helm.sh tool for testing purposes
-					// from https://github.com/helm/helm/tree/main/testdata
-					// in order to save some time. Should n't affect any functionality of productionn
-					// code
 					ts = httptest.NewUnstartedServer(handler)
 					tlsConf, err := httpclient.NewClientTLS(pub, priv, ca)
 					if err != nil {
@@ -175,21 +161,15 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			secretObjs := []runtime.Object{}
 			if tc.basicAuth && tc.tls {
 				secretRef = "both-credentials"
-				if secret, err := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca); err != nil {
-					t.Fatalf("%+v", err)
-				} else {
-					secretObjs = append(secretObjs, secret)
-				}
+				secret := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca)
+				secretObjs = append(secretObjs, secret)
 			} else if tc.basicAuth {
 				secretRef = "http-credentials"
 				secretObjs = append(secretObjs, newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar"))
 			} else if tc.tls {
 				secretRef = "https-credentials"
-				if secret, err := newTlsSecret(secretRef, repoNamespace, pub, priv, ca); err != nil {
-					t.Fatalf("%+v", err)
-				} else {
-					secretObjs = append(secretObjs, secret)
-				}
+				secret := newTlsSecret(secretRef, repoNamespace, pub, priv, ca)
+				secretObjs = append(secretObjs, secret)
 			}
 
 			ts2, repo, err := newRepoWithIndex(
@@ -199,7 +179,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -294,7 +274,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -360,7 +340,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	// I don't need any repos/charts to test these scenarios
 	for _, tc := range negativeTestCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, nil, nil, nil)
+			s, mock, err := newServerWithRepos(t, nil, nil, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -465,7 +445,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 			defer ts2.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -551,7 +531,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, nil, nil, nil)
+			s, mock, err := newServerWithRepos(t, nil, nil, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -644,7 +624,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, _, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -691,15 +671,16 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 // this test is focused on the chart cache work queue
 func TestChartCacheResyncNotIdle(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the chart cache needs to resync", func(t *testing.T) {
+
 		// start with an empty server that only has an empty repo cache
 		// passing in []testSpecChartWithUrl{} instead of nil will add support for chart cache
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil)
+		s, mock, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
 		// what I need is a single repo with a whole bunch of unique charts (packages)
-		tarGzBytes, err := ioutil.ReadFile("./testdata/redis-14.4.0.tgz")
+		tarGzBytes, err := ioutil.ReadFile("./testdata/charts/redis-14.4.0.tgz")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -738,7 +719,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		repoName := "multitude-of-charts"
 		repoNamespace := "default"
 		replaceUrls := make(map[string]string)
-		replaceUrls["{{testdata/redis-14.4.0.tgz}}"] = ts.URL
+		replaceUrls["{{testdata/charts/redis-14.4.0.tgz}}"] = ts.URL
 		ts2, r, err := newRepoWithIndex(
 			tmpFile.Name(), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
@@ -746,25 +727,14 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		unstructuredRepo, err := common.ToUnstructured(&r)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(context.Background(), unstructuredRepo, metav1.CreateOptions{})
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		repoKey, repoBytes, err := s.redisKeyValueForRepo(*r)
 		if err != nil {
 			t.Fatalf("%+v", err)
+		} else {
+			redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
 		}
-		mock.ExpectGet(repoKey).RedisNil()
-		redisMockSetValueForRepo(mock, repoKey, repoBytes)
 
 		opts := &common.ClientOptions{}
-
 		chartCacheKeys := []string{}
 		var chartBytes []byte
 		for i := 0; i < NUM_CHARTS; i++ {
@@ -784,9 +754,15 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			s.chartCache.ExpectAdd(chartCacheKey)
 			chartCacheKeys = append(chartCacheKeys, chartCacheKey)
 		}
+
 		s.repoCache.ExpectAdd(repoKey)
 
-		watcher.Add(unstructuredRepo)
+		ctrlClient, watcher, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
+			t.Fatal(err)
+		} else if err = ctrlClient.Create(context.Background(), r); err != nil {
+			t.Fatal(err)
+		}
 
 		done := make(chan int, 1)
 
@@ -818,7 +794,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 				t.Errorf("ERROR: Expected empty repo work queue!")
 			} else {
 				mock.ExpectFlushDB().SetVal("OK")
-				redisMockSetValueForRepo(mock, repoKey, repoBytes)
+				redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
 				// now we can signal to the server it's ok to proceed
 				repoResyncCh <- 0
 
@@ -868,9 +844,8 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 			APIVersion: sourcev1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Generation:      int64(1),
-			ResourceVersion: "1",
+			Name:       name,
+			Generation: int64(1),
 		},
 	}
 	if namespace != "" {
@@ -887,17 +862,6 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 	}
 
 	return helmChart
-}
-
-func availableRef(id, namespace string) *corev1.AvailablePackageReference {
-	return &corev1.AvailablePackageReference{
-		Identifier: id,
-		Context: &corev1.Context{
-			Namespace: namespace,
-			Cluster:   KubeappsCluster,
-		},
-		Plugin: fluxPlugin,
-	}
 }
 
 func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
@@ -999,12 +963,12 @@ func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.
 var redis_charts_spec = []testSpecChartWithFile{
 	{
 		name:     "redis",
-		tgzFile:  "testdata/redis-14.4.0.tgz",
+		tgzFile:  "testdata/charts/redis-14.4.0.tgz",
 		revision: "14.4.0",
 	},
 	{
 		name:     "redis",
-		tgzFile:  "testdata/redis-14.3.4.tgz",
+		tgzFile:  "testdata/charts/redis-14.3.4.tgz",
 		revision: "14.3.4",
 	},
 }

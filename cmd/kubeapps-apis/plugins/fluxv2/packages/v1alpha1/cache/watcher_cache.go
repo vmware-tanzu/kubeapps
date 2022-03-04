@@ -22,15 +22,16 @@ import (
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	errorutil "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	watchutil "k8s.io/client-go/tools/watch"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -39,6 +40,9 @@ const (
 	// max number of attempts to resync before giving up
 	maxWatcherCacheResyncBackoff = 2
 	KeySegmentsSeparator         = ":"
+	// max number of concurrent workers computing or retrieving cache values at
+	// the same time
+	maxWorkers = 10
 )
 
 var (
@@ -87,10 +91,14 @@ type NamespacedResourceWatcherCache struct {
 }
 
 type ValueGetterFunc func(key string, cachedValue interface{}) (rawValue interface{}, err error)
-type ValueAdderFunc func(key string, obj unstructured.Unstructured) (cachedValue interface{}, setValue bool, err error)
-type ValueModifierFunc func(key string, obj unstructured.Unstructured, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
+type ValueAdderFunc func(key string, obj ctrlclient.Object) (cachedValue interface{}, setValue bool, err error)
+type ValueModifierFunc func(key string, obj ctrlclient.Object, oldCachedVal interface{}) (newCachedValue interface{}, setValue bool, err error)
 type KeyDeleterFunc func(key string) (deleteValue bool, err error)
 type ResyncFunc func() error
+
+type NewObjectFunc func() ctrlclient.Object
+type NewObjectListFunc func() ctrlclient.ObjectList
+type GetListItemsFunc func(ctrlclient.ObjectList) []ctrlclient.Object
 
 type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
@@ -101,14 +109,16 @@ type NamespacedResourceWatcherCacheConfig struct {
 	// corresponding entry. Note this maybe happen as a result of a newly created k8s object
 	// or a modified object for which there was no entry in the cache
 	// This allows the call site to return information about WHETHER OR NOT and WHAT is to be stored
-	// in the cache for a given k8s object (passed in as a untyped/unstructured map).
+	// in the cache for a given k8s object (passed in as a ctrlclient.Object).
+	// ref https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Object
 	// The call site may return []byte, but it doesn't have to be that.
 	// The list of all types actually supported by redis you can find in
 	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
 	OnAddFunc ValueAdderFunc
 	// 'OnModifyFunc' hook is called when an object for which there is a corresponding cache entry
 	// is modified. This allows the call site to return information about WHETHER OR NOT and WHAT
-	// is to be stored in the cache for a given k8s object (passed in as a untyped/unstructured map).
+	// in the cache for a given k8s object (passed in as a ctrlclient.Object).
+	// ref https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Object
 	// The call site may return []byte, but it doesn't have to be that.
 	// The list of all types actually supported by redis you can find in
 	// https://github.com/go-redis/redis/blob/v8.10.0/internal/proto/writer.go#L61
@@ -121,6 +131,12 @@ type NamespacedResourceWatcherCacheConfig struct {
 	OnDeleteFunc KeyDeleterFunc
 	// OnResync hook is called when the cache is resynced
 	OnResyncFunc ResyncFunc
+
+	// These funcs are needed to manipulate API-specific objects, such as flux's
+	// sourcev1.HelmRepository, in a generic fashion
+	NewObjFunc    NewObjectFunc
+	NewListFunc   NewObjectListFunc
+	ListItemsFunc GetListItemsFunc
 }
 
 func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client, stopCh <-chan struct{}) (*NamespacedResourceWatcherCache, error) {
@@ -130,11 +146,10 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		return nil, fmt.Errorf("server not configured with redis Client")
 	} else if config.ClientGetter == nil {
 		return nil, fmt.Errorf("server not configured with clientGetter")
-	} else if config.OnAddFunc == nil ||
-		config.OnModifyFunc == nil ||
-		config.OnDeleteFunc == nil ||
-		config.OnGetFunc == nil ||
-		config.OnResyncFunc == nil {
+	} else if config.OnAddFunc == nil || config.OnModifyFunc == nil ||
+		config.OnDeleteFunc == nil || config.OnGetFunc == nil ||
+		config.OnResyncFunc == nil || config.NewObjFunc == nil ||
+		config.NewListFunc == nil || config.ListItemsFunc == nil {
 		return nil, fmt.Errorf("server not configured with expected cache hooks")
 	}
 
@@ -150,6 +165,11 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		return nil, err
 	}
 
+	// this will launch a single worker that processes items on the work queue as they come in
+	// runWorker will loop until "something bad" happens.  The .Until() func will
+	// then rekick the worker after one second
+	go wait.Until(c.runWorker, time.Second, stopCh)
+
 	// let's do the initial sync and creating a new RetryWatcher here so
 	// bootstrap errors, if any, are flagged early synchronously and the
 	// caller does not end up with a partially initialized cache
@@ -161,13 +181,6 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 	if err != nil {
 		return nil, err
 	}
-
-	// this will launch a single worker that processes items on the work queue as they come in
-	// runWorker will loop until "something bad" happens.  The .Until will
-	// then rekick the worker after one second
-	// We should be able to launch multiple workers, and the workqueue will make sure that
-	// only a single worker works on an item with a given key.
-	go wait.Until(c.runWorker, time.Second, stopCh)
 
 	go c.watchLoop(watcher, stopCh)
 	return &c, nil
@@ -221,10 +234,6 @@ func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
 		log.Infof("[%s] worker shutting down...", c.queue.Name())
 		return false
 	}
-
-	// ref https://go101.org/article/concurrent-synchronization-more.html
-	c.resyncCond.L.(*sync.RWMutex).RLock()
-	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
 	// We must remember to call Done so the queue knows we have finished
 	// processing this item. We also must remember to call Forget if we
@@ -347,13 +356,16 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	ctx := context.Background()
 
-	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
+	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
 
 	// this will start a watcher on all namespaces
-	return dynamicClient.Resource(c.config.Gvr).Namespace(apiv1.NamespaceAll).Watch(ctx, options)
+	return ctrlClient.Watch(ctx, c.config.NewListFunc(), &ctrlclient.ListOptions{
+		Namespace: apiv1.NamespaceAll,
+		Raw:       &options,
+	})
 }
 
 // it is expected that the caller will perform lock/unlock of c.resyncCond as there maybe
@@ -394,7 +406,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	}
 
 	ctx := context.Background()
-	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
+	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
 	if err != nil {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -408,24 +420,26 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	// per https://kubernetes.io/docs/reference/using-api/api-concepts/
 	// For Get() and List(), the semantics of resource version unset are to get the most recent
 	// version
-	listItems, err := dynamicClient.Resource(c.config.Gvr).
-		Namespace(apiv1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	listObj := c.config.NewListFunc()
+	err = ctrlClient.List(ctx, listObj, &ctrlclient.ListOptions{Namespace: apiv1.NamespaceAll})
 	if err != nil {
 		return "", err
 	}
 
+	listItems := c.config.ListItemsFunc(listObj)
+
 	// for debug only, will remove later
 	log.Infof("List(%s) returned list with [%d] items, object:\n%s",
-		c.config.Gvr.Resource, len(listItems.Items), common.PrettyPrint(listItems.Object))
+		c.config.Gvr.Resource, len(listItems), common.PrettyPrint(listObj))
 
-	rv := listItems.GetResourceVersion()
+	rv := listObj.GetResourceVersion()
 	if rv == "" {
 		// fail fast, without a valid resource version the whole workflow breaks down
 		return "", status.Errorf(codes.Internal, "List() call response does not contain resource version")
 	}
 
 	// re-populate the cache with current state from k8s
-	if err = c.populateWith(listItems.Items); err != nil {
+	if err = c.populateWith(listItems); err != nil {
 		// we don't want to fail the whole re-sync process and trigger retries
 		// if, for example, just one of the repos fails to sync to cache, so
 		// for now log the error(s)
@@ -466,14 +480,12 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
-		if unstructuredObj, ok := event.Object.(*unstructured.Unstructured); !ok {
-			runtime.HandleError(fmt.Errorf("could not cast %s to unstructured.Unstructured", reflect.TypeOf(event.Object)))
+		if obj, ok := event.Object.(ctrlclient.Object); !ok {
+			runtime.HandleError(fmt.Errorf("could not cast %s to *ctrlclient.Object", reflect.TypeOf(event.Object)))
+		} else if key, err := c.keyFor(obj); err != nil {
+			runtime.HandleError(err)
 		} else {
-			if key, err := c.keyFor(unstructuredObj.Object); err != nil {
-				runtime.HandleError(err)
-			} else {
-				c.queue.AddRateLimited(key)
-			}
+			c.queue.AddRateLimited(key)
 		}
 	case watch.Error:
 		// will let RetryWatcher deal with it, which will close the channel
@@ -498,7 +510,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 
 	// Get the resource with this namespace/name
 	ctx := context.Background()
-	dynamicClient, err := c.config.ClientGetter.Dynamic(ctx)
+	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
 	if err != nil {
 		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -510,8 +522,8 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 	// If an error occurs during Get/Create/Update/Delete, we'll requeue the item so we can
 	// attempt processing again later. This could have been caused by a temporary network
 	// failure, or any other transient reason.
-	unstructuredObj, err := dynamicClient.Resource(c.config.Gvr).Namespace(name.Namespace).
-		Get(ctx, name.Name, metav1.GetOptions{})
+	obj := c.config.NewObjFunc()
+	err = ctrlClient.Get(ctx, *name, obj)
 	if err != nil {
 		// The resource may no longer exist, in which case we stop processing.
 		if errors.IsNotFound(err) {
@@ -520,26 +532,24 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 			return status.Errorf(codes.Internal, "error fetching object with key [%s]: %v", key, err)
 		}
 	}
-	return c.onAddOrModify(true, *unstructuredObj)
+	return c.onAddOrModify(obj)
 }
 
-// this is effectively a cache SET operation
-func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstructuredObj unstructured.Unstructured) (err error) {
+// this is effectively a cache GET followed by SET operation
+func (c *NamespacedResourceWatcherCache) onAddOrModify(obj ctrlclient.Object) (err error) {
 	log.V(4).Infof("+onAddOrModify")
 	defer log.V(4).Infof("-onAddOrModify")
 
-	key, err := c.keyFor(unstructuredObj.Object)
-	if err != nil {
-		return fmt.Errorf("failed to get redis key due to: %v", err)
+	var key string
+	if key, err = c.keyFor(obj); err != nil {
+		return err
 	}
 
 	var oldValue []byte
-	if checkOldValue {
-		if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
-			return fmt.Errorf("onAddOrModify() failed to get value for key [%s] in cache due to: %v", key, err)
-		} else {
-			log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(oldValue))
-		}
+	if oldValue, err = c.redisCli.Get(c.redisCli.Context(), key).Bytes(); err != redis.Nil && err != nil {
+		return fmt.Errorf("onAddOrModify() failed to get value for key [%s] in cache due to: %v", key, err)
+	} else {
+		log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(oldValue))
 	}
 
 	var setVal bool
@@ -547,14 +557,14 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(checkOldValue bool, unstr
 	var newValue interface{}
 	if oldValue == nil {
 		funcName = "onAdd"
-		newValue, setVal, err = c.config.OnAddFunc(key, unstructuredObj)
+		newValue, setVal, err = c.config.OnAddFunc(key, obj)
 	} else {
 		funcName = "onModify"
-		newValue, setVal, err = c.config.OnModifyFunc(key, unstructuredObj, oldValue)
+		newValue, setVal, err = c.config.OnModifyFunc(key, obj, oldValue)
 	}
 
 	if err != nil {
-		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, common.PrettyPrint(unstructuredObj), err)
+		log.Errorf("Invocation of [%s] for object %s\nfailed due to: %v", funcName, common.PrettyPrint(obj), err)
 		// clear that key so cache doesn't contain any stale info for this object
 		keysremoved, err2 := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		if err2 != nil {
@@ -648,11 +658,8 @@ func (c *NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, e
 // parallelize the process of value retrieval because fetchForOne() calls
 // c.config.onGet() which will de-code the data from bytes into expected struct, which
 // may be computationally expensive and thus benefit from multiple threads of execution
-func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[string]interface{}, error) {
+func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys sets.String) (map[string]interface{}, error) {
 	response := make(map[string]interface{})
-
-	// max number of concurrent workers retrieving cache values at the same time
-	const maxWorkers = 10
 
 	type fetchValueJob struct {
 		key string
@@ -688,7 +695,7 @@ func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[st
 	}()
 
 	go func() {
-		for _, key := range keys {
+		for key := range keys {
 			requestChan <- fetchValueJob{key}
 		}
 		close(requestChan)
@@ -716,7 +723,7 @@ func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys []string) (map[st
 // it's value will be returned,
 // whereas 'fetchForMultiple' does not guarantee that.
 // The keys are expected to be in the format of the cache (the caller does that)
-func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[string]interface{}, error) {
+func (c *NamespacedResourceWatcherCache) GetForMultiple(keys sets.String) (map[string]interface{}, error) {
 	c.resyncCond.L.(*sync.RWMutex).RLock()
 	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
@@ -732,28 +739,94 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 	}
 
 	// now, re-compute and fetch the ones that are left over from the previous operation
-	keysLeft := []string{}
+	keysLeft := sets.String{}
 
 	for key, value := range chartsUntyped {
 		if value == nil {
 			// this cache miss may have happened due to one of these reasons:
-			// 1) key truly does not exist in k8s (e.g. there is no repo with the given name in the "Ready" state)
-			// 2) key exists and the "Ready" repo currently being indexed but has not yet completed
-			// 3) key exists in k8s but the corresponding cache entry has been evicted by redis due to
-			//    LRU maxmemory policies or entry TTL expiry (doesn't apply currently, cuz we use TTL=0
-			//    for all entries)
-			// In the 3rd case we want to re-compute the key and add it to the cache, which may potentially
-			// cause other entries to be evicted in order to make room for the ones being added
-			keysLeft = append(keysLeft, key)
+			// 1) key truly does not exist in k8s (e.g. there is no repo with
+			//    the given name in the "Ready" state)
+			// 2) key exists and the "Ready" repo currently being indexed but
+			//    has not yet completed
+			// 3) key exists in k8s but the corresponding cache entry has been
+			//    evicted by redis due to LRU maxmemory policies or entry TTL
+			//    expiry (doesn't apply currently, cuz we use TTL=0 for all entries)
+			// In the 3rd case we want to re-compute the key and add it to the cache,
+			// which may potentially cause other entries to be evicted in order to
+			// make room for the ones being added
+			keysLeft.Insert(key)
 		}
 	}
 
-	// this functionality is similar to that of populateWith() func,
-	// but different enough so I did not see the value of re-using the code
+	if chartsUntypedLeft, err := c.computeAndFetchValuesForKeys(keysLeft); err != nil {
+		return nil, err
+	} else {
 
-	// max number of concurrent workers retrieving cache values at the same time
-	const maxWorkers = 10
+		for k, v := range chartsUntypedLeft {
+			chartsUntyped[k] = v
+		}
+	}
+	return chartsUntyped, nil
+}
 
+// This func is only called in the context of a resync() operation,
+// after emptying the cache via FLUSHDB, i.e. on startup or after
+// some major (network) failure.
+// Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
+// so we will do this in a concurrent fashion to minimize the time window and performance
+// impact of doing so
+func (c *NamespacedResourceWatcherCache) populateWith(items []ctrlclient.Object) error {
+	// confidence test: I'd like to make sure this is called within the context
+	// of resync, i.e. resync.Cond.L is locked by this goroutine.
+	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
+		return status.Errorf(codes.Internal, "Invalid state of the cache in populateWith()")
+	}
+
+	keys := sets.String{}
+	for _, item := range items {
+		if key, err := c.keyFor(item); err != nil {
+			return status.Errorf(codes.Internal, "%v", err)
+		} else {
+			keys.Insert(key)
+		}
+	}
+
+	// wait until all all items have been processed
+	c.computeValuesForKeys(keys)
+	return nil
+}
+
+func (c *NamespacedResourceWatcherCache) computeValuesForKeys(keys sets.String) {
+	var wg sync.WaitGroup
+	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
+	requestChan := make(chan string, numWorkers)
+
+	// Process only at most maxWorkers at a time
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			// The following loop will only terminate when the request channel is
+			// closed (and there are no more items)
+			for key := range requestChan {
+				// see GetForOne() for explanation of what is happening below
+				c.forceKey(key)
+			}
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		for key := range keys {
+			requestChan <- key
+		}
+		close(requestChan)
+	}()
+
+	// wait until all all items have been processed
+	wg.Wait()
+}
+
+func (c *NamespacedResourceWatcherCache) computeAndFetchValuesForKeys(keys sets.String) (map[string]interface{}, error) {
 	type computeValueJob struct {
 		key string
 	}
@@ -764,7 +837,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 	}
 
 	var wg sync.WaitGroup
-	numWorkers := int(math.Min(float64(len(keysLeft)), float64(maxWorkers)))
+	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
 	requestChan := make(chan computeValueJob, numWorkers)
 	responseChan := make(chan computeValueJobResult, numWorkers)
 
@@ -776,9 +849,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 			// closed (and there are no more items)
 			for job := range requestChan {
 				// see GetForOne() for explanation of what is happening below
-				c.queue.Add(job.key)
-				c.queue.WaitUntilForgotten(job.key)
-				value, err := c.fetchForOne(job.key)
+				value, err := c.forceAndFetchKey(job.key)
 				responseChan <- computeValueJobResult{job, value, err}
 			}
 			wg.Done()
@@ -791,7 +862,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 	}()
 
 	go func() {
-		for _, key := range keysLeft {
+		for key := range keys {
 			requestChan <- computeValueJob{key}
 		}
 		close(requestChan)
@@ -800,6 +871,7 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 	// Start receiving results
 	// The following loop will only terminate when the response channel is closed, i.e.
 	// after the all the requests have been processed
+	chartsUntyped := make(map[string]interface{})
 	errs := []error{}
 	for resp := range responseChan {
 		if resp.err == nil {
@@ -813,13 +885,13 @@ func (c *NamespacedResourceWatcherCache) GetForMultiple(keys []string) (map[stri
 
 // TODO (gfichtenholt) give the plug-ins the ability to override this (default) implementation
 // for generating a cache key given an object
-// some kind of 'KeyFunc(unstructuredObj) string'
-func (c *NamespacedResourceWatcherCache) keyFor(unstructuredObj map[string]interface{}) (string, error) {
-	name, err := common.NamespacedNameForUnstructured(unstructuredObj)
-	if err != nil {
+// some kind of 'KeyFunc(obj) string'
+func (c *NamespacedResourceWatcherCache) keyFor(obj ctrlclient.Object) (string, error) {
+	if n, err := common.NamespacedName(obj); err != nil {
 		return "", err
+	} else {
+		return c.KeyForNamespacedName(*n), nil
 	}
-	return c.KeyForNamespacedName(*name), nil
 }
 
 func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.NamespacedName) string {
@@ -845,75 +917,6 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-// This func is only called in the context of a resync() operation,
-// after emptying the cache via FLUSHDB, i.e. on startup or after
-// some major (network) failure. It writes directly into redis cache, bypassing the work queue.
-// Computing a value for a key maybe expensive, e.g. indexing a repo takes a while,
-// so we will do this in a concurrent fashion to minimize the time window and performance
-// impact of doing so
-func (c *NamespacedResourceWatcherCache) populateWith(items []unstructured.Unstructured) error {
-	// confidence test: I'd like to make sure this is called within the context
-	// of resync, i.e. resync.Cond.L is locked by this goroutine.
-	if !common.RWMutexWriteLocked(c.resyncCond.L.(*sync.RWMutex)) {
-		return status.Errorf(codes.Internal, "Invalid state of the cache in populateWith()")
-	}
-
-	// max number of concurrent workers computing cache values at the same time
-	const maxWorkers = 10
-
-	type populateJob struct {
-		item unstructured.Unstructured
-	}
-
-	type populateJobResult struct {
-		populateJob
-		err error
-	}
-
-	var wg sync.WaitGroup
-	numWorkers := int(math.Min(float64(len(items)), float64(maxWorkers)))
-	requestChan := make(chan populateJob, numWorkers)
-	responseChan := make(chan populateJobResult, numWorkers)
-
-	// Process only at most maxWorkers at a time
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			// The following loop will only terminate when the request channel is
-			// closed (and there are no more items)
-			for job := range requestChan {
-				// don't need to check old value since we just flushed the whole cache
-				err := c.onAddOrModify(false, job.item)
-				responseChan <- populateJobResult{job, err}
-			}
-			wg.Done()
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(responseChan)
-	}()
-
-	go func() {
-		for _, item := range items {
-			requestChan <- populateJob{item}
-		}
-		close(requestChan)
-	}()
-
-	// Start receiving results
-	// The following loop will only terminate when the response channel is closed, i.e.
-	// after the all the requests have been processed
-	errs := []error{}
-	for resp := range responseChan {
-		if resp.err != nil {
-			errs = append(errs, resp.err)
-		}
-	}
-	return errorutil.NewAggregate(errs)
-}
-
 // GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the
 // k8s for the corresponding object, process it and then add it to the cache and return the
 // result.
@@ -928,22 +931,30 @@ func (c *NamespacedResourceWatcherCache) GetForOne(key string) (interface{}, err
 		return nil, err
 	} else if value == nil {
 		// cache miss
-		c.queue.Add(key)
-		// now need to wait until this item has been processed by runWorker().
-		// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
-		// which encode the data as []byte before storing it in the cache. That part is fine.
-		// But to get back the original data we have to decode it via config.onGet().
-		// It'd nice if there was a shortcut and skip the cycles spent decoding data from
-		// []byte to repoCacheEntry
-		c.queue.WaitUntilForgotten(key)
-		// yes, there is a small time window here between after we are done with WaitUntilDoneWith
-		// and the following fetch, where another concurrent goroutine may force the newly added
-		// cache entry out, but that is an edge case and I am willing to overlook it for now
-		// To fix it, would somehow require WaitUntilDoneWith returning a value from a cache, so
-		// the whole thing would be atomic. Don't know how to do this yet
-		return c.fetchForOne(key)
+		return c.forceAndFetchKey(key)
 	}
 	return value, nil
+}
+
+func (c *NamespacedResourceWatcherCache) forceKey(key string) {
+	c.queue.Add(key)
+	// now need to wait until this item has been processed by runWorker().
+	// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
+	// which encode the data as []byte before storing it in the cache. That part is fine.
+	// But to get back the original data we have to decode it via config.onGet().
+	// It'd nice if there was a shortcut and skip the cycles spent decoding data from
+	// []byte to repoCacheEntry
+	c.queue.WaitUntilForgotten(key)
+}
+
+func (c *NamespacedResourceWatcherCache) forceAndFetchKey(key string) (interface{}, error) {
+	c.forceKey(key)
+	// yes, there is a small time window here between after we are done with WaitUntilForgotten()
+	// and the following fetch, where another concurrent goroutine may force the newly added
+	// cache entry out, but that is an edge case and I am willing to overlook it for now
+	// To fix it, would somehow require WaitUntilForgotten() returning a value from a cache, so
+	// the whole thing would be atomic. Don't know how to do this yet
+	return c.fetchForOne(key)
 }
 
 // this func is used by unit tests only

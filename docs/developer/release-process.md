@@ -9,7 +9,7 @@ It consists of four main stages: update the development images, update the CI, u
 
 ### 0.1 - Development images
 
-For building the [development container images](https://hub.docker.com/u/kubeapps), a number of base images are used in the build stage Specifically:
+For building the [development container images](https://hub.docker.com/u/kubeapps), a number of base images are used in the build stage. Specifically:
 
 - The [dashboard/Dockerfile](../../dashboard/Dockerfile) uses:
   - [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) for building the static files for production.
@@ -41,6 +41,7 @@ The versions used there _must_ match the ones used for building the container im
 - `NODE_VERSION` _must_ match the **major** version used by the [dashboard](../../dashboard/Dockerfile).
 - `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](../../dashboard/Dockerfile).
 - `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml).
+- `DEFAULT_MACHINE_IMG` _should_ be up to date according to the [list of available machines in CircleCI](https://circleci.com/docs/2.0/configuration-reference/#available-machine-images).
 
 Besides, the `GKE_STABLE_VERSION_XX` and the `GKE_REGULAR_VERSION_XX` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 
@@ -244,12 +245,27 @@ Once the PR has been created, have a look at it (eg. remove any development chan
 
 > Some issues can arise here, so please check the app versions are being properly updated at once and ensure you have the latest changes in the PR branch. Note that the [bitnami-bot](https://github.com/bitnami-bot) usually performs some automated commits to the main branch that might collide with the changes in our PR. In particular, it will release a new version of the chart with the updated images.
 
-## 5 - Publish the GitHub release
+## 5 - Check Dockerfiles and notify the proper teams
+
+Eventually, as the Kubeapps code continues to evolve, some changes are often introduced in our own [development container images](https://hub.docker.com/u/kubeapps). However, those changes won't get released in the official Bitnami repository unless we manually notify the proper team to also include those changes in their building system.
+
+> As part of this release process, each Kubeapps component's Dockerfile _must_ compared against the one in the previous release. If they functionally differ each other, the Bitnami Content team _must_ be notified.
+
+## 6 - Check released version is in Bitnami repository
+
+Make sure the version is now publicly available in Bitnami repository.
+The correct app and chart versions should appear when performing a search:
+
+```bash
+helm repo update && helm search repo kubeapps
+```
+
+## 7 - Publish the GitHub release
 
 Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/kubeapps/kubeapps/releases).
 
 > Take into account that the chart version will be eventually published as part of the usual Bitnami release cycle. So expect this step to take a certain amount of time.
 
-## 6 - Promote the release
+## 8 - Promote the release
 
 Tell the community about the new release by using our Kubernetes slack [#kubeapps channel](https://kubernetes.slack.com/messages/kubeapps). If it includes major features, you might consider promoting it on social media.

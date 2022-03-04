@@ -187,17 +187,6 @@ Return the Redis secret name
 {{- end -}}
 
 {{/*
-Return true if cert-manager required annotations for TLS signed certificates are set in the Ingress annotations
-Ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
-*/}}
-{{- define "kubeapps.ingress.certManagerRequest" -}}
-{{ if or (hasKey . "cert-manager.io/cluster-issuer") (hasKey . "cert-manager.io/issuer") }}
-    {{- true -}}
-{{- end -}}
-{{- end -}}
-
-
-{{/*
 Compile all warnings into a single message, and call fail.
 */}}
 {{- define "kubeapps.validateValues" -}}
@@ -215,7 +204,7 @@ Compile all warnings into a single message, and call fail.
 Validate values of Kubeapps - TLS configuration for Ingress
 */}}
 {{- define "kubeapps.validateValues.ingress.tls" -}}
-{{- if and .Values.ingress.enabled .Values.ingress.tls (not (include "kubeapps.ingress.certManagerRequest" .Values.ingress.annotations)) (not .Values.ingress.selfSigned) (empty .Values.ingress.extraTls) }}
+{{- if and .Values.ingress.enabled .Values.ingress.tls (not (include "common.ingress.certManagerRequest" ( dict "annotations" .Values.ingress.annotations ))) (not .Values.ingress.selfSigned) (empty .Values.ingress.extraTls) }}
 kubeapps: ingress.tls
     You enabled the TLS configuration for the default ingress hostname but
     you did not enable any of the available mechanisms to create the TLS secret
@@ -225,6 +214,39 @@ kubeapps: ingress.tls
       - Relay on cert-manager to create it by adding its supported annotations in `ingress.annotations`
       - Relay on Helm to create self-signed certificates by setting `ingress.selfSigned=true`
 {{- end -}}
+{{- end -}}
+
+{{/*
+# Calculate the kubeappsapis enabledPlugins.
+*/}}
+{{- define "kubeapps.kubeappsapis.enabledPlugins" -}}
+    {{- $enabledPlugins := list }}
+    {{- if .Values.kubeappsapis.enabledPlugins }}
+      {{- $enabledPlugins = .Values.kubeappsapis.enabledPlugins }}
+    {{- else }}
+      {{- if and .Values.packaging.flux.enabled .Values.packaging.helm.enabled }}
+        {{- fail "packaging: Please enable only one of the flux and helm plugins, since they both operate on Helm releases." }}
+      {{- end -}}
+      {{- range $plugin, $options := .Values.packaging }}
+        {{- if $options.enabled }}
+          {{- if eq $plugin "carvel" }}
+            {{- $enabledPlugins = append $enabledPlugins "kapp-controller-packages" }}
+          {{- else if eq $plugin "flux" }}
+            {{- $enabledPlugins = append $enabledPlugins "fluxv2-packages" }}
+          {{- else if eq $plugin "helm" }}
+            {{- $enabledPlugins = append $enabledPlugins "helm-packages" }}
+          {{- else }}
+            {{ $msg := printf "packaging: Unsupported packaging option: %s" $plugin }}
+            {{- fail $msg }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if not $enabledPlugins }}
+        {{- fail "packaging: Please enable at least one of the packaging plugins." }}
+      {{- end }}
+      {{- $enabledPlugins = append $enabledPlugins "resources" }}
+    {{- end }}
+    {{- $enabledPlugins | toJson }}
 {{- end -}}
 
 {{/*

@@ -44,9 +44,7 @@ export class InstalledPackage {
   public static async GetInstalledPackageResourceRefs(
     installedPackageRef?: InstalledPackageReference,
   ) {
-    return await this.coreClient().GetInstalledPackageResourceRefs({
-      installedPackageRef: installedPackageRef,
-    });
+    return await this.coreClient().GetInstalledPackageResourceRefs({ installedPackageRef });
   }
 
   public static async CreateInstalledPackage(

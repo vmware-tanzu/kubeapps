@@ -24,35 +24,49 @@ import (
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/helm"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	apiv1 "k8s.io/api/core/v1"
 	kubecorev1 "k8s.io/api/core/v1"
 	kuberbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	// EnvvarFluxIntegrationTests enables tests that run against a local kind cluster
 	envVarFluxIntegrationTests = "ENABLE_FLUX_INTEGRATION_TESTS"
 	defaultContextTimeout      = 30 * time.Second
+
+	// This is local copy of the first few entries
+	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
+	// urls modified to link to .tgz files also within the local cluster.
+	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
+	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/kind-cluster-setup.sh
+	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo"
+
+	// same as above but requires HTTP basic authentication: user: foo, password: bar
+	podinfo_basic_auth_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth"
+
+	// same as above but requires TLS
+	podinfo_tls_repo_url = "https://fluxv2plugin-testdata-ssl-svc.default.svc.cluster.local:443"
 )
 
-func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
+func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient) {
 	enableEnvVar := os.Getenv(envVarFluxIntegrationTests)
 	runTests := false
 	if enableEnvVar != "" {
@@ -69,9 +83,10 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
 			t.Fatalf("Failed to find local kind cluster due to: [%v]", err)
 		}
-		var fluxPluginClient fluxplugin.FluxV2PackagesServiceClient
+		var fluxPluginPackagesClient fluxplugin.FluxV2PackagesServiceClient
+		var fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient
 		var err error
-		if fluxPluginClient, err = getFluxPluginClient(t); err != nil {
+		if fluxPluginPackagesClient, fluxPluginReposClient, err = getFluxPluginClients(t); err != nil {
 			t.Fatalf("Failed to get fluxv2 plugin due to: [%v]", err)
 		}
 
@@ -90,9 +105,9 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		}
 
 		rand.Seed(time.Now().UnixNano())
-		return fluxPluginClient
+		return fluxPluginPackagesClient, fluxPluginReposClient
 	}
-	return nil
+	return nil, nil
 }
 
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
@@ -129,11 +144,11 @@ func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	}
 }
 
-func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, error) {
-	t.Logf("+getFluxPluginClient")
+func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
+	t.Logf("+getFluxPluginClients")
 
 	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	opts = append(opts, grpc.WithBlock())
 	target := "localhost:8080"
 	conn, err := grpc.Dial(target, opts...)
@@ -145,6 +160,7 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	response, err := pluginsCli.GetConfiguredPlugins(ctx, &plugins.GetConfiguredPluginsRequest{})
+
 	if err != nil {
 		t.Fatalf("failed to GetConfiguredPlugins due to: %v", err)
 	}
@@ -156,14 +172,14 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("kubeapps Flux v2 plugin is not registered")
+		return nil, nil, fmt.Errorf("kubeapps Fluxv2 plugin is not registered, found these plugins: %v", response.Plugins)
 	}
-	return fluxplugin.NewFluxV2PackagesServiceClient(conn), nil
+	return fluxplugin.NewFluxV2PackagesServiceClient(conn), fluxplugin.NewFluxV2RepositoriesServiceClient(conn), nil
 }
 
-// This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
-// the design
-func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
+// This creates a flux helm repository CRD. The usage of this func should be minimized as much as
+// possible in favor of flux Plugin's AddPackageRepository() call
+func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
 	repo := sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
@@ -185,31 +201,25 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName str
 		}
 	}
 
-	u, err := common.ToUnstructured(&repo)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
-		return err
-	} else if _, err := ifc.Create(ctx, u, metav1.CreateOptions{}); err != nil {
+	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
 	} else {
-		return nil
+		return ifc.Create(ctx, &repo)
 	}
 }
 
 func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
 
-	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
+	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
 	} else {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
-		if watcher, err := ifc.Watch(ctx, metav1.ListOptions{}); err != nil {
+		var repoList sourcev1.HelmRepositoryList
+		if watcher, err := ifc.Watch(ctx, &repoList); err != nil {
 			return err
 		} else {
 			ch := watcher.ResultChan()
@@ -225,18 +235,16 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 				}
 				switch event.Type {
 				case watch.Added, watch.Modified:
-					if unstructuredRepo, ok := event.Object.(*unstructured.Unstructured); !ok {
-						return errors.New("Could not cast to unstructured.Unstructured")
+					if repo, ok := event.Object.(*sourcev1.HelmRepository); !ok {
+						return errors.New("Could not cast to *sourcev1.HelmRepository")
 					} else {
 						hour, minute, second := time.Now().Clock()
-						repo := sourcev1.HelmRepository{}
-						if err := common.FromUnstructured(unstructuredRepo, &repo); err != nil {
-							return err
-						}
-						complete, success, reason := isHelmRepositoryReady(repo)
+						complete, success, reason := isHelmRepositoryReady(*repo)
 						t.Logf("[%d:%d:%d] Got event: type: [%v], reason [%s]", hour, minute, second, event.Type, reason)
 						if complete && success {
 							return nil
+						} else if complete && !success {
+							return errors.New(reason)
 						}
 					}
 				}
@@ -248,35 +256,47 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 // this should eventually be replaced with flux plugin's DeleteRepository()
 func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeDeleteHelmRepository(%s,%s)", name, namespace)
+	repo := &sourcev1.HelmRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	if ifc, err := kubeGetHelmRepositoryResourceInterface(namespace); err != nil {
+	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
-	} else if err = ifc.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
-		return err
+	} else {
+		return ifc.Delete(ctx, repo)
 	}
-	return nil
 }
 
 func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeDeleteHelmRelease(%s,%s)", name, namespace)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
-		return err
-	} else if err = ifc.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
-		return err
+	release := &helmv2.HelmRelease{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
 	}
-	return nil
+	if ifc, err := kubeGetCtrlClient(); err != nil {
+		return err
+	} else {
+		return ifc.Delete(ctx, release)
+	}
 }
 
 func kubeExistsHelmRelease(t *testing.T, name, namespace string) (bool, error) {
 	t.Logf("+kubeExistsHelmRelease(%s,%s)", name, namespace)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	if ifc, err := kubeGetHelmReleaseResourceInterface(namespace); err != nil {
+	key := types.NamespacedName{Name: name, Namespace: namespace}
+	var rel helmv2.HelmRelease
+	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return false, err
-	} else if _, err = ifc.Get(ctx, name, metav1.GetOptions{}); err == nil {
+	} else if err = ifc.Get(ctx, key, &rel); err == nil {
 		return true, nil
 	} else {
 		return false, nil
@@ -473,17 +493,17 @@ func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error
 	}
 }
 
-func kubeCreateBasicAuthSecret(t *testing.T, namespace, name, user, password string) error {
-	t.Logf("+kubeCreateBasicAuthSecret(%s, %s, %s)", namespace, name, user)
+func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
+	t.Logf("+kubeCreateSecret(%s, %s", secret.Namespace, secret.Name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().Secrets(namespace).Create(
+	_, err = typedClient.CoreV1().Secrets(secret.Namespace).Create(
 		ctx,
-		newBasicAuthSecret(name, namespace, user, password),
+		secret,
 		metav1.CreateOptions{})
 	return err
 }
@@ -553,41 +573,18 @@ func kubePortForwardToRedis(t *testing.T) error {
 	}
 }
 
-func kubeGetHelmReleaseResourceInterface(namespace string) (dynamic.ResourceInterface, error) {
-	clientset, err := kubeGetDynamicClient()
-	if err != nil {
-		return nil, err
-	}
-	relResource := schema.GroupVersionResource{
-		Group:    helmv2.GroupVersion.Group,
-		Version:  helmv2.GroupVersion.Version,
-		Resource: fluxHelmReleases,
-	}
-	return clientset.Resource(relResource).Namespace(namespace), nil
-}
-
-func kubeGetHelmRepositoryResourceInterface(namespace string) (dynamic.ResourceInterface, error) {
-	clientset, err := kubeGetDynamicClient()
-	if err != nil {
-		return nil, err
-	}
-	repoResource := schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
-		Resource: fluxHelmRepositories,
-	}
-	return clientset.Resource(repoResource).Namespace(namespace), nil
-}
-
-func kubeGetDynamicClient() (dynamic.Interface, error) {
-	if dynamicClient != nil {
-		return dynamicClient, nil
+func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
+	if ctrlClient != nil {
+		return ctrlClient, nil
 	} else {
 		if config, err := restConfig(); err != nil {
 			return nil, err
 		} else {
-			dynamicClient, err = dynamic.NewForConfig(config)
-			return dynamicClient, err
+			scheme := runtime.NewScheme()
+			_ = sourcev1.AddToScheme(scheme)
+			_ = helmv2.AddToScheme(scheme)
+
+			return ctrlclient.NewWithWatch(config, ctrlclient.Options{Scheme: scheme})
 		}
 	}
 }
@@ -805,9 +802,9 @@ func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
 
 // global vars
 var (
-	dynamicClient dynamic.Interface
-	typedClient   kubernetes.Interface
-	letters       = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	typedClient kubernetes.Interface
+	ctrlClient  ctrlclient.WithWatch
+	letters     = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 	// total number of unique packages in bitnami repo,
 	// initialized during running of the integration test
 	totalBitnamiCharts = -1

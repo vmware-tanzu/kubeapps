@@ -81,16 +81,14 @@ var kappctrlAPIVersion = fmt.Sprintf("%s/%s", kappctrlv1alpha1.SchemeGroupVersio
 
 func TestGetClient(t *testing.T) {
 	testClientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(
-			typfake.NewSimpleClientset(),
-			dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		return clientgetter.NewBuilder().
+			WithTyped(typfake.NewSimpleClientset()).
+			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 				runtime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: "foo", Version: "bar", Resource: "baz"}: "fooList",
 				},
-			),
-			nil,
-		), nil
+			)).Build(), nil
 	}
 
 	testCases := []struct {
@@ -150,36 +148,16 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		name               string
 		existingObjects    []runtime.Object
 		expectedPackages   []*corev1.AvailablePackageSummary
+		paginationOptions  corev1.PaginationOptions
 		expectedStatusCode codes.Code
 	}{
 		{
-			name: "it returns a not found error status if a package meta does not contain spec.displayName",
-			existingObjects: []runtime.Object{
-				&datapackagingv1alpha1.PackageMetadata{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       pkgMetadataResource,
-						APIVersion: datapackagingAPIVersion,
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "tetris.foo.example.com",
-					},
-					Spec: datapackagingv1alpha1.PackageMetadataSpec{
-						DisplayName:        "Classic Tetris",
-						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
-						ShortDescription:   "A great game for arcade gamers",
-						LongDescription:    "A few sentences but not really a readme",
-						Categories:         []string{"logging", "daemon-set"},
-						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
-						SupportDescription: "Some support information",
-						ProviderName:       "Tetris inc.",
-					},
-				},
-			},
-			expectedStatusCode: codes.NotFound,
+			name:               "it returns without error if there are no packages available",
+			expectedPackages:   []*corev1.AvailablePackageSummary{},
+			expectedStatusCode: codes.OK,
 		},
 		{
-			name: "it returns an not found error status if a package does not contain version",
+			name: "it returns an internal error status if there is no corresponding package for a package metadata",
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -202,7 +180,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedStatusCode: codes.Internal,
 		},
 		{
 			name: "it returns carvel package summaries with basic info from the cluster",
@@ -477,6 +455,109 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "it returns paginated carvel package summaries",
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Tombi!",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "An awesome game from the 90's",
+						LongDescription:    "Tombi! is an open world platform-adventure game with RPG elements.",
+						Categories:         []string{"platforms", "rpg"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tombi!",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com.1.2.5",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tombi.foo.example.com",
+						Version:                         "1.2.5",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+			},
+			paginationOptions: corev1.PaginationOptions{
+				PageToken: "1",
+				PageSize:  1,
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tombi.foo.example.com",
+					},
+					Name:        "tombi.foo.example.com",
+					DisplayName: "Tombi!",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.5",
+						AppVersion: "1.2.5",
+					},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "An awesome game from the 90's",
+					Categories:       []string{"platforms", "rpg"},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -490,22 +571,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{Context: defaultContext})
+			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{
+				Context:           defaultContext,
+				PaginationOptions: &tc.paginationOptions,
+			})
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -653,17 +734,14 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}: pkgResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -948,18 +1026,15 @@ Some support information
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 			availablePackageDetail, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
@@ -1789,9 +1864,8 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
@@ -1799,9 +1873,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -2271,18 +2343,16 @@ fetchStderr
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						typfake.NewSimpleClientset(tc.existingTypedObjects...),
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 			installedPackageDetail, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
@@ -2488,7 +2558,12 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 				},
 			},
-			pluginConfig: defaultPluginConfig,
+			pluginConfig: &kappControllerPluginParsedConfig{
+				timeoutSeconds:                     1, //to avoid unnecesary test delays
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
+			},
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -2869,7 +2944,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1",
+					Version: "1.0.0",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -3017,6 +3092,118 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 		},
 		{
+			name: "create installed package (non elegible version)",
+			request: &corev1.CreateInstalledPackageRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "tetris.foo.example.com",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1.0.0-rc1",
+				},
+				Name: "my-installation",
+				TargetContext: &corev1.Context{
+					Namespace: "default",
+					Cluster:   "default",
+				},
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+				},
+			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: nil,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&kappctrlv1alpha1.App{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       appResource,
+						APIVersion: kappctrlAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: kappctrlv1alpha1.AppSpec{
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					},
+					Status: kappctrlv1alpha1.AppStatus{
+						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
+							Stdout: "deployStdout",
+							Stderr: "deployStderr",
+						},
+						Fetch: &kappctrlv1alpha1.AppStatusFetch{
+							Stdout: "fetchStdout",
+							Stderr: "fetchStderr",
+						},
+						Inspect: &kappctrlv1alpha1.AppStatusInspect{
+							Stdout: "inspectStdout",
+							Stderr: "inspectStderr",
+						},
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "ConfigMap",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-ctrl",
+					},
+					Data: map[string]string{
+						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
+					},
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
 			name: "create installed package (prereleases - defaultPrereleasesVersionSelection: [])",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -3028,7 +3215,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1",
+					Version: "1.0.0",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -3187,7 +3374,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1",
+					Version: "1.0.0",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -3346,7 +3533,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1",
+					Version: "1.0.0",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -3500,7 +3687,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1",
+					Version: "1.0.0",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -3658,7 +3845,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1",
+					Version: "1.0.0",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -3816,7 +4003,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1",
+					Version: "1.0.0",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -3974,7 +4161,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
-					Version: "1",
+					Version: "1.0.0",
 				},
 				Name: "my-installation",
 				TargetContext: &corev1.Context{
@@ -4144,7 +4331,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 			s := Server{
 				pluginConfig: tc.pluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(typfake.NewSimpleClientset(tc.existingTypedObjects...), dynamicClient, nil), nil
+					return clientgetter.NewBuilder().
+						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
+						WithDynamic(dynamicClient).
+						Build(), nil
 				},
 			}
 
@@ -4180,6 +4370,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name                   string
 		request                *corev1.UpdateInstalledPackageRequest
+		pluginConfig           *kappControllerPluginParsedConfig
 		existingObjects        []runtime.Object
 		existingTypedObjects   []runtime.Object
 		expectedStatusCode     codes.Code
@@ -4207,6 +4398,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Suspend:            false,
 				},
 			},
+			pluginConfig: defaultPluginConfig,
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -4356,6 +4548,130 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "update installed package (non elegible version)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+						Cluster:   "default",
+					},
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "1.2.3-rc",
+				},
+				Values: "foo: bar",
+				ReconciliationOptions: &corev1.ReconciliationOptions{
+					ServiceAccountName: "default",
+					Interval:           30,
+					Suspend:            false,
+				},
+			},
+			pluginConfig: &kappControllerPluginParsedConfig{
+				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
+				defaultPrereleasesVersionSelection: nil,
+				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-default-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "Deployed",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+			},
+			existingTypedObjects: []runtime.Object{
+				&k8scorev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-default-values",
+					},
+					Type: "Opaque",
+					Data: map[string][]byte{
+						"values.yaml": []byte("foo: bar"),
+					},
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -4369,9 +4685,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						typfake.NewSimpleClientset(tc.existingTypedObjects...),
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
@@ -4379,9 +4695,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -4398,7 +4712,15 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				if got, want := updateInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
-				// TODO(agamez): check the actual object being updated in the k8s fake
+
+				updatedPkgInstall, err := s.getPkgInstall(context.Background(), "default", updateInstalledPackageResponse.InstalledPackageRef.Context.Namespace, updateInstalledPackageResponse.InstalledPackageRef.Identifier)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+
+				if got, want := updatedPkgInstall, tc.expectedPackageInstall; !cmp.Equal(want, got, ignoreUnexported) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+				}
 			}
 		})
 	}
@@ -4566,9 +4888,9 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						typfake.NewSimpleClientset(tc.existingTypedObjects...),
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
@@ -4576,9 +4898,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)).Build(), nil
 				},
 			}
 
@@ -4763,7 +5083,10 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(typedClient, dynClient, nil), nil
+					return clientgetter.NewBuilder().
+						WithTyped(typedClient).
+						WithDynamic(dynClient).
+						Build(), nil
 				},
 				kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 					// Create a fake Kapp DepsFactory and configure there the fake k8s clients the hereinbefore created
@@ -4891,17 +5214,14 @@ func TestGetPackageRepositories(t *testing.T) {
 			s := Server{
 				pluginConfig: defaultPluginConfig,
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-					return clientgetter.NewClientInterfaces(
-						nil,
-						dynfake.NewSimpleDynamicClientWithCustomListKinds(
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
 							runtime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
 							},
 							unstructuredObjects...,
-						),
-						nil,
-					), nil
+						)), nil
 				},
 			}
 

@@ -11,11 +11,13 @@ import (
 	"time"
 
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
+	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,87 +50,87 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 	}
 
-	// paginate the list of results
-	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, len(pkgMetadatas))
-
-	// create the waiting group for processing each item aynchronously
-	var wg sync.WaitGroup
+	// Create a channel to receive any results. The channel is also used as a
+	// natural waitgroup to synchronize the results.
+	type fetchResult struct {
+		index                   int
+		availablePackageSummary *corev1.AvailablePackageSummary
+		err                     error
+	}
+	fetchResults := make(chan fetchResult)
+	numFetched := 0
 
 	// TODO(agamez): DRY up this logic (cf GetInstalledPackageSummaries)
 	if len(pkgMetadatas) > 0 {
-		startAt := -1
+		startAt := 0
 		if pageSize > 0 {
 			startAt = int(pageSize) * pageOffset
 		}
 		for i, pkgMetadata := range pkgMetadatas {
-			wg.Add(1)
 			if startAt <= i {
-				go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) error {
-					defer wg.Done()
-					// fetch the associated packages
-					// Use the field selector to return only Package CRs that match on the spec.refName.
-					// TODO(agamez): perhaps we better fetch all the packages and filter ourselves to reduce the k8s calls
-					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
-					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
-					if err != nil {
-						return statuserror.FromK8sError("get", "Package", pkgMetadata.Name, err)
-					}
-					pkgVersionsMap, err := getPkgVersionsMap(pkgs)
-					if err != nil {
-						return err
-					}
+				numFetched++
+				go func(i int, pkgMetadata *datapackagingv1alpha1.PackageMetadata) {
+					availablePackageSummary, err := s.fetchPackageSummaryForMeta(ctx, cluster, namespace, pkgMetadata)
 
-					// generate the availablePackageSummary from the fetched information
-					availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
-					if err != nil {
-						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the AvailablePackageSummary: %v", err))
-					}
-
-					// append the availablePackageSummary to the slice
-					availablePackageSummaries[i] = availablePackageSummary
-					return nil
+					// The index of this result is relative to the page.
+					fetchResults <- fetchResult{i - startAt, availablePackageSummary, err}
 				}(i, pkgMetadata)
 			}
 			// if we've reached the end of the page, stop iterating
-			if pageSize > 0 && len(availablePackageSummaries) == int(pageSize) {
+			if pageSize > 0 && numFetched == int(pageSize) {
 				break
 			}
 		}
 	}
-	wg.Wait() // Wait until each goroutine has finished
-
-	// TODO(agamez): the slice with make is filled with <nil>, in case of an error in the
-	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
-	// been able so far.
-	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
-	// However, should we just return an error if so? See https://github.com/kubeapps/kubeapps/pull/3784#discussion_r754836475
-	// filter out <nil> values
-	availablePackageSummariesNilSafe := []*corev1.AvailablePackageSummary{}
+	// Return an error if any is found. We continue only if there were no
+	// errors.
+	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, numFetched)
 	categories := []string{}
-	for _, availablePackageSummary := range availablePackageSummaries {
-		if availablePackageSummary != nil {
-			availablePackageSummariesNilSafe = append(availablePackageSummariesNilSafe, availablePackageSummary)
-			categories = append(categories, availablePackageSummary.Categories...)
-
+	for i := 0; i < numFetched; i++ {
+		fetchResult := <-fetchResults
+		if fetchResult.err != nil {
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected error while gathering available packages: %v", err))
 		}
-	}
-	// if no results whatsoever, throw an error
-	if len(availablePackageSummariesNilSafe) == 0 {
-		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("no available packages: %v", err))
+		// append the availablePackageSummary to the slice
+		availablePackageSummaries[fetchResult.index] = fetchResult.availablePackageSummary
+		categories = append(categories, fetchResult.availablePackageSummary.Categories...)
 	}
 
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
-	if pageSize > 0 && len(availablePackageSummariesNilSafe) == int(pageSize) {
+	if pageSize > 0 && numFetched == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	response := &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: availablePackageSummariesNilSafe,
+		AvailablePackageSummaries: availablePackageSummaries,
 		Categories:                categories,
 		NextPageToken:             nextPageToken,
 	}
 	return response, nil
+}
+
+func (s *Server) fetchPackageSummaryForMeta(ctx context.Context, cluster, namespace string, pkgMetadata *datapackagingv1alpha1.PackageMetadata) (*corev1.AvailablePackageSummary, error) {
+	// fetch the associated packages
+	// Use the field selector to return only Package CRs that match on the spec.refName.
+	// TODO(agamez): perhaps we better fetch all the packages and filter ourselves to reduce the k8s calls
+	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
+	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+	if err != nil {
+		return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, err)
+	}
+	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
+	if err != nil {
+		return nil, err
+	}
+
+	// generate the availablePackageSummary from the fetched information
+	availablePackageSummary, err := s.buildAvailablePackageSummary(pkgMetadata, pkgVersionsMap, cluster)
+	if err != nil {
+		return nil, statuserror.FromK8sError("create", "AvailablePackageSummary", pkgMetadata.Name, err)
+	}
+
+	return availablePackageSummary, nil
 }
 
 // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
@@ -506,7 +508,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	// build a new pkgInstall object
 	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions, secret)
 	if err != nil {
-		return nil, statuserror.FromK8sError("create", "PackageInstall", installedPackageName, err)
+		return nil, status.Errorf(status.Code(err), "Unable to create the PackageInstall '%s' due to '%v'", installedPackageName, err)
 	}
 
 	// create the Secret in the cluster
@@ -534,7 +536,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 	// The InstalledPackage is considered as created once the associated kapp App gets created,
 	// so we actively wait for the App CR to be present in the cluster before returning OK
-	err = WaitForResource(ctx, resource, newPkgInstall.Name, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
+	err = k8sutils.WaitForResource(ctx, resource, newPkgInstall.Name, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
 	if err != nil {
 		// clean-up the secret if something fails
 		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
@@ -611,11 +613,19 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	}
 	prereleases := prereleasesVersionSelection(s.pluginConfig.defaultPrereleasesVersionSelection)
 
-	// Set the versionSelection
-	pkgInstall.Spec.PackageRef.VersionSelection = &vendirversions.VersionSelectionSemver{
+	versionSelection := &vendirversions.VersionSelectionSemver{
 		Constraints: versionConstraints,
 		Prereleases: prereleases,
 	}
+
+	// Ensure the selected version can be, actually installed to let the user know before installing
+	elegibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
+	if elegibleVersion == "" || err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not elegible to be installed: %v", pkgVersion, err)
+	}
+
+	// Set the versionSelection
+	pkgInstall.Spec.PackageRef.VersionSelection = versionSelection
 
 	// Allow this PackageInstall to be downgraded
 	// https://carvel.dev/kapp-controller/docs/v0.32.0/package-consumer-concepts/#downgrading

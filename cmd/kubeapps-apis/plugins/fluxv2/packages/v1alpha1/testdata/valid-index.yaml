@@ -22,7 +22,7 @@ entries:
         - https://github.com/wbuchwalter/Kubernetes-acs-engine-autoscaler
       urls:
         #- https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz
-        - "{{testdata/acs-engine-autoscaler-2.1.1.tgz}}"
+        - "{{testdata/charts/acs-engine-autoscaler-2.1.1.tgz}}"
       version: 2.1.1
   wordpress:
     - appVersion: 4.9.1
@@ -48,7 +48,7 @@ entries:
         - https://github.com/bitnami/bitnami-docker-wordpress
       urls:
         #- https://kubernetes-charts.storage.googleapis.com/wordpress-0.7.5.tgz
-        - "{{testdata/wordpress-0.7.5.tgz}}"
+        - "{{testdata/charts/wordpress-0.7.5.tgz}}"
       version: 0.7.5
     - appVersion: 4.9.0
       created: 2017-12-01T11:49:00.136950565Z
@@ -74,5 +74,5 @@ entries:
         - https://github.com/bitnami/bitnami-docker-wordpress
       urls:
         #  - https://kubernetes-charts.storage.googleapis.com/wordpress-0.7.4.tgz
-        - "{{testdata/wordpress-0.7.4.tgz}}"
+        - "{{testdata/charts/wordpress-0.7.4.tgz}}"
       version: 0.7.4

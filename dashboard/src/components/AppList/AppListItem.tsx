@@ -3,7 +3,7 @@
 
 import Tooltip from "components/js/Tooltip";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { getPluginIcon } from "shared/utils";
+import { getAppStatusLabel, getPluginIcon } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
@@ -17,7 +17,7 @@ export interface IAppListItemProps {
 function AppListItem(props: IAppListItemProps) {
   const { app } = props;
   const icon = app.iconUrl ?? placeholder;
-  const appStatus = app.status?.userReason?.toLocaleLowerCase();
+  const appStatus = getAppStatusLabel(app.status?.reason);
   const appReady = app.status?.ready ?? false;
   let tooltipContent;
 

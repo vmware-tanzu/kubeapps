@@ -1,19 +1,12 @@
-# Kubeapps
+<!--- app-name: Kubeapps -->
 
-[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/main)
+# Kubeapps packaged by Bitnami
 
-[Kubeapps](https://kubeapps.com) is an in-cluster web-based application that enables users with a one-time installation to deploy, manage, and upgrade applications on a Kubernetes cluster.
+Kubeapps is a web-based UI for launching and managing applications on Kubernetes. It allows users to deploy trusted applications and operators to control users access to the cluster.
 
-With Kubeapps you can:
+[Overview of Kubeapps](https://kubeapps.com)
 
-- Customize deployments through an intuitive, form-based user interface
-- Inspect, upgrade and delete applications installed in the cluster
-- Browse and deploy [Helm](https://github.com/helm/helm) charts from public or private chart repositories (including [VMware Marketplace™](https://marketplace.cloud.vmware.com) and [Bitnami Application Catalog](https://bitnami.com/application-catalog))
-- Browse and deploy [Kubernetes Operators](https://operatorhub.io/)
-- Secure authentication to Kubeapps using a [standalone OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md) or [using Pinniped](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider-with-pinniped.md)
-- Secure authorization based on Kubernetes [Role-Based Access Control](https://github.com/kubeapps/kubeapps/blob/main/docs/user/access-control.md)
 
-**_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work.
 
 ## TL;DR
 
@@ -27,9 +20,22 @@ helm install kubeapps --namespace kubeapps bitnami/kubeapps
 
 ## Introduction
 
+[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/main)
+
 This chart bootstraps a [Kubeapps](https://kubeapps.com) deployment on a [Kubernetes](https://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
-It also packages the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/tree/master/bitnami/postgresql) which is required for bootstrapping a deployment for the database requirements of the Kubeapps application.
+With Kubeapps you can:
+
+- Customize deployments through an intuitive, form-based user interface
+- Inspect, upgrade and delete applications installed in the cluster
+- Browse and deploy [Helm](https://github.com/helm/helm) charts from public or private chart repositories (including [VMware Marketplace&trade;](https://marketplace.cloud.vmware.com) and [Bitnami Application Catalog](https://bitnami.com/application-catalog))
+- Browse and deploy [Kubernetes Operators](https://operatorhub.io/)
+- Secure authentication to Kubeapps using a [standalone OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md) or [using Pinniped](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider-with-pinniped.md)
+- Secure authorization based on Kubernetes [Role-Based Access Control](https://github.com/kubeapps/kubeapps/blob/main/docs/user/access-control.md)
+
+**_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work.
+
+It also packages the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/tree/master/bitnami/postgresql), which is required for bootstrapping a deployment for the database requirements of the Kubeapps application.
 
 ## Prerequisites
 
@@ -96,13 +102,22 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `ingress.secrets`     | Custom TLS certificates as secrets                                                                                               | `[]`                     |
 
 
+### Kubeapps packaging options
+
+| Name                       | Description                                                | Value   |
+| -------------------------- | ---------------------------------------------------------- | ------- |
+| `packaging.helm.enabled`   | Enable the standard Helm packaging.                        | `true`  |
+| `packaging.carvel.enabled` | Enable support for the Carvel (kapp-controller) packaging. | `false` |
+| `packaging.flux.enabled`   | Enable support for Flux (v2) packaging.                    | `false` |
+
+
 ### Frontend parameters
 
 | Name                                             | Description                                                                               | Value                  |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------- | ---------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                      | `docker.io`            |
 | `frontend.image.repository`                      | NGINX image repository                                                                    | `bitnami/nginx`        |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                          | `1.21.5-debian-10-r12` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                          | `1.21.6-debian-10-r32` |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                   | `IfNotPresent`         |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                  | `[]`                   |
 | `frontend.image.debug`                           | Enable image debug mode                                                                   | `false`                |
@@ -401,7 +416,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                   | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                 | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                       | `7.2.1-debian-10-r17`  |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                       | `7.2.1-debian-10-r67`  |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                               | `[]`                   |
 | `authProxy.external`                              | Use an external Auth Proxy instead of deploying its own one                   | `false`                |
@@ -461,7 +476,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`                 |
 | `testImage.registry`      | NGINX image registry                                                          | `docker.io`            |
 | `testImage.repository`    | NGINX image repository                                                        | `bitnami/nginx`        |
-| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                              | `1.21.5-debian-10-r12` |
+| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                              | `1.21.6-debian-10-r32` |
 | `testImage.pullPolicy`    | NGINX image pull policy                                                       | `IfNotPresent`         |
 | `testImage.pullSecrets`   | NGINX image pull secrets                                                      | `[]`                   |
 
@@ -486,7 +501,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 | Name                                                                                            | Description                                                                               | Value                    |
 | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------ |
-| `kubeappsapis.enabledPlugins`                                                                   | Enabled plugins for the Kubeapps-APIs service                                             | `["helm","resources"]`   |
+| `kubeappsapis.enabledPlugins`                                                                   | Manually override which plugins are enabled for the Kubeapps-APIs service                 | `[]`                     |
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.major`                      | Number of major versions to display in the summary                                        | `3`                      |
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.minor`                      | Number of minor versions to display in the summary                                        | `3`                      |
 | `kubeappsapis.pluginConfig.core.packages.v1alpha1.versionsInSummary.patch`                      | Number of patch versions to display in the summary                                        | `3`                      |
@@ -552,7 +567,6 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | Name                            | Description                                                        | Value                                                    |
 | ------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------- |
 | `redis.redisPassword`           | Password used in Redis&trade;                                      | `""`                                                     |
-| `redis.enabled`                 | Enable the Redis&trade; deployment when deploying Kubeapps APIs.   | `false`                                                  |
 | `redis.master.extraFlags`       | Array with additional command line flags for Redis&trade; master   | `["--maxmemory 200mb","--maxmemory-policy allkeys-lru"]` |
 | `redis.master.disableCommands`  | Array with commands to deactivate on Redis&trade                   | `[]`                                                     |
 | `redis.replica.replicaCount`    | Number of Redis&trade; replicas to deploy                          | `1`                                                      |
@@ -645,9 +659,10 @@ In the first two cases, it is needed a certificate and a key. We would expect th
   -----END RSA PRIVATE KEY-----
   ```
 
-If you are going to use Helm to manage the certificates, please copy these values into the `certificate` and `key` values for a given `ingress.secrets` entry.
-
-If you are going to manage TLS secrets outside of Helm, please know that you can create a TLS secret named `INGRESS_HOSTNAME-tls` (where _INGRESS_HOSTNAME_ is a placeholder to be replaced with the hostname you set using the `ingress.hostname` parameter).
+- If you are going to use Helm to manage the certificates based on the parameters, please copy these values into the `certificate` and `key` values for a given `ingress.secrets` entry.
+- In case you are going to manage TLS secrets separately, please know that you must use a TLS secret with name _INGRESS_HOSTNAME-tls_ (where _INGRESS_HOSTNAME_ is a placeholder to be replaced with the hostname you set using the `ingress.hostname` parameter).
+- To use self-signed certificates created by Helm, set both `ingress.tls` and `ingress.selfSigned` to `true`.
+- If your cluster has a [cert-manager](https://github.com/jetstack/cert-manager) add-on to automate the management and issuance of TLS certificates, set `ingress.certManager` boolean to true to enable the corresponding annotations for cert-manager.
 
 ## Upgrading Kubeapps
 
@@ -985,3 +1000,19 @@ kubectl delete statefulset -n kubeapps kubeapps-postgresql-master kubeapps-postg
 ```
 
 After that, you should be able to upgrade Kubeapps as always and the database will be repopulated.
+
+## License
+
+Copyright &copy; 2022 Bitnami
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

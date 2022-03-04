@@ -7,9 +7,9 @@ import {
   Context,
   InstalledPackageDetail,
   InstalledPackageReference,
+  InstalledPackageStatus,
   InstalledPackageSummary,
   ReconciliationOptions,
-  ResourceRef,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { ThunkAction } from "redux-thunk";
@@ -32,15 +32,6 @@ import { validate } from "../shared/schema";
 const { createAction } = deprecated;
 
 export const requestInstalledPackage = createAction("REQUEST_INSTALLED_PACKAGE");
-
-export const requestInstalledPkgResourceRefs = createAction("REQUEST_INSTALLED_PKG_RESOURCE_REFS");
-
-export const receiveInstalledPkgResourceRefs = createAction(
-  "RECEIVE_INSTALLED_PKG_RESOURCE_REFS",
-  resolve => {
-    return (refs: ResourceRef[]) => resolve(refs);
-  },
-);
 
 export const requestInstalledPackageList = createAction("REQUEST_INSTALLED_PACKAGE_LIST");
 
@@ -73,6 +64,15 @@ export const receiveRollbackInstalledPackage = createAction(
   "RECEIVE_ROLLBACK_INSTALLED_PACKAGE_CONFIRMATION",
 );
 
+export const requestInstalledPackageStatus = createAction("REQUEST_INSTALLED_PACKAGE_STATUS");
+
+export const receiveInstalledPackageStatus = createAction(
+  "RECEIVE_INSTALLED_PACKAGE_STATUS",
+  resolve => {
+    return (status: InstalledPackageStatus) => resolve(status);
+  },
+);
+
 export const errorInstalledPackage = createAction("ERROR_INSTALLED_PACKAGE", resolve => {
   return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError) =>
     resolve(err);
@@ -89,8 +89,8 @@ const allActions = [
   requestInstalledPackageList,
   requestInstalledPackage,
   receiveInstalledPackageList,
-  requestInstalledPkgResourceRefs,
-  receiveInstalledPkgResourceRefs,
+  requestInstalledPackageStatus,
+  receiveInstalledPackageStatus,
   requestDeleteInstalledPackage,
   receiveDeleteInstalledPackage,
   requestInstallPackage,
@@ -143,21 +143,19 @@ export function getInstalledPackage(
   };
 }
 
-export function getInstalledPkgResourceRefs(
+export function getInstalledPkgStatus(
   installedPackageRef?: InstalledPackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
-    dispatch(requestInstalledPkgResourceRefs());
-
+    dispatch(requestInstalledPackageStatus());
     try {
-      const { resourceRefs } = await InstalledPackage.GetInstalledPackageResourceRefs(
+      // Get the details of an installed package for the status.
+      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
         installedPackageRef,
       );
-      dispatch(receiveInstalledPkgResourceRefs(resourceRefs));
+      dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
     } catch (e: any) {
-      dispatch(
-        errorInstalledPackage(new FetchError("Unable to get installed package resources", [e])),
-      );
+      dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
     }
   };
 }

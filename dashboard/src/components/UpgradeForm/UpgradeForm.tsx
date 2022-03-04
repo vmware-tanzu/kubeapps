@@ -106,7 +106,8 @@ function UpgradeForm(props: IUpgradeFormProps) {
     if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
       // Calculate modifications from the default values
       const defaultValuesObj = yaml.load(installedAppAvailablePackageDetail?.defaultValues) || {};
-      const deployedValuesObj = yaml.load(installedAppInstalledPackageDetail?.valuesApplied || "");
+      const deployedValuesObj =
+        yaml.load(installedAppInstalledPackageDetail?.valuesApplied || "") || {};
       const newModifications = jsonpatch.compare(defaultValuesObj as any, deployedValuesObj as any);
       const values = applyModifications(
         newModifications,

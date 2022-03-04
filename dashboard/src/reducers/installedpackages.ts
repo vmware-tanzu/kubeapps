@@ -52,11 +52,18 @@ const installedPackagesReducer = (
         },
         selectedDetails: action.payload.details,
       };
-    case getType(actions.installedpackages.receiveInstalledPkgResourceRefs):
-      return {
-        ...state,
-        resourceRefs: action.payload,
-      };
+    case getType(actions.installedpackages.receiveInstalledPackageStatus):
+      if (state.selected) {
+        return {
+          ...state,
+          selected: {
+            ...state.selected!,
+            revision: state.selected!.revision,
+            status: action.payload,
+          },
+        };
+      }
+      return state;
     case getType(actions.installedpackages.requestInstalledPackageList):
       return { ...state, isFetching: true };
     case getType(actions.installedpackages.receiveInstalledPackageList):

@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -15,10 +14,8 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
@@ -29,19 +26,7 @@ import (
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 // 3) run './kind-cluster-setup.sh deploy' once prior to these tests
 
-const (
-	// This is local copy of the first few entries
-	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
-	// urls modified to link to .tgz files also within the local cluster.
-	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
-	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/kind-cluster-setup.sh
-	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo"
-
-	// same as above but requires HTTP basic authentication: user: foo, password: bar
-	podinfo_basic_auth_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth"
-)
-
-type integrationTestCreateSpec struct {
+type integrationTestCreatePackageSpec struct {
 	testName          string
 	repoUrl           string
 	request           *corev1.CreateInstalledPackageRequest
@@ -57,9 +42,9 @@ type integrationTestCreateSpec struct {
 }
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
-	fluxPluginClient := checkEnv(t)
+	fluxPluginClient, _ := checkEnv(t)
 
-	testCases := []integrationTestCreateSpec{
+	testCases := []integrationTestCreatePackageSpec{
 		{
 			testName:             "create test (simplest case)",
 			repoUrl:              podinfo_repo_url,
@@ -134,8 +119,8 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 	}
 }
 
-type integrationTestUpdateSpec struct {
-	integrationTestCreateSpec
+type integrationTestUpdatePackageSpec struct {
+	integrationTestCreatePackageSpec
 	request *corev1.UpdateInstalledPackageRequest
 	// this is expected AFTER the update call completes
 	expectedDetailAfterUpdate *corev1.InstalledPackageDetail
@@ -144,11 +129,11 @@ type integrationTestUpdateSpec struct {
 }
 
 func TestKindClusterUpdateInstalledPackage(t *testing.T) {
-	fluxPluginClient := checkEnv(t)
+	fluxPluginClient, _ := checkEnv(t)
 
-	testCases := []integrationTestUpdateSpec{
+	testCases := []integrationTestUpdatePackageSpec{
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (simplest case)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1,
@@ -161,7 +146,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (add values)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_no_values,
@@ -174,7 +159,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_no_values,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (change values)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_2,
@@ -187,7 +172,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_2,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (remove values)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_4,
@@ -200,7 +185,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_4,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (values dont change)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_5_2_1_values_6,
@@ -213,7 +198,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_6,
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update unauthorized test",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_7,
@@ -233,7 +218,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 
 			installedRef := createAndWaitForHelmRelease(
-				t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
+				t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
 			ctx := grpcContext
@@ -254,15 +239,15 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedRef, false)
 
 			tc.expectedDetailAfterUpdate.InstalledPackageRef = installedRef
-			tc.expectedDetailAfterUpdate.Name = tc.integrationTestCreateSpec.request.Name
+			tc.expectedDetailAfterUpdate.Name = tc.integrationTestCreatePackageSpec.request.Name
 			tc.expectedDetailAfterUpdate.ReconciliationOptions = &corev1.ReconciliationOptions{
 				Interval: 60,
 			}
-			tc.expectedDetailAfterUpdate.AvailablePackageRef = tc.integrationTestCreateSpec.request.AvailablePackageRef
+			tc.expectedDetailAfterUpdate.AvailablePackageRef = tc.integrationTestCreatePackageSpec.request.AvailablePackageRef
 			tc.expectedDetailAfterUpdate.PostInstallationNotes = strings.ReplaceAll(
 				tc.expectedDetailAfterUpdate.PostInstallationNotes,
 				"@TARGET_NS@",
-				tc.integrationTestCreateSpec.request.TargetContext.Namespace)
+				tc.integrationTestCreatePackageSpec.request.TargetContext.Namespace)
 
 			expectedResp := &corev1.GetInstalledPackageDetailResponse{
 				InstalledPackageDetail: tc.expectedDetailAfterUpdate,
@@ -276,8 +261,8 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 					newR := &corev1.ResourceRef{
 						ApiVersion: r.ApiVersion,
 						Kind:       r.Kind,
-						Name:       strings.ReplaceAll(r.Name, "@TARGET_NS@", tc.integrationTestCreateSpec.request.TargetContext.Namespace),
-						Namespace:  tc.integrationTestCreateSpec.request.TargetContext.Namespace,
+						Name:       strings.ReplaceAll(r.Name, "@TARGET_NS@", tc.integrationTestCreatePackageSpec.request.TargetContext.Namespace),
+						Namespace:  tc.integrationTestCreatePackageSpec.request.TargetContext.Namespace,
 					}
 					expectedRefsCopy = append(expectedRefsCopy, newR)
 				}
@@ -290,17 +275,17 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	}
 }
 
-type integrationTestDeleteSpec struct {
-	integrationTestCreateSpec
+type integrationTestDeletePackageSpec struct {
+	integrationTestCreatePackageSpec
 	unauthorized bool
 }
 
 func TestKindClusterDeleteInstalledPackage(t *testing.T) {
-	fluxPluginClient := checkEnv(t)
+	fluxPluginClient, _ := checkEnv(t)
 
-	testCases := []integrationTestDeleteSpec{
+	testCases := []integrationTestDeletePackageSpec{
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "delete test (simplest case)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_for_delete_1,
@@ -311,7 +296,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			},
 		},
 		{
-			integrationTestCreateSpec: integrationTestCreateSpec{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "delete test (unauthorized)",
 				repoUrl:              podinfo_repo_url,
 				request:              create_request_podinfo_for_delete_2,
@@ -328,7 +313,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreateSpec, fluxPluginClient, grpcContext)
+			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
 
 			ctx := grpcContext
 			if tc.unauthorized {
@@ -407,358 +392,10 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
-// this integration test is meant to test a scenario when the redis cache is confiured with maxmemory
-// too small to be able to fit all the repos needed to satisfy the request for GetAvailablePackageSummaries
-// and redis cache eviction kicks in. Also, the kubeapps-apis pod should have a large memory limit (1Gb) set
-// To set up such environment one can use  "-f ./docs/user/manifests/kubeapps-local-dev-redis-tiny-values.yaml"
-// option when installing kubeapps via "helm upgrade"
-// It is worth noting that exactly how many copies of bitnami repo can be held in the cache at any given time varies
-// This is because the size of the index.yaml we get from bitnami does fluctuate quite a bit over time:
-// [kubeapps]$ ls -l bitnami_index.yaml
-// -rw-r--r--@ 1 gfichtenholt  staff  8432962 Jun 20 02:35 bitnami_index.yaml
-// [kubeapps]$ ls -l bitnami_index.yaml
-// -rw-rw-rw-@ 1 gfichtenholt  staff  10394218 Nov  7 19:41 bitnami_index.yaml
-// Also now we are caching helmcharts themselves for each repo so that will affect how many will fit too
-func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *testing.T) {
-	fluxPlugin := checkEnv(t)
-
-	redisCli, err := newRedisClientForIntegrationTest(t)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
-	// assume 30Mb redis cache for now. See comment above
-	if err = redisCheckTinyMaxMemory(t, redisCli, "31457280"); err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	// ref https://redis.io/topics/notifications
-	if err = redisCli.ConfigSet(redisCli.Context(), "notify-keyspace-events", "EA").Err(); err != nil {
-		t.Fatalf("%+v", err)
-	}
-	t.Cleanup(func() {
-		t.Logf("Resetting notify-keyspace-events")
-		if err = redisCli.ConfigSet(redisCli.Context(), "notify-keyspace-events", "").Err(); err != nil {
-			t.Logf("%v", err)
-		}
-	})
-
-	if err = initNumberOfChartsInBitnamiCatalog(t); err != nil {
-		t.Errorf("Failed to get number of charts in bitnami catalog due to: %v", err)
-	}
-
-	const MAX_REPOS_NEVER = 100
-	var totalRepos = 0
-	// ref https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait
-	evictedRepos := sets.String{}
-
-	// do this part in a func so we can defer subscribe.Close
-	func() {
-		// ref https://medium.com/nerd-for-tech/redis-getting-notified-when-a-key-is-expired-or-changed-ca3e1f1c7f0a
-		subscribe := redisCli.PSubscribe(redisCli.Context(), "__keyevent@0__:*")
-		defer subscribe.Close()
-
-		sem := semaphore.NewWeighted(MAX_REPOS_NEVER)
-		if err := sem.Acquire(context.Background(), MAX_REPOS_NEVER); err != nil {
-			t.Fatalf("%v", err)
-		}
-
-		go redisReceiveNotificationsLoop(t, subscribe.Channel(), sem, &evictedRepos)
-
-		// now load some large repos (bitnami)
-		// I didn't want to store a large (>10MB) copy of bitnami repo in our git,
-		// so for now let it fetch directly from bitnami website
-		// we'll keep adding repos one at a time, until we get an event from redis
-		// about the first evicted repo entry
-		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == 0; totalRepos++ {
-			repo := fmt.Sprintf("bitnami-%d", totalRepos)
-			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
-				t.Fatalf("%v", err)
-			}
-			t.Cleanup(func() {
-				if err = kubeDeleteHelmRepository(t, repo, "default"); err != nil {
-					t.Logf("%v", err)
-				}
-			})
-			// wait until this repo have been indexed and cached up to 10 minutes
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
-			defer cancel()
-			if err := sem.Acquire(ctx, 1); err != nil {
-				t.Fatalf("Timed out waiting for Redis event: %v", err)
-			}
-		}
-		t.Logf("Done with first part of the test, total repos: [%d], evicted repos: [%d]",
-			totalRepos, len(evictedRepos))
-	}()
-
-	if evictedRepos.Len() == 0 {
-		t.Fatalf("Failing because redis did not evict any entries")
-	}
-
-	if keys, err := redisCli.Keys(redisCli.Context(), "helmrepositories:*").Result(); err != nil {
-		t.Fatalf("%v", err)
-	} else {
-		// the cache should only big enough to be able to hold at most (totalRepos-1) of the keys
-		// one (or more) entries may have been evicted
-		if len(keys) > totalRepos-1 {
-			t.Fatalf("Expected at most [%d] keys in cache but got: %s", totalRepos-1, keys)
-		}
-	}
-
-	// one particular code path I'd like to test:
-	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
-	grpcContext := newGrpcAdminContext(t, "test-create-admin")
-
-	// copy the evicted list because before ForEach loop below will modify it in a goroutine
-	evictedCopy := sets.StringKeySet(evictedRepos)
-
-	// do this part in a func so we can defer subscribe.Close
-	func() {
-		subscribe := redisCli.PSubscribe(redisCli.Context(), "__keyevent@0__:*")
-		defer subscribe.Close()
-
-		go redisReceiveNotificationsLoop(t, subscribe.Channel(), nil, &evictedRepos)
-
-		for _, k := range evictedCopy.List() {
-			name := strings.Split(k, ":")[2]
-			t.Logf("Checking apache version in repo [%s]...", name)
-			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			resp, err := fluxPlugin.GetAvailablePackageVersions(
-				grpcContext, &corev1.GetAvailablePackageVersionsRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-						Identifier: name + "/apache",
-					},
-				})
-			if err != nil {
-				t.Fatalf("%v", err)
-			} else if len(resp.PackageAppVersions) < 5 {
-				t.Fatalf("Expected at least 5 versions for apache chart, got: %s", resp)
-			}
-		}
-
-		t.Logf("Done with second part of the test")
-	}()
-
-	// do this part in a func so we can defer subscribe.Close
-	func() {
-		subscribe := redisCli.PSubscribe(redisCli.Context(), "__keyevent@0__:*")
-		defer subscribe.Close()
-
-		// above loop should cause a few more entries to be evicted, but just to be sure let's
-		// load a few more copies of bitnami repo into the cache. The goal of this for loop is
-		// to force redis to evict more repo(s)
-		sem := semaphore.NewWeighted(MAX_REPOS_NEVER)
-		if err := sem.Acquire(context.Background(), MAX_REPOS_NEVER); err != nil {
-			t.Fatalf("%v", err)
-		}
-		go redisReceiveNotificationsLoop(t, subscribe.Channel(), sem, &evictedRepos)
-
-		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == evictedCopy.Len(); totalRepos++ {
-			repo := fmt.Sprintf("bitnami-%d", totalRepos)
-			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeCreateHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
-				t.Fatalf("%v", err)
-			}
-			t.Cleanup(func() {
-				if err = kubeDeleteHelmRepository(t, repo, "default"); err != nil {
-					t.Logf("%v", err)
-				}
-			})
-			// wait until this repo have been indexed and cached up to 10 minutes
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
-			defer cancel()
-			if err := sem.Acquire(ctx, 1); err != nil {
-				t.Fatalf("Timed out waiting for Redis event: %v", err)
-			}
-		}
-
-		t.Logf("Done with third part of the test")
-	}()
-
-	if keys, err := redisCli.Keys(redisCli.Context(), "helmrepositories:*").Result(); err != nil {
-		t.Fatalf("%v", err)
-	} else {
-		// the cache should only big enough to be able to hold at most (totalRepos-1) of the keys
-		// one (or more) entries MUST have been evicted
-		if len(keys) > totalRepos-1 {
-			t.Fatalf("Expected at most %d keys in cache but got [%s]", totalRepos-1, keys)
-		}
-	}
-
-	// not related to low maxmemory but as long as we are here might as well check that
-	// there is a Unauthenticated failure when there are no credenitals in the request
-	_, err = fluxPlugin.GetAvailablePackageSummaries(context.TODO(), &corev1.GetAvailablePackageSummariesRequest{})
-	if err == nil || status.Code(err) != codes.Unauthenticated {
-		t.Fatalf("Expected Unauthenticated, got %v", err)
-	}
-
-	grpcContext, cancel := context.WithTimeout(grpcContext, 60*time.Second)
-	defer cancel()
-	resp2, err := fluxPlugin.GetAvailablePackageSummaries(grpcContext, &corev1.GetAvailablePackageSummariesRequest{})
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	// we need to make sure that response contains packages from all existing repositories
-	// regardless whether they're in the cache or not
-	expected := sets.String{}
-	for i := 0; i < totalRepos; i++ {
-		repo := fmt.Sprintf("bitnami-%d", i)
-		expected.Insert(repo)
-	}
-	for _, s := range resp2.AvailablePackageSummaries {
-		id := strings.Split(s.AvailablePackageRef.Identifier, "/")
-		expected.Delete(id[0])
-	}
-
-	if expected.Len() != 0 {
-		t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
-			expected.List())
-	}
-}
-
-// this test is testing a scenario when a repo that takes a long time to index is added
-// and while the indexing is in progress this repo is deleted by another request.
-// The goal is to make sure that the events are processed by the cache fully in the order
-// they were received and the cache does not end up in inconsistent state
-func TestKindClusterAddThenDeleteRepo(t *testing.T) {
-	_ = checkEnv(t)
-
-	redisCli, err := newRedisClientForIntegrationTest(t)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
-	// now load some large repos (bitnami)
-	// I didn't want to store a large (10MB) copy of bitnami repo in our git,
-	// so for now let it fetch from bitnami website
-	if err = kubeCreateHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
-		t.Fatalf("%v", err)
-	}
-	// wait until this repo reaches 'Ready' state so that long indexation process kicks in
-	if err = kubeWaitUntilHelmRepositoryIsReady(t, "bitnami-1", "default"); err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	if err = kubeDeleteHelmRepository(t, "bitnami-1", "default"); err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	t.Logf("Waiting up to 30 seconds...")
-	time.Sleep(30 * time.Second)
-
-	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
-		t.Fatalf("%v", err)
-	} else {
-		if len(keys) != 0 {
-			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
-		}
-	}
-}
-
-func TestKindClusterRepoWithBasicAuth(t *testing.T) {
-	fluxPluginClient := checkEnv(t)
-
-	secretName := "podinfo-basic-auth-secret"
-	repoName := "podinfo-basic-auth"
-
-	if err := kubeCreateBasicAuthSecret(t, "default", secretName, "foo", "bar"); err != nil {
-		t.Fatalf("%v", err)
-	}
-	t.Cleanup(func() {
-		err := kubeDeleteSecret(t, "default", secretName)
-		if err != nil {
-			t.Logf("Failed to delete helm repository due to [%v]", err)
-		}
-	})
-
-	if err := kubeCreateHelmRepository(t, repoName, podinfo_basic_auth_repo_url, "default", secretName); err != nil {
-		t.Fatalf("%v", err)
-	}
-	t.Cleanup(func() {
-		err := kubeDeleteHelmRepository(t, repoName, "default")
-		if err != nil {
-			t.Logf("Failed to delete helm repository due to [%v]", err)
-		}
-	})
-
-	// wait until this repo reaches 'Ready'
-	if err := kubeWaitUntilHelmRepositoryIsReady(t, repoName, "default"); err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	grpcContext := newGrpcAdminContext(t, "test-create-admin-basic-auth")
-
-	const maxWait = 25
-	for i := 0; i <= maxWait; i++ {
-		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-		defer cancel()
-		resp, err := fluxPluginClient.GetAvailablePackageSummaries(
-			grpcContext,
-			&corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{
-					Namespace: "default",
-				},
-			})
-		if err == nil {
-			opt1 := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageSummariesResponse{},
-				corev1.AvailablePackageSummary{},
-				corev1.AvailablePackageReference{},
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, available_package_summaries_podinfo_basic_auth; !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
-			break
-		} else if i == maxWait {
-			t.Fatalf("Timed out waiting for available package summaries, last response: %v, last error: [%v]", resp, err)
-		} else {
-			t.Logf("Waiting 2s for repository [%s] to be indexed, attempt [%d/%d]...", repoName, i+1, maxWait)
-			time.Sleep(2 * time.Second)
-		}
-	}
-
-	availablePackageRef := availableRef(repoName+"/podinfo", "default")
-
-	// first try the negative case, no auth - should fail due to not being able to
-	// read secrets in all namespaces
-	fluxPluginServiceAccount := "test-repo-with-basic-auth"
-	ctx, cancel := context.WithTimeout(newGrpcFluxPluginContext(t, fluxPluginServiceAccount), defaultContextTimeout)
-	defer cancel()
-	_, err := fluxPluginClient.GetAvailablePackageDetail(
-		ctx,
-		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
-	if err == nil {
-		t.Fatalf("Expected error, did not get one")
-	} else if status.Code(err) != codes.PermissionDenied {
-		t.Fatalf("GetAvailablePackageDetailRequest expected: PermissionDenied, got: %v", err)
-	}
-
-	// this should succeed as it is done in the context of cluster admin
-	grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-	defer cancel()
-	resp, err := fluxPluginClient.GetAvailablePackageDetail(
-		grpcContext,
-		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	compareActualVsExpectedAvailablePackageDetail(t, resp.AvailablePackageDetail, expected_detail_podinfo_basic_auth.AvailablePackageDetail)
-}
-
-func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreateSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
+func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
-	err := kubeCreateHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "")
+	err := kubeAddHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "")
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
@@ -966,7 +603,7 @@ func waitUntilInstallCompletes(
 	if actualDetailResp == nil {
 		t.Fatalf("Timed out waiting for task to complete")
 	} else if actualDetailResp.InstalledPackageDetail.Status.Ready {
-		t.Logf("Getting installed package resource refs for [installedPackageRef]...")
+		t.Logf("Getting installed package resource refs for [%s]...", installedPackageRef.Identifier)
 		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
 		var err error
@@ -1613,37 +1250,6 @@ var (
 		TargetContext: &corev1.Context{
 			Namespace: "test-15",
 			Cluster:   KubeappsCluster,
-		},
-	}
-
-	available_package_summaries_podinfo_basic_auth = &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-			{
-				Name:                "podinfo",
-				AvailablePackageRef: availableRef("podinfo-basic-auth/podinfo", "default"),
-				LatestVersion:       &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
-				DisplayName:         "podinfo",
-				ShortDescription:    "Podinfo Helm chart for Kubernetes",
-				Categories:          []string{""},
-			},
-		},
-	}
-
-	expected_detail_podinfo_basic_auth = &corev1.GetAvailablePackageDetailResponse{
-		AvailablePackageDetail: &corev1.AvailablePackageDetail{
-			AvailablePackageRef: availableRef("podinfo-basic-auth/podinfo", "default"),
-			Name:                "podinfo",
-			Version:             &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
-			RepoUrl:             "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth",
-			HomeUrl:             "https://github.com/stefanprodan/podinfo",
-			DisplayName:         "podinfo",
-			ShortDescription:    "Podinfo Helm chart for Kubernetes",
-			SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
-			Maintainers: []*corev1.Maintainer{
-				{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
-			},
-			Readme:        "Podinfo is used by CNCF projects like [Flux](https://github.com/fluxcd/flux2)",
-			DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
 		},
 	}
 )

@@ -33,6 +33,7 @@ const (
 	globalPackagingNamespace                     = "kapp-controller-packaging-global"
 	fallbackDefaultUpgradePolicy   upgradePolicy = none
 	fallbackDefaultAllowDowngrades               = false
+	fallbackTimeoutSeconds                       = 300
 )
 
 func fallbackDefaultPrereleasesVersionSelection() []string {
@@ -99,7 +100,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 		log.Infof("+kapp-controller using default config since pluginConfigPath is empty")
 	}
 	return &Server{
-		clientGetter:             clientgetter.NewClientGetter(configGetter),
+		clientGetter:             clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		pluginConfig:             pluginConfig,

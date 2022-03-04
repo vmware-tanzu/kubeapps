@@ -13,29 +13,25 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fluxcd/pkg/apis/meta"
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	k8scorev1 "k8s.io/api/core/v1"
+	apiv1 "k8s.io/api/core/v1"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic/fake"
+	"k8s.io/apiserver/pkg/storage/names"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
@@ -47,7 +43,7 @@ type testSpecGetAvailablePackageSummaries struct {
 	index     string
 }
 
-func TestGetAvailablePackageSummaries(t *testing.T) {
+func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 	testCases := []struct {
 		name              string
 		request           *corev1.GetAvailablePackageSummariesRequest
@@ -389,76 +385,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns only the first page of results",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "0",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					elasticsearch_summary,
-				},
-				NextPageToken: "1",
-			},
-		},
-		{
-			name: "it returns only the requested page of results and includes the next page token",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "1",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-					ghost_summary,
-				},
-				NextPageToken: "2",
-			},
-		},
-		{
-			name: "it returns the last page without a next page token",
-			repos: []testSpecGetAvailablePackageSummaries{
-				{
-					name:      "index-with-categories-1",
-					namespace: "default",
-					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
-				},
-			},
-			request: &corev1.GetAvailablePackageSummariesRequest{
-				Context: &corev1.Context{Namespace: "blah"},
-				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "2",
-					PageSize:  1,
-				},
-			},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
-				NextPageToken:             "",
-			},
-		},
-		{
 			name: "it returns an error if a cluster other than the kubeapps cluster is specified",
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
 				Cluster: "not-kubeapps-cluster",
@@ -482,7 +408,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			// the index.yaml will contain links to charts but for the purposes
 			// of this test they do not matter
-			s, mock, _, _, err := newServerWithRepos(t, repos, nil, nil)
+			s, mock, err := newServerWithRepos(t, repos, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -512,6 +438,138 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
+	// one big test case that can't really be broken down to smaller cases because
+	// the tests aren't independent/idempotent: there is state that needs to be
+	// kept track from one call to the next
+
+	t.Run("test GetAvailablePackageSummaries with pagination", func(t *testing.T) {
+		existingRepos := []testSpecGetAvailablePackageSummaries{
+			{
+				name:      "index-with-categories-1",
+				namespace: "default",
+				url:       "https://example.repo.com/charts",
+				index:     "testdata/index-with-categories.yaml",
+			},
+		}
+		repos := []sourcev1.HelmRepository{}
+		for _, rs := range existingRepos {
+			ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			defer ts2.Close()
+			repos = append(repos, *repo)
+		}
+
+		// the index.yaml will contain links to charts but for the purposes
+		// of this test they do not matter
+		s, mock, err := newServerWithRepos(t, repos, nil, nil)
+		if err != nil {
+			t.Fatalf("error instantiating the server: %v", err)
+		}
+
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+
+		request1 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "0",
+				PageSize:  1,
+			},
+		}
+
+		response1, err := s.GetAvailablePackageSummaries(context.Background(), request1)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", got, want)
+		}
+
+		opts := cmpopts.IgnoreUnexported(
+			corev1.GetAvailablePackageSummariesResponse{},
+			corev1.AvailablePackageSummary{},
+			corev1.AvailablePackageReference{},
+			corev1.Context{},
+			plugins.Plugin{},
+			corev1.PackageAppVersion{})
+		opts2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+
+		expectedResp1 := &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				elasticsearch_summary,
+			},
+			NextPageToken: "1",
+		}
+		expectedResp2 := &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				ghost_summary,
+			},
+			NextPageToken: "1",
+		}
+
+		match := false
+		var nextExpectedResp *corev1.GetAvailablePackageSummariesResponse
+		if got, want := response1, expectedResp1; cmp.Equal(want, got, opts, opts2) {
+			match = true
+			nextExpectedResp = expectedResp2
+			nextExpectedResp.NextPageToken = "2"
+		} else if got, want := response1, expectedResp2; cmp.Equal(want, got, opts, opts2) {
+			match = true
+			nextExpectedResp = expectedResp1
+			nextExpectedResp.NextPageToken = "2"
+		}
+		if !match {
+			t.Fatalf("Expected one of:\n%s\n%s, but got:\n%s", expectedResp1, expectedResp2, response1)
+		}
+
+		request2 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "1",
+				PageSize:  1,
+			},
+		}
+
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+		response2, err := s.GetAvailablePackageSummaries(context.Background(), request2)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", err, want)
+		}
+		if got, want := response2, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
+		}
+
+		request3 := &corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{Namespace: "blah"},
+			PaginationOptions: &corev1.PaginationOptions{
+				PageToken: "2",
+				PageSize:  1,
+			},
+		}
+		nextExpectedResp = &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
+			NextPageToken:             "",
+		}
+		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
+			t.Fatalf("%v", err)
+		}
+		response3, err := s.GetAvailablePackageSummaries(context.Background(), request3)
+		if got, want := status.Code(err), codes.OK; got != want {
+			t.Fatalf("got: %v, want: %v", err, want)
+		}
+		if got, want := response3, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("%v", err)
+		}
+	})
 }
 
 func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
@@ -563,9 +621,10 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			URL: ts.URL,
 		}
 
-		repo := newRepo("testrepo", "ns2", repoSpec, repoStatus)
+		repoName := types.NamespacedName{Namespace: "ns2", Name: "testrepo"}
+		repo := newRepo(repoName.Name, repoName.Namespace, repoSpec, repoStatus)
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{repo}, nil, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -574,8 +633,9 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
+		ctx := context.Background()
 		responseBeforeUpdate, err := s.GetAvailablePackageSummaries(
-			context.Background(),
+			ctx,
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
 			t.Fatalf("%v", err)
@@ -604,56 +664,53 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		updateHappened = true
-		// now we are going to simulate flux seeing an update of the index.yaml and modifying the
-		// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
-		repo.ObjectMeta.ResourceVersion = "2"
-		repo.Status.Artifact.Checksum = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
-		repo.Status.Artifact.Revision = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
-
-		// there will be a GET to retrieve the old value from the cache followed by a SET to new value
-		mock.ExpectGet(key).SetVal(string(oldValue))
-		key, newValue, err := s.redisMockSetValueForRepo(mock, repo)
+		ctrlClient, _, err := ctrlClientAndWatcher(t, s)
 		if err != nil {
-			t.Fatalf("%+v", err)
-		}
+			t.Fatal(err)
+		} else if err = ctrlClient.Get(ctx, repoName, &repo); err != nil {
+			t.Fatal(err)
+		} else {
+			updateHappened = true
+			// now we are going to simulate flux seeing an update of the index.yaml and modifying the
+			// HelmRepository CRD which, in turn, causes k8s server to fire a MODIFY event
+			repo.Status.Artifact.Checksum = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
+			repo.Status.Artifact.Revision = "4e881a3c34a5430c1059d2c4f753cb9aed006803"
 
-		unstructuredRepo, err := common.ToUnstructured(&repo)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
+			// there will be a GET to retrieve the old value from the cache followed by a SET
+			// to new value
+			_, newValue, err := s.redisMockSetValueForRepo(mock, repo, oldValue)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			s.repoCache.ExpectAdd(key)
 
-		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace("ns2").Update(
-			context.Background(),
-			unstructuredRepo,
-			metav1.UpdateOptions{})
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
+			if err = ctrlClient.Update(ctx, &repo); err != nil {
+				// unlike dynamic.Interface.Update, client.Update will update an object in k8s
+				// and an Modified event will be fired
+				t.Fatal(err)
+			}
+			s.repoCache.WaitUntilForgotten(key)
 
-		s.repoCache.ExpectAdd(key)
-		watcher.Modify(unstructuredRepo)
-		s.repoCache.WaitUntilForgotten(key)
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
 
-		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
-		}
+			mock.ExpectGet(key).SetVal(string(newValue))
 
-		mock.ExpectGet(key).SetVal(string(newValue))
+			responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
+				ctx,
+				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
 
-		responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
-			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
+			if got, want := responsePackagesAfterUpdate.AvailablePackageSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
 
-		if got, want := responsePackagesAfterUpdate.AvailablePackageSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
-
-		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
 		}
 	})
 }
@@ -690,7 +747,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		defer ts.Close()
 
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -744,11 +801,6 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if err = dyncli.Resource(repositoriesGvr).Namespace(repoName.Namespace).Delete(
-			context.Background(), repoName.Name, metav1.DeleteOptions{}); err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		chartCacheKeys := []string{}
 		for _, c := range chartsInCache {
 			chartCacheKeys = append(chartCacheKeys, fmt.Sprintf("helmcharts:%s:%s/%s", repoName.Namespace, repoName.Name, c))
@@ -759,11 +811,13 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			s.chartCache.ExpectAdd(k)
 		}
 
-		unstructuredObj, err := common.ToUnstructured(repo)
-		if err != nil {
-			t.Fatalf("%v", err)
+		ctx := context.Background()
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			t.Fatal(err)
+		} else if err = ctrlClient.Delete(ctx, repo); err != nil {
+			t.Fatal(err)
 		}
-		watcher.Delete(unstructuredObj)
+
 		s.repoCache.WaitUntilForgotten(repoKey)
 		for _, k := range chartCacheKeys {
 			s.chartCache.WaitUntilForgotten(k)
@@ -799,7 +853,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, _, watcher, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -836,9 +890,15 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		// now lets try to simulate HTTP 410 GONE exception which should force RetryWatcher to stop and force
-		// a cache resync. The ERROR eventwhich we'll send below should trigger a re-sync of the cache in the
+		// now lets try to simulate HTTP 410 GONE exception which should force
+		// RetryWatcher to stop and force a cache resync. The ERROR event which
+		// we'll send below should trigger a re-sync of the cache in the
 		// background: a FLUSHDB followed by a SET
+		_, watcher, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		watcher.Error(&errors.NewGone("test HTTP 410 Gone").ErrStatus)
 
 		// wait for the server to start the resync process. Don't care how big the work queue is
@@ -846,7 +906,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		// set up expectations
 		mock.ExpectFlushDB().SetVal("OK")
-		if _, _, err := s.redisMockSetValueForRepo(mock, *repo); err != nil {
+		if _, _, err := s.redisMockSetValueForRepo(mock, *repo, nil); err != nil {
 			t.Fatalf("%+v", err)
 		}
 
@@ -880,18 +940,17 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 }
 
 // test that causes RetryWatcher to stop and the cache needs to resync when there are
-// lots of pending work items
-// this test is focused on the repo cache work queue
+// lots of pending work items. this test is focused on the repo cache work queue
 func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the repo cache needs to resync", func(t *testing.T) {
 		// start with an empty server that only has an empty repo cache
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, nil, nil)
+		s, mock, err := newServerWithRepos(t, nil, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
 
 		// first, I'd like to fill up the work queue with a whole bunch of work items
-		repos := []*unstructured.Unstructured{}
+		repos := []*sourcev1.HelmRepository{}
 		mapReposCached := make(map[string][]byte)
 		keysInOrder := []string{}
 
@@ -913,25 +972,22 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			}
 			mapReposCached[key] = byteArray
 			keysInOrder = append(keysInOrder, key)
-			mock.ExpectGet(key).RedisNil()
-			redisMockSetValueForRepo(mock, key, byteArray)
-			unstructuredObj, err := common.ToUnstructured(repo)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-			repos = append(repos, unstructuredObj)
-		}
-
-		for _, r := range repos {
-			if _, err = dyncli.Resource(repositoriesGvr).Namespace("default").
-				Create(context.Background(), r, metav1.CreateOptions{}); err != nil {
-				t.Fatalf("%v", err)
-			}
+			redisMockSetValueForRepo(mock, key, byteArray, nil)
+			repos = append(repos, repo)
 		}
 
 		s.repoCache.ExpectAdd(keysInOrder[0])
-		for _, r := range repos {
-			watcher.Add(r)
+
+		ctrlClient, watcher, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
+			t.Fatal(err)
+		} else {
+			ctx := context.Background()
+			for _, r := range repos {
+				if err = ctrlClient.Create(ctx, r); err != nil {
+					t.Fatal(err)
+				}
+			}
 		}
 
 		done := make(chan int, 1)
@@ -963,7 +1019,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 				// populateWith() which will re-populate the cache from scratch based on
 				// the current state in k8s (all MAX_REPOS repos).
 				for i := 0; i <= (MAX_REPOS - len); i++ {
-					redisMockSetValueForRepo(mock, keysInOrder[i], mapReposCached[keysInOrder[i]])
+					redisMockSetValueForRepo(mock, keysInOrder[i], mapReposCached[keysInOrder[i]], nil)
 				}
 				// now we can signal to the server it's ok to proceed
 				resyncCh <- 0
@@ -1030,7 +1086,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the repo cache needs to resync (idle queue)", func(t *testing.T) {
 		// start with an empty server that only has an empty repo cache
-		s, mock, dyncli, watcher, err := newServerWithRepos(t, nil, nil, nil)
+		s, mock, err := newServerWithRepos(t, nil, nil, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -1051,21 +1107,16 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
-		mock.ExpectGet(key).RedisNil()
-		redisMockSetValueForRepo(mock, key, byteArray)
-
-		unstructuredRepo, err := common.ToUnstructured(repo)
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-		unstructuredRepo, err = dyncli.Resource(repositoriesGvr).Namespace(repoNamespace).
-			Create(context.Background(), unstructuredRepo, metav1.CreateOptions{})
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
+		redisMockSetValueForRepo(mock, key, byteArray, nil)
 
 		s.repoCache.ExpectAdd(key)
-		watcher.Add(unstructuredRepo)
+
+		ctrlClient, watcher, err := ctrlClientAndWatcher(t, s)
+		if err != nil {
+			t.Fatal(err)
+		} else if err = ctrlClient.Create(context.Background(), repo); err != nil {
+			t.Fatal(err)
+		}
 
 		done := make(chan int, 1)
 
@@ -1090,7 +1141,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 				t.Errorf("ERROR: Expected empty repo work queue!")
 			} else {
 				mock.ExpectFlushDB().SetVal("OK")
-				redisMockSetValueForRepo(mock, key, byteArray)
+				redisMockSetValueForRepo(mock, key, byteArray, nil)
 				// now we can signal to the server it's ok to proceed
 				resyncCh <- 0
 				s.repoCache.WaitUntilResyncComplete()
@@ -1139,106 +1190,284 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 	})
 }
 
-func TestGetPackageRepositories(t *testing.T) {
+func TestAddPackageRepository(t *testing.T) {
+
+	// these will be used further on for TLS-related scenarios. Init
+	// byte arrays up front so they can be re-used in multiple places later
+	ca, pub, priv := getCertsForTesting(t)
+
 	testCases := []struct {
-		name                        string
-		request                     *v1alpha1.GetPackageRepositoriesRequest
-		repoNamespace               string
-		repoSpecs                   map[string]sourcev1.HelmRepositorySpec
-		expectedPackageRepositories []*v1alpha1.PackageRepository
-		statusCode                  codes.Code
+		name                  string
+		request               *corev1.AddPackageRepositoryRequest
+		expectedResponse      *corev1.AddPackageRepositoryResponse
+		expectedRepo          *sourcev1.HelmRepository
+		statusCode            codes.Code
+		existingSecret        *apiv1.Secret
+		expectedCreatedSecret *apiv1.Secret
 	}{
 		{
-			name:          "returns an internal error status if item in response cannot be converted to v1alpha1.PackageRepository",
-			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
-			repoNamespace: "default",
-			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
-				"repo-1": {},
-			},
-			statusCode: codes.Internal,
+			name:       "returns error if no namespace is provided",
+			request:    &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{}},
+			statusCode: codes.InvalidArgument,
 		},
 		{
-			name:          "returns expected repositories",
-			request:       &v1alpha1.GetPackageRepositoriesRequest{Context: &corev1.Context{}},
-			repoNamespace: "default",
-			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
-				"repo-1": {
-					URL: "https://charts.bitnami.com/bitnami",
-				},
-				"repo-2": {
-					URL: "https://charts.helm.sh/stable",
-				},
-			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{
-				{
-					Name:      "repo-1",
-					Namespace: "default",
-					Url:       "https://charts.bitnami.com/bitnami",
-				},
-				{
-					Name:      "repo-2",
-					Namespace: "default",
-					Url:       "https://charts.helm.sh/stable",
-				},
-			},
+			name:       "returns error if no name is provided",
+			request:    &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{Namespace: "foo"}},
+			statusCode: codes.InvalidArgument,
 		},
 		{
-			name: "returns expected repositories in specific namespace",
-			request: &v1alpha1.GetPackageRepositoriesRequest{
-				Context: &corev1.Context{
-					Namespace: "default",
-				},
+			name: "returns error if namespaced scoped",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:            "bar",
+				Context:         &corev1.Context{Namespace: "foo"},
+				NamespaceScoped: true,
 			},
-			repoNamespace: "non-default",
-			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
-				"repo-1": {
-					URL: "https://charts.bitnami.com/bitnami",
-				},
-				"repo-2": {
-					URL: "https://charts.helm.sh/stable",
-				},
-			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{},
+			statusCode: codes.Unimplemented,
 		},
 		{
-			name: "returns expected repositories in specific namespace (2)",
-			request: &v1alpha1.GetPackageRepositoriesRequest{
-				Context: &corev1.Context{
-					Namespace: "default",
+			name: "returns error if wrong repository type",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "foobar",
+			},
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "returns error if no url",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+			},
+			statusCode: codes.InvalidArgument,
+		},
+		{
+			name: "returns error if insecureskipverify is set",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					InsecureSkipVerify: true,
 				},
 			},
-			repoNamespace: "default",
-			repoSpecs: map[string]sourcev1.HelmRepositorySpec{
-				"repo-1": {
-					URL: "https://charts.bitnami.com/bitnami",
-				},
-				"repo-2": {
-					URL: "https://charts.helm.sh/stable",
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "simple add package repository scenario",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+			},
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_1,
+			statusCode:       codes.OK,
+		},
+		{
+			name: "package repository with tls cert authority",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_CertAuthority{
+						CertAuthority: string(ca),
+					},
 				},
 			},
-			expectedPackageRepositories: []*v1alpha1.PackageRepository{
-				{
-					Name:      "repo-1",
-					Namespace: "default",
-					Url:       "https://charts.bitnami.com/bitnami",
-				},
-				{
-					Name:      "repo-2",
-					Namespace: "default",
-					Url:       "https://charts.helm.sh/stable",
+			expectedResponse:      add_repo_expected_resp,
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newTlsSecret("bar-", "foo", nil, nil, ca),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "package repository with secret key reference",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
 				},
 			},
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_3,
+			statusCode:       codes.OK,
+			existingSecret:   newTlsSecret("secret-1", "foo", nil, nil, ca),
+		},
+		{
+			name: "failes when package repository links to non-existing secret",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				TlsConfig: &corev1.PackageRepositoryTlsConfig{
+					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
+				},
+			},
+			statusCode: codes.NotFound,
+		},
+		{
+			name: "package repository with basic auth and pass_credentials flag",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+						UsernamePassword: &corev1.UsernamePassword{
+							Username: "baz",
+							Password: "zot",
+						},
+					},
+					PassCredentials: true,
+				},
+			},
+			expectedResponse:      add_repo_expected_resp,
+			expectedRepo:          &add_repo_4,
+			expectedCreatedSecret: newBasicAuthSecret("bar-", "foo", "baz", "zot"),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "package repository with TLS authentication",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
+						TlsCertKey: &corev1.TlsCertKey{
+							Cert: string(pub),
+							Key:  string(priv),
+						},
+					},
+				},
+			},
+			expectedResponse:      add_repo_expected_resp,
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newTlsSecret("bar-", "foo", pub, priv, nil),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "errors for package repository with bearer token",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foobarzot",
+					},
+				},
+			},
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "errors for package repository with custom auth token",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foobarzot",
+					},
+				},
+			},
+			statusCode: codes.Unimplemented,
+		},
+		{
+			name: "package repository with docker config JSON authentication",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+						DockerCreds: &corev1.DockerCredentials{
+							Server:   "your.private.registry.example.com",
+							Username: "janedoe",
+							Password: "xxxxxxxx",
+							Email:    "jdoe@example.com",
+						},
+					},
+				},
+			},
+			expectedResponse:      add_repo_expected_resp,
+			expectedRepo:          &add_repo_2,
+			expectedCreatedSecret: newDockerConfigJSONSecret("bar-", "foo", "your.private.registry.example.com", "janedoe", "xxxxxxxx", "jdoe@example.com"),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "package repository with basic auth and existing secret",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:    "bar",
+				Context: &corev1.Context{Namespace: "foo"},
+				Type:    "helm",
+				Url:     "http://example.com",
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-1",
+						},
+					},
+				},
+			},
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_3,
+			existingSecret:   newBasicAuthSecret("secret-1", "foo", "baz", "zot"),
+			statusCode:       codes.OK,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, _, _, err := newServerWithRepos(t, newRepos(tc.repoSpecs, tc.repoNamespace), nil, nil)
+			secrets := []runtime.Object{}
+			if tc.existingSecret != nil {
+				secrets = append(secrets, tc.existingSecret)
+			}
+			s, mock, err := newServerWithRepos(t, nil, nil, secrets)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			response, err := s.GetPackageRepositories(context.Background(), tc.request)
+			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
+			if tc.statusCode == codes.OK {
+				key, err := redisKeyForRepoNamespacedName(nsname)
+				if err != nil {
+					t.Fatal(err)
+				}
+				mock.ExpectGet(key).RedisNil()
+			}
+
+			ctx := context.Background()
+			response, err := s.AddPackageRepository(ctx, tc.request)
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1249,76 +1478,96 @@ func TestGetPackageRepositories(t *testing.T) {
 				if response == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(v1alpha1.PackageRepository{}, corev1.Context{})
-					opt2 := cmpopts.SortSlices(lessPackageRepositoryFunc)
-					if got, want := response.Repositories, tc.expectedPackageRepositories; !cmp.Equal(got, want, opt1, opt2) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+					opt1 := cmpopts.IgnoreUnexported(
+						corev1.AddPackageRepositoryResponse{},
+						corev1.Context{},
+						corev1.PackageRepositoryReference{},
+						plugins.Plugin{},
+					)
+					if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
 			}
 
-			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+			// purposefully not calling mock.ExpectationsWereMet() here because
+			// AddPackageRepository will trigger an ADD event that will be processed
+			// asynchronously, so it may or may not have enough time to get to the
+			// point where the cache worker does a GET
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.statusCode != codes.OK {
+				return
+			}
+
+			// check expected HelmReleass CRD has been created
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+				t.Fatal(err)
+			} else {
+				var actualRepo sourcev1.HelmRepository
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
+					t.Fatal(err)
+				} else {
+					opt1 := cmpopts.IgnoreFields(sourcev1.HelmRepositorySpec{}, "SecretRef")
+
+					if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+					}
+
+					if tc.expectedCreatedSecret != nil {
+						if !strings.HasPrefix(actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name) {
+							t.Errorf("SecretRef [%s] was expected to start with [%s]",
+								actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name)
+						}
+						opt1 := cmpopts.IgnoreFields(
+							metav1.ObjectMeta{}, "Name", "GenerateName")
+						// check expected secret has been created
+						if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+							t.Fatal(err)
+						} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
+							t.Fatal(err)
+						} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt1) {
+							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+						} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
+							t.Errorf("Secret Name [%s] was expected to start with [%s]",
+								secret.Name, tc.expectedCreatedSecret.Name)
+						}
+					}
+				}
 			}
 		})
 	}
 }
 
-func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, *fake.FakeDynamicClient, *watch.FakeWatcher, error) {
+func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, error) {
 	typedClient := typfake.NewSimpleClientset(secrets...)
 
-	initObjs := []runtime.Object{}
-	for _, r := range repos {
-		unstructuredRepo, err := common.ToUnstructured(&r)
-		if err != nil {
-			return nil, nil, nil, nil, err
-		}
-		initObjs = append(initObjs, unstructuredRepo)
-	}
-
-	dynamicClient := fake.NewSimpleDynamicClientWithCustomListKinds(
-		runtime.NewScheme(),
-		map[schema.GroupVersionResource]string{
-			repositoriesGvr: fluxHelmRepositoryList,
-		},
-		initObjs...)
-
-	// here we are essentially adding on to how List() works for HelmRepository objects
-	// this is done so that the item list returned by List() command with fake client contains
-	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
-	// is critical
-	reactor := dynamicClient.Fake.ReactionChain[0]
-
-	// here we are essentially adding on to how List() works for HelmRepository objects
-	// this is done so that the the item list returned by List() command with fake client contains
-	// a "resourceVersion" field in its metadata, which happens in a real k8s environment and
-	// is critical
-	dynamicClient.Fake.PrependReactor("list", fluxHelmRepositories,
-		func(action k8stesting.Action) (bool, runtime.Object, error) {
-			handled, ret, err := reactor.React(action)
-			if err == nil {
-				ulist, ok := ret.(*unstructured.UnstructuredList)
-				if ok && ulist != nil {
-					ulist.SetResourceVersion("1")
-				}
+	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
+	typedClient.PrependReactor(
+		"create", "*",
+		func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+			ret = action.(k8stesting.CreateAction).GetObject()
+			meta, ok := ret.(metav1.Object)
+			if !ok {
+				return
 			}
-			return handled, ret, err
+			if meta.GetName() == "" && meta.GetGenerateName() != "" {
+				meta.SetName(names.SimpleNameGenerator.GenerateName(meta.GetGenerateName()))
+			}
+			return
 		})
 
-	watcher := watch.NewFake()
-
-	dynamicClient.Fake.PrependWatchReactor(
-		fluxHelmRepositories,
-		k8stesting.DefaultWatchReactor(watcher, nil))
-
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
-
+	ctrlClient := newCtrlClient(repos, nil, nil)
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewClientInterfaces(typedClient, dynamicClient, apiextIfc), nil
+		return clientgetter.
+			NewBuilder().
+			WithTyped(typedClient).
+			WithApiExt(apiextIfc).
+			WithControllerRuntime(&ctrlClient).
+			Build(), nil
 	}
-
-	s, mock, err := newServer(t, clientGetter, nil, repos, charts)
-	return s, mock, dynamicClient, watcher, err
+	return newServer(t, clientGetter, nil, repos, charts)
 }
 
 func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
@@ -1328,9 +1577,8 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 			APIVersion: sourcev1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Generation:      int64(1),
-			ResourceVersion: "1",
+			Name:       name,
+			Generation: int64(1),
 		},
 	}
 	if namespace != "" {
@@ -1360,68 +1608,6 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 	return helmRepository
 }
 
-// newRepos takes a map of specs keyed by object name converting them to typed flux HelmRepository objects.
-func newRepos(specs map[string]sourcev1.HelmRepositorySpec, namespace string) []sourcev1.HelmRepository {
-	repos := []sourcev1.HelmRepository{}
-	for name, spec := range specs {
-		repo := newRepo(name, namespace, &spec, nil)
-		repos = append(repos, repo)
-	}
-	return repos
-}
-
-// ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
-func newBasicAuthSecret(name, namespace, user, password string) *k8scorev1.Secret {
-	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: k8scorev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"username": []byte(user),
-			"password": []byte(password),
-		},
-	}
-}
-
-// Note that according to https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
-// TLS secrets need to look one way, but according to
-// https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
-// in a different format:
-// certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
-func newTlsSecret(name, namespace string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: k8scorev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"certFile": pub,
-			"keyFile":  priv,
-			"caFile":   ca,
-		},
-	}, nil
-}
-
-func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) (*k8scorev1.Secret, error) {
-	return &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: k8scorev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"username": []byte(user),
-			"password": []byte(password),
-			"certFile": pub,
-			"keyFile":  priv,
-			"caFile":   ca,
-		},
-	}, nil
-}
-
 // these functiosn should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
 func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
@@ -1449,7 +1635,7 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 	return nil
 }
 
-func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository) (key string, bytes []byte, err error) {
+func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, bytes []byte, err error) {
 	backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
 		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
@@ -1457,24 +1643,34 @@ func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo source
 		clientGetter: backgroundClientGetter,
 		chartCache:   nil,
 	}
-	return sink.redisMockSetValueForRepo(mock, repo)
+	return sink.redisMockSetValueForRepo(mock, repo, oldValue)
 }
 
-func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
+func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {
 	if key, err = redisKeyForRepo(repo); err != nil {
 		return key, nil, err
 	}
-	if key, byteArray, err = sink.redisKeyValueForRepo(repo); err != nil {
+	if key, newValue, err = sink.redisKeyValueForRepo(repo); err != nil {
+		if oldValue == nil {
+			mock.ExpectGet(key).RedisNil()
+		} else {
+			mock.ExpectGet(key).SetVal(string(oldValue))
+		}
 		mock.ExpectDel(key).SetVal(0)
 		return key, nil, err
 	} else {
-		redisMockSetValueForRepo(mock, key, byteArray)
-		return key, byteArray, nil
+		redisMockSetValueForRepo(mock, key, newValue, oldValue)
+		return key, newValue, nil
 	}
 }
 
-func redisMockSetValueForRepo(mock redismock.ClientMock, key string, byteArray []byte) {
-	mock.ExpectSet(key, byteArray, 0).SetVal("OK")
+func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, oldValue []byte) {
+	if oldValue == nil {
+		mock.ExpectGet(key).RedisNil()
+	} else {
+		mock.ExpectGet(key).SetVal(string(oldValue))
+	}
+	mock.ExpectSet(key, newValue, 0).SetVal("OK")
 	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
 }
 
@@ -1490,16 +1686,11 @@ func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key 
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {
-		unstructuredObj, err := common.ToUnstructured(&r)
-		if err != nil {
-			return key, nil, err
-		}
-
 		// we are not really adding anything to the cache here, rather just calling a
 		// onAddRepo to compute the value that *WOULD* be stored in the cache
 		var byteArray interface{}
 		var add bool
-		byteArray, add, err = sink.onAddRepo(key, *unstructuredObj)
+		byteArray, add, err = sink.onAddRepo(key, &r)
 		if err != nil {
 			return key, nil, err
 		} else if !add {
@@ -1555,7 +1746,7 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 	}
 
 	if secretRef != "" {
-		repoSpec.SecretRef = &meta.LocalObjectReference{Name: secretRef}
+		repoSpec.SecretRef = &fluxmeta.LocalObjectReference{Name: secretRef}
 	}
 
 	lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
@@ -1583,182 +1774,263 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 }
 
 // misc global vars that get re-used in multiple tests scenarios
-var repositoriesGvr = schema.GroupVersionResource{
-	Group:    sourcev1.GroupVersion.Group,
-	Version:  sourcev1.GroupVersion.Version,
-	Resource: fluxHelmRepositories,
-}
+var (
+	repositoriesGvr = schema.GroupVersionResource{
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
+		Resource: fluxHelmRepositories,
+	}
 
-var valid_index_charts_spec = []testSpecChartWithFile{
-	{
-		name:     "acs-engine-autoscaler",
-		tgzFile:  "testdata/acs-engine-autoscaler-2.1.1.tgz",
-		revision: "2.1.1",
-	},
-	{
-		name:     "wordpress",
-		tgzFile:  "testdata/wordpress-0.7.5.tgz",
-		revision: "0.7.5",
-	},
-	{
-		name:     "wordpress",
-		tgzFile:  "testdata/wordpress-0.7.4.tgz",
-		revision: "0.7.4",
-	},
-}
-
-var valid_index_package_summaries = []*corev1.AvailablePackageSummary{
-	{
-		Name:        "acs-engine-autoscaler",
-		DisplayName: "acs-engine-autoscaler",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "2.1.1",
-			AppVersion: "2.1.1",
+	valid_index_charts_spec = []testSpecChartWithFile{
+		{
+			name:     "acs-engine-autoscaler",
+			tgzFile:  "testdata/charts/acs-engine-autoscaler-2.1.1.tgz",
+			revision: "2.1.1",
 		},
-		IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-		ShortDescription: "Scales worker nodes within agent pools",
+		{
+			name:     "wordpress",
+			tgzFile:  "testdata/charts/wordpress-0.7.5.tgz",
+			revision: "0.7.5",
+		},
+		{
+			name:     "wordpress",
+			tgzFile:  "testdata/charts/wordpress-0.7.4.tgz",
+			revision: "0.7.4",
+		},
+	}
+
+	valid_index_package_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "acs-engine-autoscaler",
+			DisplayName: "acs-engine-autoscaler",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "2.1.1",
+				AppVersion: "2.1.1",
+			},
+			IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+			ShortDescription: "Scales worker nodes within agent pools",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "bitnami-1/acs-engine-autoscaler",
+				Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+		{
+			Name:        "wordpress",
+			DisplayName: "wordpress",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "0.7.5",
+				AppVersion: "4.9.1",
+			},
+			IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+			ShortDescription: "new description!",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "bitnami-1/wordpress",
+				Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+	}
+
+	cert_manager_summary = &corev1.AvailablePackageSummary{
+		Name:        "cert-manager",
+		DisplayName: "cert-manager",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "v1.4.0",
+			AppVersion: "v1.4.0",
+		},
+		IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
+		ShortDescription: "A Helm chart for cert-manager",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "bitnami-1/acs-engine-autoscaler",
+			Identifier: "jetstack-1/cert-manager",
+			Context:    &corev1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
+			Plugin:     fluxPlugin,
+		},
+		Categories: []string{""},
+	}
+
+	elasticsearch_summary = &corev1.AvailablePackageSummary{
+		Name:        "elasticsearch",
+		DisplayName: "elasticsearch",
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "15.5.0",
+			AppVersion: "7.13.2",
+		},
+		IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
+		ShortDescription: "A highly scalable open-source full-text search and analytics engine",
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Identifier: "index-with-categories-1/elasticsearch",
 			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
-		Categories: []string{""},
-	},
-	{
-		Name:        "wordpress",
-		DisplayName: "wordpress",
+		Categories: []string{"Analytics"},
+	}
+
+	ghost_summary = &corev1.AvailablePackageSummary{
+		Name:        "ghost",
+		DisplayName: "ghost",
 		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "0.7.5",
-			AppVersion: "4.9.1",
+			PkgVersion: "13.0.14",
+			AppVersion: "4.7.0",
 		},
-		IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-		ShortDescription: "new description!",
+		IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
+		ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
 		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "bitnami-1/wordpress",
+			Identifier: "index-with-categories-1/ghost",
 			Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
 			Plugin:     fluxPlugin,
 		},
-		Categories: []string{""},
-	},
-}
+		Categories: []string{"CMS"},
+	}
 
-var cert_manager_summary = &corev1.AvailablePackageSummary{
-	Name:        "cert-manager",
-	DisplayName: "cert-manager",
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "v1.4.0",
-		AppVersion: "v1.4.0",
-	},
-	IconUrl:          "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-	ShortDescription: "A Helm chart for cert-manager",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "jetstack-1/cert-manager",
-		Context:    &corev1.Context{Namespace: "ns1", Cluster: KubeappsCluster},
-		Plugin:     fluxPlugin,
-	},
-	Categories: []string{""},
-}
+	index_with_categories_summaries = []*corev1.AvailablePackageSummary{
+		elasticsearch_summary,
+		ghost_summary,
+	}
 
-var elasticsearch_summary = &corev1.AvailablePackageSummary{
-	Name:        "elasticsearch",
-	DisplayName: "elasticsearch",
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "15.5.0",
-		AppVersion: "7.13.2",
-	},
-	IconUrl:          "https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png",
-	ShortDescription: "A highly scalable open-source full-text search and analytics engine",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "index-with-categories-1/elasticsearch",
-		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
-		Plugin:     fluxPlugin,
-	},
-	Categories: []string{"Analytics"},
-}
-
-var ghost_summary = &corev1.AvailablePackageSummary{
-	Name:        "ghost",
-	DisplayName: "ghost",
-	LatestVersion: &corev1.PackageAppVersion{
-		PkgVersion: "13.0.14",
-		AppVersion: "4.7.0",
-	},
-	IconUrl:          "https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png",
-	ShortDescription: "A simple, powerful publishing platform that allows you to share your stories with the world",
-	AvailablePackageRef: &corev1.AvailablePackageReference{
-		Identifier: "index-with-categories-1/ghost",
-		Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
-		Plugin:     fluxPlugin,
-	},
-	Categories: []string{"CMS"},
-}
-
-var index_with_categories_summaries = []*corev1.AvailablePackageSummary{
-	elasticsearch_summary,
-	ghost_summary,
-}
-
-var index_before_update_summaries = []*corev1.AvailablePackageSummary{
-	{
-		Name:        "alpine",
-		DisplayName: "alpine",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "0.2.0",
+	index_before_update_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "alpine",
+			DisplayName: "alpine",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "0.2.0",
+			},
+			IconUrl:          "",
+			ShortDescription: "Deploy a basic Alpine Linux pod",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "testrepo/alpine",
+				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
 		},
-		IconUrl:          "",
-		ShortDescription: "Deploy a basic Alpine Linux pod",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+		{
+			Name:        "nginx",
+			DisplayName: "nginx",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "1.1.0",
+			},
+			IconUrl:          "",
+			ShortDescription: "Create a basic nginx HTTP server",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "testrepo/nginx",
+				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+	}
+
+	index_after_update_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "alpine",
+			DisplayName: "alpine",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "0.3.0",
+			},
+			IconUrl:          "",
+			ShortDescription: "Deploy a basic Alpine Linux pod",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "testrepo/alpine",
+				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+		{
+			Name:        "nginx",
+			DisplayName: "nginx",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "1.1.0",
+			},
+			IconUrl:          "",
+			ShortDescription: "Create a basic nginx HTTP server",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "testrepo/nginx",
+				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		}}
+
+	add_repo_1 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+		},
+	}
+
+	add_repo_2 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:       "http://example.com",
+			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			SecretRef: &fluxmeta.LocalObjectReference{Name: "bar-"},
+		},
+	}
+
+	add_repo_3 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:       "http://example.com",
+			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			SecretRef: &fluxmeta.LocalObjectReference{Name: "secret-1"},
+		},
+	}
+
+	add_repo_4 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:             "http://example.com",
+			Interval:        metav1.Duration{Duration: 10 * time.Minute},
+			SecretRef:       &fluxmeta.LocalObjectReference{Name: "bar-"},
+			PassCredentials: true,
+		},
+	}
+
+	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "foo",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "bar",
 			Plugin:     fluxPlugin,
 		},
-		Categories: []string{""},
-	},
-	{
-		Name:        "nginx",
-		DisplayName: "nginx",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "1.1.0",
-		},
-		IconUrl:          "",
-		ShortDescription: "Create a basic nginx HTTP server",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-			Plugin:     fluxPlugin,
-		},
-		Categories: []string{""},
-	},
-}
-
-var index_after_update_summaries = []*corev1.AvailablePackageSummary{
-	{
-		Name:        "alpine",
-		DisplayName: "alpine",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "0.3.0",
-		},
-		IconUrl:          "",
-		ShortDescription: "Deploy a basic Alpine Linux pod",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "testrepo/alpine",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-			Plugin:     fluxPlugin,
-		},
-		Categories: []string{""},
-	},
-	{
-		Name:        "nginx",
-		DisplayName: "nginx",
-		LatestVersion: &corev1.PackageAppVersion{
-			PkgVersion: "1.1.0",
-		},
-		IconUrl:          "",
-		ShortDescription: "Create a basic nginx HTTP server",
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Identifier: "testrepo/nginx",
-			Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-			Plugin:     fluxPlugin,
-		},
-		Categories: []string{""},
-	}}
+	}
+)

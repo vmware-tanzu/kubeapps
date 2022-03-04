@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/gob"
 	"fmt"
 	"reflect"
@@ -13,8 +14,9 @@ import (
 	"strings"
 	"time"
 
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
@@ -27,11 +29,10 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
+	"k8s.io/apimachinery/pkg/util/sets"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -41,70 +42,45 @@ const (
 	fluxHelmRepositoryList = "HelmRepositoryList"
 )
 
-func (s *Server) getRepoResourceInterface(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	client, err := s.clientGetter.Dynamic(ctx, s.kubeappsCluster)
-	if err != nil {
-		return nil, err
-	}
-
-	repositoriesResource := schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
-		Resource: fluxHelmRepositories,
-	}
-
-	return client.Resource(repositoriesResource).Namespace(namespace), nil
-}
+var (
+	// default poll interval is 10 min
+	defaultPollInterval = metav1.Duration{Duration: 10 * time.Minute}
+)
 
 // namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
 func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]sourcev1.HelmRepository, error) {
-	resourceIfc, err := s.getRepoResourceInterface(ctx, namespace)
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if unstructuredList, err := resourceIfc.List(ctx, metav1.ListOptions{}); err != nil {
+	var repoList sourcev1.HelmRepositoryList
+	if err := client.List(ctx, &repoList); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmRepository", namespace+"/*", err)
 	} else {
-		repoArray := []sourcev1.HelmRepository{}
-		for _, u := range unstructuredList.Items {
-			repo := sourcev1.HelmRepository{}
-			if err := common.FromUnstructured(&u, &repo); err != nil {
-				return nil, err
-			}
-			repoArray = append(repoArray, repo)
-		}
-		return repoArray, nil
+		return repoList.Items, nil
 	}
 }
 
 func (s *Server) getRepoInCluster(ctx context.Context, key types.NamespacedName) (*sourcev1.HelmRepository, error) {
-	resourceIfc, err := s.getRepoResourceInterface(ctx, key.Namespace)
+	client, err := s.getClient(ctx, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
-
-	u, err := resourceIfc.Get(ctx, key.Name, metav1.GetOptions{})
-	if err != nil {
+	var repo sourcev1.HelmRepository
+	if err = client.Get(ctx, key, &repo); err != nil {
 		return nil, statuserror.FromK8sError("get", "HelmRepository", key.String(), err)
-	} else if u == nil {
-		return nil, status.Errorf(codes.NotFound, "unable to find HelmRepository [%s]", key)
-	}
-
-	repo := sourcev1.HelmRepository{}
-	if err := common.FromUnstructured(u, &repo); err != nil {
-		return nil, err
 	}
 	return &repo, nil
 }
 
 // regexp expressions are used for matching actual names against expected patters
-func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) ([]string, error) {
+func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) (sets.String, error) {
 	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	resultKeys := make([]string, 0)
+	resultKeys := sets.String{}
 	for _, repo := range repoList {
 		// first check if repo is in ready state
 		if !isRepoReady(repo) {
@@ -128,7 +104,7 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 			matched = true
 		}
 		if matched {
-			resultKeys = append(resultKeys, s.repoCache.KeyForNamespacedName(*name))
+			resultKeys.Insert(s.repoCache.KeyForNamespacedName(*name))
 		}
 	}
 	return resultKeys, nil
@@ -192,6 +168,153 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.Namesp
 	return sink.clientOptionsForRepo(ctx, *repo)
 }
 
+func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, url string, interval uint32,
+	tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
+	if url == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
+	}
+
+	var secret *apiv1.Secret
+	if tlsConfig != nil {
+		if tlsConfig.InsecureSkipVerify {
+			return nil, status.Errorf(codes.Unimplemented, "TLS flag insecureSkipVerify is not supported")
+		}
+		caCert := tlsConfig.GetCertAuthority()
+		if caCert != "" {
+			secret = newLocalOpaqueSecret(targetName.Name + "-")
+			secret.Data["caFile"] = []byte(caCert)
+		}
+	}
+	if auth != nil && auth.GetSecretRef() == nil {
+		if secret == nil {
+			secret = newLocalOpaqueSecret(targetName.Name + "-")
+		}
+		switch auth.Type {
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+			if unp := auth.GetUsernamePassword(); unp != nil {
+				secret.Data["username"] = []byte(unp.Username)
+				secret.Data["password"] = []byte(unp.Password)
+			} else {
+				return nil, status.Errorf(codes.Internal, "Username/Password configuration is missing")
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+			if ck := auth.GetTlsCertKey(); ck != nil {
+				secret.Data["certFile"] = []byte(ck.Cert)
+				secret.Data["keyFile"] = []byte(ck.Key)
+			} else {
+				return nil, status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
+			return nil, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			if dc := auth.GetDockerCreds(); dc != nil {
+				secret.Type = apiv1.SecretTypeDockerConfigJson
+				// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+				authStr := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", dc.Username, dc.Password)))
+				configStr := fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
+					dc.Server, dc.Username, dc.Password, dc.Email, authStr)
+				secret.Data[".dockerconfigjson"] = []byte(base64.StdEncoding.EncodeToString([]byte(configStr)))
+			} else {
+				return nil, status.Errorf(codes.Internal, "Docker credentials configuration is missing")
+			}
+		default:
+			return nil, status.Errorf(codes.Internal, "Unexpected package repository authentication type: %q", auth.Type)
+		}
+	}
+
+	passCredentials := auth != nil && auth.PassCredentials
+
+	secretRef, checkSecret := "", false
+	if secret != nil {
+		// create a secret first, if applicable
+		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+			return nil, err
+		} else if secret, err = typedClient.CoreV1().Secrets(targetName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
+			return nil, statuserror.FromK8sError("create", "secret", secret.GetName(), err)
+		} else {
+			secretRef = secret.GetName()
+		}
+	} else if tlsConfig != nil && tlsConfig.GetSecretRef().GetName() != "" {
+		// check that the specified secret exists
+		secretRef, checkSecret = tlsConfig.GetSecretRef().GetName(), true
+	} else if auth != nil && auth.GetSecretRef().GetName() != "" {
+		secretRef, checkSecret = auth.GetSecretRef().GetName(), true
+	}
+
+	if secretRef != "" && checkSecret {
+		// check that the specified secret exists
+		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+			return nil, err
+		} else if _, err = typedClient.CoreV1().Secrets(targetName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
+			return nil, statuserror.FromK8sError("get", "secret", secretRef, err)
+		}
+		// TODO (gfichtenholt) also check that the data in the opaque secret corresponds
+		// to specified auth type, e.g. if AuthType is
+		// PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+		// check that the secret has "username" and "password" fields, etc.
+
+		// TODO (gfichtenholt)
+		// ref https://github.com/kubeapps/kubeapps/pull/4353#discussion_r816332595
+		// check whether flux supports typed secrets in addition to opaque secrets
+		// https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
+		// If so, that cause certain validation to be done on the data (ie. ensuring that
+		//	the "username" and "password" fields are present).
+	}
+
+	if fluxRepo, err := s.newFluxHelmRepo(targetName, url, interval, secretRef, passCredentials); err != nil {
+		return nil, err
+	} else if client, err := s.getClient(ctx, targetName.Namespace); err != nil {
+		return nil, err
+	} else if err = client.Create(ctx, fluxRepo); err != nil {
+		return nil, statuserror.FromK8sError("create", "HelmRepository", targetName.String(), err)
+	} else {
+		return &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: fluxRepo.Namespace,
+				Cluster:   s.kubeappsCluster,
+			},
+			Identifier: fluxRepo.Name,
+			Plugin:     GetPluginDetail(),
+		}, nil
+	}
+}
+
+// ref https://fluxcd.io/docs/components/source/helmrepositories/
+func (s *Server) newFluxHelmRepo(
+	targetName types.NamespacedName,
+	url string,
+	interval uint32,
+	secretRef string,
+	passCredentials bool) (*sourcev1.HelmRepository, error) {
+	pollInterval := defaultPollInterval
+	if interval > 0 {
+		pollInterval = metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	}
+	fluxRepo := &sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      targetName.Name,
+			Namespace: targetName.Namespace,
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      url,
+			Interval: pollInterval,
+		},
+	}
+	if secretRef != "" {
+		fluxRepo.Spec.SecretRef = &fluxmeta.LocalObjectReference{
+			Name: secretRef,
+		}
+	}
+	if passCredentials {
+		fluxRepo.Spec.PassCredentials = true
+	}
+	return fluxRepo, nil
+}
+
 //
 // implements plug-in specific cache-related functionality
 //
@@ -208,17 +331,14 @@ type repoCacheEntryValue struct {
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
-func (s *repoEventSink) onAddRepo(key string, unstructuredRepo unstructured.Unstructured) (interface{}, bool, error) {
-	log.V(4).Info("+onAddRepo()")
+func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{}, bool, error) {
+	log.V(4).Info("+onAddRepo(%s)", key)
 	defer log.V(4).Info("-onAddRepo()")
 
-	repo := sourcev1.HelmRepository{}
-	if err := common.FromUnstructured(&unstructuredRepo, &repo); err != nil {
-		return nil, false, err
-	}
-
-	// first, check the repo is ready
-	if isRepoReady(repo) {
+	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+	} else if isRepoReady(*repo) {
+		// first, check the repo is ready
 		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 		if artifact := repo.GetArtifact(); artifact != nil {
 			if checksum := artifact.Checksum; checksum == "" {
@@ -226,7 +346,7 @@ func (s *repoEventSink) onAddRepo(key string, unstructuredRepo unstructured.Unst
 					"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
 					common.PrettyPrint(repo))
 			} else {
-				return s.indexAndEncode(checksum, repo)
+				return s.indexAndEncode(checksum, *repo)
 			}
 		} else {
 			return nil, false, status.Errorf(codes.Internal,
@@ -281,11 +401,6 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Chart, error) {
 	startTime := time.Now()
 
-	pkgRepo, err := packageRepositoryFromFlux(repo)
-	if err != nil {
-		return nil, err
-	}
-
 	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 	indexUrl := repo.Status.URL
 	if indexUrl == "" {
@@ -310,9 +425,9 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 	}
 
 	modelRepo := &models.Repo{
-		Namespace: pkgRepo.Namespace,
-		Name:      pkgRepo.Name,
-		URL:       pkgRepo.Url,
+		Namespace: repo.Namespace,
+		Name:      repo.Name,
+		URL:       indexUrl,
 		Type:      "helm",
 	}
 
@@ -338,14 +453,11 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 }
 
 // onModifyRepo essentially tells the cache whether or not to and what to store for a given key
-func (s *repoEventSink) onModifyRepo(key string, unstructuredRepo unstructured.Unstructured, oldValue interface{}) (interface{}, bool, error) {
-	repo := sourcev1.HelmRepository{}
-	if err := common.FromUnstructured(&unstructuredRepo, &repo); err != nil {
-		return nil, false, err
-	}
-
-	// first check the repo is ready
-	if isRepoReady(repo) {
+func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue interface{}) (interface{}, bool, error) {
+	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+	} else if isRepoReady(*repo) {
+		// first check the repo is ready
 		// We should to compare checksums on what's stored in the cache
 		// vs the modified object to see if the contents has really changed before embarking on
 		// expensive operation indexOneRepo() below.
@@ -378,7 +490,7 @@ func (s *repoEventSink) onModifyRepo(key string, unstructuredRepo unstructured.U
 		}
 
 		if cacheEntry.Checksum != newChecksum {
-			return s.indexAndEncode(newChecksum, repo)
+			return s.indexAndEncode(newChecksum, *repo)
 		} else {
 			// skip because the content did not change
 			return nil, false, nil
@@ -437,7 +549,7 @@ func (s *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 
 // this is only until https://github.com/kubeapps/kubeapps/issues/3496
 // "Investigate and propose package repositories API with similar core interface to packages API"
-// gets implemented. After that, the auth should be part of packageRepositoryFromUnstructured()
+// gets implemented. After that, the auth should be part of some kind of packageRepositoryFromCtrlObject()
 // The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
 // ChartCache
 func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.ClientOptions, error) {
@@ -481,26 +593,6 @@ func isRepoReady(repo sourcev1.HelmRepository) bool {
 	return completed && success
 }
 
-func packageRepositoryFromFlux(repo sourcev1.HelmRepository) (*v1alpha1.PackageRepository, error) {
-	name, err := common.NamespacedName(&repo)
-	if err != nil {
-		return nil, err
-	}
-
-	url := repo.Spec.URL
-	if url == "" {
-		return nil, status.Errorf(
-			codes.Internal,
-			"required field spec.url not found on HelmRepository:\n%s",
-			common.PrettyPrint(repo))
-	}
-	return &v1alpha1.PackageRepository{
-		Name:      name.Name,
-		Namespace: name.Namespace,
-		Url:       url,
-	}, nil
-}
-
 // returns 3 things:
 // - complete whether the operation was completed
 // - success (only applicable when complete == true) whether the operation was successful or failed
@@ -535,4 +627,14 @@ func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success
 		}
 	}
 	return false, false, reason
+}
+
+func newLocalOpaqueSecret(name string) *apiv1.Secret {
+	return &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: name,
+		},
+		Type: apiv1.SecretTypeOpaque,
+		Data: map[string][]byte{},
+	}
 }
