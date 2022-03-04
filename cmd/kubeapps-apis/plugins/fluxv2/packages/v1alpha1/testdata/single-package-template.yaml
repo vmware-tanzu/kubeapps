@@ -28,5 +28,5 @@
         - https://github.com/bitnami/bitnami-docker-redis
         - http://redis.io/
       urls:
-        - "{{testdata/redis-14.4.0.tgz}}"
+        - "{{testdata/charts/redis-14.4.0.tgz}}"
       version: 14.4.0

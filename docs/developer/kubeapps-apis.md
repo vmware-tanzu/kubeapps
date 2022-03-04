@@ -230,7 +230,7 @@ You should be able to install the exact versions of the various go CLI dependenc
 make cli-dependencies
 ```
 
-This will ensure that the cobra command is available should you need to add a sub-command.
+This will ensure that the `cobra-cli` command is available should you need to add a sub-command.
 
 ### Install buf
 

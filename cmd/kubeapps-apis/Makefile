@@ -14,7 +14,7 @@ build-plugins:
 # See https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
 cli-dependencies:
 	go get \
-		github.com/spf13/cobra/cobra \
+		github.com/spf13/cobra-cli \
 		google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 		google.golang.org/protobuf/cmd/protoc-gen-go \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
