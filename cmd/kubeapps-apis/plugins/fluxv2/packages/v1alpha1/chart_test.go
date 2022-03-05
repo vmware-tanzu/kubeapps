@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	redismock "github.com/go-redis/redismock/v8"
@@ -837,6 +838,101 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 	})
 }
 
+// ref https://github.com/kubeapps/kubeapps/issues/4381
+// [fluxv2] non-FQDN chart url fails on chart view #4381
+func TestChartWithRelativeURL(t *testing.T) {
+	repoName := "testRepo"
+	repoNamespace := "default"
+
+	tarGzBytes, err := ioutil.ReadFile("testdata/charts/airflow-1.0.0.tgz")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	indexYAMLBytes, err := ioutil.ReadFile("testdata/chart-with-relative-url.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.RequestURI == "/index.yaml" {
+			fmt.Fprintln(w, string(indexYAMLBytes))
+		} else if r.RequestURI == "/charts/airflow-1.0.0.tgz" {
+			w.WriteHeader(200)
+			w.Write(tarGzBytes)
+		} else {
+			w.WriteHeader(404)
+		}
+	}))
+
+	repoSpec := &sourcev1.HelmRepositorySpec{
+		URL:      ts.URL,
+		Interval: metav1.Duration{Duration: 1 * time.Minute},
+	}
+
+	lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repoStatus := &sourcev1.HelmRepositoryStatus{
+		Artifact: &sourcev1.Artifact{
+			Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+			LastUpdateTime: metav1.Time{Time: lastUpdateTime},
+			Revision:       "651f952130ea96823711d08345b85e82be011dc6",
+		},
+		Conditions: []metav1.Condition{
+			{
+				Type:   "Ready",
+				Status: "True",
+				Reason: sourcev1.IndexationSucceededReason,
+			},
+		},
+		URL: ts.URL + "/index.yaml",
+	}
+	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
+	defer ts.Close()
+
+	s, mock, err := newServerWithRepos(t,
+		[]sourcev1.HelmRepository{repo},
+		[]testSpecChartWithUrl{
+			{
+				chartID:       fmt.Sprintf("%s/airflow", repoName),
+				chartRevision: "1.0.0",
+				chartUrl:      ts.URL + "/charts/airflow-1.0.0.tgz",
+				repoNamespace: repoNamespace,
+			},
+		}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	key, bytes, err := s.redisKeyValueForRepo(repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock.ExpectGet(key).SetVal(string(bytes))
+
+	response, err := s.GetAvailablePackageVersions(
+		context.Background(), &corev1.GetAvailablePackageVersionsRequest{
+			AvailablePackageRef: availableRef(repoName+"/airflow", repoNamespace),
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	opts := cmpopts.IgnoreUnexported(
+		corev1.GetAvailablePackageVersionsResponse{},
+		corev1.PackageAppVersion{})
+	if got, want := response, expected_versions_airflow; !cmp.Equal(want, got, opts) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sourcev1.HelmChartStatus) sourcev1.HelmChart {
 	helmChart := sourcev1.HelmChart{
 		TypeMeta: metav1.TypeMeta{
@@ -959,95 +1055,102 @@ func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.
 }
 
 // global vars
-
-var redis_charts_spec = []testSpecChartWithFile{
-	{
-		name:     "redis",
-		tgzFile:  "testdata/charts/redis-14.4.0.tgz",
-		revision: "14.4.0",
-	},
-	{
-		name:     "redis",
-		tgzFile:  "testdata/charts/redis-14.3.4.tgz",
-		revision: "14.3.4",
-	},
-}
-
-var expected_detail_redis_1 = &corev1.AvailablePackageDetail{
-	AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
-	Name:                "redis",
-	Version: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "6.2.4",
-	},
-	RepoUrl:          "https://example.repo.com/charts",
-	HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
-	IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	DisplayName:      "redis",
-	Categories:       []string{"Database"},
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-	DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
-	ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
-	SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
-	Maintainers: []*corev1.Maintainer{
+var (
+	redis_charts_spec = []testSpecChartWithFile{
 		{
-			Name:  "Bitnami",
-			Email: "containers@bitnami.com",
+			name:     "redis",
+			tgzFile:  "testdata/charts/redis-14.4.0.tgz",
+			revision: "14.4.0",
 		},
 		{
-			Name:  "desaintmartin",
-			Email: "cedric@desaintmartin.fr",
+			name:     "redis",
+			tgzFile:  "testdata/charts/redis-14.3.4.tgz",
+			revision: "14.3.4",
 		},
-	},
-}
+	}
 
-var expected_detail_redis_2 = &corev1.AvailablePackageDetail{
-	AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
-	Name:                "redis",
-	Version: &corev1.PackageAppVersion{
-		PkgVersion: "14.3.4",
-		AppVersion: "6.2.4",
-	},
-	RepoUrl:          "https://example.repo.com/charts",
-	IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
-	DisplayName:      "redis",
-	Categories:       []string{"Database"},
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-	DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
-	ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
-	SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
-	Maintainers: []*corev1.Maintainer{
-		{
-			Name:  "Bitnami",
-			Email: "containers@bitnami.com",
+	expected_detail_redis_1 = &corev1.AvailablePackageDetail{
+		AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+		Name:                "redis",
+		Version: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
 		},
-		{
-			Name:  "desaintmartin",
-			Email: "cedric@desaintmartin.fr",
+		RepoUrl:          "https://example.repo.com/charts",
+		HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
+		IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		DisplayName:      "redis",
+		Categories:       []string{"Database"},
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
+		DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
+		ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
+		SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
+		Maintainers: []*corev1.Maintainer{
+			{
+				Name:  "Bitnami",
+				Email: "containers@bitnami.com",
+			},
+			{
+				Name:  "desaintmartin",
+				Email: "cedric@desaintmartin.fr",
+			},
 		},
-	},
-}
+	}
 
-var expected_versions_redis = &corev1.GetAvailablePackageVersionsResponse{
-	PackageAppVersions: []*corev1.PackageAppVersion{
-		{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
-		{PkgVersion: "14.3.4", AppVersion: "6.2.4"},
-		{PkgVersion: "14.3.3", AppVersion: "6.2.4"},
-		{PkgVersion: "14.3.2", AppVersion: "6.2.3"},
-		{PkgVersion: "14.2.1", AppVersion: "6.2.3"},
-		{PkgVersion: "14.2.0", AppVersion: "6.2.3"},
-		{PkgVersion: "13.0.1", AppVersion: "6.2.1"},
-		{PkgVersion: "13.0.0", AppVersion: "6.2.1"},
-		{PkgVersion: "12.10.1", AppVersion: "6.0.12"},
-		{PkgVersion: "12.10.0", AppVersion: "6.0.12"},
-		{PkgVersion: "12.9.2", AppVersion: "6.0.12"},
-		{PkgVersion: "12.9.1", AppVersion: "6.0.12"},
-		{PkgVersion: "12.9.0", AppVersion: "6.0.12"},
-		{PkgVersion: "12.8.3", AppVersion: "6.0.12"},
-		{PkgVersion: "12.8.2", AppVersion: "6.0.12"},
-		{PkgVersion: "12.8.1", AppVersion: "6.0.12"},
-	},
-}
+	expected_detail_redis_2 = &corev1.AvailablePackageDetail{
+		AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
+		Name:                "redis",
+		Version: &corev1.PackageAppVersion{
+			PkgVersion: "14.3.4",
+			AppVersion: "6.2.4",
+		},
+		RepoUrl:          "https://example.repo.com/charts",
+		IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
+		DisplayName:      "redis",
+		Categories:       []string{"Database"},
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
+		DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
+		ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
+		SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
+		Maintainers: []*corev1.Maintainer{
+			{
+				Name:  "Bitnami",
+				Email: "containers@bitnami.com",
+			},
+			{
+				Name:  "desaintmartin",
+				Email: "cedric@desaintmartin.fr",
+			},
+		},
+	}
+
+	expected_versions_redis = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
+			{PkgVersion: "14.3.4", AppVersion: "6.2.4"},
+			{PkgVersion: "14.3.3", AppVersion: "6.2.4"},
+			{PkgVersion: "14.3.2", AppVersion: "6.2.3"},
+			{PkgVersion: "14.2.1", AppVersion: "6.2.3"},
+			{PkgVersion: "14.2.0", AppVersion: "6.2.3"},
+			{PkgVersion: "13.0.1", AppVersion: "6.2.1"},
+			{PkgVersion: "13.0.0", AppVersion: "6.2.1"},
+			{PkgVersion: "12.10.1", AppVersion: "6.0.12"},
+			{PkgVersion: "12.10.0", AppVersion: "6.0.12"},
+			{PkgVersion: "12.9.2", AppVersion: "6.0.12"},
+			{PkgVersion: "12.9.1", AppVersion: "6.0.12"},
+			{PkgVersion: "12.9.0", AppVersion: "6.0.12"},
+			{PkgVersion: "12.8.3", AppVersion: "6.0.12"},
+			{PkgVersion: "12.8.2", AppVersion: "6.0.12"},
+			{PkgVersion: "12.8.1", AppVersion: "6.0.12"},
+		},
+	}
+
+	expected_versions_airflow = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "1.0.0", AppVersion: "2.1.4"},
+		},
+	}
+)

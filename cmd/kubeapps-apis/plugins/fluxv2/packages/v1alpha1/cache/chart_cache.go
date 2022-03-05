@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
@@ -139,11 +140,29 @@ func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.Cli
 
 		// The tarball URL will always be the first URL in the repo.chartVersions.
 		// So says the helm plugin :-)
+		// however, not everybody agrees
+		// ref https://github.com/cjauvin/helm/blob/master/pkg/downloader/chart_downloader.go#L212
+		u, err := url.Parse(chart.ChartVersions[0].URLs[0])
+		if err != nil {
+			return fmt.Errorf("invalid URL format for chart [%s]: %v", chart.ID, err)
+		}
+
+		// If the URL is relative (no scheme), prepend the chart repo's base URL
+		// ref https://github.com/kubeapps/kubeapps/issues/4381
+		if !u.IsAbs() {
+			path := u.Path
+			u, err = url.Parse(chart.Repo.URL)
+			if err != nil {
+				return fmt.Errorf("invalid URL format for chart repo [%s]: %v", chart.ID, err)
+			}
+			u.Path = u.Path + path
+		}
+
 		entry := chartCacheStoreEntry{
 			namespace:     chart.Repo.Namespace,
 			id:            chart.ID,
 			version:       chart.ChartVersions[0].Version,
-			url:           chart.ChartVersions[0].URLs[0],
+			url:           u.String(),
 			clientOptions: clientOptions,
 			deleted:       false,
 		}
