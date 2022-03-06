@@ -319,14 +319,14 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 
 	if err = kubeCopyFileToPod(
 		t,
-		"./testdata/charts/podinfo-6.0.3.tgz",
+		testTgz("podinfo-6.0.3.tgz"),
 		*podName,
 		"/usr/share/nginx/html/podinfo/podinfo-6.0.3.tgz"); err != nil {
 		t.Fatal(err)
 	}
 	if err = kubeCopyFileToPod(
 		t,
-		"./testdata/podinfo-index-updated.yaml",
+		testYaml("podinfo-index-updated.yaml"),
 		*podName,
 		"/usr/share/nginx/html/podinfo/index.yaml"); err != nil {
 		t.Fatal(err)
@@ -335,7 +335,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 	t.Cleanup(func() {
 		if err = kubeCopyFileToPod(
 			t,
-			"./testdata/podinfo-index.yaml",
+			testYaml("podinfo-index.yaml"),
 			*podName,
 			"/usr/share/nginx/html/podinfo/index.yaml"); err != nil {
 			t.Logf("Error reverting to previos podinfo index: %v", err)

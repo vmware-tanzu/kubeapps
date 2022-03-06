@@ -174,7 +174,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			ts2, repo, err := newRepoWithIndex(
-				"testdata/redis-two-versions.yaml", repoName, repoNamespace, replaceUrls, secretRef)
+				testYaml("redis-two-versions.yaml"), repoName, repoNamespace, replaceUrls, secretRef)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -269,7 +269,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 
 		ts2, repo, err := newRepoWithIndex(
-			"testdata/redis-two-versions.yaml", repoName, repoNamespace, replaceUrls, "")
+			testYaml("redis-two-versions.yaml"), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -440,7 +440,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 
 			ts2, repo, err := newRepoWithIndex(
-				"testdata/redis-two-versions.yaml", tc.repoName, tc.repoNamespace, replaceUrls, "")
+				testYaml("redis-two-versions.yaml"), tc.repoName, tc.repoNamespace, replaceUrls, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -572,7 +572,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 	}{
 		{
 			name:          "it returns the package version summary for redis chart in bitnami repo",
-			repoIndex:     "testdata/redis-many-versions.yaml",
+			repoIndex:     testYaml("redis-many-versions.yaml"),
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
 			request: &corev1.GetAvailablePackageVersionsRequest{
@@ -583,7 +583,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		},
 		{
 			name:          "it returns error for non-existent chart",
-			repoIndex:     "testdata/redis-many-versions.yaml",
+			repoIndex:     testYaml("redis-many-versions.yaml"),
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
 			request: &corev1.GetAvailablePackageVersionsRequest{
@@ -681,7 +681,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 
 		// what I need is a single repo with a whole bunch of unique charts (packages)
-		tarGzBytes, err := ioutil.ReadFile("./testdata/charts/redis-14.4.0.tgz")
+		tarGzBytes, err := ioutil.ReadFile(testTgz("redis-14.4.0.tgz"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -701,7 +701,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 		defer os.Remove(tmpFile.Name())
 
-		templateYAMLBytes, err := ioutil.ReadFile("testdata/single-package-template.yaml")
+		templateYAMLBytes, err := ioutil.ReadFile(testTgz("single-package-template.yaml"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -844,12 +844,12 @@ func TestChartWithRelativeURL(t *testing.T) {
 	repoName := "testRepo"
 	repoNamespace := "default"
 
-	tarGzBytes, err := ioutil.ReadFile("testdata/charts/airflow-1.0.0.tgz")
+	tarGzBytes, err := ioutil.ReadFile(testTgz("airflow-1.0.0.tgz"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	indexYAMLBytes, err := ioutil.ReadFile("testdata/chart-with-relative-url.yaml")
+	indexYAMLBytes, err := ioutil.ReadFile(testYaml("chart-with-relative-url.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1059,12 +1059,12 @@ var (
 	redis_charts_spec = []testSpecChartWithFile{
 		{
 			name:     "redis",
-			tgzFile:  "testdata/charts/redis-14.4.0.tgz",
+			tgzFile:  testTgz("redis-14.4.0.tgz"),
 			revision: "14.4.0",
 		},
 		{
 			name:     "redis",
-			tgzFile:  "testdata/charts/redis-14.3.4.tgz",
+			tgzFile:  testTgz("redis-14.3.4.tgz"),
 			revision: "14.3.4",
 		},
 	}
