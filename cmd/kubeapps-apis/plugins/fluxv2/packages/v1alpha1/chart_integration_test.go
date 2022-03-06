@@ -38,7 +38,10 @@ import (
 // -rw-rw-rw-@ 1 gfichtenholt  staff  10394218 Nov  7 19:41 bitnami_index.yaml
 // Also now we are caching helmcharts themselves for each repo so that will affect how many will fit too
 func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *testing.T) {
-	fluxPlugin, _ := checkEnv(t)
+	fluxPlugin, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	redisCli, err := newRedisClientForIntegrationTest(t)
 	if err != nil {
@@ -54,12 +57,6 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	if err = redisCli.ConfigSet(redisCli.Context(), "notify-keyspace-events", "EA").Err(); err != nil {
 		t.Fatalf("%+v", err)
 	}
-	t.Cleanup(func() {
-		t.Logf("Resetting notify-keyspace-events")
-		if err = redisCli.ConfigSet(redisCli.Context(), "notify-keyspace-events", "").Err(); err != nil {
-			t.Logf("%v", err)
-		}
-	})
 
 	if err = initNumberOfChartsInBitnamiCatalog(t); err != nil {
 		t.Errorf("Failed to get number of charts in bitnami catalog due to: %v", err)
@@ -91,7 +88,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == 0; totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeAddHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
+			if err = kubeAddHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
 				t.Fatalf("%v", err)
 			}
 			t.Cleanup(func() {
@@ -126,7 +123,10 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	// one particular code path I'd like to test:
 	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
-	grpcContext := newGrpcAdminContext(t, "test-create-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// copy the evicted list because before ForEach loop below will modify it in a goroutine
 	evictedCopy := sets.StringKeySet(evictedRepos)
@@ -179,7 +179,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == evictedCopy.Len(); totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeAddHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
+			if err = kubeAddHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
 				t.Fatalf("%v", err)
 			}
 			t.Cleanup(func() {

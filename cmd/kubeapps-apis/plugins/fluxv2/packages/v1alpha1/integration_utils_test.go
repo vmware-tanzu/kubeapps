@@ -22,6 +22,7 @@ import (
 	"github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-redis/redis/v8"
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -32,18 +33,21 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	apiv1 "k8s.io/api/core/v1"
-	kubecorev1 "k8s.io/api/core/v1"
-	kuberbacv1 "k8s.io/api/rbac/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+	"k8s.io/kubectl/pkg/cmd/cp"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -66,28 +70,29 @@ const (
 	podinfo_tls_repo_url = "https://fluxv2plugin-testdata-ssl-svc.default.svc.cluster.local:443"
 )
 
-func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient) {
+func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
 	enableEnvVar := os.Getenv(envVarFluxIntegrationTests)
 	runTests := false
 	if enableEnvVar != "" {
 		var err error
 		runTests, err = strconv.ParseBool(enableEnvVar)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			return nil, nil, err
 		}
 	}
 
 	if !runTests {
 		t.Skipf("skipping flux plugin integration tests because environment variable %q not set to be true", envVarFluxIntegrationTests)
+		return nil, nil, nil
 	} else {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
-			t.Fatalf("Failed to find local kind cluster due to: [%v]", err)
+			return nil, nil, fmt.Errorf("Failed to find local kind cluster due to: [%v]", err)
 		}
 		var fluxPluginPackagesClient fluxplugin.FluxV2PackagesServiceClient
 		var fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient
 		var err error
 		if fluxPluginPackagesClient, fluxPluginReposClient, err = getFluxPluginClients(t); err != nil {
-			t.Fatalf("Failed to get fluxv2 plugin due to: [%v]", err)
+			return nil, nil, fmt.Errorf("Failed to get fluxv2 plugin due to: [%v]", err)
 		}
 
 		// check the fluxv2plugin-testdata-svc is deployed - without it,
@@ -95,19 +100,18 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 		// long time
 		typedClient, err := kubeGetTypedClient()
 		if err != nil {
-			t.Fatalf("%+v", err)
+			return nil, nil, err
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
 		_, err = typedClient.CoreV1().Services("default").Get(ctx, "fluxv2plugin-testdata-svc", metav1.GetOptions{})
 		if err != nil {
-			t.Fatalf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
+			return nil, nil, fmt.Errorf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
 		}
 
 		rand.Seed(time.Now().UnixNano())
-		return fluxPluginPackagesClient, fluxPluginReposClient
+		return fluxPluginPackagesClient, fluxPluginReposClient, nil
 	}
-	return nil, nil
 }
 
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
@@ -153,7 +157,7 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 	target := "localhost:8080"
 	conn, err := grpc.Dial(target, opts...)
 	if err != nil {
-		t.Fatalf("failed to dial [%s] due to: %v", target, err)
+		return nil, nil, fmt.Errorf("failed to dial [%s] due to: %v", target, err)
 	}
 	t.Cleanup(func() { conn.Close() })
 	pluginsCli := plugins.NewPluginsServiceClient(conn)
@@ -162,7 +166,7 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 	response, err := pluginsCli.GetConfiguredPlugins(ctx, &plugins.GetConfiguredPluginsRequest{})
 
 	if err != nil {
-		t.Fatalf("failed to GetConfiguredPlugins due to: %v", err)
+		return nil, nil, fmt.Errorf("failed to GetConfiguredPlugins due to: %v", err)
 	}
 	found := false
 	for _, p := range response.Plugins {
@@ -179,8 +183,11 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 
 // This creates a flux helm repository CRD. The usage of this func should be minimized as much as
 // possible in favor of flux Plugin's AddPackageRepository() call
-func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
+func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string, interval time.Duration) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
+	if interval <= 0 {
+		interval = time.Duration(10 * time.Minute)
+	}
 	repo := sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       sourcev1.HelmRepositoryKind,
@@ -191,7 +198,8 @@ func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string
 			Namespace: namespace,
 		},
 		Spec: sourcev1.HelmRepositorySpec{
-			URL: url,
+			URL:      url,
+			Interval: metav1.Duration{Duration: interval},
 		},
 	}
 
@@ -216,7 +224,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
 	} else {
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 		defer cancel()
 		var repoList sourcev1.HelmRepositoryList
 		if watcher, err := ifc.Watch(ctx, &repoList); err != nil {
@@ -330,7 +338,7 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	defer cancel()
 	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
 		ctx,
-		&kubecorev1.ServiceAccount{
+		&apiv1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: namespace,
@@ -375,18 +383,18 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	}
 	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
 		ctx,
-		&kuberbacv1.ClusterRoleBinding{
+		&rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name + "-binding",
 			},
-			Subjects: []kuberbacv1.Subject{
+			Subjects: []rbacv1.Subject{
 				{
-					Kind:      kuberbacv1.ServiceAccountKind,
+					Kind:      rbacv1.ServiceAccountKind,
 					Name:      name,
 					Namespace: namespace,
 				},
 			},
-			RoleRef: kuberbacv1.RoleRef{
+			RoleRef: rbacv1.RoleRef{
 				Kind: "ClusterRole",
 				Name: role,
 			},
@@ -446,7 +454,7 @@ func kubeCreateNamespace(t *testing.T, namespace string) error {
 	defer cancel()
 	_, err = typedClient.CoreV1().Namespaces().Create(
 		ctx,
-		&kubecorev1.Namespace{
+		&apiv1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
 			},
@@ -573,6 +581,33 @@ func kubePortForwardToRedis(t *testing.T) error {
 	}
 }
 
+// ref https://stackoverflow.com/questions/51686986/how-to-copy-file-to-container-with-kubernetes-client-go
+// example kubectl cp /tmp/foo.txt default/fluxv2plugin-testdata-app-7f7dd58796-w2qbg:/
+func kubeCopyFileToPod(t *testing.T, srcFile string, podName types.NamespacedName, destFile string) error {
+	t.Logf("+kubeCopyFileToPod(%s, %s, %s)", srcFile, podName, destFile)
+	ioStreams, _, _, _ := genericclioptions.NewTestIOStreams()
+	copyOptions := cp.NewCopyOptions(ioStreams)
+	restcfg, err := restConfig()
+	if err != nil {
+		return err
+	}
+	restcfg.APIPath = "/api"                                   // Make sure we target /api and not just /
+	restcfg.GroupVersion = &schema.GroupVersion{Version: "v1"} // this targets the core api groups so the url path will be /api/v1
+	restcfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+	copyOptions.ClientConfig = restcfg
+	typedcli, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	copyOptions.Clientset = typedcli
+	destSpec := fmt.Sprintf("%s/%s:%s", podName.Namespace, podName.Name, destFile)
+	err = copyOptions.Run([]string{srcFile, destSpec})
+	if err != nil {
+		return fmt.Errorf("Could not run copy operation: %v", err)
+	}
+	return nil
+}
+
 func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 	if ctrlClient != nil {
 		return ctrlClient, nil
@@ -581,8 +616,8 @@ func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 			return nil, err
 		} else {
 			scheme := runtime.NewScheme()
-			_ = sourcev1.AddToScheme(scheme)
-			_ = helmv2.AddToScheme(scheme)
+			sourcev1.AddToScheme(scheme)
+			helmv2.AddToScheme(scheme)
 
 			return ctrlclient.NewWithWatch(config, ctrlclient.Options{Scheme: scheme})
 		}
@@ -621,30 +656,30 @@ func newGrpcContext(t *testing.T, token string) context.Context {
 		metadata.Pairs("Authorization", "Bearer "+token))
 }
 
-func newGrpcAdminContext(t *testing.T, name string) context.Context {
+func newGrpcAdminContext(t *testing.T, name string) (context.Context, error) {
 	token, err := kubeCreateAdminServiceAccount(t, name, "default")
 	if err != nil {
-		t.Fatalf("Failed to create service account due to: %+v", err)
+		return nil, fmt.Errorf("Failed to create service account due to: %+v", err)
 	}
 	t.Cleanup(func() {
 		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
 			t.Logf("Failed to delete service account due to: %+v", err)
 		}
 	})
-	return newGrpcContext(t, token)
+	return newGrpcContext(t, token), nil
 }
 
-func newGrpcFluxPluginContext(t *testing.T, name string) context.Context {
+func newGrpcFluxPluginContext(t *testing.T, name string) (context.Context, error) {
 	token, err := kubeCreateFluxPluginServiceAccount(t, name, "default")
 	if err != nil {
-		t.Fatalf("Failed to create service account due to: %+v", err)
+		return nil, fmt.Errorf("Failed to create service account due to: %+v", err)
 	}
 	t.Cleanup(func() {
 		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
 			t.Logf("Failed to delete service account due to: %+v", err)
 		}
 	})
-	return newGrpcContext(t, token)
+	return newGrpcContext(t, token), nil
 }
 
 func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMemory string) error {
@@ -655,7 +690,7 @@ func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMe
 		currentMaxMemory := fmt.Sprintf("%v", maxmemory[1])
 		t.Logf("Current redis maxmemory = [%s]", currentMaxMemory)
 		if currentMaxMemory != expectedMaxMemory {
-			t.Fatalf("This test requires redis config maxmemory to be set to %s", expectedMaxMemory)
+			return fmt.Errorf("This test requires redis config maxmemory to be set to %s", expectedMaxMemory)
 		}
 	}
 	maxmemoryPolicy, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory-policy").Result()
@@ -665,7 +700,7 @@ func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMe
 		currentMaxMemoryPolicy := fmt.Sprintf("%v", maxmemoryPolicy[1])
 		t.Logf("Current maxmemory policy = [%s]", currentMaxMemoryPolicy)
 		if currentMaxMemoryPolicy != "allkeys-lfu" {
-			t.Fatalf("This test requires redis config maxmemory-policy to be set to allkeys-lfu")
+			return fmt.Errorf("This test requires redis config maxmemory-policy to be set to allkeys-lfu")
 		}
 	}
 	return nil
@@ -713,10 +748,10 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	// and you should be able to clean up manually
 	// $ kubectl delete helmrepositories --all
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	} else {
 		if len(keys) != 0 {
-			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
+			return nil, fmt.Errorf("Failing due to unexpected state of the cache. Current keys: %s", keys)
 		}
 	}
 	return redisCli, nil
@@ -798,6 +833,27 @@ func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
 	totalBitnamiCharts = len(charts)
 	t.Logf("+initNumberOfChartsInBitnamiCatalog: total [%d] charts", totalBitnamiCharts)
 	return nil
+}
+
+func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
+	cli, err := kubeGetTypedClient()
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	podList, err := cli.CoreV1().Pods("default").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range podList.Items {
+		if strings.HasPrefix(p.Name, "fluxv2plugin-testdata-app-") {
+			return &types.NamespacedName{
+				Name:      p.Name,
+				Namespace: p.Namespace}, nil
+		}
+	}
+	return nil, fmt.Errorf("fluxplugin testdata pod not found")
 }
 
 // global vars
