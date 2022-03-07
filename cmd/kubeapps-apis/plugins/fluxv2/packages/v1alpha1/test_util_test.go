@@ -149,11 +149,11 @@ func compareJSONStrings(t *testing.T, expectedJSONString, actualJSONString strin
 // generate-cert.sh script in testdata directory is used to generate these files
 func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 	var err error
-	if ca, err = ioutil.ReadFile("testdata/cert/ca.pem"); err != nil {
+	if ca, err = ioutil.ReadFile(testCert("ca.pem")); err != nil {
 		t.Fatalf("%+v", err)
-	} else if pub, err = ioutil.ReadFile("testdata/cert/server.pem"); err != nil {
+	} else if pub, err = ioutil.ReadFile(testCert("server.pem")); err != nil {
 		t.Fatalf("%+v", err)
-	} else if priv, err = ioutil.ReadFile("testdata/cert/server-key.pem"); err != nil {
+	} else if priv, err = ioutil.ReadFile(testCert("server-key.pem")); err != nil {
 		t.Fatalf("%+v", err)
 	}
 	return ca, pub, priv
@@ -334,22 +334,36 @@ func ctrlClientAndWatcher(t *testing.T, s *Server) (client.WithWatch, *watch.Rac
 	}
 }
 
+func testTgz(name string) string {
+	return "./testdata/charts/" + name
+}
+
+func testYaml(name string) string {
+	return "./testdata/charts/" + name
+}
+
+func testCert(name string) string {
+	return "./testdata/cert/" + name
+}
+
 // misc global vars that get re-used in multiple tests
-var fluxPlugin = &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}
-var fluxHelmRepositoryCRD = &apiextv1.CustomResourceDefinition{
-	TypeMeta: metav1.TypeMeta{
-		Kind:       "CustomResourceDefinition",
-		APIVersion: "apiextensions.k8s.io/v1",
-	},
-	ObjectMeta: metav1.ObjectMeta{
-		Name: "helmrepositories.source.toolkit.fluxcd.io",
-	},
-	Status: apiextv1.CustomResourceDefinitionStatus{
-		Conditions: []apiextv1.CustomResourceDefinitionCondition{
-			{
-				Type:   "Established",
-				Status: "True",
+var (
+	fluxPlugin            = &plugins.Plugin{Name: "fluxv2.packages", Version: "v1alpha1"}
+	fluxHelmRepositoryCRD = &apiextv1.CustomResourceDefinition{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CustomResourceDefinition",
+			APIVersion: "apiextensions.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "helmrepositories.source.toolkit.fluxcd.io",
+		},
+		Status: apiextv1.CustomResourceDefinitionStatus{
+			Conditions: []apiextv1.CustomResourceDefinitionCondition{
+				{
+					Type:   "Established",
+					Status: "True",
+				},
 			},
 		},
-	},
-}
+	}
+)

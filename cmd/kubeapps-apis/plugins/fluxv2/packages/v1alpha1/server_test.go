@@ -463,13 +463,16 @@ func newServer(t *testing.T,
 	}
 
 	repoCache, err := cache.NewNamespacedResourceWatcherCache(
-		"repoCacheTest", cacheConfig, redisCli, stopCh)
+		"repoCacheTest", cacheConfig, redisCli, stopCh, true)
 	if err != nil {
 		return nil, mock, err
 	}
 	t.Cleanup(func() { repoCache.Shutdown() })
 
-	// need to wait until ChartCache has finished syncing
+	// need to wait until repoCache has finished syncing
+	repoCache.WaitUntilResyncComplete()
+
+	// need to wait until chartCache has finished syncing
 	for key := range cachedChartKeys {
 		chartCache.WaitUntilForgotten(key)
 	}

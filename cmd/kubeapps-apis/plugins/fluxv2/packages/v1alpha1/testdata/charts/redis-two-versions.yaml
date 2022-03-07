@@ -37,7 +37,7 @@ entries:
         - http://redis.io/
       urls:
         #- https://charts.bitnami.com/bitnami/redis-14.4.0.tgz
-        - "{{testdata/charts/redis-14.4.0.tgz}}"
+        - "{{./testdata/charts/redis-14.4.0.tgz}}"
       version: 14.4.0
     - annotations:
         category: Database
@@ -72,5 +72,5 @@ entries:
         - http://redis.io/
       urls:
         #- https://charts.bitnami.com/bitnami/redis-14.3.4.tgz
-        - "{{testdata/charts/redis-14.3.4.tgz}}"
+        - "{{./testdata/charts/redis-14.3.4.tgz}}"
       version: 14.3.4

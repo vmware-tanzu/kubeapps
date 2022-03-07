@@ -29,6 +29,7 @@ import (
 type integrationTestCreatePackageSpec struct {
 	testName          string
 	repoUrl           string
+	repoInterval      time.Duration // 0 for default (10m)
 	request           *corev1.CreateInstalledPackageRequest
 	expectedDetail    *corev1.InstalledPackageDetail
 	expectedPodPrefix string
@@ -42,7 +43,10 @@ type integrationTestCreatePackageSpec struct {
 }
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
-	fluxPluginClient, _ := checkEnv(t)
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	testCases := []integrationTestCreatePackageSpec{
 		{
@@ -110,7 +114,10 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext := newGrpcAdminContext(t, "test-create-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -129,7 +136,10 @@ type integrationTestUpdatePackageSpec struct {
 }
 
 func TestKindClusterUpdateInstalledPackage(t *testing.T) {
-	fluxPluginClient, _ := checkEnv(t)
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	testCases := []integrationTestUpdatePackageSpec{
 		{
@@ -209,10 +219,12 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			request:      update_request_6,
 			unauthorized: true,
 		},
-		// TODO (gfichtenholt) test automatic upgrade to new version when it becomes available
 	}
 
-	grpcContext := newGrpcAdminContext(t, "test-create-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -275,13 +287,91 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	}
 }
 
+func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	spec := integrationTestCreatePackageSpec{
+		testName:             "create test (auto update)",
+		repoUrl:              podinfo_repo_url,
+		repoInterval:         30 * time.Second,
+		request:              create_request_auto_update,
+		expectedDetail:       expected_detail_auto_update,
+		expectedPodPrefix:    "my-podinfo-16",
+		expectedStatusCode:   codes.OK,
+		expectedResourceRefs: expected_resource_refs_auto_update,
+	}
+
+	grpcContext, err := newGrpcAdminContext(t, "test-auto-update")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// this will also make sure that response looks like expected_detail_auto_update
+	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginClient, grpcContext)
+	podName, err := getFluxPluginTestdataPodName()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("podName = [%s]", podName)
+
+	if err = kubeCopyFileToPod(
+		t,
+		testTgz("podinfo-6.0.3.tgz"),
+		*podName,
+		"/usr/share/nginx/html/podinfo/podinfo-6.0.3.tgz"); err != nil {
+		t.Fatal(err)
+	}
+	if err = kubeCopyFileToPod(
+		t,
+		testYaml("podinfo-index-updated.yaml"),
+		*podName,
+		"/usr/share/nginx/html/podinfo/index.yaml"); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		if err = kubeCopyFileToPod(
+			t,
+			testYaml("podinfo-index.yaml"),
+			*podName,
+			"/usr/share/nginx/html/podinfo/index.yaml"); err != nil {
+			t.Logf("Error reverting to previos podinfo index: %v", err)
+		}
+	})
+	t.Logf("Waiting 45 seconds...")
+	time.Sleep(45 * time.Second)
+
+	resp, err := fluxPluginClient.GetInstalledPackageDetail(
+		grpcContext, &corev1.GetInstalledPackageDetailRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected_detail_auto_update_2.InstalledPackageRef = installedRef
+	expected_detail_auto_update_2.PostInstallationNotes = strings.ReplaceAll(
+		expected_detail_auto_update_2.PostInstallationNotes,
+		"@TARGET_NS@",
+		spec.request.TargetContext.Namespace)
+	compareActualVsExpectedGetInstalledPackageDetailResponse(
+		t, resp, &corev1.GetInstalledPackageDetailResponse{
+			InstalledPackageDetail: expected_detail_auto_update_2,
+		})
+}
+
 type integrationTestDeletePackageSpec struct {
 	integrationTestCreatePackageSpec
 	unauthorized bool
 }
 
 func TestKindClusterDeleteInstalledPackage(t *testing.T) {
-	fluxPluginClient, _ := checkEnv(t)
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	testCases := []integrationTestDeletePackageSpec{
 		{
@@ -309,7 +399,10 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext := newGrpcAdminContext(t, "test-delete-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-delete-admin")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -395,7 +488,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
-	err := kubeAddHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "")
+	err := kubeAddHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "", tc.repoInterval)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
@@ -1250,6 +1343,77 @@ var (
 		TargetContext: &corev1.Context{
 			Namespace: "test-15",
 			Cluster:   KubeappsCluster,
+		},
+	}
+
+	create_request_auto_update = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-16/podinfo", "default"),
+		Name:                "my-podinfo-16",
+		TargetContext: &corev1.Context{
+			Namespace: "test-16",
+			Cluster:   KubeappsCluster,
+		},
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: 30,
+		},
+	}
+
+	expected_detail_auto_update = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "6.0.0",
+			AppVersion: "6.0.0",
+		},
+		Status: statusInstalled,
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: 30,
+		},
+		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-16 8080:9898\n",
+	}
+
+	expected_detail_auto_update_2 = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "6.0.3",
+			AppVersion: "6.0.3",
+		},
+		Name:   "my-podinfo-16",
+		Status: statusInstalled,
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: 30,
+		},
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "default",
+			},
+			Identifier: "podinfo-16/podinfo",
+			Plugin:     fluxPlugin,
+		},
+		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-16 8080:9898\n",
+	}
+
+	expected_resource_refs_auto_update = []*corev1.ResourceRef{
+		{
+			ApiVersion: "v1",
+			Kind:       "Service",
+			Name:       "my-podinfo-16",
+		},
+		{
+			ApiVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       "my-podinfo-16",
 		},
 	}
 )
