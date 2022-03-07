@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,7 +34,8 @@ const (
 	// copied from helm plug-in
 	UserAgentPrefix = "kubeapps-apis/plugins"
 	// max number of attempts to initialize redis client before giving up
-	maxRedisInitClientBackoff = 5
+	maxRedisInitClientRetries = 10
+	redisInitClientRetryWait  = 1 * time.Second
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -137,9 +137,8 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 	}
 
 	// ref https://github.com/kubeapps/kubeapps/pull/4382#discussion_r820386531
-	// max backoff is 2^(maxRedisInitClientBackoff) seconds
 	var redisCli *redis.Client
-	for i := 0; i < maxRedisInitClientBackoff; i++ {
+	for i := 0; i < maxRedisInitClientRetries; i++ {
 		redisCli = redis.NewClient(&redis.Options{
 			Addr:     REDIS_ADDR,
 			Password: REDIS_PASSWORD,
@@ -152,13 +151,12 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 			log.Infof("Redis [PING]: %s", pong)
 			break
 		}
-		waitTime := math.Pow(2, float64(i))
-		log.Infof("Waiting [%d] seconds before retrying to due to %v...", int(waitTime), err)
-		time.Sleep(time.Duration(waitTime) * time.Second)
+		log.Infof("Waiting %ds before retrying to due to %v...", redisInitClientRetryWait, err)
+		time.Sleep(redisInitClientRetryWait)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("initializing redis client failed after [%d] retries were exhausted, last error: %v", maxRedisInitClientBackoff, err)
+		return nil, fmt.Errorf("initializing redis client failed after [%d] retries were exhausted, last error: %v", maxRedisInitClientRetries, err)
 	}
 
 	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
