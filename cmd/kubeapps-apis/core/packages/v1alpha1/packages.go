@@ -77,10 +77,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.pluginsWithServers {
-		log.Infof("Items now: %d/%d", len(pkgs), (pageOffset*int(pageSize) + int(pageSize)))
 		if pageSize == 0 || len(pkgs) <= (pageOffset*int(pageSize)+int(pageSize)) {
-			log.Infof("Should enter")
-
 			response, err := p.server.GetAvailablePackageSummaries(ctx, requestN)
 			if err != nil {
 				return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetAvailablePackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
