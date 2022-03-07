@@ -140,8 +140,8 @@ func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.Cli
 
 		// The tarball URL will always be the first URL in the repo.chartVersions.
 		// So says the helm plugin :-)
-		// however, not everybody agrees
-		// ref https://github.com/cjauvin/helm/blob/master/pkg/downloader/chart_downloader.go#L212
+		// however, not everybody agrees:
+		// ref https://github.com/helm/helm/blob/65d8e72504652e624948f74acbba71c51ac2e342/pkg/downloader/chart_downloader.go#L296
 		u, err := url.Parse(chart.ChartVersions[0].URLs[0])
 		if err != nil {
 			return fmt.Errorf("invalid URL format for chart [%s]: %v", chart.ID, err)

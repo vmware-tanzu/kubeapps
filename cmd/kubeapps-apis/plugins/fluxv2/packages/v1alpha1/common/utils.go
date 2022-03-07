@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
@@ -32,6 +34,8 @@ import (
 const (
 	// copied from helm plug-in
 	UserAgentPrefix = "kubeapps-apis/plugins"
+	// max number of attempts to initialize redis client before giving up
+	maxRedisInitClientBackoff = 5
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -132,17 +136,29 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 		return nil, err
 	}
 
-	redisCli := redis.NewClient(&redis.Options{
-		Addr:     REDIS_ADDR,
-		Password: REDIS_PASSWORD,
-		DB:       REDIS_DB_NUM,
-	})
+	// ref https://github.com/kubeapps/kubeapps/pull/4382#discussion_r820386531
+	// max backoff is 2^(maxRedisInitClientBackoff) seconds
+	var redisCli *redis.Client
+	for i := 0; i < maxRedisInitClientBackoff; i++ {
+		redisCli = redis.NewClient(&redis.Options{
+			Addr:     REDIS_ADDR,
+			Password: REDIS_PASSWORD,
+			DB:       REDIS_DB_NUM,
+		})
 
-	// confidence test that the redis client is connected
-	if pong, err := redisCli.Ping(redisCli.Context()).Result(); err != nil {
-		return nil, err
-	} else {
-		log.Infof("Redis [PING]: %s", pong)
+		// confidence test that the redis client is connected
+		var pong string
+		if pong, err = redisCli.Ping(redisCli.Context()).Result(); err == nil {
+			log.Infof("Redis [PING]: %s", pong)
+			break
+		}
+		waitTime := math.Pow(2, float64(i))
+		log.Infof("Waiting [%d] seconds before retrying to due to %v...", int(waitTime), err)
+		time.Sleep(time.Duration(waitTime) * time.Second)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("initializing redis client failed after [%d] retries were exhausted, last error: %v", maxRedisInitClientBackoff, err)
 	}
 
 	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
