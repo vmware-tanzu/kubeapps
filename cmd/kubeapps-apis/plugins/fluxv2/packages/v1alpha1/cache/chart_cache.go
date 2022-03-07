@@ -149,13 +149,17 @@ func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.Cli
 
 		// If the URL is relative (no scheme), prepend the chart repo's base URL
 		// ref https://github.com/kubeapps/kubeapps/issues/4381
+		// ref https://github.com/helm/helm/blob/65d8e72504652e624948f74acbba71c51ac2e342/pkg/downloader/chart_downloader.go#L303
 		if !u.IsAbs() {
-			path := u.Path
-			u, err = url.Parse(chart.Repo.URL)
+			repoURL, err := url.Parse(chart.Repo.URL)
 			if err != nil {
 				return fmt.Errorf("invalid URL format for chart repo [%s]: %v", chart.ID, err)
 			}
-			u.Path = u.Path + path
+			q := repoURL.Query()
+			// We need a trailing slash for ResolveReference to work, but make sure there isn't already one
+			repoURL.Path = strings.TrimSuffix(repoURL.Path, "/") + "/"
+			u = repoURL.ResolveReference(u)
+			u.RawQuery = q.Encode()
 		}
 
 		entry := chartCacheStoreEntry{
