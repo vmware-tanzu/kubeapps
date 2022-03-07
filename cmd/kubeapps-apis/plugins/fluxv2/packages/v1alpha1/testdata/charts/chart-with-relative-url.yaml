@@ -1,0 +1,32 @@
+apiVersion: v1
+entries:
+  airflow:
+  - apiVersion: v2
+    appVersion: 2.1.4
+    created: "2022-02-18T11:33:37.336580189Z"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.9.4
+    description: Helm chart to deploy Apache Airflow, a platform to programmatically
+      author, schedule, and monitor workflows
+    digest: 0bebbb733539200082bc73baaaf44287c90874ff1ce57ef306baa13b59082cf5
+    home: https://airflow.apache.org/
+    icon: https://airflow.apache.org/docs/apache-airflow/stable/_images/pin_large.png
+    keywords:
+    - apache
+    - airflow
+    - workflow
+    - scheduler
+    maintainers:
+    - email: dev@airflow.apache.org
+      name: Apache Airflow PMC
+    name: airflow
+    sources:
+    - https://github.com/apache/airflow
+    urls:
+    - charts/airflow-1.0.0.tgz   
+    version: 1.0.0
+generated: "2022-02-18T11:33:37Z"
+serverInfo: {}

@@ -120,7 +120,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			},
 		}
 		if repoCache, err := cache.NewNamespacedResourceWatcherCache(
-			"repoCache", repoCacheConfig, redisCli, stopCh); err != nil {
+			"repoCache", repoCacheConfig, redisCli, stopCh, false); err != nil {
 			return nil, err
 		} else {
 			return &Server{

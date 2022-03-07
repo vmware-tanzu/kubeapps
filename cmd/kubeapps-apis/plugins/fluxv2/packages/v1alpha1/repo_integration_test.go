@@ -40,7 +40,7 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 	// now load some large repos (bitnami)
 	// I didn't want to store a large (10MB) copy of bitnami repo in our git,
 	// so for now let it fetch from bitnami website
-	if err = kubeAddHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default", ""); err != nil {
+	if err = kubeAddHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
 		t.Fatalf("%v", err)
 	}
 	// wait until this repo reaches 'Ready' state so that long indexation process kicks in
@@ -65,7 +65,10 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 }
 
 func TestKindClusterRepoWithBasicAuth(t *testing.T) {
-	fluxPluginClient, _ := checkEnv(t)
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	secretName := "podinfo-basic-auth-secret"
 	repoName := "podinfo-basic-auth"
@@ -80,7 +83,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		}
 	})
 
-	if err := kubeAddHelmRepository(t, repoName, podinfo_basic_auth_repo_url, "default", secretName); err != nil {
+	if err := kubeAddHelmRepository(t, repoName, podinfo_basic_auth_repo_url, "default", secretName, 0); err != nil {
 		t.Fatalf("%v", err)
 	}
 	t.Cleanup(func() {
@@ -95,7 +98,10 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	grpcContext := newGrpcAdminContext(t, "test-create-admin-basic-auth")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-basic-auth")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	const maxWait = 25
 	for i := 0; i <= maxWait; i++ {
@@ -134,9 +140,13 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	// first try the negative case, no auth - should fail due to not being able to
 	// read secrets in all namespaces
 	fluxPluginServiceAccount := "test-repo-with-basic-auth"
-	ctx, cancel := context.WithTimeout(newGrpcFluxPluginContext(t, fluxPluginServiceAccount), defaultContextTimeout)
+	grpcCtx, err := newGrpcFluxPluginContext(t, fluxPluginServiceAccount)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(grpcCtx, defaultContextTimeout)
 	defer cancel()
-	_, err := fluxPluginClient.GetAvailablePackageDetail(
+	_, err = fluxPluginClient.GetAvailablePackageDetail(
 		ctx,
 		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 	if err == nil {
@@ -168,7 +178,10 @@ type integrationTestAddRepoSpec struct {
 }
 
 func TestKindClusterAddPackageRepository(t *testing.T) {
-	_, fluxPluginReposClient := checkEnv(t)
+	_, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// these will be used further on for TLS-related scenarios. Init
 	// byte arrays up front so they can be re-used in multiple places later
@@ -314,7 +327,10 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		},
 	}
 
-	grpcContext := newGrpcAdminContext(t, "test-add-repo-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-add-repo-admin")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {

@@ -58,7 +58,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "bitnami-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/valid-index.yaml",
+					index:     testYaml("valid-index.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
@@ -73,7 +73,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "bitnami-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/valid-index.yaml",
+					index:     testYaml("valid-index.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
@@ -88,7 +88,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "bitnami-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/valid-index.yaml",
+					index:     testYaml("valid-index.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{
@@ -106,13 +106,13 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "bitnami-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/valid-index.yaml",
+					index:     testYaml("valid-index.yaml"),
 				},
 				{
 					name:      "jetstack-1",
 					namespace: "ns1",
 					url:       "https://charts.jetstack.io",
-					index:     "testdata/jetstack-index.yaml",
+					index:     testYaml("jetstack-index.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
@@ -127,13 +127,13 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "bitnami-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/valid-index.yaml",
+					index:     testYaml("valid-index.yaml"),
 				},
 				{
 					name:      "jetstack-1",
 					namespace: "ns1",
 					url:       "https://charts.jetstack.io",
-					index:     "testdata/jetstack-index.yaml",
+					index:     testYaml("jetstack-index.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -155,13 +155,13 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "bitnami-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/valid-index.yaml",
+					index:     testYaml("valid-index.yaml"),
 				},
 				{
 					name:      "jetstack-1",
 					namespace: "ns1",
 					url:       "https://charts.jetstack.io",
-					index:     "testdata/jetstack-index.yaml",
+					index:     testYaml("jetstack-index.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -181,7 +181,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -203,7 +203,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -223,7 +223,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -243,7 +243,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -265,7 +265,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -285,7 +285,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -307,7 +307,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -327,7 +327,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -349,7 +349,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -371,7 +371,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					name:      "index-with-categories-1",
 					namespace: "default",
 					url:       "https://example.repo.com/charts",
-					index:     "testdata/index-with-categories.yaml",
+					index:     testYaml("index-with-categories.yaml"),
 				},
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{
@@ -451,7 +451,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 				name:      "index-with-categories-1",
 				namespace: "default",
 				url:       "https://example.repo.com/charts",
-				index:     "testdata/index-with-categories.yaml",
+				index:     testYaml("index-with-categories.yaml"),
 			},
 		}
 		repos := []sourcev1.HelmRepository{}
@@ -574,12 +574,12 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 
 func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 	t.Run("test get available package summaries after repo index is updated", func(t *testing.T) {
-		indexYamlBeforeUpdateBytes, err := ioutil.ReadFile("testdata/index-before-update.yaml")
+		indexYamlBeforeUpdateBytes, err := ioutil.ReadFile(testYaml("index-before-update.yaml"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 
-		indexYamlAfterUpdateBytes, err := ioutil.ReadFile("testdata/index-after-update.yaml")
+		indexYamlAfterUpdateBytes, err := ioutil.ReadFile(testYaml("index-after-update.yaml"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -741,7 +741,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			charts = append(charts, c)
 		}
 		ts, repo, err := newRepoWithIndex(
-			"testdata/valid-index.yaml", repoName.Name, repoName.Namespace, replaceUrls, "")
+			testYaml("valid-index.yaml"), repoName.Name, repoName.Namespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -847,7 +847,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 // test that causes RetryWatcher to stop and the cache needs to resync
 func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
-		ts2, repo, err := newRepoWithIndex("testdata/valid-index.yaml", "bitnami-1", "default", nil, "")
+		ts2, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), "bitnami-1", "default", nil, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -958,7 +958,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		for i := 0; i < MAX_REPOS; i++ {
 			repoName := fmt.Sprintf("bitnami-%d", i)
 
-			ts, repo, err := newRepoWithIndex("testdata/valid-index.yaml", repoName, "default", nil, "")
+			ts, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), repoName, "default", nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1095,7 +1095,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		repoName := "bitnami-0"
 		repoNamespace := "default"
 
-		ts, repo, err := newRepoWithIndex("testdata/valid-index.yaml", repoName, repoNamespace, nil, "")
+		ts, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), repoName, repoNamespace, nil, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -1784,17 +1784,17 @@ var (
 	valid_index_charts_spec = []testSpecChartWithFile{
 		{
 			name:     "acs-engine-autoscaler",
-			tgzFile:  "testdata/charts/acs-engine-autoscaler-2.1.1.tgz",
+			tgzFile:  testTgz("acs-engine-autoscaler-2.1.1.tgz"),
 			revision: "2.1.1",
 		},
 		{
 			name:     "wordpress",
-			tgzFile:  "testdata/charts/wordpress-0.7.5.tgz",
+			tgzFile:  testTgz("wordpress-0.7.5.tgz"),
 			revision: "0.7.5",
 		},
 		{
 			name:     "wordpress",
-			tgzFile:  "testdata/charts/wordpress-0.7.4.tgz",
+			tgzFile:  testTgz("wordpress-0.7.4.tgz"),
 			revision: "0.7.4",
 		},
 	}

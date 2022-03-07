@@ -60,7 +60,7 @@ type Server struct {
 // createRESTMapper returns a rest mapper configured with the APIs of the
 // local k8s API server. This is used to convert between the GroupVersionKinds
 // of the resource references to the GroupVersionResource used by the API server.
-func createRESTMapper() (meta.RESTMapper, error) {
+func createRESTMapper(clientQPS float32, clientBurst int) (meta.RESTMapper, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -69,6 +69,14 @@ func createRESTMapper() (meta.RESTMapper, error) {
 	// See https://github.com/kubernetes/client-go/issues/657#issuecomment-842960258
 	config.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
 	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+
+	// Avoid client-side throttling while the rest mapper discovers the
+	// available APIs on the K8s api server.  Note that this is only used for
+	// the discovery client below to return the rest mapper. The configured
+	// values for QPS and Burst are used for the client used for user requests.
+	config.QPS = clientQPS
+	config.Burst = clientBurst
+
 	client, err := rest.RESTClientFor(config)
 	if err != nil {
 		return nil, err
@@ -81,8 +89,8 @@ func createRESTMapper() (meta.RESTMapper, error) {
 	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter) (*Server, error) {
-	mapper, err := createRESTMapper()
+func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int) (*Server, error) {
+	mapper, err := createRESTMapper(clientQPS, clientBurst)
 	if err != nil {
 		return nil, err
 	}
