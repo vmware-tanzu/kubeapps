@@ -75,7 +75,7 @@ require (
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/vmware-tanzu/carvel-kapp-controller v0.32.0
 	github.com/vmware-tanzu/carvel-kapp-controller/cli v0.0.0-20220203213126-e7c5dc77af08
-	github.com/vmware-tanzu/carvel-vendir v0.24.0
+	github.com/vmware-tanzu/carvel-vendir v0.25.0
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
