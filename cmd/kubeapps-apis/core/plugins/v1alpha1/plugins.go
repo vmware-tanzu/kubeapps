@@ -45,6 +45,10 @@ type GRPCPluginRegistrationOptions struct {
 	ConfigGetter     core.KubernetesConfigGetter
 	ClustersConfig   kube.ClustersConfig
 	PluginConfigPath string
+	// The QPS and Burst options that have been configured for any
+	// clients of the K8s API server created by plugins.
+	ClientQPS   float32
+	ClientBurst int
 }
 
 // PluginWithServer keeps a record of a GRPC server and its plugin detail.
@@ -131,7 +135,7 @@ func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			return err
 		}
 
-		if grpcServer, err := s.registerGRPC(p, pluginDetail, grpcReg, configGetter, serveOpts.PluginConfigPath); err != nil {
+		if grpcServer, err := s.registerGRPC(p, pluginDetail, grpcReg, configGetter, serveOpts); err != nil {
 			return err
 		} else {
 			pluginsWithServers = append(pluginsWithServers, PluginWithServer{
@@ -156,7 +160,7 @@ func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
 func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar,
-	clientGetter core.KubernetesConfigGetter, pluginConfigPath string) (interface{}, error) {
+	configGetter core.KubernetesConfigGetter, serveOpts core.ServeOptions) (interface{}, error) {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return nil, fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
@@ -171,7 +175,14 @@ func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 		return nil, fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, stubFn, grpcRegFn)
 	}
 
-	server, err := grpcFn(GRPCPluginRegistrationOptions{registrar, clientGetter, s.clustersConfig, pluginConfigPath})
+	server, err := grpcFn(GRPCPluginRegistrationOptions{
+		Registrar:        registrar,
+		ConfigGetter:     configGetter,
+		ClustersConfig:   s.clustersConfig,
+		PluginConfigPath: serveOpts.PluginConfigPath,
+		ClientQPS:        serveOpts.QPS,
+		ClientBurst:      serveOpts.Burst,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("plug-in %q failed to register due to: %v", pluginDetail, err)
 	} else if server == nil {
@@ -300,7 +311,7 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 // createClientGetter takes the required params and returns the closure fuction.
 // it's splitted for testing this fn separately
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
-	// return the closure fuction that takes the context, but preserving the required scope,
+	// return the closure function that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
 	return func(ctx context.Context, cluster string) (*rest.Config, error) {
 		log.V(4).Infof("+clientGetter.GetClient")
