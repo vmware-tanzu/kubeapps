@@ -67,7 +67,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 		Resource: fluxHelmRepositories,
 	}
 
-	if redisCli, err := common.NewRedisClientFromEnv(); err != nil {
+	if redisCli, err := common.NewRedisClientFromEnv(stopCh); err != nil {
 		return nil, err
 	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err

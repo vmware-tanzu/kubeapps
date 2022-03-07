@@ -26,16 +26,16 @@ import (
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	// copied from helm plug-in
-	UserAgentPrefix = "kubeapps-apis/plugins"
-	// max number of attempts to initialize redis client before giving up
-	maxRedisInitClientRetries = 10
-	redisInitClientRetryWait  = 1 * time.Second
+	UserAgentPrefix          = "kubeapps-apis/plugins"
+	redisInitClientRetryWait = 1 * time.Second
+	redisInitClientTimeout   = 10 * time.Second
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -117,7 +117,7 @@ func RWMutexReadLocked(rw *sync.RWMutex) bool {
 // small preference for reading all config in the main.go
 // (whether from env vars or cmd-line options) only in the one spot and passing
 // explicitly to functions (so functions are less dependent on env state).
-func NewRedisClientFromEnv() (*redis.Client, error) {
+func NewRedisClientFromEnv(stopCh <-chan struct{}) (*redis.Client, error) {
 	REDIS_ADDR, ok := os.LookupEnv("REDIS_ADDR")
 	if !ok {
 		return nil, fmt.Errorf("missing environment variable REDIS_ADDR")
@@ -138,25 +138,26 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 
 	// ref https://github.com/kubeapps/kubeapps/pull/4382#discussion_r820386531
 	var redisCli *redis.Client
-	for i := 0; i < maxRedisInitClientRetries; i++ {
-		redisCli = redis.NewClient(&redis.Options{
-			Addr:     REDIS_ADDR,
-			Password: REDIS_PASSWORD,
-			DB:       REDIS_DB_NUM,
+	err = wait.PollImmediate(redisInitClientRetryWait, redisInitClientTimeout,
+		func() (bool, error) {
+			redisCli = redis.NewClient(&redis.Options{
+				Addr:     REDIS_ADDR,
+				Password: REDIS_PASSWORD,
+				DB:       REDIS_DB_NUM,
+			})
+
+			// ping redis to make sure client is connected
+			var pong string
+			if pong, err = redisCli.Ping(redisCli.Context()).Result(); err == nil {
+				log.Infof("Redis [PING]: %s", pong)
+				return true, nil
+			}
+			log.Infof("Waiting %s before retrying to due to %v...", redisInitClientRetryWait.String(), err)
+			return false, nil
 		})
 
-		// confidence test that the redis client is connected
-		var pong string
-		if pong, err = redisCli.Ping(redisCli.Context()).Result(); err == nil {
-			log.Infof("Redis [PING]: %s", pong)
-			break
-		}
-		log.Infof("Waiting %ds before retrying to due to %v...", redisInitClientRetryWait, err)
-		time.Sleep(redisInitClientRetryWait)
-	}
-
 	if err != nil {
-		return nil, fmt.Errorf("initializing redis client failed after [%d] retries were exhausted, last error: %v", maxRedisInitClientRetries, err)
+		return nil, fmt.Errorf("initializing redis client failed after timeout of %s was reached, error: %v", redisInitClientTimeout.String(), err)
 	}
 
 	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
