@@ -10,10 +10,11 @@ At the heart of Kubeapps is an in-cluster Kubernetes dashboard that provides you
 
 The dashboard is written in the JavaScript programming language and is developed using the React JavaScript library.
 
-### Kubeops
+### Kubeapps-APIs
 
-Kubeops is the service in charge of communicating both with the Helm (v3) API and other k8s resources like AppRepositories or Secrets.
-Check more details about the implementation in [this document](/docs/developer/kubeops.md).
+The Kubeapps APIs service provides a plugable, gRPC-based API service enabling the Kubeapps UI (or other clients) to interact with different Kubernetes packaging formats in a consistent, extensible way.
+
+You can read more details about the architecture, implementation and getting started in the [Kubeapps APIs developer documentation](/docs/developer/kubeapps-apis.md).
 
 ### Apprepository CRD and Controller
 
