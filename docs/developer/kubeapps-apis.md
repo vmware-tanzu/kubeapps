@@ -138,7 +138,7 @@ Note that although we don't support its use in anything other than a demo enviro
 
 ### Caveats
 
-Although the current Kubeapps UI does indeed benefit from this core client and interacts with the packages from different packaging systems in a uniform way, we still have some exceptions to this. For example, Flux and Carvel require selecting a service account to be associated with the installed package. Rather than the plugin providing additional schema or field data for creating a package ([something we plan to add in the future](#4365)), we've currently included the service account field based on the plugin name.
+Although the current Kubeapps UI does indeed benefit from this core client and interacts with the packages from different packaging systems in a uniform way, we still have some exceptions to this. For example, Flux and Carvel require selecting a service account to be associated with the installed package. Rather than the plugin providing additional schema or field data for creating a package ([something we plan to add in the future](https://github.com/kubeapps/kubeapps/issues/4365)), we've currently included the service account field based on the plugin name.
 
 It's also worth noting that we tried and were unable to include any streaming gRPC calls on the core packages interface. While two separate packages can define the same interface (with the same methods, return types etc.), `grpc-go` generates package-specific types for streamed responses, which makes it impossible for one packages' implementation of a streaming RPC to match another one, such as the core interface. It is not impossible to work around this, but so far we've used streaming responses on other non-packages plugins, such as the resources plugin for reporting on the Kubernetes resources related to an installed package.
 
@@ -248,7 +248,7 @@ curl -s http://localhost:8080/core/plugins/v1alpha1/configured-plugins | jq .
 }
 ```
 
-or via gRPC (using the [grpcurl tool](https://github.com/fullstorydev/grpcurl)):
+or via gRPC (using the [grpcurl tool](https://github.com/fullstorydev/grpcurl)), note that the same host:port is used as we multiplex on the one port:
 
 ```bash
 grpcurl -plaintext localhost:8080 kubeappsapis.core.plugins.v1alpha1.PluginsService.GetConfiguredPlugins
