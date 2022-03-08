@@ -16,7 +16,7 @@ In addition to these three packaging plugins, the Kubeapps APIs service is also 
 
 We chose to use [gRPC/protobuf](https://grpc.io/) to manage our API definitions and implementations together with the [buf.build](https://buf.build/) tool for lint and other niceties. In that regard, it's a pretty standard stack using:
 
-- [grpc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/) to enable an RESTful JSON version of our API (we don't use this in our client, but not everyone uses gRPC either, so wanted to ensure the API was accessible to others who wanted to use it)
+- [grpc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/) to enable an RESTful JSON version of our API (we don't use this in our client, but not everyone uses gRPC either, so we want to ensure the API is accessible to others who would like to use it)
 - Improbable's [grpc-web](https://github.com/improbable-eng/grpc-web) to enable TypeScript gRPC client generation as well as translating gRPC-web requests into plain gRPC calls in the backend (rather than requiring something heavier like [Envoy](https://grpc.io/docs/platforms/web/basics/#configure-the-envoy-proxy) to do the translation),
 - We multiplex on a single port to serve gRPC, gRPC-web as well as JSON HTTP requests.
 
@@ -34,11 +34,11 @@ This allows the main `kubeapps-apis` service to load dynamically any plugins fou
 
 So for example, as you might expect, we have a `helm/v1alpha1` plugin that provides a helm catalog and the ability to install helm packages, as well as a `resources/v1alpha1` plugin which can be enabled to provide some access to Kubernetes resources, such as the resources related to an installed package (assuming the requestor has the correct RBAC) - more on that later.
 
-With this structure, the kubeapps-apis' executable loads the `.so` files from the plugin directories specified on the command-line and register them when starting. You can see the plugin registration functionality in the [core plugin implementation](/cmd/kubeapps-apis/core/plugins/v1alpha1/plugins.go).
+With this structure, the kubeapps-apis executable loads the compiled plugin `.so` files from the plugin directories specified on the command-line and registers them when starting. You can find more details about the plugin registration functionality in the [core plugin implementation](/cmd/kubeapps-apis/core/plugins/v1alpha1/plugins.go).
 
-### An extensible API server - enabling different implementations of a core packages plugin
+### An extensible API server - enabling different implementations of the core packages plugin
 
-Where things become interesting is with the requirement to **support different Kubernetes packaging formats** via this plugable system and **present them consistently to a UI** like the Kubeapps dashboard.
+Where things become interesting is with the requirement to **support different Kubernetes packaging formats** via this plugable system and **present them consistently to a UI** such as the Kubeapps dashboard.
 
 To achieve this, we defined a core packages API (`core.packages.v1alpha1`) with an interface which any plugin can choose to implement. This interface consists of methods common to querying for and installing Kubernetes packages, such as `GetAvailablePackages` or `CreateInstalledPackage`. You can view the full protobuf definition of this interface
 in the [packages.proto](/cmd/kubeapps-apis/proto/kubeappsapis/core/packages/v1alpha1/packages.proto) file, but as an example, the `GetAvailablePackageDetail` RPC is defined as:
@@ -129,6 +129,66 @@ and return the aggregated results. So our Kubeapps UI (or any UI using the clien
 It is worth noting that a plugin that satisfies the core packages interface isn't restricted to *only* those methods. Similar to go interfaces, the plugin is free to implement
  other functionality in addition to the interface requirements. The Helm plugin uses this to include additional functionality for rolling back an installed package - something
  which is not necessary for Carvel or Flux. This extra functionality is available on the Helm-specific gRPC client.
+
+### Authentication/Authorization
+
+Authentication-wise, we continue to rely on the OIDC standard so that every request that arrives at the Kubeapps APIs server must include a token to identify the user. This token is then relayed with requests to the Kubernetes API service on the users' behalf, ensuring that all use of the Kubernetes API server is with the users' configured RBAC. Each plugin receives a `core.KubernetesConfigGetter` function when being registered, which handles creating the required Kubernetes config for a given request context, so the plugin doesn't need to care about the details.
+
+Note that although we don't support its use in anything other than a demo environment, a service account token can be used instead of a valid OIDC `id_token` to authenticate requests.
+
+### Caveats
+
+Although the current Kubeapps UI does indeed benefit from this core client and interacts with the packages from different packaging systems in a uniform way, we still have some exceptions to this. For example, Flux and Carvel require selecting a service account to be associated with the installed package. Rather than the plugin providing additional schema or field data for creating a package ([something we plan to add in the future](#4365)), we've currently included the service account field based on the plugin name.
+
+It's also worth noting that we tried and were unable to include any streaming gRPC calls on the core packages interface. While two separate packages can define the same interface (with the same methods, return types etc.), `grpc-go` generates package-specific types for streamed responses, which makes it impossible for one packages' implementation of a streaming RPC to match another one, such as the core interface. It is not impossible to work around this, but so far we've used streaming responses on other non-packages plugins, such as the resources plugin for reporting on the Kubernetes resources related to an installed package.
+
+### Accessing K8s resources without exposing the Kubernetes API server
+
+Since the beginning of the Kubeapps project, the Kubeapps dashboard required access to the Kubernetes API to be able to query and display the Kubernetes resources related to an installed package, as well as other functionality such as creating secrets or simply determining whether the user is authenticated (all of which required credentials with sufficient permissions). As a result, the Kubeapps frontend service has included a reverse proxy to the Kubernetes API since the very beginning. A major goal for the new `kubeapps-apis` service was to remove this reverse proxying of the Kubernetes API.
+
+This was achieved by the creation of the `resources/v1alpha1` plugin, which provides a number of specific functions related to Kubernetes resources that are required by UIs such as the Kubeapps dashboard. For example, rather than being able to query (or update) resources via the Kubernetes API, the `resources/v1alpha1` plugin provides a [`GetResources` method that streams the resources](/cmd/kubeapps-apis/proto/kubeappsapis/plugins/resources/v1alpha1/resources.proto) (or a subset thereof) for a specific installed package only:
+
+```protobuf
+// GetResourcesRequest
+//
+// Request for GetResources that specifies the resource references to get or watch.
+message GetResourcesRequest {
+    // InstalledPackageRef
+    //
+    // The installed package reference for which the resources are being fetched.
+    kubeappsapis.core.packages.v1alpha1.InstalledPackageReference installed_package_ref = 1;
+
+    // ResourceRefs
+    //
+    // The references to the resources that are to be fetched or watched.
+    // If empty, all resources for the installed package are returned when only
+    // getting the resources. It must be populated to watch resources to avoid
+    // watching all resources unnecessarily.
+    repeated kubeappsapis.core.packages.v1alpha1.ResourceRef resource_refs = 2;
+
+    // Watch
+    //
+    // When true, this will cause the stream to remain open with updated
+    // resources being sent as events are received from the Kubernetes API
+    // server.
+    bool watch = 3;
+}
+```
+
+This enables a client such as the Kubeapps UI to request to watch a set of resources referenced by an installed package with a single request, with updates being returned for any resources in that set which change, which is much more efficient for the browser client than a watch request per resources sent previously sent to the Kubernetes API. Of course the implementation of the resources plugin still needs to issue a separate watch request per resource to the Kubernetes API, but it's much less of a problem to do this in our plugin than it is to do so from a web browser, which has set limits. Furthermore, it is much simpler to reason about with go channels since the messages from separate go channels of resource updates can be [merged into a single watcher](/cmd/kubeapps-apis/plugins/resources/v1alpha1/server.go) with which to send data:
+
+```golang
+// Otherwise, if requested to watch the resources, merge the watchers
+// into a single resourceWatcher and stream the data as it arrives.
+resourceWatcher := mergeWatchers(watchers)
+for e := range resourceWatcher.ResultChan() {
+    sendResourceData(e.ResourceRef, e.Object, stream)
+}
+```
+
+See the [`mergeWatchers` function](https://github.com/kubeapps/kubeapps/blob/v2.4.3/cmd/kubeapps-apis/plugins/resources/v1alpha1/server.go#L298-L335) for details of how the channel results are merged, which is itself inspired by the [fan-in example from the go blog](https://go.dev/blog/pipelines).
+
+The resources plugin doesn't care which packaging system is used behind the scenes, all it needs to know is which packaging plugin is used so that it can verify the Kubernetes references for the installed package. In this way, the Kubeapps dashboard UI can present the Kubernetes resources for an installed package without caring which packaging system is involved.
 
 ## Trying it out
 
