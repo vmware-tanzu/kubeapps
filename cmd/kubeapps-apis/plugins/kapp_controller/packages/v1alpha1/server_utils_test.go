@@ -22,6 +22,7 @@ func TestGetPkgVersionsMap(t *testing.T) {
 	version123, _ := semver.NewVersion("1.2.3")
 	version124, _ := semver.NewVersion("1.2.4")
 	version127, _ := semver.NewVersion("1.2.7")
+	version1210, _ := semver.NewVersion("1.2.10")
 	tests := []struct {
 		name                   string
 		packages               []*datapackagingv1alpha1.Package
@@ -70,6 +71,23 @@ func TestGetPkgVersionsMap(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
+					Name:      "tetris.foo.example.com.1.2.10",
+				},
+				Spec: datapackagingv1alpha1.PackageSpec{
+					RefName:                         "tetris.foo.example.com",
+					Version:                         "1.2.10",
+					Licenses:                        []string{"my-license"},
+					ReleaseNotes:                    "release notes",
+					CapactiyRequirementsDescription: "capacity description",
+				},
+			},
+			{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       pkgResource,
+					APIVersion: datapackagingAPIVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
 					Name:      "tetris.foo.example.com.1.2.4",
 				},
 				Spec: datapackagingv1alpha1.PackageSpec{
@@ -83,16 +101,16 @@ func TestGetPkgVersionsMap(t *testing.T) {
 		}, map[string][]pkgSemver{
 			"tetris.foo.example.com": {
 				{
-					pkg:     &datapackagingv1alpha1.Package{},
-					version: version123,
+					version: version1210,
 				},
 				{
-					pkg:     &datapackagingv1alpha1.Package{},
+					version: version127,
+				},
+				{
 					version: version124,
 				},
 				{
-					pkg:     &datapackagingv1alpha1.Package{},
-					version: version127,
+					version: version123,
 				},
 			},
 		}},
@@ -103,7 +121,11 @@ func TestGetPkgVersionsMap(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			opts := cmpopts.IgnoreUnexported(pkgSemver{})
+			// We want to compare the `version` field of pkgSemver.
+			opts := cmp.Options{
+				cmp.AllowUnexported(pkgSemver{}),
+				cmpopts.IgnoreFields(pkgSemver{}, "pkg"),
+			}
 			if want, got := tt.expectedPkgVersionsMap, pkgVersionsMap; !cmp.Equal(want, got, opts) {
 				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got, opts))
 			}
