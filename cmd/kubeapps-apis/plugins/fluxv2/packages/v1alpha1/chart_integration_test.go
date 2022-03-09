@@ -123,7 +123,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	// one particular code path I'd like to test:
 	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}

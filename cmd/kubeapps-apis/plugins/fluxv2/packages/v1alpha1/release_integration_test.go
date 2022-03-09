@@ -114,7 +114,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +221,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,7 +304,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 		expectedResourceRefs: expected_resource_refs_auto_update,
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-auto-update")
+	grpcContext, err := newGrpcAdminContext(t, "test-auto-update", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -399,7 +399,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-delete-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-delete-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -525,10 +525,11 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 
 		if !tc.noPreCreateNs {
 			// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-950383123
-			kubeCreateNamespace(t, tc.request.TargetContext.Namespace)
+			if err := kubeCreateNamespace(t, tc.request.TargetContext.Namespace); err != nil {
+				t.Fatal(err)
+			}
 			t.Cleanup(func() {
-				err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace)
-				if err != nil {
+				if err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace); err != nil {
 					t.Logf("Failed to delete namespace [%s] due to [%v]", tc.request.TargetContext.Namespace, err)
 				}
 			})
@@ -555,7 +556,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 					}
 				}
 			}
-			err := kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, tc.request.TargetContext.Namespace)
+			err := kubeDeleteServiceAccountWithClusterRoleBinding(t, tc.request.ReconciliationOptions.ServiceAccountName, tc.request.TargetContext.Namespace)
 			if err != nil {
 				t.Logf("Failed to delete service account due to [%v]", err)
 			}

@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -98,7 +99,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-basic-auth")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-basic-auth", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,7 +141,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	// first try the negative case, no auth - should fail due to not being able to
 	// read secrets in all namespaces
 	fluxPluginServiceAccount := "test-repo-with-basic-auth"
-	grpcCtx, err := newGrpcFluxPluginContext(t, fluxPluginServiceAccount)
+	grpcCtx, err := newGrpcFluxPluginContext(t, fluxPluginServiceAccount, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,6 +167,152 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	}
 
 	compareActualVsExpectedAvailablePackageDetail(t, resp.AvailablePackageDetail, expected_detail_podinfo_basic_auth.AvailablePackageDetail)
+}
+
+// scenario:
+// 1) create two namespaces
+// 2) create two helm repositories, each containing a single package: one in each of the namespaces from (1)
+// 3) create 3 service-accounts in default namespace:
+//   a) - "...-admin", with cluster-wide access
+//   b) - "...-loser", without cluster-wide access or any access to any of the namespaces
+//   c) - "...-limited", without cluster-wide access, but with read access to one namespace
+// 4) execute GetAvailablePackageSummaries():
+//   a) with 3a) => should return 2 packages
+//   b) with 3b) => should return 0 packages
+//   c) with 3c) => should return 1 package
+
+func TestKindClusterGetAvailablePackageSummariesWhenCallerHasNoNamespaceAccess(t *testing.T) {
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repoName := "podinfo-1"
+	repoNamespace := "test-" + randSeq(4)
+	if err := kubeCreateNamespace(t, repoNamespace); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteNamespace(t, repoNamespace); err != nil {
+			t.Logf("Failed to delete namespace [%s] due to [%v]", repoNamespace, err)
+		}
+	})
+	if err = kubeAddHelmRepository(t, repoName, podinfo_repo_url, repoNamespace, "", 0); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err = kubeDeleteHelmRepository(t, repoName, repoNamespace); err != nil {
+			t.Logf("Failed to delete helm source due to [%v]", err)
+		}
+	})
+	// wait until this repo reaches 'Ready'
+	if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName, repoNamespace); err != nil {
+		t.Fatal(err)
+	}
+
+	repoName2 := "podinfo-2"
+	repoNamespace2 := "test-" + randSeq(4)
+	if err := kubeCreateNamespace(t, repoNamespace2); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteNamespace(t, repoNamespace2); err != nil {
+			t.Logf("Failed to delete namespace [%s] due to [%v]", repoNamespace2, err)
+		}
+	})
+
+	if err = kubeAddHelmRepository(t, repoName2, podinfo_repo_url, repoNamespace2, "", 0); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err = kubeDeleteHelmRepository(t, repoName2, repoNamespace2); err != nil {
+			t.Logf("Failed to delete helm source due to [%v]", err)
+		}
+	})
+	// wait until this repo reaches 'Ready'
+	if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName2, repoNamespace2); err != nil {
+		t.Fatal(err)
+	}
+
+	grpcContextAdmin, err := newGrpcAdminContext(t, "test-caller-ctx-admin", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-admin", "default", repoNamespace)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-admin", "default", repoNamespace2)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+
+	grpcContextLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-caller-ctx-loser", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-loser", "default", repoNamespace)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-loser", "default", repoNamespace2)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+
+	grpcContextLimited, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-caller-ctx-limited", "default", repoNamespace2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-limited", "default", repoNamespace)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-limited", "default", repoNamespace2)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+
+	grpcContext, cancel := context.WithTimeout(grpcContextAdmin, defaultContextTimeout)
+	defer cancel()
+	resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+		grpcContext,
+		&corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{},
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else if len(resp.AvailablePackageSummaries) != 2 {
+		t.Errorf("Expected 2 packages, got %s", common.PrettyPrint(resp))
+	}
+
+	grpcContext, cancel = context.WithTimeout(grpcContextLoser, defaultContextTimeout)
+	defer cancel()
+	resp, err = fluxPluginClient.GetAvailablePackageSummaries(
+		grpcContext,
+		&corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{},
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else if len(resp.AvailablePackageSummaries) != 0 {
+		t.Errorf("Expected 0 packages, got %s", common.PrettyPrint(resp))
+	}
+
+	grpcContext, cancel = context.WithTimeout(grpcContextLimited, defaultContextTimeout)
+	defer cancel()
+	resp, err = fluxPluginClient.GetAvailablePackageSummaries(
+		grpcContext,
+		&corev1.GetAvailablePackageSummariesRequest{
+			Context: &corev1.Context{},
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else if len(resp.AvailablePackageSummaries) != 1 {
+		t.Errorf("Expected 0 packages, got %s", common.PrettyPrint(resp))
+	}
 }
 
 type integrationTestAddRepoSpec struct {
@@ -327,7 +474,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-add-repo-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-add-repo-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}

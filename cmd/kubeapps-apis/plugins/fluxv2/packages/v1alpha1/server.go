@@ -5,13 +5,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"reflect"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -45,14 +45,19 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter       clientgetter.ClientGetterFunc
+	// It is meant for in-band interactions (i.e. in the context of a caller)
+	// with k8s API server
+	clientGetter clientgetter.ClientGetterFunc
+	// for out-of-band interactions (in the context of kubeapps-internal-kubeappsapis
+	// service account with k8s API server
+	backgroundClientGetter clientgetter.BackgroundClientGetterFunc
+
 	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
 	chartCache *cache.ChartCache
 
-	versionsInSummary pkgutils.VersionsInSummary
-	timeoutSeconds    int32
+	pluginConfig *common.FluxPluginConfig
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -72,16 +77,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err
 	} else {
-		// If no config is provided, we default to the existing values for backwards
-		// compatibility.
-		versionsInSummary := pkgutils.GetDefaultVersionsInSummary()
-		timeoutSecs := int32(-1)
+		pluginConfig := &common.DefaultPluginConfig
 		if pluginConfigPath != "" {
-			versionsInSummary, timeoutSecs, err = parsePluginConfig(pluginConfigPath)
+			pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
 			if err != nil {
 				log.Fatalf("%s", err)
 			}
-			log.Infof("+fluxv2 using custom packages config with versions: [%v]", versionsInSummary)
+			log.Infof("+fluxv2 using custom config: [%v]", *pluginConfig)
 		} else {
 			log.Infof("+fluxv2 using default config since pluginConfigPath is empty")
 		}
@@ -91,10 +93,12 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 		sourcev1.AddToScheme(scheme)
 		helmv2.AddToScheme(scheme)
 
+		backgroundClientGetter := clientgetter.NewBackgroundClientGetter(
+			configGetter, clientgetter.Options{Scheme: scheme})
+
 		s := repoEventSink{
-			clientGetter: clientgetter.NewBackgroundClientGetter(
-				configGetter, clientgetter.Options{Scheme: scheme}),
-			chartCache: chartCache,
+			clientGetter: backgroundClientGetter,
+			chartCache:   chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
 			Gvr:          repositoriesGvr,
@@ -126,13 +130,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return &Server{
 				clientGetter: clientgetter.NewClientGetter(
 					configGetter, clientgetter.Options{Scheme: scheme}),
+				backgroundClientGetter: backgroundClientGetter,
 				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(
 					configGetter, kubeappsCluster),
-				repoCache:         repoCache,
-				chartCache:        chartCache,
-				kubeappsCluster:   kubeappsCluster,
-				versionsInSummary: versionsInSummary,
-				timeoutSeconds:    timeoutSecs,
+				repoCache:       repoCache,
+				chartCache:      chartCache,
+				kubeappsCluster: kubeappsCluster,
+				pluginConfig:    pluginConfig,
 			}, nil
 		}
 	}
@@ -154,12 +158,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 // Note that currently packages are returned only from repos that are in a 'Ready'
 // state. For the fluxv2 plugin, the request context namespace (the target
 // namespace) is not relevant since charts from a repository in any namespace
-//  accessible to the user are available to be installed in the target namespace.
+// accessible to the user are available to be installed in the target namespace.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 	defer log.Infof("-fluxv2 GetAvailablePackageSummaries")
 
-	// grpc compiles in getters for you which automatically return a default (empty) struct if the pointer was nil
+	// grpc compiles in getters for you which automatically return a default (empty) struct
+	// if the pointer was nil
 	cluster := request.GetContext().GetCluster()
 	if request != nil && cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
@@ -305,7 +310,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return &corev1.GetAvailablePackageVersionsResponse{
 			PackageAppVersions: pkgutils.PackageAppVersionsSummary(
 				chart.ChartVersions,
-				s.versionsInSummary),
+				s.pluginConfig.VersionsInSummary),
 		}, nil
 	} else {
 		return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
@@ -573,41 +578,33 @@ func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Cl
 	return ctrlclient.NewNamespacedClient(client, namespace), nil
 }
 
+// hasAccessToNamespace returns an error if the client does not have read access to a given namespace
+func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bool, error) {
+	typedCli, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+	if err != nil {
+		return false, err
+	}
+
+	res, err := typedCli.AuthorizationV1().SelfSubjectAccessReviews().Create(
+		context.TODO(),
+		&authorizationv1.SelfSubjectAccessReview{
+			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authorizationv1.ResourceAttributes{
+					Group:     sourcev1.GroupVersion.Group,
+					Version:   sourcev1.GroupVersion.Version,
+					Resource:  fluxHelmRepositories,
+					Verb:      "get",
+					Namespace: namespace,
+				},
+			},
+		}, metav1.CreateOptions{})
+	if err != nil {
+		return false, status.Errorf(codes.Internal, "Unable to check if the user has access to the namespace: %s", err)
+	}
+	return res.Status.Allowed, nil
+}
+
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
 func GetPluginDetail() *plugins.Plugin {
 	return common.GetPluginDetail()
-}
-
-// parsePluginConfig parses the input plugin configuration json file and return the
-// configuration options.
-func parsePluginConfig(pluginConfigPath string) (pkgutils.VersionsInSummary, int32, error) {
-	// Note at present VersionsInSummary is the only configurable option for this plugin,
-	// and if required this func can be enhanced to return fluxConfig struct
-
-	// In the flux plugin, for example, we are interested in config for the
-	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
-	type fluxPluginConfig struct {
-		Core struct {
-			Packages struct {
-				V1alpha1 struct {
-					VersionsInSummary pkgutils.VersionsInSummary
-					TimeoutSeconds    int32 `json:"timeoutSeconds"`
-				} `json:"v1alpha1"`
-			} `json:"packages"`
-		} `json:"core"`
-	}
-	var config fluxPluginConfig
-
-	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
-	if err != nil {
-		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
-	}
-	err = json.Unmarshal([]byte(pluginConfig), &config)
-	if err != nil {
-		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
-	}
-
-	// return configured value
-	return config.Core.Packages.V1alpha1.VersionsInSummary,
-		config.Core.Packages.V1alpha1.TimeoutSeconds, nil
 }

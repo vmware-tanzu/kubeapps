@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,6 +21,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
 	"google.golang.org/grpc/codes"
@@ -44,13 +46,20 @@ var (
 	pluginDetail plugins.Plugin
 	// This version var is updated during the build (see the -ldflags option
 	// in the cmd/kubeapps-apis/Dockerfile)
-	version = "devel"
+	version             = "devel"
+	DefaultPluginConfig FluxPluginConfig
 )
 
 func init() {
 	pluginDetail = plugins.Plugin{
 		Name:    "fluxv2.packages",
 		Version: "v1alpha1",
+	}
+	// If no config is provided, we default to the existing values for backwards
+	// compatibility.
+	DefaultPluginConfig = FluxPluginConfig{
+		VersionsInSummary: pkgutils.GetDefaultVersionsInSummary(),
+		TimeoutSeconds:    int32(-1),
 	}
 }
 
@@ -299,4 +308,45 @@ func userAgentString() string {
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
 func GetPluginDetail() *plugins.Plugin {
 	return &pluginDetail
+}
+
+type FluxPluginConfig struct {
+	VersionsInSummary pkgutils.VersionsInSummary
+	TimeoutSeconds    int32
+}
+
+// ParsePluginConfig parses the input plugin configuration json file and return the
+// configuration options.
+func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
+	// Note at present VersionsInSummary is the only configurable option for this plugin,
+	// and if required this func can be enhanced to return fluxConfig struct
+
+	// In the flux plugin, for example, we are interested in config for the
+	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
+	type internalFluxPluginConfig struct {
+		Core struct {
+			Packages struct {
+				V1alpha1 struct {
+					VersionsInSummary pkgutils.VersionsInSummary
+					TimeoutSeconds    int32 `json:"timeoutSeconds"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"core"`
+	}
+	var config internalFluxPluginConfig
+
+	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+	}
+	err = json.Unmarshal([]byte(pluginConfig), &config)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+	}
+
+	// return configured value
+	return &FluxPluginConfig{
+		VersionsInSummary: config.Core.Packages.V1alpha1.VersionsInSummary,
+		TimeoutSeconds:    config.Core.Packages.V1alpha1.TimeoutSeconds,
+	}, nil
 }

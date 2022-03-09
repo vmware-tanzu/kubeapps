@@ -192,7 +192,7 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	if c.config.Gvr.Empty() {
 		return fmt.Errorf("server configured with empty GVR")
 	}
-	// confidence test that CRD for GVR has been registered
+	// sanity check that CRD for GVR has been registered
 	ctx := context.Background()
 	apiExt, err := c.config.ClientGetter.ApiExt(ctx)
 	if err != nil {

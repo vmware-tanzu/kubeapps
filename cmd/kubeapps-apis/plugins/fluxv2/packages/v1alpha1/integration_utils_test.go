@@ -328,8 +328,62 @@ func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error)
 	}
 }
 
-func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
-	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
+func kubeCreateClusterRole(t *testing.T, name string) error {
+	t.Logf("+kubeCreateClusterRole(%s)", name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.RbacV1().ClusterRoles().Create(ctx, &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}, metav1.CreateOptions{})
+	return err
+}
+
+func kubeDeleteClusterRole(t *testing.T, name string) error {
+	t.Logf("+kubeDeleteClusterRole(%s)", name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	return typedClient.RbacV1().ClusterRoles().Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+func kubeCreateRole(t *testing.T, name, namespace string, rules []rbacv1.PolicyRule) error {
+	t.Logf("+kubeCreateRole(%s,%s)", name, namespace)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.RbacV1().Roles(namespace).Create(ctx, &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Rules: rules,
+	}, metav1.CreateOptions{})
+	return err
+}
+
+func kubeDeleteRole(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeDeleteRole(%s,%s)", name, namespace)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	return typedClient.RbacV1().Roles(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+func kubeCreateServiceAccountAndSecret(t *testing.T, name, namespace string) (string, error) {
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return "", err
@@ -380,7 +434,23 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	token := secret.Data["token"]
 	if token == nil {
 		return "", err
+	} else {
+		return string(token), nil
 	}
+}
+
+func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
+	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
+	if err != nil {
+		return "", err
+	}
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
 		ctx,
 		&rbacv1.ClusterRoleBinding{
@@ -406,6 +476,44 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	return string(token), nil
 }
 
+func kubeCreateServiceAccountWithRole(t *testing.T, name, namespace, role, namespaceAllowed string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithRole(%s,%s,%s,%s)", name, namespace, role, namespaceAllowed)
+	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
+	if err != nil {
+		return "", err
+	}
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.RbacV1().RoleBindings(namespaceAllowed).Create(
+		ctx,
+		&rbacv1.RoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name + "-binding",
+				Namespace: namespaceAllowed,
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      rbacv1.ServiceAccountKind,
+					Name:      name,
+					Namespace: namespace,
+				},
+			},
+			RoleRef: rbacv1.RoleRef{
+				Kind: "Role",
+				Name: role,
+			},
+		},
+		metav1.CreateOptions{})
+	if err != nil {
+		return "", err
+	}
+	return string(token), nil
+}
+
 // ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
 // will create a service account with cluster-admin privs and return the associated
 // Bearer token (base64-encoded)
@@ -417,8 +525,8 @@ func kubeCreateFluxPluginServiceAccount(t *testing.T, name, namespace string) (s
 	return kubeCreateServiceAccountWithClusterRole(t, name, namespace, "kubeapps:controller:kubeapps-apis-fluxv2-plugin")
 }
 
-func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeDeleteServiceAccount(%s,%s)", name, namespace)
+func kubeDeleteServiceAccountWithClusterRoleBinding(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeDeleteServiceAccountWithClusterRoleBinding(%s,%s)", name, namespace)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
@@ -426,6 +534,33 @@ func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	err = typedClient.RbacV1().ClusterRoleBindings().Delete(
+		ctx,
+		name+"-binding",
+		metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
+		ctx,
+		name,
+		metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func kubeDeleteServiceAccountWithRoleBinding(t *testing.T, name, namespace, roleNamespace string) error {
+	t.Logf("+kubeDeleteServiceAccountWithRoleBinding(%s,%s)", name, namespace)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	err = typedClient.RbacV1().RoleBindings(roleNamespace).Delete(
 		ctx,
 		name+"-binding",
 		metav1.DeleteOptions{})
@@ -656,29 +791,101 @@ func newGrpcContext(t *testing.T, token string) context.Context {
 		metadata.Pairs("Authorization", "Bearer "+token))
 }
 
-func newGrpcAdminContext(t *testing.T, name string) (context.Context, error) {
-	token, err := kubeCreateAdminServiceAccount(t, name, "default")
+func newGrpcAdminContext(t *testing.T, name, namespace string) (context.Context, error) {
+	token, err := kubeCreateAdminServiceAccount(t, name, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create service account due to: %+v", err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
 			t.Logf("Failed to delete service account due to: %+v", err)
 		}
 	})
 	return newGrpcContext(t, token), nil
 }
 
-func newGrpcFluxPluginContext(t *testing.T, name string) (context.Context, error) {
-	token, err := kubeCreateFluxPluginServiceAccount(t, name, "default")
+func newGrpcFluxPluginContext(t *testing.T, name, namespace string) (context.Context, error) {
+	token, err := kubeCreateFluxPluginServiceAccount(t, name, namespace)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create service account due to: %+v", err)
+		return nil, fmt.Errorf("Failed to create service account [%s] due to: %+v", name, err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
-			t.Logf("Failed to delete service account due to: %+v", err)
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
+			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
 		}
 	})
+	return newGrpcContext(t, token), nil
+}
+
+func kubectlCanIgetHelmRepositoriesInNamespace(t *testing.T, name, namespace, checkThisNamespace string) string {
+	args := []string{
+		"auth",
+		"can-i",
+		"get",
+		"helmrepositories",
+		"--namespace",
+		checkThisNamespace,
+		"--as",
+		"system:serviceaccount:" + namespace + ":" + name,
+	}
+	cmd := exec.Command("kubectl", args...)
+	byteArray, _ := cmd.CombinedOutput()
+	out := strings.Trim(string(byteArray), "\n")
+	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
+	return out
+}
+
+func newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t *testing.T, name, namespace string) (context.Context, error) {
+	role := name + "-cluster-role"
+	if err := kubeCreateClusterRole(t, role); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteClusterRole(t, role); err != nil {
+			t.Logf("Failed to delete cluster role [%s] due to: %+v", role, err)
+		}
+	})
+
+	token, err := kubeCreateServiceAccountWithClusterRole(t, name, namespace, role)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
+			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
+		}
+	})
+	return newGrpcContext(t, token), nil
+}
+
+func newGrpcContextForServiceAccountWithAccessToNamespace(t *testing.T, name, namespace, namespaceAllowed string) (context.Context, error) {
+	role := name + "-role"
+	rules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{sourcev1.GroupVersion.Group},
+			Resources: []string{fluxHelmRepositories},
+			Verbs:     []string{"get", "list"},
+		},
+	}
+	if err := kubeCreateRole(t, role, namespaceAllowed, rules); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteRole(t, role, namespaceAllowed); err != nil {
+			t.Logf("Failed to delete role [%s] due to: %+v", role, err)
+		}
+	})
+
+	token, err := kubeCreateServiceAccountWithRole(t, name, namespace, role, namespaceAllowed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteServiceAccountWithRoleBinding(t, name, namespace, namespaceAllowed); err != nil {
+			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
+		}
+	})
+
 	return newGrpcContext(t, token), nil
 }
 

@@ -48,17 +48,31 @@ var (
 )
 
 // namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
+// the repositories to which the caller context has no access are filtered out
 func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]sourcev1.HelmRepository, error) {
-	client, err := s.getClient(ctx, namespace)
+	// the actual List(...) call will be executed in the context of
+	// kubeapps-internal-kubeappsapis service account
+	// ref https://github.com/kubeapps/kubeapps/issues/4390 for explanation
+	backgroundCtx := context.Background()
+	client, err := s.backgroundClientGetter.ControllerRuntime(backgroundCtx)
 	if err != nil {
 		return nil, err
 	}
 
 	var repoList sourcev1.HelmRepositoryList
-	if err := client.List(ctx, &repoList); err != nil {
+	if err := client.List(backgroundCtx, &repoList); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmRepository", namespace+"/*", err)
 	} else {
-		return repoList.Items, nil
+		// filter out those repos the caller has no access to
+		items := []sourcev1.HelmRepository{}
+		for _, item := range repoList.Items {
+			if ok, err := s.hasAccessToNamespace(ctx, item.GetNamespace()); err == nil && ok {
+				items = append(items, item)
+			} else if err != nil {
+				return nil, err
+			}
+		}
+		return items, nil
 	}
 }
 

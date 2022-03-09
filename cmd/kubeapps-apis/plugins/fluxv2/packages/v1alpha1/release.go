@@ -538,8 +538,8 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 	// So far we just use one configured per server/installation, if specified,
 	// same as helm plug-in.
 	// Otherwise the default timeout is used.
-	if s.timeoutSeconds > 0 {
-		timeoutInterval := metav1.Duration{Duration: time.Duration(s.timeoutSeconds) * time.Second}
+	if s.pluginConfig.TimeoutSeconds > 0 {
+		timeoutInterval := metav1.Duration{Duration: time.Duration(s.pluginConfig.TimeoutSeconds) * time.Second}
 		fluxRelease.Spec.Timeout = &timeoutInterval
 	}
 	return fluxRelease, nil
