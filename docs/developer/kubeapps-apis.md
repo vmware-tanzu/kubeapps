@@ -1,6 +1,6 @@
 # Kubeapps APIs service
 
-The Kubeapps APIs service provides a plugable, gRPC-based API service enabling the Kubeapps UI (or other clients) to interact with different Kubernetes packaging formats in a consistent, extensible way.
+The Kubeapps APIs service provides a pluggable, gRPC-based API service enabling the Kubeapps UI (or other clients) to interact with different Kubernetes packaging formats in a consistent, extensible way.
 
 The Kubeapps APIs service is bundled with three packaging plugins providing support for the Helm, Carvel and Flux packaging formats, enabling users to browse and install packages of different formats.
 
@@ -16,11 +16,11 @@ In addition to these three packaging plugins, the Kubeapps APIs service is also 
 
 We chose to use [gRPC/protobuf](https://grpc.io/) to manage our API definitions and implementations together with the [buf.build](https://buf.build/) tool for lint and other niceties. In that regard, it's a pretty standard stack using:
 
-- [grpc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/) to enable an RESTful JSON version of our API (we don't use this in our client, but not everyone uses gRPC either, so we want to ensure the API is accessible to others who would like to use it)
+- [grpc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/) to enable a RESTful JSON version of our API (we don't use this in our client, but not everyone uses gRPC either, so we want to ensure the API is accessible to others who would like to use it)
 - Improbable's [grpc-web](https://github.com/improbable-eng/grpc-web) to enable TypeScript gRPC client generation as well as translating gRPC-web requests into plain gRPC calls in the backend (rather than requiring something heavier like [Envoy](https://grpc.io/docs/platforms/web/basics/#configure-the-envoy-proxy) to do the translation),
 - We multiplex on a single port to serve gRPC, gRPC-web as well as JSON HTTP requests.
 
-### An plugable API server - loading plugins dynamically
+### A pluggable API server - loading plugins dynamically
 
 A plugin for the Kubeapps APIs service is just a standard [Go plugin](https://pkg.go.dev/plugin) that exports two specific functions with the signatures:
 
@@ -38,7 +38,7 @@ With this structure, the kubeapps-apis executable loads the compiled plugin `.so
 
 ### An extensible API server - enabling different implementations of the core packages plugin
 
-Where things become interesting is with the requirement to **support different Kubernetes packaging formats** via this plugable system and **present them consistently to a UI** such as the Kubeapps dashboard.
+Where things become interesting is with the requirement to **support different Kubernetes packaging formats** via this pluggable system and **present them consistently to a UI** such as the Kubeapps dashboard.
 
 To achieve this, we defined a core packages API (`core.packages.v1alpha1`) with an interface which any plugin can choose to implement. This interface consists of methods common to querying for and installing Kubernetes packages, such as `GetAvailablePackages` or `CreateInstalledPackage`. You can view the full protobuf definition of this interface
 in the [packages.proto](/cmd/kubeapps-apis/proto/kubeappsapis/core/packages/v1alpha1/packages.proto) file, but as an example, the `GetAvailablePackageDetail` RPC is defined as:
@@ -95,7 +95,7 @@ Of course, all plugins register their own gRPC servers and so the RPC calls they
 
 ### An Aggregated API server - combining results from different packaging plugins
 
-Part of the goal of enabling plugable support for different packaging systems is to ensure that a UI like the Kubeapps dashboard can use a single client to present a catalog of apps for install, regardless of whether they come from a standard Helm repository, or a flux-based Helm repository, or Carvel package resources on the cluster.
+Part of the goal of enabling pluggable support for different packaging systems is to ensure that a UI like the Kubeapps dashboard can use a single client to present a catalog of apps for install, regardless of whether they come from a standard Helm repository, or a flux-based Helm repository, or Carvel package resources on the cluster.
 
 For this reason, the implementation of the core packages API delegates to the related packaging plugins and aggregates their results. For example, the core packages implementation of `GetAvailablePackageDetail` ([see `packages.go`](/cmd/kubeapps-apis/core/packages/v1alpha1/packages.go)) can simply delegate to the relevant plugin:
 
@@ -194,7 +194,7 @@ The resources plugin doesn't care which packaging system is used behind the scen
 
 ### The command-line interface
 
-Similar to most go commands, we've used [Cobra](https://github.com/spf13/cobra) for the CLI interface. Currently there is only a root command to run server, but we may later add a `version` subcommand or a `new-plugin` subcommand, but even without these it provides a lot of useful defaults for config, env var support etc.
+Similar to most go commands, we've used [Cobra](https://github.com/spf13/cobra) for the CLI interface. Currently, there is only a root command to run the server, but we may later add a `version` subcommand or a `new-plugin` subcommand, but even without these, it provides a lot of useful defaults for config, env var support, etc.
 
 Although it is possible to run the service in isolation, it requires access to a cluster so it's much simpler to test the service via port-forwarding.
 

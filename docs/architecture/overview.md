@@ -12,7 +12,7 @@ The dashboard is written in the JavaScript programming language and is developed
 
 ### Kubeapps-APIs
 
-The Kubeapps APIs service provides a plugable, gRPC-based API service enabling the Kubeapps UI (or other clients) to interact with different Kubernetes packaging formats in a consistent, extensible way.
+The Kubeapps APIs service provides a pluggable, gRPC-based API service enabling the Kubeapps UI (or other clients) to interact with different Kubernetes packaging formats in a consistent, extensible way.
 
 You can read more details about the architecture, implementation and getting started in the [Kubeapps APIs developer documentation](/docs/developer/kubeapps-apis.md).
 
