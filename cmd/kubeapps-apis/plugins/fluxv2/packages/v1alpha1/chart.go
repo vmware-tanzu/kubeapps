@@ -100,6 +100,10 @@ func (s *Server) availableChartDetail(ctx context.Context, repoName types.Namesp
 func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {
 	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+	} else if ok, err := s.hasAccessToNamespace(ctx, repo.Namespace); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, status.Errorf(codes.PermissionDenied, "user has no access to specified namespace")
 	}
 
 	key := s.repoCache.KeyForNamespacedName(repo)

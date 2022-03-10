@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
@@ -180,105 +181,90 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 //   a) with 3a) => should return 2 packages
 //   b) with 3b) => should return 0 packages
 //   c) with 3c) => should return 1 package
+// 5) execute GetAvailablePackageDetail():
+//   a) with 3a) => should work 2 times
+//   b) with 3b) => should fail 2 times with PermissionDenied error
+//   c) with 3c) => should fail once and work once
+// 6) execute GetAvailablePackageVersions():
+//   a) with 3a) => should work 2 times
+//   b) with 3b) => should fail 2 times with PermissionDenied error
+//   c) with 3c) => should fail once and work once
 
-func TestKindClusterGetAvailablePackageSummariesWhenCallerHasNoNamespaceAccess(t *testing.T) {
+func TestKindClusterRepoRBAC(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
-	repoName := "podinfo-1"
-	repoNamespace := "test-" + randSeq(4)
-	if err := kubeCreateNamespace(t, repoNamespace); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, repoNamespace); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", repoNamespace, err)
-		}
-	})
-	if err = kubeAddHelmRepository(t, repoName, podinfo_repo_url, repoNamespace, "", 0); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err = kubeDeleteHelmRepository(t, repoName, repoNamespace); err != nil {
-			t.Logf("Failed to delete helm source due to [%v]", err)
-		}
-	})
-	// wait until this repo reaches 'Ready'
-	if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName, repoNamespace); err != nil {
-		t.Fatal(err)
+
+	names := []types.NamespacedName{
+		{Name: "podinfo-1", Namespace: "test-" + randSeq(4)},
+		{Name: "podinfo-2", Namespace: "test-" + randSeq(4)},
 	}
 
-	repoName2 := "podinfo-2"
-	repoNamespace2 := "test-" + randSeq(4)
-	if err := kubeCreateNamespace(t, repoNamespace2); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, repoNamespace2); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", repoNamespace2, err)
+	for _, n := range names {
+		nm, ns := n.Name, n.Namespace
+		if err := kubeCreateNamespace(t, ns); err != nil {
+			t.Fatal(err)
+		} else if err = kubeAddHelmRepository(t, nm, podinfo_repo_url, ns, "", 0); err != nil {
+			t.Fatal(err)
 		}
-	})
-
-	if err = kubeAddHelmRepository(t, repoName2, podinfo_repo_url, repoNamespace2, "", 0); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err = kubeDeleteHelmRepository(t, repoName2, repoNamespace2); err != nil {
-			t.Logf("Failed to delete helm source due to [%v]", err)
+		t.Cleanup(func() {
+			if err = kubeDeleteHelmRepository(t, nm, ns); err != nil {
+				t.Logf("Failed to delete helm source due to [%v]", err)
+			} else if err := kubeDeleteNamespace(t, ns); err != nil {
+				t.Logf("Failed to delete namespace [%s] due to [%v]", ns, err)
+			}
+		})
+		// wait until this repo reaches 'Ready'
+		if err = kubeWaitUntilHelmRepositoryIsReady(t, nm, ns); err != nil {
+			t.Fatal(err)
 		}
-	})
-	// wait until this repo reaches 'Ready'
-	if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName2, repoNamespace2); err != nil {
-		t.Fatal(err)
 	}
 
-	grpcContextAdmin, err := newGrpcAdminContext(t, "test-caller-ctx-admin", "default")
+	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-caller-ctx-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-admin", "default", repoNamespace)
-	if out != "yes" {
-		t.Errorf("Expected [yes], got [%s]", out)
-	}
-	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-admin", "default", repoNamespace2)
-	if out != "yes" {
-		t.Errorf("Expected [yes], got [%s]", out)
+	for _, n := range names {
+		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-admin", "default", n.Namespace)
+		if out != "yes" {
+			t.Errorf("Expected [yes], got [%s]", out)
+		}
 	}
 
-	grpcContextLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-caller-ctx-loser", "default")
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-caller-ctx-loser", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-loser", "default", repoNamespace)
-	if out != "no" {
-		t.Errorf("Expected [no], got [%s]", out)
-	}
-	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-loser", "default", repoNamespace2)
-	if out != "no" {
-		t.Errorf("Expected [no], got [%s]", out)
+	for _, n := range names {
+		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-loser", "default", n.Namespace)
+		if out != "no" {
+			t.Errorf("Expected [no], got [%s]", out)
+		}
 	}
 
-	grpcContextLimited, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-caller-ctx-limited", "default", repoNamespace2)
+	grpcCtxLimited, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-caller-ctx-limited", "default", names[1].Namespace)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-limited", "default", repoNamespace)
-	if out != "no" {
-		t.Errorf("Expected [no], got [%s]", out)
+	for i, n := range names {
+		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-limited", "default", n.Namespace)
+		if i == 0 {
+			if out != "no" {
+				t.Errorf("Expected [no], got [%s]", out)
+			}
+		} else {
+			if out != "yes" {
+				t.Errorf("Expected [yes], got [%s]", out)
+			}
+		}
 	}
-	out = kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-limited", "default", repoNamespace2)
-	if out != "yes" {
-		t.Errorf("Expected [yes], got [%s]", out)
-	}
 
-	grpcContext, cancel := context.WithTimeout(grpcContextAdmin, defaultContextTimeout)
+	grpcCtx, cancel := context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
 	defer cancel()
 	resp, err := fluxPluginClient.GetAvailablePackageSummaries(
-		grpcContext,
+		grpcCtx,
 		&corev1.GetAvailablePackageSummariesRequest{
 			Context: &corev1.Context{},
 		})
@@ -288,10 +274,44 @@ func TestKindClusterGetAvailablePackageSummariesWhenCallerHasNoNamespaceAccess(t
 		t.Errorf("Expected 2 packages, got %s", common.PrettyPrint(resp))
 	}
 
-	grpcContext, cancel = context.WithTimeout(grpcContextLoser, defaultContextTimeout)
+	for _, n := range names {
+		grpcCtx, cancel = context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
+		defer cancel()
+		resp2, err := fluxPluginClient.GetAvailablePackageDetail(
+			grpcCtx,
+			&corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: n.Namespace},
+					Identifier: n.Name + "/podinfo",
+				},
+			})
+		if err != nil {
+			t.Fatal(err)
+		} else if resp2.AvailablePackageDetail.SourceUrls[0] != "https://github.com/stefanprodan/podinfo" {
+			t.Errorf("Unexpected response: %s", common.PrettyPrint(resp2))
+		}
+
+		grpcCtx, cancel = context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
+		defer cancel()
+		resp3, err := fluxPluginClient.GetAvailablePackageVersions(
+			grpcCtx,
+			&corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: n.Namespace},
+					Identifier: n.Name + "/podinfo",
+				},
+			})
+		if err != nil {
+			t.Fatal(err)
+		} else if len(resp3.PackageAppVersions) != 2 {
+			t.Errorf("Unexpected response: %s", common.PrettyPrint(resp3))
+		}
+	}
+
+	grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
 	defer cancel()
 	resp, err = fluxPluginClient.GetAvailablePackageSummaries(
-		grpcContext,
+		grpcCtx,
 		&corev1.GetAvailablePackageSummariesRequest{
 			Context: &corev1.Context{},
 		})
@@ -301,17 +321,85 @@ func TestKindClusterGetAvailablePackageSummariesWhenCallerHasNoNamespaceAccess(t
 		t.Errorf("Expected 0 packages, got %s", common.PrettyPrint(resp))
 	}
 
-	grpcContext, cancel = context.WithTimeout(grpcContextLimited, defaultContextTimeout)
+	for _, n := range names {
+		grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
+		defer cancel()
+		_, err := fluxPluginClient.GetAvailablePackageDetail(
+			grpcCtx,
+			&corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: n.Namespace},
+					Identifier: n.Name + "/podinfo",
+				},
+			})
+		if status.Code(err) != codes.PermissionDenied {
+			t.Fatalf("Expected PermissionDenied error, got %v", err)
+		}
+
+		grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
+		defer cancel()
+		_, err = fluxPluginClient.GetAvailablePackageVersions(
+			grpcCtx,
+			&corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: n.Namespace},
+					Identifier: n.Name + "/podinfo",
+				},
+			})
+		if status.Code(err) != codes.PermissionDenied {
+			t.Fatalf("Expected PermissionDenied error, got %v", err)
+		}
+	}
+
+	grpcCtx, cancel = context.WithTimeout(grpcCtxLimited, defaultContextTimeout)
 	defer cancel()
 	resp, err = fluxPluginClient.GetAvailablePackageSummaries(
-		grpcContext,
+		grpcCtx,
 		&corev1.GetAvailablePackageSummariesRequest{
 			Context: &corev1.Context{},
 		})
 	if err != nil {
 		t.Fatal(err)
 	} else if len(resp.AvailablePackageSummaries) != 1 {
-		t.Errorf("Expected 0 packages, got %s", common.PrettyPrint(resp))
+		t.Errorf("Unexpected response: %s", common.PrettyPrint(resp))
+	}
+
+	for i, n := range names {
+		grpcCtx, cancel = context.WithTimeout(grpcCtxLimited, defaultContextTimeout)
+		defer cancel()
+		resp2, err := fluxPluginClient.GetAvailablePackageDetail(
+			grpcCtx,
+			&corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: n.Namespace},
+					Identifier: n.Name + "/podinfo",
+				},
+			})
+		if i == 0 {
+			if status.Code(err) != codes.PermissionDenied {
+				t.Fatalf("Expected PermissionDenied error, got %v", err)
+			}
+		} else if resp2.AvailablePackageDetail.SourceUrls[0] != "https://github.com/stefanprodan/podinfo" {
+			t.Errorf("Unexpected response: %s", common.PrettyPrint(resp2))
+		}
+
+		grpcCtx, cancel = context.WithTimeout(grpcCtxLimited, defaultContextTimeout)
+		defer cancel()
+		resp3, err := fluxPluginClient.GetAvailablePackageVersions(
+			grpcCtx,
+			&corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: n.Namespace},
+					Identifier: n.Name + "/podinfo",
+				},
+			})
+		if i == 0 {
+			if status.Code(err) != codes.PermissionDenied {
+				t.Fatalf("Expected PermissionDenied error, got %v", err)
+			}
+		} else if len(resp3.PackageAppVersions) != 2 {
+			t.Errorf("UnexpectedResponse: %s", common.PrettyPrint(resp3))
+		}
 	}
 }
 

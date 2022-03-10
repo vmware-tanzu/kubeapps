@@ -77,6 +77,11 @@ func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]
 }
 
 func (s *Server) getRepoInCluster(ctx context.Context, key types.NamespacedName) (*sourcev1.HelmRepository, error) {
+	// unlike List(), there is no need to execute Get() in the context of
+	// kubeapps-internal-kubeappsapis service account and then filter out results based on
+	// whether or not the caller hasAccessToNamespace(). We can just pass the caller
+	// context into Get() and if the caller isn't allowed, Get will raise an error, which is what we
+	// want
 	client, err := s.getClient(ctx, key.Namespace)
 	if err != nil {
 		return nil, err
@@ -124,10 +129,11 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 	return resultKeys, nil
 }
 
+// Notes:
+// 1. with flux, an available package may be from a repo in any namespace accessible to the caller
+// 2. can't rely on cache as a real source of truth for key names
+//    because redis may evict cache entries due to memory pressure to make room for new ones
 func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[string][]models.Chart, error) {
-	// 1. with flux an available package may be from a repo in any namespace
-	// 2. can't rely on cache as a real source of truth for key names
-	//    because redis may evict cache entries due to memory pressure to make room for new ones
 	repoList, err := s.listReposInNamespace(ctx, apiv1.NamespaceAll)
 	if err != nil {
 		return nil, err
