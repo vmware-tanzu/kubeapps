@@ -288,7 +288,7 @@ func newServer(t *testing.T,
 	}
 
 	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
-		Gvr:          repositoriesGvr,
+		Gvr:          common.GetRepositoriesGvr(),
 		ClientGetter: backgroundClientGetter,
 		OnAddFunc:    sink.onAddRepo,
 		OnModifyFunc: sink.onModifyRepo,
@@ -331,7 +331,7 @@ func newServer(t *testing.T,
 	}
 
 	s := &Server{
-		clientGetter:           clientGetter,
+		clientGetter:               clientGetter,
 		serviceAccountClientGetter: backgroundClientGetter,
 		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
 			return actionConfig, nil

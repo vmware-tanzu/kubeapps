@@ -67,8 +67,9 @@ func (s *Server) listAllRepos(ctx context.Context) ([]sourcev1.HelmRepository, e
 			namespaces.Insert(item.GetNamespace())
 		}
 		allowedNamespaces := sets.String{}
+		gvr := common.GetRepositoriesGvr()
 		for ns := range namespaces {
-			if ok, err := s.hasAccessToNamespace(ctx, ns); err == nil && ok {
+			if ok, err := s.hasAccessToNamespace(ctx, gvr, ns); err == nil && ok {
 				allowedNamespaces.Insert(ns)
 			} else if err != nil {
 				return nil, err
@@ -81,26 +82,6 @@ func (s *Server) listAllRepos(ctx context.Context) ([]sourcev1.HelmRepository, e
 			}
 		}
 		return items, nil
-	}
-}
-
-// namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
-// the repositories to which the caller context has no access are filtered out
-func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]sourcev1.HelmRepository, error) {
-	if namespace == apiv1.NamespaceAll {
-		return s.listAllRepos(ctx)
-	} else {
-		client, err := s.getClient(ctx, namespace)
-		if err != nil {
-			return nil, err
-		}
-
-		var repoList sourcev1.HelmRepositoryList
-		if err := client.List(ctx, &repoList); err != nil {
-			return nil, statuserror.FromK8sError("list", "HelmRepository", namespace+"/*", err)
-		} else {
-			return repoList.Items, nil
-		}
 	}
 }
 
@@ -162,7 +143,7 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 // 2. can't rely on cache as a real source of truth for key names
 //    because redis may evict cache entries due to memory pressure to make room for new ones
 func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[string][]models.Chart, error) {
-	repoList, err := s.listReposInNamespace(ctx, apiv1.NamespaceAll)
+	repoList, err := s.listAllRepos(ctx)
 	if err != nil {
 		return nil, err
 	}

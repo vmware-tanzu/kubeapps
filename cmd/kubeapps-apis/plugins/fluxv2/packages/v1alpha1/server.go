@@ -66,12 +66,6 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v], pluginConfigPath: [%s]",
 		kubeappsCluster, pluginConfigPath)
 
-	repositoriesGvr := schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
-		Resource: fluxHelmRepositories,
-	}
-
 	if redisCli, err := common.NewRedisClientFromEnv(stopCh); err != nil {
 		return nil, err
 	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
@@ -101,7 +95,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			chartCache:   chartCache,
 		}
 		repoCacheConfig := cache.NamespacedResourceWatcherCacheConfig{
-			Gvr:          repositoriesGvr,
+			Gvr:          common.GetRepositoriesGvr(),
 			ClientGetter: s.clientGetter,
 			OnAddFunc:    s.onAddRepo,
 			OnModifyFunc: s.onModifyRepo,
@@ -579,7 +573,7 @@ func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Cl
 }
 
 // hasAccessToNamespace returns an error if the client does not have read access to a given namespace
-func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bool, error) {
+func (s *Server) hasAccessToNamespace(ctx context.Context, gvr schema.GroupVersionResource, namespace string) (bool, error) {
 	typedCli, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
 	if err != nil {
 		return false, err
@@ -590,9 +584,9 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bo
 		&authorizationv1.SelfSubjectAccessReview{
 			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 				ResourceAttributes: &authorizationv1.ResourceAttributes{
-					Group:     sourcev1.GroupVersion.Group,
-					Version:   sourcev1.GroupVersion.Version,
-					Resource:  fluxHelmRepositories,
+					Group:     gvr.Group,
+					Version:   gvr.Version,
+					Resource:  gvr.Resource,
 					Verb:      "get",
 					Namespace: namespace,
 				},

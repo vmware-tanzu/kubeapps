@@ -24,7 +24,6 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -87,18 +86,6 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
 	if len(releasesFromCluster) > 0 {
-		// we're going to need this later
-		// TODO (gfichtenholt) for now we get all charts and later find one that helmrelease is using
-		// there is probably a more efficient way to do this
-
-		// TODO (gfichtenholt) how do we ensure that for several calls in succession
-		// we don't return the same result? After all we can't guarantee the order in which
-		// s.listReleasesInCluster will return the results when invoked multiple times in a row
-		chartsFromCluster, err := s.listChartsInCluster(ctx, apiv1.NamespaceAll)
-		if err != nil {
-			return nil, err
-		}
-
 		startAt := -1
 		if pageSize > 0 {
 			startAt = int(pageSize) * pageOffset
@@ -106,7 +93,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 		for i, r := range releasesFromCluster {
 			if startAt <= i {
-				summary, err := s.installedPkgSummaryFromRelease(ctx, r, chartsFromCluster)
+				summary, err := s.installedPkgSummaryFromRelease(ctx, r)
 				if err != nil {
 					return nil, err
 				} else if summary == nil {
@@ -123,7 +110,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 	return installedPkgSummaries, nil
 }
 
-func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.HelmRelease, chartsFromCluster []sourcev1.HelmChart) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.HelmRelease) (*corev1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
 	if !common.CheckGeneration(&rel) {
 		return nil, nil
@@ -196,7 +183,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.
 	repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
 	chartFromCache, err := s.getChart(ctx, repo, chartName)
 	if err != nil {
-		return nil, err
+		log.Warning("%v", err)
 	} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
 		// charts in cache are already sorted with the latest being at position 0
 		latestPkgVersion = &corev1.PackageAppVersion{

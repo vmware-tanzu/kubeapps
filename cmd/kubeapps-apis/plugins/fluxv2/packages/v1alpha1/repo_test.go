@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/storage/names"
@@ -1783,12 +1782,6 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 
 // misc global vars that get re-used in multiple tests scenarios
 var (
-	repositoriesGvr = schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
-		Resource: fluxHelmRepositories,
-	}
-
 	valid_index_charts_spec = []testSpecChartWithFile{
 		{
 			name:     "acs-engine-autoscaler",

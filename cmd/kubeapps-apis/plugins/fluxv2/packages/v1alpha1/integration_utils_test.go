@@ -817,48 +817,12 @@ func newGrpcFluxPluginContext(t *testing.T, name, namespace string) (context.Con
 	return newGrpcContext(t, token), nil
 }
 
-func kubectlCanIgetHelmRepositoriesInNamespace(t *testing.T, name, namespace, checkThisNamespace string) string {
+func kubectlCanIGetThisInNamespace(t *testing.T, name, namespace, resource, checkThisNamespace string) string {
 	args := []string{
 		"auth",
 		"can-i",
 		"get",
-		"helmrepositories",
-		"--namespace",
-		checkThisNamespace,
-		"--as",
-		"system:serviceaccount:" + namespace + ":" + name,
-	}
-	cmd := exec.Command("kubectl", args...)
-	byteArray, _ := cmd.CombinedOutput()
-	out := strings.Trim(string(byteArray), "\n")
-	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
-	return out
-}
-
-func kubectlCanIgetHelmChartsInNamespace(t *testing.T, name, namespace, checkThisNamespace string) string {
-	args := []string{
-		"auth",
-		"can-i",
-		"get",
-		"helmcharts",
-		"--namespace",
-		checkThisNamespace,
-		"--as",
-		"system:serviceaccount:" + namespace + ":" + name,
-	}
-	cmd := exec.Command("kubectl", args...)
-	byteArray, _ := cmd.CombinedOutput()
-	out := strings.Trim(string(byteArray), "\n")
-	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
-	return out
-}
-
-func kubectlCanIgetHelmReleasesInNamespace(t *testing.T, name, namespace, checkThisNamespace string) string {
-	args := []string{
-		"auth",
-		"can-i",
-		"get",
-		"helmreleases",
+		resource,
 		"--namespace",
 		checkThisNamespace,
 		"--as",
@@ -894,15 +858,8 @@ func newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t *testing.T, na
 	return newGrpcContext(t, token), nil
 }
 
-func newGrpcContextForServiceAccountWithAccessToNamespace(t *testing.T, name, namespace, namespaceAllowed string) (context.Context, error) {
+func newGrpcContextForServiceAccountWithAccessToNamespace(t *testing.T, name, namespace, namespaceAllowed string, rules []rbacv1.PolicyRule) (context.Context, error) {
 	role := name + "-role"
-	rules := []rbacv1.PolicyRule{
-		{
-			APIGroups: []string{sourcev1.GroupVersion.Group},
-			Resources: []string{fluxHelmRepositories},
-			Verbs:     []string{"get", "list"},
-		},
-	}
 	if err := kubeCreateRole(t, role, namespaceAllowed, rules); err != nil {
 		t.Fatal(err)
 	}

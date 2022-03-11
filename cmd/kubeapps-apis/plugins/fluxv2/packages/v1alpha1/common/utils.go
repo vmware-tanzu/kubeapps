@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
@@ -48,6 +49,9 @@ var (
 	// in the cmd/kubeapps-apis/Dockerfile)
 	version             = "devel"
 	DefaultPluginConfig FluxPluginConfig
+	repositoriesGvr     schema.GroupVersionResource
+	chartsGvr           schema.GroupVersionResource
+	releasesGvr         schema.GroupVersionResource
 )
 
 func init() {
@@ -60,6 +64,24 @@ func init() {
 	DefaultPluginConfig = FluxPluginConfig{
 		VersionsInSummary: pkgutils.GetDefaultVersionsInSummary(),
 		TimeoutSeconds:    int32(-1),
+	}
+
+	repositoriesGvr = schema.GroupVersionResource{
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
+		Resource: "helmrepositories",
+	}
+
+	chartsGvr = schema.GroupVersionResource{
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
+		Resource: "helmcharts",
+	}
+
+	releasesGvr = schema.GroupVersionResource{
+		Group:    helmv2.GroupVersion.Group,
+		Version:  helmv2.GroupVersion.Version,
+		Resource: "helmreleases",
 	}
 }
 
@@ -349,4 +371,16 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 		VersionsInSummary: config.Core.Packages.V1alpha1.VersionsInSummary,
 		TimeoutSeconds:    config.Core.Packages.V1alpha1.TimeoutSeconds,
 	}, nil
+}
+
+func GetRepositoriesGvr() schema.GroupVersionResource {
+	return repositoriesGvr
+}
+
+func GetChartsGvr() schema.GroupVersionResource {
+	return chartsGvr
+}
+
+func GetReleasesGvr() schema.GroupVersionResource {
+	return releasesGvr
 }
