@@ -23,12 +23,12 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	apiv1 "k8s.io/api/core/v1"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/storage/names"
@@ -1557,6 +1557,13 @@ func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []
 			return
 		})
 
+	// Creating an authorized clientGetter
+	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
+
 	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 	ctrlClient := newCtrlClient(repos, nil, nil)
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
@@ -1775,12 +1782,6 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 
 // misc global vars that get re-used in multiple tests scenarios
 var (
-	repositoriesGvr = schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
-		Resource: fluxHelmRepositories,
-	}
-
 	valid_index_charts_spec = []testSpecChartWithFile{
 		{
 			name:     "acs-engine-autoscaler",

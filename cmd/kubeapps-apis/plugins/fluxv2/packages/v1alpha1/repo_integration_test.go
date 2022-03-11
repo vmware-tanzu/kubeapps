@@ -98,7 +98,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-basic-auth")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-basic-auth", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,7 +140,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	// first try the negative case, no auth - should fail due to not being able to
 	// read secrets in all namespaces
 	fluxPluginServiceAccount := "test-repo-with-basic-auth"
-	grpcCtx, err := newGrpcFluxPluginContext(t, fluxPluginServiceAccount)
+	grpcCtx, err := newGrpcFluxPluginContext(t, fluxPluginServiceAccount, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -327,7 +327,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-add-repo-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-add-repo-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}

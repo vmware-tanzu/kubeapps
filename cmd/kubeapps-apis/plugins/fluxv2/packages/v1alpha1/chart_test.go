@@ -701,7 +701,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 		defer os.Remove(tmpFile.Name())
 
-		templateYAMLBytes, err := ioutil.ReadFile(testTgz("single-package-template.yaml"))
+		templateYAMLBytes, err := ioutil.ReadFile(testYaml("single-package-template.yaml"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -720,7 +720,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		repoName := "multitude-of-charts"
 		repoNamespace := "default"
 		replaceUrls := make(map[string]string)
-		replaceUrls["{{testdata/charts/redis-14.4.0.tgz}}"] = ts.URL
+		replaceUrls["{{./testdata/charts/redis-14.4.0.tgz}}"] = ts.URL
 		ts2, r, err := newRepoWithIndex(
 			tmpFile.Name(), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
@@ -832,6 +832,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			t.FailNow()
 		}
 
+		// sanity check
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}

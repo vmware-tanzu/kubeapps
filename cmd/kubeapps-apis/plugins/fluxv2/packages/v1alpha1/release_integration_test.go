@@ -9,13 +9,16 @@ import (
 	"testing"
 	"time"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
@@ -114,7 +117,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +224,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,7 +307,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 		expectedResourceRefs: expected_resource_refs_auto_update,
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-auto-update")
+	grpcContext, err := newGrpcAdminContext(t, "test-auto-update", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -399,7 +402,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-delete-admin")
+	grpcContext, err := newGrpcAdminContext(t, "test-delete-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -485,6 +488,165 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
+// scenario:
+// 1) create new namespace ns1
+// 2) add podinfo repo in ns1
+// 3) create new namespace ns2
+// 4) create these service-accounts in default namespace:
+//   a) - "...-admin", with cluster-wide access to everything
+//   b) - "...-loser", without cluster-wide access or any access to any of the namespaces
+//   c) - "...-helmreleases", with only permissions to read HelmReleases in ns2
+// 5) as user 4a) install package podinfo in ns2
+// 6) verify GetInstalledPackageSummaries:
+//    a) as 4a) returns 1 result
+//    b) as 4b) raises PermissionDenied error
+//    c) as 4c) returns 1 result but without the corresponding chart details
+// ref https://github.com/kubeapps/kubeapps/issues/4390
+func TestKindClusterReleaseRBAC(t *testing.T) {
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ns1 := "test-ns1-" + randSeq(4)
+	if err := kubeCreateNamespace(t, ns1); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteNamespace(t, ns1); err != nil {
+			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
+		}
+	})
+
+	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-release-rbac-admin", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-release-rbac-loser", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out := kubectlCanIGetThisInNamespace(t, "test-release-rbac-admin", "default", "helmcharts", ns1)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-loser", "default", "helmcharts", ns1)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+
+	tc := integrationTestCreatePackageSpec{
+		testName: "test chart RBAC",
+		repoUrl:  podinfo_repo_url,
+		request: &corev1.CreateInstalledPackageRequest{
+			AvailablePackageRef: availableRef("podinfo-1/podinfo", ns1),
+			Name:                "my-podinfo",
+			TargetContext: &corev1.Context{
+				// note that Namespace is just the prefix - the actual name will
+				// have a random string appended at the end, e.g. "test-ns2-h23r"
+				// this will happen during the running of the test
+				Namespace: "test-ns2",
+				Cluster:   KubeappsCluster,
+			},
+		},
+		expectedDetail:       expected_detail_test_release_rbac,
+		expectedPodPrefix:    "my-podinfo-",
+		expectedStatusCode:   codes.OK,
+		expectedResourceRefs: expected_resource_refs_basic,
+	}
+
+	createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
+
+	ns2 := tc.request.TargetContext.Namespace
+
+	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-admin", "default", fluxHelmReleases, ns2)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+
+	resp, err := fluxPluginClient.GetInstalledPackageSummaries(
+		grpcCtxAdmin,
+		&corev1.GetInstalledPackageSummariesRequest{
+			Context: &corev1.Context{
+				Namespace: ns2,
+			},
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else if len(resp.InstalledPackageSummaries) != 1 {
+		t.Errorf("Unexpected response: %s", common.PrettyPrint(resp))
+	}
+
+	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-loser", "default", fluxHelmReleases, ns2)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+
+	_, err = fluxPluginClient.GetInstalledPackageSummaries(
+		grpcCtxLoser,
+		&corev1.GetInstalledPackageSummariesRequest{
+			Context: &corev1.Context{
+				Namespace: ns2,
+			},
+		})
+	if status.Code(err) != codes.PermissionDenied {
+		t.Errorf("Expected PermissionDenied, got %v", err)
+	}
+
+	rules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{helmv2.GroupVersion.Group},
+			Resources: []string{fluxHelmReleases},
+			Verbs:     []string{"get", "list"},
+		},
+	}
+
+	grpcCtxReadHelmReleases, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-release-rbac-helmreleases", "default", ns2, rules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-helmreleases", "default", fluxHelmRepositories, ns2)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-helmreleases", "default", "helmcharts", ns2)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-helmreleases", "default", fluxHelmReleases, ns2)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+
+	resp2, err := fluxPluginClient.GetInstalledPackageSummaries(
+		grpcCtxReadHelmReleases,
+		&corev1.GetInstalledPackageSummariesRequest{
+			Context: &corev1.Context{
+				Namespace: ns2,
+			},
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		// should return installed package summaries without chart details
+		expected_summaries_test_release_rbac_1.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
+		opts := cmpopts.IgnoreUnexported(
+			corev1.GetInstalledPackageSummariesResponse{},
+			corev1.InstalledPackageSummary{},
+			corev1.InstalledPackageReference{},
+			corev1.InstalledPackageStatus{},
+			plugins.Plugin{},
+			corev1.VersionReference{},
+			corev1.Context{})
+		if got, want := resp2, expected_summaries_test_release_rbac_1; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
+	}
+}
+
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
@@ -525,10 +687,11 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 
 		if !tc.noPreCreateNs {
 			// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-950383123
-			kubeCreateNamespace(t, tc.request.TargetContext.Namespace)
+			if err := kubeCreateNamespace(t, tc.request.TargetContext.Namespace); err != nil {
+				t.Fatal(err)
+			}
 			t.Cleanup(func() {
-				err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace)
-				if err != nil {
+				if err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace); err != nil {
 					t.Logf("Failed to delete namespace [%s] due to [%v]", tc.request.TargetContext.Namespace, err)
 				}
 			})
@@ -555,7 +718,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 					}
 				}
 			}
-			err := kubeDeleteServiceAccount(t, tc.request.ReconciliationOptions.ServiceAccountName, tc.request.TargetContext.Namespace)
+			err := kubeDeleteServiceAccountWithClusterRoleBinding(t, tc.request.ReconciliationOptions.ServiceAccountName, tc.request.TargetContext.Namespace)
 			if err != nil {
 				t.Logf("Failed to delete service account due to [%v]", err)
 			}
@@ -1414,6 +1577,45 @@ var (
 			ApiVersion: "apps/v1",
 			Kind:       "Deployment",
 			Name:       "my-podinfo-16",
+		},
+	}
+
+	expected_detail_test_release_rbac = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "6.0.0",
+			AppVersion: "6.0.0",
+		},
+		Status: statusInstalled,
+		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo 8080:9898\n",
+	}
+
+	expected_summaries_test_release_rbac_1 = &corev1.GetInstalledPackageSummariesResponse{
+		InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+			{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context: &corev1.Context{
+						Cluster:   KubeappsCluster,
+						Namespace: "@TARGET_NS@",
+					},
+					Identifier: "my-podinfo",
+					Plugin:     fluxPlugin,
+				},
+				Name: "my-podinfo",
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "*",
+				},
+				Status: &corev1.InstalledPackageStatus{
+					Ready:      true,
+					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+					UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
+				},
+				// notice that the details from the corresponding chart, like LatestPkgVersion, are missing
+			},
 		},
 	}
 )
