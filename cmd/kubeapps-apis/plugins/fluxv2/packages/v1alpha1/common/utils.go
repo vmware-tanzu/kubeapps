@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,22 +21,24 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-redis/redis/v8"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	// copied from helm plug-in
-	UserAgentPrefix = "kubeapps-apis/plugins"
-	// max number of attempts to initialize redis client before giving up
-	maxRedisInitClientRetries = 10
-	redisInitClientRetryWait  = 1 * time.Second
+	UserAgentPrefix          = "kubeapps-apis/plugins"
+	redisInitClientRetryWait = 1 * time.Second
+	redisInitClientTimeout   = 10 * time.Second
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -44,13 +47,41 @@ var (
 	pluginDetail plugins.Plugin
 	// This version var is updated during the build (see the -ldflags option
 	// in the cmd/kubeapps-apis/Dockerfile)
-	version = "devel"
+	version             = "devel"
+	DefaultPluginConfig FluxPluginConfig
+	repositoriesGvr     schema.GroupVersionResource
+	chartsGvr           schema.GroupVersionResource
+	releasesGvr         schema.GroupVersionResource
 )
 
 func init() {
 	pluginDetail = plugins.Plugin{
 		Name:    "fluxv2.packages",
 		Version: "v1alpha1",
+	}
+	// If no config is provided, we default to the existing values for backwards
+	// compatibility.
+	DefaultPluginConfig = FluxPluginConfig{
+		VersionsInSummary: pkgutils.GetDefaultVersionsInSummary(),
+		TimeoutSeconds:    int32(-1),
+	}
+
+	repositoriesGvr = schema.GroupVersionResource{
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
+		Resource: "helmrepositories",
+	}
+
+	chartsGvr = schema.GroupVersionResource{
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
+		Resource: "helmcharts",
+	}
+
+	releasesGvr = schema.GroupVersionResource{
+		Group:    helmv2.GroupVersion.Group,
+		Version:  helmv2.GroupVersion.Version,
+		Resource: "helmreleases",
 	}
 }
 
@@ -117,7 +148,7 @@ func RWMutexReadLocked(rw *sync.RWMutex) bool {
 // small preference for reading all config in the main.go
 // (whether from env vars or cmd-line options) only in the one spot and passing
 // explicitly to functions (so functions are less dependent on env state).
-func NewRedisClientFromEnv() (*redis.Client, error) {
+func NewRedisClientFromEnv(stopCh <-chan struct{}) (*redis.Client, error) {
 	REDIS_ADDR, ok := os.LookupEnv("REDIS_ADDR")
 	if !ok {
 		return nil, fmt.Errorf("missing environment variable REDIS_ADDR")
@@ -138,25 +169,26 @@ func NewRedisClientFromEnv() (*redis.Client, error) {
 
 	// ref https://github.com/kubeapps/kubeapps/pull/4382#discussion_r820386531
 	var redisCli *redis.Client
-	for i := 0; i < maxRedisInitClientRetries; i++ {
-		redisCli = redis.NewClient(&redis.Options{
-			Addr:     REDIS_ADDR,
-			Password: REDIS_PASSWORD,
-			DB:       REDIS_DB_NUM,
+	err = wait.PollImmediate(redisInitClientRetryWait, redisInitClientTimeout,
+		func() (bool, error) {
+			redisCli = redis.NewClient(&redis.Options{
+				Addr:     REDIS_ADDR,
+				Password: REDIS_PASSWORD,
+				DB:       REDIS_DB_NUM,
+			})
+
+			// ping redis to make sure client is connected
+			var pong string
+			if pong, err = redisCli.Ping(redisCli.Context()).Result(); err == nil {
+				log.Infof("Redis [PING]: %s", pong)
+				return true, nil
+			}
+			log.Infof("Waiting %s before retrying to due to %v...", redisInitClientRetryWait.String(), err)
+			return false, nil
 		})
 
-		// confidence test that the redis client is connected
-		var pong string
-		if pong, err = redisCli.Ping(redisCli.Context()).Result(); err == nil {
-			log.Infof("Redis [PING]: %s", pong)
-			break
-		}
-		log.Infof("Waiting %ds before retrying to due to %v...", redisInitClientRetryWait, err)
-		time.Sleep(redisInitClientRetryWait)
-	}
-
 	if err != nil {
-		return nil, fmt.Errorf("initializing redis client failed after [%d] retries were exhausted, last error: %v", maxRedisInitClientRetries, err)
+		return nil, fmt.Errorf("initializing redis client failed after timeout of %s was reached, error: %v", redisInitClientTimeout.String(), err)
 	}
 
 	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
@@ -298,4 +330,57 @@ func userAgentString() string {
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
 func GetPluginDetail() *plugins.Plugin {
 	return &pluginDetail
+}
+
+type FluxPluginConfig struct {
+	VersionsInSummary pkgutils.VersionsInSummary
+	TimeoutSeconds    int32
+}
+
+// ParsePluginConfig parses the input plugin configuration json file and return the
+// configuration options.
+func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
+	// Note at present VersionsInSummary is the only configurable option for this plugin,
+	// and if required this func can be enhanced to return fluxConfig struct
+
+	// In the flux plugin, for example, we are interested in config for the
+	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
+	type internalFluxPluginConfig struct {
+		Core struct {
+			Packages struct {
+				V1alpha1 struct {
+					VersionsInSummary pkgutils.VersionsInSummary
+					TimeoutSeconds    int32 `json:"timeoutSeconds"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"core"`
+	}
+	var config internalFluxPluginConfig
+
+	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
+	}
+	err = json.Unmarshal([]byte(pluginConfig), &config)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+	}
+
+	// return configured value
+	return &FluxPluginConfig{
+		VersionsInSummary: config.Core.Packages.V1alpha1.VersionsInSummary,
+		TimeoutSeconds:    config.Core.Packages.V1alpha1.TimeoutSeconds,
+	}, nil
+}
+
+func GetRepositoriesGvr() schema.GroupVersionResource {
+	return repositoriesGvr
+}
+
+func GetChartsGvr() schema.GroupVersionResource {
+	return chartsGvr
+}
+
+func GetReleasesGvr() schema.GroupVersionResource {
+	return releasesGvr
 }
