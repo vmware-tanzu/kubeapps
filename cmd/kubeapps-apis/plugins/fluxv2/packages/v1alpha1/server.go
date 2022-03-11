@@ -48,9 +48,9 @@ type Server struct {
 	// It is meant for in-band interactions (i.e. in the context of a caller)
 	// with k8s API server
 	clientGetter clientgetter.ClientGetterFunc
-	// for out-of-band interactions (in the context of kubeapps-internal-kubeappsapis
-	// service account with k8s API server
-	backgroundClientGetter clientgetter.BackgroundClientGetterFunc
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	serviceAccountClientGetter clientgetter.BackgroundClientGetterFunc
 
 	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
 
@@ -130,7 +130,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return &Server{
 				clientGetter: clientgetter.NewClientGetter(
 					configGetter, clientgetter.Options{Scheme: scheme}),
-				backgroundClientGetter: backgroundClientGetter,
+				serviceAccountClientGetter: backgroundClientGetter,
 				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(
 					configGetter, kubeappsCluster),
 				repoCache:       repoCache,
@@ -586,7 +586,7 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, namespace string) (bo
 	}
 
 	res, err := typedCli.AuthorizationV1().SelfSubjectAccessReviews().Create(
-		context.TODO(),
+		ctx,
 		&authorizationv1.SelfSubjectAccessReview{
 			Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 				ResourceAttributes: &authorizationv1.ResourceAttributes{

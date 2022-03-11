@@ -47,32 +47,60 @@ var (
 	defaultPollInterval = metav1.Duration{Duration: 10 * time.Minute}
 )
 
-// namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
-// the repositories to which the caller context has no access are filtered out
-func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]sourcev1.HelmRepository, error) {
+func (s *Server) listAllRepos(ctx context.Context) ([]sourcev1.HelmRepository, error) {
 	// the actual List(...) call will be executed in the context of
 	// kubeapps-internal-kubeappsapis service account
 	// ref https://github.com/kubeapps/kubeapps/issues/4390 for explanation
 	backgroundCtx := context.Background()
-	client, err := s.backgroundClientGetter.ControllerRuntime(backgroundCtx)
+	client, err := s.serviceAccountClientGetter.ControllerRuntime(backgroundCtx)
 	if err != nil {
 		return nil, err
 	}
 
 	var repoList sourcev1.HelmRepositoryList
 	if err := client.List(backgroundCtx, &repoList); err != nil {
-		return nil, statuserror.FromK8sError("list", "HelmRepository", namespace+"/*", err)
+		return nil, statuserror.FromK8sError("list", "HelmRepository", "", err)
 	} else {
 		// filter out those repos the caller has no access to
-		items := []sourcev1.HelmRepository{}
+		namespaces := sets.String{}
 		for _, item := range repoList.Items {
-			if ok, err := s.hasAccessToNamespace(ctx, item.GetNamespace()); err == nil && ok {
-				items = append(items, item)
+			namespaces.Insert(item.GetNamespace())
+		}
+		allowedNamespaces := sets.String{}
+		for ns := range namespaces {
+			if ok, err := s.hasAccessToNamespace(ctx, ns); err == nil && ok {
+				allowedNamespaces.Insert(ns)
 			} else if err != nil {
 				return nil, err
 			}
 		}
+		items := []sourcev1.HelmRepository{}
+		for _, item := range repoList.Items {
+			if allowedNamespaces.Has(item.GetNamespace()) {
+				items = append(items, item)
+			}
+		}
 		return items, nil
+	}
+}
+
+// namespace maybe apiv1.NamespaceAll, in which case repositories from all namespaces are returned
+// the repositories to which the caller context has no access are filtered out
+func (s *Server) listReposInNamespace(ctx context.Context, namespace string) ([]sourcev1.HelmRepository, error) {
+	if namespace == apiv1.NamespaceAll {
+		return s.listAllRepos(ctx)
+	} else {
+		client, err := s.getClient(ctx, namespace)
+		if err != nil {
+			return nil, err
+		}
+
+		var repoList sourcev1.HelmRepositoryList
+		if err := client.List(ctx, &repoList); err != nil {
+			return nil, statuserror.FromK8sError("list", "HelmRepository", namespace+"/*", err)
+		} else {
+			return repoList.Items, nil
+		}
 	}
 }
 

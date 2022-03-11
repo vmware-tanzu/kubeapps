@@ -835,6 +835,42 @@ func kubectlCanIgetHelmRepositoriesInNamespace(t *testing.T, name, namespace, ch
 	return out
 }
 
+func kubectlCanIgetHelmChartsInNamespace(t *testing.T, name, namespace, checkThisNamespace string) string {
+	args := []string{
+		"auth",
+		"can-i",
+		"get",
+		"helmcharts",
+		"--namespace",
+		checkThisNamespace,
+		"--as",
+		"system:serviceaccount:" + namespace + ":" + name,
+	}
+	cmd := exec.Command("kubectl", args...)
+	byteArray, _ := cmd.CombinedOutput()
+	out := strings.Trim(string(byteArray), "\n")
+	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
+	return out
+}
+
+func kubectlCanIgetHelmReleasesInNamespace(t *testing.T, name, namespace, checkThisNamespace string) string {
+	args := []string{
+		"auth",
+		"can-i",
+		"get",
+		"helmreleases",
+		"--namespace",
+		checkThisNamespace,
+		"--as",
+		"system:serviceaccount:" + namespace + ":" + name,
+	}
+	cmd := exec.Command("kubectl", args...)
+	byteArray, _ := cmd.CombinedOutput()
+	out := strings.Trim(string(byteArray), "\n")
+	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
+	return out
+}
+
 func newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t *testing.T, name, namespace string) (context.Context, error) {
 	role := name + "-cluster-role"
 	if err := kubeCreateClusterRole(t, role); err != nil {

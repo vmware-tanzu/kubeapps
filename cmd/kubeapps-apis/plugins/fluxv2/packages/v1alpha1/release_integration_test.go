@@ -485,6 +485,112 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	}
 }
 
+// scenario:
+// 1) create these service-accounts in default namespace:
+//   a) - "...-admin", with cluster-wide access to everything
+//   b) - "...-loser", without cluster-wide access or any access to any of the namespaces
+// 2) create new namespace ns1
+// 3) add podinfo repo in ns1
+// 4) create new namespace ns2
+// 5) as user 1a) install package podinfo in ns2
+// 6) verify GetInstalledPackageSummaries:
+//    a) as 1a) returns 1 result
+//    b) as 1b) returns 0 results
+
+func TestKindClusterReleaseRBAC(t *testing.T) {
+	/* TODO
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-release-rbac-admin", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-release-rbac-loser", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ns1 := "test-ns1-" + randSeq(4)
+	if err := kubeCreateNamespace(t, ns1); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteNamespace(t, ns1); err != nil {
+			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
+		}
+	})
+
+	out := kubectlCanIgetHelmChartsInNamespace(t, "test-release-rbac-admin", "default", ns1)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+	out = kubectlCanIgetHelmChartsInNamespace(t, "test-release-rbac-loser", "default", ns1)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+
+	tc := integrationTestCreatePackageSpec{
+		testName: "test chart RBAC",
+		repoUrl:  podinfo_repo_url,
+		request: &corev1.CreateInstalledPackageRequest{
+			AvailablePackageRef: availableRef("podinfo-1/podinfo", ns1),
+			Name:                "my-podinfo",
+			TargetContext: &corev1.Context{
+				// note that Namespace is just the prefix - the actual name will
+				// have a random string appended at the end, e.g. "test-ns2-h23r"
+				// this will happen during the running of the test
+				Namespace: "test-ns2",
+				Cluster:   KubeappsCluster,
+			},
+		},
+		expectedDetail:       expected_detail_basic,
+		expectedPodPrefix:    "my-podinfo-",
+		expectedStatusCode:   codes.OK,
+		expectedResourceRefs: expected_resource_refs_basic,
+	}
+
+	createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
+
+	ns2 := tc.request.TargetContext.Namespace
+
+	out = kubectlCanIgetHelmReleasesInNamespace(t, "test-release-rbac-admin", "default", ns2)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+
+	resp, err := fluxPluginClient.GetInstalledPackageSummaries(
+		grpcCtxAdmin,
+		&corev1.GetInstalledPackageSummariesRequest{
+			Context: &corev1.Context{
+				Namespace: ns2,
+			},
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else if len(resp.InstalledPackageSummaries) != 1 {
+		t.Errorf("Unexpected response: %s", common.PrettyPrint(resp))
+	}
+
+	out = kubectlCanIgetHelmReleasesInNamespace(t, "test-release-rbac-loser", "default", ns2)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+
+	resp2, err := fluxPluginClient.GetInstalledPackageSummaries(
+		grpcCtxLoser,
+		&corev1.GetInstalledPackageSummariesRequest{
+			Context: &corev1.Context{
+				Namespace: ns2,
+			},
+		})
+	t.Logf("%s, %v", resp2, err)
+	*/
+}
+
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")

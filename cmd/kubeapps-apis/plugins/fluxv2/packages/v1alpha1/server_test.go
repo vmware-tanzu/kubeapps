@@ -332,7 +332,7 @@ func newServer(t *testing.T,
 
 	s := &Server{
 		clientGetter:           clientGetter,
-		backgroundClientGetter: backgroundClientGetter,
+		serviceAccountClientGetter: backgroundClientGetter,
 		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},

@@ -221,35 +221,35 @@ func TestKindClusterRepoRBAC(t *testing.T) {
 		}
 	}
 
-	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-caller-ctx-admin", "default")
+	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-repo-rbac-admin", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, n := range names {
-		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-admin", "default", n.Namespace)
+		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-repo-rbac-admin", "default", n.Namespace)
 		if out != "yes" {
 			t.Errorf("Expected [yes], got [%s]", out)
 		}
 	}
 
-	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-caller-ctx-loser", "default")
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-repo-rbac-loser", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, n := range names {
-		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-loser", "default", n.Namespace)
+		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-repo-rbac-loser", "default", n.Namespace)
 		if out != "no" {
 			t.Errorf("Expected [no], got [%s]", out)
 		}
 	}
 
-	grpcCtxLimited, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-caller-ctx-limited", "default", names[1].Namespace)
+	grpcCtxLimited, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-repo-rbac-limited", "default", names[1].Namespace)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i, n := range names {
-		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-caller-ctx-limited", "default", n.Namespace)
+		out := kubectlCanIgetHelmRepositoriesInNamespace(t, "test-repo-rbac-limited", "default", n.Namespace)
 		if i == 0 {
 			if out != "no" {
 				t.Errorf("Expected [no], got [%s]", out)
