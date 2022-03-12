@@ -318,20 +318,23 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		}
 	}
 
-	rules := []rbacv1.PolicyRule{
-		{
-			APIGroups: []string{sourcev1.GroupVersion.Group},
-			Resources: []string{fluxHelmRepositories},
-			Verbs:     []string{"get", "list"},
-		},
-		{
-			APIGroups: []string{sourcev1.GroupVersion.Group},
-			Resources: []string{"helmcharts"},
-			Verbs:     []string{"get", "list"},
+	rules := map[string][]rbacv1.PolicyRule{
+		names[1].Namespace: {
+			{
+				APIGroups: []string{sourcev1.GroupVersion.Group},
+				Resources: []string{fluxHelmRepositories},
+				Verbs:     []string{"get", "list"},
+			},
+			{
+				APIGroups: []string{sourcev1.GroupVersion.Group},
+				Resources: []string{"helmcharts"},
+				Verbs:     []string{"get", "list"},
+			},
 		},
 	}
 
-	grpcCtxLimited, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-repo-rbac-limited", "default", names[1].Namespace, rules)
+	grpcCtxLimited, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-repo-rbac-limited", "default", rules)
 	if err != nil {
 		t.Fatal(err)
 	}

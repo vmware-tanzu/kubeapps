@@ -10,6 +10,7 @@ import (
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -496,11 +497,17 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 //   a) - "...-admin", with cluster-wide access to everything
 //   b) - "...-loser", without cluster-wide access or any access to any of the namespaces
 //   c) - "...-helmreleases", with only permissions to read HelmReleases in ns2
+//   d) - "...-helmreleases-and-charts", with only permissions to read HelmCharts in ns1, HelmReleases in ns2
 // 5) as user 4a) install package podinfo in ns2
 // 6) verify GetInstalledPackageSummaries:
 //    a) as 4a) returns 1 result
 //    b) as 4b) raises PermissionDenied error
 //    c) as 4c) returns 1 result but without the corresponding chart details
+//    d) as 4d) returns 1 result with details from corresponding chart
+// 7) verify GetInstalledPackageDetail:
+//    a) as 4a) returns full detail
+//    b) as 4b) returns PermissionDenied error
+//    c) as 4c) returns full detail
 // ref https://github.com/kubeapps/kubeapps/issues/4390
 func TestKindClusterReleaseRBAC(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
@@ -523,7 +530,8 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-release-rbac-loser", "default")
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
+		t, "test-release-rbac-loser", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -557,7 +565,7 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		expectedResourceRefs: expected_resource_refs_basic,
 	}
 
-	createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
 
 	ns2 := tc.request.TargetContext.Namespace
 
@@ -566,8 +574,11 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
 
+	grpcCtx, cancel := context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
+	defer cancel()
+
 	resp, err := fluxPluginClient.GetInstalledPackageSummaries(
-		grpcCtxAdmin,
+		grpcCtx,
 		&corev1.GetInstalledPackageSummariesRequest{
 			Context: &corev1.Context{
 				Namespace: ns2,
@@ -579,13 +590,35 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Errorf("Unexpected response: %s", common.PrettyPrint(resp))
 	}
 
+	grpcCtx, cancel = context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
+	defer cancel()
+
+	resp2, err := fluxPluginClient.GetInstalledPackageDetail(
+		grpcCtx,
+		&corev1.GetInstalledPackageDetailRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		expected_detail_test_release_rbac_2.InstalledPackageDetail.InstalledPackageRef = installedRef
+		expected_detail_test_release_rbac_2.InstalledPackageDetail.PostInstallationNotes = strings.ReplaceAll(
+			expected_detail_test_release_rbac_2.InstalledPackageDetail.PostInstallationNotes,
+			"@TARGET_NS@", ns2)
+		expected_detail_test_release_rbac_2.InstalledPackageDetail.AvailablePackageRef.Context.Namespace = ns1
+		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+	}
+
 	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-loser", "default", fluxHelmReleases, ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
 
+	grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
+	defer cancel()
+
 	_, err = fluxPluginClient.GetInstalledPackageSummaries(
-		grpcCtxLoser,
+		grpcCtx,
 		&corev1.GetInstalledPackageSummariesRequest{
 			Context: &corev1.Context{
 				Namespace: ns2,
@@ -595,15 +628,42 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Errorf("Expected PermissionDenied, got %v", err)
 	}
 
-	rules := []rbacv1.PolicyRule{
-		{
-			APIGroups: []string{helmv2.GroupVersion.Group},
-			Resources: []string{fluxHelmReleases},
-			Verbs:     []string{"get", "list"},
+	grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
+	defer cancel()
+
+	_, err = fluxPluginClient.GetInstalledPackageDetail(
+		grpcCtx,
+		&corev1.GetInstalledPackageDetailRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if status.Code(err) != codes.PermissionDenied {
+		t.Errorf("Expected PermissionDenied, got %v", err)
+	}
+
+	rules := map[string][]rbacv1.PolicyRule{
+		ns2: {
+			{
+				APIGroups: []string{helmv2.GroupVersion.Group},
+				Resources: []string{fluxHelmReleases},
+				Verbs:     []string{"get", "list"},
+			},
+			// a little weird but currently this is required too:
+			// without it when calling GetInstalledPackageDetail() you will get
+			// error "Failed to get helm release due to rpc
+			// error: code = NotFound desc = Unable to run Helm Get action for release
+			// [test-ns2-8ynh/my-podinfo] in namespace [test-ns2-8ynh]: query: failed to query with
+			// labels: secrets is forbidden: User "system:serviceaccount:default:test-release-rbac-helmreleases"
+			// cannot list resource "secrets" in API group "" in the namespace "test-ns2-8ynh"
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list"},
+			},
 		},
 	}
 
-	grpcCtxReadHelmReleases, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-release-rbac-helmreleases", "default", ns2, rules)
+	grpcCtxReadHelmReleases, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-release-rbac-helmreleases", "default", rules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -621,8 +681,96 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
 
-	resp2, err := fluxPluginClient.GetInstalledPackageSummaries(
-		grpcCtxReadHelmReleases,
+	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
+	defer cancel()
+
+	resp, err = fluxPluginClient.GetInstalledPackageSummaries(
+		grpcCtx,
+		&corev1.GetInstalledPackageSummariesRequest{
+			Context: &corev1.Context{
+				Namespace: ns2,
+			},
+		})
+
+	opts2 := cmpopts.IgnoreUnexported(
+		corev1.GetInstalledPackageSummariesResponse{},
+		corev1.InstalledPackageSummary{},
+		corev1.InstalledPackageReference{},
+		corev1.InstalledPackageStatus{},
+		plugins.Plugin{},
+		corev1.VersionReference{},
+		corev1.PackageAppVersion{},
+		corev1.Context{})
+
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		// should return installed package summaries without chart details
+		expected_summaries_test_release_rbac_1.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
+		if got, want := resp, expected_summaries_test_release_rbac_1; !cmp.Equal(want, got, opts2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts2))
+		}
+	}
+
+	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
+	defer cancel()
+
+	resp2, err = fluxPluginClient.GetInstalledPackageDetail(
+		grpcCtx,
+		&corev1.GetInstalledPackageDetailRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+	}
+
+	nsToRules := map[string][]rbacv1.PolicyRule{
+		ns1: {
+			{
+				APIGroups: []string{sourcev1.GroupVersion.Group},
+				Resources: []string{"helmcharts"},
+				Verbs:     []string{"get", "list"},
+			},
+		},
+		ns2: {
+			{
+				APIGroups: []string{helmv2.GroupVersion.Group},
+				Resources: []string{fluxHelmReleases},
+				Verbs:     []string{"get", "list"},
+			},
+			// see comment above
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list"},
+			},
+		},
+	}
+
+	grpcCtxReadHelmReleasesAndCharts, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-release-rbac-helmreleases-and-charts", "default", nsToRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out = kubectlCanIGetThisInNamespace(
+		t, "test-release-rbac-helmreleases-and-charts", "default", "helmcharts", ns1)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+	out = kubectlCanIGetThisInNamespace(
+		t, "test-release-rbac-helmreleases-and-charts", "default", fluxHelmReleases, ns2)
+	if out != "yes" {
+		t.Errorf("Expected [yes], got [%s]", out)
+	}
+
+	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleasesAndCharts, defaultContextTimeout)
+	defer cancel()
+
+	resp, err = fluxPluginClient.GetInstalledPackageSummaries(
+		grpcCtx,
 		&corev1.GetInstalledPackageSummariesRequest{
 			Context: &corev1.Context{
 				Namespace: ns2,
@@ -631,19 +779,25 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		// should return installed package summaries without chart details
-		expected_summaries_test_release_rbac_1.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
-		opts := cmpopts.IgnoreUnexported(
-			corev1.GetInstalledPackageSummariesResponse{},
-			corev1.InstalledPackageSummary{},
-			corev1.InstalledPackageReference{},
-			corev1.InstalledPackageStatus{},
-			plugins.Plugin{},
-			corev1.VersionReference{},
-			corev1.Context{})
-		if got, want := resp2, expected_summaries_test_release_rbac_1; !cmp.Equal(want, got, opts) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		// should return installed package summaries with chart details
+		expected_summaries_test_release_rbac_2.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
+		if got, want := resp, expected_summaries_test_release_rbac_2; !cmp.Equal(want, got, opts2) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts2))
 		}
+	}
+
+	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleasesAndCharts, defaultContextTimeout)
+	defer cancel()
+
+	resp2, err = fluxPluginClient.GetInstalledPackageDetail(
+		grpcCtx,
+		&corev1.GetInstalledPackageDetailRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
 	}
 }
 
@@ -872,750 +1026,3 @@ func waitUntilInstallCompletes(
 	}
 	return actualDetailResp, actualRefsResp
 }
-
-// global vars
-// why define these here? see https://github.com/kubeapps/kubeapps/pull/3736#discussion_r745246398
-var (
-	create_request_basic = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-1/podinfo", "default"),
-		Name:                "my-podinfo",
-		TargetContext: &corev1.Context{
-			// note that Namespace is just the prefix - the actual name will
-			// have a random string appended at the end, e.g. "test-1-h23r"
-			// this will happen during the running of the test
-			Namespace: "test-1",
-			Cluster:   KubeappsCluster,
-		},
-	}
-
-	// specify just the fields that cannot be easily computed based on the request
-	expected_detail_basic = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "*",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-			AppVersion: "6.0.0",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo 8080:9898\n",
-	}
-
-	expected_resource_refs_basic = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo",
-		},
-	}
-
-	create_request_semver_constraint = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-2/podinfo", "default"),
-		Name:                "my-podinfo-2",
-		TargetContext: &corev1.Context{
-			Namespace: "test-2",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "> 5",
-		},
-	}
-
-	expected_detail_semver_constraint = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "> 5",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-			AppVersion: "6.0.0",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-2 8080:9898\n",
-	}
-
-	expected_resource_refs_semver_constraint = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-2",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-2",
-		},
-	}
-
-	create_request_reconcile_options = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-3/podinfo", "default"),
-		Name:                "my-podinfo-3",
-		TargetContext: &corev1.Context{
-			Namespace: "test-3",
-			Cluster:   KubeappsCluster,
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval:           60,
-			Suspend:            false,
-			ServiceAccountName: "foo",
-		},
-	}
-
-	expected_detail_reconcile_options = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "*",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-			AppVersion: "6.0.0",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval:           60,
-			Suspend:            false,
-			ServiceAccountName: "foo",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-3 8080:9898\n",
-	}
-
-	expected_resource_refs_reconcile_options = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-3",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-3",
-		},
-	}
-
-	create_request_with_values = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-4/podinfo", "default"),
-		Name:                "my-podinfo-4",
-		TargetContext: &corev1.Context{
-			Namespace: "test-4",
-			Cluster:   KubeappsCluster,
-		},
-		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
-	}
-
-	expected_detail_with_values = &corev1.InstalledPackageDetail{
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-			AppVersion: "6.0.0",
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "*",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-4 8080:9898\n",
-		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
-	}
-
-	expected_resource_refs_with_values = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-4",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-4",
-		},
-	}
-
-	create_request_install_fails = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-5/podinfo", "default"),
-		Name:                "my-podinfo-5",
-		TargetContext: &corev1.Context{
-			Namespace: "test-5",
-			Cluster:   KubeappsCluster,
-		},
-		Values: "{\"replicaCount\": \"what we do in the shadows\" }",
-	}
-
-	expected_detail_install_fails = &corev1.InstalledPackageDetail{
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "*",
-		},
-		Status: &corev1.InstalledPackageStatus{
-			Ready:  false,
-			Reason: corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
-			// most of the time it fails with
-			//   "InstallFailed: install retries exhausted",
-			// but every once in a while you get
-			//   "InstallFailed: Helm install failed: unable to build kubernetes objects from release manifest: error
-			//    validating "": error validating data: ValidationError(Deployment.spec.replicas): invalid type for
-			//    io.k8s.api.apps.v1.DeploymentSpec.replicas: got "string""
-			// so we'll just test the prefix
-			UserReason: "InstallFailed: ",
-		},
-		ValuesApplied: "{\"replicaCount\":\"what we do in the shadows\"}",
-	}
-
-	create_request_podinfo_5_2_1 = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-6/podinfo", "default"),
-		Name:                "my-podinfo-6",
-		TargetContext: &corev1.Context{
-			Namespace: "test-6",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-	}
-
-	expected_detail_podinfo_5_2_1 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-6 8080:9898\n",
-	}
-
-	expected_resource_refs_podinfo_5_2_1 = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-6",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-6",
-		},
-	}
-
-	expected_detail_podinfo_6_0_0 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "6.0.0",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-			AppVersion: "6.0.0",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-6 8080:9898\n",
-	}
-
-	create_request_podinfo_5_2_1_no_values = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-7/podinfo", "default"),
-		Name:                "my-podinfo-7",
-		TargetContext: &corev1.Context{
-			Namespace: "test-7",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-	}
-
-	expected_detail_podinfo_5_2_1_no_values = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-7 8080:9898\n",
-	}
-
-	expected_resource_refs_podinfo_5_2_1_no_values = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-7",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-7",
-		},
-	}
-
-	expected_detail_podinfo_5_2_1_values = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
-		Status:        statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-7 8080:9898\n",
-	}
-
-	create_request_podinfo_5_2_1_values_2 = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-8/podinfo", "default"),
-		Name:                "my-podinfo-8",
-		TargetContext: &corev1.Context{
-			Namespace: "test-8",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
-	}
-
-	expected_detail_podinfo_5_2_1_values_2 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
-		Status:        statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-8 8080:9898\n",
-	}
-
-	expected_resource_refs_podinfo_5_2_1_values_2 = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-8",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-8",
-		},
-	}
-
-	expected_detail_podinfo_5_2_1_values_3 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		ValuesApplied: "{\"ui\":{\"message\":\"Le Bureau des Légendes\"}}",
-		Status:        statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-8 8080:9898\n",
-	}
-
-	create_request_podinfo_5_2_1_values_4 = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-9/podinfo", "default"),
-		Name:                "my-podinfo-9",
-		TargetContext: &corev1.Context{
-			Namespace: "test-9",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
-	}
-
-	expected_detail_podinfo_5_2_1_values_4 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
-		Status:        statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-9 8080:9898\n",
-	}
-
-	expected_resource_refs_podinfo_5_2_1_values_4 = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-9",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-9",
-		},
-	}
-
-	expected_detail_podinfo_5_2_1_values_5 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-9 8080:9898\n",
-	}
-
-	create_request_podinfo_5_2_1_values_6 = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-10/podinfo", "default"),
-		Name:                "my-podinfo-10",
-		TargetContext: &corev1.Context{
-			Namespace: "test-10",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
-	}
-
-	expected_detail_podinfo_5_2_1_values_6 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		ValuesApplied: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
-		Status:        statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-10 8080:9898\n",
-	}
-
-	expected_resource_refs_podinfo_5_2_1_values_6 = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-10",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-10",
-		},
-	}
-
-	create_request_podinfo_7 = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-11/podinfo", "default"),
-		Name:                "my-podinfo-11",
-		TargetContext: &corev1.Context{
-			Namespace: "test-11",
-			Cluster:   KubeappsCluster,
-		},
-	}
-
-	expected_detail_podinfo_7 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "*",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-			AppVersion: "6.0.0",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-11 8080:9898\n",
-	}
-
-	expected_resource_refs_podinfo_7 = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-11",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-11",
-		},
-	}
-
-	update_request_1 = &corev1.UpdateInstalledPackageRequest{
-		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "6.0.0",
-		},
-	}
-
-	update_request_2 = &corev1.UpdateInstalledPackageRequest{
-		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
-	}
-
-	update_request_3 = &corev1.UpdateInstalledPackageRequest{
-		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		Values: "{\"ui\": { \"message\": \"Le Bureau des Légendes\" } }",
-	}
-
-	update_request_4 = &corev1.UpdateInstalledPackageRequest{
-		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		Values: "",
-	}
-
-	update_request_5 = &corev1.UpdateInstalledPackageRequest{
-		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
-	}
-
-	update_request_6 = &corev1.UpdateInstalledPackageRequest{
-		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
-	}
-
-	create_request_podinfo_for_delete_1 = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
-		Name:                "my-podinfo-12",
-		TargetContext: &corev1.Context{
-			Namespace: "test-12",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-	}
-
-	expected_detail_podinfo_for_delete_1 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-12 8080:9898\n",
-	}
-
-	expected_resource_refs_for_delete_1 = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-12",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-12",
-		},
-	}
-
-	create_request_podinfo_for_delete_2 = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-13/podinfo", "default"),
-		Name:                "my-podinfo-13",
-		TargetContext: &corev1.Context{
-			Namespace: "test-13",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-	}
-
-	expected_detail_podinfo_for_delete_2 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "=5.2.1",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "5.2.1",
-			AppVersion: "5.2.1",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-13 8080:9898\n",
-	}
-
-	expected_resource_refs_for_delete_2 = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-13",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-13",
-		},
-	}
-
-	create_request_wrong_cluster = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-14/podinfo", "default"),
-		Name:                "my-podinfo",
-		TargetContext: &corev1.Context{
-			Namespace: "test-14",
-			Cluster:   "this is not the cluster you're looking for",
-		},
-	}
-
-	create_request_target_ns_doesnt_exist = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-15/podinfo", "default"),
-		Name:                "my-podinfo",
-		TargetContext: &corev1.Context{
-			Namespace: "test-15",
-			Cluster:   KubeappsCluster,
-		},
-	}
-
-	create_request_auto_update = &corev1.CreateInstalledPackageRequest{
-		AvailablePackageRef: availableRef("podinfo-16/podinfo", "default"),
-		Name:                "my-podinfo-16",
-		TargetContext: &corev1.Context{
-			Namespace: "test-16",
-			Cluster:   KubeappsCluster,
-		},
-		PkgVersionReference: &corev1.VersionReference{
-			Version: ">= 6",
-		},
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 30,
-		},
-	}
-
-	expected_detail_auto_update = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: ">= 6",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-			AppVersion: "6.0.0",
-		},
-		Status: statusInstalled,
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 30,
-		},
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-16 8080:9898\n",
-	}
-
-	expected_detail_auto_update_2 = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: ">= 6",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.3",
-			AppVersion: "6.0.3",
-		},
-		Name:   "my-podinfo-16",
-		Status: statusInstalled,
-		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 30,
-		},
-		AvailablePackageRef: &corev1.AvailablePackageReference{
-			Context: &corev1.Context{
-				Cluster:   KubeappsCluster,
-				Namespace: "default",
-			},
-			Identifier: "podinfo-16/podinfo",
-			Plugin:     fluxPlugin,
-		},
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo-16 8080:9898\n",
-	}
-
-	expected_resource_refs_auto_update = []*corev1.ResourceRef{
-		{
-			ApiVersion: "v1",
-			Kind:       "Service",
-			Name:       "my-podinfo-16",
-		},
-		{
-			ApiVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "my-podinfo-16",
-		},
-	}
-
-	expected_detail_test_release_rbac = &corev1.InstalledPackageDetail{
-		PkgVersionReference: &corev1.VersionReference{
-			Version: "*",
-		},
-		CurrentVersion: &corev1.PackageAppVersion{
-			PkgVersion: "6.0.0",
-			AppVersion: "6.0.0",
-		},
-		Status: statusInstalled,
-		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
-			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
-			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo 8080:9898\n",
-	}
-
-	expected_summaries_test_release_rbac_1 = &corev1.GetInstalledPackageSummariesResponse{
-		InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-			{
-				InstalledPackageRef: &corev1.InstalledPackageReference{
-					Context: &corev1.Context{
-						Cluster:   KubeappsCluster,
-						Namespace: "@TARGET_NS@",
-					},
-					Identifier: "my-podinfo",
-					Plugin:     fluxPlugin,
-				},
-				Name: "my-podinfo",
-				PkgVersionReference: &corev1.VersionReference{
-					Version: "*",
-				},
-				Status: &corev1.InstalledPackageStatus{
-					Ready:      true,
-					Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
-					UserReason: "ReconciliationSucceeded: Release reconciliation succeeded",
-				},
-				// notice that the details from the corresponding chart, like LatestPkgVersion, are missing
-			},
-		},
-	}
-)
