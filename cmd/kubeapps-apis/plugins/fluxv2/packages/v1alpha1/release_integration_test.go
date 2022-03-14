@@ -496,8 +496,8 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 // 4) create these service-accounts in default namespace:
 //   a) - "...-admin", with cluster-wide access to everything
 //   b) - "...-loser", without cluster-wide access or any access to any of the namespaces
-//   c) - "...-helmreleases", with only permissions to read HelmReleases in ns2
-//   d) - "...-helmreleases-and-charts", with only permissions to read HelmCharts in ns1, HelmReleases in ns2
+//   c) - "...-helmreleases", with only permissions to 'get' HelmReleases in ns2
+//   d) - "...-helmreleases-and-charts", with only permissions to 'get' HelmCharts in ns1, HelmReleases in ns2
 // 5) as user 4a) install package podinfo in ns2
 // 6) verify GetInstalledPackageSummaries:
 //    a) as 4a) returns 1 result
@@ -508,8 +508,9 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 //    a) as 4a) returns full detail
 //    b) as 4b) returns PermissionDenied error
 //    c) as 4c) returns full detail
+//    d) as 4d) returns full detail
 // ref https://github.com/kubeapps/kubeapps/issues/4390
-func TestKindClusterReleaseRBAC(t *testing.T) {
+func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
@@ -536,11 +537,13 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out := kubectlCanIGetThisInNamespace(t, "test-release-rbac-admin", "default", "helmcharts", ns1)
+	out := kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-admin", "default", "get", "helmcharts", ns1)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
-	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-loser", "default", "helmcharts", ns1)
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-loser", "default", "get", "helmcharts", ns1)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
@@ -569,7 +572,8 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 
 	ns2 := tc.request.TargetContext.Namespace
 
-	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-admin", "default", fluxHelmReleases, ns2)
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-admin", "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
@@ -609,7 +613,8 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
 	}
 
-	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-loser", "default", fluxHelmReleases, ns2)
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-loser", "default", "get", fluxHelmReleases, ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
@@ -668,15 +673,18 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-helmreleases", "default", fluxHelmRepositories, ns2)
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-helmreleases", "default", "get", fluxHelmRepositories, ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
-	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-helmreleases", "default", "helmcharts", ns2)
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-helmreleases", "default", "get", "helmcharts", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
-	out = kubectlCanIGetThisInNamespace(t, "test-release-rbac-helmreleases", "default", fluxHelmReleases, ns2)
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-helmreleases", "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
@@ -740,8 +748,7 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 				Resources: []string{fluxHelmReleases},
 				Verbs:     []string{"get", "list"},
 			},
-			// see comment above
-			{
+			{ // see comment above
 				APIGroups: []string{""},
 				Resources: []string{"secrets"},
 				Verbs:     []string{"get", "list"},
@@ -755,13 +762,13 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out = kubectlCanIGetThisInNamespace(
-		t, "test-release-rbac-helmreleases-and-charts", "default", "helmcharts", ns1)
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-helmreleases-and-charts", "default", "get", "helmcharts", ns1)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
-	out = kubectlCanIGetThisInNamespace(
-		t, "test-release-rbac-helmreleases-and-charts", "default", fluxHelmReleases, ns2)
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-helmreleases-and-charts", "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
@@ -798,6 +805,381 @@ func TestKindClusterReleaseRBAC(t *testing.T) {
 		t.Fatal(err)
 	} else {
 		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+	}
+}
+
+func TestKindClusterRBAC_CreateRelease(t *testing.T) {
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ns1 := "test-ns1-" + randSeq(4)
+	if err := kubeCreateNamespace(t, ns1); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteNamespace(t, ns1); err != nil {
+			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
+		}
+	})
+
+	err = kubeAddHelmRepository(t, "podinfo", podinfo_repo_url, ns1, "", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		err = kubeDeleteHelmRepository(t, "podinfo", ns1)
+		if err != nil {
+			t.Logf("Failed to delete helm source due to [%v]", err)
+		}
+	})
+
+	err = kubeWaitUntilHelmRepositoryIsReady(t, "podinfo", ns1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
+		t, "test-release-rbac-loser", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ns2 := "test-ns2-" + randSeq(4)
+	if err := kubeCreateNamespace(t, ns2); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteNamespace(t, ns2); err != nil {
+			t.Logf("Failed to delete namespace [%s] due to [%v]", ns2, err)
+		}
+	})
+
+	out := kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-loser", "default", "get", "helmcharts", ns2)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-loser", "default", "get", "helmreleases", ns2)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+
+	out = kubectlCanIDoThisInNamespace(
+		t, "test-release-rbac-loser", "default", "create", "helmreleases", ns2)
+	if out != "no" {
+		t.Errorf("Expected [no], got [%s]", out)
+	}
+
+	ctx, cancel := context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
+	defer cancel()
+
+	req := &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo/podinfo", ns1),
+		Name:                "podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: ns2,
+			Cluster:   KubeappsCluster,
+		},
+	}
+	_, err = fluxPluginClient.CreateInstalledPackage(ctx, req)
+	if status.Code(err) != codes.PermissionDenied {
+		t.Errorf("Expected PermissionDenied, got %v", err)
+	}
+
+	nsToRules := map[string][]rbacv1.PolicyRule{
+		ns2: {
+			{
+				APIGroups: []string{helmv2.GroupVersion.Group},
+				Resources: []string{fluxHelmReleases},
+				Verbs:     []string{"create"},
+			},
+		},
+	}
+
+	grpcCtx2, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-release-rbac-helmreleases-2", "default", nsToRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel = context.WithTimeout(grpcCtx2, defaultContextTimeout)
+	defer cancel()
+
+	_, err = fluxPluginClient.CreateInstalledPackage(ctx, req)
+	// perhaps not super intuitive BUT
+	// this should fail due to not having 'get' access for HelmCharts in ns1
+	if status.Code(err) != codes.PermissionDenied {
+		t.Errorf("Expected PermissionDenied, got %v", err)
+	}
+
+	nsToRules = map[string][]rbacv1.PolicyRule{
+		ns1: {
+			{
+				APIGroups: []string{sourcev1.GroupVersion.Group},
+				Resources: []string{"helmcharts"},
+				Verbs:     []string{"get"},
+			},
+		},
+		ns2: {
+			{
+				APIGroups: []string{helmv2.GroupVersion.Group},
+				Resources: []string{fluxHelmReleases},
+				Verbs:     []string{"create"},
+			},
+		},
+	}
+
+	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-release-rbac-helmreleases-3", "default", nsToRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel = context.WithTimeout(grpcCtx3, defaultContextTimeout)
+	defer cancel()
+
+	resp, err := fluxPluginClient.CreateInstalledPackage(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		// not necessary to delete release because the whole namespace ns2 will be deleted
+		expectedRef := installedRef("podinfo", ns2)
+		opts := cmpopts.IgnoreUnexported(
+			corev1.InstalledPackageDetail{},
+			corev1.InstalledPackageReference{},
+			plugins.Plugin{},
+			corev1.Context{})
+		if got, want := resp.InstalledPackageRef, expectedRef; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
+	}
+}
+
+func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ns1 := "test-ns1-" + randSeq(4)
+	if err := kubeCreateNamespace(t, ns1); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteNamespace(t, ns1); err != nil {
+			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
+		}
+	})
+
+	tc := integrationTestCreatePackageSpec{
+		testName: "test chart RBAC",
+		repoUrl:  podinfo_repo_url,
+		request: &corev1.CreateInstalledPackageRequest{
+			AvailablePackageRef: availableRef("podinfo-1/podinfo", ns1),
+			Name:                "my-podinfo",
+			TargetContext: &corev1.Context{
+				// note that Namespace is just the prefix - the actual name will
+				// have a random string appended at the end, e.g. "test-ns2-h23r"
+				// this will happen during the running of the test
+				Namespace: "test-ns2",
+				Cluster:   KubeappsCluster,
+			},
+		},
+		expectedDetail:       expected_detail_test_release_rbac_3,
+		expectedPodPrefix:    "my-podinfo-",
+		expectedStatusCode:   codes.OK,
+		expectedResourceRefs: expected_resource_refs_basic,
+	}
+
+	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-release-rbac-admin", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
+
+	ns2 := tc.request.TargetContext.Namespace
+
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
+		t, "test-release-rbac-loser", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
+	defer cancel()
+
+	req := &corev1.UpdateInstalledPackageRequest{
+		InstalledPackageRef: installedRef,
+		Values:              "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+	}
+	_, err = fluxPluginClient.UpdateInstalledPackage(ctx, req)
+	// should fail due to rpc error: code = PermissionDenied desc = Forbidden to get the
+	// HelmRelease 'test-ns2-b8jg/my-podinfo' due to 'helmreleases.helm.toolkit.fluxcd.io
+	// "my-podinfo" is forbidden: User "system:serviceaccount:default:test-release-rbac-loser"
+	// cannot get resource "helmreleases" in API group "helm.toolkit.fluxcd.io" in the namespace
+	// "test-ns2-b8jg"'
+	if status.Code(err) != codes.PermissionDenied {
+		t.Errorf("Expected PermissionDenied, got %v", err)
+	}
+
+	nsToRules := map[string][]rbacv1.PolicyRule{
+		ns2: {
+			{
+				APIGroups: []string{helmv2.GroupVersion.Group},
+				Resources: []string{fluxHelmReleases},
+				Verbs:     []string{"get"},
+			},
+		},
+	}
+
+	grpcCtx2, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-release-rbac-helmreleases-2", "default", nsToRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel = context.WithTimeout(grpcCtx2, defaultContextTimeout)
+	defer cancel()
+
+	_, err = fluxPluginClient.UpdateInstalledPackage(ctx, req)
+	// should fail due to rpc error: code = PermissionDenied desc = Forbidden to update the
+	// HelmRelease 'test-ns2-w8xd/my-podinfo' due to 'helmreleases.helm.toolkit.fluxcd.io
+	// "my-podinfo" is forbidden: User "system:serviceaccount:default:test-release-rbac-helmreleases-2"
+	// cannot update resource "helmreleases" in API group "helm.toolkit.fluxcd.io" in the
+	// namespace "test-ns2-w8xd"'
+	if status.Code(err) != codes.PermissionDenied {
+		t.Errorf("Expected PermissionDenied, got %v", err)
+	}
+
+	nsToRules = map[string][]rbacv1.PolicyRule{
+		ns2: {
+			{
+				APIGroups: []string{helmv2.GroupVersion.Group},
+				Resources: []string{fluxHelmReleases},
+				Verbs:     []string{"get", "update"},
+			},
+		},
+	}
+
+	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-release-rbac-helmreleases-3", "default", nsToRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel = context.WithTimeout(grpcCtx3, defaultContextTimeout)
+	defer cancel()
+
+	resp, err := fluxPluginClient.UpdateInstalledPackage(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		// not necessary to delete release because the whole namespace ns2 will be deleted
+		opts := cmpopts.IgnoreUnexported(
+			corev1.InstalledPackageDetail{},
+			corev1.InstalledPackageReference{},
+			plugins.Plugin{},
+			corev1.Context{})
+		if got, want := resp.InstalledPackageRef, installedRef; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
+	}
+}
+
+func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ns1 := "test-ns1-" + randSeq(4)
+	if err := kubeCreateNamespace(t, ns1); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteNamespace(t, ns1); err != nil {
+			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
+		}
+	})
+
+	tc := integrationTestCreatePackageSpec{
+		testName: "test chart RBAC",
+		repoUrl:  podinfo_repo_url,
+		request: &corev1.CreateInstalledPackageRequest{
+			AvailablePackageRef: availableRef("podinfo-1/podinfo", ns1),
+			Name:                "my-podinfo",
+			TargetContext: &corev1.Context{
+				// note that Namespace is just the prefix - the actual name will
+				// have a random string appended at the end, e.g. "test-ns2-h23r"
+				// this will happen during the running of the test
+				Namespace: "test-ns2",
+				Cluster:   KubeappsCluster,
+			},
+		},
+		expectedDetail:       expected_detail_test_release_rbac_4,
+		expectedPodPrefix:    "my-podinfo-",
+		expectedStatusCode:   codes.OK,
+		expectedResourceRefs: expected_resource_refs_basic,
+	}
+
+	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-release-rbac-admin", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
+
+	ns2 := tc.request.TargetContext.Namespace
+
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
+		t, "test-release-rbac-loser", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
+	defer cancel()
+
+	req := &corev1.DeleteInstalledPackageRequest{
+		InstalledPackageRef: installedRef,
+	}
+
+	_, err = fluxPluginClient.DeleteInstalledPackage(ctx, req)
+	// should fail due to rpc error: code = PermissionDenied desc = Forbidden to delete the
+	// HelmRelease 'my-podinfo' due to 'helmreleases.helm.toolkit.fluxcd.io "my-podinfo" is
+	// forbidden: User "system:serviceaccount:default:test-release-rbac-loser" cannot delete
+	// resource "helmreleases" in API group "helm.toolkit.fluxcd.io" in the namespace "test-ns2-g4yp"'
+	if status.Code(err) != codes.PermissionDenied {
+		t.Errorf("Expected PermissionDenied, got %v", err)
+	}
+
+	nsToRules := map[string][]rbacv1.PolicyRule{
+		ns2: {
+			{
+				APIGroups: []string{helmv2.GroupVersion.Group},
+				Resources: []string{fluxHelmReleases},
+				Verbs:     []string{"delete"},
+			},
+		},
+	}
+
+	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-release-rbac-helmreleases-3", "default", nsToRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel = context.WithTimeout(grpcCtx3, defaultContextTimeout)
+	defer cancel()
+
+	_, err = fluxPluginClient.DeleteInstalledPackage(ctx, req)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

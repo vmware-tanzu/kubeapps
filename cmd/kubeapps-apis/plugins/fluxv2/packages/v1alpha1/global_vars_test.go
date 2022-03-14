@@ -805,6 +805,34 @@ var (
 		},
 	}
 
+	expected_detail_test_release_rbac_3 = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "6.0.0",
+			AppVersion: "6.0.0",
+		},
+		Status: statusInstalled,
+		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo 8080:9898\n",
+	}
+
+	expected_detail_test_release_rbac_4 = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "6.0.0",
+			AppVersion: "6.0.0",
+		},
+		Status: statusInstalled,
+		PostInstallationNotes: "1. Get the application URL by running these commands:\n  " +
+			"echo \"Visit http://127.0.0.1:8080 to use your application\"\n  " +
+			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo 8080:9898\n",
+	}
+
 	available_package_summaries_podinfo_basic_auth = &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 			{

@@ -301,7 +301,8 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 
 	for _, n := range names {
-		out := kubectlCanIGetThisInNamespace(t, "test-repo-rbac-admin", "default", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanIDoThisInNamespace(
+			t, "test-repo-rbac-admin", "default", "get", fluxHelmRepositories, n.Namespace)
 		if out != "yes" {
 			t.Errorf("Expected [yes], got [%s]", out)
 		}
@@ -312,7 +313,8 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, n := range names {
-		out := kubectlCanIGetThisInNamespace(t, "test-repo-rbac-loser", "default", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanIDoThisInNamespace(
+			t, "test-repo-rbac-loser", "default", "get", fluxHelmRepositories, n.Namespace)
 		if out != "no" {
 			t.Errorf("Expected [no], got [%s]", out)
 		}
@@ -339,7 +341,8 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i, n := range names {
-		out := kubectlCanIGetThisInNamespace(t, "test-repo-rbac-limited", "default", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanIDoThisInNamespace(
+			t, "test-repo-rbac-limited", "default", "get", fluxHelmRepositories, n.Namespace)
 		if i == 0 {
 			if out != "no" {
 				t.Errorf("Expected [no], got [%s]", out)

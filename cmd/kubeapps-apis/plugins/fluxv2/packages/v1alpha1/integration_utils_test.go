@@ -822,11 +822,11 @@ func newGrpcFluxPluginContext(t *testing.T, name, namespace string) (context.Con
 	return newGrpcContext(t, token), nil
 }
 
-func kubectlCanIGetThisInNamespace(t *testing.T, name, namespace, resource, checkThisNamespace string) string {
+func kubectlCanIDoThisInNamespace(t *testing.T, name, namespace, verb, resource, checkThisNamespace string) string {
 	args := []string{
 		"auth",
 		"can-i",
-		"get",
+		verb,
 		resource,
 		"--namespace",
 		checkThisNamespace,
