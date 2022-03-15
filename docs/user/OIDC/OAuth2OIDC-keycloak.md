@@ -5,11 +5,11 @@ It covers the installation and documentation for Kubeapps interacting with two K
 
 The installation used the [bitnami chart for Keycloak](https://github.com/bitnami/charts/tree/master/bitnami/keycloak) (version 12.0.4/2.4.8) and [bitnami chart for Kubeapps](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) (version 7.0.0/2.3.2) 
 
-# Installation
+# Keycloak Installation
 
 ## SSL
 
-In order to support OIDC or OAuth, most servers and proxies require HTTPS. By default, the certificate created by the helm chart / keycloak server is both invalid (error with `notBefore` attribute) and also based on a deprecated certificate version making it incompatible to use (i.e. is it based on Common Name instead of SAN and is rejected).
+In order to support OIDC or OAuth, most servers and proxies require HTTPS. By default, the certificate created by the helm chart / Keycloak server is both invalid (error with `notBefore` attribute) and also based on a deprecated certificate version making it incompatible to use (i.e. is it based on Common Name instead of SAN and is rejected).
 
 In this section, we will see how to configure Keycloak with its `auth.tls` enabled. Note that there are other options to configure TLS, for example via ingress TLS, either manually or using a cert manager. This section will focus on TLS at the server level.
 
@@ -82,9 +82,9 @@ kubectl create secret generic keycloak-tls --from-file=./keycloak-0.keystore.jks
 
 ## Helm Install
 
-To provide a default install, not many values must be provided in values.yaml - this is mostly some default passwords and the name of the secret created in Step 3 above.
+To provide a default install, not many values must be provided in the values file - the values are mostly default passwords and the name of the secret created in Step 3 above.
 
-Here is a the values.yaml file that was applied:
+Here is the `my-values.yaml` file that was applied when installing the Helm Chart:
 
 ```yaml
 ## Keycloak authentication parameters
@@ -124,10 +124,13 @@ auth:
    truststorePassword: Vmware!23
 ```
 
-Then just deploy Keycloak either using Kubeapps UI or helm cli.
+Then just deploy Keycloak either using Kubeapps UI or helm cli as follows:
+```shell
+helm install keycloak bitnami/keycloak --values my-values.yaml
+```
 
 
-# Configuration
+# Keycloak Configuration
 
 Follow the [Keycloak documentation](https://www.keycloak.org/documentation) to create and configure a new Realm to work with.
 
@@ -244,7 +247,7 @@ The oauth proxy used in kubeapps requires email as the username. Furthermore, if
 
 In order to test multiple users with different levels of authorization, it is useful to create them with multiple dummy email addresses. This can be done by ensuring that when the user is created, the field “email verified” is ON (skipping an actual email verification workflow).
 
-# Kubeapps
+# Kubeapps Installation
 
 ## Helm Install
 
@@ -255,7 +258,7 @@ Few changes are required to values.yaml for the helm installation:
  - The `clientID` and `clientSecret` field values can be retrieved from the `kubeapps` client in Keycloak
  - the flag `--oidc-issuer-url` is the url to the Keycloak realm
 
-Here is an example of values.yaml:
+The following excerpt shows the relevant values used in values.yaml when installing the Helm Chart:
 
 ```yaml
 ## Frontend parameters
