@@ -129,7 +129,7 @@ Then just deploy Keycloak either using Kubeapps UI or helm cli.
 
 # Configuration
 
-Follow the Keycloak documentation to create and configure a new Realm to work with.
+Follow the [Keycloak documentation](https://www.keycloak.org/documentation) to create and configure a new Realm to work with.
 
 This section will focus on a few aspects to configure for the SSO scenario to work.
 
