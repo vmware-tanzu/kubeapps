@@ -1,10 +1,9 @@
 # Configuring Keycloak as an OIDC provider
-(created May 17th 2021)
 
 This document explains how to configure Keycloak as an IDP + OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../using-an-OIDC-provider.md)).
-It covers the installation and documentation for Kubeapps interacting with two AWS clusters. 
+It covers the installation and documentation for Kubeapps interacting with two Kubernetes clusters. 
 
-The base installation is done using the bitnami chart for Keycloak.
+The installation used the [bitnami chart for Keycloak](https://github.com/bitnami/charts/tree/master/bitnami/keycloak) (version 12.0.4/2.4.8) and [bitnami chart for Kubeapps](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) (version 7.0.0/2.3.2) 
 
 # Installation
 
@@ -46,7 +45,7 @@ subjectAltName      = @alt_names
 DNS.1               = *.us-east-2.elb.amazonaws.com
 ```
 
-The important section of the config is the `[req_ext]` extension section with alternate names. As the load balancer URL is created during installation (here on an AWS cluster), we use the wildcard mechanism so the final hostname can be verified by the certificates. Other hostnames, e.g. localhost, can also be added following the numbers pattern (`DNS.x`).
+The important section of the config is the `[req_ext]` extension section with alternate names. As the load balancer URL is created during installation, we use the wildcard mechanism so the final hostname can be verified by the certificates (here `DNS.1` illustrates a cluster on AWS). Other hostnames, e.g. localhost, can also be added following the numbers pattern (`DNS.x`).
 
 The following command will generate the private key and certificate files:
 
@@ -85,7 +84,7 @@ kubectl create secret generic keycloak-tls --from-file=./keycloak-0.keystore.jks
 
 To provide a default install, not many values must be provided in values.yaml - this is mostly some default passwords and the name of the secret created in Step 3 above.
 
-Here is the values.yaml file that i used:
+Here is a the values.yaml file that was applied:
 
 ```yaml
 ## Keycloak authentication parameters
@@ -125,7 +124,7 @@ auth:
    truststorePassword: Vmware!23
 ```
 
-Then just deploy Keycloak either using Kubeapps or helm cli.
+Then just deploy Keycloak either using Kubeapps UI or helm cli.
 
 
 # Configuration
@@ -158,14 +157,14 @@ Note: if you navigate to “Client Scopes” and then select the tab “Default 
 
 ## Clients
 
-In probably a very simplified view, Clients represent the application to be protected and accessed via SSO and OIDC. In my use case, the environment consisted of the Kubeapps web app and two AWS clusters. So we need to create three clients.
+In probably a very simplified view, Clients represent the application to be protected and accessed via SSO and OIDC. Here, the environment consisted of the Kubeapps web app and two Kubernetes clusters. So we need to create three clients.
 
 ### Cluster clients
 
-For each of the two AWS clusters, we will create a client as follows:
+For each of the two Kubernetes clusters, we will create a client as follows:
  - Click “Clients” from the left navigator
  - Click “Create” from the table
- - Enter an “id” and Save (for example, `aws1`and `aws2` respectively)
+ - Enter an “id” and Save (for example, `cluster1`and `cluster2` respectively)
 
 Once created, configure the authentication as follows:
  - Ensure the protocol is set to “openid-connect”
@@ -184,7 +183,7 @@ You then need to configure the client scopes that will be available:
 We need to first create the client:
  - Click “Clients” from the left navigator
  - Click “Create” from the table
- - Enter an “id” and Save (i used kubeapps)
+ - Enter an “id” and Save (e.g. `kubeapps`)
 
 Once created, configure the authentication as follows:
  - Ensure the protocol is set to “openid-connect”
@@ -199,38 +198,38 @@ As for the cluster clients, we need to configure the client scopes:
  - Ensure the “email” scope is available either in the “Assigned Default Client Scopes” list or the “Assigned Optional Client Scopes” list
  - The “groups” client scope should be available in the lists on the left. Add it either to the “Assigned Default Client Scopes” list or the “Assigned Optional Client Scopes” list.
 
-The last step is to configure the kubeapps client to be aware of the two cluster clients and be allowed to invoke them. There are different ways to configure Keycloak:
+The last step is to configure the `kubeapps` client to be aware of the two cluster clients and be allowed to invoke them. There are different ways to configure Keycloak:
  - Using automatic audience resolution. We haven't explored this method yet, therefore it won't be covered in this guide.
- - Via Client Scopes: define the cluster clients as Client Scopes and add them to kubeapps.
- - Via Mappers in the client: define a mapper attached to the kubeapps client that will inject the client ids in th audience claim. 
+ - Via Client Scopes: define the cluster clients as Client Scopes and add them to `kubeapps`.
+ - Via Mappers in the client: define a mapper attached to the `kubeapps` client that will inject the client ids in th audience claim. 
 
 #### Option #2
 
-In this option, we create a client scope similar to how we created the groups client scope. This solution is better that solution #3 as the client ids are injected in the audience claim only if they were asked for in the scope request field.
+In this option, we create a client scope similar to how we created the groups client scope. This solution is better than solution #3 as the client ids are injected in the audience claim only if they were asked for in the scope request field.
  - Click “Client Scopes” from the left navigator menu
  - Click on “Create” from the table (top right corner)
- - Provide a name (e.g. aws1-client), ensure the protocol is set to “openid-connect” and that the option “Include in Token Scope” is on.
+ - Provide a name (e.g. `cluster1-client`), ensure the protocol is set to “openid-connect” and that the option “Include in Token Scope” is on.
  - Click the Mappers tab
  - Click Create from the table to create a new mapper
     - Enter a name
     - Select the mapper type “Audience”
-    - In “Included Client Audience” select the cluster client created above (e.g. aws1)
+    - In “Included Client Audience” select the cluster client created above (e.g. `cluster1`)
     - Ensure “Add to ID token” is enabled
     - Save
  - Repeat for the second cluster
 
-Then in the kubeapps client:
+Then in the `kubeapps` client:
  - Navigate to the “Client Scope” tab
  - The two new scopes created above should be available in the lists on the left. You can choose to add them to either the default list or the optional list.
 
 #### Option #3
 
 In this option, the claim is statically defined via a mapper similar to the one created in option #2.
- - Navigate to the Mappers tab of the kubeapps client
+ - Navigate to the Mappers tab of the `kubeapps` client
  - Click Create from the table
     - Enter a name
     - For Mapper Type select “Audience”
-    - In “Included Client Audience” select the cluster client(e.g. aws1)
+    - In “Included Client Audience” select the cluster client(e.g. `cluster1`)
     - Ensure “Add to ID token” is enabled
     - Save
  - Repeat for the second cluster
@@ -250,8 +249,11 @@ In order to test multiple users with different levels of authorization, it is us
 ## Helm Install
 
 Few changes are required to values.yaml for the helm installation:
- -The `frontend` service type was changed to LoadBalancer so we can have a public hostname for the callback. Using an ingress could be another alternative.
+ - The `frontend` service type is set to LoadBalancer so we can have a public hostname for the callback. Using an ingress could be another alternative.
  - The auth proxy must be configured. Here we will be using the default one.
+ - the `provider` field must be set to oidc
+ - The `clientID` and `clientSecret` field values can be retrieved from the `kubeapps` client in Keycloak
+ - the flag `--oidc-issuer-url` is the url to the Keycloak realm
 
 Here is an example of values.yaml:
 
@@ -301,10 +303,9 @@ authProxy:
 ## Configuration
 
 Once Kubeapps is installed and the load balancer is ready, we need to go back to Keycloak to configure the callback URL:
- - Navigate to the kubeapps Client
+ - Navigate to the `kubeapps` Client
  - In the “Valid Redirect URIs” enter the callback URL for Kubeapps. It will be of the form “http://`<hostname>`/oauth2/callback”  (where `<hostname>` is the load balancer hostname)
 
 ## Users
 
-Users created in keycloak will be authenticated but they will not have access to the cluster resources by default. Make sure to create role bindings to users and/or groups in both clusters.
-
+Users created in Keycloak will be authenticated but they will not have access to the cluster resources by default. Make sure to create role bindings to users and/or groups in both clusters.
