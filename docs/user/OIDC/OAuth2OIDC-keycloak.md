@@ -46,7 +46,7 @@ subjectAltName      = @alt_names
 DNS.1               = *.us-east-2.elb.amazonaws.com
 ```
 
-The important section of the config is the [req_ext] extension section with alternate names. As the load balancer URL is created during installation (here on an AWS cluster), we use the wildcard mechanism so the final hostname can be verified by the certificates. Other hostnames, e.g. localhost, can also be added following the numbers pattern (DNS.x).
+The important section of the config is the `[req_ext]` extension section with alternate names. As the load balancer URL is created during installation (here on an AWS cluster), we use the wildcard mechanism so the final hostname can be verified by the certificates. Other hostnames, e.g. localhost, can also be added following the numbers pattern (`DNS.x`).
 
 The following command will generate the private key and certificate files:
 
