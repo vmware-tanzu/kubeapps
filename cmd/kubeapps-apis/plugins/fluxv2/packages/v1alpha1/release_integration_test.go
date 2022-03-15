@@ -509,6 +509,10 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 //    b) as 4b) returns PermissionDenied error
 //    c) as 4c) returns full detail
 //    d) as 4d) returns full detail
+// 8) verify GetInstalledPackageResourceRefs:
+//    a) as 4a) returns all refs
+//    b) as 4b) returns PermissionDenied error
+//    c) as 4c) returns all refs
 // ref https://github.com/kubeapps/kubeapps/issues/4390
 func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
@@ -613,6 +617,34 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
 	}
 
+	grpcCtx, cancel = context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
+	defer cancel()
+
+	expectedRefsCopy := []*corev1.ResourceRef{}
+	for _, r := range expected_resource_refs_basic {
+		newR := &corev1.ResourceRef{
+			ApiVersion: r.ApiVersion,
+			Kind:       r.Kind,
+			Name:       r.Name,
+			Namespace:  ns2,
+		}
+		expectedRefsCopy = append(expectedRefsCopy, newR)
+	}
+
+	resp3, err := fluxPluginClient.GetInstalledPackageResourceRefs(
+		grpcCtx,
+		&corev1.GetInstalledPackageResourceRefsRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		opts := cmpopts.IgnoreUnexported(corev1.ResourceRef{})
+		if got, want := resp3.ResourceRefs, expectedRefsCopy; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
+	}
+
 	out = kubectlCanIDoThisInNamespace(
 		t, "test-release-rbac-loser", "default", "get", fluxHelmReleases, ns2)
 	if out != "no" {
@@ -639,6 +671,18 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	_, err = fluxPluginClient.GetInstalledPackageDetail(
 		grpcCtx,
 		&corev1.GetInstalledPackageDetailRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if status.Code(err) != codes.PermissionDenied {
+		t.Errorf("Expected PermissionDenied, got %v", err)
+	}
+
+	grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
+	defer cancel()
+
+	_, err = fluxPluginClient.GetInstalledPackageResourceRefs(
+		grpcCtx,
+		&corev1.GetInstalledPackageResourceRefsRequest{
 			InstalledPackageRef: installedRef,
 		})
 	if status.Code(err) != codes.PermissionDenied {
@@ -732,6 +776,23 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		t.Fatal(err)
 	} else {
 		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+	}
+
+	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
+	defer cancel()
+
+	resp3, err = fluxPluginClient.GetInstalledPackageResourceRefs(
+		grpcCtx,
+		&corev1.GetInstalledPackageResourceRefsRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		opts := cmpopts.IgnoreUnexported(corev1.ResourceRef{})
+		if got, want := resp3.ResourceRefs, expectedRefsCopy; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
 	}
 
 	nsToRules := map[string][]rbacv1.PolicyRule{
