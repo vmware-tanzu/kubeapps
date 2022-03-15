@@ -250,7 +250,7 @@ In order to test multiple users with different levels of authorization, it is us
 ## Helm Install
 
 Few changes are required to values.yaml for the helm installation:
- - I changed the frontend service type to LoadBalancer so we can have a public hostname for the callback
+ -The `frontend` service type was changed to LoadBalancer so we can have a public hostname for the callback. Using an ingress could be another alternative.
  - The auth proxy must be configured. Here we will be using the default one.
 
 Here is an example of values.yaml:
