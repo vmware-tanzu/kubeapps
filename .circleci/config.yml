@@ -163,8 +163,7 @@ workflows:
             - build_pinniped_proxy
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
-          <<: *build_always # TEMPORARY CHANGE
-          # <<: *build_on_main
+          <<: *build_on_main
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
