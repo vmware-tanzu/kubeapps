@@ -528,7 +528,7 @@ gke_test: &gke_test
     - <<: *exports
     - <<: *install_gcloud_sdk
     - setup_remote_docker:
-          version: << pipeline.parameters.DOCKER_VERSION >>
+        version: << pipeline.parameters.DOCKER_VERSION >>
     - run:
         name: Configure Google Cloud
         command: |
