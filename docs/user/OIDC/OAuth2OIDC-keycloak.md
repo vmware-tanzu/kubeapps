@@ -165,7 +165,7 @@ In probably a very simplified view, Clients represent the application to be prot
 For each of the two AWS clusters, we will create a client as follows:
  - Click “Clients” from the left navigator
  - Click “Create” from the table
- - Enter an “id” and Save (i used aws1 and aws2 respectively)
+ - Enter an “id” and Save (for example, `aws1`and `aws2` respectively)
 
 Once created, configure the authentication as follows:
  - Ensure the protocol is set to “openid-connect”
