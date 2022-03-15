@@ -170,7 +170,7 @@ For each of the two AWS clusters, we will create a client as follows:
 Once created, configure the authentication as follows:
  - Ensure the protocol is set to “openid-connect”
  - Configure the “Access Type” to be “confidential”. This will add a new “Credentials” tab from which you can get the client secret
- - For my case, as i just wanted to use tokens to access the cluster, so i disabled “Standard Flow Enabled”. Keep this option if you plan to use a local browser login screen (e.g. if using pinniped cli).
+ - If you just want to use tokens to access the cluster, you can disable the “Standard Flow Enabled”. Keep this option if you plan to use a local browser login screen (e.g. if using pinniped cli).
  - Ensure “Direct Access Grants Enabled” is enabled, as this is how we can get the tokens via API.
  - Save
 
