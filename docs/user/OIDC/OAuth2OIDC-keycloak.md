@@ -10,7 +10,7 @@ The base installation is done using the bitnami chart for Keycloak.
 
 ## SSL
 
-In order to support OIDC or OAuth, most servers and proxies require HTTPS. By default, the certificate created by the helm chart / keycloak server is both invalid (error with notBefore attribute) and also based on a deprecated certificate version making it incompatible to use (i.e. is it based on Common Name instead of SAN and is rejected).
+In order to support OIDC or OAuth, most servers and proxies require HTTPS. By default, the certificate created by the helm chart / keycloak server is both invalid (error with `notBefore` attribute) and also based on a deprecated certificate version making it incompatible to use (i.e. is it based on Common Name instead of SAN and is rejected).
 
 In this section we will see how to configure Keycloak with its “auth.tls” enabled. Note that there are other options to configure TLS, for example via ingress TLS, either manually or using a cert manager. This section will focus on TLS at the server level.
 
