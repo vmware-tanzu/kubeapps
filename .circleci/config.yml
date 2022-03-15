@@ -746,7 +746,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -778,7 +778,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
       - checkout
       - <<: *install_github
