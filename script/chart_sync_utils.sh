@@ -184,6 +184,21 @@ updateRepoWithRemoteChanges() {
     replaceImage_productionToLatest kubeapps-apis "${KUBEAPPS_CHART_DIR}/values.yaml"
 }
 
+generateReadme() {
+    local README_GENERATOR_REPO=${1:?}
+    local CHART_PATH=${2:?}
+
+    TMP_DIR=$(mktemp -u)/readme
+    local chartReadmePath="${CHART_PATH}/README.md"
+    local chartValuesPath="${CHART_PATH}/values.yaml"
+
+    git clone "https://github.com/${README_GENERATOR_REPO}" "${TMP_DIR}" --depth 1 --no-single-branch
+
+    cd "${TMP_DIR}"
+    npm install --production
+    node bin/index.js -r "${chartReadmePath}" -v "${chartValuesPath}"
+}
+
 commitAndSendExternalPR() {
     local TARGET_REPO=${1:?}
     local TARGET_BRANCH=${2:?}
