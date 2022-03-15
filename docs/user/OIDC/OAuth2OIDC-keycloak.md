@@ -135,7 +135,7 @@ This section will focus on a few aspects to configure for the SSO scenario to wo
 
 ## Groups Claim
 
-By default, there is no “groups” scope/claim. We will create a global client scope for groups.
+By default, there is no "groups" scope/claim. We will create a global client scope for groups.
 
 In the admin console:
  - Click “Client Scopes” from the left navigator menu
