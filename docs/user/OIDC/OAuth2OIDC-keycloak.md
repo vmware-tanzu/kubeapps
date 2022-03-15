@@ -158,7 +158,7 @@ Note: if you navigate to “Client Scopes” and then select the tab “Default 
 
 ## Clients
 
-In probably a very simplified view, Clients represent the application to be protected and accessed via SSO and OIDC. In my use case, the environment consisted in the Kubeapps webapp and two AWS clusters. So we need to create three clients.
+In probably a very simplified view, Clients represent the application to be protected and accessed via SSO and OIDC. In my use case, the environment consisted of the Kubeapps web app and two AWS clusters. So we need to create three clients.
 
 ### Cluster clients
 
