@@ -308,7 +308,8 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		}
 	}
 
-	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-repo-rbac-loser", "default")
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
+		t, "test-repo-rbac-loser", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
