@@ -1,6 +1,8 @@
 name: Custodian rules for Kubeapps
 on:
-  workflow_dispatch:
+  push:
+    branches:    
+      - '4402-custodian-rule-disks'
   #schedule:
   #  - cron: "0 8 * * *"
 env:
