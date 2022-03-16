@@ -81,8 +81,6 @@ func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
-		// The Flux plugin currently supports interactions with the default (kubeapps)
-		// cluster only:
 		config, err := configGetter(ctx, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)

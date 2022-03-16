@@ -476,8 +476,8 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	return string(token), nil
 }
 
-func kubeCreateServiceAccountWithRole(t *testing.T, name, namespace, role, namespaceAllowed string) (string, error) {
-	t.Logf("+kubeCreateServiceAccountWithRole(%s,%s,%s,%s)", name, namespace, role, namespaceAllowed)
+func kubeCreateServiceAccountWithRoles(t *testing.T, name, namespace string, namespacesToRoles map[string]string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithRoles(%s,%s,%s)", name, namespace, namespacesToRoles)
 	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
 	if err != nil {
 		return "", err
@@ -488,28 +488,30 @@ func kubeCreateServiceAccountWithRole(t *testing.T, name, namespace, role, names
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.RbacV1().RoleBindings(namespaceAllowed).Create(
-		ctx,
-		&rbacv1.RoleBinding{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name + "-binding",
-				Namespace: namespaceAllowed,
-			},
-			Subjects: []rbacv1.Subject{
-				{
-					Kind:      rbacv1.ServiceAccountKind,
-					Name:      name,
-					Namespace: namespace,
+	for ns, role := range namespacesToRoles {
+		_, err = typedClient.RbacV1().RoleBindings(ns).Create(
+			ctx,
+			&rbacv1.RoleBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name + "-binding",
+					Namespace: ns,
+				},
+				Subjects: []rbacv1.Subject{
+					{
+						Kind:      rbacv1.ServiceAccountKind,
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				RoleRef: rbacv1.RoleRef{
+					Kind: "Role",
+					Name: role,
 				},
 			},
-			RoleRef: rbacv1.RoleRef{
-				Kind: "Role",
-				Name: role,
-			},
-		},
-		metav1.CreateOptions{})
-	if err != nil {
-		return "", err
+			metav1.CreateOptions{})
+		if err != nil {
+			return "", err
+		}
 	}
 	return string(token), nil
 }
@@ -552,22 +554,25 @@ func kubeDeleteServiceAccountWithClusterRoleBinding(t *testing.T, name, namespac
 	return nil
 }
 
-func kubeDeleteServiceAccountWithRoleBinding(t *testing.T, name, namespace, roleNamespace string) error {
-	t.Logf("+kubeDeleteServiceAccountWithRoleBinding(%s,%s)", name, namespace)
+func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name, namespace string, nsToRole map[string]string) error {
+	t.Logf("+kubeDeleteServiceAccountWithRoleBindings(%s,%s,%s)", name, namespace, nsToRole)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
-	err = typedClient.RbacV1().RoleBindings(roleNamespace).Delete(
-		ctx,
-		name+"-binding",
-		metav1.DeleteOptions{})
-	if err != nil {
-		return err
+	for ns, _ := range nsToRole {
+		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+		defer cancel()
+		err = typedClient.RbacV1().RoleBindings(ns).Delete(
+			ctx,
+			name+"-binding",
+			metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
 	}
-	ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
 		ctx,
@@ -817,11 +822,11 @@ func newGrpcFluxPluginContext(t *testing.T, name, namespace string) (context.Con
 	return newGrpcContext(t, token), nil
 }
 
-func kubectlCanIGetThisInNamespace(t *testing.T, name, namespace, resource, checkThisNamespace string) string {
+func kubectlCanI(t *testing.T, name, namespace, verb, resource, checkThisNamespace string) string {
 	args := []string{
 		"auth",
 		"can-i",
-		"get",
+		verb,
 		resource,
 		"--namespace",
 		checkThisNamespace,
@@ -858,23 +863,28 @@ func newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t *testing.T, na
 	return newGrpcContext(t, token), nil
 }
 
-func newGrpcContextForServiceAccountWithAccessToNamespace(t *testing.T, name, namespace, namespaceAllowed string, rules []rbacv1.PolicyRule) (context.Context, error) {
-	role := name + "-role"
-	if err := kubeCreateRole(t, role, namespaceAllowed, rules); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := kubeDeleteRole(t, role, namespaceAllowed); err != nil {
-			t.Logf("Failed to delete role [%s] due to: %+v", role, err)
+func newGrpcContextForServiceAccountWithRules(t *testing.T, name, namespace string, namespaceToRules map[string][]rbacv1.PolicyRule) (context.Context, error) {
+	nsToRole := make(map[string]string)
+	for ns, rules := range namespaceToRules {
+		role := name + "-" + ns + "-role"
+		namespace := ns // somthing funky with using ns inside a t.Cleanup func
+		if err := kubeCreateRole(t, role, ns, rules); err != nil {
+			t.Fatal(err)
 		}
-	})
+		t.Cleanup(func() {
+			if err := kubeDeleteRole(t, role, namespace); err != nil {
+				t.Logf("Failed to delete role [%s/%s] due to: %+v", ns, role, err)
+			}
+		})
+		nsToRole[ns] = role
+	}
 
-	token, err := kubeCreateServiceAccountWithRole(t, name, namespace, role, namespaceAllowed)
+	token, err := kubeCreateServiceAccountWithRoles(t, name, namespace, nsToRole)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccountWithRoleBinding(t, name, namespace, namespaceAllowed); err != nil {
+		if err := kubeDeleteServiceAccountWithRoleBindings(t, name, namespace, nsToRole); err != nil {
 			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
 		}
 	})

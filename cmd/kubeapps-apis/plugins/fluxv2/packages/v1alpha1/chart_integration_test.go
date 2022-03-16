@@ -301,42 +301,49 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 
 	for _, n := range names {
-		out := kubectlCanIGetThisInNamespace(t, "test-repo-rbac-admin", "default", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanI(
+			t, "test-repo-rbac-admin", "default", "get", fluxHelmRepositories, n.Namespace)
 		if out != "yes" {
 			t.Errorf("Expected [yes], got [%s]", out)
 		}
 	}
 
-	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-repo-rbac-loser", "default")
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
+		t, "test-repo-rbac-loser", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, n := range names {
-		out := kubectlCanIGetThisInNamespace(t, "test-repo-rbac-loser", "default", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanI(
+			t, "test-repo-rbac-loser", "default", "get", fluxHelmRepositories, n.Namespace)
 		if out != "no" {
 			t.Errorf("Expected [no], got [%s]", out)
 		}
 	}
 
-	rules := []rbacv1.PolicyRule{
-		{
-			APIGroups: []string{sourcev1.GroupVersion.Group},
-			Resources: []string{fluxHelmRepositories},
-			Verbs:     []string{"get", "list"},
-		},
-		{
-			APIGroups: []string{sourcev1.GroupVersion.Group},
-			Resources: []string{"helmcharts"},
-			Verbs:     []string{"get", "list"},
+	rules := map[string][]rbacv1.PolicyRule{
+		names[1].Namespace: {
+			{
+				APIGroups: []string{sourcev1.GroupVersion.Group},
+				Resources: []string{fluxHelmRepositories},
+				Verbs:     []string{"get", "list"},
+			},
+			{
+				APIGroups: []string{sourcev1.GroupVersion.Group},
+				Resources: []string{"helmcharts"},
+				Verbs:     []string{"get", "list"},
+			},
 		},
 	}
 
-	grpcCtxLimited, err := newGrpcContextForServiceAccountWithAccessToNamespace(t, "test-repo-rbac-limited", "default", names[1].Namespace, rules)
+	grpcCtxLimited, err := newGrpcContextForServiceAccountWithRules(
+		t, "test-repo-rbac-limited", "default", rules)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i, n := range names {
-		out := kubectlCanIGetThisInNamespace(t, "test-repo-rbac-limited", "default", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanI(
+			t, "test-repo-rbac-limited", "default", "get", fluxHelmRepositories, n.Namespace)
 		if i == 0 {
 			if out != "no" {
 				t.Errorf("Expected [no], got [%s]", out)
