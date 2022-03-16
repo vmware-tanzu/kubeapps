@@ -183,7 +183,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.
 	repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
 	chartFromCache, err := s.getChart(ctx, repo, chartName)
 	if err != nil {
-		log.Warning("%v", err)
+		log.Warningf("%v", err)
 	} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
 		// charts in cache are already sorted with the latest being at position 0
 		latestPkgVersion = &corev1.PackageAppVersion{

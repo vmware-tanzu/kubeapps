@@ -47,7 +47,9 @@ var (
 	defaultPollInterval = metav1.Duration{Duration: 10 * time.Minute}
 )
 
-func (s *Server) listAllRepos(ctx context.Context) ([]sourcev1.HelmRepository, error) {
+// returns a list of HelmRepositories from all namespaces (cluster-wide), excluding
+// the ones that the caller has no read access to
+func (s *Server) listReposInAllNamespaces(ctx context.Context) ([]sourcev1.HelmRepository, error) {
 	// the actual List(...) call will be executed in the context of
 	// kubeapps-internal-kubeappsapis service account
 	// ref https://github.com/kubeapps/kubeapps/issues/4390 for explanation
@@ -143,7 +145,7 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 // 2. can't rely on cache as a real source of truth for key names
 //    because redis may evict cache entries due to memory pressure to make room for new ones
 func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[string][]models.Chart, error) {
-	repoList, err := s.listAllRepos(ctx)
+	repoList, err := s.listReposInAllNamespaces(ctx)
 	if err != nil {
 		return nil, err
 	}

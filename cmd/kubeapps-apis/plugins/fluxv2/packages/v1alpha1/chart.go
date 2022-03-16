@@ -90,7 +90,7 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 	} else if ok, err := s.hasAccessToNamespace(ctx, common.GetChartsGvr(), repo.Namespace); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, status.Errorf(codes.PermissionDenied, "user has no 'get' access for HelmCharts in namespace [%s]", repo.Namespace)
+		return nil, status.Errorf(codes.PermissionDenied, "user has no [get] access for HelmCharts in namespace [%s]", repo.Namespace)
 	}
 
 	key := s.repoCache.KeyForNamespacedName(repo)
