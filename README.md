@@ -40,7 +40,7 @@ Please refer to:
 - [Kubeapps user guide](./docs/howto/dashboard.md) to easily manage your applications running in your cluster.
 - [Kubeapps FAQs](./chart/kubeapps/README.md#faq).
 
-See how to deploy and configure [Kubeapps on VMware Tanzu™ Kubernetes Grid™](./docs/step-by-step/kubeapps-on-tkg/README.md)
+See how to deploy and configure [Kubeapps on VMware Tanzu™ Kubernetes Grid™](./docs/tutorials/kubeapps-on-tkg/README.md)
 
 ## Troubleshooting
 
