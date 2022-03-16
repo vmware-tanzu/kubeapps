@@ -90,7 +90,7 @@ require (
 	k8s.io/apiserver v0.23.4
 	k8s.io/cli-runtime v0.23.4
 	k8s.io/client-go v0.23.4
-	k8s.io/klog/v2 v2.40.1
+	k8s.io/klog/v2 v2.50.0
 	k8s.io/kubectl v0.23.4
 	k8s.io/kubernetes v1.22.7
 	oras.land/oras-go v1.1.0
@@ -228,7 +228,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/component-base v0.23.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
-	k8s.io/utils v0.0.0-20211208161948-7d6a63dca704 // indirect
+	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/kustomize/api v0.11.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.3 // indirect
