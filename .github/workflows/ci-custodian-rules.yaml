@@ -1,0 +1,19 @@
+name: Custodian rules for Kubeapps
+on:
+  workflow_dispatch:
+  #schedule:
+  #  - cron: "0 8 * * *"
+env:
+  GOOGLE_APPLICATION_CREDENTIALS: key.json
+  GCLOUD_CUSTODIAN_KEY: ${{ secrets.GCLOUD_CUSTODIAN_KEY }}
+  CLOUDSDK_CORE_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+jobs:
+  remove-unattached-disks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: gscho/setup-cloud-custodian@v1
+        with:
+          include-gcp: true
+      - run: echo $GCLOUD_CUSTODIAN_KEY > $GOOGLE_APPLICATION_CREDENTIALS
+      - run: custodian run -s out .github/workflows/custodian-rules/remove-unattached-disks.yaml
