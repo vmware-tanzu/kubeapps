@@ -541,12 +541,12 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out := kubectlCanIDoThisInNamespace(
+	out := kubectlCanI(
 		t, "test-release-rbac-admin", "default", "get", "helmcharts", ns1)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
-	out = kubectlCanIDoThisInNamespace(
+	out = kubectlCanI(
 		t, "test-release-rbac-loser", "default", "get", "helmcharts", ns1)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
@@ -576,7 +576,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 
 	ns2 := tc.request.TargetContext.Namespace
 
-	out = kubectlCanIDoThisInNamespace(
+	out = kubectlCanI(
 		t, "test-release-rbac-admin", "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
@@ -645,7 +645,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		}
 	}
 
-	out = kubectlCanIDoThisInNamespace(
+	out = kubectlCanI(
 		t, "test-release-rbac-loser", "default", "get", fluxHelmReleases, ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
@@ -717,17 +717,17 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out = kubectlCanIDoThisInNamespace(
+	out = kubectlCanI(
 		t, "test-release-rbac-helmreleases", "default", "get", fluxHelmRepositories, ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
-	out = kubectlCanIDoThisInNamespace(
+	out = kubectlCanI(
 		t, "test-release-rbac-helmreleases", "default", "get", "helmcharts", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
-	out = kubectlCanIDoThisInNamespace(
+	out = kubectlCanI(
 		t, "test-release-rbac-helmreleases", "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
@@ -823,12 +823,12 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out = kubectlCanIDoThisInNamespace(
+	out = kubectlCanI(
 		t, "test-release-rbac-helmreleases-and-charts", "default", "get", "helmcharts", ns1)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
-	out = kubectlCanIDoThisInNamespace(
+	out = kubectlCanI(
 		t, "test-release-rbac-helmreleases-and-charts", "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
@@ -917,20 +917,17 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 		}
 	})
 
-	out := kubectlCanIDoThisInNamespace(
-		t, "test-release-rbac-loser", "default", "get", "helmcharts", ns2)
+	out := kubectlCanI(t, "test-release-rbac-loser", "default", "get", "helmcharts", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
 
-	out = kubectlCanIDoThisInNamespace(
-		t, "test-release-rbac-loser", "default", "get", "helmreleases", ns2)
+	out = kubectlCanI(t, "test-release-rbac-loser", "default", "get", "helmreleases", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
 
-	out = kubectlCanIDoThisInNamespace(
-		t, "test-release-rbac-loser", "default", "create", "helmreleases", ns2)
+	out = kubectlCanI(t, "test-release-rbac-loser", "default", "create", "helmreleases", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}

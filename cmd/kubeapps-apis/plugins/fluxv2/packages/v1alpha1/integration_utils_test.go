@@ -822,7 +822,7 @@ func newGrpcFluxPluginContext(t *testing.T, name, namespace string) (context.Con
 	return newGrpcContext(t, token), nil
 }
 
-func kubectlCanIDoThisInNamespace(t *testing.T, name, namespace, verb, resource, checkThisNamespace string) string {
+func kubectlCanI(t *testing.T, name, namespace, verb, resource, checkThisNamespace string) string {
 	args := []string{
 		"auth",
 		"can-i",
