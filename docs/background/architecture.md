@@ -19,7 +19,7 @@ Check more details about the implementation in [this document](/docs/reference/d
 
 The Kubeapps APIs service provides a pluggable, gRPC-based API service enabling the Kubeapps UI (or other clients) to interact with different Kubernetes packaging formats in a consistent, extensible way.
 
-You can read more details about the architecture, implementation and getting started in the [Kubeapps APIs developer documentation](/docs/developer/kubeapps-apis.md).
+You can read more details about the architecture, implementation and getting started in the [Kubeapps APIs developer documentation](/docs/reference/developer/kubeapps-apis.md).
 
 ### Apprepository CRD and Controller
 
