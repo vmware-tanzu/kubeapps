@@ -1318,7 +1318,7 @@ assetsvc:
 ## @section Auth Proxy parameters
 
 ## Auth Proxy configuration for OIDC support
-## ref: https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md
+## ref: https://github.com/kubeapps/kubeapps/blob/main/docs/tutorials/using-an-OIDC-provider.md
 ##
 authProxy:
   ## @param authProxy.enabled Specifies whether Kubeapps should configure OAuth login/logout

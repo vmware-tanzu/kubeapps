@@ -30,8 +30,8 @@ With Kubeapps you can:
 - Inspect, upgrade and delete applications installed in the cluster
 - Browse and deploy [Helm](https://github.com/helm/helm) charts from public or private chart repositories (including [VMware Marketplace&trade;](https://marketplace.cloud.vmware.com) and [Bitnami Application Catalog](https://bitnami.com/application-catalog))
 - Browse and deploy [Kubernetes Operators](https://operatorhub.io/)
-- Secure authentication to Kubeapps using a [standalone OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider.md) or [using Pinniped](https://github.com/kubeapps/kubeapps/blob/main/docs/user/using-an-OIDC-provider-with-pinniped.md)
-- Secure authorization based on Kubernetes [Role-Based Access Control](https://github.com/kubeapps/kubeapps/blob/main/docs/user/access-control.md)
+- Secure authentication to Kubeapps using a [standalone OAuth2/OIDC provider](https://github.com/kubeapps/kubeapps/blob/main/docs/tutorials/using-an-OIDC-provider.md) or [using Pinniped](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/OIDC/using-an-OIDC-provider-with-pinniped.md)
+- Secure authorization based on Kubernetes [Role-Based Access Control](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/access-control.md)
 
 **_Note:_** Kubeapps 2.0 and onwards supports Helm 3 only. While only the Helm 3 API is supported, in most cases, charts made for Helm 2 will still work.
 
