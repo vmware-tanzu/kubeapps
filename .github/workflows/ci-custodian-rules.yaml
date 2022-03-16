@@ -1,10 +1,7 @@
 name: Custodian rules for Kubeapps
 on:
-  push:
-    branches:    
-      - '4402-custodian-rule-disks'
-  #schedule:
-  #  - cron: "0 8 * * *"
+  schedule:
+    - cron: "0 8 * * *"
 env:
   GOOGLE_APPLICATION_CREDENTIALS: key.json
   GCLOUD_CUSTODIAN_KEY: ${{ secrets.GCLOUD_CUSTODIAN_KEY }}
