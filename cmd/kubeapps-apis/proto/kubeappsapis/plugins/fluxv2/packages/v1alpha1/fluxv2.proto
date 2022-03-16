@@ -22,14 +22,14 @@ service FluxV2PackagesService {
   // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
   rpc GetAvailablePackageDetail(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse) {
     option (google.api.http) = {
-      get: "/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}"
+      get: "/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"
     };
   };
 
   // GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
   rpc GetAvailablePackageVersions(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse) {
     option (google.api.http) = {
-      get: "/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}/versions"
+      get: "/plugins/fluxv2/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"
     };
   }
 
@@ -80,7 +80,7 @@ service FluxV2PackagesService {
 }
 
 service FluxV2RepositoriesService {
-  // AddPackageRepository add an existing package repository to the set of ones already managed by the 
+  // AddPackageRepository add an existing package repository to the set of ones already managed by the
   // 'fluxv2' plugin
   rpc AddPackageRepository(kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse) {
     option (google.api.http) = {
