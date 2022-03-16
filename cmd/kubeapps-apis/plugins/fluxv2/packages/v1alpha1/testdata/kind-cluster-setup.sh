@@ -10,7 +10,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-TAG=0.0.9
+TAG=0.0.10
 
 function deploy {
   docker build -t kubeapps/fluxv2plugin-testdata:$TAG .
@@ -19,29 +19,40 @@ function deploy {
   kubectl create deployment --image=kubeapps/fluxv2plugin-testdata:$TAG fluxv2plugin-testdata-app --context kind-kubeapps
   kubectl set env deployment/fluxv2plugin-testdata-app DOMAIN=cluster --context kind-kubeapps
   kubectl expose deployment fluxv2plugin-testdata-app --port=80 --target-port=80 --name=fluxv2plugin-testdata-svc --context kind-kubeapps
+  kubectl expose deployment fluxv2plugin-testdata-app --port=443 --target-port=443 --name=fluxv2plugin-testdata-ssl-svc --context kind-kubeapps
 }
 
 function undeploy {
    kubectl delete svc/fluxv2plugin-testdata-svc
+   kubectl delete svc/fluxv2plugin-testdata-ssl-svc
    kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
 }
 
+function redeploy {
+   undeploy
+   deploy
+}
+
+
 function portforward {
-  kubectl -n default port-forward svc/fluxv2plugin-testdata-svc 8081:80 --context kind-kubeapps 
+  #kubectl -n default port-forward svc/fluxv2plugin-testdata-svc 8081:80 --context kind-kubeapps 
+  kubectl -n default port-forward svc/fluxv2plugin-testdata-ssl-svc 8081:443 --context kind-kubeapps 
 }
 
 function shell {
-  kubectl exec --stdin --tty fluxv2plugin-testdata-app-74766cf559-695qg -- /bin/bash --context kind-kubeapps 
+  #kubectl exec --stdin --tty fluxv2plugin-testdata-app-74766cf559-695qg -- /bin/bash --context kind-kubeapps 
+  RANDOM=$$
+  kubectl run -i --rm --tty centos-$RANDOM --image=centos --restart=Never -- /bin/bash
 }
 
 function logs {
-  kubectl logs pod/$(kubectl get pod -n default | grep fluxv2plugin | awk '{print $1}') -n default --context kind-kubeapps 
+  kubectl logs pod/$(kubectl get pod -n default | grep fluxv2plugin | head -n 1 | awk '{print $1}') -n default --context kind-kubeapps 
 }
 
 
 if [ $# -lt 1 ]
 then
-  echo "Usage : $0 deploy|undeploy|portforward|shell|logs"
+  echo "Usage : $0 deploy|undeploy|redeploy|portforward|shell|logs"
   exit
 fi
 
@@ -49,6 +60,8 @@ case "$1" in
 deploy) deploy
     ;;
 undeploy) undeploy
+    ;;
+redeploy) redeploy
     ;;
 portforward) portforward
     ;;

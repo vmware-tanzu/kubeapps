@@ -15,6 +15,12 @@ The dashboard is written in the JavaScript programming language and is developed
 Kubeops is the service in charge of communicating both with the Helm (v3) API and other k8s resources like AppRepositories or Secrets.
 Check more details about the implementation in [this document](/docs/reference/developer/kubeops.md).
 
+### Kubeapps-APIs
+
+The Kubeapps APIs service provides a pluggable, gRPC-based API service enabling the Kubeapps UI (or other clients) to interact with different Kubernetes packaging formats in a consistent, extensible way.
+
+You can read more details about the architecture, implementation and getting started in the [Kubeapps APIs developer documentation](/docs/developer/kubeapps-apis.md).
+
 ### Apprepository CRD and Controller
 
 Chart repositories in Kubeapps are managed with a `CustomResourceDefinition` called `apprepositories.kubeapps.com`. Each repository added to Kubeapps is an object of type `AppRepository` and the `apprepository-controller` will watch for changes on those types of objects to update the list of available charts to deploy.

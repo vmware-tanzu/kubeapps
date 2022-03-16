@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	redismock "github.com/go-redis/redismock/v8"
@@ -95,15 +96,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 	// these will be used further on for TLS-related scenarios. Init
 	// byte arrays up front so they can be re-used in multiple places later
-	var ca, pub, priv []byte
-	var err error
-	if ca, err = ioutil.ReadFile("testdata/rootCA.crt"); err != nil {
-		t.Fatalf("%+v", err)
-	} else if pub, err = ioutil.ReadFile("testdata/crt.pem"); err != nil {
-		t.Fatalf("%+v", err)
-	} else if priv, err = ioutil.ReadFile("testdata/key.pem"); err != nil {
-		t.Fatalf("%+v", err)
-	}
+	ca, pub, priv := getCertsForTesting(t)
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -140,12 +133,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}
 				var ts *httptest.Server
 				if tc.tls {
-					// I cheated a bit in this test. Instead of generating my own certificates
-					// and keys using openssl tool, which I found time consuming and overly complicated,
-					// I just copied the ones being used by helm.sh tool for testing purposes
-					// from https://github.com/helm/helm/tree/main/testdata
-					// in order to save some time. Should n't affect any functionality of productionn
-					// code
 					ts = httptest.NewUnstartedServer(handler)
 					tlsConf, err := httpclient.NewClientTLS(pub, priv, ca)
 					if err != nil {
@@ -175,25 +162,19 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			secretObjs := []runtime.Object{}
 			if tc.basicAuth && tc.tls {
 				secretRef = "both-credentials"
-				if secret, err := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca); err != nil {
-					t.Fatalf("%+v", err)
-				} else {
-					secretObjs = append(secretObjs, secret)
-				}
+				secret := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca)
+				secretObjs = append(secretObjs, secret)
 			} else if tc.basicAuth {
 				secretRef = "http-credentials"
 				secretObjs = append(secretObjs, newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar"))
 			} else if tc.tls {
 				secretRef = "https-credentials"
-				if secret, err := newTlsSecret(secretRef, repoNamespace, pub, priv, ca); err != nil {
-					t.Fatalf("%+v", err)
-				} else {
-					secretObjs = append(secretObjs, secret)
-				}
+				secret := newTlsSecret(secretRef, repoNamespace, pub, priv, ca)
+				secretObjs = append(secretObjs, secret)
 			}
 
 			ts2, repo, err := newRepoWithIndex(
-				"testdata/redis-two-versions.yaml", repoName, repoNamespace, replaceUrls, secretRef)
+				testYaml("redis-two-versions.yaml"), repoName, repoNamespace, replaceUrls, secretRef)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -288,7 +269,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 
 		ts2, repo, err := newRepoWithIndex(
-			"testdata/redis-two-versions.yaml", repoName, repoNamespace, replaceUrls, "")
+			testYaml("redis-two-versions.yaml"), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -459,7 +440,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 
 			ts2, repo, err := newRepoWithIndex(
-				"testdata/redis-two-versions.yaml", tc.repoName, tc.repoNamespace, replaceUrls, "")
+				testYaml("redis-two-versions.yaml"), tc.repoName, tc.repoNamespace, replaceUrls, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -591,7 +572,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 	}{
 		{
 			name:          "it returns the package version summary for redis chart in bitnami repo",
-			repoIndex:     "testdata/redis-many-versions.yaml",
+			repoIndex:     testYaml("redis-many-versions.yaml"),
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
 			request: &corev1.GetAvailablePackageVersionsRequest{
@@ -602,7 +583,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		},
 		{
 			name:          "it returns error for non-existent chart",
-			repoIndex:     "testdata/redis-many-versions.yaml",
+			repoIndex:     testYaml("redis-many-versions.yaml"),
 			repoNamespace: "kubeapps",
 			repoName:      "bitnami",
 			request: &corev1.GetAvailablePackageVersionsRequest{
@@ -700,7 +681,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 
 		// what I need is a single repo with a whole bunch of unique charts (packages)
-		tarGzBytes, err := ioutil.ReadFile("./testdata/redis-14.4.0.tgz")
+		tarGzBytes, err := ioutil.ReadFile(testTgz("redis-14.4.0.tgz"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -720,7 +701,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 		defer os.Remove(tmpFile.Name())
 
-		templateYAMLBytes, err := ioutil.ReadFile("testdata/single-package-template.yaml")
+		templateYAMLBytes, err := ioutil.ReadFile(testYaml("single-package-template.yaml"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -739,7 +720,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		repoName := "multitude-of-charts"
 		repoNamespace := "default"
 		replaceUrls := make(map[string]string)
-		replaceUrls["{{testdata/redis-14.4.0.tgz}}"] = ts.URL
+		replaceUrls["{{./testdata/charts/redis-14.4.0.tgz}}"] = ts.URL
 		ts2, r, err := newRepoWithIndex(
 			tmpFile.Name(), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
@@ -851,10 +832,106 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			t.FailNow()
 		}
 
+		// sanity check
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
 		}
 	})
+}
+
+// ref https://github.com/kubeapps/kubeapps/issues/4381
+// [fluxv2] non-FQDN chart url fails on chart view #4381
+func TestChartWithRelativeURL(t *testing.T) {
+	repoName := "testRepo"
+	repoNamespace := "default"
+
+	tarGzBytes, err := ioutil.ReadFile(testTgz("airflow-1.0.0.tgz"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	indexYAMLBytes, err := ioutil.ReadFile(testYaml("chart-with-relative-url.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.RequestURI == "/index.yaml" {
+			fmt.Fprintln(w, string(indexYAMLBytes))
+		} else if r.RequestURI == "/charts/airflow-1.0.0.tgz" {
+			w.WriteHeader(200)
+			w.Write(tarGzBytes)
+		} else {
+			w.WriteHeader(404)
+		}
+	}))
+
+	repoSpec := &sourcev1.HelmRepositorySpec{
+		URL:      ts.URL,
+		Interval: metav1.Duration{Duration: 1 * time.Minute},
+	}
+
+	lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repoStatus := &sourcev1.HelmRepositoryStatus{
+		Artifact: &sourcev1.Artifact{
+			Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+			LastUpdateTime: metav1.Time{Time: lastUpdateTime},
+			Revision:       "651f952130ea96823711d08345b85e82be011dc6",
+		},
+		Conditions: []metav1.Condition{
+			{
+				Type:   "Ready",
+				Status: "True",
+				Reason: sourcev1.IndexationSucceededReason,
+			},
+		},
+		URL: ts.URL + "/index.yaml",
+	}
+	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
+	defer ts.Close()
+
+	s, mock, err := newServerWithRepos(t,
+		[]sourcev1.HelmRepository{repo},
+		[]testSpecChartWithUrl{
+			{
+				chartID:       fmt.Sprintf("%s/airflow", repoName),
+				chartRevision: "1.0.0",
+				chartUrl:      ts.URL + "/charts/airflow-1.0.0.tgz",
+				repoNamespace: repoNamespace,
+			},
+		}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	key, bytes, err := s.redisKeyValueForRepo(repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mock.ExpectGet(key).SetVal(string(bytes))
+
+	response, err := s.GetAvailablePackageVersions(
+		context.Background(), &corev1.GetAvailablePackageVersionsRequest{
+			AvailablePackageRef: availableRef(repoName+"/airflow", repoNamespace),
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	opts := cmpopts.IgnoreUnexported(
+		corev1.GetAvailablePackageVersionsResponse{},
+		corev1.PackageAppVersion{})
+	if got, want := response, expected_versions_airflow; !cmp.Equal(want, got, opts) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sourcev1.HelmChartStatus) sourcev1.HelmChart {
@@ -976,98 +1053,4 @@ func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.
 	if !strings.Contains(actual.ValuesSchema, expected.ValuesSchema) {
 		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected.ValuesSchema, actual.ValuesSchema)
 	}
-}
-
-// global vars
-
-var redis_charts_spec = []testSpecChartWithFile{
-	{
-		name:     "redis",
-		tgzFile:  "testdata/redis-14.4.0.tgz",
-		revision: "14.4.0",
-	},
-	{
-		name:     "redis",
-		tgzFile:  "testdata/redis-14.3.4.tgz",
-		revision: "14.3.4",
-	},
-}
-
-var expected_detail_redis_1 = &corev1.AvailablePackageDetail{
-	AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
-	Name:                "redis",
-	Version: &corev1.PackageAppVersion{
-		PkgVersion: "14.4.0",
-		AppVersion: "6.2.4",
-	},
-	RepoUrl:          "https://example.repo.com/charts",
-	HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
-	IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	DisplayName:      "redis",
-	Categories:       []string{"Database"},
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-	DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
-	ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
-	SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
-	Maintainers: []*corev1.Maintainer{
-		{
-			Name:  "Bitnami",
-			Email: "containers@bitnami.com",
-		},
-		{
-			Name:  "desaintmartin",
-			Email: "cedric@desaintmartin.fr",
-		},
-	},
-}
-
-var expected_detail_redis_2 = &corev1.AvailablePackageDetail{
-	AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
-	Name:                "redis",
-	Version: &corev1.PackageAppVersion{
-		PkgVersion: "14.3.4",
-		AppVersion: "6.2.4",
-	},
-	RepoUrl:          "https://example.repo.com/charts",
-	IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
-	HomeUrl:          "https://github.com/bitnami/charts/tree/master/bitnami/redis",
-	DisplayName:      "redis",
-	Categories:       []string{"Database"},
-	ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
-	Readme:           "Redis<sup>TM</sup> Chart packaged by Bitnami\n\n[Redis<sup>TM</sup>](http://redis.io/) is an advanced key-value cache",
-	DefaultValues:    "## @param global.imageRegistry Global Docker image registry",
-	ValuesSchema:     "\"$schema\": \"http://json-schema.org/schema#\"",
-	SourceUrls:       []string{"https://github.com/bitnami/bitnami-docker-redis", "http://redis.io/"},
-	Maintainers: []*corev1.Maintainer{
-		{
-			Name:  "Bitnami",
-			Email: "containers@bitnami.com",
-		},
-		{
-			Name:  "desaintmartin",
-			Email: "cedric@desaintmartin.fr",
-		},
-	},
-}
-
-var expected_versions_redis = &corev1.GetAvailablePackageVersionsResponse{
-	PackageAppVersions: []*corev1.PackageAppVersion{
-		{PkgVersion: "14.4.0", AppVersion: "6.2.4"},
-		{PkgVersion: "14.3.4", AppVersion: "6.2.4"},
-		{PkgVersion: "14.3.3", AppVersion: "6.2.4"},
-		{PkgVersion: "14.3.2", AppVersion: "6.2.3"},
-		{PkgVersion: "14.2.1", AppVersion: "6.2.3"},
-		{PkgVersion: "14.2.0", AppVersion: "6.2.3"},
-		{PkgVersion: "13.0.1", AppVersion: "6.2.1"},
-		{PkgVersion: "13.0.0", AppVersion: "6.2.1"},
-		{PkgVersion: "12.10.1", AppVersion: "6.0.12"},
-		{PkgVersion: "12.10.0", AppVersion: "6.0.12"},
-		{PkgVersion: "12.9.2", AppVersion: "6.0.12"},
-		{PkgVersion: "12.9.1", AppVersion: "6.0.12"},
-		{PkgVersion: "12.9.0", AppVersion: "6.0.12"},
-		{PkgVersion: "12.8.3", AppVersion: "6.0.12"},
-		{PkgVersion: "12.8.2", AppVersion: "6.0.12"},
-		{PkgVersion: "12.8.1", AppVersion: "6.0.12"},
-	},
 }

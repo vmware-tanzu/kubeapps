@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
@@ -139,11 +140,33 @@ func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.Cli
 
 		// The tarball URL will always be the first URL in the repo.chartVersions.
 		// So says the helm plugin :-)
+		// however, not everybody agrees:
+		// ref https://github.com/helm/helm/blob/65d8e72504652e624948f74acbba71c51ac2e342/pkg/downloader/chart_downloader.go#L296
+		u, err := url.Parse(chart.ChartVersions[0].URLs[0])
+		if err != nil {
+			return fmt.Errorf("invalid URL format for chart [%s]: %v", chart.ID, err)
+		}
+
+		// If the URL is relative (no scheme), prepend the chart repo's base URL
+		// ref https://github.com/kubeapps/kubeapps/issues/4381
+		// ref https://github.com/helm/helm/blob/65d8e72504652e624948f74acbba71c51ac2e342/pkg/downloader/chart_downloader.go#L303
+		if !u.IsAbs() {
+			repoURL, err := url.Parse(chart.Repo.URL)
+			if err != nil {
+				return fmt.Errorf("invalid URL format for chart repo [%s]: %v", chart.ID, err)
+			}
+			q := repoURL.Query()
+			// We need a trailing slash for ResolveReference to work, but make sure there isn't already one
+			repoURL.Path = strings.TrimSuffix(repoURL.Path, "/") + "/"
+			u = repoURL.ResolveReference(u)
+			u.RawQuery = q.Encode()
+		}
+
 		entry := chartCacheStoreEntry{
 			namespace:     chart.Repo.Namespace,
 			id:            chart.ID,
 			version:       chart.ChartVersions[0].Version,
-			url:           chart.ChartVersions[0].URLs[0],
+			url:           u.String(),
 			clientOptions: clientOptions,
 			deleted:       false,
 		}
@@ -387,7 +410,11 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 
 // this is effectively a cache GET operation
 func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
+	c.resyncCond.L.(*sync.RWMutex).RLock()
+	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
+
 	log.Infof("+FetchForOne(%s)", key)
+
 	// read back from cache: should be either:
 	//  - what we previously wrote OR
 	//  - redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry

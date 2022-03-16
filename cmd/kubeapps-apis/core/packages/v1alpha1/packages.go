@@ -6,12 +6,13 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	. "github.com/ahmetb/go-linq/v3"
 	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -57,7 +58,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
 
-	pageOffset, err := pageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
 	pageSize := request.GetPaginationOptions().GetPageSize()
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
@@ -76,10 +77,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.pluginsWithServers {
-		log.Infof("Items now: %d/%d", len(pkgs), (pageOffset*int(pageSize) + int(pageSize)))
 		if pageSize == 0 || len(pkgs) <= (pageOffset*int(pageSize)+int(pageSize)) {
-			log.Infof("Should enter")
-
 			response, err := p.server.GetAvailablePackageSummaries(ctx, requestN)
 			if err != nil {
 				return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetAvailablePackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
@@ -169,6 +167,9 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, request *packages.GetInstalledPackageSummariesRequest) (*packages.GetInstalledPackageSummariesResponse, error) {
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+core GetInstalledPackageSummaries %s", contextMsg)
+
+	// TODO (gfichtenholt) what about request.PaginationOptions?
+	// I think logic similar to GetAvailablePackageSummaries is missing here
 
 	// Aggregate the response for each plugin
 	pkgs := []*packages.InstalledPackageSummary{}
@@ -385,22 +386,4 @@ func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgPlugins
 		}
 	}
 	return nil
-}
-
-// pageOffsetFromPageToken converts a page token to an integer offset
-// representing the page of results.
-// TODO(mnelson): When aggregating results from different plugins, we'll
-// need to update the actual query in GetPaginatedChartListWithFilters to
-// use a row offset rather than a page offset (as not all rows may be consumed
-// for a specific plugin when combining).
-func pageOffsetFromPageToken(pageToken string) (int, error) {
-	if pageToken == "" {
-		return 0, nil
-	}
-	offset, err := strconv.ParseUint(pageToken, 10, 0)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(offset), nil
 }

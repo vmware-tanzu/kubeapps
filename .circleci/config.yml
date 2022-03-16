@@ -51,6 +51,9 @@ parameters:
   GKE_REGULAR_VERSION:
     type: "string"
     default: "1.21"
+  DEFAULT_MACHINE_IMG:
+    type: "string"
+    default: "ubuntu-2004:202111-02"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -698,7 +701,8 @@ jobs:
           command: |
             ./script/create_release.sh ${CIRCLE_TAG} << pipeline.parameters.KUBEAPPS_REPO >>
   local_e2e_tests:
-    machine: true
+    machine:
+      image: << pipeline.parameters.DEFAULT_MACHINE_IMG >>
     # Reference for available machines
     # https://circleci.com/docs/2.0/configuration-reference/#machine-executor-linux
     resource_class: large

@@ -56,7 +56,7 @@ it("renders an app item", () => {
       plugin: { name: "my.plugin", version: "0.0.1" },
     } as InstalledPackageReference),
     tag1Class: "label-success",
-    tag1Content: "deployed",
+    tag1Content: "installed",
     title: defaultProps.app.name,
   });
 });

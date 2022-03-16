@@ -9,10 +9,16 @@ COPY ./nginx.conf /etc/nginx/nginx.conf
 # only has a single user: foo, password: bar
 COPY ./.htpasswd /etc/apache2/.htpasswd
 
-COPY ./podinfo-index.yaml /usr/share/nginx/html/podinfo/index.yaml
-COPY ./podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo/
-COPY ./podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo/
+COPY ./charts/podinfo-index.yaml /usr/share/nginx/html/podinfo/index.yaml
+COPY ./charts/podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo/
+COPY ./charts/podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo/
 
-COPY ./podinfo-basic-auth-index.yaml /usr/share/nginx/html/podinfo-basic-auth/index.yaml
-COPY ./podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo-basic-auth/
-COPY ./podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo-basic-auth/
+COPY ./charts/podinfo-basic-auth-index.yaml /usr/share/nginx/html/podinfo-basic-auth/index.yaml
+COPY ./charts/podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo-basic-auth/
+COPY ./charts/podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo-basic-auth/
+
+COPY ./cert/ssl-bundle.pem /etc/ssl/certs/
+COPY ./cert/server-key.pem /etc/ssl/certs/
+COPY ./charts/podinfo-tls-index.yaml /usr/share/nginx/html/podinfo-tls/index.yaml
+COPY ./charts/podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo-tls/
+COPY ./charts/podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo-tls/

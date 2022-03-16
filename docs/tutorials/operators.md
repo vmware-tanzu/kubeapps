@@ -8,7 +8,18 @@ In this tutorial we will be using the [Operator Lifecycle Manager (OLM)](https:/
 
 Kubeapps assumes a working Kubernetes cluster (v1.12+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Users following this tutorial require to have admin privileges in the cluster in order to install and manage Operators.
 
-## Step 1: Install the Operator Lifecycle Manager (OLM)
+## Step 1: Enable Operators support in Kubeapps
+
+Since Kubeapps v2.4.3 (package version 7.8.4), Operators support is disabled by default.
+
+In order to enable it, set up Kubeapps with the following chart value:
+
+```bash
+featureFlags:
+  operators: true
+```
+
+## Step 2: Install the Operator Lifecycle Manager (OLM)
 
 Since Kubeapps 2.0, Operators are available by default. Once you access to the dashboard, if you click on the menu icon and select "Operators", you will see a message alerting that the OLM is not installed:
 
@@ -19,7 +30,7 @@ Follow the instructions to install the latest OLM version. For example:
 ```bash
 curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/install.sh -o install.sh
 chmod +x install.sh
-./install.sh 0.20.0
+./install.sh v0.20.0
 ```
 
 Note that you will need special permissions to manage Operators. If you receive a Forbidden error, apply the following ClusterRole to your admin user:
@@ -30,7 +41,7 @@ kubectl create clusterrolebinding kubeapps-operator-cluster-admin --clusterrole=
 
 NOTE: replace the `kubeapps:kubeapps-operator` with the service account you are using or the cluster user.
 
-## Step 2: Install an Operator
+## Step 3: Install an Operator
 
 After some minutes, you should be able to see the full list of Operators available:
 
@@ -48,7 +59,7 @@ Once the Operator is installed it would be listed like that and after a minute o
 
 ![Installed Operators](../img/installed-operators.png)
 
-## Step 3: Deploy Resources Managed by an Operator
+## Step 4: Deploy Resources Managed by an Operator
 
 Now, available applications related to an Operator are listed in the Catalog along with the existing Helm Charts:
 
@@ -64,6 +75,6 @@ Finally, when the application or resource gets deployed, after some minutes, you
 
 You can also click in the Update button to modify the instance or in the Delete button to remove it.
 
-## Step 4: Provide Feedback
+## Step 5: Provide Feedback
 
 We need your feedback to improve this integration! If you find any issue or have a suggestion please [open an issue in GitHub](https://github.com/kubeapps/kubeapps/issues/new) or contact us in the [#kubeapps](https://kubernetes.slack.com/messages/kubeapps) channel in Slack.

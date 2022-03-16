@@ -139,7 +139,8 @@ type NamespacedResourceWatcherCacheConfig struct {
 	ListItemsFunc GetListItemsFunc
 }
 
-func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client, stopCh <-chan struct{}) (*NamespacedResourceWatcherCache, error) {
+// invokeExpectResync arg is only set to true for by unit tests only
+func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWatcherCacheConfig, redisCli *redis.Client, stopCh <-chan struct{}, invokeExpectResync bool) (*NamespacedResourceWatcherCache, error) {
 	log.Infof("+NewNamespacedResourceWatcherCache(%s, %v, %v)", name, config.Gvr, redisCli)
 
 	if redisCli == nil {
@@ -160,29 +161,30 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		resyncCond: sync.NewCond(&sync.RWMutex{}),
 	}
 
-	// confidence test that the specified GVR is a valid registered CRD
+	// sanity check that the specified GVR is a valid registered CRD
 	if err := c.isGvrValid(); err != nil {
 		return nil, err
 	}
 
-	// this will launch a single worker that processes items on the work queue as they come in
-	// runWorker will loop until "something bad" happens.  The .Until() func will
+	// this will launch a single worker that processes items on the work queue as they
+	// come in runWorker will loop until "something bad" happens.  The .Until() func will
 	// then rekick the worker after one second
 	go wait.Until(c.runWorker, time.Second, stopCh)
 
-	// let's do the initial sync and creating a new RetryWatcher here so
-	// bootstrap errors, if any, are flagged early synchronously and the
-	// caller does not end up with a partially initialized cache
-
-	// RetryWatcher will take care of re-starting the watcher if the underlying channel
-	// happens to close for some reason, as well as recover from other failures
-	// at the same time ensuring not to replay events that have been processed
-	watcher, err := c.resyncAndNewRetryWatcher(true)
-	if err != nil {
-		return nil, err
+	// this is needed by unit tests only. Since the potential lengthy bootstrap is done
+	// asynchronously (see below), the this func will set a condition before returning and
+	// the unit test will wait for for this condition to complete WaitUntilResyncComplete().
+	// That's how it knows when the bootstrap is done
+	if invokeExpectResync {
+		if _, err := c.ExpectResync(); err != nil {
+			return nil, err
+		}
 	}
 
-	go c.watchLoop(watcher, stopCh)
+	// per https://github.com/kubeapps/kubeapps/issues/4329
+	// we want to do this asynchronously, so that having to parse existing large repos in the cluster
+	// doesn't block the kubeapps apis pod start-up
+	go c.syncAndStartWatchLoop(stopCh)
 	return &c, nil
 }
 
@@ -190,7 +192,7 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	if c.config.Gvr.Empty() {
 		return fmt.Errorf("server configured with empty GVR")
 	}
-	// confidence test that CRD for GVR has been registered
+	// sanity check that CRD for GVR has been registered
 	ctx := context.Background()
 	apiExt, err := c.config.ClientGetter.ApiExt(ctx)
 	if err != nil {
@@ -209,6 +211,22 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 		}
 	}
 	return fmt.Errorf("CRD [%s] is not valid", c.config.Gvr)
+}
+
+func (c *NamespacedResourceWatcherCache) syncAndStartWatchLoop(stopCh <-chan struct{}) {
+	// RetryWatcher will take care of re-starting the watcher if the underlying channel
+	// happens to close for some reason, as well as recover from other failures
+	// at the same time ensuring not to replay events that have been processed
+	watcher, err := c.resyncAndNewRetryWatcher(true)
+	if err != nil {
+		err = fmt.Errorf(
+			"[%s]: Initial resync failed after [%d] retries were exhausted, last error: %v",
+			c.queue.Name(), maxWatcherCacheRetries, err)
+		// yes, I really want this to panic. Something is seriously wrong and
+		// possibly restarting kubeapps-apis server is needed...
+		runtime.Must(err)
+	}
+	c.watchLoop(watcher, stopCh)
 }
 
 // runWorker is a long-running function that will continually call the
