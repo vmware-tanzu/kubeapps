@@ -87,7 +87,7 @@ export default function Catalog() {
     },
     operators,
     repos: { repos },
-    config: { kubeappsCluster, kubeappsNamespace, featureFlags },
+    config: { appVersion, kubeappsCluster, kubeappsNamespace, featureFlags },
   } = useSelector((state: IStoreState) => state);
   const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
   const location = ReactRouter.useLocation();
@@ -345,12 +345,23 @@ export default function Catalog() {
           <CdsIcon shape="bundle" />
           <p>The current catalog is empty.</p>
           <p>
-            Manage your Package Repositories in Kubeapps by visiting the App repositories
+            Manage your Helm Package Repositories in Kubeapps by visiting the App repositories
             configuration page.
           </p>
           <Link to={app.config.apprepositories(cluster, namespace)}>
             <CdsButton>Manage App Repositories</CdsButton>
           </Link>
+          <p>
+            For help managing other packaging formats, such as Flux or Carvel, please refer to the{" "}
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/`}
+            >
+              Kubeapps documentation
+            </a>
+            .
+          </p>
         </div>
       ) : (
         <Row>

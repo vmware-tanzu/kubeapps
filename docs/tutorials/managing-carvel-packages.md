@@ -9,10 +9,10 @@
    1. [Quick overview of the kapp-controller CRs](#quick-overview-of-the-kapp-controller-crs)
 3. [Using Kubeapps for Managing Carvel Packages
    ](#using-kubeapps-for-managing-carvel-packages)
-   1. [Configuring Kubeapps to Cupport Carvel Packages](#configuring-kubeapps-to-support-carvel-packages)
+   1. [Configuring Kubeapps to Support Carvel Packages](#configuring-kubeapps-to-support-carvel-packages)
    2. [Installing a Package Repository](#installing-a-package-repository)
    3. [Installing a Package](#installing-a-package)
-   4. [Viewing the Installed Applications](#viewing-the-installed-applications)
+   4. [Viewing the Installed Packages](#viewing-the-installed-packages)
 4. [Conclusions](#conclusions)
 
 ---
@@ -66,25 +66,21 @@ The following image depicts the relationship between the different kapp-controll
 
 ### Configuring Kubeapps to Support Carvel Packages
 
-As any other packaging format, the kapp-controller support is brought into Kubeapps by means of a plugin.
+As with any other packaging format, the kapp-controller support is brought into Kubeapps by means of a plugin.
 
 This `kapp-controller` plugin is currently being built by default in the Kubeapps release and it is just a matter of enabling it when installing Kubeapps.
 
 > **TIP**: Please refer to the [getting started documentation](./getting-started.md) for more information on how to install Kubeapps and pass custom configuration values.
 
-In the [values.yaml](../../chart/kubeapps/values.yaml) file, under `kubeappsapis.enabledPlugins` add
-`kapp-controller` to the list of enabled plugins. For example:
+In the [values.yaml](../../chart/kubeapps/values.yaml) file, enable the `packaging.carvel` option:
 
 ```yaml
-kubeappsapis:
-  ...
-  enabledPlugins:
-  - resources
-  - helm
-  - kapp-controller # add this one
+packaging:
+  carvel:
+    enabled: true
 ```
 
-Additionally, you can pass the following configuration values to the `kapp-controller` plugin:
+If required, you can additionally pass the following configuration values to modify the defaults used by Kubeapps for the Carvel support. These are options passed to the `kapp-controller` plugin that handles the Carvel packaging support:
 
 - `defaultUpgradePolicy`: represents the default upgrade policy for the packages. If other than `none` is selected, the kapp-controller will automatically upgrade the packages to the latest matching semantic version. For instance, assuming we installed the version `1.2.3`:
   - With `major` selected, the package will be upgraded to `>=1.2.3`, for example, `2.0.0`, for
@@ -143,10 +139,10 @@ EOF
 Then, you need to apply the `PackageRepository` CR to your cluster using `kubectl` (or, alternatively, the `kapp` CLI), by running the following command:
 
 ```bash
-kubectl apply -f repo.yaml
+kubectl apply --namespace kapp-controller-packaging-global -f repo.yaml
 ```
 
-Under the hood, kapp-controller will create `Package` and `PackageMetadata` CRs for each of the packages in the repository.
+Under the hood, kapp-controller will create `Package` and `PackageMetadata` CRs for each of the packages in the repository in the global packaging namespace for kapp-controller, enabling those packages to be installed via Kubeapps in any namespace. Note you can instead install the repository in a different namespace if the packages should only be available for install via Kubeapps in a particular namespace.
 
 > **TIP**: Run `kubectl get packagerepository`, `kubectl get packages` and `kubectl get packagemetadatas` to get the created CRs.
 
@@ -187,7 +183,7 @@ In Kubeapps, we work around this decision by generating some default values base
 Finally, after clicking the `Install` button, the required CRs will be installed in the cluster (`PackageInstall` and the `Secret` holding the passed values).
 At this moment, kapp-controller will perform the required actions to start creating the Kubernetes resources defined by the package. This process is known as _reconciliation_.
 
-### Viewing the Installed Applications
+### Viewing the Installed Packages
 
 Viewing the installed Carvel Packages in Kubeapps is the same experience as viewing any other installed package (such as a Helm Chart) in Kubeapps.
 
@@ -210,9 +206,9 @@ Besides, the current values are shown at the end of the page.
 
 Next, you can click on the `Delete` button to uninstall the application or the `Upgrade` button to edit the values of the application or update it to another version.
 
-> **NOTE**: as opossed to Helm Charts, Carvel Packages cannot be rolled back, hence there is no `Rollback` button.
+> **NOTE**: as opposed to Helm Charts, Carvel Packages cannot be rolled back, hence there is no `Rollback` button.
 
-Finally, note that every installed Carvel Package through Kubeapps can also be managed by the [kapp](https://carvel.dev/kapp/) CLI using the `kapp inspect -a <APPLICATION_NAME>` command. For example:
+Finally, note that every Carvel Package installed through Kubeapps can also be managed by the [kapp](https://carvel.dev/kapp/) CLI using the `kapp inspect -a <APPLICATION_NAME>` command. For example:
 
 ```bash
 kapp inspect -a my-test-ctrl

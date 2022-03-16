@@ -203,9 +203,31 @@ func (s *Server) getApp(ctx context.Context, cluster, namespace, identifier stri
 
 //  List of resources getters
 
-// getPkgs returns the list of packages for the given cluster and namespace
-func (s *Server) getPkgs(ctx context.Context, cluster, namespace string) ([]*datapackagingv1alpha1.Package, error) {
-	return s.getPkgsWithFieldSelector(ctx, cluster, namespace, "")
+// getPkgs requests the packages for the given cluster and namespace and sends
+// them to the channel to be processed immediately, closing the channel
+// when finished or when an error is returned.
+func (s *Server) getPkgs(ctx context.Context, cluster, namespace string, ch chan<- *datapackagingv1alpha1.Package) error {
+	defer close(ch)
+	resource, err := s.getPkgResource(ctx, cluster, namespace)
+	if err != nil {
+		return err
+	}
+
+	unstructured, err := resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, unstructured := range unstructured.Items {
+		pkg := &datapackagingv1alpha1.Package{}
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured.Object, pkg)
+		if err != nil {
+			return err
+		}
+
+		ch <- pkg
+	}
+	return nil
 }
 
 // getPkgs returns the list of packages for the given cluster and namespace

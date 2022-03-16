@@ -21,14 +21,14 @@ service HelmPackagesService {
   // GetAvailablePackageDetail returns the package details managed by the 'helm' plugin
   rpc GetAvailablePackageDetail(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse) {
     option (google.api.http) = {
-      get: "/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}"
+      get: "/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"
     };
   }
 
   // GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
   rpc GetAvailablePackageVersions(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse) {
     option (google.api.http) = {
-      get: "/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier}/versions"
+      get: "/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"
     };
   }
 

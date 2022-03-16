@@ -161,7 +161,7 @@ export const Struct = {
   },
 
   wrap(object: { [key: string]: any } | undefined): Struct {
-    const struct = Struct.fromPartial({});
+    const struct = createBaseStruct();
     if (object !== undefined) {
       Object.keys(object).forEach(key => {
         struct.fields[key] = object[key];
@@ -340,23 +340,25 @@ export const Value = {
   },
 
   wrap(value: any): Value {
+    const result = createBaseValue();
+
     if (value === null) {
-      return { nullValue: NullValue.NULL_VALUE } as Value;
+      result.nullValue = NullValue.NULL_VALUE;
     } else if (typeof value === "boolean") {
-      return { boolValue: value } as Value;
+      result.boolValue = value;
     } else if (typeof value === "number") {
-      return { numberValue: value } as Value;
+      result.numberValue = value;
     } else if (typeof value === "string") {
-      return { stringValue: value } as Value;
+      result.stringValue = value;
     } else if (Array.isArray(value)) {
-      return { listValue: value } as Value;
+      result.listValue = value;
     } else if (typeof value === "object") {
-      return { structValue: value } as Value;
-    } else if (typeof value === "undefined") {
-      return {} as Value;
-    } else {
+      result.structValue = value;
+    } else if (typeof value !== "undefined") {
       throw new Error("Unsupported any value type: " + typeof value);
     }
+
+    return result;
   },
 
   unwrap(message: Value): string | number | boolean | Object | null | Array<any> | undefined {
@@ -430,7 +432,11 @@ export const ListValue = {
   },
 
   wrap(value: Array<any> | undefined): ListValue {
-    return { values: value ?? [] };
+    const result = createBaseListValue();
+
+    result.values = value ?? [];
+
+    return result;
   },
 
   unwrap(message: ListValue): Array<any> {

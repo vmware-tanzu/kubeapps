@@ -22,6 +22,7 @@ import (
 	"github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/go-redis/redis/v8"
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -29,19 +30,24 @@ import (
 	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	kubecorev1 "k8s.io/api/core/v1"
-	kuberbacv1 "k8s.io/api/rbac/v1"
+	apiv1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+	"k8s.io/kubectl/pkg/cmd/cp"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -49,29 +55,44 @@ const (
 	// EnvvarFluxIntegrationTests enables tests that run against a local kind cluster
 	envVarFluxIntegrationTests = "ENABLE_FLUX_INTEGRATION_TESTS"
 	defaultContextTimeout      = 30 * time.Second
+
+	// This is local copy of the first few entries
+	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
+	// urls modified to link to .tgz files also within the local cluster.
+	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
+	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/kind-cluster-setup.sh
+	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo"
+
+	// same as above but requires HTTP basic authentication: user: foo, password: bar
+	podinfo_basic_auth_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth"
+
+	// same as above but requires TLS
+	podinfo_tls_repo_url = "https://fluxv2plugin-testdata-ssl-svc.default.svc.cluster.local:443"
 )
 
-func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
+func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
 	enableEnvVar := os.Getenv(envVarFluxIntegrationTests)
 	runTests := false
 	if enableEnvVar != "" {
 		var err error
 		runTests, err = strconv.ParseBool(enableEnvVar)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			return nil, nil, err
 		}
 	}
 
 	if !runTests {
 		t.Skipf("skipping flux plugin integration tests because environment variable %q not set to be true", envVarFluxIntegrationTests)
+		return nil, nil, nil
 	} else {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
-			t.Fatalf("Failed to find local kind cluster due to: [%v]", err)
+			return nil, nil, fmt.Errorf("Failed to find local kind cluster due to: [%v]", err)
 		}
-		var fluxPluginClient fluxplugin.FluxV2PackagesServiceClient
+		var fluxPluginPackagesClient fluxplugin.FluxV2PackagesServiceClient
+		var fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient
 		var err error
-		if fluxPluginClient, err = getFluxPluginClient(t); err != nil {
-			t.Fatalf("Failed to get fluxv2 plugin due to: [%v]", err)
+		if fluxPluginPackagesClient, fluxPluginReposClient, err = getFluxPluginClients(t); err != nil {
+			return nil, nil, fmt.Errorf("Failed to get fluxv2 plugin due to: [%v]", err)
 		}
 
 		// check the fluxv2plugin-testdata-svc is deployed - without it,
@@ -79,19 +100,18 @@ func checkEnv(t *testing.T) fluxplugin.FluxV2PackagesServiceClient {
 		// long time
 		typedClient, err := kubeGetTypedClient()
 		if err != nil {
-			t.Fatalf("%+v", err)
+			return nil, nil, err
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
 		_, err = typedClient.CoreV1().Services("default").Get(ctx, "fluxv2plugin-testdata-svc", metav1.GetOptions{})
 		if err != nil {
-			t.Fatalf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
+			return nil, nil, fmt.Errorf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
 		}
 
 		rand.Seed(time.Now().UnixNano())
-		return fluxPluginClient
+		return fluxPluginPackagesClient, fluxPluginReposClient, nil
 	}
-	return nil
 }
 
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
@@ -128,24 +148,25 @@ func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	}
 }
 
-func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, error) {
-	t.Logf("+getFluxPluginClient")
+func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
+	t.Logf("+getFluxPluginClients")
 
 	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	opts = append(opts, grpc.WithBlock())
 	target := "localhost:8080"
 	conn, err := grpc.Dial(target, opts...)
 	if err != nil {
-		t.Fatalf("failed to dial [%s] due to: %v", target, err)
+		return nil, nil, fmt.Errorf("failed to dial [%s] due to: %v", target, err)
 	}
 	t.Cleanup(func() { conn.Close() })
 	pluginsCli := plugins.NewPluginsServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	response, err := pluginsCli.GetConfiguredPlugins(ctx, &plugins.GetConfiguredPluginsRequest{})
+
 	if err != nil {
-		t.Fatalf("failed to GetConfiguredPlugins due to: %v", err)
+		return nil, nil, fmt.Errorf("failed to GetConfiguredPlugins due to: %v", err)
 	}
 	found := false
 	for _, p := range response.Plugins {
@@ -155,15 +176,18 @@ func getFluxPluginClient(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, 
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("kubeapps Flux v2 plugin is not registered")
+		return nil, nil, fmt.Errorf("kubeapps Fluxv2 plugin is not registered, found these plugins: %v", response.Plugins)
 	}
-	return fluxplugin.NewFluxV2PackagesServiceClient(conn), nil
+	return fluxplugin.NewFluxV2PackagesServiceClient(conn), fluxplugin.NewFluxV2RepositoriesServiceClient(conn), nil
 }
 
-// This should eventually be replaced with fluxPlugin CreateRepository() call as soon as we finalize
-// the design
-func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName string) error {
+// This creates a flux helm repository CRD. The usage of this func should be minimized as much as
+// possible in favor of flux Plugin's AddPackageRepository() call
+func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string, interval time.Duration) error {
 	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
+	if interval <= 0 {
+		interval = time.Duration(10 * time.Minute)
+	}
 	repo := sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       sourcev1.HelmRepositoryKind,
@@ -174,7 +198,8 @@ func kubeCreateHelmRepository(t *testing.T, name, url, namespace, secretName str
 			Namespace: namespace,
 		},
 		Spec: sourcev1.HelmRepositorySpec{
-			URL: url,
+			URL:      url,
+			Interval: metav1.Duration{Duration: interval},
 		},
 	}
 
@@ -199,7 +224,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
 	} else {
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 		defer cancel()
 		var repoList sourcev1.HelmRepositoryList
 		if watcher, err := ifc.Watch(ctx, &repoList); err != nil {
@@ -226,6 +251,8 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 						t.Logf("[%d:%d:%d] Got event: type: [%v], reason [%s]", hour, minute, second, event.Type, reason)
 						if complete && success {
 							return nil
+						} else if complete && !success {
+							return errors.New(reason)
 						}
 					}
 				}
@@ -301,8 +328,62 @@ func kubeGetPodNames(t *testing.T, namespace string) (names []string, err error)
 	}
 }
 
-func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
-	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
+func kubeCreateClusterRole(t *testing.T, name string) error {
+	t.Logf("+kubeCreateClusterRole(%s)", name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.RbacV1().ClusterRoles().Create(ctx, &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}, metav1.CreateOptions{})
+	return err
+}
+
+func kubeDeleteClusterRole(t *testing.T, name string) error {
+	t.Logf("+kubeDeleteClusterRole(%s)", name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	return typedClient.RbacV1().ClusterRoles().Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+func kubeCreateRole(t *testing.T, name, namespace string, rules []rbacv1.PolicyRule) error {
+	t.Logf("+kubeCreateRole(%s,%s)", name, namespace)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.RbacV1().Roles(namespace).Create(ctx, &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Rules: rules,
+	}, metav1.CreateOptions{})
+	return err
+}
+
+func kubeDeleteRole(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeDeleteRole(%s,%s)", name, namespace)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	return typedClient.RbacV1().Roles(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+func kubeCreateServiceAccountAndSecret(t *testing.T, name, namespace string) (string, error) {
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return "", err
@@ -311,7 +392,7 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	defer cancel()
 	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
 		ctx,
-		&kubecorev1.ServiceAccount{
+		&apiv1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: namespace,
@@ -353,21 +434,37 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 	token := secret.Data["token"]
 	if token == nil {
 		return "", err
+	} else {
+		return string(token), nil
 	}
+}
+
+func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
+	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
+	if err != nil {
+		return "", err
+	}
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
 	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
 		ctx,
-		&kuberbacv1.ClusterRoleBinding{
+		&rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name + "-binding",
 			},
-			Subjects: []kuberbacv1.Subject{
+			Subjects: []rbacv1.Subject{
 				{
-					Kind:      kuberbacv1.ServiceAccountKind,
+					Kind:      rbacv1.ServiceAccountKind,
 					Name:      name,
 					Namespace: namespace,
 				},
 			},
-			RoleRef: kuberbacv1.RoleRef{
+			RoleRef: rbacv1.RoleRef{
 				Kind: "ClusterRole",
 				Name: role,
 			},
@@ -375,6 +472,46 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 		metav1.CreateOptions{})
 	if err != nil {
 		return "", err
+	}
+	return string(token), nil
+}
+
+func kubeCreateServiceAccountWithRoles(t *testing.T, name, namespace string, namespacesToRoles map[string]string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithRoles(%s,%s,%s)", name, namespace, namespacesToRoles)
+	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
+	if err != nil {
+		return "", err
+	}
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	for ns, role := range namespacesToRoles {
+		_, err = typedClient.RbacV1().RoleBindings(ns).Create(
+			ctx,
+			&rbacv1.RoleBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name + "-binding",
+					Namespace: ns,
+				},
+				Subjects: []rbacv1.Subject{
+					{
+						Kind:      rbacv1.ServiceAccountKind,
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				RoleRef: rbacv1.RoleRef{
+					Kind: "Role",
+					Name: role,
+				},
+			},
+			metav1.CreateOptions{})
+		if err != nil {
+			return "", err
+		}
 	}
 	return string(token), nil
 }
@@ -390,8 +527,8 @@ func kubeCreateFluxPluginServiceAccount(t *testing.T, name, namespace string) (s
 	return kubeCreateServiceAccountWithClusterRole(t, name, namespace, "kubeapps:controller:kubeapps-apis-fluxv2-plugin")
 }
 
-func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeDeleteServiceAccount(%s,%s)", name, namespace)
+func kubeDeleteServiceAccountWithClusterRoleBinding(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeDeleteServiceAccountWithClusterRoleBinding(%s,%s)", name, namespace)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
@@ -417,6 +554,36 @@ func kubeDeleteServiceAccount(t *testing.T, name, namespace string) error {
 	return nil
 }
 
+func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name, namespace string, nsToRole map[string]string) error {
+	t.Logf("+kubeDeleteServiceAccountWithRoleBindings(%s,%s,%s)", name, namespace, nsToRole)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	for ns, _ := range nsToRole {
+		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+		defer cancel()
+		err = typedClient.RbacV1().RoleBindings(ns).Delete(
+			ctx,
+			name+"-binding",
+			metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
+		ctx,
+		name,
+		metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func kubeCreateNamespace(t *testing.T, namespace string) error {
 	t.Logf("+kubeCreateNamespace(%s)", namespace)
 	typedClient, err := kubeGetTypedClient()
@@ -427,7 +594,7 @@ func kubeCreateNamespace(t *testing.T, namespace string) error {
 	defer cancel()
 	_, err = typedClient.CoreV1().Namespaces().Create(
 		ctx,
-		&kubecorev1.Namespace{
+		&apiv1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
 			},
@@ -474,17 +641,17 @@ func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error
 	}
 }
 
-func kubeCreateBasicAuthSecret(t *testing.T, namespace, name, user, password string) error {
-	t.Logf("+kubeCreateBasicAuthSecret(%s, %s, %s)", namespace, name, user)
+func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
+	t.Logf("+kubeCreateSecret(%s, %s", secret.Namespace, secret.Name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().Secrets(namespace).Create(
+	_, err = typedClient.CoreV1().Secrets(secret.Namespace).Create(
 		ctx,
-		newBasicAuthSecret(name, namespace, user, password),
+		secret,
 		metav1.CreateOptions{})
 	return err
 }
@@ -554,6 +721,33 @@ func kubePortForwardToRedis(t *testing.T) error {
 	}
 }
 
+// ref https://stackoverflow.com/questions/51686986/how-to-copy-file-to-container-with-kubernetes-client-go
+// example kubectl cp /tmp/foo.txt default/fluxv2plugin-testdata-app-7f7dd58796-w2qbg:/
+func kubeCopyFileToPod(t *testing.T, srcFile string, podName types.NamespacedName, destFile string) error {
+	t.Logf("+kubeCopyFileToPod(%s, %s, %s)", srcFile, podName, destFile)
+	ioStreams, _, _, _ := genericclioptions.NewTestIOStreams()
+	copyOptions := cp.NewCopyOptions(ioStreams)
+	restcfg, err := restConfig()
+	if err != nil {
+		return err
+	}
+	restcfg.APIPath = "/api"                                   // Make sure we target /api and not just /
+	restcfg.GroupVersion = &schema.GroupVersion{Version: "v1"} // this targets the core api groups so the url path will be /api/v1
+	restcfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+	copyOptions.ClientConfig = restcfg
+	typedcli, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+	copyOptions.Clientset = typedcli
+	destSpec := fmt.Sprintf("%s/%s:%s", podName.Namespace, podName.Name, destFile)
+	err = copyOptions.Run([]string{srcFile, destSpec})
+	if err != nil {
+		return fmt.Errorf("Could not run copy operation: %v", err)
+	}
+	return nil
+}
+
 func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 	if ctrlClient != nil {
 		return ctrlClient, nil
@@ -562,8 +756,8 @@ func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 			return nil, err
 		} else {
 			scheme := runtime.NewScheme()
-			_ = sourcev1.AddToScheme(scheme)
-			_ = helmv2.AddToScheme(scheme)
+			sourcev1.AddToScheme(scheme)
+			helmv2.AddToScheme(scheme)
 
 			return ctrlclient.NewWithWatch(config, ctrlclient.Options{Scheme: scheme})
 		}
@@ -602,30 +796,100 @@ func newGrpcContext(t *testing.T, token string) context.Context {
 		metadata.Pairs("Authorization", "Bearer "+token))
 }
 
-func newGrpcAdminContext(t *testing.T, name string) context.Context {
-	token, err := kubeCreateAdminServiceAccount(t, name, "default")
+func newGrpcAdminContext(t *testing.T, name, namespace string) (context.Context, error) {
+	token, err := kubeCreateAdminServiceAccount(t, name, namespace)
 	if err != nil {
-		t.Fatalf("Failed to create service account due to: %+v", err)
+		return nil, fmt.Errorf("Failed to create service account due to: %+v", err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
 			t.Logf("Failed to delete service account due to: %+v", err)
 		}
 	})
-	return newGrpcContext(t, token)
+	return newGrpcContext(t, token), nil
 }
 
-func newGrpcFluxPluginContext(t *testing.T, name string) context.Context {
-	token, err := kubeCreateFluxPluginServiceAccount(t, name, "default")
+func newGrpcFluxPluginContext(t *testing.T, name, namespace string) (context.Context, error) {
+	token, err := kubeCreateFluxPluginServiceAccount(t, name, namespace)
 	if err != nil {
-		t.Fatalf("Failed to create service account due to: %+v", err)
+		return nil, fmt.Errorf("Failed to create service account [%s] due to: %+v", name, err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccount(t, name, "default"); err != nil {
-			t.Logf("Failed to delete service account due to: %+v", err)
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
+			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
 		}
 	})
-	return newGrpcContext(t, token)
+	return newGrpcContext(t, token), nil
+}
+
+func kubectlCanI(t *testing.T, name, namespace, verb, resource, checkThisNamespace string) string {
+	args := []string{
+		"auth",
+		"can-i",
+		verb,
+		resource,
+		"--namespace",
+		checkThisNamespace,
+		"--as",
+		"system:serviceaccount:" + namespace + ":" + name,
+	}
+	cmd := exec.Command("kubectl", args...)
+	byteArray, _ := cmd.CombinedOutput()
+	out := strings.Trim(string(byteArray), "\n")
+	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
+	return out
+}
+
+func newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t *testing.T, name, namespace string) (context.Context, error) {
+	role := name + "-cluster-role"
+	if err := kubeCreateClusterRole(t, role); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteClusterRole(t, role); err != nil {
+			t.Logf("Failed to delete cluster role [%s] due to: %+v", role, err)
+		}
+	})
+
+	token, err := kubeCreateServiceAccountWithClusterRole(t, name, namespace, role)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
+			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
+		}
+	})
+	return newGrpcContext(t, token), nil
+}
+
+func newGrpcContextForServiceAccountWithRules(t *testing.T, name, namespace string, namespaceToRules map[string][]rbacv1.PolicyRule) (context.Context, error) {
+	nsToRole := make(map[string]string)
+	for ns, rules := range namespaceToRules {
+		role := name + "-" + ns + "-role"
+		namespace := ns // somthing funky with using ns inside a t.Cleanup func
+		if err := kubeCreateRole(t, role, ns, rules); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if err := kubeDeleteRole(t, role, namespace); err != nil {
+				t.Logf("Failed to delete role [%s/%s] due to: %+v", ns, role, err)
+			}
+		})
+		nsToRole[ns] = role
+	}
+
+	token, err := kubeCreateServiceAccountWithRoles(t, name, namespace, nsToRole)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := kubeDeleteServiceAccountWithRoleBindings(t, name, namespace, nsToRole); err != nil {
+			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
+		}
+	})
+
+	return newGrpcContext(t, token), nil
 }
 
 func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMemory string) error {
@@ -636,7 +900,7 @@ func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMe
 		currentMaxMemory := fmt.Sprintf("%v", maxmemory[1])
 		t.Logf("Current redis maxmemory = [%s]", currentMaxMemory)
 		if currentMaxMemory != expectedMaxMemory {
-			t.Fatalf("This test requires redis config maxmemory to be set to %s", expectedMaxMemory)
+			return fmt.Errorf("This test requires redis config maxmemory to be set to %s", expectedMaxMemory)
 		}
 	}
 	maxmemoryPolicy, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory-policy").Result()
@@ -646,7 +910,7 @@ func redisCheckTinyMaxMemory(t *testing.T, redisCli *redis.Client, expectedMaxMe
 		currentMaxMemoryPolicy := fmt.Sprintf("%v", maxmemoryPolicy[1])
 		t.Logf("Current maxmemory policy = [%s]", currentMaxMemoryPolicy)
 		if currentMaxMemoryPolicy != "allkeys-lfu" {
-			t.Fatalf("This test requires redis config maxmemory-policy to be set to allkeys-lfu")
+			return fmt.Errorf("This test requires redis config maxmemory-policy to be set to allkeys-lfu")
 		}
 	}
 	return nil
@@ -694,10 +958,10 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	// and you should be able to clean up manually
 	// $ kubectl delete helmrepositories --all
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	} else {
 		if len(keys) != 0 {
-			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
+			return nil, fmt.Errorf("Failing due to unexpected state of the cache. Current keys: %s", keys)
 		}
 	}
 	return redisCli, nil
@@ -779,6 +1043,27 @@ func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
 	totalBitnamiCharts = len(charts)
 	t.Logf("+initNumberOfChartsInBitnamiCatalog: total [%d] charts", totalBitnamiCharts)
 	return nil
+}
+
+func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
+	cli, err := kubeGetTypedClient()
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	podList, err := cli.CoreV1().Pods("default").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range podList.Items {
+		if strings.HasPrefix(p.Name, "fluxv2plugin-testdata-app-") {
+			return &types.NamespacedName{
+				Name:      p.Name,
+				Namespace: p.Namespace}, nil
+		}
+	}
+	return nil, fmt.Errorf("fluxplugin testdata pod not found")
 }
 
 // global vars

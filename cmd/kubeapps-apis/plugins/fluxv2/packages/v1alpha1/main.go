@@ -9,16 +9,14 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
+	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "k8s.io/klog/v2"
 )
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.KubernetesConfigGetter,
-	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
+func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
 	log.Infof("+fluxv2 RegisterWithGRPCServer")
 
 	// TODO (gfichtenholt) stub channel for now. Ideally, the caller (kubeappsapis-server)
@@ -26,11 +24,12 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.Kubernete
 	// 'Shutdown' hook
 	stopCh := make(chan struct{})
 
-	svr, err := NewServer(configGetter, clustersConfig.KubeappsClusterName, stopCh, pluginConfigPath)
+	svr, err := NewServer(opts.ConfigGetter, opts.ClustersConfig.KubeappsClusterName, stopCh, opts.PluginConfigPath)
 	if err != nil {
 		return nil, err
 	}
-	v1alpha1.RegisterFluxV2PackagesServiceServer(s, svr)
+	v1alpha1.RegisterFluxV2PackagesServiceServer(opts.Registrar, svr)
+	v1alpha1.RegisterFluxV2RepositoriesServiceServer(opts.Registrar, svr)
 	return svr, nil
 }
 
@@ -38,5 +37,10 @@ func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.Kubernete
 // handler to translate to the gRPC request.
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	log.Infof("+fluxv2 RegisterHTTPHandlerFromEndpoint")
-	return v1alpha1.RegisterFluxV2PackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	err := v1alpha1.RegisterFluxV2PackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	if err != nil {
+		return err
+	} else {
+		return v1alpha1.RegisterFluxV2RepositoriesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	}
 }

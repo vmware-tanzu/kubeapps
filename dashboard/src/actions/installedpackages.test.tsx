@@ -10,19 +10,13 @@ import {
   InstalledPackageStatus,
   VersionReference,
   ReconciliationOptions,
-  ResourceRef,
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { InstalledPackage } from "shared/InstalledPackage";
-import {
-  FetchError,
-  IInstalledPackageState,
-  UnprocessableEntity,
-  UpgradeError,
-} from "shared/types";
+import { IInstalledPackageState, UnprocessableEntity, UpgradeError } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -405,63 +399,6 @@ describe("rollbackInstalledPackage", () => {
       1,
     );
     await store.dispatch(rollbackInstalledPackageBadAction);
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("getInstalledPkgResourceRefs", () => {
-  const installedPkgRef = {
-    context: { cluster: "default-c", namespace: "default-ns" },
-    identifier: "my-release",
-    plugin: { name: "bad-plugin", version: "0.0.1" } as Plugin,
-  } as InstalledPackageReference;
-  const expectedRefs = [
-    {
-      apiVersion: "apps/v1",
-      kind: "Deployment",
-      name: "my-deployment",
-      namespace: "my-namespace",
-    },
-  ] as ResourceRef[];
-
-  it("dispatches the resource refs when successful", async () => {
-    InstalledPackage.GetInstalledPackageResourceRefs = jest
-      .fn()
-      .mockReturnValue({ resourceRefs: expectedRefs });
-    const expectedActions = [
-      { type: getType(actions.installedpackages.requestInstalledPkgResourceRefs) },
-      {
-        type: getType(actions.installedpackages.receiveInstalledPkgResourceRefs),
-        payload: expectedRefs,
-      },
-    ];
-
-    const getInstalledPkgResourceRefsAction =
-      actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef);
-    await store.dispatch(getInstalledPkgResourceRefsAction);
-
-    expect(InstalledPackage.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("dispatches a fetch error when unsuccessful", async () => {
-    const e = new Error("Bang!");
-    InstalledPackage.GetInstalledPackageResourceRefs = jest.fn().mockImplementation(() => {
-      throw e;
-    });
-    const expectedActions = [
-      { type: getType(actions.installedpackages.requestInstalledPkgResourceRefs) },
-      {
-        type: getType(actions.installedpackages.errorInstalledPackage),
-        payload: new FetchError("Unable to get installed package resources", [e]),
-      },
-    ];
-
-    const getInstalledPkgResourceRefsAction =
-      actions.installedpackages.getInstalledPkgResourceRefs(installedPkgRef);
-    await store.dispatch(getInstalledPkgResourceRefsAction);
-
-    expect(InstalledPackage.GetInstalledPackageResourceRefs).toHaveBeenCalledWith(installedPkgRef);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

@@ -9,18 +9,17 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
+	pluginsgrpcv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
 // Set the pluginDetail once during a module init function so the single struct
 // can be used throughout the plugin.
-var pluginDetail plugins.Plugin
+var pluginDetail pluginsgrpcv1alpha1.Plugin
 
 func init() {
-	pluginDetail = plugins.Plugin{
+	pluginDetail = pluginsgrpcv1alpha1.Plugin{
 		Name:    "kapp_controller.packages",
 		Version: "v1alpha1",
 	}
@@ -28,10 +27,9 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
-func RegisterWithGRPCServer(s grpc.ServiceRegistrar, configGetter core.KubernetesConfigGetter,
-	clustersConfig kube.ClustersConfig, pluginConfigPath string) (interface{}, error) {
-	svr := NewServer(configGetter, clustersConfig.KubeappsClusterName, pluginConfigPath)
-	v1alpha1.RegisterKappControllerPackagesServiceServer(s, svr)
+func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
+	svr := NewServer(opts.ConfigGetter, opts.ClustersConfig.KubeappsClusterName, opts.PluginConfigPath)
+	v1alpha1.RegisterKappControllerPackagesServiceServer(opts.Registrar, svr)
 	return svr, nil
 }
 
@@ -42,6 +40,6 @@ func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux,
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
-func GetPluginDetail() *plugins.Plugin {
+func GetPluginDetail() *pluginsgrpcv1alpha1.Plugin {
 	return &pluginDetail
 }

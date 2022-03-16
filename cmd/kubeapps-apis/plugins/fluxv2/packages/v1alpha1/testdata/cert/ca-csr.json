@@ -1,0 +1,8 @@
+{
+  "CN": "fluxv2plugin-testdata-ssl-svc.default.svc.cluster.local CA",
+  "hosts": [
+    "127.0.0.1",
+    "localhost",
+    "fluxv2plugin-testdata-ssl-svc.default.svc.cluster.local"
+  ]
+}
