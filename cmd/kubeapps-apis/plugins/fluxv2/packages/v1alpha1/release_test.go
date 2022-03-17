@@ -20,6 +20,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -512,22 +513,17 @@ type testSpecCreateInstalledPackage struct {
 
 func TestCreateInstalledPackage(t *testing.T) {
 	testCases := []struct {
-		name               string
-		request            *corev1.CreateInstalledPackageRequest
-		existingObjs       testSpecCreateInstalledPackage
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.CreateInstalledPackageResponse
-		expectedRelease    *helmv2.HelmRelease
+		name                    string
+		request                 *corev1.CreateInstalledPackageRequest
+		existingObjs            testSpecCreateInstalledPackage
+		expectedStatusCode      codes.Code
+		expectedResponse        *corev1.CreateInstalledPackageResponse
+		expectedRelease         *helmv2.HelmRelease
+		defaultUpgradePolicyStr string
 	}{
 		{
-			name: "create package (simple)",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
-				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
-					Namespace: "test",
-				},
-			},
+			name:    "create package (simple)",
+			request: create_package_simple_req,
 			existingObjs: testSpecCreateInstalledPackage{
 				repoName:      "podinfo",
 				repoNamespace: "namespace-1",
@@ -538,17 +534,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedRelease:    flux_helm_release_basic,
 		},
 		{
-			name: "create package (semver constraint)",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
-				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
-					Namespace: "test",
-				},
-				PkgVersionReference: &corev1.VersionReference{
-					Version: "> 5",
-				},
-			},
+			name:    "create package (semver constraint)",
+			request: create_package_semver_constraint_req,
 			existingObjs: testSpecCreateInstalledPackage{
 				repoName:      "podinfo",
 				repoNamespace: "namespace-1",
@@ -559,19 +546,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedRelease:    flux_helm_release_semver_constraint,
 		},
 		{
-			name: "create package (reconcile options)",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
-				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
-					Namespace: "test",
-				},
-				ReconciliationOptions: &corev1.ReconciliationOptions{
-					Interval:           60,
-					Suspend:            false,
-					ServiceAccountName: "foo",
-				},
-			},
+			name:    "create package (reconcile options)",
+			request: create_package_reconcile_options_req,
 			existingObjs: testSpecCreateInstalledPackage{
 				repoName:      "podinfo",
 				repoNamespace: "namespace-1",
@@ -582,15 +558,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedRelease:    flux_helm_release_reconcile_options,
 		},
 		{
-			name: "create package (values JSON override)",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
-				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
-					Namespace: "test",
-				},
-				Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
-			},
+			name:    "create package (values JSON override)",
+			request: create_package_values_json_override,
 			existingObjs: testSpecCreateInstalledPackage{
 				repoName:      "podinfo",
 				repoNamespace: "namespace-1",
@@ -601,15 +570,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedRelease:    flux_helm_release_values,
 		},
 		{
-			name: "create package (values YAML override)",
-			request: &corev1.CreateInstalledPackageRequest{
-				AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
-				Name:                "my-podinfo",
-				TargetContext: &corev1.Context{
-					Namespace: "test",
-				},
-				Values: "# Default values for podinfo.\n---\nui:\n  message: what we do in the shadows",
-			},
+			name:    "create package (values YAML override)",
+			request: create_package_values_yaml_override,
 			existingObjs: testSpecCreateInstalledPackage{
 				repoName:      "podinfo",
 				repoNamespace: "namespace-1",
@@ -618,6 +580,58 @@ func TestCreateInstalledPackage(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedResponse:   create_installed_package_resp_my_podinfo,
 			expectedRelease:    flux_helm_release_values,
+		},
+		{
+			name:    "create with specific version (upgrade policy none)",
+			request: create_package_for_test_of_upgrade_policy,
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     testYaml("podinfo-index.yaml"),
+			},
+			expectedStatusCode:      codes.OK,
+			expectedResponse:        create_installed_package_resp_my_podinfo,
+			expectedRelease:         flux_helm_release_upgrade_policy_none,
+			defaultUpgradePolicyStr: "none",
+		},
+		{
+			name:    "create with specific version (upgrade policy major)",
+			request: create_package_for_test_of_upgrade_policy,
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     testYaml("podinfo-index.yaml"),
+			},
+			expectedStatusCode:      codes.OK,
+			expectedResponse:        create_installed_package_resp_my_podinfo,
+			expectedRelease:         flux_helm_release_upgrade_policy_major,
+			defaultUpgradePolicyStr: "major",
+		},
+		{
+			name:    "create with specific version (upgrade policy minor)",
+			request: create_package_for_test_of_upgrade_policy,
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     testYaml("podinfo-index.yaml"),
+			},
+			expectedStatusCode:      codes.OK,
+			expectedResponse:        create_installed_package_resp_my_podinfo,
+			expectedRelease:         flux_helm_release_upgrade_policy_minor,
+			defaultUpgradePolicyStr: "minor",
+		},
+		{
+			name:    "create with specific version (upgrade policy patch)",
+			request: create_package_for_test_of_upgrade_policy,
+			existingObjs: testSpecCreateInstalledPackage{
+				repoName:      "podinfo",
+				repoNamespace: "namespace-1",
+				repoIndex:     testYaml("podinfo-index.yaml"),
+			},
+			expectedStatusCode:      codes.OK,
+			expectedResponse:        create_installed_package_resp_my_podinfo,
+			expectedRelease:         flux_helm_release_upgrade_policy_patch,
+			defaultUpgradePolicyStr: "patch",
 		},
 	}
 
@@ -641,6 +655,15 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 
 			mock.ExpectGet(redisKey).SetVal(string(bytes))
+
+			if tc.defaultUpgradePolicyStr != "" {
+				policy, err := pkgutils.UpgradePolicyFromString(tc.defaultUpgradePolicyStr)
+				if err != nil {
+					t.Fatal(err)
+				} else {
+					s.pluginConfig.DefaultUpgradePolicy = policy
+				}
+			}
 
 			response, err := s.CreateInstalledPackage(context.Background(), tc.request)
 
@@ -692,12 +715,13 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 func TestUpdateInstalledPackage(t *testing.T) {
 	testCases := []struct {
-		name               string
-		request            *corev1.UpdateInstalledPackageRequest
-		existingK8sObjs    *testSpecGetInstalledPackages
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.UpdateInstalledPackageResponse
-		expectedRelease    *helmv2.HelmRelease
+		name                    string
+		request                 *corev1.UpdateInstalledPackageRequest
+		existingK8sObjs         *testSpecGetInstalledPackages
+		expectedStatusCode      codes.Code
+		expectedResponse        *corev1.UpdateInstalledPackageResponse
+		expectedRelease         *helmv2.HelmRelease
+		defaultUpgradePolicyStr string
 	}{
 		{
 			name: "update package (simple)",
@@ -765,6 +789,54 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			},
 			expectedRelease: flux_helm_release_updated_2,
 		},
+		{
+			name: "update package (default upgrade policy major)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "14.4.0",
+				},
+			},
+			existingK8sObjs:    &redis_existing_spec_completed,
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: my_redis_ref,
+			},
+			expectedRelease:         flux_helm_release_updated_upgrade_major,
+			defaultUpgradePolicyStr: "major",
+		},
+		{
+			name: "update package (default upgrade policy minor)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "14.4.0",
+				},
+			},
+			existingK8sObjs:    &redis_existing_spec_completed,
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: my_redis_ref,
+			},
+			expectedRelease:         flux_helm_release_updated_upgrade_minor,
+			defaultUpgradePolicyStr: "minor",
+		},
+		{
+			name: "update package (default upgrade policy patch)",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "14.4.0",
+				},
+			},
+			existingK8sObjs:    &redis_existing_spec_completed,
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.UpdateInstalledPackageResponse{
+				InstalledPackageRef: my_redis_ref,
+			},
+			expectedRelease:         flux_helm_release_updated_upgrade_patch,
+			defaultUpgradePolicyStr: "patch",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -773,11 +845,20 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			if tc.existingK8sObjs != nil {
 				existingObjs = []testSpecGetInstalledPackages{*tc.existingK8sObjs}
 			}
-			charts, repos, cleanup := newChartsAndReleases(t, existingObjs)
+			charts, releases, cleanup := newChartsAndReleases(t, existingObjs)
 			defer cleanup()
-			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, repos)
+			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 			if err != nil {
 				t.Fatalf("%+v", err)
+			}
+
+			if tc.defaultUpgradePolicyStr != "" {
+				policy, err := pkgutils.UpgradePolicyFromString(tc.defaultUpgradePolicyStr)
+				if err != nil {
+					t.Fatal(err)
+				} else {
+					s.pluginConfig.DefaultUpgradePolicy = policy
+				}
 			}
 
 			response, err := s.UpdateInstalledPackage(context.Background(), tc.request)

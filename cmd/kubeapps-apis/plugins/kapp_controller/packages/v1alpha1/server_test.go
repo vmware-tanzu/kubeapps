@@ -26,6 +26,7 @@ import (
 	pluginv1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -3832,7 +3833,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               major,
+				defaultUpgradePolicy:               pkgutils.UpgradePolicyMajor,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
@@ -3990,7 +3991,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               minor,
+				defaultUpgradePolicy:               pkgutils.UpgradePolicyMinor,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
@@ -4148,7 +4149,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               patch,
+				defaultUpgradePolicy:               pkgutils.UpgradePolicyPatch,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
@@ -5410,7 +5411,7 @@ kappController:
       defaultUpgradePolicy: major
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               major,
+				defaultUpgradePolicy:               pkgutils.UpgradePolicyMajor,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
@@ -5425,7 +5426,7 @@ kappController:
       defaultUpgradePolicy: minor
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               minor,
+				defaultUpgradePolicy:               pkgutils.UpgradePolicyMinor,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
@@ -5440,7 +5441,7 @@ kappController:
       defaultUpgradePolicy: patch
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               patch,
+				defaultUpgradePolicy:               pkgutils.UpgradePolicyPatch,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
@@ -5455,7 +5456,7 @@ kappController:
       defaultUpgradePolicy: none
         `),
 			expectedPluginConfig: &kappControllerPluginParsedConfig{
-				defaultUpgradePolicy:               none,
+				defaultUpgradePolicy:               pkgutils.UpgradePolicyNone,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
@@ -5574,7 +5575,7 @@ kappController:
       defaultUpgradePolicy: foo
       `),
 			expectedPluginConfig: defaultPluginConfig,
-			expectedErrorStr:     "unable to parse DefaultUpgradePolicy",
+			expectedErrorStr:     "unsupported upgrade policy: [foo]",
 		},
 		{
 			name: "invalid defaultUpgradePolicy",
