@@ -340,7 +340,17 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		}
 	}
 
-	fluxRelease, err := s.newFluxHelmRelease(chart, targetName, versionRef, reconcile, values)
+	// Calculate the version constraints
+	versionExpr := versionRef.GetVersion()
+	if versionExpr != "" {
+		versionExpr, err = pkgutils.VersionConstraintWithUpgradePolicy(
+			versionRef.GetVersion(), s.pluginConfig.DefaultUpgradePolicy)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	fluxRelease, err := s.newFluxHelmRelease(chart, targetName, versionExpr, reconcile, values)
 	if err != nil {
 		return nil, err
 	}
@@ -375,8 +385,14 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		return nil, err
 	}
 
-	if versionRef.GetVersion() != "" {
-		rel.Spec.Chart.Spec.Version = versionRef.GetVersion()
+	versionExpr := versionRef.GetVersion()
+	if versionExpr != "" {
+		versionExpr, err = pkgutils.VersionConstraintWithUpgradePolicy(
+			versionRef.GetVersion(), s.pluginConfig.DefaultUpgradePolicy)
+		if err != nil {
+			return nil, err
+		}
+		rel.Spec.Chart.Spec.Version = versionExpr
 	} else {
 		rel.Spec.Chart.Spec.Version = ""
 	}
@@ -472,7 +488,7 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 // 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
 //    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
-func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*helmv2.HelmRelease, error) {
+func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionExpr string, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*helmv2.HelmRelease, error) {
 	fluxRelease := &helmv2.HelmRelease{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       helmv2.HelmReleaseKind,
@@ -495,8 +511,8 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 			},
 		},
 	}
-	if versionRef.GetVersion() != "" {
-		fluxRelease.Spec.Chart.Spec.Version = versionRef.GetVersion()
+	if versionExpr != "" {
+		fluxRelease.Spec.Chart.Spec.Version = versionExpr
 	}
 
 	reconcileInterval := defaultReconcileInterval // unless explicitly specified

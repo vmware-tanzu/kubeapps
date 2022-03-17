@@ -202,3 +202,71 @@ core:
 		})
 	}
 }
+
+func TestParsePluginConfigDefaultUpgradePolicy(t *testing.T) {
+	testCases := []struct {
+		name           string
+		pluginYAMLConf []byte
+		exp_policy_str string
+		exp_error_str  string
+	}{
+		{
+			name:           "no policy specified in plugin config",
+			pluginYAMLConf: nil,
+			exp_policy_str: "none",
+			exp_error_str:  "",
+		},
+		{
+			name: "specific policy in plugin config",
+			pluginYAMLConf: []byte(`
+core:
+  packages:
+    v1alpha1:
+      timeoutSeconds: 650
+flux:
+  packages:
+    v1alpha1:
+      defaultUpgradePolicy: minor  
+      `),
+			exp_policy_str: "minor",
+			exp_error_str:  "",
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			config, err := ParsePluginConfig(filename)
+			if err != nil && !strings.Contains(err.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", err.Error(), tc.exp_error_str)
+			}
+			if err == nil {
+				exp_policy, err := pkgutils.UpgradePolicyFromString(tc.exp_policy_str)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got, want := config.DefaultUpgradePolicy, exp_policy; !cmp.Equal(want, got, opts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+				}
+			}
+		})
+	}
+}

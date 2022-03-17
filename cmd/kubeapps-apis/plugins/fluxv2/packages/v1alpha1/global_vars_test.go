@@ -1981,4 +1981,250 @@ var (
 			{PkgVersion: "1.0.0", AppVersion: "2.1.4"},
 		},
 	}
+
+	create_package_simple_req = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+		Name:                "my-podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: "test",
+		},
+	}
+
+	create_package_semver_constraint_req = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+		Name:                "my-podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: "test",
+		},
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "> 5",
+		},
+	}
+
+	create_package_reconcile_options_req = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+		Name:                "my-podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: "test",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval:           60,
+			Suspend:            false,
+			ServiceAccountName: "foo",
+		},
+	}
+
+	create_package_values_json_override = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+		Name:                "my-podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: "test",
+		},
+		Values: "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
+	}
+
+	create_package_values_yaml_override = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+		Name:                "my-podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: "test",
+		},
+		Values: "# Default values for podinfo.\n---\nui:\n  message: what we do in the shadows",
+	}
+
+	create_package_for_test_of_upgrade_policy = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
+		Name:                "my-podinfo",
+		TargetContext: &corev1.Context{
+			Namespace: "test",
+		},
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "5.2.1",
+		},
+	}
+
+	flux_helm_release_upgrade_policy_none = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-podinfo",
+			Namespace:       "test",
+			ResourceVersion: "1",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Chart:   "podinfo",
+					Version: "5.2.1",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "podinfo",
+						Namespace: "namespace-1",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
+
+	flux_helm_release_upgrade_policy_major = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-podinfo",
+			Namespace:       "test",
+			ResourceVersion: "1",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Chart:   "podinfo",
+					Version: ">=5.2.1",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "podinfo",
+						Namespace: "namespace-1",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
+
+	flux_helm_release_upgrade_policy_minor = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-podinfo",
+			Namespace:       "test",
+			ResourceVersion: "1",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Chart:   "podinfo",
+					Version: ">=5.2.1 <6.0.0",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "podinfo",
+						Namespace: "namespace-1",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
+
+	flux_helm_release_upgrade_policy_patch = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-podinfo",
+			Namespace:       "test",
+			ResourceVersion: "1",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Chart:   "podinfo",
+					Version: ">=5.2.1 <5.3.0",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "podinfo",
+						Namespace: "namespace-1",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
+
+	flux_helm_release_updated_upgrade_major = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-redis",
+			Namespace:       "test",
+			Generation:      int64(1),
+			ResourceVersion: "1000",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Version: ">=14.4.0",
+					Chart:   "redis",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "bitnami-1",
+						Namespace: "default",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
+
+	flux_helm_release_updated_upgrade_minor = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-redis",
+			Namespace:       "test",
+			Generation:      int64(1),
+			ResourceVersion: "1000",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Version: ">=14.4.0 <15.0.0",
+					Chart:   "redis",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "bitnami-1",
+						Namespace: "default",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
+
+	flux_helm_release_updated_upgrade_patch = &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-redis",
+			Namespace:       "test",
+			Generation:      int64(1),
+			ResourceVersion: "1000",
+		},
+		Spec: helmv2.HelmReleaseSpec{
+			Chart: helmv2.HelmChartTemplate{
+				Spec: helmv2.HelmChartTemplateSpec{
+					Version: ">=14.4.0 <14.5.0",
+					Chart:   "redis",
+					SourceRef: helmv2.CrossNamespaceObjectReference{
+						Kind:      sourcev1.HelmRepositoryKind,
+						Name:      "bitnami-1",
+						Namespace: "default",
+					},
+				},
+			},
+			Interval: metav1.Duration{Duration: 1 * time.Minute},
+		},
+	}
 )
