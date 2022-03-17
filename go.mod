@@ -71,7 +71,7 @@ require (
 	github.com/spf13/viper v1.10.1
 	github.com/srwiley/oksvg v0.0.0-20220128195007-1f435e4c2b44
 	github.com/srwiley/rasterx v0.0.0-20220128185129-2efea2b9ea41
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/vmware-tanzu/carvel-kapp-controller v0.33.1
 	github.com/vmware-tanzu/carvel-kapp-controller/cli v0.0.0-20220203213126-e7c5dc77af08
