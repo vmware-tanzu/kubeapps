@@ -1,0 +1,20 @@
+---
+policies:
+  - name: remove-unattached-disks
+    resource: gcp.disk
+    comment: |
+      Remove all unattached disks AND created by a GKE cluster
+    actions:
+      - type: delete
+    filters:
+      - type: value
+        key: labels
+        op: contains
+        value: "goog-gke-volume"
+      - type: value
+        key: users
+        value: absent
+      - type: value
+        key: description
+        op: regex
+        value: "^.*kubernetes.io/created-for/pv/name.*$"
