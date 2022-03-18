@@ -96,6 +96,9 @@ parameters:
   BRANCH_KUBEAPPS_REPO:
     type: "string"
     default: "main"
+  README_GENERATOR_REPO:
+    type: "string"
+    default: "bitnami-labs/readme-generator-for-helm"
 
 ## Build conditions
 # Build on any branch or tag
@@ -528,7 +531,7 @@ gke_test: &gke_test
     - <<: *exports
     - <<: *install_gcloud_sdk
     - setup_remote_docker:
-          version: << pipeline.parameters.DOCKER_VERSION >>
+        version: << pipeline.parameters.DOCKER_VERSION >>
     - run:
         name: Configure Google Cloud
         command: |
@@ -743,7 +746,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -775,7 +778,7 @@ jobs:
     environment:
       <<: *common_envars
     docker:
-      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+      - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
     steps:
       - checkout
       - <<: *install_github
@@ -805,7 +808,7 @@ jobs:
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
           name: Run the check_upstream_chart script
           command: |
-            ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >>
+            ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >> << pipeline.parameters.README_GENERATOR_REPO >>
   push_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>

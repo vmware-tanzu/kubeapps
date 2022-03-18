@@ -35,6 +35,7 @@ if [[ ${semverCompare} -gt 0 ]]; then
     prBranchName="kubeapps-bump-${currentVersion}"
 
     updateRepoWithLocalChanges "${TMP_DIR}" "${latestVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_FORKED}"
+    generateReadme "${README_GENERATOR_REPO}" "${TMP_DIR}/${CHART_REPO_PATH}"
     commitAndSendExternalPR "${TMP_DIR}" "${prBranchName}" "${currentVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}"
 elif [[ ${semverCompare} -lt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version (${currentVersion}) is less than the chart external version (${externalVersion})"
