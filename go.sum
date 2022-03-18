@@ -579,12 +579,13 @@ github.com/fluxcd/pkg/apis/acl v0.0.3 h1:Lw0ZHdpnO4G7Zy9KjrzwwBmDZQuy4qEjaU/RvA6
 github.com/fluxcd/pkg/apis/acl v0.0.3/go.mod h1:XPts6lRJ9C9fIF9xVWofmQwftvhY25n1ps7W9xw0XLU=
 github.com/fluxcd/pkg/apis/kustomize v0.3.1 h1:wmb5D9e1+Rr3/5O3235ERuj+h2VKUArVfYYk68QKP+w=
 github.com/fluxcd/pkg/apis/kustomize v0.3.1/go.mod h1:k2HSRd68UwgNmOYBPOd6WbX6a2MH2X/Jeh7e3s3PFPc=
-github.com/fluxcd/pkg/apis/meta v0.10.2 h1:pnDBBEvfs4HaKiVAYgz+e/AQ8dLvcgmVfSeBroZ/KKI=
 github.com/fluxcd/pkg/apis/meta v0.10.2/go.mod h1:KQ2er9xa6koy7uoPMZjIjNudB5p4tXs+w0GO6fRcy7I=
+github.com/fluxcd/pkg/apis/meta v0.12.1 h1:m5PfKAqbqWBvGp9+JRj1sv+xNkGsHwUVf+3rJ8wm6SE=
+github.com/fluxcd/pkg/apis/meta v0.12.1/go.mod h1:f8YVt70/KAhqzZ7xxhjvqyzKubOYx2pAbakb/FfCEg8=
 github.com/fluxcd/pkg/runtime v0.12.5 h1:/8+0UBnSHbO9DVG9IFTjc37lwofsixGbs5WpHso8n5s=
 github.com/fluxcd/pkg/runtime v0.12.5/go.mod h1:gspNvhAqodZgSmK1ZhMtvARBf/NGAlxmaZaIOHkJYsc=
-github.com/fluxcd/source-controller/api v0.21.2 h1:J0S5NN4V8FPLrkSMXIUoUvj1X/RuTpVJSjIRF414wmc=
-github.com/fluxcd/source-controller/api v0.21.2/go.mod h1:Ab2qDmAUz6ZCp8UaHYLYzxyFrC1FQqEqjxiROb/Rdiw=
+github.com/fluxcd/source-controller/api v0.22.0 h1:WF0xsrlyUaRLWS4u5un3yfzlvER86sZx/qiV6l7Ay6Q=
+github.com/fluxcd/source-controller/api v0.22.0/go.mod h1:Vb13q9Pq+1IW/sJUZn/RSb7IU5WT86Er6uCFPCFm9L4=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoDwaVPLA+WlJuPGy+QneDUgJi2k=
