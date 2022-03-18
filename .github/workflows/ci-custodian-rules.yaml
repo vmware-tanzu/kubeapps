@@ -11,7 +11,7 @@ jobs:
     if: github.repository == 'kubeapps/kubeapps'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: gscho/setup-cloud-custodian@v1
         with:
           include-gcp: true
