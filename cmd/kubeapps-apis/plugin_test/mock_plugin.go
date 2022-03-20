@@ -131,8 +131,9 @@ func (s TestPackagingPluginServer) DeleteInstalledPackage(ctx context.Context, r
 
 type TestRepositoriesPluginServer struct {
 	corev1.UnimplementedRepositoriesServiceServer
-	Plugin *plugins.Plugin
-	Status codes.Code
+	Plugin                  *plugins.Plugin
+	PackageRepositoryDetail *corev1.PackageRepositoryDetail
+	Status                  codes.Code
 }
 
 func NewTestRepositoriesPlugin(plugin *plugins.Plugin) *TestRepositoriesPluginServer {
@@ -145,5 +146,20 @@ func (s TestRepositoriesPluginServer) AddPackageRepository(ctx context.Context, 
 	if s.Status != codes.OK {
 		return nil, status.Errorf(s.Status, "Non-OK response")
 	}
-	return &corev1.AddPackageRepositoryResponse{}, nil
+	return &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context:    request.GetContext(),
+			Identifier: request.GetName(),
+			Plugin:     s.Plugin,
+		},
+	}, nil
+}
+
+func (s TestRepositoriesPluginServer) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &corev1.GetPackageRepositoryDetailResponse{
+		Detail: s.PackageRepositoryDetail,
+	}, nil
 }
