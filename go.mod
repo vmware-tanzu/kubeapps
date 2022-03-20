@@ -50,11 +50,11 @@ require (
 	github.com/fluxcd/helm-controller/api v0.17.2
 	github.com/fluxcd/pkg/apis/meta v0.10.2
 	github.com/fluxcd/source-controller/api v0.21.2
-	github.com/go-redis/redis/v8 v8.11.4
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.7
 	github.com/gorilla/mux v1.8.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.8.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.9.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.7
@@ -73,12 +73,12 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220128185129-2efea2b9ea41
 	github.com/stretchr/testify v1.7.1
 	github.com/urfave/negroni/v2 v2.0.2
-	github.com/vmware-tanzu/carvel-kapp-controller v0.33.1
+	github.com/vmware-tanzu/carvel-kapp-controller v0.34.0
 	github.com/vmware-tanzu/carvel-kapp-controller/cli v0.0.0-20220203213126-e7c5dc77af08
 	github.com/vmware-tanzu/carvel-vendir v0.26.0
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
+	google.golang.org/genproto v0.0.0-20220314164441-57ef72a4c106
 	google.golang.org/grpc v1.45.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.27.1
@@ -90,9 +90,9 @@ require (
 	k8s.io/apiserver v0.23.4
 	k8s.io/cli-runtime v0.23.4
 	k8s.io/client-go v0.23.4
-	k8s.io/klog/v2 v2.50.2
+	k8s.io/klog/v2 v2.60.0
 	k8s.io/kubectl v0.23.4
-	k8s.io/kubernetes v1.22.7
+	k8s.io/kubernetes v1.22.8
 	oras.land/oras-go v1.1.0
 	sigs.k8s.io/controller-runtime v0.11.1
 	sigs.k8s.io/yaml v1.3.0
@@ -214,7 +214,7 @@ require (
 	go.starlark.net v0.0.0-20220203230714-bb14e151c28f // indirect
 	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
-	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
+	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a // indirect
 	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
