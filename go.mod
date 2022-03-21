@@ -90,7 +90,7 @@ require (
 	k8s.io/apiserver v0.23.4
 	k8s.io/cli-runtime v0.23.4
 	k8s.io/client-go v0.23.4
-	k8s.io/klog/v2 v2.60.0
+	k8s.io/klog/v2 v2.60.1
 	k8s.io/kubectl v0.23.4
 	k8s.io/kubernetes v1.22.8
 	oras.land/oras-go v1.1.0
