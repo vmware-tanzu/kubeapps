@@ -1381,6 +1381,69 @@
         ]
       }
     },
+    "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{packageRepoRef.plugin.name}/{packageRepoRef.plugin.version}/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}": {
+      "get": {
+        "operationId": "FluxV2RepositoriesService_GetPackageRepositoryDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoryDetailResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "packageRepoRef.plugin.name",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.plugin.version",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.identifier",
+            "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FluxV2RepositoriesService"
+        ]
+      }
+    },
     "/plugins/helm/packages/v1alpha1/availablepackages": {
       "get": {
         "summary": "GetAvailablePackageSummaries returns the available packages managed by the 'helm' plugin",

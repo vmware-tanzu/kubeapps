@@ -414,6 +414,7 @@ type FluxV2RepositoriesServiceClient interface {
 	// AddPackageRepository add an existing package repository to the set of ones already managed by the
 	// 'fluxv2' plugin
 	AddPackageRepository(ctx context.Context, in *v1alpha1.AddPackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.AddPackageRepositoryResponse, error)
+	GetPackageRepositoryDetail(ctx context.Context, in *v1alpha1.GetPackageRepositoryDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryDetailResponse, error)
 }
 
 type fluxV2RepositoriesServiceClient struct {
@@ -433,6 +434,15 @@ func (c *fluxV2RepositoriesServiceClient) AddPackageRepository(ctx context.Conte
 	return out, nil
 }
 
+func (c *fluxV2RepositoriesServiceClient) GetPackageRepositoryDetail(ctx context.Context, in *v1alpha1.GetPackageRepositoryDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryDetailResponse, error) {
+	out := new(v1alpha1.GetPackageRepositoryDetailResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/GetPackageRepositoryDetail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FluxV2RepositoriesServiceServer is the server API for FluxV2RepositoriesService service.
 // All implementations should embed UnimplementedFluxV2RepositoriesServiceServer
 // for forward compatibility
@@ -440,6 +450,7 @@ type FluxV2RepositoriesServiceServer interface {
 	// AddPackageRepository add an existing package repository to the set of ones already managed by the
 	// 'fluxv2' plugin
 	AddPackageRepository(context.Context, *v1alpha1.AddPackageRepositoryRequest) (*v1alpha1.AddPackageRepositoryResponse, error)
+	GetPackageRepositoryDetail(context.Context, *v1alpha1.GetPackageRepositoryDetailRequest) (*v1alpha1.GetPackageRepositoryDetailResponse, error)
 }
 
 // UnimplementedFluxV2RepositoriesServiceServer should be embedded to have forward compatible implementations.
@@ -448,6 +459,9 @@ type UnimplementedFluxV2RepositoriesServiceServer struct {
 
 func (UnimplementedFluxV2RepositoriesServiceServer) AddPackageRepository(context.Context, *v1alpha1.AddPackageRepositoryRequest) (*v1alpha1.AddPackageRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPackageRepository not implemented")
+}
+func (UnimplementedFluxV2RepositoriesServiceServer) GetPackageRepositoryDetail(context.Context, *v1alpha1.GetPackageRepositoryDetailRequest) (*v1alpha1.GetPackageRepositoryDetailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryDetail not implemented")
 }
 
 // UnsafeFluxV2RepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -479,6 +493,24 @@ func _FluxV2RepositoriesService_AddPackageRepository_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FluxV2RepositoriesService_GetPackageRepositoryDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetPackageRepositoryDetailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2RepositoriesServiceServer).GetPackageRepositoryDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/GetPackageRepositoryDetail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2RepositoriesServiceServer).GetPackageRepositoryDetail(ctx, req.(*v1alpha1.GetPackageRepositoryDetailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FluxV2RepositoriesService_ServiceDesc is the grpc.ServiceDesc for FluxV2RepositoriesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -489,6 +521,10 @@ var FluxV2RepositoriesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddPackageRepository",
 			Handler:    _FluxV2RepositoriesService_AddPackageRepository_Handler,
+		},
+		{
+			MethodName: "GetPackageRepositoryDetail",
+			Handler:    _FluxV2RepositoriesService_GetPackageRepositoryDetail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
