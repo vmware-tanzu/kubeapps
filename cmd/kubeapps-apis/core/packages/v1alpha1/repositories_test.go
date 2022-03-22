@@ -19,6 +19,7 @@ import (
 
 var mockedRepoPlugin1 = makeDefaultTestRepositoriesPlugin("mock1")
 var mockedRepoPlugin2 = makeDefaultTestRepositoriesPlugin("mock2")
+var mockedNotFoundRepoPlugin = makeOnlyStatusTestRepositoriesPlugin("bad-plugin", codes.NotFound)
 
 var ignoreUnexportedRepoOpts = cmpopts.IgnoreUnexported(
 	corev1.AddPackageRepositoryRequest{},
@@ -38,6 +39,18 @@ func makeDefaultTestRepositoriesPlugin(pluginName string) repoPluginsWithServer 
 
 	repositoriesPluginServer.PackageRepositoryDetail =
 		plugin_test.MakePackageRepositoryDetail("repo-1", pluginDetails)
+
+	return repoPluginsWithServer{
+		plugin: pluginDetails,
+		server: repositoriesPluginServer,
+	}
+}
+
+func makeOnlyStatusTestRepositoriesPlugin(pluginName string, statusCode codes.Code) repoPluginsWithServer {
+	pluginDetails := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
+	repositoriesPluginServer := &plugin_test.TestRepositoriesPluginServer{Plugin: pluginDetails}
+
+	repositoriesPluginServer.Status = statusCode
 
 	return repoPluginsWithServer{
 		plugin: pluginDetails,
@@ -162,29 +175,24 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			},
 			statusCode: codes.OK,
 		},
-		/*
-			{
-				name: "it should fail when calling the core GetAvailablePackageDetail operation when the package is not present in a plugin",
-				configuredPlugins: []pkgPluginsWithServer{
-					mockedPackagingPlugin1,
-					mockedNotFoundPackagingPlugin,
-				},
-				request: &corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Cluster:   "",
-							Namespace: globalPackagingNamespace,
-						},
-						Identifier: "pkg-1",
-						Plugin:     mockedNotFoundPackagingPlugin.plugin,
-					},
-					PkgVersion: "",
-				},
-
-				expectedResponse: &corev1.GetAvailablePackageDetailResponse{},
-				statusCode:       codes.NotFound,
+		{
+			name: "it should fail when calling the core GetPackageRepositoryDetail operation when the package is not present in a plugin",
+			configuredPlugins: []repoPluginsWithServer{
+				mockedRepoPlugin1,
+				mockedNotFoundRepoPlugin,
 			},
-		*/
+			request: &corev1.GetPackageRepositoryDetailRequest{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context: &corev1.Context{
+						Cluster:   plugin_test.GlobalPackagingCluster,
+						Namespace: plugin_test.DefaultNamespace,
+					},
+					Identifier: "repo-1",
+					Plugin:     mockedNotFoundPackagingPlugin.plugin,
+				},
+			},
+			statusCode: codes.NotFound,
+		},
 	}
 
 	for _, tc := range testCases {

@@ -52,6 +52,8 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
 		return nil, err
+	} else if !isRepoReady(*repo) {
+		return nil, status.Errorf(codes.Internal, "repository [%s] is not in Ready state", repoName)
 	}
 
 	chartID := fmt.Sprintf("%s/%s", repoName.Name, chartName)
