@@ -346,6 +346,91 @@ func (s *Server) newFluxHelmRepo(
 	return fluxRepo, nil
 }
 
+func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageRepositoryReference) (*corev1.PackageRepositoryDetail, error) {
+	key := types.NamespacedName{Namespace: repoRef.Context.Namespace, Name: repoRef.Identifier}
+
+	repo, err := s.getRepoInCluster(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	var tlsConfig *corev1.PackageRepositoryTlsConfig
+	auth := &corev1.PackageRepositoryAuth{
+		Type:            corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+		PassCredentials: repo.Spec.PassCredentials,
+	}
+	if repo.Spec.SecretRef != nil {
+		secretName := repo.Spec.SecretRef.Name
+		if s == nil || s.clientGetter == nil {
+			return nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
+		}
+		typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+		if err != nil {
+			return nil, err
+		}
+		secret, err := typedClient.CoreV1().Secrets(repo.Namespace).Get(ctx, secretName, metav1.GetOptions{})
+		if err != nil {
+			return nil, statuserror.FromK8sError("get", "secret", secretName, err)
+		}
+		if _, ok := secret.Data["caFile"]; ok {
+			tlsConfig = &corev1.PackageRepositoryTlsConfig{
+				// flux plug in doesn't support this option
+				InsecureSkipVerify: false,
+				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: secretName,
+						Key:  "caFile",
+					},
+				},
+			}
+		}
+		if _, ok := secret.Data["certFile"]; ok {
+			if _, ok = secret.Data["keyFile"]; ok {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{Name: secretName},
+				}
+			}
+		} else if _, ok := secret.Data["username"]; ok {
+			if _, ok = secret.Data["password"]; ok {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{Name: secretName},
+				}
+			}
+		} else if _, ok := secret.Data[".dockerconfigjson"]; ok {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{Name: secretName},
+			}
+		} else {
+			log.Warning("Unrecognized type of secret [%s]", secretName)
+		}
+	}
+
+	return &corev1.PackageRepositoryDetail{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: repo.Namespace,
+				Cluster:   s.kubeappsCluster,
+			},
+			Identifier: repo.Name,
+			Plugin:     GetPluginDetail(),
+		},
+		Name: repo.Name,
+		// TBD Flux HelmRepository CR doesn't have a designated field for description
+		Description:     "",
+		NamespaceScoped: false,
+		Type:            "helm",
+		Url:             repo.Spec.URL,
+		Interval:        uint32(repo.Spec.Interval.Duration.Seconds()),
+		TlsConfig:       tlsConfig,
+		Auth:            auth,
+		CustomDetail:    nil,
+		Status:          repoStatus(*repo),
+	}, nil
+}
+
 //
 // implements plug-in specific cache-related functionality
 //
@@ -658,6 +743,23 @@ func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success
 		}
 	}
 	return false, false, reason
+}
+
+func repoStatus(repo sourcev1.HelmRepository) *corev1.PackageRepositoryStatus {
+	complete, success, reason := isHelmRepositoryReady(repo)
+	s := &corev1.PackageRepositoryStatus{
+		Ready:      complete && success,
+		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_UNSPECIFIED,
+		UserReason: reason,
+	}
+	if !complete {
+		s.Reason = corev1.PackageRepositoryStatus_STATUS_REASON_PENDING
+	} else if success {
+		s.Reason = corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS
+	} else {
+		s.Reason = corev1.PackageRepositoryStatus_STATUS_REASON_FAILED
+	}
+	return s
 }
 
 func newLocalOpaqueSecret(name string) *apiv1.Secret {

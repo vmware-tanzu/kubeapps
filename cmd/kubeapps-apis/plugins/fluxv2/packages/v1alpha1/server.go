@@ -229,34 +229,10 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	repoN, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	pkgDetail, err := s.availableChartDetail(ctx, request.GetAvailablePackageRef(), request.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
-
-	// check specified repo exists and is in ready state
-	repoName := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoN}
-
-	// this verifies that the repo exists
-	repo, err := s.getRepoInCluster(ctx, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	pkgDetail, err := s.availableChartDetail(ctx, repoName, chartName, request.GetPkgVersion())
-	if err != nil {
-		return nil, err
-	}
-
-	// fix up a couple of fields that don't come from the chart tarball
-	repoUrl := repo.Spec.URL
-	if repoUrl == "" {
-		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repoName)
-	}
-	pkgDetail.RepoUrl = repoUrl
-	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
-	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
-	pkgDetail.AvailablePackageRef.Context.Cluster = s.kubeappsCluster
 
 	return &corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: pkgDetail,
@@ -555,6 +531,36 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	} else {
 		return &corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}, nil
 	}
+}
+
+func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
+	log.Infof("+fluxv2 GetPackageRepositoryDetail [%v]", request)
+	if request == nil || request.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+	}
+
+	repoRef := request.PackageRepoRef
+	// flux CRDs require a namespace, cluster-wide resources are not supported
+	if repoRef.Context == nil || len(repoRef.Context.Namespace) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "PackageRepositoryReference is missing required namespace")
+	}
+
+	cluster := repoRef.Context.Cluster
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.PackageRepoRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
+	repoDetail, err := s.repoDetail(ctx, repoRef)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corev1.GetPackageRepositoryDetailResponse{
+		Detail: repoDetail,
+	}, nil
 }
 
 // convenience func mostly used by unit tests
