@@ -196,14 +196,14 @@ installOrUpgradeKubeapps() {
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
     --set kubeops.enabled=true
-    --set postgresql.replication.enabled=false
-    --set postgresql.postgresqlPassword=password
+    --set postgresql.architecture=standalone
+    --set postgresql.auth.password=password
     --set redis.auth.password=password
     --set apprepository.initialRepos[0].name=bitnami
     --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
-    --set globalReposNamespaceSuffix=-repos-global
+    --set apprepository.globalReposNamespaceSuffix=-repos-global
     --wait)
 
   echo "${cmd[@]}"

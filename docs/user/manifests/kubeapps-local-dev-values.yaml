@@ -5,7 +5,8 @@ frontend:
   replicaCount: 1
   service:
     type: NodePort
-    nodePort: 30000
+    nodePorts:
+      http: 30000
 assetsvc:
   replicaCount: 1
 dashboard:
@@ -13,8 +14,7 @@ dashboard:
 kubeops:
   replicaCount: 1
 postgresql:
-  replication:
-    enabled: false
+  architecture: standalone
   existingSecret: postgresql-db
 kubeappsapis:
   replicaCount: 1
