@@ -2227,4 +2227,345 @@ var (
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		},
 	}
+
+	get_repo_detail_req_1 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+	}
+
+	get_repo_detail_package_resp_ref = &corev1.PackageRepositoryReference{
+		Context: &corev1.Context{
+			Cluster:   KubeappsCluster,
+			Namespace: "namespace-1",
+		},
+		Identifier: "repo-1",
+		Plugin:     fluxPlugin,
+	}
+
+	get_repo_detail_resp_1 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        60,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed",
+			},
+		},
+	}
+
+	get_repo_detail_req_2 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-kaka",
+		},
+	}
+
+	get_repo_detail_req_3 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-kaka",
+			},
+			Identifier: "repo-1",
+		},
+	}
+
+	get_repo_detail_req_4 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Identifier: "repo-1",
+		},
+	}
+
+	get_repo_detail_req_5 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+				Cluster:   "this-is-not-the-cluster-youre-looking-for",
+			},
+			Identifier: "repo-1",
+		},
+	}
+
+	get_repo_detail_resp_6 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        60,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			TlsConfig: &corev1.PackageRepositoryTlsConfig{
+				InsecureSkipVerify: false,
+				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: "secret-1",
+						Key:  "caFile",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed",
+			},
+		},
+	}
+
+	get_repo_detail_resp_7 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        60,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      false,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+				UserReason: "Progressing: reconciliation in progress",
+			},
+		},
+	}
+
+	get_repo_detail_resp_8 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        60,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      false,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
+				UserReason: "IndexationFailed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
+			},
+		},
+	}
+
+	get_repo_detail_resp_9 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        60,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+				Type:            corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: "secret-1",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed",
+			},
+		},
+	}
+
+	get_repo_detail_req_6 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				// will be set when test scenario is run
+				Namespace: "TBD",
+			},
+			Identifier: "my-podinfo",
+		},
+	}
+
+	get_repo_detail_resp_10 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        60,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+				Type:            corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: "secret-1",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed",
+			},
+		},
+	}
+
+	get_repo_detail_resp_11 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Cluster: KubeappsCluster,
+					// will be set when scenario is run
+					Namespace: "TBD",
+				},
+				Identifier: "my-podinfo",
+				Plugin:     fluxPlugin,
+			},
+			Name:            "my-podinfo",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_repo_url,
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed: Fetched revision: 2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b",
+			},
+		},
+	}
+
+	get_repo_detail_req_7 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				// will be set when test scenario is run
+				Namespace: "TBD",
+			},
+			Identifier: "my-bitnami",
+		},
+	}
+
+	get_repo_detail_resp_12 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Cluster: KubeappsCluster,
+					// will be set when scenario is run
+					Namespace: "TBD",
+				},
+				Identifier: "my-bitnami",
+				Plugin:     fluxPlugin,
+			},
+			Name:            "my-bitnami",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://charts.bitnami.com/bitnami",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed: Fetched revision: ",
+			},
+		},
+	}
+
+	get_repo_detail_resp_13 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Cluster: KubeappsCluster,
+					// will be set when scenario is run
+					Namespace: "TBD",
+				},
+				Identifier: "my-podinfo",
+				Plugin:     fluxPlugin,
+			},
+			Name:            "my-podinfo",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_basic_auth_repo_url,
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      false,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
+				UserReason: "IndexationFailed: failed to download repository index: failed to cache index to temporary file: failed to fetch http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/index.yaml : 401 Unauthorized",
+			},
+		},
+	}
+
+	get_repo_detail_resp_14 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Cluster: KubeappsCluster,
+					// will be set when scenario is run
+					Namespace: "TBD",
+				},
+				Identifier: "my-podinfo",
+				Plugin:     fluxPlugin,
+			},
+			Name:            "my-podinfo",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_basic_auth_repo_url,
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+				Type:            corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: "secret-1",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed: Fetched revision: 9d3ac1eb708dfaebae14d7c88fd46afce8b1e0f7aace790d91758575dc8ce518",
+			},
+		},
+	}
+
+	get_repo_detail_req_8 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				// will be set when test scenario is run
+				Namespace: "TBD",
+			},
+			Identifier: "my-kaka",
+		},
+	}
 )

@@ -23,6 +23,12 @@ service RepositoriesService {
       body: "*"
     };
    }
+
+  rpc GetPackageRepositoryDetail(GetPackageRepositoryDetailRequest) returns (GetPackageRepositoryDetailResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+   }
 }
 
 // Standard request and response messages for each required function are defined
@@ -221,6 +227,14 @@ message SecretKeyReference {
   string key = 2;
 }
 
+// GetPackageRepositoryDetailRequest
+//
+// Request for GetPackageRepositoryDetail
+message GetPackageRepositoryDetailRequest {
+  PackageRepositoryReference package_repo_ref = 1;
+}
+
+
 // -- Start definitions of the response messages --
 
 // PackageRepositoryReference
@@ -250,4 +264,89 @@ message AddPackageRepositoryResponse {
   //   example: '{"package_repo_ref": {}}'
   // };
   PackageRepositoryReference package_repo_ref = 1;
+}
+
+// PackageRepositoryStatus
+//
+// A PackageRepositoryStatus reports on the current status of the repository.
+message PackageRepositoryStatus {
+  // Ready
+  //
+  // An indication of whether the repository is ready or not
+  bool ready = 1;
+
+  // StatusReason
+  //
+  // Generic reasons why a package repository may be ready or not.
+  // These should make sense across different packaging plugins.
+  enum StatusReason {
+    STATUS_REASON_UNSPECIFIED = 0;
+    STATUS_REASON_SUCCESS = 1;
+    STATUS_REASON_FAILED = 2;
+    STATUS_REASON_PENDING = 3;
+  }
+
+  // Reason
+  //
+  // An enum indicating the reason for the current status.
+  StatusReason reason = 2;
+
+  // UserReason
+  //
+  // Optional text to return for user context, which may be plugin specific.
+  string user_reason = 3;
+}
+
+// PackageRepositoryDetail
+//
+message PackageRepositoryDetail {
+  // A reference uniquely identifying the package repository.
+  PackageRepositoryReference package_repo_ref = 1;
+  
+  // A user-provided name for the package repository (e.g. bitnami)
+  string name = 2;
+
+  // A user-provided description.
+  string description = 3;
+
+  // Whether this repository is global or namespace-scoped.
+  bool namespace_scoped = 4;
+ 
+  // Package storage type 
+  string type = 5;
+
+  // A URL identifying the package repository location.
+  string url = 6;
+
+  // The interval at which to check the upstream for updates (in seconds)
+  uint32 interval = 7;
+
+  // TLS-specific parameters for connecting to a repository. 
+  // If the cert authority was configured for this repository, then in the context 
+  // of GetPackageRepositoryDetail() operation, the PackageRepositoryTlsConfig will ALWAYS 
+  // contain an existing SecretKeyReference, rather that cert_authority field
+  PackageRepositoryTlsConfig tls_config = 8;
+
+  // authentication parameters for connecting to a repository.
+  // If Basic Auth or TLS or Docker Creds Auth was configured for this repository,
+  // then in the context of GetPackageRepositoryDetail() operation, the 
+  // PackageRepositoryAuth will ALWAYS contain an existing SecretKeyReference, 
+  // rather that string values that may have been used when package repository was created
+  // field
+  PackageRepositoryAuth auth = 9; 
+
+  // Custom data added by the plugin
+  google.protobuf.Any custom_detail = 10;
+
+  // current status of the repository which can include reconciliation
+  // status, where relevant.
+  PackageRepositoryStatus status = 11;
+}
+
+// GetPackageRepositoryDetailResponse
+//
+// Response for GetPackageRepositoryDetail
+message GetPackageRepositoryDetailResponse {
+  // package repository detail
+  PackageRepositoryDetail detail = 1;
 }
