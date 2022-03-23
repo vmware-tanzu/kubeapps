@@ -10,7 +10,7 @@ authProxy:
   #  If you are serving Kubeapps under a subpath "example.com/subpath", both oauthLoginURI and oauthLogoutURI have to be changed
   # oauthLoginURI: /subpath/oauth2/login
   # oauthLogoutURI: /subpath/oauth2/logout
-  additionalFlags:
+  extraFlags:
     - --oidc-issuer-url=https://172.18.0.2:32000
     # Overwrite the scope option to include the other cluster's clientids in the audience.
     - --scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster

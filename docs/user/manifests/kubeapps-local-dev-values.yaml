@@ -15,7 +15,11 @@ kubeops:
   replicaCount: 1
 postgresql:
   architecture: standalone
-  existingSecret: postgresql-db
+  auth:
+    existingSecret: postgresql-db
+  primary:
+    persistence:
+      enabled: false
 kubeappsapis:
   replicaCount: 1
 ingress:

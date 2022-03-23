@@ -295,8 +295,8 @@ Returns the name of the globalRepos namespace
 Return the Postgresql secret name
 */}}
 {{- define "kubeapps.postgresql.secretName" -}}
-  {{- if .Values.postgresql.existingSecret }}
-      {{- printf "%s" .Values.postgresql.existingSecret -}}
+  {{- if .Values.postgresql.auth.existingSecret }}
+      {{- printf "%s" .Values.postgresql.auth.existingSecret -}}
   {{- else -}}
       {{- printf "%s" (include "kubeapps.postgresql.fullname" .) -}}
   {{- end -}}
@@ -306,8 +306,8 @@ Return the Postgresql secret name
 Return the Redis secret name
 */}}
 {{- define "kubeapps.redis.secretName" -}}
-  {{- if .Values.redis.existingSecret }}
-      {{- printf "%s" .Values.redis.existingSecret -}}
+  {{- if .Values.redis.auth.existingSecret }}
+      {{- printf "%s" .Values.redis.auth.existingSecret -}}
   {{- else -}}
       {{- printf "%s" (include "kubeapps.redis.fullname" .) -}}
   {{- end -}}
@@ -357,11 +357,11 @@ kubeapps: ingress.tls
       {{- range $plugin, $options := .Values.packaging }}
         {{- if $options.enabled }}
           {{- if eq $plugin "carvel" }}
-            {{- $enabledPlugins = append $enabledPlugins "kapp-controller" }}
+            {{- $enabledPlugins = append $enabledPlugins "kapp-controller-packages" }}
           {{- else if eq $plugin "flux" }}
-            {{- $enabledPlugins = append $enabledPlugins "fluxv2" }}
+            {{- $enabledPlugins = append $enabledPlugins "fluxv2-packages" }}
           {{- else if eq $plugin "helm" }}
-            {{- $enabledPlugins = append $enabledPlugins "helm" }}
+            {{- $enabledPlugins = append $enabledPlugins "helm-packages" }}
           {{- else }}
             {{ $msg := printf "packaging: Unsupported packaging option: %s" $plugin }}
             {{- fail $msg }}
