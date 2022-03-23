@@ -30,12 +30,19 @@ const (
 	DefaultValues           = "key: value"
 	DefaultMaintainerName   = "me"
 	DefaultMaintainerEmail  = "me@example.com"
+	DefaultRepoInterval     = 60
 )
 
 var defaultInstalledPackageStatus = &corev1.InstalledPackageStatus{
 	Ready:      true,
 	Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
 	UserReason: "ReconciliationSucceeded",
+}
+
+var defaultRepoStatus = &corev1.PackageRepositoryStatus{
+	Ready:      true,
+	Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+	UserReason: "IndexationSucceed",
 }
 
 func MakeAvailablePackageSummary(name string, plugin *plugins.Plugin) *corev1.AvailablePackageSummary {
@@ -151,5 +158,25 @@ func MakePackageAppVersion(appVersion, pkgVersion string) *corev1.PackageAppVers
 	return &corev1.PackageAppVersion{
 		AppVersion: appVersion,
 		PkgVersion: pkgVersion,
+	}
+}
+
+func MakePackageRepositoryDetail(name string, plugin *plugins.Plugin) *corev1.PackageRepositoryDetail {
+	return &corev1.PackageRepositoryDetail{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context:    &corev1.Context{Cluster: GlobalPackagingCluster, Namespace: DefaultNamespace},
+			Identifier: name,
+			Plugin:     plugin,
+		},
+		Name:            name,
+		Description:     DefaultDescription,
+		NamespaceScoped: false,
+		Type:            "helm",
+		Url:             DefaultRepoURL,
+		Interval:        DefaultRepoInterval,
+		TlsConfig:       nil,
+		Auth:            nil,
+		CustomDetail:    nil,
+		Status:          defaultRepoStatus,
 	}
 }

@@ -20,6 +20,7 @@ import (
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/dynamic"
@@ -30,10 +31,10 @@ import (
 type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
-	globalPackagingNamespace                     = "kapp-controller-packaging-global"
-	fallbackDefaultUpgradePolicy   upgradePolicy = none
-	fallbackDefaultAllowDowngrades               = false
-	fallbackTimeoutSeconds                       = 300
+	globalPackagingNamespace                              = "kapp-controller-packaging-global"
+	fallbackDefaultUpgradePolicy   pkgutils.UpgradePolicy = pkgutils.UpgradePolicyNone
+	fallbackDefaultAllowDowngrades                        = false
+	fallbackTimeoutSeconds                                = 300
 )
 
 func fallbackDefaultPrereleasesVersionSelection() []string {
@@ -75,10 +76,14 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 		return config, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfigFile), err)
 	}
 
+	defaultUpgradePolicy, err := pkgutils.UpgradePolicyFromString(pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy)
+	if err != nil {
+		return config, err
+	}
 	// override the defaults with the loaded configuration
 	config.timeoutSeconds = pluginConfig.Core.Packages.V1alpha1.TimeoutSeconds
 	config.versionsInSummary = pluginConfig.Core.Packages.V1alpha1.VersionsInSummary
-	config.defaultUpgradePolicy = upgradePolicyMapping[pluginConfig.KappController.Packages.V1alpha1.DefaultUpgradePolicy]
+	config.defaultUpgradePolicy = defaultUpgradePolicy
 	config.defaultPrereleasesVersionSelection = pluginConfig.KappController.Packages.V1alpha1.DefaultPrereleasesVersionSelection
 	config.defaultAllowDowngrades = pluginConfig.KappController.Packages.V1alpha1.DefaultAllowDowngrades
 

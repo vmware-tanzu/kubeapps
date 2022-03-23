@@ -37,8 +37,24 @@ func (s *Server) getChartInCluster(ctx context.Context, key types.NamespacedName
 	return &chartObj, nil
 }
 
-func (s *Server) availableChartDetail(ctx context.Context, repoName types.NamespacedName, chartName, chartVersion string) (*corev1.AvailablePackageDetail, error) {
-	log.Infof("+availableChartDetail(%s, %s, %s)", repoName, chartName, chartVersion)
+func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.AvailablePackageReference, chartVersion string) (*corev1.AvailablePackageDetail, error) {
+	log.Infof("+availableChartDetail(%s, %s)", packageRef, chartVersion)
+
+	repoN, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	// check specified repo exists and is in ready state
+	repoName := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoN}
+
+	// this verifies that the repo exists
+	repo, err := s.getRepoInCluster(ctx, repoName)
+	if err != nil {
+		return nil, err
+	} else if !isRepoReady(*repo) {
+		return nil, status.Errorf(codes.Internal, "repository [%s] is not in Ready state", repoName)
+	}
 
 	chartID := fmt.Sprintf("%s/%s", repoName.Name, chartName)
 	// first, try the happy path - we have the chart version and the corresponding entry
@@ -81,7 +97,22 @@ func (s *Server) availableChartDetail(ctx context.Context, repoName types.Namesp
 		return nil, err
 	}
 
-	return availablePackageDetailFromChartDetail(chartID, chartDetail)
+	pkgDetail, err := availablePackageDetailFromChartDetail(chartID, chartDetail)
+	if err != nil {
+		return nil, err
+	}
+
+	// fix up a couple of fields that don't come from the chart tarball
+	repoUrl := repo.Spec.URL
+	if repoUrl == "" {
+		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repoName)
+	}
+
+	pkgDetail.RepoUrl = repoUrl
+	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
+	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	pkgDetail.AvailablePackageRef.Context.Cluster = s.kubeappsCluster
+	return pkgDetail, nil
 }
 
 func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {

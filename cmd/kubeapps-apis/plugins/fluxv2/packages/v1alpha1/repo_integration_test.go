@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -379,6 +381,178 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 				t.Fatal(err)
 			} else if err == nil && tc.expectedReconcileFailure {
 				t.Fatalf("Expected error got nil")
+			}
+		})
+	}
+}
+
+type integrationTestGetRepoSpec struct {
+	testName           string
+	request            *corev1.GetPackageRepositoryDetailRequest
+	repoName           string
+	repoUrl            string
+	unauthorized       bool
+	expectedResponse   *corev1.GetPackageRepositoryDetailResponse
+	expectedStatusCode codes.Code
+	existingSecret     *apiv1.Secret
+}
+
+func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
+	_, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []integrationTestGetRepoSpec{
+		{
+			testName:           "gets detail for podinfo package repository",
+			request:            get_repo_detail_req_6,
+			repoName:           "my-podinfo",
+			repoUrl:            podinfo_repo_url,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_11,
+		},
+		{
+			testName:           "gets detail for bitnami package repository",
+			request:            get_repo_detail_req_7,
+			repoName:           "my-bitnami",
+			repoUrl:            "https://charts.bitnami.com/bitnami",
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_12,
+		},
+		{
+			testName:           "get detail fails for podinfo basic auth package repository without creds",
+			request:            get_repo_detail_req_6,
+			repoName:           "my-podinfo",
+			repoUrl:            podinfo_basic_auth_repo_url,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_13,
+		},
+		{
+			testName:           "get detail succeeds for podinfo basic auth package repository with creds",
+			request:            get_repo_detail_req_6,
+			repoName:           "my-podinfo",
+			repoUrl:            podinfo_basic_auth_repo_url,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_14,
+			existingSecret:     newBasicAuthSecret("secret-1", "TBD", "foo", "bar"),
+		},
+		{
+			testName:           "get detail returns NotFound error for wrong repo",
+			request:            get_repo_detail_req_8,
+			repoName:           "my-podinfo",
+			repoUrl:            podinfo_repo_url,
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			testName:           "get detail returns PermissionDenied error",
+			request:            get_repo_detail_req_6,
+			repoName:           "my-podinfo",
+			repoUrl:            podinfo_repo_url,
+			expectedStatusCode: codes.PermissionDenied,
+			unauthorized:       true,
+		},
+	}
+
+	grpcAdmin, err := newGrpcAdminContext(t, "test-get-repo-admin", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-get-repo-loser", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			repoNamespace := "test-" + randSeq(4)
+
+			if err := kubeCreateNamespace(t, repoNamespace); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err := kubeDeleteNamespace(t, repoNamespace); err != nil {
+					t.Logf("Failed to delete namespace [%s] due to [%v]", repoNamespace, err)
+				}
+			})
+
+			secretName := ""
+			if tc.existingSecret != nil {
+				tc.existingSecret.Namespace = repoNamespace
+				if err := kubeCreateSecret(t, tc.existingSecret); err != nil {
+					t.Fatalf("%v", err)
+				}
+				secretName = tc.existingSecret.Name
+				t.Cleanup(func() {
+					err := kubeDeleteSecret(t, tc.existingSecret.Namespace, tc.existingSecret.Name)
+					if err != nil {
+						t.Logf("Failed to delete secret due to [%v]", err)
+					}
+				})
+			}
+
+			if err = kubeAddHelmRepository(t, tc.repoName, tc.repoUrl, repoNamespace, secretName, 0); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err = kubeDeleteHelmRepository(t, tc.repoName, repoNamespace); err != nil {
+					t.Logf("Failed to delete helm source due to [%v]", err)
+				}
+			})
+
+			tc.request.PackageRepoRef.Context.Namespace = repoNamespace
+			if tc.expectedResponse != nil {
+				tc.expectedResponse.Detail.PackageRepoRef.Context.Namespace = repoNamespace
+			}
+
+			var grpcCtx context.Context
+			var cancel context.CancelFunc
+			if tc.unauthorized {
+				grpcCtx, cancel = context.WithTimeout(grpcLoser, defaultContextTimeout)
+			} else {
+				grpcCtx, cancel = context.WithTimeout(grpcAdmin, defaultContextTimeout)
+			}
+			defer cancel()
+
+			var resp *corev1.GetPackageRepositoryDetailResponse
+			for {
+				resp, err = fluxPluginReposClient.GetPackageRepositoryDetail(grpcCtx, tc.request)
+				if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+					t.Fatalf("got: %v, want: %v", err, want)
+				}
+				if tc.expectedStatusCode != codes.OK {
+					// we are done
+					return
+				}
+				if resp.Detail.Status.Reason != corev1.PackageRepositoryStatus_STATUS_REASON_PENDING {
+					break
+				} else {
+					t.Logf("Waiting 2s for repository reconciliation to complete...")
+					time.Sleep(2 * time.Second)
+				}
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				corev1.PackageRepositoryReference{},
+				plugins.Plugin{},
+				corev1.GetPackageRepositoryDetailResponse{},
+				corev1.PackageRepositoryDetail{},
+				corev1.PackageRepositoryStatus{},
+				corev1.PackageRepositoryAuth{},
+				corev1.PackageRepositoryTlsConfig{},
+				corev1.SecretKeyReference{},
+			)
+
+			opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
+
+			if got, want := resp, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts, opts2))
+			}
+
+			if !strings.HasPrefix(resp.GetDetail().Status.UserReason, tc.expectedResponse.Detail.Status.UserReason) {
+				t.Errorf("unexpected response: %s", common.PrettyPrint(resp))
 			}
 		})
 	}

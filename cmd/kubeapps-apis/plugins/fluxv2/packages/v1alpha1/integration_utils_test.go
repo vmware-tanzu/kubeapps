@@ -184,7 +184,7 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 // This creates a flux helm repository CRD. The usage of this func should be minimized as much as
 // possible in favor of flux Plugin's AddPackageRepository() call
 func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string, interval time.Duration) error {
-	t.Logf("+kubeCreateHelmRepository(%s,%s)", name, namespace)
+	t.Logf("+kubeAddHelmRepository(%s,%s)", name, namespace)
 	if interval <= 0 {
 		interval = time.Duration(10 * time.Minute)
 	}
@@ -560,7 +560,7 @@ func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name, namespace stri
 	if err != nil {
 		return err
 	}
-	for ns, _ := range nsToRole {
+	for ns := range nsToRole {
 		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
 		err = typedClient.RbacV1().RoleBindings(ns).Delete(

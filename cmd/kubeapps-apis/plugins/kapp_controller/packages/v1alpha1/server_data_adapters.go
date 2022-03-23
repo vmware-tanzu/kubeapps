@@ -315,7 +315,7 @@ func (s *Server) buildSecret(installedPackageName, values, targetNamespace strin
 
 func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetNamespace, packageRefName, pkgVersion string, reconciliationOptions *corev1.ReconciliationOptions, secret *k8scorev1.Secret) (*packagingv1alpha1.PackageInstall, error) {
 	// Calculate the constraints and prerelease fields
-	versionConstraints, err := versionConstraintWithUpgradePolicy(pkgVersion, s.pluginConfig.defaultUpgradePolicy)
+	versionConstraints, err := pkgutils.VersionConstraintWithUpgradePolicy(pkgVersion, s.pluginConfig.defaultUpgradePolicy)
 	if err != nil {
 		return nil, err
 	}
