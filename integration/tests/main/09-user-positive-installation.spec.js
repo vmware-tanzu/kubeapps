@@ -15,7 +15,7 @@ test.describe("Limited user simple deployments", () => {
 
     // Change namespace using UI
     await page.click(".kubeapps-dropdown .kubeapps-nav-link");
-    await page.selectOption('select[name="namespaces"]', "kubeapps");
+    await page.selectOption('select[name="namespaces"]', "kubeapps-repos-global");
     await page.click('cds-button:has-text("Change Context")');
 
     // Go to repos page
