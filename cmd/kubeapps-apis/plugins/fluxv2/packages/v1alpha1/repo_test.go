@@ -1191,7 +1191,6 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 }
 
 func TestAddPackageRepository(t *testing.T) {
-
 	// these will be used further on for TLS-related scenarios. Init
 	// byte arrays up front so they can be re-used in multiple places later
 	ca, pub, priv := getCertsForTesting(t)
@@ -1532,6 +1531,213 @@ func TestAddPackageRepository(t *testing.T) {
 							t.Errorf("Secret Name [%s] was expected to start with [%s]",
 								secret.Name, tc.expectedCreatedSecret.Name)
 						}
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositoryDetail(t *testing.T) {
+	ca, pub, priv := getCertsForTesting(t)
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositoryDetailRequest
+		repoIndex          string
+		repoName           string
+		repoNamespace      string
+		repoSecret         *apiv1.Secret
+		pending            bool
+		failed             bool
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositoryDetailResponse
+	}{
+		{
+			name:               "get package repository detail simplest case",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_1,
+		},
+		{
+			name:               "fails with NotFound when wrong identifier",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            get_repo_detail_req_2,
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name:               "fails with NotFound when wrong namespace",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            get_repo_detail_req_3,
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name:               "it returns an invalid arg error status if no context is provided",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            get_repo_detail_req_4,
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name:               "it returns an error status if cluster is not the global/kubeapps one",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            get_repo_detail_req_5,
+			expectedStatusCode: codes.Unimplemented,
+		},
+		{
+			name:               "it returns package repository detail with TLS cert aurthority",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			repoSecret:         newTlsSecret("secret-1", "namespace-1", nil, nil, ca),
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_6,
+		},
+		{
+			name:               "get package repository with pending status",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_7,
+			pending:            true,
+		},
+		{
+			name:               "get package repository with failed status",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_8,
+			failed:             true,
+		},
+		{
+			name:               "it returns package repository detail with TLS cert authentication",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			repoSecret:         newTlsSecret("secret-1", "namespace-1", pub, priv, nil),
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_9,
+		},
+		{
+			name:               "it returns package repository detail with basic authentication",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			repoSecret:         newBasicAuthSecret("secret-1", "namespace-1", "foo", "bar"),
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_10,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			secretRef := ""
+			secrets := []runtime.Object{}
+			if tc.repoSecret != nil {
+				secretRef = tc.repoSecret.Name
+				secrets = append(secrets, tc.repoSecret)
+			}
+			var repo *sourcev1.HelmRepository
+			if !tc.pending && !tc.failed {
+				var ts *httptest.Server
+				var err error
+				ts, repo, err = newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, secretRef)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				defer ts.Close()
+			} else if tc.pending {
+				repoSpec := &sourcev1.HelmRepositorySpec{
+					URL:      "https://example.repo.com/charts",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
+				}
+				lastTransitionTime, err := time.Parse(time.RFC3339, "2022-03-20T06:29:40Z")
+				if err != nil {
+					t.Fatal(err)
+				}
+				repoStatus := &sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+							Type:               "Ready",
+							Status:             "Unknown",
+							Reason:             "Progressing",
+							Message:            "reconciliation in progress",
+						},
+					},
+				}
+				repo1 := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
+				repo = &repo1
+			} else { // failed
+				repoSpec := &sourcev1.HelmRepositorySpec{
+					URL:      "https://example.repo.com/charts",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
+				}
+				lastTransitionTime, err := time.Parse(time.RFC3339, "2022-03-20T06:29:40Z")
+				if err != nil {
+					t.Fatal(err)
+				}
+				repoStatus := &sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+							Type:               "Ready",
+							Status:             "False",
+							Reason:             "IndexationFailed",
+							Message:            "failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
+						},
+					},
+				}
+				repo1 := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
+				repo = &repo1
+			}
+
+			// the index.yaml will contain links to charts but for the purposes
+			// of this test they do not matter
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			ctx := context.Background()
+			actualResp, err := s.GetPackageRepositoryDetail(ctx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.expectedStatusCode == codes.OK {
+				if actualResp == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					opt1 := cmpopts.IgnoreUnexported(
+						corev1.Context{},
+						corev1.PackageRepositoryReference{},
+						plugins.Plugin{},
+						corev1.GetPackageRepositoryDetailResponse{},
+						corev1.PackageRepositoryDetail{},
+						corev1.PackageRepositoryStatus{},
+						corev1.PackageRepositoryAuth{},
+						corev1.PackageRepositoryTlsConfig{},
+						corev1.SecretKeyReference{},
+					)
+					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
 			}

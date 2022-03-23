@@ -62,8 +62,9 @@ func init() {
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
 	DefaultPluginConfig = FluxPluginConfig{
-		VersionsInSummary: pkgutils.GetDefaultVersionsInSummary(),
-		TimeoutSeconds:    int32(-1),
+		VersionsInSummary:    pkgutils.GetDefaultVersionsInSummary(),
+		TimeoutSeconds:       int32(-1),
+		DefaultUpgradePolicy: pkgutils.UpgradePolicyNone,
 	}
 
 	repositoriesGvr = schema.GroupVersionResource{
@@ -333,18 +334,17 @@ func GetPluginDetail() *plugins.Plugin {
 }
 
 type FluxPluginConfig struct {
-	VersionsInSummary pkgutils.VersionsInSummary
-	TimeoutSeconds    int32
+	VersionsInSummary    pkgutils.VersionsInSummary
+	TimeoutSeconds       int32
+	DefaultUpgradePolicy pkgutils.UpgradePolicy
 }
 
 // ParsePluginConfig parses the input plugin configuration json file and return the
 // configuration options.
 func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
-	// Note at present VersionsInSummary is the only configurable option for this plugin,
-	// and if required this func can be enhanced to return fluxConfig struct
-
-	// In the flux plugin, for example, we are interested in config for the
-	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
+	// In the flux plugin, for example, we are interested in
+	// a) config for the core.packages.v1alpha1.
+	// b) flux plugin-specific config
 	type internalFluxPluginConfig struct {
 		Core struct {
 			Packages struct {
@@ -354,6 +354,14 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"core"`
+
+		Flux struct {
+			Packages struct {
+				V1alpha1 struct {
+					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
+				} `json:"v1alpha1"`
+			} `json:"packages"`
+		} `json:"flux"`
 	}
 	var config internalFluxPluginConfig
 
@@ -363,13 +371,21 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 	}
 	err = json.Unmarshal([]byte(pluginConfig), &config)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
+		return nil, fmt.Errorf("unable to unmarshal plugin config: %q error: %w", string(pluginConfig), err)
+	}
+
+	var defaultUpgradePolicy pkgutils.UpgradePolicy
+	defaultUpgradePolicy, err = pkgutils.UpgradePolicyFromString(
+		config.Flux.Packages.V1alpha1.DefaultUpgradePolicy)
+	if err != nil {
+		return nil, err
 	}
 
 	// return configured value
 	return &FluxPluginConfig{
-		VersionsInSummary: config.Core.Packages.V1alpha1.VersionsInSummary,
-		TimeoutSeconds:    config.Core.Packages.V1alpha1.TimeoutSeconds,
+		VersionsInSummary:    config.Core.Packages.V1alpha1.VersionsInSummary,
+		TimeoutSeconds:       config.Core.Packages.V1alpha1.TimeoutSeconds,
+		DefaultUpgradePolicy: defaultUpgradePolicy,
 	}, nil
 }
 

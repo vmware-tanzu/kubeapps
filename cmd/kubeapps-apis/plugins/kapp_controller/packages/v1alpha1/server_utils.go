@@ -188,7 +188,7 @@ type (
 	kappControllerPluginParsedConfig struct {
 		versionsInSummary                  pkgutils.VersionsInSummary
 		timeoutSeconds                     int32
-		defaultUpgradePolicy               upgradePolicy
+		defaultUpgradePolicy               pkgutils.UpgradePolicy
 		defaultPrereleasesVersionSelection []string
 		defaultAllowDowngrades             bool
 	}
@@ -200,63 +200,6 @@ var defaultPluginConfig = &kappControllerPluginParsedConfig{
 	defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
 	defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 	defaultAllowDowngrades:             fallbackDefaultAllowDowngrades,
-}
-
-// Create a upgradePolicy enum-alike
-type upgradePolicy int
-
-const (
-	none upgradePolicy = iota
-	patch
-	minor
-	major
-)
-
-var upgradePolicyMapping = map[string]upgradePolicy{
-	"":      none,
-	"none":  none,
-	"major": major,
-	"minor": minor,
-	"patch": patch,
-}
-
-func (s upgradePolicy) string() string {
-	switch s {
-	case major:
-		return "major"
-	case minor:
-		return "minor"
-	case patch:
-		return "patch"
-	case none:
-		return "none"
-	}
-	return "none"
-}
-
-func versionConstraintWithUpgradePolicy(pkgVersion string, policy upgradePolicy) (string, error) {
-	version, err := semver.NewVersion(pkgVersion)
-	if err != nil {
-		return "", err
-	}
-
-	// Example: 1.2.3
-	switch policy {
-	case major:
-		// >= 1.2.3 (1.2.4 and 1.3.0 and 2.0.0 are valid)
-		return fmt.Sprintf(">=%s", version.String()), nil
-	case minor:
-		// >= 1.2.3 <2.0.0 (1.2.4 and 1.3.0 are valid, but 2.0.0 is not)
-		return fmt.Sprintf(">=%s <%s", version.String(), version.IncMajor().String()), nil
-	case patch:
-		// >= 1.2.3 <2.0.0 (1.2.4 is valid, but 1.3.0 and 2.0.0 are not)
-		return fmt.Sprintf(">=%s <%s", version.String(), version.IncMinor().String()), nil
-	case none:
-		// 1.2.3 (only 1.2.3 is valid)
-		return version.String(), nil
-	}
-	// Default: 1.2.3 (only 1.2.3 is valid)
-	return version.String(), nil
 }
 
 // prereleasesVersionSelection returns the proper value to the prereleases used in kappctrl from the selection

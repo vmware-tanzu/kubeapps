@@ -1332,7 +1332,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 		}
 		return nil // done, nothing more to check
 	} else if err != nil {
-		t.Fatalf("%+v", err)
+		t.Fatalf("CreateInstalledPackage failed due to: %+v", err)
 	}
 
 	if tc.expectedDetail != nil {

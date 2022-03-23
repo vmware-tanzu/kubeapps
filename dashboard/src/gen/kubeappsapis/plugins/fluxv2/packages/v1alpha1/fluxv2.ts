@@ -24,7 +24,9 @@ import {
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
+  GetPackageRepositoryDetailRequest,
   AddPackageRepositoryResponse,
+  GetPackageRepositoryDetailResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
 
@@ -408,6 +410,10 @@ export interface FluxV2RepositoriesService {
     request: DeepPartial<AddPackageRepositoryRequest>,
     metadata?: grpc.Metadata,
   ): Promise<AddPackageRepositoryResponse>;
+  GetPackageRepositoryDetail(
+    request: DeepPartial<GetPackageRepositoryDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryDetailResponse>;
 }
 
 export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesService {
@@ -416,6 +422,7 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
   constructor(rpc: Rpc) {
     this.rpc = rpc;
     this.AddPackageRepository = this.AddPackageRepository.bind(this);
+    this.GetPackageRepositoryDetail = this.GetPackageRepositoryDetail.bind(this);
   }
 
   AddPackageRepository(
@@ -425,6 +432,17 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     return this.rpc.unary(
       FluxV2RepositoriesServiceAddPackageRepositoryDesc,
       AddPackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositoryDetail(
+    request: DeepPartial<GetPackageRepositoryDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryDetailResponse> {
+    return this.rpc.unary(
+      FluxV2RepositoriesServiceGetPackageRepositoryDetailDesc,
+      GetPackageRepositoryDetailRequest.fromPartial(request),
       metadata,
     );
   }
@@ -448,6 +466,28 @@ export const FluxV2RepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefin
     deserializeBinary(data: Uint8Array) {
       return {
         ...AddPackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const FluxV2RepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMethodDefinitionish = {
+  methodName: "GetPackageRepositoryDetail",
+  service: FluxV2RepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetPackageRepositoryDetailRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetPackageRepositoryDetailResponse.decode(data),
         toObject() {
           return this;
         },
@@ -529,7 +569,6 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
-
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>

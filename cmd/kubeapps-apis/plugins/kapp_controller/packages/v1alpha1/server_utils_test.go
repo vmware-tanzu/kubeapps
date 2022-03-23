@@ -526,31 +526,6 @@ Some support information
 	}
 }
 
-func TestVersionConstraintWithUpgradePolicy(t *testing.T) {
-	tests := []struct {
-		name          string
-		version       string
-		upgradePolicy upgradePolicy
-		expected      string
-	}{
-		{"get constraints with upgradePolicy 'major'", "1.2.3", major, ">=1.2.3"},
-		{"get constraints with upgradePolicy 'minor'", "1.2.3", minor, ">=1.2.3 <2.0.0"},
-		{"get constraints with upgradePolicy 'patch'", "1.2.3", patch, ">=1.2.3 <1.3.0"},
-		{"get constraints with upgradePolicy 'none'", "1.2.3", none, "1.2.3"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			values, err := versionConstraintWithUpgradePolicy(tt.version, tt.upgradePolicy)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if !cmp.Equal(tt.expected, values) {
-				t.Errorf("mismatch in '%s': %s", tt.name, cmp.Diff(tt.expected, values))
-			}
-		})
-	}
-}
-
 func TestPrereleasesVersionSelection(t *testing.T) {
 	tests := []struct {
 		name                        string

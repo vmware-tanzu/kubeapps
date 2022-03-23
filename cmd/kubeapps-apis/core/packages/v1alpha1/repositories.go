@@ -71,13 +71,43 @@ func (s repositoriesServer) AddPackageRepository(ctx context.Context, request *p
 		return nil, status.Errorf(status.Convert(err).Code(), "Unable to add package repository %q using the plugin %q: %v", request.Name, request.Plugin.Name, err)
 	}
 
-	// TODO (gfichtenholt)
 	// Validate the plugin response
-	//if response.InstalledPackageRef == nil {
-	//	return nil, status.Errorf(codes.Internal, "Invalid CreateInstalledPackage response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
-	//}
+	if response.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.Internal, "Invalid AddPackageRepository response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
 
 	return response, nil
+}
+
+func (s repositoriesServer) GetPackageRepositoryDetail(ctx context.Context, request *packages.GetPackageRepositoryDetailRequest) (*packages.GetPackageRepositoryDetailResponse, error) {
+	contextMsg := fmt.Sprintf("(identifier=%q, cluster=%q, namespace=%q)", request.GetPackageRepoRef().GetIdentifier(), request.GetPackageRepoRef().GetContext().GetCluster(), request.GetPackageRepoRef().GetContext().GetNamespace())
+	log.Infof("+core GetPackageRepositoryDetail %s", contextMsg)
+
+	if request.GetPackageRepoRef().GetPlugin() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing PackageRepoRef.Plugin)")
+	}
+
+	// Retrieve the plugin with server matching the requested plugin name
+	pluginWithServer := s.getPluginWithServer(request.PackageRepoRef.Plugin)
+	if pluginWithServer == nil {
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.PackageRepoRef.Plugin)
+	}
+
+	// Get the response from the requested plugin
+	response, err := pluginWithServer.server.GetPackageRepositoryDetail(ctx, request)
+	if err != nil {
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the package repository detail for the repository %q using the plugin %q: %v", request.PackageRepoRef.Identifier, request.PackageRepoRef.Plugin.Name, err)
+	}
+
+	// Validate the plugin response
+	if response.GetDetail().GetPackageRepoRef() == nil {
+		return nil, status.Errorf(codes.Internal, "Invalid package reposirtory detail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	// Build the response
+	return &packages.GetPackageRepositoryDetailResponse{
+		Detail: response.Detail,
+	}, nil
 }
 
 // getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer

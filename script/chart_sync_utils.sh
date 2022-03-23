@@ -81,8 +81,8 @@ replaceImage_latestToProduction() {
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
-        's/repository: '${currentImageEscaped}'\n    tag: latest/repository: '${targetImageEscaped}'\n    tag: '${tag}'/g' \
-        "${FILE}"
+    's/repository: '${currentImageEscaped}'\n    tag: latest/repository: '${targetImageEscaped}'\n    tag: '${tag}'/g' \
+    "${FILE}"
     rm "${FILE}.bk"
 }
 
@@ -104,8 +104,8 @@ replaceImage_productionToLatest() {
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
-        's/repository: '${currentImageEscaped}'\n    tag: \S*/repository: '${targetImageEscaped}'\n    tag: latest/g' \
-        "${FILE}"
+    's/repository: '${currentImageEscaped}'\n    tag: \S*/repository: '${targetImageEscaped}'\n    tag: latest/g' \
+    "${FILE}"
     rm "${FILE}.bk"
 }
 
@@ -182,6 +182,21 @@ updateRepoWithRemoteChanges() {
     replaceImage_productionToLatest kubeops "${KUBEAPPS_CHART_DIR}/values.yaml"
     replaceImage_productionToLatest pinniped-proxy "${KUBEAPPS_CHART_DIR}/values.yaml"
     replaceImage_productionToLatest kubeapps-apis "${KUBEAPPS_CHART_DIR}/values.yaml"
+}
+
+generateReadme() {
+    local README_GENERATOR_REPO=${1:?}
+    local CHART_PATH=${2:?}
+
+    TMP_DIR=$(mktemp -u)/readme
+    local chartReadmePath="${CHART_PATH}/README.md"
+    local chartValuesPath="${CHART_PATH}/values.yaml"
+
+    git clone "https://github.com/${README_GENERATOR_REPO}" "${TMP_DIR}" --depth 1 --no-single-branch
+
+    cd "${TMP_DIR}"
+    npm install --production
+    node bin/index.js -r "${chartReadmePath}" -v "${chartValuesPath}"
 }
 
 commitAndSendExternalPR() {
