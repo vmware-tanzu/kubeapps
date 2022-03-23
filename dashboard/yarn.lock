@@ -1087,10 +1087,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@braintree/sanitize-url@^5.0.2":
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-5.0.2.tgz#b23080fa35520e993a8a37a0f5bca26aa4650a48"
-  integrity sha512-NBEJlHWrhQucLhZGHtSxM2loSaNUMajC7KOYJLyfcdW/6goVoff2HoYI3bz8YCDN0wKGbxtUL0gx2dvHpvnWlw==
+"@braintree/sanitize-url@=6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-6.0.0.tgz#fe364f025ba74f6de6c837a84ef44bdb1d61e68f"
+  integrity sha512-mgmE7XBYY/21erpzhexk4Cj1cyTQ9LzvnTxtzM17BJ7ERMNE6W72mQRo0I1Ud8eFJ+RVVIcBNhLFZ3GX4XFz5w==
 
 "@cds/city@^1.1.0":
   version "1.1.0"
@@ -13828,13 +13828,13 @@ swagger-client@^3.18.4:
     traverse "~0.6.6"
     url "~0.11.0"
 
-swagger-ui-react@^4.6.2:
-  version "4.6.2"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.6.2.tgz#77f8d4c8c25a96984b83571c17647abac9c8afe8"
-  integrity sha512-7ab+IMkW4zxkIamjpNnbYVn/9E922mw8rVmTXZA0pQZ/V0heQDAzp/j2fHjJK0RZSJekxbuo9M2yChcTWdaIdg==
+swagger-ui-react@^4.8.0:
+  version "4.8.0"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-4.8.0.tgz#0d3782dbc7254b3a8306d5f3f345b5e7894d6d17"
+  integrity sha512-zumBDcwifJaM4/7DdMh76fHvlzT5t4f8/Fx8hSlZ25VhJycv+F+s23KzfhoXsgAy4qE8TeEDz2fDiODx/1XAWA==
   dependencies:
     "@babel/runtime-corejs3" "^7.16.8"
-    "@braintree/sanitize-url" "^5.0.2"
+    "@braintree/sanitize-url" "=6.0.0"
     base64-js "^1.5.1"
     classnames "^2.3.1"
     css.escape "1.5.1"
