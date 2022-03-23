@@ -272,7 +272,7 @@ fi
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
-GLOBAL_REPOS_NS=kubeapps
+GLOBAL_REPOS_NS=kubeapps-repos-global
 
 if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
