@@ -197,6 +197,7 @@ installOrUpgradeKubeapps() {
     --set kubeappsapis.replicaCount=2
     --set kubeops.enabled=true
     --set postgresql.architecture=standalone
+    --set postgresql.primary.persistence.enabled=false
     --set postgresql.auth.password=password
     --set redis.auth.password=password
     --set apprepository.initialRepos[0].name=bitnami

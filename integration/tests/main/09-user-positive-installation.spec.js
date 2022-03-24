@@ -24,7 +24,7 @@ test.describe("Limited user simple deployments", () => {
     await page.waitForTimeout(3000);
 
     // Add new repo
-    const repoName = utils.getRandomName("repo-test-09");
+    const repoName = utils.getRandomName("repo-09");
     console.log(`Creating repository "${repoName}"`);
     await page.click('cds-button:has-text("Add App Repository")');
     await page.fill("input#kubeapps-repo-name", repoName);
@@ -34,6 +34,7 @@ test.describe("Limited user simple deployments", () => {
     );
     await page.click('cds-button:has-text("Install Repo")');
     await page.waitForLoadState("networkidle");
+    await page.click(`div.page-content table td a:has-text("${repoName}")`);
 
     // Log out admin and log in regular user
     await k.doLogout();
