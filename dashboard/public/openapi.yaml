@@ -26,9 +26,9 @@ info:
 
      Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.
      #### Developer Documentation
-     - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/main/docs/architecture/overview.md).
-     - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
-     - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
+     - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/main/docs/background/architecture.md).
+     - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
+     - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/main/docs/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
   version: 0.1.0
   title: Kubeapps API
   termsOfService: "https://github.com/kubeapps/kubeapps/blob/main/LICENSE"

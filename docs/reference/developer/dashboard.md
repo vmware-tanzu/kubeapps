@@ -70,7 +70,7 @@ First add the desired host:port to the package.json:
 
 > **NOTE**: Add the [proxy](../../dashboard/package.json#L176) `key:value` to the end of the `package.json`. For convenience, you can change the `host:port` values to meet your needs.
 
-To use this a run Kubeapps per the [getting-started documentation](../../docs/user/getting-started.md#step-3-start-the-kubeapps-dashboard). This will start Kubeapps running on port `8080`.
+To use this a run Kubeapps per the [getting-started documentation](../../docs/tutorials/getting-started.md#step-3-start-the-kubeapps-dashboard). This will start Kubeapps running on port `8080`.
 
 Next you can launch the dashboard.
 
