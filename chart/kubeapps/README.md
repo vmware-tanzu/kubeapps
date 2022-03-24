@@ -958,12 +958,17 @@ The following values have been renamed:
 - `assetsvc.service.port` renamed as `assetsvc.service.ports.http`.
 - `assetsvc.containerPort` renamed as `assetsvc.containerPorts.http`.
 - `authProxy.containerPort` renamed as `authProxy.containerPorts.proxy`.
+- `authProxy.additionalFlags` renamed as `authProxy.extraFlags`,
 - Pinniped Proxy service no longer uses `pinnipedProxy.containerPort`. Use `pinnipedProxy.service.ports.pinnipedProxy` to change the service port.
 - `pinnipedProxy.containerPort` renamed as `pinnipedProxy.containerPorts.pinnipedProxy`.
 - `postgresql.replication.enabled` has been removed. Use `postgresql.architecture` instead.
 - `postgresql.postgresqlDatabase` renamed as `postgresql.auth.database`.
 - `postgresql.postgresqlPassword` renamed as `postgresql.auth.password`.
+- `postgresql.existingSecret` renamed as `postgresql.auth.existingSecret`.
 - `redis.redisPassword` renamed as `redis.auth.password`.
+- `redis.existingSecret` renamed as `redis.auth.existingSecret`.
+
+Note also that if you have an existing Postgresql secret that is used for Kubeapps, you will need to update the key from `postgresql-password` to `postgres-password`.
 
 ### Nginx Ipv6 error
 
