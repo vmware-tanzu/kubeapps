@@ -193,18 +193,8 @@ installKappController() {
   # wait for deployment to be ready
   kubectl rollout status -w deployment/kapp-controller --namespace="${namespace}"
 
-  cat <<EOF | kubectl apply -f -
----
-apiVersion: packaging.carvel.dev/v1alpha1
-kind: PackageRepository
-metadata:
-  name: tmc.test.carvel.dev
-  namespace: kapp-controller-packaging-global
-spec:
-  fetch:
-    imgpkgBundle:
-      image: projects.registry.vmware.com/tce/main:stable
-EOF
+  # Add test repository.
+	kubectl apply -f https://raw.githubusercontent.com/vmware-tanzu/carvel-kapp-controller/develop/examples/packaging-with-repo/package-repository.yml
 }
 
 ########################

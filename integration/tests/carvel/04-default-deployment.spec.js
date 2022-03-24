@@ -12,12 +12,14 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
 
   // Select package to deploy
   await page.click('a.nav-link:has-text("Catalog")');
-  await page.locator("input#search").fill("local-path-storage");
+  await page.locator("input#search").fill("carvel");
   await page.waitForTimeout(3000);
-  await page.click('a:has-text("local path node storage")');
+  await page.click('a:has-text("Carvel package for testing installation")');
   await page.click('cds-button:has-text("Deploy") >> nth=0');
 
   // Deploy package
+  await page.waitForSelector('select[name="package-versions"]');
+  await page.selectOption('select[name="package-versions"]', "2.0.0");
   const releaseNameLocator = page.locator("#releaseName");
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
