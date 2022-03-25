@@ -4,7 +4,6 @@ on:
   issues:
     types: [opened]
 env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
 
 jobs:
@@ -17,8 +16,3 @@ jobs:
       if: github.event.action == 'opened'
       with:
         project: 'https://github.com/orgs/kubeapps/projects/4'
-    - name: Assign NEW issues to classic project
-      uses: srggrs/assign-one-project-github-action@1.3.1
-      if: github.event.action == 'opened'
-      with:
-        project: 'https://github.com/orgs/kubeapps/kubeapps/projects/11'
