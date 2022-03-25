@@ -5,7 +5,7 @@ frontend:
   replicaCount: 1
   service:
     type: NodePort
-    nodePorts: 
+    nodePorts:
       http: 30000
 assetsvc:
   replicaCount: 1
