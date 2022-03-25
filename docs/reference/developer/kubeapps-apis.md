@@ -274,7 +274,7 @@ grpcurl -plaintext localhost:8080 kubeappsapis.core.plugins.v1alpha1.PluginsServ
 
 You will need an authentication token to be able to query the API service's other endpoints, such as the packaging endpoints.
 
-You can either create a service account with the necessary RBAC and use the related bearer token, or [steal the auth token from your browser](/docs/user/OIDC/OAuth2OIDC-debugging.md#viewing-the-jwt-id-token). Either way, you will end up with a token that you can use with your queries. For example, to get the available packages:
+You can either create a service account with the necessary RBAC and use the related bearer token, or [steal the auth token from your browser](/docs/howto/OIDC/OAuth2OIDC-debugging.md#viewing-the-jwt-id-token). Either way, you will end up with a token that you can use with your queries. For example, to get the available packages:
 
 ```bash
 $ export TOKEN="Bearer eyJhbGciO..."
@@ -365,7 +365,7 @@ grpcurl -plaintext -d '{"context": {"cluster": "default", "namespace": "kubeapps
       "iconUrl": "https://bitnami.com/assets/stacks/apache/img/apache-stack-220x234.png",
 ```
 
-Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available. See [managing carvel packages](/docs/user/managing-carvel-packages.md) or [managing flux packages](/docs/user/managing-flux-packages.md) for information about setting up the environment.
+Of course, you will need to have the appropriate Flux HelmRepository or Carvel PackageRepository available. See [managing carvel packages](/docs/tutorials/managing-carvel-packages.md) or [managing flux packages](/docs/tutorials/managing-flux-packages.md) for information about setting up the environment.
 
 ## Hacking
 

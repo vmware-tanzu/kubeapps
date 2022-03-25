@@ -3,8 +3,8 @@
 
 # File from https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 # with modification of:
-# --- a/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
-# +++ b/docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
+# --- a/docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
+# +++ b/docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
 # @@ -45,6 +45,8 @@ metadata:
 #    name: ingress-nginx-controller
 #    namespace: ingress-nginx
