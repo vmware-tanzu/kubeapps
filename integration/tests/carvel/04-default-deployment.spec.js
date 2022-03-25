@@ -30,7 +30,7 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Assertions
-  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
+  await page.waitForSelector("css=.application-status-pie-chart-number >> text=3", {
     timeout: utils.getDeploymentTimeout(),
   });
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
