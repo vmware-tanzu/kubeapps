@@ -563,6 +563,26 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	}, nil
 }
 
+// GetPackageRepositorySummaries returns the package repositories managed by the 'fluxv2' plugin
+func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *corev1.GetPackageRepositorySummariesRequest) (*corev1.GetPackageRepositorySummariesResponse, error) {
+	log.Infof("+fluxv2 GetPackageRepositorySummaries [%v]", request)
+	cluster := request.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.Context.Cluster: [%v]",
+			cluster)
+	}
+
+	if summaries, err := s.repoSummaries(ctx, request.GetContext().GetNamespace()); err != nil {
+		return nil, err
+	} else {
+		return &corev1.GetPackageRepositorySummariesResponse{
+			PackageRepositorySummaries: summaries,
+		}, nil
+	}
+}
+
 // convenience func mostly used by unit tests
 func (s *Server) newBackgroundClientGetter() clientgetter.BackgroundClientGetterFunc {
 	return func(ctx context.Context) (clientgetter.ClientInterfaces, error) {

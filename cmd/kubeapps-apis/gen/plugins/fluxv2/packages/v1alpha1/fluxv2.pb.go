@@ -233,7 +233,7 @@ var file_kubeappsapis_plugins_fluxv2_packages_v1alpha1_fluxv2_proto_rawDesc = []
 	0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x7d, 0x2f, 0x7b, 0x69, 0x6e, 0x73, 0x74,
 	0x61, 0x6c, 0x6c, 0x65, 0x64, 0x5f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x65,
 	0x66, 0x2e, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x7d, 0x2f, 0x72, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x72, 0x65, 0x66, 0x73, 0x32, 0x95, 0x05, 0x0a, 0x19, 0x46,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x72, 0x65, 0x66, 0x73, 0x32, 0x86, 0x07, 0x0a, 0x19, 0x46,
 	0x6c, 0x75, 0x78, 0x56, 0x32, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65,
 	0x73, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0xd6, 0x01, 0x0a, 0x14, 0x41, 0x64, 0x64,
 	0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
@@ -275,13 +275,28 @@ var file_kubeappsapis_plugins_fluxv2_packages_v1alpha1_fluxv2_proto_rawDesc = []
 	0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x2e, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65,
 	0x7d, 0x2f, 0x7b, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x65, 0x70, 0x6f, 0x5f,
 	0x72, 0x65, 0x66, 0x2e, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x3d, 0x2a,
-	0x2a, 0x7d, 0x42, 0x55, 0x5a, 0x53, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70,
-	0x70, 0x73, 0x2f, 0x63, 0x6d, 0x64, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2d,
-	0x61, 0x70, 0x69, 0x73, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73,
-	0x2f, 0x66, 0x6c, 0x75, 0x78, 0x76, 0x32, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73,
-	0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x2a, 0x7d, 0x12, 0xee, 0x01, 0x0a, 0x1d, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67,
+	0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x53, 0x75, 0x6d, 0x6d, 0x61,
+	0x72, 0x69, 0x65, 0x73, 0x12, 0x49, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61,
+	0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65,
+	0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x50, 0x61,
+	0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x53,
+	0x75, 0x6d, 0x6d, 0x61, 0x72, 0x69, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x4a, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63,
+	0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x61,
+	0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65,
+	0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72,
+	0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x36, 0x82, 0xd3, 0xe4,
+	0x93, 0x02, 0x30, 0x12, 0x2e, 0x2f, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x2f, 0x66, 0x6c,
+	0x75, 0x78, 0x76, 0x32, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2f, 0x76, 0x31,
+	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2f, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x69, 0x65, 0x73, 0x42, 0x55, 0x5a, 0x53, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61,
+	0x70, 0x70, 0x73, 0x2f, 0x63, 0x6d, 0x64, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73,
+	0x2d, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e,
+	0x73, 0x2f, 0x66, 0x6c, 0x75, 0x78, 0x76, 0x32, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65,
+	0x73, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var file_kubeappsapis_plugins_fluxv2_packages_v1alpha1_fluxv2_proto_goTypes = []interface{}{
@@ -296,17 +311,19 @@ var file_kubeappsapis_plugins_fluxv2_packages_v1alpha1_fluxv2_proto_goTypes = []
 	(*v1alpha1.GetInstalledPackageResourceRefsRequest)(nil),  // 8: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsRequest
 	(*v1alpha1.AddPackageRepositoryRequest)(nil),             // 9: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest
 	(*v1alpha1.GetPackageRepositoryDetailRequest)(nil),       // 10: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest
-	(*v1alpha1.GetAvailablePackageSummariesResponse)(nil),    // 11: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
-	(*v1alpha1.GetAvailablePackageDetailResponse)(nil),       // 12: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
-	(*v1alpha1.GetAvailablePackageVersionsResponse)(nil),     // 13: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
-	(*v1alpha1.GetInstalledPackageSummariesResponse)(nil),    // 14: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
-	(*v1alpha1.GetInstalledPackageDetailResponse)(nil),       // 15: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
-	(*v1alpha1.CreateInstalledPackageResponse)(nil),          // 16: kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
-	(*v1alpha1.UpdateInstalledPackageResponse)(nil),          // 17: kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
-	(*v1alpha1.DeleteInstalledPackageResponse)(nil),          // 18: kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
-	(*v1alpha1.GetInstalledPackageResourceRefsResponse)(nil), // 19: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
-	(*v1alpha1.AddPackageRepositoryResponse)(nil),            // 20: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
-	(*v1alpha1.GetPackageRepositoryDetailResponse)(nil),      // 21: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	(*v1alpha1.GetPackageRepositorySummariesRequest)(nil),    // 11: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
+	(*v1alpha1.GetAvailablePackageSummariesResponse)(nil),    // 12: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
+	(*v1alpha1.GetAvailablePackageDetailResponse)(nil),       // 13: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
+	(*v1alpha1.GetAvailablePackageVersionsResponse)(nil),     // 14: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
+	(*v1alpha1.GetInstalledPackageSummariesResponse)(nil),    // 15: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
+	(*v1alpha1.GetInstalledPackageDetailResponse)(nil),       // 16: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
+	(*v1alpha1.CreateInstalledPackageResponse)(nil),          // 17: kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
+	(*v1alpha1.UpdateInstalledPackageResponse)(nil),          // 18: kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
+	(*v1alpha1.DeleteInstalledPackageResponse)(nil),          // 19: kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
+	(*v1alpha1.GetInstalledPackageResourceRefsResponse)(nil), // 20: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
+	(*v1alpha1.AddPackageRepositoryResponse)(nil),            // 21: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
+	(*v1alpha1.GetPackageRepositoryDetailResponse)(nil),      // 22: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	(*v1alpha1.GetPackageRepositorySummariesResponse)(nil),   // 23: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
 }
 var file_kubeappsapis_plugins_fluxv2_packages_v1alpha1_fluxv2_proto_depIdxs = []int32{
 	0,  // 0: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetAvailablePackageSummaries:input_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesRequest
@@ -320,19 +337,21 @@ var file_kubeappsapis_plugins_fluxv2_packages_v1alpha1_fluxv2_proto_depIdxs = []
 	8,  // 8: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetInstalledPackageResourceRefs:input_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsRequest
 	9,  // 9: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService.AddPackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest
 	10, // 10: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService.GetPackageRepositoryDetail:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest
-	11, // 11: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetAvailablePackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
-	12, // 12: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetAvailablePackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
-	13, // 13: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetAvailablePackageVersions:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
-	14, // 14: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetInstalledPackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
-	15, // 15: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetInstalledPackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
-	16, // 16: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.CreateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
-	17, // 17: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.UpdateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
-	18, // 18: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.DeleteInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
-	19, // 19: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetInstalledPackageResourceRefs:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
-	20, // 20: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
-	21, // 21: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
-	11, // [11:22] is the sub-list for method output_type
-	0,  // [0:11] is the sub-list for method input_type
+	11, // 11: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService.GetPackageRepositorySummaries:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
+	12, // 12: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetAvailablePackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
+	13, // 13: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetAvailablePackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
+	14, // 14: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetAvailablePackageVersions:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
+	15, // 15: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetInstalledPackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
+	16, // 16: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetInstalledPackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
+	17, // 17: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.CreateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
+	18, // 18: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.UpdateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
+	19, // 19: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.DeleteInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
+	20, // 20: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService.GetInstalledPackageResourceRefs:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
+	21, // 21: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
+	22, // 22: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	23, // 23: kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
+	12, // [12:24] is the sub-list for method output_type
+	0,  // [0:12] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

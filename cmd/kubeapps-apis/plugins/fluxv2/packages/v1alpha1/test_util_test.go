@@ -108,6 +108,11 @@ func lessInstalledPackageSummaryFunc(p1, p2 *corev1.InstalledPackageSummary) boo
 	return p1.Name < p2.Name
 }
 
+// these are helpers to compare slices ignoring order
+func lessPackageRepositorySummaryFunc(p1, p2 *corev1.PackageRepositorySummary) bool {
+	return p1.Name < p2.Name
+}
+
 func compareJSON(t *testing.T, expectedJSON, actualJSON *apiextv1.JSON) {
 	expectedJSONString, actualJSONString := "", ""
 	if expectedJSON != nil {

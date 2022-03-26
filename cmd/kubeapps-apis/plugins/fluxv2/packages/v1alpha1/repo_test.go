@@ -600,11 +600,6 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		}
 
-		lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		repoStatus := &sourcev1.HelmRepositoryStatus{
 			Artifact: &sourcev1.Artifact{
 				Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
@@ -1667,10 +1662,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 					URL:      "https://example.repo.com/charts",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				}
-				lastTransitionTime, err := time.Parse(time.RFC3339, "2022-03-20T06:29:40Z")
-				if err != nil {
-					t.Fatal(err)
-				}
 				repoStatus := &sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
@@ -1688,10 +1679,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				repoSpec := &sourcev1.HelmRepositorySpec{
 					URL:      "https://example.repo.com/charts",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
-				}
-				lastTransitionTime, err := time.Parse(time.RFC3339, "2022-03-20T06:29:40Z")
-				if err != nil {
-					t.Fatal(err)
 				}
 				repoStatus := &sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
@@ -1740,6 +1727,105 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositorySummaries(t *testing.T) {
+	// some prep
+	indexYAMLBytes, err := ioutil.ReadFile(testYaml("valid-index.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, string(indexYAMLBytes))
+	}))
+	defer ts.Close()
+	get_summaries_repo_1.Status.URL = ts.URL
+	get_summaries_repo_2.Status.URL = ts.URL
+
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositorySummariesRequest
+		existingRepos      []sourcev1.HelmRepository
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositorySummariesResponse
+	}{
+		{
+			name: "returns package summaries when namespace not specified",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{},
+			},
+			existingRepos: []sourcev1.HelmRepository{
+				get_summaries_repo_1,
+				get_summaries_repo_2,
+				get_summaries_repo_3,
+				get_summaries_repo_4,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					get_summaries_summary_1,
+					get_summaries_summary_2,
+					get_summaries_summary_3,
+					get_summaries_summary_4,
+				},
+			},
+		},
+		{
+			name: "returns package summaries when namespace is specified",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: "foo"},
+			},
+			existingRepos: []sourcev1.HelmRepository{
+				get_summaries_repo_1,
+				get_summaries_repo_2,
+				get_summaries_repo_3,
+				get_summaries_repo_4,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					get_summaries_summary_1,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, mock, err := newServerWithRepos(t, tc.existingRepos, nil, nil)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.GetPackageRepositorySummariesResponse{},
+				corev1.PackageRepositorySummary{},
+				corev1.PackageRepositoryReference{},
+				corev1.PackageRepositoryStatus{},
+			)
+			opts2 := cmpopts.SortSlices(lessPackageRepositorySummaryFunc)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 		})
 	}
@@ -1960,11 +2046,6 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 
 	if secretRef != "" {
 		repoSpec.SecretRef = &fluxmeta.LocalObjectReference{Name: secretRef}
-	}
-
-	lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
-	if err != nil {
-		return nil, nil, err
 	}
 
 	repoStatus := &sourcev1.HelmRepositoryStatus{
