@@ -196,14 +196,15 @@ installOrUpgradeKubeapps() {
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
     --set kubeops.enabled=true
-    --set postgresql.replication.enabled=false
-    --set postgresql.postgresqlPassword=password
+    --set postgresql.architecture=standalone
+    --set postgresql.primary.persistence.enabled=false
+    --set postgresql.auth.password=password
     --set redis.auth.password=password
     --set apprepository.initialRepos[0].name=bitnami
     --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
-    --set globalReposNamespaceSuffix=-repos-global
+    --set apprepository.globalReposNamespaceSuffix=-repos-global
     --wait)
 
   echo "${cmd[@]}"
@@ -253,14 +254,14 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "authProxy.clientID=default"
     "--set" "authProxy.clientSecret=ZXhhbXBsZS1hcHAtc2VjcmV0"
     "--set" "authProxy.cookieSecret=bm90LWdvb2Qtc2VjcmV0Cg=="
-    "--set" "authProxy.additionalFlags[0]=\"--oidc-issuer-url=https://${DEX_IP}:32000\""
-    "--set" "authProxy.additionalFlags[1]=\"--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster\""
-    "--set" "authProxy.additionalFlags[2]=\"--ssl-insecure-skip-verify=true\""
-    "--set" "authProxy.additionalFlags[3]=\"--redirect-url=http://kubeapps-ci.kubeapps/oauth2/callback\""
-    "--set" "authProxy.additionalFlags[4]=\"--cookie-secure=false\""
-    "--set" "authProxy.additionalFlags[5]=\"--cookie-domain=kubeapps-ci.kubeapps\""
-    "--set" "authProxy.additionalFlags[6]=\"--whitelist-domain=kubeapps-ci.kubeapps\""
-    "--set" "authProxy.additionalFlags[7]=\"--set-authorization-header=true\""
+    "--set" "authProxy.extraFlags[0]=\"--oidc-issuer-url=https://${DEX_IP}:32000\""
+    "--set" "authProxy.extraFlags[1]=\"--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster\""
+    "--set" "authProxy.extraFlags[2]=\"--ssl-insecure-skip-verify=true\""
+    "--set" "authProxy.extraFlags[3]=\"--redirect-url=http://kubeapps-ci.kubeapps/oauth2/callback\""
+    "--set" "authProxy.extraFlags[4]=\"--cookie-secure=false\""
+    "--set" "authProxy.extraFlags[5]=\"--cookie-domain=kubeapps-ci.kubeapps\""
+    "--set" "authProxy.extraFlags[6]=\"--whitelist-domain=kubeapps-ci.kubeapps\""
+    "--set" "authProxy.extraFlags[7]=\"--set-authorization-header=true\""
     "--set" "clusters[0].name=default"
     "--set" "clusters[1].name=second-cluster"
     "--set" "clusters[1].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
@@ -272,7 +273,7 @@ fi
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dep up "${ROOT_DIR}/chart/kubeapps"
 kubectl create ns kubeapps
-GLOBAL_REPOS_NS=kubeapps
+GLOBAL_REPOS_NS=kubeapps-repos-global
 
 if [[ -n "${TEST_UPGRADE:-}" ]]; then
   # To test the upgrade, first install the latest version published
