@@ -39,6 +39,7 @@ var _ corev1.RepositoriesServiceServer = (*Server)(nil)
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedFluxV2PackagesServiceServer
+	v1alpha1.UnimplementedFluxV2RepositoriesServiceServer
 
 	// kubeappsCluster specifies the cluster on which Kubeapps is installed.
 	kubeappsCluster string
