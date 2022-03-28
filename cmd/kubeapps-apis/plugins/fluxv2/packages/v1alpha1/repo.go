@@ -444,6 +444,11 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 		// namely, if a specific namespace is specified we need to list repos in that namespace
 		// and if the caller happens not to have 'read' access to that namespace, a PermissionDenied
 		// error should be raised, as opposed to returning an empty list with no error
+
+		// also note that, at least theoretically, it is not clear what we'd do if we ever
+		// had a flavor of API that allowed 2 namespaces (as opposed to all/one), and the caller
+		// only had access to 1 of them. Raise the error (same as with one namespace) or ignore
+		// inaccessible namespace (same as with all namespaces)?
 		var repoList sourcev1.HelmRepositoryList
 		var client ctrlclient.Client
 		if client, err = s.getClient(ctx, namespace); err != nil {

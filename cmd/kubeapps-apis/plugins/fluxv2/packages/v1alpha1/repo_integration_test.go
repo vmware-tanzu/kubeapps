@@ -591,7 +591,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 		expectedStatusCode codes.Code
 	}{
 		{
-			testName: "gets summaries (all namespaces)",
+			testName: "admin gets summaries (all namespaces)",
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{},
 			},
@@ -610,7 +610,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "gets summaries (one namespace)",
+			testName: "admin gets summaries (one namespace)",
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{Namespace: ns2},
 			},
@@ -627,7 +627,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			},
 		},
 		{
-			testName: "gets summaries (permission denined)",
+			testName: "loser gets summaries (one namespace => permission denined)",
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{Namespace: ns2},
 			},
@@ -638,6 +638,22 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			},
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
+		},
+		{
+			testName: "loser gets summaries (all namespaces => empty list)",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{},
+			},
+			existingRepos: []repoSpec{
+				{name: "podinfo-10", ns: ns1, url: podinfo_repo_url},
+				{name: "podinfo-11", ns: ns2, url: podinfo_repo_url},
+				{name: "podinfo-12", ns: ns3, url: podinfo_repo_url},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   &corev1.GetPackageRepositorySummariesResponse{
+				// PackageRepositorySummaries: is empty so is omitted
+			},
+			unauthorized: true,
 		},
 	}
 
