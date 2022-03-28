@@ -2570,22 +2570,12 @@ var (
 		},
 	}
 
-	get_summaries_repo_1 = sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "bar",
-			Namespace:       "foo",
-			ResourceVersion: "1",
-			Generation:      2,
-		},
-		Spec: sourcev1.HelmRepositorySpec{
+	get_summaries_repo_1 = newRepo("bar", "foo",
+		&sourcev1.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
-		Status: sourcev1.HelmRepositoryStatus{
+		&sourcev1.HelmRepositoryStatus{
 			Artifact: &sourcev1.Artifact{
 				Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
 				LastUpdateTime: metav1.Time{Time: lastUpdateTime},
@@ -2602,27 +2592,15 @@ var (
 					Type:               "Ready",
 				},
 			},
-			ObservedGeneration: 2,
-			URL:                "TBD",
-		},
-	}
+			URL: "TBD",
+		})
 
-	get_summaries_repo_2 = sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "zot",
-			Namespace:       "xyz",
-			ResourceVersion: "1",
-			Generation:      2,
-		},
-		Spec: sourcev1.HelmRepositorySpec{
+	get_summaries_repo_2 = newRepo("zot", "xyz",
+		&sourcev1.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
-		Status: sourcev1.HelmRepositoryStatus{
+		&sourcev1.HelmRepositoryStatus{
 			Artifact: &sourcev1.Artifact{
 				Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
 				LastUpdateTime: metav1.Time{Time: lastUpdateTime},
@@ -2639,47 +2617,25 @@ var (
 					Type:               "Ready",
 				},
 			},
-			ObservedGeneration: 2,
-			URL:                "TBD",
-		},
-	}
+			URL: "TBD",
+		})
 
-	get_summaries_repo_3 = sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "pending",
-			Namespace:       "xyz",
-			ResourceVersion: "1",
-			Generation:      1,
-		},
-		Spec: sourcev1.HelmRepositorySpec{
+	get_summaries_repo_3 = newRepo("pending", "xyz",
+		&sourcev1.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
-		Status: sourcev1.HelmRepositoryStatus{
+		&sourcev1.HelmRepositoryStatus{
 			ObservedGeneration: -1,
 		},
-	}
+	)
 
-	get_summaries_repo_4 = sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "failed",
-			Namespace:       "xyz",
-			ResourceVersion: "1",
-			Generation:      1,
-		},
-		Spec: sourcev1.HelmRepositorySpec{
+	get_summaries_repo_4 = newRepo("failed", "xyz",
+		&sourcev1.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
-		Status: sourcev1.HelmRepositoryStatus{
+		&sourcev1.HelmRepositoryStatus{
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
@@ -2689,9 +2645,7 @@ var (
 					Message:            "failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
 				},
 			},
-			ObservedGeneration: 1,
-		},
-	}
+		})
 
 	get_summaries_summary_1 = &corev1.PackageRepositorySummary{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
@@ -2775,5 +2729,28 @@ var (
 			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
 			UserReason: "IndexationFailed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
 		},
+	}
+
+	get_summaries_summary_5 = func(name, ns string) *corev1.PackageRepositorySummary {
+		return &corev1.PackageRepositorySummary{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Cluster:   KubeappsCluster,
+					Namespace: ns,
+				},
+				Identifier: name,
+				Plugin:     fluxPlugin,
+			},
+			Name:            name,
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_repo_url,
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed: Fetched revision: 2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b",
+			},
+		}
 	}
 )

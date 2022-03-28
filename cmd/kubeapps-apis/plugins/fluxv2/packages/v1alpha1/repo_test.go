@@ -1877,7 +1877,7 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
-			Generation: int64(1),
+			Generation: 1,
 		},
 	}
 	if namespace != "" {
@@ -1901,7 +1901,9 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 
 	if status != nil {
 		helmRepository.Status = *status.DeepCopy()
-		helmRepository.Status.ObservedGeneration = int64(1)
+		if status.ObservedGeneration == 0 {
+			helmRepository.Status.ObservedGeneration = 1
+		}
 	}
 
 	return helmRepository
