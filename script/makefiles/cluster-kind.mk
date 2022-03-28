@@ -16,11 +16,11 @@ ${CLUSTER_CONFIG}:
 	kind create cluster \
 		--kubeconfig ${CLUSTER_CONFIG} \
 		--name ${CLUSTER_NAME} \
-		--config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml \
+		--config=./docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml \
 		--retain \
 		--wait 10s
-	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
-	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
 	# TODO: need to add wait for condition=exists or similar - https://github.com/kubernetes/kubernetes/issues/83242
 	sleep 5
 	kubectl wait --kubeconfig=${CLUSTER_CONFIG} --namespace ingress-nginx \
@@ -43,11 +43,11 @@ ${ADDITIONAL_CLUSTER_CONFIG}: devel/dex.crt
 	kind create cluster \
 		--kubeconfig ${ADDITIONAL_CLUSTER_CONFIG} \
 		--name ${ADDITIONAL_CLUSTER_NAME} \
-		--config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
+		--config=./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
 		--retain \
 		--wait 10s
-	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
-	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml
+	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml
 
 additional-cluster-kind: ${ADDITIONAL_CLUSTER_CONFIG}
 

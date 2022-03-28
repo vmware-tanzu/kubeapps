@@ -32,7 +32,7 @@ import (
 // this integration test is meant to test a scenario when the redis cache is confiured with maxmemory
 // too small to be able to fit all the repos needed to satisfy the request for GetAvailablePackageSummaries
 // and redis cache eviction kicks in. Also, the kubeapps-apis pod should have a large memory limit (1Gb) set
-// To set up such environment one can use  "-f ./docs/user/manifests/kubeapps-local-dev-redis-tiny-values.yaml"
+// To set up such environment one can use  "-f ./docs/howto/manifests/kubeapps-local-dev-redis-tiny-values.yaml"
 // option when installing kubeapps via "helm upgrade"
 // It is worth noting that exactly how many copies of bitnami repo can be held in the cache at any given time varies
 // This is because the size of the index.yaml we get from bitnami does fluctuate quite a bit over time:

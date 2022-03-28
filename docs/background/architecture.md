@@ -13,13 +13,13 @@ The dashboard is written in the JavaScript programming language and is developed
 ### Kubeops
 
 Kubeops is the service in charge of communicating both with the Helm (v3) API and other k8s resources like AppRepositories or Secrets.
-Check more details about the implementation in [this document](/docs/developer/kubeops.md). Note: this service is deprecated and in the process of being removed.
+Check more details about the implementation in [this document](/docs/reference/developer/kubeops.md). Note: this service is deprecated and in the process of being removed.
 
 ### Kubeapps-APIs
 
 The Kubeapps APIs service provides a pluggable, gRPC-based API service enabling the Kubeapps UI (or other clients) to interact with different Kubernetes packaging formats in a consistent, extensible way.
 
-You can read more details about the architecture, implementation and getting started in the [Kubeapps APIs developer documentation](/docs/developer/kubeapps-apis.md).
+You can read more details about the architecture, implementation and getting started in the [Kubeapps APIs developer documentation](/docs/reference/developer/kubeapps-apis.md).
 
 ### Apprepository CRD and Controller
 
@@ -27,8 +27,8 @@ Chart repositories in Kubeapps are managed with a `CustomResourceDefinition` cal
 
 ### `asset-syncer`
 
-The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in a database. This metadata is then served by the `assetsvc` component. Check more details about the implementation in this [document](/docs/developer/asset-syncer.md).
+The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in a database. This metadata is then served by the `assetsvc` component. Check more details about the implementation in this [document](/docs/reference/developer/asset-syncer.md).
 
 ### `assetsvc`
 
-The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts and other resources that's populated in a database. Check more details about the implementation in this [document](/docs/developer/asset-syncer.md).
+The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts and other resources that's populated in a database. Check more details about the implementation in this [document](/docs/reference/developer/asset-syncer.md).

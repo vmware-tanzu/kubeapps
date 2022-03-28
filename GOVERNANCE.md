@@ -41,7 +41,7 @@ One of the most important aspects of any open source community is the concept of
 
 Proposals should cover the high-level objectives, use cases, and technical recommendations on how to implement them. In general, the community member(s) interested in implementing the proposal should be either deeply engaged in the proposal process or be an author of the proposal.
 
-The proposal should be documented as a separate markdown file pushed to the root of the [design-proposals](./docs/architecture/design-proposals) folder in the [Kubeapps repository](https://github.com/kubeapps/kubeapps) via PR.
+The proposal should be documented as a separate markdown file pushed to the root of the [design-proposals](./docs/reference/design-proposals) folder in the [Kubeapps repository](https://github.com/kubeapps/kubeapps) via PR.
 
 ### Proposal Lifecycle
 
