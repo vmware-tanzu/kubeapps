@@ -40,7 +40,7 @@ function AppListGrid(props: IAppListProps) {
           Start browsing your <Link to={url.app.catalog(cluster, namespace)}>favourite apps</Link>{" "}
           or check the{" "}
           <a
-            href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/user/getting-started.md`}
+            href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/tutorials/getting-started.md`}
             target="_blank"
             rel="noopener noreferrer"
           >

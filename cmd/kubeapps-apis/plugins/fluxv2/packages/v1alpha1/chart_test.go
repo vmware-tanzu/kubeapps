@@ -871,11 +871,6 @@ func TestChartWithRelativeURL(t *testing.T) {
 		Interval: metav1.Duration{Duration: 1 * time.Minute},
 	}
 
-	lastUpdateTime, err := time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	repoStatus := &sourcev1.HelmRepositoryStatus{
 		Artifact: &sourcev1.Artifact{
 			Checksum:       "651f952130ea96823711d08345b85e82be011dc6",

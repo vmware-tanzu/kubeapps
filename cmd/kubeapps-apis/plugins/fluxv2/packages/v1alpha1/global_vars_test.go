@@ -1278,6 +1278,7 @@ var (
 	}
 
 	lastTransitionTime, _ = time.Parse(time.RFC3339, "2021-08-11T08:46:03Z")
+	lastUpdateTime, _     = time.Parse(time.RFC3339, "2021-07-01T05:09:45Z")
 
 	redis_existing_spec_completed = testSpecGetInstalledPackages{
 		repoName:             "bitnami-1",
@@ -2567,5 +2568,189 @@ var (
 			},
 			Identifier: "my-kaka",
 		},
+	}
+
+	get_summaries_repo_1 = newRepo("bar", "foo",
+		&sourcev1.HelmRepositorySpec{
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+		},
+		&sourcev1.HelmRepositoryStatus{
+			Artifact: &sourcev1.Artifact{
+				Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+				LastUpdateTime: metav1.Time{Time: lastUpdateTime},
+				Path:           "helmrepository/default/bitnami/index-651f952130ea96823711d08345b85e82be011dc6.yaml",
+				Revision:       "651f952130ea96823711d08345b85e82be011dc6",
+				URL:            "http://source-controller.flux-system.svc.cluster.local./helmrepository/default/bitnami/index-651f952130ea96823711d08345b85e82be011dc6.yaml",
+			},
+			Conditions: []metav1.Condition{
+				{
+					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+					Message:            "Fetched revision: 651f952130ea96823711d08345b85e82be011dc6",
+					Reason:             sourcev1.IndexationSucceededReason,
+					Status:             "True",
+					Type:               "Ready",
+				},
+			},
+			URL: "TBD",
+		})
+
+	get_summaries_repo_2 = newRepo("zot", "xyz",
+		&sourcev1.HelmRepositorySpec{
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+		},
+		&sourcev1.HelmRepositoryStatus{
+			Artifact: &sourcev1.Artifact{
+				Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+				LastUpdateTime: metav1.Time{Time: lastUpdateTime},
+				Path:           "helmrepository/default/bitnami/index-651f952130ea96823711d08345b85e82be011dc6.yaml",
+				Revision:       "651f952130ea96823711d08345b85e82be011dc6",
+				URL:            "http://source-controller.flux-system.svc.cluster.local./helmrepository/default/bitnami/index-651f952130ea96823711d08345b85e82be011dc6.yaml",
+			},
+			Conditions: []metav1.Condition{
+				{
+					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+					Message:            "Fetched revision: 651f952130ea96823711d08345b85e82be011dc6",
+					Reason:             sourcev1.IndexationSucceededReason,
+					Status:             "True",
+					Type:               "Ready",
+				},
+			},
+			URL: "TBD",
+		})
+
+	get_summaries_repo_3 = newRepo("pending", "xyz",
+		&sourcev1.HelmRepositorySpec{
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+		},
+		&sourcev1.HelmRepositoryStatus{
+			ObservedGeneration: -1,
+		},
+	)
+
+	get_summaries_repo_4 = newRepo("failed", "xyz",
+		&sourcev1.HelmRepositorySpec{
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+		},
+		&sourcev1.HelmRepositoryStatus{
+			Conditions: []metav1.Condition{
+				{
+					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+					Type:               "Ready",
+					Status:             "False",
+					Reason:             "IndexationFailed",
+					Message:            "failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
+				},
+			},
+		})
+
+	get_summaries_summary_1 = &corev1.PackageRepositorySummary{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "foo",
+			},
+			Identifier: "bar",
+			Plugin:     fluxPlugin,
+		},
+		Name:            "bar",
+		Description:     "",
+		NamespaceScoped: false,
+		Type:            "helm",
+		Url:             "http://example.com",
+		Status: &corev1.PackageRepositoryStatus{
+			Ready:      true,
+			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+			UserReason: "IndexationSucceed: Fetched revision: 651f952130ea96823711d08345b85e82be011dc6",
+		},
+	}
+
+	get_summaries_summary_2 = &corev1.PackageRepositorySummary{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "xyz",
+			},
+			Identifier: "zot",
+			Plugin:     fluxPlugin,
+		},
+		Name:            "zot",
+		Description:     "",
+		NamespaceScoped: false,
+		Type:            "helm",
+		Url:             "http://example.com",
+		Status: &corev1.PackageRepositoryStatus{
+			Ready:      true,
+			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+			UserReason: "IndexationSucceed: Fetched revision: 651f952130ea96823711d08345b85e82be011dc6",
+		},
+	}
+
+	get_summaries_summary_3 = &corev1.PackageRepositorySummary{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "xyz",
+			},
+			Identifier: "pending",
+			Plugin:     fluxPlugin,
+		},
+		Name:            "pending",
+		Description:     "",
+		NamespaceScoped: false,
+		Type:            "helm",
+		Url:             "http://example.com",
+		Status: &corev1.PackageRepositoryStatus{
+			Ready:      false,
+			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			UserReason: "",
+		},
+	}
+
+	get_summaries_summary_4 = &corev1.PackageRepositorySummary{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "xyz",
+			},
+			Identifier: "failed",
+			Plugin:     fluxPlugin,
+		},
+		Name:            "failed",
+		Description:     "",
+		NamespaceScoped: false,
+		Type:            "helm",
+		Url:             "http://example.com",
+		Status: &corev1.PackageRepositoryStatus{
+			Ready:      false,
+			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
+			UserReason: "IndexationFailed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
+		},
+	}
+
+	get_summaries_summary_5 = func(name, ns string) *corev1.PackageRepositorySummary {
+		return &corev1.PackageRepositorySummary{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Cluster:   KubeappsCluster,
+					Namespace: ns,
+				},
+				Identifier: name,
+				Plugin:     fluxPlugin,
+			},
+			Name:            name,
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_repo_url,
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "IndexationSucceed: Fetched revision: 2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b",
+			},
+		}
 	}
 )

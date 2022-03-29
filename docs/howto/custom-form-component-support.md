@@ -1,6 +1,6 @@
 # Custom Form Component Support
 
-This is an extension to the [basic form support](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/basic-form-support.md#basic-form-support)
+This is an extension to the [basic form support](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/basic-form-support.md#basic-form-support)
 
 ## Possible use cases
 
@@ -19,7 +19,7 @@ This is an extension to the [basic form support](https://github.com/kubeapps/kub
    Note: The file can be located anywhere on your file system or even a remote source!
    Alternatively we provide remote loading by setting the `remoteComponentsUrl` value to the URL that is serving your bundle. If this is not set, the configmap will be the default loader.
 
-3. Once the deployment is complete you will need a values json that will signal to Kubeapps that we want to render a custom component and not one fo the provided ones. To do that you will need a `values.json.schema` that has a `customComponent` key, more info [here](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/custom-form-component-support.md#render-a-custom-component).
+3. Once the deployment is complete you will need a values json that will signal to Kubeapps that we want to render a custom component and not one fo the provided ones. To do that you will need a `values.json.schema` that has a `customComponent` key, more info [here](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/custom-form-component-support.md#render-a-custom-component).
 
 ## Render a custom component
 
@@ -57,4 +57,4 @@ Custom form components would be useless without the ability to interact with the
 
 ## Tips
 
-To help you get started we provide some examples that you can try [here](https://github.com/kubeapps/kubeapps/blob/main/docs/developer/examples). The three files should give you a good idea about how to start developing and building your own custom components. `CustomComponent.jsx` is a super simple react component that takes the `handleBasicFormParamChange` and `param` props and renders a button that changes the value to 'test'. `CustomComponent.js` is the JavaScript variant of `CustomComponent.jsx` and `CustomComponent.min.js` is a minified js bundle created using [remote-component-starter](https://github.com/Paciolan/remote-component-starter), which is specifically made to help build components that you want to load remotely with the [remote-component](https://github.com/Paciolan/remote-component) tool used by Kubeapps.
+To help you get started we provide some examples that you can try [here](https://github.com/kubeapps/kubeapps/blob/main/docs/reference/examples). The three files should give you a good idea about how to start developing and building your own custom components. `CustomComponent.jsx` is a super simple react component that takes the `handleBasicFormParamChange` and `param` props and renders a button that changes the value to 'test'. `CustomComponent.js` is the JavaScript variant of `CustomComponent.jsx` and `CustomComponent.min.js` is a minified js bundle created using [remote-component-starter](https://github.com/Paciolan/remote-component-starter), which is specifically made to help build components that you want to load remotely with the [remote-component](https://github.com/Paciolan/remote-component) tool used by Kubeapps.

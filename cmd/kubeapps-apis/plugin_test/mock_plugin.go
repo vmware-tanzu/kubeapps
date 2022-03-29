@@ -131,9 +131,10 @@ func (s TestPackagingPluginServer) DeleteInstalledPackage(ctx context.Context, r
 
 type TestRepositoriesPluginServer struct {
 	corev1.UnimplementedRepositoriesServiceServer
-	Plugin                  *plugins.Plugin
-	PackageRepositoryDetail *corev1.PackageRepositoryDetail
-	Status                  codes.Code
+	Plugin                     *plugins.Plugin
+	PackageRepositoryDetail    *corev1.PackageRepositoryDetail
+	PackageRepositorySummaries []*corev1.PackageRepositorySummary
+	Status                     codes.Code
 }
 
 func NewTestRepositoriesPlugin(plugin *plugins.Plugin) *TestRepositoriesPluginServer {
@@ -161,5 +162,15 @@ func (s TestRepositoriesPluginServer) GetPackageRepositoryDetail(ctx context.Con
 	}
 	return &corev1.GetPackageRepositoryDetailResponse{
 		Detail: s.PackageRepositoryDetail,
+	}, nil
+}
+
+// GetPackageRepositorySummaries returns the package repository summaries based on the request.
+func (s TestRepositoriesPluginServer) GetPackageRepositorySummaries(ctx context.Context, request *corev1.GetPackageRepositorySummariesRequest) (*corev1.GetPackageRepositorySummariesResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &corev1.GetPackageRepositorySummariesResponse{
+		PackageRepositorySummaries: s.PackageRepositorySummaries,
 	}, nil
 }

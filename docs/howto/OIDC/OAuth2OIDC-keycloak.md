@@ -270,7 +270,7 @@ frontend:
 
 
 # Auth Proxy configuration for OIDC support
-# ref: https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md
+# ref: https://github.com/kubeapps/kubeapps/blob/master/docs/tutorials/using-an-OIDC-provider.md
 authProxy:
  ## Set to true if Kubeapps should configure the OAuth login/logout URIs defined below.
  #
