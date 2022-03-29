@@ -14198,10 +14198,10 @@ ts-pnp@1.2.0, ts-pnp@^1.1.6:
   resolved "https://registry.yarnpkg.com/ts-pnp/-/ts-pnp-1.2.0.tgz#a500ad084b0798f1c3071af391e65912c86bca92"
   integrity sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==
 
-ts-poet@^4.10.0:
-  version "4.10.0"
-  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-4.10.0.tgz#8732374655e87f8f833e5d110938e346713e8c66"
-  integrity sha512-V5xzt+LDMVtxWvK12WVwHhGHTA//CeoPdWOqka0mMjlRqq7RPKYSfWEnzJdMmhNbd34BwZuZpip4mm+nqEcbQA==
+ts-poet@^4.11.0:
+  version "4.11.0"
+  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-4.11.0.tgz#5566f499ec767920cc18b977624f084c52e8734a"
+  integrity sha512-OaXnCKsRs0yrc0O7LFhnq/US2DB4Wd313cS+qjG2XMksZ74pF/jvMHkJdURXJiAo4kSahL2N4e8JOdwUjOMNdw==
   dependencies:
     lodash "^4.17.15"
     prettier "^2.5.1"
@@ -14214,16 +14214,16 @@ ts-proto-descriptors@1.6.0:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.110.0:
-  version "1.110.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.110.0.tgz#a583562835d144220f6cff7101ed145189709f23"
-  integrity sha512-bKToPbmDNji/xgF97jdxYENB9vkC/kK3dGpIrrUX1/CTk2zaafE4ldpKaFQrY3a4NBrjl+8YoKC4FcKtKxP9lA==
+ts-proto@^1.110.2:
+  version "1.110.2"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.110.2.tgz#857b36b27a72ae2920125fa284cadd91c6bb1137"
+  integrity sha512-OkThD+BgfK9IvDf7vQ5wC2o6iUIHDqcloNzfXhuwesbxAQF0LVRCLfEifBH4gpyYzeFXnfHSEpR11iNu4+/6aA==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
     object-hash "^1.3.1"
     protobufjs "^6.8.8"
-    ts-poet "^4.10.0"
+    ts-poet "^4.11.0"
     ts-proto-descriptors "1.6.0"
 
 tsconfig-paths@^3.12.0, tsconfig-paths@^3.14.1:
