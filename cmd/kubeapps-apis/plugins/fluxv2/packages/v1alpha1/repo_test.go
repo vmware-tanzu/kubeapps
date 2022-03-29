@@ -609,7 +609,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			Conditions: []metav1.Condition{
 				{
 					Type:   fluxmeta.ReadyCondition,
-					Status: "True",
+					Status: metav1.ConditionTrue,
 					Reason: fluxmeta.SucceededReason,
 				},
 			},

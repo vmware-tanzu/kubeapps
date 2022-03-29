@@ -11,6 +11,7 @@ import (
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
@@ -569,7 +570,7 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 	}
 
 	isInstallFailed := false
-	readyCond := meta.FindStatusCondition(*rel.GetStatusConditions(), "Ready")
+	readyCond := meta.FindStatusCondition(rel.GetConditions(), fluxmeta.ReadyCondition)
 	if readyCond != nil {
 		if readyCond.Reason != "" {
 			// this could be something like

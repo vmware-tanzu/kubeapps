@@ -366,7 +366,7 @@ var (
 			Conditions: []apiextv1.CustomResourceDefinitionCondition{
 				{
 					Type:   "Established",
-					Status: "True",
+					Status: apiextv1.ConditionStatus(metav1.ConditionTrue),
 				},
 			},
 		},
