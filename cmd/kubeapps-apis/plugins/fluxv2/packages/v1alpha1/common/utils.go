@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -97,20 +98,6 @@ func PrettyPrint(o interface{}) string {
 	return string(prettyBytes)
 }
 
-func CheckGeneration(obj ctrlclient.Object) bool {
-	generation := obj.GetGeneration()
-	var observedGeneration int64
-	if repo, ok := obj.(*sourcev1.HelmRepository); ok {
-		observedGeneration = repo.Status.ObservedGeneration
-	} else if rel, ok := obj.(*helmv2.HelmRelease); ok {
-		observedGeneration = rel.Status.ObservedGeneration
-	} else {
-		log.Errorf("Unsupported object type in CheckGeneration: %#v", obj)
-		return false
-	}
-	return generation == observedGeneration
-}
-
 func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
 	name := obj.GetName()
 	namespace := obj.GetNamespace()
@@ -121,6 +108,17 @@ func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
 			status.Errorf(codes.Internal,
 				"required fields 'metadata.name' and/or 'metadata.namespace' not found on resource: %v",
 				PrettyPrint(obj))
+	}
+}
+
+// "Local" in the sense of no namespace is specified
+func NewLocalOpaqueSecret(name string) *apiv1.Secret {
+	return &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: name,
+		},
+		Type: apiv1.SecretTypeOpaque,
+		Data: map[string][]byte{},
 	}
 }
 

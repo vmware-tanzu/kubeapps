@@ -212,13 +212,13 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 		}
 		caCert := tlsConfig.GetCertAuthority()
 		if caCert != "" {
-			secret = newLocalOpaqueSecret(targetName.Name + "-")
+			secret = common.NewLocalOpaqueSecret(targetName.Name + "-")
 			secret.Data["caFile"] = []byte(caCert)
 		}
 	}
 	if auth != nil && auth.GetSecretRef() == nil {
 		if secret == nil {
-			secret = newLocalOpaqueSecret(targetName.Name + "-")
+			secret = common.NewLocalOpaqueSecret(targetName.Name + "-")
 		}
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
@@ -429,6 +429,57 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		CustomDetail:    nil,
 		Status:          repoStatus(*repo),
 	}, nil
+}
+
+func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1.PackageRepositorySummary, error) {
+	summaries := []*corev1.PackageRepositorySummary{}
+	var repos []sourcev1.HelmRepository
+	var err error
+	if namespace == apiv1.NamespaceAll {
+		if repos, err = s.listReposInAllNamespaces(ctx); err != nil {
+			return nil, err
+		}
+	} else {
+		// here I think the right semantics are different than that of availablePackageSummaries
+		// namely, if a specific namespace is specified we need to list repos in that namespace
+		// and if the caller happens not to have 'read' access to that namespace, a PermissionDenied
+		// error should be raised, as opposed to returning an empty list with no error
+
+		// also note that, at least theoretically, it is not clear what we'd do if we ever
+		// had a flavor of API that allowed 2 namespaces (as opposed to all/one), and the caller
+		// only had access to 1 of them. Raise the error (same as with one namespace) or ignore
+		// inaccessible namespace (same as with all namespaces)?
+		var repoList sourcev1.HelmRepositoryList
+		var client ctrlclient.Client
+		if client, err = s.getClient(ctx, namespace); err != nil {
+			return nil, err
+		} else if err = client.List(ctx, &repoList); err != nil {
+			return nil, statuserror.FromK8sError("list", "HelmRepository", "", err)
+		} else {
+			repos = repoList.Items
+		}
+	}
+	for _, repo := range repos {
+		summary := &corev1.PackageRepositorySummary{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Namespace: repo.Namespace,
+					Cluster:   s.kubeappsCluster,
+				},
+				Identifier: repo.Name,
+				Plugin:     GetPluginDetail(),
+			},
+			Name: repo.Name,
+			// TBD Flux HelmRepository CR doesn't have a designated field for description
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             repo.Spec.URL,
+			Status:          repoStatus(repo),
+		}
+		summaries = append(summaries, summary)
+	}
+	return summaries, nil
 }
 
 //
@@ -701,7 +752,7 @@ func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.
 func isRepoReady(repo sourcev1.HelmRepository) bool {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
 	// Confirm the state we are observing is for the current generation
-	if !common.CheckGeneration(&repo) {
+	if !checkRepoGeneration(repo) {
 		return false
 	}
 
@@ -716,7 +767,7 @@ func isRepoReady(repo sourcev1.HelmRepository) bool {
 // docs:
 // 1. https://fluxcd.io/docs/components/source/helmrepositories/#status-examples
 func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success bool, reason string) {
-	if !common.CheckGeneration(&repo) {
+	if !checkRepoGeneration(repo) {
 		return false, false, ""
 	}
 
@@ -762,12 +813,8 @@ func repoStatus(repo sourcev1.HelmRepository) *corev1.PackageRepositoryStatus {
 	return s
 }
 
-func newLocalOpaqueSecret(name string) *apiv1.Secret {
-	return &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: name,
-		},
-		Type: apiv1.SecretTypeOpaque,
-		Data: map[string][]byte{},
-	}
+func checkRepoGeneration(repo sourcev1.HelmRepository) bool {
+	generation := repo.GetGeneration()
+	observedGeneration := repo.Status.ObservedGeneration
+	return generation > 0 && generation == observedGeneration
 }

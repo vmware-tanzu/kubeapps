@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type RepositoriesServiceClient interface {
 	AddPackageRepository(ctx context.Context, in *AddPackageRepositoryRequest, opts ...grpc.CallOption) (*AddPackageRepositoryResponse, error)
 	GetPackageRepositoryDetail(ctx context.Context, in *GetPackageRepositoryDetailRequest, opts ...grpc.CallOption) (*GetPackageRepositoryDetailResponse, error)
+	GetPackageRepositorySummaries(ctx context.Context, in *GetPackageRepositorySummariesRequest, opts ...grpc.CallOption) (*GetPackageRepositorySummariesResponse, error)
 }
 
 type repositoriesServiceClient struct {
@@ -48,12 +49,22 @@ func (c *repositoriesServiceClient) GetPackageRepositoryDetail(ctx context.Conte
 	return out, nil
 }
 
+func (c *repositoriesServiceClient) GetPackageRepositorySummaries(ctx context.Context, in *GetPackageRepositorySummariesRequest, opts ...grpc.CallOption) (*GetPackageRepositorySummariesResponse, error) {
+	out := new(GetPackageRepositorySummariesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositorySummaries", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RepositoriesServiceServer is the server API for RepositoriesService service.
 // All implementations should embed UnimplementedRepositoriesServiceServer
 // for forward compatibility
 type RepositoriesServiceServer interface {
 	AddPackageRepository(context.Context, *AddPackageRepositoryRequest) (*AddPackageRepositoryResponse, error)
 	GetPackageRepositoryDetail(context.Context, *GetPackageRepositoryDetailRequest) (*GetPackageRepositoryDetailResponse, error)
+	GetPackageRepositorySummaries(context.Context, *GetPackageRepositorySummariesRequest) (*GetPackageRepositorySummariesResponse, error)
 }
 
 // UnimplementedRepositoriesServiceServer should be embedded to have forward compatible implementations.
@@ -65,6 +76,9 @@ func (UnimplementedRepositoriesServiceServer) AddPackageRepository(context.Conte
 }
 func (UnimplementedRepositoriesServiceServer) GetPackageRepositoryDetail(context.Context, *GetPackageRepositoryDetailRequest) (*GetPackageRepositoryDetailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryDetail not implemented")
+}
+func (UnimplementedRepositoriesServiceServer) GetPackageRepositorySummaries(context.Context, *GetPackageRepositorySummariesRequest) (*GetPackageRepositorySummariesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositorySummaries not implemented")
 }
 
 // UnsafeRepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -114,6 +128,24 @@ func _RepositoriesService_GetPackageRepositoryDetail_Handler(srv interface{}, ct
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RepositoriesService_GetPackageRepositorySummaries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPackageRepositorySummariesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoriesServiceServer).GetPackageRepositorySummaries(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositorySummaries",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoriesServiceServer).GetPackageRepositorySummaries(ctx, req.(*GetPackageRepositorySummariesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RepositoriesService_ServiceDesc is the grpc.ServiceDesc for RepositoriesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -128,6 +160,10 @@ var RepositoriesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPackageRepositoryDetail",
 			Handler:    _RepositoriesService_GetPackageRepositoryDetail_Handler,
+		},
+		{
+			MethodName: "GetPackageRepositorySummaries",
+			Handler:    _RepositoriesService_GetPackageRepositorySummaries_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
