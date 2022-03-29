@@ -39,6 +39,7 @@ var _ corev1.RepositoriesServiceServer = (*Server)(nil)
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
 	v1alpha1.UnimplementedFluxV2PackagesServiceServer
+	v1alpha1.UnimplementedFluxV2RepositoriesServiceServer
 
 	// kubeappsCluster specifies the cluster on which Kubeapps is installed.
 	kubeappsCluster string
@@ -561,6 +562,26 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	return &corev1.GetPackageRepositoryDetailResponse{
 		Detail: repoDetail,
 	}, nil
+}
+
+// GetPackageRepositorySummaries returns the package repositories managed by the 'fluxv2' plugin
+func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *corev1.GetPackageRepositorySummariesRequest) (*corev1.GetPackageRepositorySummariesResponse, error) {
+	log.Infof("+fluxv2 GetPackageRepositorySummaries [%v]", request)
+	cluster := request.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.Context.Cluster: [%v]",
+			cluster)
+	}
+
+	if summaries, err := s.repoSummaries(ctx, request.GetContext().GetNamespace()); err != nil {
+		return nil, err
+	} else {
+		return &corev1.GetPackageRepositorySummariesResponse{
+			PackageRepositorySummaries: summaries,
+		}, nil
+	}
 }
 
 // convenience func mostly used by unit tests

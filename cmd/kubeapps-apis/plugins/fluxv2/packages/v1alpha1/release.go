@@ -112,7 +112,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.HelmRelease) (*corev1.InstalledPackageSummary, error) {
 	// first check if release CR is ready or is in "flux"
-	if !common.CheckGeneration(&rel) {
+	if !checkReleaseGeneration(rel) {
 		return nil, nil
 	}
 
@@ -564,7 +564,7 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 //       otherwise pending or unspecified when there are no status conditions to go by
 //
 func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
-	if !common.CheckGeneration(&rel) {
+	if !checkReleaseGeneration(rel) {
 		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
 	}
 
@@ -662,4 +662,10 @@ func helmReleaseName(key types.NamespacedName, rel *helmv2.HelmRelease) types.Na
 		helmReleaseNamespace = key.Namespace
 	}
 	return types.NamespacedName{Name: helmReleaseName, Namespace: helmReleaseNamespace}
+}
+
+func checkReleaseGeneration(rel helmv2.HelmRelease) bool {
+	generation := rel.GetGeneration()
+	observedGeneration := rel.Status.ObservedGeneration
+	return generation > 0 && generation == observedGeneration
 }

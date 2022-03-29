@@ -29,6 +29,12 @@ service RepositoriesService {
       get: "/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
     };
    }
+
+  rpc GetPackageRepositorySummaries(GetPackageRepositorySummariesRequest) returns (GetPackageRepositorySummariesResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/repositories"
+    };
+  }
 }
 
 // Standard request and response messages for each required function are defined
@@ -234,6 +240,13 @@ message GetPackageRepositoryDetailRequest {
   PackageRepositoryReference package_repo_ref = 1;
 }
 
+// GetPackageRepositorySummariesRequest
+//
+// Request for PackageRepositorySummary
+message GetPackageRepositorySummariesRequest {
+  // The context (cluster/namespace) for the request.
+  Context context = 1;
+}
 
 // -- Start definitions of the response messages --
 
@@ -349,4 +362,38 @@ message PackageRepositoryDetail {
 message GetPackageRepositoryDetailResponse {
   // package repository detail
   PackageRepositoryDetail detail = 1;
+}
+
+// PackageRepositorySummary
+//
+message PackageRepositorySummary {
+  // A reference uniquely identifying the package repository.
+  PackageRepositoryReference package_repo_ref = 1;
+  
+  // A user-provided name for the package repository (e.g. bitnami)
+  string name = 2;
+
+  // A user-provided description.
+  string description = 3;
+
+  // Whether this repository is global or namespace-scoped.
+  bool namespace_scoped = 4;
+ 
+  // Package storage type 
+  string type = 5;
+
+  // URL identifying the package repository location.
+  string url = 6;
+
+  // current status of the repository which can include reconciliation
+  // status, where relevant.
+  PackageRepositoryStatus status = 7;
+}
+
+// GetPackageRepositorySummariesResponse
+//
+// Response for GetPackageRepositorySummaries
+message GetPackageRepositorySummariesResponse {
+  // List of PackageRepositorySummary
+  repeated PackageRepositorySummary package_repository_summaries = 1;
 }

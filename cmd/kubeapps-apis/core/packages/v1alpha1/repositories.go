@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	. "github.com/ahmetb/go-linq/v3"
+
 	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -107,6 +109,43 @@ func (s repositoriesServer) GetPackageRepositoryDetail(ctx context.Context, requ
 	// Build the response
 	return &packages.GetPackageRepositoryDetailResponse{
 		Detail: response.Detail,
+	}, nil
+}
+
+// GetPackageRepositorySummaries returns the package repository summaries based on the request.
+func (s repositoriesServer) GetPackageRepositorySummaries(ctx context.Context, request *packages.GetPackageRepositorySummariesRequest) (*packages.GetPackageRepositorySummariesResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
+	log.Infof("+core GetPackageRepositorySummaries %s", contextMsg)
+
+	// Aggregate the response for each plugin
+	summaries := []*packages.PackageRepositorySummary{}
+	// TODO: We can do these in parallel in separate go routines.
+	for _, p := range s.pluginsWithServers {
+		response, err := p.server.GetPackageRepositorySummaries(ctx, request)
+		if err != nil {
+			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetPackageRepositorySummaries response from the plugin %v: %v", p.plugin.Name, err)
+		}
+
+		// Add the plugin for the pkgs
+		pluginSummaries := response.PackageRepositorySummaries
+		for _, r := range pluginSummaries {
+			if r.PackageRepoRef == nil {
+				r.PackageRepoRef = &packages.PackageRepositoryReference{}
+			}
+			r.PackageRepoRef.Plugin = p.plugin
+		}
+		summaries = append(summaries, pluginSummaries...)
+	}
+
+	From(summaries).
+		// Order by repo name, regardless of the plugin
+		OrderBy(func(repo interface{}) interface{} {
+			return repo.(*packages.PackageRepositorySummary).Name + repo.(*packages.PackageRepositorySummary).PackageRepoRef.Plugin.Name
+		}).ToSlice(&summaries)
+
+	// Build the response
+	return &packages.GetPackageRepositorySummariesResponse{
+		PackageRepositorySummaries: summaries,
 	}, nil
 }
 
