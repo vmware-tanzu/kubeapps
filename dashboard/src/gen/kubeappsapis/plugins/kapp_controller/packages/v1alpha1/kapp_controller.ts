@@ -84,7 +84,9 @@ export interface PackageRepository {
   plugin?: Plugin;
 }
 
-const baseGetPackageRepositoriesRequest: object = {};
+function createBaseGetPackageRepositoriesRequest(): GetPackageRepositoriesRequest {
+  return { context: undefined };
+}
 
 export const GetPackageRepositoriesRequest = {
   encode(
@@ -100,9 +102,7 @@ export const GetPackageRepositoriesRequest = {
   decode(input: _m0.Reader | Uint8Array, length?: number): GetPackageRepositoriesRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseGetPackageRepositoriesRequest,
-    } as GetPackageRepositoriesRequest;
+    const message = createBaseGetPackageRepositoriesRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -118,15 +118,9 @@ export const GetPackageRepositoriesRequest = {
   },
 
   fromJSON(object: any): GetPackageRepositoriesRequest {
-    const message = {
-      ...baseGetPackageRepositoriesRequest,
-    } as GetPackageRepositoriesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
-    return message;
+    return {
+      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
+    };
   },
 
   toJSON(message: GetPackageRepositoriesRequest): unknown {
@@ -136,20 +130,21 @@ export const GetPackageRepositoriesRequest = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesRequest>): GetPackageRepositoriesRequest {
-    const message = {
-      ...baseGetPackageRepositoriesRequest,
-    } as GetPackageRepositoriesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
+  fromPartial<I extends Exact<DeepPartial<GetPackageRepositoriesRequest>, I>>(
+    object: I,
+  ): GetPackageRepositoriesRequest {
+    const message = createBaseGetPackageRepositoriesRequest();
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     return message;
   },
 };
 
-const baseGetPackageRepositoriesResponse: object = {};
+function createBaseGetPackageRepositoriesResponse(): GetPackageRepositoriesResponse {
+  return { repositories: [] };
+}
 
 export const GetPackageRepositoriesResponse = {
   encode(
@@ -165,10 +160,7 @@ export const GetPackageRepositoriesResponse = {
   decode(input: _m0.Reader | Uint8Array, length?: number): GetPackageRepositoriesResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseGetPackageRepositoriesResponse,
-    } as GetPackageRepositoriesResponse;
-    message.repositories = [];
+    const message = createBaseGetPackageRepositoriesResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -184,16 +176,11 @@ export const GetPackageRepositoriesResponse = {
   },
 
   fromJSON(object: any): GetPackageRepositoriesResponse {
-    const message = {
-      ...baseGetPackageRepositoriesResponse,
-    } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromJSON(e));
-      }
-    }
-    return message;
+    return {
+      repositories: Array.isArray(object?.repositories)
+        ? object.repositories.map((e: any) => PackageRepository.fromJSON(e))
+        : [],
+    };
   },
 
   toJSON(message: GetPackageRepositoriesResponse): unknown {
@@ -208,21 +195,18 @@ export const GetPackageRepositoriesResponse = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesResponse>): GetPackageRepositoriesResponse {
-    const message = {
-      ...baseGetPackageRepositoriesResponse,
-    } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromPartial(e));
-      }
-    }
+  fromPartial<I extends Exact<DeepPartial<GetPackageRepositoriesResponse>, I>>(
+    object: I,
+  ): GetPackageRepositoriesResponse {
+    const message = createBaseGetPackageRepositoriesResponse();
+    message.repositories = object.repositories?.map(e => PackageRepository.fromPartial(e)) || [];
     return message;
   },
 };
 
-const basePackageRepository: object = { name: "", namespace: "", url: "" };
+function createBasePackageRepository(): PackageRepository {
+  return { name: "", namespace: "", url: "", plugin: undefined };
+}
 
 export const PackageRepository = {
   encode(message: PackageRepository, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -244,7 +228,7 @@ export const PackageRepository = {
   decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepository {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = { ...basePackageRepository } as PackageRepository;
+    const message = createBasePackageRepository();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -269,28 +253,12 @@ export const PackageRepository = {
   },
 
   fromJSON(object: any): PackageRepository {
-    const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = String(object.namespace);
-    } else {
-      message.namespace = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = String(object.url);
-    } else {
-      message.url = "";
-    }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromJSON(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
-    return message;
+    return {
+      name: isSet(object.name) ? String(object.name) : "",
+      namespace: isSet(object.namespace) ? String(object.namespace) : "",
+      url: isSet(object.url) ? String(object.url) : "",
+      plugin: isSet(object.plugin) ? Plugin.fromJSON(object.plugin) : undefined,
+    };
   },
 
   toJSON(message: PackageRepository): unknown {
@@ -303,28 +271,15 @@ export const PackageRepository = {
     return obj;
   },
 
-  fromPartial(object: DeepPartial<PackageRepository>): PackageRepository {
-    const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
-    }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = object.namespace;
-    } else {
-      message.namespace = "";
-    }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
-    }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromPartial(object.plugin);
-    } else {
-      message.plugin = undefined;
-    }
+  fromPartial<I extends Exact<DeepPartial<PackageRepository>, I>>(object: I): PackageRepository {
+    const message = createBasePackageRepository();
+    message.name = object.name ?? "";
+    message.namespace = object.namespace ?? "";
+    message.url = object.url ?? "";
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromPartial(object.plugin)
+        : undefined;
     return message;
   },
 };
@@ -817,6 +772,7 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -827,7 +783,16 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
+}
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
 }
