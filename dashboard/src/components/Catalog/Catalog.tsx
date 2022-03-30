@@ -56,7 +56,7 @@ export function filtersToQuery(filters: any) {
   let query = "";
   const activeFilters = Object.keys(filters).filter(f => filters[f].length);
   if (activeFilters.length) {
-    // https://github.com/kubeapps/kubeapps/pull/2279
+    // https://github.com/vmware-tanzu/kubeapps/pull/2279
     // get parameters from the parsed and decoded query params
     // since some search filters could eventually have a ','
     // we need to temporary replace it by other arbitrary string '__'.
@@ -219,7 +219,7 @@ export default function Catalog() {
       c =>
         filters[filterNames.REPO].length === 0 ||
         // TODO(agamez): get the repo name once available
-        // https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-884574732
+        // https://github.com/vmware-tanzu/kubeapps/issues/3165#issuecomment-884574732
         filters[filterNames.REPO].includes(c.availablePackageRef?.identifier.split("/")[0]),
     )
     .filter(
@@ -356,7 +356,7 @@ export default function Catalog() {
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/`}
+              href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/docs/`}
             >
               Kubeapps documentation
             </a>

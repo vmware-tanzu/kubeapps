@@ -1,9 +1,9 @@
 # Configuring Keycloak as an OIDC provider
 
 This document explains how to configure Keycloak as an IDP + OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../using-an-OIDC-provider.md)).
-It covers the installation and documentation for Kubeapps interacting with two Kubernetes clusters. 
+It covers the installation and documentation for Kubeapps interacting with two Kubernetes clusters.
 
-The installation used the [bitnami chart for Keycloak](https://github.com/bitnami/charts/tree/master/bitnami/keycloak) (version 12.0.4/2.4.8) and [bitnami chart for Kubeapps](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) (version 7.0.0/2.3.2) 
+The installation used the [bitnami chart for Keycloak](https://github.com/bitnami/charts/tree/master/bitnami/keycloak) (version 12.0.4/2.4.8) and [bitnami chart for Kubeapps](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) (version 7.0.0/2.3.2)
 
 # Keycloak Installation
 
@@ -204,7 +204,7 @@ As for the cluster clients, we need to configure the client scopes:
 The last step is to configure the `kubeapps` client to be aware of the two cluster clients and be allowed to invoke them. There are different ways to configure Keycloak:
  - Using automatic audience resolution. We haven't explored this method yet, therefore it won't be covered in this guide.
  - Via Client Scopes: define the cluster clients as Client Scopes and add them to `kubeapps`.
- - Via Mappers in the client: define a mapper attached to the `kubeapps` client that will inject the client ids in th audience claim. 
+ - Via Mappers in the client: define a mapper attached to the `kubeapps` client that will inject the client ids in th audience claim.
 
 #### Option #2
 
@@ -270,7 +270,7 @@ frontend:
 
 
 # Auth Proxy configuration for OIDC support
-# ref: https://github.com/kubeapps/kubeapps/blob/master/docs/tutorials/using-an-OIDC-provider.md
+# ref: https://github.com/vmware-tanzu/kubeapps/blob/master/docs/tutorials/using-an-OIDC-provider.md
 authProxy:
  ## Set to true if Kubeapps should configure the OAuth login/logout URIs defined below.
  #

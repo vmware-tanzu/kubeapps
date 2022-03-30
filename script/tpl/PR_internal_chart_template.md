@@ -4,7 +4,7 @@ This is an automatic PR for synchronizing the changes performed externally at th
 
 ### Benefits
 
-The Kubeapps [development chart](https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps) will get the newest changes, including image version updates and other updates.
+The Kubeapps [development chart](https://github.com/vmware-tanzu/kubeapps/tree/main/chart/kubeapps) will get the newest changes, including image version updates and other updates.
 
 ### Possible drawbacks
 

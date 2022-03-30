@@ -15,7 +15,7 @@ The `assetsvc` component is a micro-service that creates an API endpoint for acc
 ## Download the Kubeapps source code
 
 ```bash
-git clone https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
+git clone https://github.com/vmware-tanzu/kubeapps $KUBEAPPS_DIR
 ```
 
 The `assetsvc` sources are located under the `cmd/assetsvc/` directory.

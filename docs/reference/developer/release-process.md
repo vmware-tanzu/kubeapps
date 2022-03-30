@@ -134,7 +134,7 @@ cargo update
 
 #### Security and chart sync PRs
 
-Finally, look at the [pull requests](https://github.com/kubeapps/kubeapps/pulls) and ensure there is no PR open by Snyk or `kubeapps-bot` fixing a security issue or bringing upstream chart changes. If so, discuss it with another Kubeapps maintainer and come to a decision on it, trying not to release with a high/medium severity issue.
+Finally, look at the [pull requests](https://github.com/vmware-tanzu/kubeapps/pulls) and ensure there is no PR open by Snyk or `kubeapps-bot` fixing a security issue or bringing upstream chart changes. If so, discuss it with another Kubeapps maintainer and come to a decision on it, trying not to release with a high/medium severity issue.
 
 > As part of this release process, the dashboard deps _must_ be updated, the golang deps _should_ be updated, the rust deps _should_ be updated and the security check _must_ be performed.
 
@@ -202,7 +202,7 @@ A new tag pushed to the repository will trigger, apart from the usual test and b
 
 ## 3 - Complete the GitHub release notes
 
-Once the release job is finished, you will have a pre-populated [draft GitHub release](https://github.com/kubeapps/kubeapps/releases).
+Once the release job is finished, you will have a pre-populated [draft GitHub release](https://github.com/vmware-tanzu/kubeapps/releases).
 
 You still _must_ add a high-level description with the release highlights. Please take apart those commits just bumping dependencies up; it may prevent important commits from being clearly identified by our users.
 
@@ -234,7 +234,7 @@ helm repo update && helm search repo kubeapps
 
 ## 7 - Publish the GitHub release
 
-Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/kubeapps/kubeapps/releases).
+Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/vmware-tanzu/kubeapps/releases).
 
 > Take into account that the chart version will be eventually published as part of the usual Bitnami release cycle. So expect this step to take a certain amount of time.
 

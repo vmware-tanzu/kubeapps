@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
+	yamlUtils "github.com/vmware-tanzu/kubeapps/pkg/yaml"
 	authorizationapi "k8s.io/api/authorization/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

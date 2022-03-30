@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/kubeapps/kubeapps/pkg/kube"
-	"github.com/kubeapps/kubeapps/pkg/response"
 	negroni "github.com/urfave/negroni/v2"
+	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
+	"github.com/vmware-tanzu/kubeapps/pkg/response"
 )
 
 // tokenPrefix is the string preceding the token in the Authorization header.

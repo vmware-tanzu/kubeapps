@@ -593,7 +593,7 @@ describe("pagination and package fetching", () => {
       expect(setPage).toHaveBeenCalledWith(0);
     });
     // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
-    // https://github.com/kubeapps/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
+    // https://github.com/vmware-tanzu/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
   });
 });
 

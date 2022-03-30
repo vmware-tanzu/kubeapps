@@ -13,10 +13,10 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	fluxplugin "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	fluxplugin "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -513,7 +513,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 //    a) as 4a) returns all refs
 //    b) as 4b) returns PermissionDenied error
 //    c) as 4c) returns all refs
-// ref https://github.com/kubeapps/kubeapps/issues/4390
+// ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {
@@ -1280,7 +1280,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 		tc.request.TargetContext.Namespace += "-" + randSeq(4)
 
 		if !tc.noPreCreateNs {
-			// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-950383123
+			// per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-950383123
 			if err := kubeCreateNamespace(t, tc.request.TargetContext.Namespace); err != nil {
 				t.Fatal(err)
 			}

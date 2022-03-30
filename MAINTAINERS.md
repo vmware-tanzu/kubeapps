@@ -26,4 +26,4 @@
 | Engineering Manager | Pepe Baena ([ppbaena](https://github.com/ppbaena))           |
 | Executive Owner     | Arun Goel                                                    |
 
-Full list of [Kubeapps contributors](https://github.com/kubeapps/kubeapps/graphs/contributors).
+Full list of [Kubeapps contributors](https://github.com/vmware-tanzu/kubeapps/graphs/contributors).

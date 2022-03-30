@@ -15,7 +15,7 @@ The `asset-syncer` component is a tool that scans a Helm chart repository and po
 ## Download the Kubeapps source code
 
 ```bash
-git clone https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
+git clone https://github.com/vmware-tanzu/kubeapps $KUBEAPPS_DIR
 ```
 
 The `asset-syncer` sources are located under the `cmd/asset-syncer/` directory.

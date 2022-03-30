@@ -9,11 +9,11 @@ import (
 	"time"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -241,7 +241,7 @@ func (s *Server) getPkgsWithFieldSelector(ctx context.Context, cluster, namespac
 		listOptions.FieldSelector = fieldSelector
 	}
 	// TODO(agamez): this function takes way too long (1-2 seconds!). Try to reduce it
-	// More context at: https://github.com/kubeapps/kubeapps/pull/3784#discussion_r756259504
+	// More context at: https://github.com/vmware-tanzu/kubeapps/pull/3784#discussion_r756259504
 	unstructured, err := resource.List(ctx, listOptions)
 	if err != nil {
 		return nil, err

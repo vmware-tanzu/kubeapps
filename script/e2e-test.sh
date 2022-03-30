@@ -160,7 +160,7 @@ pushChart() {
   #   name: kubeapps-apache
   #   description: foo apache chart for CI
   # consequently, the new packaged chart is "${prefix}${chart}-${version}.tgz"
-  # This workaround should mitigate https://github.com/kubeapps/kubeapps/issues/3339
+  # This workaround should mitigate https://github.com/vmware-tanzu/kubeapps/issues/3339
   mkdir ./${chart}-${version}
   tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
   sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml

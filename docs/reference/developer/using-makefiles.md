@@ -1,13 +1,13 @@
 # How to set up the environment using the provided makefile targets
 
-The main file is [Makefile](https://github.com/kubeapps/kubeapps/blob/main/Makefile), which will compile and prepare the production assets for then generating a set of Docker images. It is the starting point when you want to build the Kubeapps different components.
+The main file is [Makefile](https://github.com/vmware-tanzu/kubeapps/blob/main/Makefile), which will compile and prepare the production assets for then generating a set of Docker images. It is the starting point when you want to build the Kubeapps different components.
 
 For setting up the environment for running Kubeapps, we also provide (as is) makefile targets for:
 
-- Creating a multicluster environment with Kind ([cluster-kind.mk](https://github.com/kubeapps/kubeapps/blob/main/script/makefiles/cluster-kind.mk))
-- Deploying and configuring the components for getting Kubeapps running with OIDC login using Dex ([deploy-dev.mk](https://github.com/kubeapps/kubeapps/blob/main/script/makefiles/deploy-dev.mk)).
+- Creating a multicluster environment with Kind ([cluster-kind.mk](https://github.com/vmware-tanzu/kubeapps/blob/main/script/makefiles/cluster-kind.mk))
+- Deploying and configuring the components for getting Kubeapps running with OIDC login using Dex ([deploy-dev.mk](https://github.com/vmware-tanzu/kubeapps/blob/main/script/makefiles/deploy-dev.mk)).
 
-> Disclaimer: these files are not being actively maintained, as they are solely intended for helping Kubeapp developers to set up the environment. If you are a contributor and you are having troubles, please feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new).
+> Disclaimer: these files are not being actively maintained, as they are solely intended for helping Kubeapp developers to set up the environment. If you are a contributor and you are having troubles, please feel free to [open an issue](https://github.com/vmware-tanzu/kubeapps/issues/new).
 
 ## Makefile for generating images
 

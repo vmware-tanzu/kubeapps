@@ -37,10 +37,10 @@ Certain multi-cluster environments, such as Tanzu Kubernetes Grid, have specific
 
 If you are testing the multi-cluster support on a local [Kubernetes-in-Docker cluster](https://kind.sigs.k8s.io/), you can view the example configuration files used for configuring two kind clusters in a local development environment:
 
-- [Kubeapps cluster API server config](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml)
-- An [additional cluster API server config](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
+- [Kubeapps cluster API server config](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml)
+- An [additional cluster API server config](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
 
-These are used with an instance of Dex running in the Kubeapps cluster with a [matching configuration](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-dex-values.yaml) and Kubeapps itself [configured with its own auth-proxy](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-auth-proxy-values.yaml).
+These are used with an instance of Dex running in the Kubeapps cluster with a [matching configuration](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-dex-values.yaml) and Kubeapps itself [configured with its own auth-proxy](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-auth-proxy-values.yaml).
 
 Configuring your Kubernetes cluster for OIDC authentication can be tricky, despite the upstream documentation, so be prepared to check the logs of your `kube-apiserver` pod:
 
@@ -101,7 +101,7 @@ kubectl --kubeconfig ~/.kube/path-to-kube-confnig-file config view --raw -o json
 
 Alternatively, for a development with private API server URLs, you can omit the `certificateAuthorityData` and instead include the field `insecure: true` for a cluster and Kubeapps will not try to verify the secure connection.
 
-A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. It's also used to retrieve icons of the available operators if the OLM is enabled. The service token should be configured with RBAC so that it can list those resources. You can refer to the [example used for a local development environment](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
+A serviceToken is not required but provides a better user experience, enabling users viewing the cluster to see the namespaces to which they have access (only) when they use the namespace selector. It's also used to retrieve icons of the available operators if the OLM is enabled. The service token should be configured with RBAC so that it can list those resources. You can refer to the [example used for a local development environment](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml).
 
 Your Kubeapps installation will also need to be [configured to use OIDC for authentication](./using-an-OIDC-provider.md) with a client-id for your chosen provider.
 
@@ -119,7 +119,7 @@ First your OIDC Provider needs to be configured so that tokens issued for the cl
 
 ### Configuring the auth-proxy to request multiple audiences
 
-The second part of the additional configuration is to ensure that when Kubeapps' auth-proxy requests a token that it includes extra scopes, such as `audience:server:client_id:second-cluster` for each additional audience that it requires in the issued token. For example, you can view the [auth-proxy configuration used in the local development environment](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-auth-proxy-values.yaml) and see the additional scopes included there to ensure that the `second-cluster` and `third-cluster` are included in the audience of the resulting token.
+The second part of the additional configuration is to ensure that when Kubeapps' auth-proxy requests a token that it includes extra scopes, such as `audience:server:client_id:second-cluster` for each additional audience that it requires in the issued token. For example, you can view the [auth-proxy configuration used in the local development environment](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-auth-proxy-values.yaml) and see the additional scopes included there to ensure that the `second-cluster` and `third-cluster` are included in the audience of the resulting token.
 
 ## Updating multi-cluster options
 

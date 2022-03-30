@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/tarutil"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
@@ -110,7 +110,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 
 	pkgDetail.RepoUrl = repoUrl
 	pkgDetail.AvailablePackageRef.Context.Namespace = packageRef.Context.Namespace
-	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	// per https://github.com/vmware-tanzu/kubeapps/pull/3686#issue-1038093832
 	pkgDetail.AvailablePackageRef.Context.Cluster = s.kubeappsCluster
 	return pkgDetail, nil
 }
@@ -202,7 +202,7 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 	// 1) to convert from []interface{} which is what the generic cache implementation
 	// returns for cache hits to a typed array object.
 	// 2) perform any filtering of the results as needed, pending redis support for
-	// querying values stored in cache (see discussion in https://github.com/kubeapps/kubeapps/issues/3032)
+	// querying values stored in cache (see discussion in https://github.com/vmware-tanzu/kubeapps/issues/3032)
 	// 3) if pagination was requested, only return up to one page size of results
 	summaries := make([]*corev1.AvailablePackageSummary, 0)
 	i := 0

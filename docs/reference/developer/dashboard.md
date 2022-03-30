@@ -17,7 +17,7 @@ _Telepresence is not a hard requirement, but is recommended for a better develop
 ## Download the kubeapps source code
 
 ```bash
-git clone --recurse-submodules https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
+git clone --recurse-submodules https://github.com/vmware-tanzu/kubeapps $KUBEAPPS_DIR
 ```
 
 The dashboard application source is located under the `dashboard/` directory of the repository.

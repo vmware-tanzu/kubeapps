@@ -3,10 +3,10 @@
 
 package main
 
-import "github.com/kubeapps/kubeapps/cmd/kubeops/cmd"
+import "github.com/vmware-tanzu/kubeapps/cmd/kubeops/cmd"
 
 // This cobra command was initially generated together with the cmd/root with the command
-// cobra init --pkg-name github.com/kubeapps/kubeapps/cmd/kubeops
+// cobra init --pkg-name github.com/vmware-tanzu/kubeapps/cmd/kubeops
 
 func main() {
 	cmd.Execute()

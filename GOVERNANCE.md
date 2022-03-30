@@ -10,12 +10,12 @@ This document defines the project governance for Kubeapps.
 
 The following code repositories are governed by Kubeapps community and maintained under the `kubeapps\kubeapps` organization.
 
-- [kubeapps](https://github.com/kubeapps/kubeapps): Main Kubeapps codebase.
+- [kubeapps](https://github.com/vmware-tanzu/kubeapps): Main Kubeapps codebase.
 - [hub](https://github.com/kubeapps/hub): Kubeapps Hub UI codebase.
 
 ## Community Roles
 
-- **Users**: Members that engage with the Kubeapps community via any medium ([Slack](https://kubernetes.slack.com/messages/kubeapps), [GitHub](https://github.com/kubeapps/kubeapps), etc.).
+- **Users**: Members that engage with the Kubeapps community via any medium ([Slack](https://kubernetes.slack.com/messages/kubeapps), [GitHub](https://github.com/vmware-tanzu/kubeapps), etc.).
 - **Contributors**: Members contributing to projects (documentation, code reviews, responding to issues, participation in proposal discussions, contributing code, etc.).
 - **Maintainers**: The Kubeapps project leaders. They are responsible for the overall health and direction of the project; final reviewers of PRs and responsible for releases. Maintainers are expected to contribute code and documentation, review PRs including ensuring the quality of code, triage issues, proactively fix bugs and perform maintenance tasks for Kubeapps components.
 
@@ -41,7 +41,7 @@ One of the most important aspects of any open source community is the concept of
 
 Proposals should cover the high-level objectives, use cases, and technical recommendations on how to implement them. In general, the community member(s) interested in implementing the proposal should be either deeply engaged in the proposal process or be an author of the proposal.
 
-The proposal should be documented as a separate markdown file pushed to the root of the [design-proposals](./docs/reference/design-proposals) folder in the [Kubeapps repository](https://github.com/kubeapps/kubeapps) via PR.
+The proposal should be documented as a separate markdown file pushed to the root of the [design-proposals](./docs/reference/design-proposals) folder in the [Kubeapps repository](https://github.com/vmware-tanzu/kubeapps) via PR.
 
 ### Proposal Lifecycle
 

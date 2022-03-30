@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 package kubeappsapis.plugins.resources.v1alpha1;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1";
+option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1";
 
 import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 

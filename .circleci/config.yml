@@ -601,7 +601,7 @@ local_e2e_steps: &local_e2e_steps
 
 jobs:
   test_go:
-    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       CGO_ENABLED: "0"
       <<: *common_envars
@@ -622,7 +622,7 @@ jobs:
             docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
             docker run --network container:postgresql -d --name tests cimg/go:${GOLANG_VERSION} tail -f /dev/null
             docker cp /home/circleci/go tests:/
-            docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
+            docker exec -it tests /bin/sh -c "cd /go/src/github.com/vmware-tanzu/kubeapps/ && make test-db"
   test_dashboard:
     environment:
       # Note that the max old space setting is per worker, so running the tests
@@ -670,7 +670,7 @@ jobs:
   build_go_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
       IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"

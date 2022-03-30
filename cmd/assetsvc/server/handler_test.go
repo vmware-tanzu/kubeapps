@@ -19,10 +19,10 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/disintegration/imaging"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware-tanzu/kubeapps/cmd/assetsvc/pkg/utils"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 )
 
 type bodyAPIListResponse struct {

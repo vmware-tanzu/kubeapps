@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
+	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/server"
 	v1 "k8s.io/api/core/v1"
 )
 
