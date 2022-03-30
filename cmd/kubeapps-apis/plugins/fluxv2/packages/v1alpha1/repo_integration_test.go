@@ -13,7 +13,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -418,16 +417,16 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		},
 		{
 			testName:           "get detail fails for podinfo basic auth package repository without creds",
-			request:            get_repo_detail_req_6,
-			repoName:           "my-podinfo",
+			request:            get_repo_detail_req_9,
+			repoName:           "my-podinfo-2",
 			repoUrl:            podinfo_basic_auth_repo_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_13,
 		},
 		{
 			testName:           "get detail succeeds for podinfo basic auth package repository with creds",
-			request:            get_repo_detail_req_6,
-			repoName:           "my-podinfo",
+			request:            get_repo_detail_req_10,
+			repoName:           "my-podinfo-3",
 			repoUrl:            podinfo_basic_auth_repo_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_14,
@@ -442,8 +441,8 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		},
 		{
 			testName:           "get detail returns PermissionDenied error",
-			request:            get_repo_detail_req_6,
-			repoName:           "my-podinfo",
+			request:            get_repo_detail_req_11,
+			repoName:           "my-podinfo-11",
 			repoUrl:            podinfo_repo_url,
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
@@ -548,7 +547,9 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			}
 
 			if !strings.HasPrefix(resp.GetDetail().Status.UserReason, tc.expectedResponse.Detail.Status.UserReason) {
-				t.Errorf("unexpected response: %s", common.PrettyPrint(resp))
+				t.Errorf("unexpected response (status.UserReason): (-want +got):\n- %s\n+ %s",
+					tc.expectedResponse.Detail.Status.UserReason,
+					resp.GetDetail().Status.UserReason)
 			}
 		})
 	}

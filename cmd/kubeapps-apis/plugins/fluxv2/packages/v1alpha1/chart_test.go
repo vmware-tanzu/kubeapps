@@ -14,7 +14,8 @@ import (
 	"testing"
 	"time"
 
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -879,9 +880,9 @@ func TestChartWithRelativeURL(t *testing.T) {
 		},
 		Conditions: []metav1.Condition{
 			{
-				Type:   "Ready",
-				Status: "True",
-				Reason: sourcev1.IndexationSucceededReason,
+				Type:   fluxmeta.ReadyCondition,
+				Status: metav1.ConditionTrue,
+				Reason: fluxmeta.SucceededReason,
 			},
 		},
 		URL: ts.URL + "/index.yaml",

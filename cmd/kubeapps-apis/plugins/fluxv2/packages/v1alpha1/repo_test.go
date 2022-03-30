@@ -14,7 +14,7 @@ import (
 	"time"
 
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -608,9 +608,9 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			},
 			Conditions: []metav1.Condition{
 				{
-					Type:   "Ready",
-					Status: "True",
-					Reason: sourcev1.IndexationSucceededReason,
+					Type:   fluxmeta.ReadyCondition,
+					Status: metav1.ConditionTrue,
+					Reason: fluxmeta.SucceededReason,
 				},
 			},
 			URL: ts.URL,
@@ -1666,9 +1666,9 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-							Type:               "Ready",
-							Status:             "Unknown",
-							Reason:             "Progressing",
+							Type:               fluxmeta.ReadyCondition,
+							Status:             metav1.ConditionUnknown,
+							Reason:             fluxmeta.ProgressingReason,
 							Message:            "reconciliation in progress",
 						},
 					},
@@ -1684,9 +1684,9 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 					Conditions: []metav1.Condition{
 						{
 							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-							Type:               "Ready",
-							Status:             "False",
-							Reason:             "IndexationFailed",
+							Type:               fluxmeta.ReadyCondition,
+							Status:             metav1.ConditionFalse,
+							Reason:             fluxmeta.FailedReason,
 							Message:            "failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
 						},
 					},
@@ -2050,17 +2050,26 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 		repoSpec.SecretRef = &fluxmeta.LocalObjectReference{Name: secretRef}
 	}
 
+	revision := "651f952130ea96823711d08345b85e82be011dc6"
+	sz := int64(31989)
+
 	repoStatus := &sourcev1.HelmRepositoryStatus{
 		Artifact: &sourcev1.Artifact{
-			Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+			Path:           fmt.Sprintf("helmrepository/%s/%s/index-%s.yaml", repoNamespace, repoName, revision),
+			Checksum:       revision,
 			LastUpdateTime: metav1.Time{Time: lastUpdateTime},
-			Revision:       "651f952130ea96823711d08345b85e82be011dc6",
+			Revision:       revision,
+			Size:           &sz,
+			URL:            fmt.Sprintf("http://source-controller.flux-system.svc.cluster.local./helmrepository/%s/%s/index-%s.yaml", repoNamespace, repoName, revision),
 		},
 		Conditions: []metav1.Condition{
 			{
-				Type:   "Ready",
-				Status: "True",
-				Reason: sourcev1.IndexationSucceededReason,
+				Type:               fluxmeta.ReadyCondition,
+				Status:             metav1.ConditionTrue,
+				Reason:             fluxmeta.SucceededReason,
+				Message:            fmt.Sprintf("stored artifact for revision '%s'", revision),
+				LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+				ObservedGeneration: 1,
 			},
 		},
 		URL: ts.URL,

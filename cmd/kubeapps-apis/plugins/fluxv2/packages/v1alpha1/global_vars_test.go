@@ -9,7 +9,7 @@ import (
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -1294,15 +1294,15 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             "ReconciliationSucceeded",
 					Message:            "Release reconciliation succeeded",
 				},
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Type:               "Released",
-					Status:             "True",
+					Status:             metav1.ConditionTrue,
 					Reason:             helmv2.InstallSucceededReason,
 					Message:            "Helm install succeeded",
 				},
@@ -1345,15 +1345,15 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             "ReconciliationSucceeded",
 					Message:            "Release reconciliation succeeded",
 				},
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Type:               "Released",
-					Status:             "True",
+					Status:             metav1.ConditionTrue,
 					Reason:             helmv2.InstallSucceededReason,
 					Message:            "Helm install succeeded",
 				},
@@ -1378,15 +1378,15 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "False",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionFalse,
 					Reason:             helmv2.InstallFailedReason,
 					Message:            "install retries exhausted",
 				},
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Type:               "Released",
-					Status:             "False",
+					Status:             metav1.ConditionFalse,
 					Reason:             helmv2.InstallFailedReason,
 					Message:            "Helm install failed: unable to build kubernetes objects from release manifest: error validating \"\": error validating data: ValidationError(Deployment.spec.replicas): invalid type for io.k8s.api.apps.v1.DeploymentSpec.replicas: got \"string\", expected \"integer\"",
 				},
@@ -1420,15 +1420,15 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             "ReconciliationSucceeded",
 					Message:            "Release reconciliation succeeded",
 				},
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Type:               "Released",
-					Status:             "True",
+					Status:             metav1.ConditionTrue,
 					Reason:             helmv2.InstallSucceededReason,
 					Message:            "Helm install succeeded",
 				},
@@ -1453,15 +1453,15 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             "ReconciliationSucceeded",
 					Message:            "Release reconciliation succeeded",
 				},
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Type:               "Released",
-					Status:             "True",
+					Status:             metav1.ConditionTrue,
 					Reason:             helmv2.InstallSucceededReason,
 					Message:            "Helm install succeeded",
 				},
@@ -1486,7 +1486,7 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
+					Type:               fluxmeta.ReadyCondition,
 					Status:             "Unknown",
 					Reason:             "Progressing",
 					Message:            "reconciliation in progress",
@@ -1511,8 +1511,8 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "False",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionFalse,
 					Reason:             helmv2.ArtifactFailedReason,
 					Message:            "HelmChart 'default/kubeapps-my-redis' is not ready",
 				},
@@ -1545,15 +1545,15 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             "ReconciliationSucceeded",
 					Message:            "Release reconciliation succeeded",
 				},
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Type:               "Released",
-					Status:             "True",
+					Status:             metav1.ConditionTrue,
 					Reason:             helmv2.InstallSucceededReason,
 					Message:            "Helm install succeeded",
 				},
@@ -1829,15 +1829,15 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             "ReconciliationSucceeded",
 					Message:            "Release reconciliation succeeded",
 				},
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Type:               "Released",
-					Status:             "True",
+					Status:             metav1.ConditionTrue,
 					Reason:             helmv2.InstallSucceededReason,
 					Message:            "Helm install succeeded",
 				},
@@ -2262,7 +2262,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-				UserReason: "IndexationSucceed",
+				UserReason: "Succeeded: stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
 			},
 		},
 	}
@@ -2325,7 +2325,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-				UserReason: "IndexationSucceed",
+				UserReason: "Succeeded: stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
 			},
 		},
 	}
@@ -2365,7 +2365,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      false,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
-				UserReason: "IndexationFailed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
+				UserReason: "Failed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
 			},
 		},
 	}
@@ -2391,7 +2391,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-				UserReason: "IndexationSucceed",
+				UserReason: "Succeeded: stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
 			},
 		},
 	}
@@ -2427,7 +2427,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-				UserReason: "IndexationSucceed",
+				UserReason: "Succeeded: stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
 			},
 		},
 	}
@@ -2455,7 +2455,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-				UserReason: "IndexationSucceed: Fetched revision: 2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b",
+				UserReason: "Succeeded: stored artifact for revision '2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b'",
 			},
 		},
 	}
@@ -2493,7 +2493,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-				UserReason: "IndexationSucceed: Fetched revision: ",
+				UserReason: "Succeeded: stored artifact for revision '",
 			},
 		},
 	}
@@ -2506,10 +2506,10 @@ var (
 					// will be set when scenario is run
 					Namespace: "TBD",
 				},
-				Identifier: "my-podinfo",
+				Identifier: "my-podinfo-2",
 				Plugin:     fluxPlugin,
 			},
-			Name:            "my-podinfo",
+			Name:            "my-podinfo-2",
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
@@ -2521,7 +2521,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      false,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
-				UserReason: "IndexationFailed: failed to download repository index: failed to cache index to temporary file: failed to fetch http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/index.yaml : 401 Unauthorized",
+				UserReason: "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: failed to fetch http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/index.yaml : 401 Unauthorize",
 			},
 		},
 	}
@@ -2534,10 +2534,10 @@ var (
 					// will be set when scenario is run
 					Namespace: "TBD",
 				},
-				Identifier: "my-podinfo",
+				Identifier: "my-podinfo-3",
 				Plugin:     fluxPlugin,
 			},
-			Name:            "my-podinfo",
+			Name:            "my-podinfo-3",
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
@@ -2555,7 +2555,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-				UserReason: "IndexationSucceed: Fetched revision: 9d3ac1eb708dfaebae14d7c88fd46afce8b1e0f7aace790d91758575dc8ce518",
+				UserReason: "Succeeded: stored artifact for revision '9d3ac1eb708dfaebae14d7c88fd46afce8b1e0f7aace790d91758575dc8ce518'",
 			},
 		},
 	}
@@ -2567,6 +2567,36 @@ var (
 				Namespace: "TBD",
 			},
 			Identifier: "my-kaka",
+		},
+	}
+
+	get_repo_detail_req_9 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				// will be set when test scenario is run
+				Namespace: "TBD",
+			},
+			Identifier: "my-podinfo-2",
+		},
+	}
+
+	get_repo_detail_req_10 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				// will be set when test scenario is run
+				Namespace: "TBD",
+			},
+			Identifier: "my-podinfo-3",
+		},
+	}
+
+	get_repo_detail_req_11 = &corev1.GetPackageRepositoryDetailRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				// will be set when test scenario is run
+				Namespace: "TBD",
+			},
+			Identifier: "my-podinfo-4",
 		},
 	}
 
@@ -2586,10 +2616,10 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Message:            "Fetched revision: 651f952130ea96823711d08345b85e82be011dc6",
-					Reason:             sourcev1.IndexationSucceededReason,
-					Status:             "True",
-					Type:               "Ready",
+					Message:            "stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
+					Reason:             fluxmeta.SucceededReason,
+					Status:             metav1.ConditionTrue,
+					Type:               fluxmeta.ReadyCondition,
 				},
 			},
 			URL: "TBD",
@@ -2611,10 +2641,10 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Message:            "Fetched revision: 651f952130ea96823711d08345b85e82be011dc6",
-					Reason:             sourcev1.IndexationSucceededReason,
-					Status:             "True",
-					Type:               "Ready",
+					Message:            "stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
+					Reason:             fluxmeta.SucceededReason,
+					Status:             metav1.ConditionTrue,
+					Type:               fluxmeta.ReadyCondition,
 				},
 			},
 			URL: "TBD",
@@ -2639,9 +2669,9 @@ var (
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
-					Type:               "Ready",
-					Status:             "False",
-					Reason:             "IndexationFailed",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionFalse,
+					Reason:             fluxmeta.FailedReason,
 					Message:            "failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
 				},
 			},
@@ -2664,7 +2694,7 @@ var (
 		Status: &corev1.PackageRepositoryStatus{
 			Ready:      true,
 			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-			UserReason: "IndexationSucceed: Fetched revision: 651f952130ea96823711d08345b85e82be011dc6",
+			UserReason: "Succeeded: stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
 		},
 	}
 
@@ -2685,7 +2715,7 @@ var (
 		Status: &corev1.PackageRepositoryStatus{
 			Ready:      true,
 			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-			UserReason: "IndexationSucceed: Fetched revision: 651f952130ea96823711d08345b85e82be011dc6",
+			UserReason: "Succeeded: stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
 		},
 	}
 
@@ -2727,7 +2757,7 @@ var (
 		Status: &corev1.PackageRepositoryStatus{
 			Ready:      false,
 			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
-			UserReason: "IndexationFailed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
+			UserReason: "Failed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
 		},
 	}
 
@@ -2749,7 +2779,7 @@ var (
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-				UserReason: "IndexationSucceed: Fetched revision: 2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b",
+				UserReason: "Succeeded: stored artifact for revision '2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b'",
 			},
 		}
 	}
