@@ -203,10 +203,20 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	if crd, err := apiExt.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{}); err != nil {
 		return err
 	} else {
-		for _, condition := range crd.Status.Conditions {
-			if condition.Type == apiextv1.Established &&
-				condition.Status == apiextv1.ConditionTrue {
-				return nil
+		// check version
+		ok := false
+		for _, v := range crd.Status.StoredVersions {
+			if v == c.config.Gvr.Version {
+				ok = true
+				break
+			}
+		}
+		if ok {
+			for _, condition := range crd.Status.Conditions {
+				if condition.Type == apiextv1.Established &&
+					condition.Status == apiextv1.ConditionTrue {
+					return nil
+				}
 			}
 		}
 	}

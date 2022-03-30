@@ -369,6 +369,7 @@ var (
 					Status: apiextv1.ConditionStatus(metav1.ConditionTrue),
 				},
 			},
+			StoredVersions: []string{"v1beta2"},
 		},
 	}
 )

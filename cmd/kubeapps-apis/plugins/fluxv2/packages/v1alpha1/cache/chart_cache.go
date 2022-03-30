@@ -77,7 +77,7 @@ type ChartCache struct {
 // note that url and delete fields are mutually exclusive, you must either:
 //  - set url to non-empty string or
 //  - deleted flag to true
-// setting both does not make sense
+// setting both for a given entry does not make sense
 type chartCacheStoreEntry struct {
 	namespace     string
 	id            string
@@ -117,7 +117,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 }
 
 // this func will enqueue work items into chart work queue and return.
-// the charts will be synced by a worker thread running in the background
+// the charts will be synced worker threads running in the background
 func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.ClientOptions) error {
 	log.Infof("+SyncCharts()")
 	totalToSync := 0
@@ -251,8 +251,8 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 }
 
 func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
-	log.Infof("+DeleteChartsFor(%s)", repo)
-	defer log.Infof("-DeleteChartsFor(%s)", repo)
+	log.Infof("+DeleteChartsForRepo(%s)", repo)
+	defer log.Infof("-DeleteChartsForRepo(%s)", repo)
 
 	// need to get a list of all charts/versions for this repo that are either:
 	//   a. already in the cache OR
@@ -370,10 +370,13 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 
 	if chart.deleted {
 		// TODO: (gfichtenholt) DEL has the capability to delete multiple keys in one
-		// atomic operation. It would be nice to come up with a way to utilize that here
-		// the problem is the queue is designed to work on one item at a time. I think to
-		// be able to do this, we need to add a .GetAll() method to RateLimitingInterface,
-		// which will be a little tricky to make sure to get the logic right t be atomic and
+		// atomic operation. Ref https://www.redis.io/commands/del/
+		// It would be nice to come up with a way to utilize that here
+		// the problem is the queue is designed to work on one item at a time. In other words,
+		// each queue entry has to be associated with some unique key. How to do that when
+		// you're trying to delete 50 keys at once? One way to solve
+		// it *might* be to add a .GetAll() method to RateLimitingInterface,
+		// which will be a little tricky to make sure to get the logic right to be atomic and
 		// also when *SOME* of the items fail and some succeed
 		keysRemoved, _ := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		log.Infof("Redis [DEL %s]: %d", key, keysRemoved)
