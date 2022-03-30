@@ -711,10 +711,7 @@ jobs:
     resource_class: large
     environment:
       DEFAULT_DEX_IP: "172.18.0.2"
-      # TODO(minelson): disable the upgrade test temporarily for upgrading
-      # to 8.0.0 which is backwards incompatible. Re-enable once 8.0.0
-      # is published.
-      # TEST_UPGRADE: "1"
+      TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       TEST_OPERATORS: "1"
       TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
