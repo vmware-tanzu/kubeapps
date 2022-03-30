@@ -94,9 +94,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name))
 		}
 		// The kapp-controller returns both packages and package metadata
-		// in order.
-		if currentPkg.Spec.RefName != pkgMetadata.Name {
-			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+		// in order. But some repositories have invalid data (TAP 1.0.2)
+		// where a package is present *without* corresponding metadata.
+		for currentPkg.Spec.RefName != pkgMetadata.Name {
+			if currentPkg.Spec.RefName > pkgMetadata.Name {
+				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+			}
+			log.Errorf("Package %q did not have a corresponding metadata", currentPkg.Spec.RefName)
+			currentPkg = <-getPkgsChannel
 		}
 		// Collect the packages for a particular refName to be able to send the
 		// latest semver version. For the moment, kapp-controller just returns
