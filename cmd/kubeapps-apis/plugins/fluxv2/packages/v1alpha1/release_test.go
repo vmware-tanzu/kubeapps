@@ -13,7 +13,8 @@ import (
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -1155,18 +1156,13 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		}
 
-		lastTransitionTime, err := time.Parse(time.RFC3339, "2021-08-12T03:25:38Z")
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		chartStatus := &sourcev1.HelmChartStatus{
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Message:            "Fetched revision: " + existing.chartSpecVersion,
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             sourcev1.ChartPullSucceededReason,
 				},
 			},

@@ -15,7 +15,7 @@ import (
 	"time"
 
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
@@ -440,15 +440,10 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 			return nil, err
 		}
 	} else {
-		// here I think the right semantics are different than that of availablePackageSummaries
-		// namely, if a specific namespace is specified we need to list repos in that namespace
+		// here, the right semantics are different than that of availablePackageSummaries()
+		// namely, if a specific namespace is passed in, we need to list repos in that namespace
 		// and if the caller happens not to have 'read' access to that namespace, a PermissionDenied
 		// error should be raised, as opposed to returning an empty list with no error
-
-		// also note that, at least theoretically, it is not clear what we'd do if we ever
-		// had a flavor of API that allowed 2 namespaces (as opposed to all/one), and the caller
-		// only had access to 1 of them. Raise the error (same as with one namespace) or ignore
-		// inaccessible namespace (same as with all namespaces)?
 		var repoList sourcev1.HelmRepositoryList
 		var client ctrlclient.Client
 		if client, err = s.getClient(ctx, namespace); err != nil {
@@ -761,17 +756,18 @@ func isRepoReady(repo sourcev1.HelmRepository) bool {
 }
 
 // returns 3 things:
-// - complete whether the operation was completed
-// - success (only applicable when complete == true) whether the operation was successful or failed
-// - reason, if present
+// - complete: whether the operation was completed
+// - success: (only applicable when complete == true) whether the operation was successful or failed
+// - reason: if present
 // docs:
 // 1. https://fluxcd.io/docs/components/source/helmrepositories/#status-examples
 func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success bool, reason string) {
-	if !checkRepoGeneration(repo) {
-		return false, false, ""
-	}
-
-	readyCond := meta.FindStatusCondition(*repo.GetStatusConditions(), "Ready")
+	// flux source-controller v1beta2 API made a change so that we can no longer
+	// rely on a simple "metadata.generation" vs "status.observedGeneration" check for a
+	// quick answer. The resource may now exist with "observedGeneration": -1 either in
+	// pending or in a failed state. We need to distinguish between the two. Personally,
+	// feels like a mistake to me.
+	readyCond := meta.FindStatusCondition(repo.GetConditions(), fluxmeta.ReadyCondition)
 	if readyCond != nil {
 		if readyCond.Reason != "" {
 			// this could be something like
@@ -787,7 +783,7 @@ func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success
 		}
 		switch readyCond.Status {
 		case metav1.ConditionTrue:
-			return true, true, reason
+			return checkRepoGeneration(repo), true, reason
 		case metav1.ConditionFalse:
 			return true, false, reason
 			// metav1.ConditionUnknown falls through

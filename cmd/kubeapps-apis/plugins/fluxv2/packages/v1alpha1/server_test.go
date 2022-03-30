@@ -10,7 +10,8 @@ import (
 	"testing"
 	"time"
 
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
 	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
@@ -61,9 +62,9 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   "Ready",
-							Status: "False",
-							Reason: "IndexationFailed",
+							Type:   fluxmeta.ReadyCondition,
+							Status: metav1.ConditionFalse,
+							Reason: fluxmeta.FailedReason,
 						},
 					},
 				}),
@@ -76,9 +77,9 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   "Ready",
-							Status: "True",
-							Reason: "IndexationSucceed",
+							Type:   fluxmeta.ReadyCondition,
+							Status: metav1.ConditionTrue,
+							Reason: fluxmeta.SucceededReason,
 						},
 					},
 				}),
@@ -91,9 +92,9 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   "Ready",
-							Status: "True",
-							Reason: "IndexationSucceed",
+							Type:   fluxmeta.ReadyCondition,
+							Status: metav1.ConditionTrue,
+							Reason: fluxmeta.SucceededReason,
 						},
 					},
 				}),
@@ -106,9 +107,9 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   "Ready",
-							Status: "True",
-							Reason: "IndexationSucceed",
+							Type:   fluxmeta.ReadyCondition,
+							Status: metav1.ConditionTrue,
+							Reason: fluxmeta.SucceededReason,
 						},
 					},
 				}),
@@ -124,9 +125,9 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
-							Type:   "Ready",
-							Status: "True",
-							Reason: "IndexationSucceed",
+							Type:   fluxmeta.ReadyCondition,
+							Status: metav1.ConditionTrue,
+							Reason: fluxmeta.SucceededReason,
 						},
 					},
 				}),
