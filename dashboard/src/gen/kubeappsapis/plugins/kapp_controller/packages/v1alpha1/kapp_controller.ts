@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import {
   Context,
   GetAvailablePackageSummariesRequest,

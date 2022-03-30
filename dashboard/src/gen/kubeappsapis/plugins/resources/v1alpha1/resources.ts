@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import {
   InstalledPackageReference,
   ResourceRef,
@@ -1211,7 +1211,7 @@ export const GetSecretNamesResponse = {
         ? Object.entries(object.secretNames).reduce<{
             [key: string]: SecretType;
           }>((acc, [key, value]) => {
-            acc[key] = value as number;
+            acc[key] = value as SecretType;
             return acc;
           }, {})
         : {},
@@ -1237,7 +1237,7 @@ export const GetSecretNamesResponse = {
       [key: string]: SecretType;
     }>((acc, [key, value]) => {
       if (value !== undefined) {
-        acc[key] = value as number;
+        acc[key] = value as SecretType;
       }
       return acc;
     }, {});
