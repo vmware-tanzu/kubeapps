@@ -5,13 +5,13 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.18.0"
+    default: "1.18"
   NODE_VERSION:
     type: string
     default: "16.14.2"
   RUST_VERSION:
     type: string
-    default: "1.59.1"
+    default: "1.59.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.11"
