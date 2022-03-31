@@ -395,9 +395,22 @@ kubectl create rolebinding kubeapps-view-user-apprepo-read -n kubeapps-user-name
 kubectl create rolebinding kubeapps-view-user -n kubeapps-user-namespace --clusterrole=edit --serviceaccount kubeapps:kubeapps-view
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
+# TODO(minelson): Many of these roles/bindings need to be cleaned up. Some are
+# unnecessary (with chart changes), some should not be created (such as edit
+# here having the edit cluster role in the kubeapps namespace - should just be
+# default). See https://github.com/vmware-tanzu/kubeapps/issues/4435
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
 kubectl create rolebinding kubeapps-edit -n default --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
 kubectl create rolebinding kubeapps-repositories-read -n kubeapps --clusterrole kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-edit
+# TODO(minelson): Similar to the `global-repos-read` rolebinding that the chart
+# adds to the `kubeapps-repos-global` namespace for all authenticated users, we
+# should eventually consider adding a similar rolebinding for secrets in the
+# `kubeapps-repos-global` namespace also (but not if the global repos namespace
+# is configured to be the kubeapps namespace, of course.) For now, explicit
+# creation because CI tests with a repo with creds in the global repos ns.
+# See https://github.com/vmware-tanzu/kubeapps/issues/4435
+kubectl create role view-secrets -n ${GLOBAL_REPOS_NS} --verb=get,list,watch --resource=secrets
+kubectl create rolebinding global-repos-secrets-read -n ${GLOBAL_REPOS_NS} --role=view-secrets --serviceaccount kubeapps:kubeapps-edit
 
 ## Give the cluster some time to avoid issues like
 ## https://circleci.com/gh/kubeapps/kubeapps/16102
