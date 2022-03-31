@@ -107,7 +107,7 @@
     "postcss": "^8.4.11",
     "postcss-scss": "^4.0.3",
     "prettier": "^2.6.1",
-    "react-scripts": "^4.0.3",
+    "react-scripts": "^5.0.0",
     "redux-mock-store": "^1.5.4",
     "sass": "^1.49.9",
     "shx": "^0.3.4",
