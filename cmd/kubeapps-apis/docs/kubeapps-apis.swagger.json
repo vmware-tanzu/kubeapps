@@ -2,8 +2,8 @@
   "swagger": "2.0",
   "info": {
     "title": "Kubeapps API",
-    "description": "[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/main)\n \n [Kubeapps](https://github.com/kubeapps/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/kubeapps/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/kubeapps/kubeapps/blob/main/docs/background/architecture.md).\n - The [Kubeapps Developer Documentation](https://github.com/kubeapps/kubeapps/blob/main/docs/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/kubeapps/kubeapps/blob/main/docs/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n",
-    "termsOfService": "https://github.com/kubeapps/kubeapps/blob/main/LICENSE",
+    "description": "[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/main)\n \n [Kubeapps](https://github.com/vmware-tanzu/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/vmware-tanzu/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/background/architecture.md).\n - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n",
+    "termsOfService": "https://github.com/vmware-tanzu/kubeapps/blob/main/LICENSE",
     "version": "0.1.0",
     "license": {
       "name": "Apache-2.0",
@@ -3349,7 +3349,7 @@
       "properties": {
         "context": {
           "$ref": "#/definitions/v1alpha1Context",
-          "description": "The target context where the package repository is intended to be \ninstalled."
+          "description": "The target context where the package repository is intended to be\ninstalled."
         },
         "name": {
           "type": "string",
@@ -3365,11 +3365,11 @@
         },
         "type": {
           "type": "string",
-          "title": "Package storage type \nIn general, each plug-in will define an acceptable set of valid types \n- for direct helm plug-in valid values are: helm, oci\n- for flux plug-in currently only supported value is helm. In the\n  future, we may add support for git and/or AWS s3-style buckets"
+          "title": "Package storage type\nIn general, each plug-in will define an acceptable set of valid types\n- for direct helm plug-in valid values are: helm, oci\n- for flux plug-in currently only supported value is helm. In the\n  future, we may add support for git and/or AWS s3-style buckets"
         },
         "url": {
           "type": "string",
-          "title": "A URL identifying the package repository location. Must contain at \nleast a protocol and host"
+          "title": "A URL identifying the package repository location. Must contain at\nleast a protocol and host"
         },
         "interval": {
           "type": "integer",
@@ -3390,7 +3390,7 @@
         },
         "customDetail": {
           "$ref": "#/definitions/protobufAny",
-          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or \nnever will be specified in the core AddPackageRepositoryRequest \nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the \ncore interface. \nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to \nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
+          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
         }
       },
       "description": "Request for AddPackageRepository",
@@ -4214,7 +4214,7 @@
           "title": "pass_credentials allows the credentials from the SecretRef to be passed\non to a host that does not match the host as defined in URL.\nThis flag controls whether or not it is allowed to passing credentials\nwith requests to other domains linked from the repository.\nThis may be needed if the host of the advertised chart URLs in the\nindex differs from the defined URL. Optional"
         }
       },
-      "description": "Authentication/authorization to provide client’s identity when connecting\nto a package repository.\nThere are 6 total distinct use cases we may support:\n1) None (Public)\n2) Basic Auth\n3) Bearer Token \n4) Custom Authorization Header\n5) Docker Registry Credentials (for OCI only)\n6) TLS certificate and key\n\nNote that (1)-(4) may be done over HTTP or HTTPs without any custom \ncertificates or certificate authority \n(1) is handled by not not having PackageRepositoryAuth field on\n    the parent object\na given plug-in may or may not support a given authentication type. \nFor example\n - direct-helm plug-in does not currently support (6), while flux does\n - flux plug-in does not support (3) or (4) while direct-helm does",
+      "description": "Authentication/authorization to provide client’s identity when connecting\nto a package repository.\nThere are 6 total distinct use cases we may support:\n1) None (Public)\n2) Basic Auth\n3) Bearer Token\n4) Custom Authorization Header\n5) Docker Registry Credentials (for OCI only)\n6) TLS certificate and key\n\nNote that (1)-(4) may be done over HTTP or HTTPs without any custom\ncertificates or certificate authority\n(1) is handled by not not having PackageRepositoryAuth field on\n    the parent object\na given plug-in may or may not support a given authentication type.\nFor example\n - direct-helm plug-in does not currently support (6), while flux does\n - flux plug-in does not support (3) or (4) while direct-helm does",
       "title": "PackageRepositoryAuth"
     },
     "v1alpha1PackageRepositoryDetail": {
@@ -4251,11 +4251,11 @@
         },
         "tlsConfig": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
-          "title": "TLS-specific parameters for connecting to a repository. \nIf the cert authority was configured for this repository, then in the context \nof GetPackageRepositoryDetail() operation, the PackageRepositoryTlsConfig will ALWAYS \ncontain an existing SecretKeyReference, rather that cert_authority field"
+          "title": "TLS-specific parameters for connecting to a repository.\nIf the cert authority was configured for this repository, then in the context\nof GetPackageRepositoryDetail() operation, the PackageRepositoryTlsConfig will ALWAYS\ncontain an existing SecretKeyReference, rather that cert_authority field"
         },
         "auth": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-          "title": "authentication parameters for connecting to a repository.\nIf Basic Auth or TLS or Docker Creds Auth was configured for this repository,\nthen in the context of GetPackageRepositoryDetail() operation, the \nPackageRepositoryAuth will ALWAYS contain an existing SecretKeyReference, \nrather that string values that may have been used when package repository was created\nfield"
+          "title": "authentication parameters for connecting to a repository.\nIf Basic Auth or TLS or Docker Creds Auth was configured for this repository,\nthen in the context of GetPackageRepositoryDetail() operation, the\nPackageRepositoryAuth will ALWAYS contain an existing SecretKeyReference,\nrather that string values that may have been used when package repository was created\nfield"
         },
         "customDetail": {
           "$ref": "#/definitions/protobufAny",
@@ -4474,7 +4474,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "title": "The name of an existing secret in the same namespace as the object \nthat refers to it (e.g. PackageRepository), containing authentication \ncredentials for the said package repository.\n- For HTTP/S basic auth the secret must be of type \n  \"kubernetes.io/basic-auth\" or opaque and contain username and\n  password fields\n- For TLS the secret must be of type \"kubernetes.io/tls\" or opaque \n  and contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and \n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson”\nFor more details, refer to \nhttps://kubernetes.io/docs/concepts/configuration/secret/"
+          "title": "The name of an existing secret in the same namespace as the object\nthat refers to it (e.g. PackageRepository), containing authentication\ncredentials for the said package repository.\n- For HTTP/S basic auth the secret must be of type\n  \"kubernetes.io/basic-auth\" or opaque and contain username and\n  password fields\n- For TLS the secret must be of type \"kubernetes.io/tls\" or opaque\n  and contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and\n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson”\nFor more details, refer to\nhttps://kubernetes.io/docs/concepts/configuration/secret/"
         },
         "key": {
           "type": "string",
@@ -4564,6 +4564,6 @@
   ],
   "externalDocs": {
     "description": "Kuebapps GitHub repository",
-    "url": "https://github.com/kubeapps/kubeapps"
+    "url": "https://github.com/vmware-tanzu/kubeapps"
   }
 }

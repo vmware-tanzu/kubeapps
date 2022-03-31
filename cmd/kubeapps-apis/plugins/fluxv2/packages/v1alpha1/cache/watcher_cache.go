@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -181,7 +181,7 @@ func NewNamespacedResourceWatcherCache(name string, config NamespacedResourceWat
 		}
 	}
 
-	// per https://github.com/kubeapps/kubeapps/issues/4329
+	// per https://github.com/vmware-tanzu/kubeapps/issues/4329
 	// we want to do this asynchronously, so that having to parse existing large repos in the cluster
 	// doesn't block the kubeapps apis pod start-up
 	go c.syncAndStartWatchLoop(stopCh)
@@ -431,7 +431,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 
 	// This code runs in the background, i.e. not in a context of any specific user request.
 	// As such, it requires RBAC to be set up properly during install to be able to list specified GVR
-	// (e.g. flux CRDs). For further details, see https://github.com/kubeapps/kubeapps/pull/3551 and
+	// (e.g. flux CRDs). For further details, see https://github.com/vmware-tanzu/kubeapps/pull/3551 and
 	// see helm chart templates/kubeappsapis/rbac_fluxv2.yaml
 
 	// Notice, we are not setting resourceVersion in ListOptions, which means

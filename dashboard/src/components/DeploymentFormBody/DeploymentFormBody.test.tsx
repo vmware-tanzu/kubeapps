@@ -31,7 +31,7 @@ const versions = [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }] as PackageAppVe
 // Note that most of the tests that cover DeploymentFormBody component are in
 // in the DeploymentForm and UpgradeForm parent components
 
-// Context at https://github.com/kubeapps/kubeapps/issues/1293
+// Context at https://github.com/vmware-tanzu/kubeapps/issues/1293
 it("should modify the original values of the differential component if parsed as YAML object", () => {
   const oldValues = `a: b
 

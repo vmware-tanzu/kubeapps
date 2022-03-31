@@ -22,16 +22,16 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/disintegration/imaging"
 	"github.com/google/go-cmp/cmp"
-	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/kubeapps/kubeapps/pkg/helm"
-	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
-	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	tartest "github.com/kubeapps/kubeapps/pkg/tarutil/test"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
+	helmfake "github.com/vmware-tanzu/kubeapps/pkg/helm/fake"
+	helmtest "github.com/vmware-tanzu/kubeapps/pkg/helm/test"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	tartest "github.com/vmware-tanzu/kubeapps/pkg/tarutil/test"
 	"helm.sh/helm/v3/pkg/chart"
 )
 
@@ -852,7 +852,7 @@ maintainers:
     name: Bitnami
 name: kubeapps
 sources:
-  - https://github.com/kubeapps/kubeapps
+  - https://github.com/vmware-tanzu/kubeapps
 version: 1.0.0
 `
 	tests := []struct {
@@ -879,7 +879,7 @@ version: 1.0.0
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
 					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
-					Sources:     []string{"https://github.com/kubeapps/kubeapps"},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
 					Icon:        "https://logo.png",
 					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
@@ -887,7 +887,7 @@ version: 1.0.0
 							Version:    "1.0.0",
 							AppVersion: "2.0.0",
 							Digest:     "123",
-							URLs:       []string{"https://github.com/kubeapps/kubeapps"},
+							URLs:       []string{"https://github.com/vmware-tanzu/kubeapps"},
 						},
 					},
 				},

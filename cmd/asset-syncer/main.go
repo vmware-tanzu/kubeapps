@@ -3,7 +3,7 @@
 
 package main
 
-import "github.com/kubeapps/kubeapps/cmd/asset-syncer/cmd"
+import "github.com/vmware-tanzu/kubeapps/cmd/asset-syncer/cmd"
 
 func main() {
 	cmd.Execute()

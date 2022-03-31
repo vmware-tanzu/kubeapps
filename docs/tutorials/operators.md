@@ -77,4 +77,4 @@ You can also click in the Update button to modify the instance or in the Delete 
 
 ## Step 5: Provide Feedback
 
-We need your feedback to improve this integration! If you find any issue or have a suggestion please [open an issue in GitHub](https://github.com/kubeapps/kubeapps/issues/new) or contact us in the [#kubeapps](https://kubernetes.slack.com/messages/kubeapps) channel in Slack.
+We need your feedback to improve this integration! If you find any issue or have a suggestion please [open an issue in GitHub](https://github.com/vmware-tanzu/kubeapps/issues/new) or contact us in the [#kubeapps](https://kubernetes.slack.com/messages/kubeapps) channel in Slack.

@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 package kubeappsapis.core.packages.v1alpha1;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1";
+option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1";
 
 import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
@@ -46,7 +46,7 @@ service RepositoriesService {
 //
 // Request for AddPackageRepository
 message AddPackageRepositoryRequest {
-  // The target context where the package repository is intended to be 
+  // The target context where the package repository is intended to be
   // installed.
   Context context = 1;
 
@@ -60,14 +60,14 @@ message AddPackageRepositoryRequest {
   // By default, the value is false, i.e. the repository is global
   bool namespace_scoped = 4;
 
-  // Package storage type 
-  // In general, each plug-in will define an acceptable set of valid types 
+  // Package storage type
+  // In general, each plug-in will define an acceptable set of valid types
   // - for direct helm plug-in valid values are: helm, oci
   // - for flux plug-in currently only supported value is helm. In the
-  //   future, we may add support for git and/or AWS s3-style buckets 
+  //   future, we may add support for git and/or AWS s3-style buckets
   string type = 5;
 
-  // A URL identifying the package repository location. Must contain at 
+  // A URL identifying the package repository location. Must contain at
   // least a protocol and host
   string url = 6;
 
@@ -75,10 +75,10 @@ message AddPackageRepositoryRequest {
   // Optional. Defaults to 10m if not specified
   uint32 interval = 7;
 
-  // TLS-specific parameters for connecting to a repository. Optional 
+  // TLS-specific parameters for connecting to a repository. Optional
   PackageRepositoryTlsConfig tls_config = 8;
 
-  // authentication parameters for connecting to a repository. Optional 
+  // authentication parameters for connecting to a repository. Optional
   PackageRepositoryAuth auth = 9;
 
   // The plugin used to interact with this package repository.
@@ -87,19 +87,19 @@ message AddPackageRepositoryRequest {
   kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 10;
 
   // Custom data added by the plugin
-  // A plugin can define custom details for data which is not yet, or 
-  // never will be specified in the core AddPackageRepositoryRequest 
+  // A plugin can define custom details for data which is not yet, or
+  // never will be specified in the core AddPackageRepositoryRequest
   // fields. The use of an `Any` field means that each plugin can define
-  // the structure of this message as required, while still satisfying the 
-  // core interface. 
+  // the structure of this message as required, while still satisfying the
+  // core interface.
   // See https://developers.google.com/protocol-buffers/docs/proto3#any
-  // Just for reference, some of the examples that have been chosen not to 
+  // Just for reference, some of the examples that have been chosen not to
   // be part of the core API but rather plugin-specific details are:
   //   direct-helm:
   //      - image pull secrets
   //      - list of oci repositories
   //      - filter rules
-  //      - sync job pod template 
+  //      - sync job pod template
   google.protobuf.Any custom_detail = 11;
 }
 
@@ -127,19 +127,19 @@ message PackageRepositoryTlsConfig {
 // There are 6 total distinct use cases we may support:
 // 1) None (Public)
 // 2) Basic Auth
-// 3) Bearer Token 
+// 3) Bearer Token
 // 4) Custom Authorization Header
 // 5) Docker Registry Credentials (for OCI only)
 // 6) TLS certificate and key
-// 
-// Note that (1)-(4) may be done over HTTP or HTTPs without any custom 
-// certificates or certificate authority 
+//
+// Note that (1)-(4) may be done over HTTP or HTTPs without any custom
+// certificates or certificate authority
 // (1) is handled by not not having PackageRepositoryAuth field on
 //     the parent object
-// a given plug-in may or may not support a given authentication type. 
+// a given plug-in may or may not support a given authentication type.
 // For example
 //  - direct-helm plug-in does not currently support (6), while flux does
-//  - flux plug-in does not support (3) or (4) while direct-helm does 
+//  - flux plug-in does not support (3) or (4) while direct-helm does
 message PackageRepositoryAuth {
   enum PackageRepositoryAuthType {
     PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED = 0;
@@ -150,11 +150,11 @@ message PackageRepositoryAuth {
     PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON = 5;
   }
   PackageRepositoryAuthType type = 1;
-  
+
   oneof package_repo_auth_one_of {
     // username and plain text password
     UsernamePassword username_password = 2;
-    
+
     // certificate and key for TLS-based authentication
     TlsCertKey tls_cert_key = 3;
 
@@ -163,7 +163,7 @@ message PackageRepositoryAuth {
 
     // for Bearer Auth token value
     // for Custom Auth, complete value of "Authorization" header
-    string header = 5; 
+    string header = 5;
 
     // a reference to an existing secret
     SecretKeyReference secret_ref = 6;
@@ -212,20 +212,20 @@ message DockerCredentials {
 // SecretKeyReference
 //
 message SecretKeyReference {
-  // The name of an existing secret in the same namespace as the object 
-  // that refers to it (e.g. PackageRepository), containing authentication 
+  // The name of an existing secret in the same namespace as the object
+  // that refers to it (e.g. PackageRepository), containing authentication
   // credentials for the said package repository.
-  // - For HTTP/S basic auth the secret must be of type 
+  // - For HTTP/S basic auth the secret must be of type
   //   "kubernetes.io/basic-auth" or opaque and contain username and
   //   password fields
-  // - For TLS the secret must be of type "kubernetes.io/tls" or opaque 
+  // - For TLS the secret must be of type "kubernetes.io/tls" or opaque
   //   and contain a certFile and keyFile, and/or
   //   caCert fields.
-  // - For Bearer or Custom Auth, the secret must be opaque, and 
+  // - For Bearer or Custom Auth, the secret must be opaque, and
   //   the key must be provided
   // - For Docker Registry Credentials (OCI registries) the secret
   //   must of of type "kubernetes.io/dockerconfigjson”
-  // For more details, refer to 
+  // For more details, refer to
   // https://kubernetes.io/docs/concepts/configuration/secret/
   string name = 1;
 
@@ -253,11 +253,11 @@ message GetPackageRepositorySummariesRequest {
 // PackageRepositoryReference
 //
 // A PackageRepositoryReference has the minimum information required to
-// uniquely identify a package repository. 
+// uniquely identify a package repository.
 message PackageRepositoryReference {
   // The context (cluster/namespace) for the repository.
   Context context = 1;
-  
+
   // The fully qualified identifier for the repository
   // (i.e. a unique name for the context).
   string identifier = 2;
@@ -315,7 +315,7 @@ message PackageRepositoryStatus {
 message PackageRepositoryDetail {
   // A reference uniquely identifying the package repository.
   PackageRepositoryReference package_repo_ref = 1;
-  
+
   // A user-provided name for the package repository (e.g. bitnami)
   string name = 2;
 
@@ -324,8 +324,8 @@ message PackageRepositoryDetail {
 
   // Whether this repository is global or namespace-scoped.
   bool namespace_scoped = 4;
- 
-  // Package storage type 
+
+  // Package storage type
   string type = 5;
 
   // A URL identifying the package repository location.
@@ -334,19 +334,19 @@ message PackageRepositoryDetail {
   // The interval at which to check the upstream for updates (in seconds)
   uint32 interval = 7;
 
-  // TLS-specific parameters for connecting to a repository. 
-  // If the cert authority was configured for this repository, then in the context 
-  // of GetPackageRepositoryDetail() operation, the PackageRepositoryTlsConfig will ALWAYS 
+  // TLS-specific parameters for connecting to a repository.
+  // If the cert authority was configured for this repository, then in the context
+  // of GetPackageRepositoryDetail() operation, the PackageRepositoryTlsConfig will ALWAYS
   // contain an existing SecretKeyReference, rather that cert_authority field
   PackageRepositoryTlsConfig tls_config = 8;
 
   // authentication parameters for connecting to a repository.
   // If Basic Auth or TLS or Docker Creds Auth was configured for this repository,
-  // then in the context of GetPackageRepositoryDetail() operation, the 
-  // PackageRepositoryAuth will ALWAYS contain an existing SecretKeyReference, 
+  // then in the context of GetPackageRepositoryDetail() operation, the
+  // PackageRepositoryAuth will ALWAYS contain an existing SecretKeyReference,
   // rather that string values that may have been used when package repository was created
   // field
-  PackageRepositoryAuth auth = 9; 
+  PackageRepositoryAuth auth = 9;
 
   // Custom data added by the plugin
   google.protobuf.Any custom_detail = 10;
@@ -369,7 +369,7 @@ message GetPackageRepositoryDetailResponse {
 message PackageRepositorySummary {
   // A reference uniquely identifying the package repository.
   PackageRepositoryReference package_repo_ref = 1;
-  
+
   // A user-provided name for the package repository (e.g. bitnami)
   string name = 2;
 
@@ -378,8 +378,8 @@ message PackageRepositorySummary {
 
   // Whether this repository is global or namespace-scoped.
   bool namespace_scoped = 4;
- 
-  // Package storage type 
+
+  // Package storage type
   string type = 5;
 
   // URL identifying the package repository location.

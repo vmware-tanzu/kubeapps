@@ -4,13 +4,13 @@
 
 **About this document**
 
-This document provides a link to the[ Kubeapps Project issues](https://github.com/kubeapps/kubeapps/issues) list that serves as the up to date description of items that are in the Kubeapps release pipeline. This should serve as a reference point for Kubeapps users and contributors to understand where the project is heading, and help determine if a contribution could be conflicting with a longer term plan.
+This document provides a link to the[ Kubeapps Project issues](https://github.com/vmware-tanzu/kubeapps/issues) list that serves as the up to date description of items that are in the Kubeapps release pipeline. This should serve as a reference point for Kubeapps users and contributors to understand where the project is heading, and help determine if a contribution could be conflicting with a longer term plan.
 
 ###
 
 **How to help?**
 
-Discussion on the roadmap can take place in threads under [Issues](https://github.com/kubeapps/kubeapps/issues). Please open and comment on an issue if you want to provide suggestions and feedback to an item in the roadmap. Please review the roadmap to avoid potential duplicated effort.
+Discussion on the roadmap can take place in threads under [Issues](https://github.com/vmware-tanzu/kubeapps/issues). Please open and comment on an issue if you want to provide suggestions and feedback to an item in the roadmap. Please review the roadmap to avoid potential duplicated effort.
 
 ###
 

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -263,7 +263,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 //   a) with 3a) => should work 2 times
 //   b) with 3b) => should fail 2 times with PermissionDenied error
 //   c) with 3c) => should fail once and work once
-// ref https://github.com/kubeapps/kubeapps/issues/4390
+// ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {

@@ -10,9 +10,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	negroni "github.com/urfave/negroni/v2"
+	"github.com/vmware-tanzu/kubeapps/cmd/assetsvc/pkg/utils"
+	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	log "k8s.io/klog/v2"
 )
 

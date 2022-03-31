@@ -184,7 +184,7 @@ export default function AppView() {
     // correct (ie. Package is "Pending" required RBAC). The work-around here
     // is to continue polling for the resource refs every two seconds as long
     // as a `NotFound` is returned.
-    // See https://github.com/kubeapps/kubeapps/issues/4337
+    // See https://github.com/vmware-tanzu/kubeapps/issues/4337
     let abort = false;
     const fetchResourceRefs = async () => {
       while (!abort) {

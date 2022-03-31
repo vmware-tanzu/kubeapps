@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	kubechart "github.com/kubeapps/kubeapps/pkg/chart"
-	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
+	kubechart "github.com/vmware-tanzu/kubeapps/pkg/chart"
+	chartFake "github.com/vmware-tanzu/kubeapps/pkg/chart/fake"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"

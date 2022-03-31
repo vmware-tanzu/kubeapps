@@ -3,7 +3,7 @@
 
 package main
 
-import "github.com/kubeapps/kubeapps/cmd/assetsvc/cmd"
+import "github.com/vmware-tanzu/kubeapps/cmd/assetsvc/cmd"
 
 func main() {
 	cmd.Execute()

@@ -10,8 +10,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/kubeapps/kubeapps/pkg/tarutil/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware-tanzu/kubeapps/pkg/tarutil/test"
 )
 
 func Test_extractFilesFromTarball(t *testing.T) {

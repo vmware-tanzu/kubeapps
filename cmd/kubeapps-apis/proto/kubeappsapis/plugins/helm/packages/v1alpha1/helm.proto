@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 package kubeappsapis.plugins.helm.packages.v1alpha1;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1";
+option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1";
 
 import "google/api/annotations.proto";
 import "kubeappsapis/core/packages/v1alpha1/packages.proto";

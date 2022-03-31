@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 )
 
 // tests the GET /live endpoint

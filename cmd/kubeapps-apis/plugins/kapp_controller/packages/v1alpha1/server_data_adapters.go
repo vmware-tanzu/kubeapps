@@ -8,9 +8,6 @@ import (
 	"strings"
 	"time"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	kappctrlinstalled "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -18,6 +15,9 @@ import (
 	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
@@ -33,7 +33,7 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 
 	// TODO(agamez): check if want to avoid sending this data over the wire
 	// instead we could send a url (to another API endpoint) to retrieve the icon
-	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
+	// See: https://github.com/vmware-tanzu/kubeapps/pull/3787#discussion_r754741255
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
 		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
@@ -71,7 +71,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 
 	// TODO(agamez): check if want to avoid sending this data over the wire
 	// instead we could send a url (to another API endpoint) to retrieve the icon
-	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
+	// See: https://github.com/vmware-tanzu/kubeapps/pull/3787#discussion_r754741255
 	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
 		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
@@ -141,7 +141,7 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 
 	// TODO(agamez): check if want to avoid sending this data over the wire
 	// instead we could send a url (to another API endpoint) to retrieve the icon
-	// See: https://github.com/kubeapps/kubeapps/pull/3787#discussion_r754741255
+	// See: https://github.com/vmware-tanzu/kubeapps/pull/3787#discussion_r754741255
 	var iconStringBuilder strings.Builder
 	if pkgMetadata.Spec.IconSVGBase64 != "" {
 		iconStringBuilder.WriteString("data:image/svg+xml;base64,")
@@ -346,7 +346,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			// This is the Carvel's way of supporting deployments across clusters
 			// without having kapp-controller on those other clusters
 			// We, currently, don't support deploying to another cluster without kapp-controller
-			// See https://github.com/kubeapps/kubeapps/pull/3789#discussion_r754786633
+			// See https://github.com/vmware-tanzu/kubeapps/pull/3789#discussion_r754786633
 			// Cluster: &kappctrlv1alpha1.AppCluster{
 			// 	Namespace:           targetNamespace,
 			// 	KubeconfigSecretRef: &kappctrlv1alpha1.AppClusterKubeconfigSecretRef{},

@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/pkg/utils"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/response"
+	"github.com/vmware-tanzu/kubeapps/cmd/assetsvc/pkg/utils"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/response"
 	log "k8s.io/klog/v2"
 )
 

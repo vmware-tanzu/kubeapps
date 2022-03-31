@@ -16,12 +16,12 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
-	"github.com/kubeapps/kubeapps/cmd/kubeops/internal/handler"
-	"github.com/kubeapps/kubeapps/pkg/agent"
-	"github.com/kubeapps/kubeapps/pkg/auth"
-	backendHandlers "github.com/kubeapps/kubeapps/pkg/http-handler"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 	negroni "github.com/urfave/negroni/v2"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/handler"
+	"github.com/vmware-tanzu/kubeapps/pkg/agent"
+	"github.com/vmware-tanzu/kubeapps/pkg/auth"
+	backendHandlers "github.com/vmware-tanzu/kubeapps/pkg/http-handler"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
 	log "k8s.io/klog/v2"
 )

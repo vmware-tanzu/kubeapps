@@ -13,13 +13,13 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/kubeapps/kubeapps/pkg/tarutil"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -255,7 +255,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, key types.Namespace
 	if err != nil {
 		return nil, err
 	}
-	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	// per https://github.com/vmware-tanzu/kubeapps/pull/3686#issue-1038093832
 	availablePackageRef.Context.Cluster = s.kubeappsCluster
 
 	appVersion, postInstallNotes := "", ""
@@ -356,7 +356,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 		return nil, err
 	}
 
-	// per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
+	// per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-949315105
 	// the helm release CR to also be created in the target namespace (where the helm
 	// release itself is currently created)
 	client, err := s.getClient(ctx, targetName.Namespace)
@@ -487,7 +487,7 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 // Potentially, there are 3 different namespaces that can be specified here
 // 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
 // 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
-//    per https://github.com/kubeapps/kubeapps/pull/3640#issuecomment-949315105
+//    per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-949315105
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
 func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionExpr string, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*helmv2.HelmRelease, error) {
 	fluxRelease := &helmv2.HelmRelease{
