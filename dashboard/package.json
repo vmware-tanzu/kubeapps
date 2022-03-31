@@ -57,7 +57,7 @@
     "react-markdown": "^8.0.1",
     "react-minimal-pie-chart": "^8.2.0",
     "react-redux": "^7.2.6",
-    "react-router-dom": "^5.3.0",
+    "react-router-dom": "^6.2.2",
     "react-router-hash-link": "^2.4.3",
     "react-switch": "^6.0.0",
     "react-tabs": "^4.0.1",
