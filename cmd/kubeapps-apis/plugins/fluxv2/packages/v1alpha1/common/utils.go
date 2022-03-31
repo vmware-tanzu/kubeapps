@@ -20,9 +20,9 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/go-redis/redis/v8"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -143,7 +143,7 @@ func RWMutexReadLocked(rw *sync.RWMutex) bool {
 	return reflect.ValueOf(rw).Elem().FieldByName("readerCount").Int() > 0
 }
 
-// https://github.com/kubeapps/kubeapps/pull/3044#discussion_r662733334
+// https://github.com/vmware-tanzu/kubeapps/pull/3044#discussion_r662733334
 // small preference for reading all config in the main.go
 // (whether from env vars or cmd-line options) only in the one spot and passing
 // explicitly to functions (so functions are less dependent on env state).
@@ -166,7 +166,7 @@ func NewRedisClientFromEnv(stopCh <-chan struct{}) (*redis.Client, error) {
 		return nil, err
 	}
 
-	// ref https://github.com/kubeapps/kubeapps/pull/4382#discussion_r820386531
+	// ref https://github.com/vmware-tanzu/kubeapps/pull/4382#discussion_r820386531
 	var redisCli *redis.Client
 	err = wait.PollImmediate(redisInitClientRetryWait, redisInitClientTimeout,
 		func() (bool, error) {

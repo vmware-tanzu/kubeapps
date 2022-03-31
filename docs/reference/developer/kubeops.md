@@ -14,7 +14,7 @@ The `kubeops` component is a micro-service that creates an API endpoint for acce
 ## Download the Kubeapps source code
 
 ```bash
-git clone --recurse-submodules https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
+git clone --recurse-submodules https://github.com/vmware-tanzu/kubeapps $KUBEAPPS_DIR
 ```
 
 The `kubeops` sources are located under `cmd/kubeops/` and use packages from the `pkg` directory.

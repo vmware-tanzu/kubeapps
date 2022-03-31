@@ -17,9 +17,9 @@ import (
 	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/kube"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -351,7 +351,7 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 // It is equivalent to the "Authorization" usual HTTP 1 header
 // For instance: authorization="Bearer abc" will return "abc"
 func extractToken(ctx context.Context) (string, error) {
-	// per https://github.com/kubeapps/kubeapps/issues/3560
+	// per https://github.com/vmware-tanzu/kubeapps/issues/3560
 	// extractToken() to raise an error if there is no metadata with the context.
 	// note, the caller will wrap this as a codes.Unauthenticated status
 	md, ok := metadata.FromIncomingContext(ctx)

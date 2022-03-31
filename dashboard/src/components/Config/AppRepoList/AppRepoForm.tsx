@@ -589,7 +589,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href={`https://github.com/kubeapps/kubeapps/blob/${appVersion}/docs/howto/private-app-repository.md#modifying-the-synchronization-job`}
+              href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/docs/howto/private-app-repository.md#modifying-the-synchronization-job`}
             >
               here
             </a>

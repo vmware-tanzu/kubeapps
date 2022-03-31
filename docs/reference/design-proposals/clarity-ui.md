@@ -1,6 +1,6 @@
 # Update Kubeapps to use clarity.design
 
-Issue https://github.com/kubeapps/kubeapps/issues/1354
+Issue https://github.com/vmware-tanzu/kubeapps/issues/1354
 
 The goal of this proposal is to define how the new UI of Kubeapps will look like. To make collaboration easier, a Google doc is available:
 

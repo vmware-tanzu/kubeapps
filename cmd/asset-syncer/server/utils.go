@@ -25,14 +25,14 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/disintegration/imaging"
 	"github.com/itchyny/gojq"
-	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/kubeapps/kubeapps/pkg/helm"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/kubeapps/kubeapps/pkg/tarutil"
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
+	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
 	"helm.sh/helm/v3/pkg/chart"
 	helmregistry "helm.sh/helm/v3/pkg/registry"
 	log "k8s.io/klog/v2"
@@ -924,7 +924,7 @@ func isURLDomainEqual(url1Str, url2Str string) bool {
 // asset-syncer/devel
 // asset-syncer/1.0
 // asset-syncer/1.0 (foo v1.0-beta4)
-// More info here https://github.com/kubeapps/kubeapps/issues/767#issuecomment-436835938
+// More info here https://github.com/vmware-tanzu/kubeapps/issues/767#issuecomment-436835938
 func GetUserAgent(version, userAgentComment string) string {
 	if version == "" && userAgentComment == "" {
 		return "asset-syncer/devel"

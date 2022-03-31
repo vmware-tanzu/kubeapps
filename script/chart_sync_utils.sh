@@ -14,7 +14,7 @@ PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
 CHART_REPO_PATH="bitnami/kubeapps"
 
 # Path of the Kubeapps chart in the Kubeapps repo.
-# For instance, given "https://github.com/kubeapps/kubeapps/tree/main/chart/kubeapps", it should be "chart/kubeapps"
+# For instance, given "https://github.com/vmware-tanzu/kubeapps/tree/main/chart/kubeapps", it should be "chart/kubeapps"
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
 
 # Paths of the templates files, note they are also used elsewhere

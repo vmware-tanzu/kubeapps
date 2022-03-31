@@ -2,13 +2,13 @@
 
 The goal of this document is to define in detail the actions planned to improve the current user experience when working with applications.
 
-Parent issue: https://github.com/kubeapps/kubeapps/issues/1524
+Parent issue: https://github.com/vmware-tanzu/kubeapps/issues/1524
 
 ## Goal
 
 The goal of this revamp is to improve the Application View, which is one of the core views of the project so it gives a better user experience in different areas:
 
-- Discoverability. It should be possible to obtain information about the application dependencies. For example, Kubeapps should show that MariaDB is a dependency of WordPress. Details at https://github.com/kubeapps/kubeapps/issues/529
+- Discoverability. It should be possible to obtain information about the application dependencies. For example, Kubeapps should show that MariaDB is a dependency of WordPress. Details at https://github.com/vmware-tanzu/kubeapps/issues/529
 - Error Detection. Make an easy to understand view that can point the user to the piece(s) of the chart that is failing.
 - Usability. Make it easier, if possible, to modify/upgrade/rollback/test/delete an application.
 - Debugging. When something fails while working with a release, it should be possible to detect the cause of the issue and fix it without the need of a terminal. This means being able to report kubernetes events/errors to the user and being able to read logs.
@@ -64,7 +64,7 @@ We could also differentiate between the configuration and the upgrade actions. W
 The current list of URLs can be improved with two small changes:
 
 - If the browser can access the URL, we could show an icon so the user knows if the URL is working.
-- If the URL is not working and the cause is well known, we could show additional information for the user to debug it (e.g. Pending IPs when using LoadBalancers in Minikube [link](https://github.com/kubeapps/kubeapps/issues/953)).
+- If the URL is not working and the cause is well known, we could show additional information for the user to debug it (e.g. Pending IPs when using LoadBalancers in Minikube [link](https://github.com/vmware-tanzu/kubeapps/issues/953)).
 
  <img src="./img/url-list.png">
 

@@ -1,6 +1,6 @@
 # How to translate Kubeapps
 
-> Important: this is a _work in progress_ feature. See the current progress at https://github.com/kubeapps/kubeapps/issues/2346:
+> Important: this is a _work in progress_ feature. See the current progress at https://github.com/vmware-tanzu/kubeapps/issues/2346:
 
 There are two ways to have Kubeapps with different messages: i) customizing the strings at runtime from the `values.yaml` file; ii) adding a new official translation into the Kubeapps project.
 

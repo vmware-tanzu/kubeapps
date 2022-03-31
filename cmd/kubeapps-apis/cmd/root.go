@@ -6,11 +6,11 @@ package cmd
 import (
 	"flag"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/server"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/server"
 	log "k8s.io/klog/v2"
 )
 

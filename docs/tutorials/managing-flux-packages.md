@@ -207,4 +207,4 @@ Some additional resources and references include:
 
 - [Getting Started with Flux](https://fluxcd.io/docs/get-started/)
 
-Finally, we are [currently working](https://github.com/kubeapps/kubeapps/milestone/17) on this Flux plugin for managing Flux Packages, so if you encounter any problems, please [file an issue](https://github.com/kubeapps/kubeapps/issues/new) in the Kubeapps repository.
+Finally, we are [currently working](https://github.com/vmware-tanzu/kubeapps/milestone/17) on this Flux plugin for managing Flux Packages, so if you encounter any problems, please [file an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) in the Kubeapps repository.

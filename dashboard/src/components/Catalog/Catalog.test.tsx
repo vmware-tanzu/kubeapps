@@ -593,7 +593,7 @@ describe("pagination and package fetching", () => {
       expect(setPage).toHaveBeenCalledWith(0);
     });
     // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
-    // https://github.com/kubeapps/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
+    // https://github.com/vmware-tanzu/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
   });
 });
 
@@ -659,8 +659,9 @@ describe("filters by application repository", () => {
     // The repo name is "foo"
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "foo");
     input.simulate("change", { target: { value: "foo" } });
-    // It should have pushed with the filter
-    expect(fetchRepos).toHaveBeenCalledWith("kubeapps");
+    // It should have pushed with the filter and fetches global repos since
+    // the "kubeapps" namespace isn't the global repos namespace.
+    expect(fetchRepos).toHaveBeenCalledWith("kubeapps", true);
     expect(mockDispatch).toHaveBeenCalledWith({
       payload: {
         args: ["/c/default-cluster/ns/kubeapps/catalog?Repository=foo"],
@@ -696,6 +697,44 @@ describe("filters by application repository", () => {
       },
       type: "@@router/CALL_HISTORY_METHOD",
     });
+  });
+
+  it("does not additionally fetch global repos when the global repo is selected", () => {
+    mountWrapper(
+      getStore({
+        ...populatedState,
+        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+      }),
+      <MemoryRouter
+        initialEntries={[
+          `/c/${defaultProps.cluster}/ns/${initialState.config.globalReposNamespace}/catalog`,
+        ]}
+      >
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+
+    // Called without the boolean `true` option to additionally fetch global repos.
+    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+  });
+
+  it("fetches from the global repos namespace for other clusters", () => {
+    mountWrapper(
+      getStore({
+        ...populatedState,
+        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+      }),
+      <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+
+    // Only the global repos should have been fetched.
+    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
   });
 });
 

@@ -44,7 +44,7 @@ Configuring an authentication provider is typically done by a cluster operator, 
 
 ### Logging in with Client Certificate/Key Auth
 
-Client certificate and key pairs are a common way to authenticate against a cluster. The Kubeconfig can either point to certificates or keys in the filesystem, or they can be embedded within the file as base64 encoded strings. Unfortunately for Kubeapps, it is not possible to include a client certificate and key pair in an XMLHttpRequest (browser AJAX request), so we would not be able to leverage client certificate/key authentication within Kubeapps (see [#200](https://github.com/kubeapps/kubeapps/issues/200#issuecomment-376617420)).
+Client certificate and key pairs are a common way to authenticate against a cluster. The Kubeconfig can either point to certificates or keys in the filesystem, or they can be embedded within the file as base64 encoded strings. Unfortunately for Kubeapps, it is not possible to include a client certificate and key pair in an XMLHttpRequest (browser AJAX request), so we would not be able to leverage client certificate/key authentication within Kubeapps (see [#200](https://github.com/vmware-tanzu/kubeapps/issues/200#issuecomment-376617420)).
 
 ### Logging in with Token Auth
 

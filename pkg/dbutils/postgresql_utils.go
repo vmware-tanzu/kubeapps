@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 )
 
 const (

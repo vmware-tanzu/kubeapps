@@ -33,9 +33,9 @@ import (
 	fakeRest "k8s.io/client-go/rest/fake"
 	k8stesting "k8s.io/client-go/testing"
 
-	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	fakeapprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	fakeapprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 )
 
 type repoStub struct {

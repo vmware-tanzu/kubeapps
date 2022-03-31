@@ -16,10 +16,10 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
-	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/helm"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/kubeapps/kubeapps/pkg/kube"
+	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/repo"
@@ -140,7 +140,7 @@ func checksum(data []byte) string {
 }
 
 // Cache the result of parsing the repo index since parsing this YAML
-// is an expensive operation. See https://github.com/kubeapps/kubeapps/issues/1052
+// is an expensive operation. See https://github.com/vmware-tanzu/kubeapps/issues/1052
 // TODO(agamez): remove this method once it is no longer used in kubeops
 func getIndexFromCache(repoURL string, data []byte) (*repo.IndexFile, string) {
 	sha := checksum(data)

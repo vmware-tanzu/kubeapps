@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Kubeapps's default configuration schedules the syncing process of the App Repositories every _ten minutes_. However, this behavior can be easily changed globally by editing the [values.yaml file](https://github.com/kubeapps/kubeapps/blob/main/chart/kubeapps/values.yaml#L215) (`crontab: "*/10 * * * *"`).
+Kubeapps's default configuration schedules the syncing process of the App Repositories every _ten minutes_. However, this behavior can be easily changed globally by editing the [values.yaml file](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/values.yaml#L215) (`crontab: "*/10 * * * *"`).
 
 Nevertheless, this default approach might not be useful for environments with highly frequent changes. Moreover, if there are a few App Repositories with numerous changes while others hardly are modified, therefore, increasing the default global syncing periodicity is not a good approach.
 
@@ -13,7 +13,7 @@ Webhook notifications provide information about events in JSON format and are us
 
 The example below will use Harbor for explaining how a webhook is configured for triggering an App Repository sync process.
 
-> In other platforms the process will be pretty similar. Doubts? Please feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you need further guidance!
+> In other platforms the process will be pretty similar. Doubts? Please feel free to [open an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) if you need further guidance!
 
 ## Creating and granting a ServiceAccount for authenticating requests
 
@@ -115,4 +115,4 @@ This picture illustrates the configuration of a webhook in Habor:
 ## Final remarks
 
 Currently, Kubeapps does not process any payload. Therefore, the information that the platform may send as part of the `POST` request will be ignored.
-Feel free to [open an issue](https://github.com/kubeapps/kubeapps/issues/new) if you need further guidance or your use case is not matching with this approach.
+Feel free to [open an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) if you need further guidance or your use case is not matching with this approach.

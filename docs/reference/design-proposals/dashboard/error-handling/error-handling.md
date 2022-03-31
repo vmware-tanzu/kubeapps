@@ -6,7 +6,7 @@ Date: 2018/10/02
 
 Type: Design Doc
 
-Issue: [kubeapps#657](https://github.com/kubeapps/kubeapps/issues/657)
+Issue: [kubeapps#657](https://github.com/vmware-tanzu/kubeapps/issues/657)
 
 ## Objective
 
@@ -37,7 +37,7 @@ Today, we are handling errors per-case basis, which is good if we want to react 
 
 Why do we need a catch all?
 
-Currently, if the application experiences a runtime error, the application stops rendering, but does not notify the user that something went wrong. Leaving a page in a potentially corrupted state. [This](https://github.com/kubeapps/kubeapps/issues/632) is an example of such behavior.
+Currently, if the application experiences a runtime error, the application stops rendering, but does not notify the user that something went wrong. Leaving a page in a potentially corrupted state. [This](https://github.com/vmware-tanzu/kubeapps/issues/632) is an example of such behavior.
 
 This behavior can be confusing, so it would be better to just show the user, "something went wrong, please double check 'foo' and/or create an issue in here..."
 
@@ -135,11 +135,11 @@ In our previous section [1 - Unexpected, unhandled errors](#1---unexpected-unhan
 
 This design can be implemented in multiple stages:
 
-- Stage 1: Implement error boundary for unexpected runtime rendering errors, reusing the `UnexpectedError` component. [#724](https://github.com/kubeapps/kubeapps/issues/724).
-- Stage 2: Implement an instance of ErrorSelector in the layout connected to the redux store, move a couple of ErrorSelector consumers to this new model [#725](https://github.com/kubeapps/kubeapps/issues/725).
-- Stage 3: Finish the migration of all these consumers from rendering the component to dispatch an error and remove those renders [#725](https://github.com/kubeapps/kubeapps/issues/725).
-- Stage 4: Change the errorBoundary component to rely on the connected errorSelector implemented in stage 2 and remove its own render [#726](https://github.com/kubeapps/kubeapps/issues/726).
-- Stage 5: Look into merging errorBoundary and errorSelector [#727](https://github.com/kubeapps/kubeapps/issues/727).
+- Stage 1: Implement error boundary for unexpected runtime rendering errors, reusing the `UnexpectedError` component. [#724](https://github.com/vmware-tanzu/kubeapps/issues/724).
+- Stage 2: Implement an instance of ErrorSelector in the layout connected to the redux store, move a couple of ErrorSelector consumers to this new model [#725](https://github.com/vmware-tanzu/kubeapps/issues/725).
+- Stage 3: Finish the migration of all these consumers from rendering the component to dispatch an error and remove those renders [#725](https://github.com/vmware-tanzu/kubeapps/issues/725).
+- Stage 4: Change the errorBoundary component to rely on the connected errorSelector implemented in stage 2 and remove its own render [#726](https://github.com/vmware-tanzu/kubeapps/issues/726).
+- Stage 5: Look into merging errorBoundary and errorSelector [#727](https://github.com/vmware-tanzu/kubeapps/issues/727).
 
 My opinion is that in terms of priorities, what we really need in the short term is only Stage 1. The global error handling via Redux mechanism is nice to have but not strictly needed right now because the app is not growing much in terms of new views just yet.
 

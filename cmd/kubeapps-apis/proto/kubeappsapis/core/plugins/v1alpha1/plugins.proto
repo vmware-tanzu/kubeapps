@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 package kubeappsapis.core.plugins.v1alpha1;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1";
+option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1";
 
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
@@ -37,7 +37,7 @@ message GetConfiguredPluginsResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     example: '{"plugins": [{"name": "kapp_controller.packages", "version": "v1alpha1"}]}'
   };
-  
+
   // Plugins
   //
   // List of Plugin
@@ -56,7 +56,7 @@ message Plugin {
   //
   // The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
   string name = 1;
-  
+
   // Plugin version
   //
   // The version of the plugin, such as v1alpha1

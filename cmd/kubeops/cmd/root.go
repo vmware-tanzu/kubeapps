@@ -6,10 +6,10 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeops/server"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/server"
 	log "k8s.io/klog/v2"
 )
 

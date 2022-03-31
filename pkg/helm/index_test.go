@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")

@@ -10,14 +10,14 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // global vars
-// why define these here? see https://github.com/kubeapps/kubeapps/pull/3736#discussion_r745246398
+// why define these here? see https://github.com/vmware-tanzu/kubeapps/pull/3736#discussion_r745246398
 // plus I am putting them in a separate file, since they take up so much space they distract from
 // overall test logic
 var (
