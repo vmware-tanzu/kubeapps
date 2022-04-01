@@ -195,6 +195,11 @@ installKappController() {
 
   # Add test repository.
 	kubectl apply -f https://raw.githubusercontent.com/vmware-tanzu/carvel-kapp-controller/develop/examples/packaging-with-repo/package-repository.yml
+
+  # Add a carvel-reconciler service account to the kubeapps-user-namespace with
+  # cluster-admin.
+  kubectl create serviceaccount carvel-reconciler -n kubeapps-user-namespace
+  kubectl create clusterrolebinding carvel-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:carvel-reconciler
 }
 
 ########################

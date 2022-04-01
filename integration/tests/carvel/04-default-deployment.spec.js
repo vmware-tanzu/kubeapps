@@ -10,6 +10,11 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
 
+  // Switch to user's namespace using UI
+  await page.click(".kubeapps-dropdown .kubeapps-nav-link");
+  await page.selectOption('select[name="namespaces"]', "kubeapps-user-namespace");
+  await page.click('cds-button:has-text("Change Context")');
+
   // Select package to deploy
   await page.click('a.nav-link:has-text("Catalog")');
   await page.locator("input#search").fill("carvel");
@@ -24,10 +29,10 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
   const releaseName = utils.getRandomName("test-04-release");
-  console.log(`Creating release "${releaseName}"`);
   await releaseNameLocator.fill(releaseName);
-  await page.selectOption("#serviceaccount-selector select", "kubeapps-operator");
+  await page.selectOption("#serviceaccount-selector select", "carvel-reconciler");
   await page.locator('cds-button:has-text("Deploy")').click();
+  console.log(`Creating release "${releaseName}"`);
 
   // Assertions
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=3", {
