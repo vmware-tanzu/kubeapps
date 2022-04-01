@@ -19,12 +19,12 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	helmfake "github.com/kubeapps/kubeapps/pkg/helm/fake"
-	helmtest "github.com/kubeapps/kubeapps/pkg/helm/test"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 	"github.com/stretchr/testify/assert"
+	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	helmfake "github.com/vmware-tanzu/kubeapps/pkg/helm/fake"
+	helmtest "github.com/vmware-tanzu/kubeapps/pkg/helm/test"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/repo"
 	corev1 "k8s.io/api/core/v1"

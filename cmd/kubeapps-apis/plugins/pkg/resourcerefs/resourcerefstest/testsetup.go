@@ -4,7 +4,7 @@
 package resourcerefstest
 
 import (
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 )
 
@@ -190,7 +190,7 @@ should not be :! parsed as yaml$
 		},
 		{
 			Name: "handles duplicate labels as helm does",
-			// See https://github.com/kubeapps/kubeapps/issues/632
+			// See https://github.com/vmware-tanzu/kubeapps/issues/632
 			ExistingReleases: []TestReleaseStub{
 				{
 					Name:      "my-apache",
@@ -518,7 +518,7 @@ should not be :! parsed as yaml$
 		},
 		{
 			Name: "handles duplicate labels in the manifest as helm does (2)",
-			// See https://github.com/kubeapps/kubeapps/issues/632
+			// See https://github.com/vmware-tanzu/kubeapps/issues/632
 			ExistingReleases: []TestReleaseStub{
 				{
 					Name:      releaseName,

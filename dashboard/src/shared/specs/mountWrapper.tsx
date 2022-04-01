@@ -30,6 +30,7 @@ export const initialState = {
     ...cloneDeep(configInitialState),
     kubeappsCluster: "default-cluster",
     kubeappsNamespace: "kubeapps",
+    globalReposNamespace: "kubeapps-repos-global",
   },
   kube: cloneDeep(kubeInitialState),
   clusters: {

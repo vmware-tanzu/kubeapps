@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,7 +32,7 @@ import (
 // this integration test is meant to test a scenario when the redis cache is confiured with maxmemory
 // too small to be able to fit all the repos needed to satisfy the request for GetAvailablePackageSummaries
 // and redis cache eviction kicks in. Also, the kubeapps-apis pod should have a large memory limit (1Gb) set
-// To set up such environment one can use  "-f ./docs/user/manifests/kubeapps-local-dev-redis-tiny-values.yaml"
+// To set up such environment one can use  "-f ./docs/howto/manifests/kubeapps-local-dev-redis-tiny-values.yaml"
 // option when installing kubeapps via "helm upgrade"
 // It is worth noting that exactly how many copies of bitnami repo can be held in the cache at any given time varies
 // This is because the size of the index.yaml we get from bitnami does fluctuate quite a bit over time:
@@ -263,7 +263,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 //   a) with 3a) => should work 2 times
 //   b) with 3b) => should fail 2 times with PermissionDenied error
 //   c) with 3c) => should fail once and work once
-// ref https://github.com/kubeapps/kubeapps/issues/4390
+// ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {

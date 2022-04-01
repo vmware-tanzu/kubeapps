@@ -8,7 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 )
 
 func Test_NewPGManager(t *testing.T) {

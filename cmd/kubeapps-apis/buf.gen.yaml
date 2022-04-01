@@ -6,11 +6,11 @@ plugins:
   - name: go
     out: gen
     opt:
-      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+      - module=github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen
   - name: go-grpc
     out: gen
     opt:
-      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+      - module=github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen
       # The following option controls whether the generated interfaces require
       # the `mustEmbedUnimplemented**Server` method. This method is useful to
       # ensure that when you add a method to a proto service and regenerate
@@ -30,7 +30,7 @@ plugins:
   - name: grpc-gateway
     out: gen
     opt:
-      - module=github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen
+      - module=github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen
   # Consider migrating to openapiv3 once ready
   # https://github.com/grpc-ecosystem/grpc-gateway/pull/2147
   - name: openapiv2

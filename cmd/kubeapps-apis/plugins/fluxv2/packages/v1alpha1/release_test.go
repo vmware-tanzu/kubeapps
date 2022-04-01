@@ -13,15 +13,16 @@ import (
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -176,7 +177,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			},
 		},
 		{
-			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 			// this is testing a configuration where a customer has manually set a
 			// .targetNamespace field of Flux HelmRelease CR
 			name: "returns installed packages when HelmRelease targetNamespace is set",
@@ -450,7 +451,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			expectedDetail:     redis_detail_completed_with_values_and_reconciliation_options,
 		},
 		{
-			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 			// this is testing a configuration where a customer has manually set a
 			// .targetNamespace field of Flux HelmRelease CR
 			name: "returns installed package detail when targetNamespace is set",
@@ -746,7 +747,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			expectedStatusCode: codes.NotFound,
 		},
 		{
-			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 			// this is testing a configuration where a customer has manually set a
 			// .targetNamespace field of Flux HelmRelease CR
 			name: "updates a package when targetNamespace is set",
@@ -1050,14 +1051,14 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		newTestCase(3, true, codes.OK, false),
 		newTestCase(4, false, codes.NotFound, false),
 		newTestCase(5, false, codes.Internal, false),
-		// See https://github.com/kubeapps/kubeapps/issues/632
+		// See https://github.com/vmware-tanzu/kubeapps/issues/632
 		newTestCase(6, true, codes.OK, false),
 		newTestCase(7, true, codes.OK, false),
 		newTestCase(8, true, codes.OK, false),
 		// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
 		newTestCase(9, true, codes.OK, false),
 		newTestCase(10, true, codes.OK, false),
-		// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+		// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 		// this is testing a configuration where a customer has manually set a
 		// .targetNamespace field of Flux HelmRelease CR
 		newTestCase(11, true, codes.OK, true),
@@ -1155,18 +1156,13 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		}
 
-		lastTransitionTime, err := time.Parse(time.RFC3339, "2021-08-12T03:25:38Z")
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		chartStatus := &sourcev1.HelmChartStatus{
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Message:            "Fetched revision: " + existing.chartSpecVersion,
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             sourcev1.ChartPullSucceededReason,
 				},
 			},

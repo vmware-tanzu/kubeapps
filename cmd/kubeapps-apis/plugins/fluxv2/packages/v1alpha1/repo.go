@@ -15,15 +15,15 @@ import (
 	"time"
 
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/helm"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -52,7 +52,7 @@ var (
 func (s *Server) listReposInAllNamespaces(ctx context.Context) ([]sourcev1.HelmRepository, error) {
 	// the actual List(...) call will be executed in the context of
 	// kubeapps-internal-kubeappsapis service account
-	// ref https://github.com/kubeapps/kubeapps/issues/4390 for explanation
+	// ref https://github.com/vmware-tanzu/kubeapps/issues/4390 for explanation
 	backgroundCtx := context.Background()
 	client, err := s.serviceAccountClientGetter.ControllerRuntime(backgroundCtx)
 	if err != nil {
@@ -212,13 +212,13 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 		}
 		caCert := tlsConfig.GetCertAuthority()
 		if caCert != "" {
-			secret = newLocalOpaqueSecret(targetName.Name + "-")
+			secret = common.NewLocalOpaqueSecret(targetName.Name + "-")
 			secret.Data["caFile"] = []byte(caCert)
 		}
 	}
 	if auth != nil && auth.GetSecretRef() == nil {
 		if secret == nil {
-			secret = newLocalOpaqueSecret(targetName.Name + "-")
+			secret = common.NewLocalOpaqueSecret(targetName.Name + "-")
 		}
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
@@ -285,7 +285,7 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 		// check that the secret has "username" and "password" fields, etc.
 
 		// TODO (gfichtenholt)
-		// ref https://github.com/kubeapps/kubeapps/pull/4353#discussion_r816332595
+		// ref https://github.com/vmware-tanzu/kubeapps/pull/4353#discussion_r816332595
 		// check whether flux supports typed secrets in addition to opaque secrets
 		// https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
 		// If so, that cause certain validation to be done on the data (ie. ensuring that
@@ -431,6 +431,52 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 	}, nil
 }
 
+func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1.PackageRepositorySummary, error) {
+	summaries := []*corev1.PackageRepositorySummary{}
+	var repos []sourcev1.HelmRepository
+	var err error
+	if namespace == apiv1.NamespaceAll {
+		if repos, err = s.listReposInAllNamespaces(ctx); err != nil {
+			return nil, err
+		}
+	} else {
+		// here, the right semantics are different than that of availablePackageSummaries()
+		// namely, if a specific namespace is passed in, we need to list repos in that namespace
+		// and if the caller happens not to have 'read' access to that namespace, a PermissionDenied
+		// error should be raised, as opposed to returning an empty list with no error
+		var repoList sourcev1.HelmRepositoryList
+		var client ctrlclient.Client
+		if client, err = s.getClient(ctx, namespace); err != nil {
+			return nil, err
+		} else if err = client.List(ctx, &repoList); err != nil {
+			return nil, statuserror.FromK8sError("list", "HelmRepository", "", err)
+		} else {
+			repos = repoList.Items
+		}
+	}
+	for _, repo := range repos {
+		summary := &corev1.PackageRepositorySummary{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Namespace: repo.Namespace,
+					Cluster:   s.kubeappsCluster,
+				},
+				Identifier: repo.Name,
+				Plugin:     GetPluginDetail(),
+			},
+			Name: repo.Name,
+			// TBD Flux HelmRepository CR doesn't have a designated field for description
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             repo.Spec.URL,
+			Status:          repoStatus(repo),
+		}
+		summaries = append(summaries, summary)
+	}
+	return summaries, nil
+}
+
 //
 // implements plug-in specific cache-related functionality
 //
@@ -497,7 +543,7 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 
 	if s.chartCache != nil {
 		if opts, err := s.clientOptionsForRepo(context.Background(), repo); err != nil {
-			// ref: https://github.com/kubeapps/kubeapps/pull/3899#issuecomment-990446931
+			// ref: https://github.com/vmware-tanzu/kubeapps/pull/3899#issuecomment-990446931
 			// I don't want this func to fail onAdd/onModify() if we can't read
 			// the corresponding secret due to something like default RBAC settings:
 			// "secrets "podinfo-basic-auth-secret" is forbidden:
@@ -663,7 +709,7 @@ func (s *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-// this is only until https://github.com/kubeapps/kubeapps/issues/3496
+// this is only until https://github.com/vmware-tanzu/kubeapps/issues/3496
 // "Investigate and propose package repositories API with similar core interface to packages API"
 // gets implemented. After that, the auth should be part of some kind of packageRepositoryFromCtrlObject()
 // The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
@@ -701,7 +747,7 @@ func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.
 func isRepoReady(repo sourcev1.HelmRepository) bool {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
 	// Confirm the state we are observing is for the current generation
-	if !common.CheckGeneration(&repo) {
+	if !checkRepoGeneration(repo) {
 		return false
 	}
 
@@ -710,17 +756,18 @@ func isRepoReady(repo sourcev1.HelmRepository) bool {
 }
 
 // returns 3 things:
-// - complete whether the operation was completed
-// - success (only applicable when complete == true) whether the operation was successful or failed
-// - reason, if present
+// - complete: whether the operation was completed
+// - success: (only applicable when complete == true) whether the operation was successful or failed
+// - reason: if present
 // docs:
 // 1. https://fluxcd.io/docs/components/source/helmrepositories/#status-examples
 func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success bool, reason string) {
-	if !common.CheckGeneration(&repo) {
-		return false, false, ""
-	}
-
-	readyCond := meta.FindStatusCondition(*repo.GetStatusConditions(), "Ready")
+	// flux source-controller v1beta2 API made a change so that we can no longer
+	// rely on a simple "metadata.generation" vs "status.observedGeneration" check for a
+	// quick answer. The resource may now exist with "observedGeneration": -1 either in
+	// pending or in a failed state. We need to distinguish between the two. Personally,
+	// feels like a mistake to me.
+	readyCond := meta.FindStatusCondition(repo.GetConditions(), fluxmeta.ReadyCondition)
 	if readyCond != nil {
 		if readyCond.Reason != "" {
 			// this could be something like
@@ -736,7 +783,7 @@ func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success
 		}
 		switch readyCond.Status {
 		case metav1.ConditionTrue:
-			return true, true, reason
+			return checkRepoGeneration(repo), true, reason
 		case metav1.ConditionFalse:
 			return true, false, reason
 			// metav1.ConditionUnknown falls through
@@ -762,12 +809,8 @@ func repoStatus(repo sourcev1.HelmRepository) *corev1.PackageRepositoryStatus {
 	return s
 }
 
-func newLocalOpaqueSecret(name string) *apiv1.Secret {
-	return &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: name,
-		},
-		Type: apiv1.SecretTypeOpaque,
-		Data: map[string][]byte{},
-	}
+func checkRepoGeneration(repo sourcev1.HelmRepository) bool {
+	generation := repo.GetGeneration()
+	observedGeneration := repo.Status.ObservedGeneration
+	return generation > 0 && generation == observedGeneration
 }

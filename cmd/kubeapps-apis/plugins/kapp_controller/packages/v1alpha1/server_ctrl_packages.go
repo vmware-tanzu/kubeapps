@@ -10,16 +10,16 @@ import (
 	"sync"
 	"time"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -94,9 +94,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name))
 		}
 		// The kapp-controller returns both packages and package metadata
-		// in order.
-		if currentPkg.Spec.RefName != pkgMetadata.Name {
-			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+		// in order. But some repositories have invalid data (TAP 1.0.2)
+		// where a package is present *without* corresponding metadata.
+		for currentPkg.Spec.RefName != pkgMetadata.Name {
+			if currentPkg.Spec.RefName > pkgMetadata.Name {
+				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+			}
+			log.Errorf("Package %q did not have a corresponding metadata", currentPkg.Spec.RefName)
+			currentPkg = <-getPkgsChannel
 		}
 		// Collect the packages for a particular refName to be able to send the
 		// latest semver version. For the moment, kapp-controller just returns
@@ -348,7 +353,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
 	// been able so far.
 	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
-	// However, should we just return an error if so? See https://github.com/kubeapps/kubeapps/pull/3784#discussion_r754836475
+	// However, should we just return an error if so? See https://github.com/vmware-tanzu/kubeapps/pull/3784#discussion_r754836475
 	// filter out <nil> values
 	installedPkgSummariesNilSafe := []*corev1.InstalledPackageSummary{}
 	for _, installedPkgSummary := range installedPkgSummaries {
@@ -687,7 +692,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	} else {
 		// Delete all the associated secrets
 		// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
-		// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
+		// See https://github.com/vmware-tanzu/kubeapps/pull/3790#discussion_r754797195
 		for _, packageInstallValue := range pkgInstall.Spec.Values {
 			secretId := packageInstallValue.SecretRef.Name
 			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
@@ -752,7 +757,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 
 	// Delete all the associated secrets
 	// TODO(agamez): maybe it's too aggressive and we should be deleting only those secrets created by this plugin
-	// See https://github.com/kubeapps/kubeapps/pull/3790#discussion_r754797195
+	// See https://github.com/vmware-tanzu/kubeapps/pull/3790#discussion_r754797195
 	for _, packageInstallValue := range pkgInstall.Spec.Values {
 		secretId := packageInstallValue.SecretRef.Name
 		err := typedClient.CoreV1().Secrets(namespace).Delete(ctx, secretId, metav1.DeleteOptions{})

@@ -4,8 +4,8 @@
 package plugin_test
 
 import (
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 )
 
 const (
@@ -177,6 +177,22 @@ func MakePackageRepositoryDetail(name string, plugin *plugins.Plugin) *corev1.Pa
 		TlsConfig:       nil,
 		Auth:            nil,
 		CustomDetail:    nil,
+		Status:          defaultRepoStatus,
+	}
+}
+
+func MakePackageRepositorySummary(name string, plugin *plugins.Plugin) *corev1.PackageRepositorySummary {
+	return &corev1.PackageRepositorySummary{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context:    &corev1.Context{Cluster: GlobalPackagingCluster, Namespace: DefaultNamespace},
+			Identifier: name,
+			Plugin:     plugin,
+		},
+		Name:            name,
+		Description:     DefaultDescription,
+		NamespaceScoped: false,
+		Type:            "helm",
+		Url:             DefaultRepoURL,
 		Status:          defaultRepoStatus,
 	}
 }

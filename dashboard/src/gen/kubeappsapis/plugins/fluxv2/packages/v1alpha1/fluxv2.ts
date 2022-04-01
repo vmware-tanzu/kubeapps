@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import {
   GetAvailablePackageSummariesRequest,
   GetAvailablePackageDetailRequest,
@@ -25,8 +25,10 @@ import {
 import {
   AddPackageRepositoryRequest,
   GetPackageRepositoryDetailRequest,
+  GetPackageRepositorySummariesRequest,
   AddPackageRepositoryResponse,
   GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
 
@@ -414,6 +416,10 @@ export interface FluxV2RepositoriesService {
     request: DeepPartial<GetPackageRepositoryDetailRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetPackageRepositoryDetailResponse>;
+  GetPackageRepositorySummaries(
+    request: DeepPartial<GetPackageRepositorySummariesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositorySummariesResponse>;
 }
 
 export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesService {
@@ -423,6 +429,7 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     this.rpc = rpc;
     this.AddPackageRepository = this.AddPackageRepository.bind(this);
     this.GetPackageRepositoryDetail = this.GetPackageRepositoryDetail.bind(this);
+    this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
   }
 
   AddPackageRepository(
@@ -443,6 +450,17 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     return this.rpc.unary(
       FluxV2RepositoriesServiceGetPackageRepositoryDetailDesc,
       GetPackageRepositoryDetailRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositorySummaries(
+    request: DeepPartial<GetPackageRepositorySummariesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositorySummariesResponse> {
+    return this.rpc.unary(
+      FluxV2RepositoriesServiceGetPackageRepositorySummariesDesc,
+      GetPackageRepositorySummariesRequest.fromPartial(request),
       metadata,
     );
   }
@@ -495,6 +513,29 @@ export const FluxV2RepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMetho
     },
   } as any,
 };
+
+export const FluxV2RepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositorySummaries",
+    service: FluxV2RepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositorySummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositorySummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
@@ -569,6 +610,7 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>

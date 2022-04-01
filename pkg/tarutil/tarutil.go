@@ -12,8 +12,8 @@ import (
 	"path"
 	"strings"
 
-	chart "github.com/kubeapps/kubeapps/pkg/chart/models"
-	httpclient "github.com/kubeapps/kubeapps/pkg/http-client"
+	chart "github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 )
 
 //

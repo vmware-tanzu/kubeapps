@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 package kubeappsapis.plugins.fluxv2.packages.v1alpha1;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1";
+option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1";
 
 import "google/api/annotations.proto";
 import "kubeappsapis/core/packages/v1alpha1/packages.proto";
@@ -89,10 +89,15 @@ service FluxV2RepositoriesService {
     };
    }
 
-   rpc GetPackageRepositoryDetail(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse) {
+  rpc GetPackageRepositoryDetail(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse) {
     option (google.api.http) = {
       get: "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
     };
-   }
+  }
 
+  rpc GetPackageRepositorySummaries(kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/fluxv2/packages/v1alpha1/repositories"
+    };
+  }
 }

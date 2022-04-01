@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "axios": "^0.26.1",
-    "playwright": "^1.20.0",
+    "playwright": "^1.20.1",
     "wait-on": "^6.0.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.20.0",
-    "prettier": "^2.6.0"
+    "@playwright/test": "^1.20.1",
+    "prettier": "^2.6.1"
   }
 }

@@ -5,13 +5,13 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.17.6"
+    default: "1.18"
   NODE_VERSION:
     type: string
-    default: "16.13.2"
+    default: "16.14.2"
   RUST_VERSION:
     type: string
-    default: "1.58.1"
+    default: "1.59.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.11"
@@ -20,7 +20,7 @@ parameters:
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.8.0"
+    default: "v3.8.1"
   OLM_VERSION:
     type: "string"
     default: "v0.20.0"
@@ -29,7 +29,7 @@ parameters:
     default: "v1.4.3"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.6"
+    default: "v1.22.8"
   GITHUB_VERSION:
     type: "string"
     default: "2.4.0"
@@ -44,7 +44,7 @@ parameters:
     default: "v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.2.0-debian-10-r35"
+    default: "14.2.0-debian-10-r45"
   GKE_STABLE_VERSION:
     type: "string"
     default: "1.20"
@@ -314,13 +314,13 @@ install_cluster: &install_cluster
   run:
     name: "Install cluster"
     command: |
-      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml
       {
         echo "Creating cluster..."
-        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -330,9 +330,9 @@ install_cluster: &install_cluster
       } || {
         echo "Cluster creation failed, retrying..."
         kind delete clusters kubeapps-ci || true
-        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/user/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -367,12 +367,12 @@ install_additional_cluster: &install_additional_cluster
   run:
     name: "Install additional cluster"
     command: |
-      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml
       {
         echo "Creating additional cluster..."
-        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
 
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
@@ -380,9 +380,9 @@ install_additional_cluster: &install_additional_cluster
       } || {
         echo "Additional cluster creation failed, retrying..."
         kind delete clusters kubeapps-ci-additional || true
-        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
 
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
@@ -471,12 +471,12 @@ install_multicluster_deps: &install_multicluster_deps
   run:
     name: "Install multicluster deps"
     command: |
-      sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s/localhost/kubeapps-ci.kubeapps/g" ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+      sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s/localhost/kubeapps-ci.kubeapps/g" ./docs/howto/manifests/kubeapps-local-dev-dex-values.yaml
       helm repo add dex https://charts.dexidp.io
 
       # Install dex
       kubectl create namespace dex
-      helm install dex dex/dex --version 0.5.0 --namespace dex --values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
+      helm install dex dex/dex --version 0.5.0 --namespace dex --values ./docs/howto/manifests/kubeapps-local-dev-dex-values.yaml
 
       # Install openldap
       helm repo add stable https://charts.helm.sh/stable
@@ -601,7 +601,7 @@ local_e2e_steps: &local_e2e_steps
 
 jobs:
   test_go:
-    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       CGO_ENABLED: "0"
       <<: *common_envars
@@ -622,7 +622,7 @@ jobs:
             docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:${POSTGRESQL_VERSION}
             docker run --network container:postgresql -d --name tests cimg/go:${GOLANG_VERSION} tail -f /dev/null
             docker cp /home/circleci/go tests:/
-            docker exec -it tests /bin/sh -c "cd /go/src/github.com/kubeapps/kubeapps/ && make test-db"
+            docker exec -it tests /bin/sh -c "cd /go/src/github.com/vmware-tanzu/kubeapps/ && make test-db"
   test_dashboard:
     environment:
       # Note that the max old space setting is per worker, so running the tests
@@ -670,7 +670,7 @@ jobs:
   build_go_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-    working_directory: /home/circleci/go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
       IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"
@@ -711,10 +711,7 @@ jobs:
     resource_class: large
     environment:
       DEFAULT_DEX_IP: "172.18.0.2"
-      # TODO(minelson): disable the upgrade test temporarily for upgrading
-      # to 8.0.0 which is backwards incompatible. Re-enable once 8.0.0
-      # is published.
-      # TEST_UPGRADE: "1"
+      TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       TEST_OPERATORS: "1"
       TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test

@@ -215,7 +215,7 @@ export default function OperatorList({
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://github.com/kubeapps/kubeapps/issues"
+            href="https://github.com/vmware-tanzu/kubeapps/issues"
           >
             here.
           </a>

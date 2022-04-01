@@ -11,9 +11,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -170,15 +169,6 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	compareActualVsExpectedAvailablePackageDetail(t, resp.AvailablePackageDetail, expected_detail_podinfo_basic_auth.AvailablePackageDetail)
 }
 
-type integrationTestAddRepoSpec struct {
-	testName                 string
-	request                  *corev1.AddPackageRepositoryRequest
-	existingSecret           *apiv1.Secret
-	expectedResponse         *corev1.AddPackageRepositoryResponse
-	expectedStatusCode       codes.Code
-	expectedReconcileFailure bool
-}
-
 func TestKindClusterAddPackageRepository(t *testing.T) {
 	_, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
@@ -189,7 +179,14 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 	// byte arrays up front so they can be re-used in multiple places later
 	ca, pub, priv := getCertsForTesting(t)
 
-	testCases := []integrationTestAddRepoSpec{
+	testCases := []struct {
+		testName                 string
+		request                  *corev1.AddPackageRepositoryRequest
+		existingSecret           *apiv1.Secret
+		expectedResponse         *corev1.AddPackageRepositoryResponse
+		expectedStatusCode       codes.Code
+		expectedReconcileFailure bool
+	}{
 		{
 			testName: "add repo test (simplest case)",
 			request: &corev1.AddPackageRepositoryRequest{
@@ -386,24 +383,22 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 	}
 }
 
-type integrationTestGetRepoSpec struct {
-	testName           string
-	request            *corev1.GetPackageRepositoryDetailRequest
-	repoName           string
-	repoUrl            string
-	unauthorized       bool
-	expectedResponse   *corev1.GetPackageRepositoryDetailResponse
-	expectedStatusCode codes.Code
-	existingSecret     *apiv1.Secret
-}
-
 func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 	_, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	testCases := []integrationTestGetRepoSpec{
+	testCases := []struct {
+		testName           string
+		request            *corev1.GetPackageRepositoryDetailRequest
+		repoName           string
+		repoUrl            string
+		unauthorized       bool
+		expectedResponse   *corev1.GetPackageRepositoryDetailResponse
+		expectedStatusCode codes.Code
+		existingSecret     *apiv1.Secret
+	}{
 		{
 			testName:           "gets detail for podinfo package repository",
 			request:            get_repo_detail_req_6,
@@ -422,16 +417,16 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		},
 		{
 			testName:           "get detail fails for podinfo basic auth package repository without creds",
-			request:            get_repo_detail_req_6,
-			repoName:           "my-podinfo",
+			request:            get_repo_detail_req_9,
+			repoName:           "my-podinfo-2",
 			repoUrl:            podinfo_basic_auth_repo_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_13,
 		},
 		{
 			testName:           "get detail succeeds for podinfo basic auth package repository with creds",
-			request:            get_repo_detail_req_6,
-			repoName:           "my-podinfo",
+			request:            get_repo_detail_req_10,
+			repoName:           "my-podinfo-3",
 			repoUrl:            podinfo_basic_auth_repo_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_14,
@@ -446,8 +441,8 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		},
 		{
 			testName:           "get detail returns PermissionDenied error",
-			request:            get_repo_detail_req_6,
-			repoName:           "my-podinfo",
+			request:            get_repo_detail_req_11,
+			repoName:           "my-podinfo-11",
 			repoUrl:            podinfo_repo_url,
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
@@ -552,7 +547,172 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			}
 
 			if !strings.HasPrefix(resp.GetDetail().Status.UserReason, tc.expectedResponse.Detail.Status.UserReason) {
-				t.Errorf("unexpected response: %s", common.PrettyPrint(resp))
+				t.Errorf("unexpected response (status.UserReason): (-want +got):\n- %s\n+ %s",
+					tc.expectedResponse.Detail.Status.UserReason,
+					resp.GetDetail().Status.UserReason)
+			}
+		})
+	}
+}
+
+func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
+	_, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type repoSpec struct {
+		name string
+		ns   string
+		url  string
+	}
+
+	ns1 := "ns1-" + randSeq(4)
+	ns2 := "ns2-" + randSeq(4)
+	ns3 := "ns3-" + randSeq(4)
+
+	for _, namespace := range []string{ns1, ns2, ns3} {
+		ns := namespace
+		if err := kubeCreateNamespace(t, ns); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if err := kubeDeleteNamespace(t, ns); err != nil {
+				t.Logf("Failed to delete namespace [%s] due to [%v]", ns, err)
+			}
+		})
+	}
+
+	testCases := []struct {
+		testName           string
+		request            *corev1.GetPackageRepositorySummariesRequest
+		existingRepos      []repoSpec
+		unauthorized       bool
+		expectedResponse   *corev1.GetPackageRepositorySummariesResponse
+		expectedStatusCode codes.Code
+	}{
+		{
+			testName: "admin gets summaries (all namespaces)",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{},
+			},
+			existingRepos: []repoSpec{
+				{name: "podinfo-1", ns: ns1, url: podinfo_repo_url},
+				{name: "podinfo-2", ns: ns2, url: podinfo_repo_url},
+				{name: "podinfo-3", ns: ns3, url: podinfo_repo_url},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					get_summaries_summary_5("podinfo-1", ns1),
+					get_summaries_summary_5("podinfo-2", ns2),
+					get_summaries_summary_5("podinfo-3", ns3),
+				},
+			},
+		},
+		{
+			testName: "admin gets summaries (one namespace)",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: ns2},
+			},
+			existingRepos: []repoSpec{
+				{name: "podinfo-4", ns: ns1, url: podinfo_repo_url},
+				{name: "podinfo-5", ns: ns2, url: podinfo_repo_url},
+				{name: "podinfo-6", ns: ns3, url: podinfo_repo_url},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					get_summaries_summary_5("podinfo-5", ns2),
+				},
+			},
+		},
+		{
+			testName: "loser gets summaries (one namespace => permission denined)",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: ns2},
+			},
+			existingRepos: []repoSpec{
+				{name: "podinfo-7", ns: ns1, url: podinfo_repo_url},
+				{name: "podinfo-8", ns: ns2, url: podinfo_repo_url},
+				{name: "podinfo-9", ns: ns3, url: podinfo_repo_url},
+			},
+			expectedStatusCode: codes.PermissionDenied,
+			unauthorized:       true,
+		},
+		{
+			testName: "loser gets summaries (all namespaces => empty list)",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{},
+			},
+			existingRepos: []repoSpec{
+				{name: "podinfo-10", ns: ns1, url: podinfo_repo_url},
+				{name: "podinfo-11", ns: ns2, url: podinfo_repo_url},
+				{name: "podinfo-12", ns: ns3, url: podinfo_repo_url},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   &corev1.GetPackageRepositorySummariesResponse{
+				// PackageRepositorySummaries: is empty so is omitted
+			},
+			unauthorized: true,
+		},
+	}
+
+	grpcAdmin, err := newGrpcAdminContext(t, "test-get-repo-admin", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-get-repo-loser", "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			for _, repo := range tc.existingRepos {
+				name, namespace := repo.name, repo.ns
+				if err = kubeAddHelmRepository(t, name, repo.url, namespace, "", 0); err != nil {
+					t.Fatal(err)
+				}
+				// want to wait until all repos reach Ready state
+				kubeWaitUntilHelmRepositoryIsReady(t, name, namespace)
+				t.Cleanup(func() {
+					if err = kubeDeleteHelmRepository(t, name, namespace); err != nil {
+						t.Logf("Failed to delete helm source due to [%v]", err)
+					}
+				})
+			}
+
+			var grpcCtx context.Context
+			var cancel context.CancelFunc
+			if tc.unauthorized {
+				grpcCtx, cancel = context.WithTimeout(grpcLoser, defaultContextTimeout)
+			} else {
+				grpcCtx, cancel = context.WithTimeout(grpcAdmin, defaultContextTimeout)
+			}
+			defer cancel()
+
+			resp, err := fluxPluginReposClient.GetPackageRepositorySummaries(grpcCtx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %v, want: %v", err, want)
+			}
+			if tc.expectedStatusCode != codes.OK {
+				// we are done
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				corev1.PackageRepositoryReference{},
+				plugins.Plugin{},
+				corev1.PackageRepositoryStatus{},
+				corev1.GetPackageRepositorySummariesResponse{},
+				corev1.PackageRepositorySummary{},
+			)
+
+			if got, want := resp, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts))
 			}
 		})
 	}
