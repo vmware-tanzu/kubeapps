@@ -490,6 +490,9 @@ install_multicluster_deps: &install_multicluster_deps
 run_e2e_tests: &run_e2e_tests
   run:
     name: "Run e2e tests script"
+    # Carvel test failing with
+    # https://support.circleci.com/hc/en-us/articles/360045268074-Build-Fails-with-Too-long-with-no-output-exceeded-10m0s-context-deadline-exceeded-
+    no_output_timeout: 20m
     command: |
       # If we want to test the latest version instead we override the image to be used
       if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
