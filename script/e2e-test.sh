@@ -485,9 +485,12 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   installOLM "${OLM_VERSION}"
 
   # Update Kubeapps settings to enable operators and hence proxying
-  # to k8s API server.
+  # to k8s API server. Don't change the packaging setting to avoid
+  # re-installing postgres.
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "packaging.helm.enabled=false" \
+    "--set" "packaging.carvel.enabled=true" \
     "--set" "featureFlags.operators=true"
 
   info "Waiting for Kubeapps components to be ready (bitnami chart)..."
