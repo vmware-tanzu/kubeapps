@@ -16,7 +16,6 @@ CHARTS_REPO_ORIGINAL=${4:?Missing base chart repository}
 BRANCH_CHARTS_REPO_ORIGINAL=${5:?Missing base chart repository branch}
 CHARTS_REPO_FORKED=${6:?Missing forked chart repository}
 BRANCH_CHARTS_REPO_FORKED=${7:?Missing forked chart repository branch}
-README_GENERATOR_REPO=${8:?Missing readme generator repository}
 
 currentVersion=$(grep -oP '(?<=^version: ).*' <"${KUBEAPPS_CHART_DIR}/Chart.yaml")
 externalVersion=$(curl -s "https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/${BRANCH_CHARTS_REPO_ORIGINAL}/${CHART_REPO_PATH}/Chart.yaml" | grep -oP '(?<=^version: ).*')
@@ -36,7 +35,6 @@ if [[ ${semverCompare} -gt 0 ]]; then
     prBranchName="kubeapps-bump-${currentVersion}"
 
     updateRepoWithLocalChanges "${TMP_DIR}" "${latestVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_FORKED}"
-    generateReadme "${README_GENERATOR_REPO}" "${TMP_DIR}/${CHART_REPO_PATH}"
     commitAndSendExternalPR "${TMP_DIR}" "${prBranchName}" "${currentVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}"
 elif [[ ${semverCompare} -lt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version (${currentVersion}) is less than the chart external version (${externalVersion})"
