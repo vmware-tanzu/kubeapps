@@ -357,11 +357,11 @@ kubeapps: ingress.tls
       {{- range $plugin, $options := .Values.packaging }}
         {{- if $options.enabled }}
           {{- if eq $plugin "carvel" }}
-            {{- $enabledPlugins = append $enabledPlugins "kapp-controller-packages" }}
+            {{- $enabledPlugins = append $enabledPlugins "kapp-controller" }}
           {{- else if eq $plugin "flux" }}
-            {{- $enabledPlugins = append $enabledPlugins "fluxv2-packages" }}
+            {{- $enabledPlugins = append $enabledPlugins "fluxv2" }}
           {{- else if eq $plugin "helm" }}
-            {{- $enabledPlugins = append $enabledPlugins "helm-packages" }}
+            {{- $enabledPlugins = append $enabledPlugins "helm" }}
           {{- else }}
             {{ $msg := printf "packaging: Unsupported packaging option: %s" $plugin }}
             {{- fail $msg }}
