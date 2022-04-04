@@ -24,6 +24,9 @@ parameters:
   OLM_VERSION:
     type: "string"
     default: "v0.20.0"
+  KAPP_CONTROLLER_VERSION:
+    type: "string"
+    default: "v0.32.0"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.3"
@@ -498,7 +501,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP; then
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else

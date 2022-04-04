@@ -18,7 +18,7 @@ DOCKER_PASSWORD=${6:-""}
 TEST_TIMEOUT_MINUTES=${7:-4}
 DEX_IP=${8:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
-KAPP_CONTROLLER_VERSION="v0.32.0"
+KAPP_CONTROLLER_VERSION=${10:-"v0.32.0"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
