@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "axios": "^0.26.1",
-    "playwright": "^1.20.1",
+    "playwright": "^1.20.2",
     "wait-on": "^6.0.1"
   },
   "devDependencies": {
