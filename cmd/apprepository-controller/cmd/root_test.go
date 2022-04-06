@@ -134,9 +134,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 			setFlags(cmd)
 			cmd.SetArgs(tt.args)
 			cmd.Execute()
-			serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
-			serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
-			serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

@@ -32,6 +32,7 @@ func newRootCmd() *cobra.Command {
 		Use:   "apprepository-controller",
 		Short: "Apprepository-controller is a Kubernetes controller for managing package repositories added to Kubeapps.",
 		PreRun: func(cmd *cobra.Command, args []string) {
+			initServerOpts()
 			log.Infof("apprepository-controller has been configured with: %#v", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -40,6 +41,14 @@ func newRootCmd() *cobra.Command {
 		},
 		Version: "devel",
 	}
+}
+
+// initServerOpts initialises the server options which are dependent
+// on the parsed arguments.
+func initServerOpts() {
+	serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
+	serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
+	serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,9 +69,6 @@ func init() {
 		log.Errorf("Error parsing verbosity: %v", viper.ConfigFileUsed())
 	}
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
-	serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
-	serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
 }
 
 func setFlags(c *cobra.Command) {
