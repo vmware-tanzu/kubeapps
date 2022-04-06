@@ -6699,10 +6699,10 @@ globjoin@^0.1.4:
   resolved "https://registry.yarnpkg.com/globjoin/-/globjoin-0.1.4.tgz#2f4494ac8919e3767c5cbb691e9f463324285d43"
   integrity sha1-L0SUrIkZ43Z8XLtpHp9GMyQoXUM=
 
-google-protobuf@^3.19.4:
-  version "3.19.4"
-  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.19.4.tgz#8d32c3e34be9250956f28c0fb90955d13f311888"
-  integrity sha512-OIPNCxsG2lkIvf+P5FNfJ/Km95CsXOBecS9ZcAU6m2Rq3svc0Apl9nB3GMDNKfQ9asNv4KjyAqGwPQFrVle3Yg==
+google-protobuf@^3.20.0:
+  version "3.20.0"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.20.0.tgz#8705ab5fb7e91e9578250a4a8ac533a3cc0bc0bb"
+  integrity sha512-hhXv5IKLDIkb0pEm53G053UZGhRAhw3wM5Jk7ly5sGIQRkO1s63FaDqM9QjlrPHygKEE2awUlLP9fFrG6M9vfQ==
 
 graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2, graceful-fs@^4.1.6, graceful-fs@^4.2.0, graceful-fs@^4.2.4, graceful-fs@^4.2.9:
   version "4.2.9"
