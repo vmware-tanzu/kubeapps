@@ -18,6 +18,7 @@ DOCKER_PASSWORD=${6:-""}
 TEST_TIMEOUT_MINUTES=${7:-4}
 DEX_IP=${8:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
+KAPP_CONTROLLER_VERSION=${10:-"v0.32.0"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -172,6 +173,33 @@ pushChart() {
   sleep 2
   curl -u "${user}:${password}" --data-binary "@${prefix}${chart}-${version}.tgz" http://localhost:8080/api/charts
   pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
+}
+
+########################
+# Install kapp-controller
+# Globals: None
+# Arguments:
+#   $1: Version of kapp-controller
+# Returns: None
+#########################
+installKappController() {
+  local release=$1
+  info "Installing kapp-controller ${release} ..."
+  url=https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/${release}/release.yml
+  namespace=kapp-controller
+
+  kubectl apply -f "${url}"
+
+  # wait for deployment to be ready
+  kubectl rollout status -w deployment/kapp-controller --namespace="${namespace}"
+
+  # Add test repository.
+	kubectl apply -f https://raw.githubusercontent.com/vmware-tanzu/carvel-kapp-controller/develop/examples/packaging-with-repo/package-repository.yml
+
+  # Add a carvel-reconciler service account to the kubeapps-user-namespace with
+  # cluster-admin.
+  kubectl create serviceaccount carvel-reconciler -n kubeapps-user-namespace
+  kubectl create clusterrolebinding carvel-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:carvel-reconciler
 }
 
 ########################
@@ -431,15 +459,38 @@ if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAM
 fi
 info "Main integration tests succeeded!!"
 
+
+## Upgrade and run Carvel test
+installKappController "${KAPP_CONTROLLER_VERSION}"
+info "Updating Kubeapps with carvel support"
+installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+  "--set" "packaging.helm.enabled=false" \
+  "--set" "packaging.carvel.enabled=true"
+
+info "Waiting for updated Kubeapps components to be ready..."
+k8s_wait_for_deployment kubeapps kubeapps-ci
+
+info "Running carvel integration test..."
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/carvel/\""; then
+  ## Integration tests failed, get report screenshot
+  warn "PODS status on failure"
+  kubectl cp "${pod}:/app/reports" ./reports
+  exit 1
+fi
+info "Carvel integration tests succeeded!!"
+
 ## Upgrade and run operator test
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
 if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   installOLM "${OLM_VERSION}"
 
   # Update Kubeapps settings to enable operators and hence proxying
-  # to k8s API server.
+  # to k8s API server. Don't change the packaging setting to avoid
+  # re-installing postgres.
   info "Installing latest Kubeapps chart available"
   installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "packaging.helm.enabled=false" \
+    "--set" "packaging.carvel.enabled=true" \
     "--set" "featureFlags.operators=true"
 
   info "Waiting for Kubeapps components to be ready (bitnami chart)..."
