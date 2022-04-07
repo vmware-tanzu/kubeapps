@@ -18,8 +18,9 @@ func TestParseFlagsCorrect(t *testing.T) {
 		conf server.Config
 	}{
 		{
-			"all arguments are captured (root command)",
+			"all arguments are captured (invalidate command)",
 			[]string{
+				"invalidate-cache",
 				"--database-url", "foo01",
 				"--database-name", "foo02",
 				"--database-user", "foo03",
@@ -30,7 +31,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--tls-insecure-skip-verify", "true",
 				"--filter-rules", "foo06",
 				"--pass-credentials", "true",
-				"--oci-repositories", "foo07",
 			},
 			server.Config{
 				DatabaseURL:           "foo01",
@@ -39,11 +39,12 @@ func TestParseFlagsCorrect(t *testing.T) {
 				Debug:                 true,
 				Namespace:             "foo04",
 				GlobalReposNamespace:  "kubeapps-global",
-				OciRepositories:       []string{"foo07"},
+				OciRepositories:       []string{},
 				TlsInsecureSkipVerify: true,
 				FilterRules:           "foo06",
 				PassCredentials:       true,
 				UserAgent:             "asset-syncer/devel (foo05)",
+				UserAgentComment:      "foo05",
 			},
 		},
 		{
@@ -74,6 +75,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				FilterRules:           "foo06",
 				PassCredentials:       true,
 				UserAgent:             "asset-syncer/devel (foo05)",
+				UserAgentComment:      "foo05",
 			},
 		},
 		{
@@ -90,7 +92,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--tls-insecure-skip-verify", "true",
 				"--filter-rules", "foo06",
 				"--pass-credentials", "true",
-				"--oci-repositories", "foo07",
 			},
 			server.Config{
 				DatabaseURL:           "foo01",
@@ -99,26 +100,24 @@ func TestParseFlagsCorrect(t *testing.T) {
 				Debug:                 true,
 				Namespace:             "foo04",
 				GlobalReposNamespace:  "kubeapps-global",
-				OciRepositories:       []string{"foo07"},
+				OciRepositories:       []string{},
 				TlsInsecureSkipVerify: true,
 				FilterRules:           "foo06",
 				PassCredentials:       true,
 				UserAgent:             "asset-syncer/devel (foo05)",
+				UserAgentComment:      "foo05",
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := newRootCmd()
+			cmd := newCmd()
 			b := bytes.NewBufferString("")
 			cmd.SetOut(b)
 			cmd.SetErr(b)
-			setRootFlags(cmd)
-			setSyncFlags(cmd)
 			cmd.SetArgs(tt.args)
 			cmd.Execute()
-			serveOpts.UserAgent = server.GetUserAgent(version, serveOpts.UserAgent)
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
