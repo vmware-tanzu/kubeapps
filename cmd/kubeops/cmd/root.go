@@ -29,6 +29,7 @@ func newRootCmd() *cobra.Command {
 		Use:   "kubeops",
 		Short: "Kubeops is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources.",
 		PreRun: func(cmd *cobra.Command, args []string) {
+			serveOpts.UserAgent = getUserAgent(version, serveOpts.UserAgentComment)
 			log.Infof("kubeops has been configured with: %#v", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -49,7 +50,6 @@ func init() {
 	rootCmd = newRootCmd()
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
-	serveOpts.UserAgent = getUserAgent(version, serveOpts.UserAgentComment)
 }
 
 func setFlags(c *cobra.Command) {

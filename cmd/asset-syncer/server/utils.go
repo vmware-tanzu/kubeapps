@@ -56,6 +56,7 @@ type Config struct {
 	FilterRules           string
 	PassCredentials       bool
 	UserAgent             string
+	UserAgentComment      string
 	GlobalReposNamespace  string
 	KubeappsNamespace     string
 	AuthorizationHeader   string

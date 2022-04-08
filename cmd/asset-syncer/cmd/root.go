@@ -23,17 +23,12 @@ var (
 	version = "devel"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd *cobra.Command
-var syncCmd *cobra.Command
-var deleteCmd *cobra.Command
-var invalidateCacheCmd *cobra.Command
-
 func newRootCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "asset-syncer",
 		Short: "Asset Synchronization utility",
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			serveOpts.UserAgent = server.GetUserAgent(version, serveOpts.UserAgentComment)
 			log.Infof("asset-syncer has been configured with: %#v", serveOpts)
 		},
 		Version: "devel",
@@ -76,10 +71,33 @@ func newInvalidateCacheCmd() *cobra.Command {
 	}
 }
 
+func newCmd() *cobra.Command {
+	// Create new commands
+	c := newRootCmd()
+	syncCmd := newSyncCmd()
+	deleteCmd := newDeleteCmd()
+	invalidateCacheCmd := newInvalidateCacheCmd()
+
+	// Set the flags of each command
+	setRootFlags(c)
+	setSyncFlags(syncCmd)
+
+	// Set version
+	c.SetVersionTemplate(version)
+
+	// Register each command to the root cmd
+	cmds := []*cobra.Command{syncCmd, deleteCmd, invalidateCacheCmd}
+	for _, cmd := range cmds {
+		c.AddCommand(cmd)
+	}
+
+	return c
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	cobra.CheckErr(rootCmd.Execute())
+	cobra.CheckErr(newCmd().Execute())
 }
 
 func init() {
@@ -92,31 +110,11 @@ func init() {
 	}
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 
-	// Create new commands
-	rootCmd = newRootCmd()
-	syncCmd = newSyncCmd()
-	deleteCmd = newDeleteCmd()
-	invalidateCacheCmd = newInvalidateCacheCmd()
-
-	// Set the flags of each command
-	setRootFlags(rootCmd)
-	setSyncFlags(syncCmd)
-
-	// Set version
-	rootCmd.SetVersionTemplate(version)
-
 	// Enrich the config object with environmental information
 	serveOpts.DatabasePassword = os.Getenv("DB_PASSWORD")
 	serveOpts.KubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	serveOpts.AuthorizationHeader = os.Getenv("AUTHORIZATION_HEADER")
 	serveOpts.DockerConfigJson = os.Getenv("DOCKER_CONFIG_JSON")
-	serveOpts.UserAgent = server.GetUserAgent(version, serveOpts.UserAgent)
-
-	// Register each command to the root cmd
-	cmds := []*cobra.Command{syncCmd, deleteCmd, invalidateCacheCmd}
-	for _, cmd := range cmds {
-		rootCmd.AddCommand(cmd)
-	}
 }
 
 func setRootFlags(c *cobra.Command) {
@@ -124,7 +122,7 @@ func setRootFlags(c *cobra.Command) {
 	c.PersistentFlags().StringVar(&serveOpts.DatabaseName, "database-name", "charts", "Name of the database to use")
 	c.PersistentFlags().StringVar(&serveOpts.DatabaseUser, "database-user", "", "Database user")
 	c.PersistentFlags().StringVar(&serveOpts.Namespace, "namespace", "", "Namespace of the repository being synced")
-	c.PersistentFlags().StringVar(&serveOpts.UserAgent, "user-agent-comment", "", "UserAgent comment used during outbound requests")
+	c.PersistentFlags().StringVar(&serveOpts.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	c.PersistentFlags().BoolVar(&serveOpts.Debug, "debug", false, "verbose logging")
 	c.PersistentFlags().BoolVar(&serveOpts.TlsInsecureSkipVerify, "tls-insecure-skip-verify", false, "Skip TLS verification")
 	c.PersistentFlags().StringVar(&serveOpts.FilterRules, "filter-rules", "", "JSON blob with the rules to filter assets")
