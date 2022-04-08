@@ -181,7 +181,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			defer ts2.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs, false)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -276,7 +276,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil, false)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -447,7 +447,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 			defer ts2.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil, false)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -626,7 +626,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil, false)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -676,7 +676,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 
 		// start with an empty server that only has an empty repo cache
 		// passing in []testSpecChartWithUrl{} instead of nil will add support for chart cache
-		s, mock, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil, false)
+		s, mock, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -899,7 +899,7 @@ func TestChartWithRelativeURL(t *testing.T) {
 				chartUrl:      ts.URL + "/charts/airflow-1.0.0.tgz",
 				repoNamespace: repoNamespace,
 			},
-		}, nil, false)
+		}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1248,7 +1248,7 @@ var (
 		},
 	}
 
-	add_repo_13 = &corev1.AddPackageRepositoryRequest{
+	add_repo_req_13 = &corev1.AddPackageRepositoryRequest{
 		Name:    "bar",
 		Context: &corev1.Context{Namespace: "foo"},
 		Type:    "helm",
@@ -1263,7 +1263,7 @@ var (
 		},
 	}
 
-	add_repo_14 = &corev1.AddPackageRepositoryRequest{
+	add_repo_req_14 = &corev1.AddPackageRepositoryRequest{
 		Name:    "bar",
 		Context: &corev1.Context{Namespace: "foo"},
 		Type:    "helm",
@@ -1285,6 +1285,75 @@ var (
 		},
 	}
 
+	add_repo_req_15 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "helm",
+		Url:     podinfo_repo_url,
+	}
+
+	add_repo_req_16 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-2",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "helm",
+		Url:     podinfo_basic_auth_repo_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: "foo",
+					Password: "bar",
+				},
+			},
+		},
+	}
+
+	add_repo_req_17 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-3",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "helm",
+		Url:     podinfo_basic_auth_repo_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: "foo",
+					Password: "bar-2",
+				},
+			},
+		},
+	}
+
+	add_repo_req_18 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-4",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "helm",
+		Url:     podinfo_basic_auth_repo_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-1",
+				},
+			},
+		},
+	}
+
+	add_repo_req_19 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-4",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "helm",
+		Url:     podinfo_tls_repo_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-2",
+				},
+			},
+		},
+	}
+
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
@@ -1292,6 +1361,61 @@ var (
 				Cluster:   KubeappsCluster,
 			},
 			Identifier: "bar",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	add_repo_expected_resp_2 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "default",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "my-podinfo",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	add_repo_expected_resp_3 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "default",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "my-podinfo-2",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	add_repo_expected_resp_4 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "default",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "my-podinfo-3",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	add_repo_expected_resp_5 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "default",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "my-podinfo-4",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	add_repo_expected_resp_6 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "default",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "my-podinfo-4",
 			Plugin:     fluxPlugin,
 		},
 	}

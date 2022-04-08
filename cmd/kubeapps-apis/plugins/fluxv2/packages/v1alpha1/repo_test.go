@@ -737,7 +737,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		defer ts.Close()
 
-		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil, false)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -1301,7 +1301,7 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		{
 			name:               "package repository with basic auth and existing secret",
-			request:            add_repo_13,
+			request:            add_repo_req_13,
 			expectedResponse:   add_repo_expected_resp,
 			expectedRepo:       &add_repo_3,
 			existingSecret:     newBasicAuthSecret("secret-1", "foo", "baz", "zot"),
@@ -1310,17 +1310,17 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		{
 			name:       "package repository with basic auth and existing secret (kubeapps managed secrets)",
-			request:    add_repo_13,
+			request:    add_repo_req_13,
 			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:       "errors when package repository with 1 secret for TLS CA and a different secret for basic auth (kubeapps managed secrets)",
-			request:    add_repo_14,
+			request:    add_repo_req_14,
 			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:               "errors when package repository with 1 secret for TLS CA and a different secret for basic auth",
-			request:            add_repo_14,
+			request:            add_repo_req_14,
 			statusCode:         codes.InvalidArgument,
 			userManagedSecrets: true,
 		},
@@ -1332,10 +1332,11 @@ func TestAddPackageRepository(t *testing.T) {
 			if tc.existingSecret != nil {
 				secrets = append(secrets, tc.existingSecret)
 			}
-			s, mock, err := newServerWithRepos(t, nil, nil, secrets, tc.userManagedSecrets)
+			s, mock, err := newServerWithRepos(t, nil, nil, secrets)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
+			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
 			if tc.statusCode == codes.OK {
@@ -1616,10 +1617,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 
 			// the index.yaml will contain links to charts but for the purposes
 			// of this test they do not matter
-			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets, tc.userManagedSecrets)
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
+			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			ctx := context.Background()
 			actualResp, err := s.GetPackageRepositoryDetail(ctx, tc.request)

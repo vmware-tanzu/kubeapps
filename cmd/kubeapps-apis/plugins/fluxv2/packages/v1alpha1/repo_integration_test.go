@@ -190,179 +190,49 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		userManagedSecrets       bool
 	}{
 		{
-			testName: "add repo test (simplest case)",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_repo_url,
-			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:           "add repo test (simplest case)",
+			request:            add_repo_req_15,
+			expectedResponse:   add_repo_expected_resp_2,
 			expectedStatusCode: codes.OK,
 		},
 		{
-			testName: "package repository with basic auth",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-2",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_basic_auth_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
-						UsernamePassword: &corev1.UsernamePassword{
-							Username: "foo",
-							Password: "bar",
-						},
-					},
-				},
-			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo-2",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:           "package repository with basic auth",
+			request:            add_repo_req_16,
+			expectedResponse:   add_repo_expected_resp_3,
 			expectedStatusCode: codes.OK,
 		},
 		{
-			testName: "package repository with wrong basic auth fails",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-3",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_basic_auth_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
-						UsernamePassword: &corev1.UsernamePassword{
-							Username: "foo",
-							Password: "bar-2",
-						},
-					},
-				},
-			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo-3",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:                 "package repository with wrong basic auth fails",
+			request:                  add_repo_req_17,
+			expectedResponse:         add_repo_expected_resp_4,
 			expectedStatusCode:       codes.OK,
 			expectedReconcileFailure: true,
 		},
 		{
-			testName: "package repository with basic auth and existing secret",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-4",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_basic_auth_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-						SecretRef: &corev1.SecretKeyReference{
-							Name: "secret-1",
-						},
-					},
-				},
-			},
-			existingSecret: newBasicAuthSecret("secret-1", "default", "foo", "bar"),
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo-4",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:           "package repository with basic auth and existing secret",
+			request:            add_repo_req_18,
+			existingSecret:     newBasicAuthSecret("secret-1", "default", "foo", "bar"),
+			expectedResponse:   add_repo_expected_resp_5,
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
 		},
 		{
-			testName: "package repository with basic auth and existing secret (kubeapps managed secrets)",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-4",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_basic_auth_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-						SecretRef: &corev1.SecretKeyReference{
-							Name: "secret-1",
-						},
-					},
-				},
-			},
+			testName:           "package repository with basic auth and existing secret (kubeapps managed secrets)",
+			request:            add_repo_req_18,
 			existingSecret:     newBasicAuthSecret("secret-1", "default", "foo", "bar"),
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
-			testName: "package repository with TLS",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-4",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_tls_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-						SecretRef: &corev1.SecretKeyReference{
-							Name: "secret-2",
-						},
-					},
-				},
-			},
-			existingSecret: newTlsSecret("secret-2", "default", pub, priv, ca),
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo-4",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:           "package repository with TLS",
+			request:            add_repo_req_19,
+			existingSecret:     newTlsSecret("secret-2", "default", pub, priv, ca),
+			expectedResponse:   add_repo_expected_resp_6,
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
 		},
 		{
-			testName: "package repository with TLS (kubeapps managed secrets)",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-4",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_tls_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-						SecretRef: &corev1.SecretKeyReference{
-							Name: "secret-2",
-						},
-					},
-				},
-			},
+			testName:           "package repository with TLS (kubeapps managed secrets)",
+			request:            add_repo_req_19,
 			existingSecret:     newTlsSecret("secret-2", "default", pub, priv, ca),
 			expectedStatusCode: codes.InvalidArgument,
 		},

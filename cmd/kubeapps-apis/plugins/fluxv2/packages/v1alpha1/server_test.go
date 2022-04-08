@@ -203,10 +203,10 @@ type testSpecChartWithUrl struct {
 }
 
 func newSimpleServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository) (*Server, redismock.ClientMock, error) {
-	return newServerWithRepos(t, repos, nil, nil, false)
+	return newServerWithRepos(t, repos, nil, nil)
 }
 
-func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object, userManagedSecrets bool) (*Server, redismock.ClientMock, error) {
+func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, error) {
 	typedClient := typfake.NewSimpleClientset(secrets...)
 
 	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
@@ -241,7 +241,7 @@ func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []
 			WithControllerRuntime(&ctrlClient).
 			Build(), nil
 	}
-	return newServer(t, clientGetter, nil, repos, charts, userManagedSecrets)
+	return newServer(t, clientGetter, nil, repos, charts)
 }
 
 func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) (*Server, redismock.ClientMock, error) {
@@ -263,7 +263,7 @@ func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configura
 			WithControllerRuntime(&ctrlClient).
 			Build(), nil
 	}
-	return newServer(t, clientGetter, actionConfig, nil, nil, false)
+	return newServer(t, clientGetter, actionConfig, nil, nil)
 }
 
 // newHelmActionConfig returns an action.Configuration with fake clients and memory storage.
@@ -321,8 +321,7 @@ func newServer(t *testing.T,
 	clientGetter clientgetter.ClientGetterFunc,
 	actionConfig *action.Configuration,
 	repos []sourcev1.HelmRepository,
-	charts []testSpecChartWithUrl,
-	userManagedSecrets bool) (*Server, redismock.ClientMock, error) {
+	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
 
 	stopCh := make(chan struct{})
 	t.Cleanup(func() { close(stopCh) })
@@ -457,9 +456,6 @@ func newServer(t *testing.T,
 		return nil, mock, err
 	}
 
-	pluginConfig := common.NewDefaultPluginConfig()
-	pluginConfig.UserManagedSecrets = userManagedSecrets
-
 	s := &Server{
 		clientGetter:               clientGetter,
 		serviceAccountClientGetter: backgroundClientGetter,
@@ -469,7 +465,7 @@ func newServer(t *testing.T,
 		repoCache:       repoCache,
 		chartCache:      chartCache,
 		kubeappsCluster: KubeappsCluster,
-		pluginConfig:    pluginConfig,
+		pluginConfig:    common.NewDefaultPluginConfig(),
 	}
 	return s, mock, nil
 }
