@@ -72,7 +72,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err
 	} else {
-		pluginConfig := &common.DefaultPluginConfig
+		pluginConfig := common.NewDefaultPluginConfig()
 		if pluginConfigPath != "" {
 			pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
 			if err != nil {
@@ -582,6 +582,22 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 			PackageRepositorySummaries: summaries,
 		}, nil
 	}
+}
+
+// UpdatePackageRepository updates a package repository based on the request.
+func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
+	// just a stub for now
+	return nil, nil
+}
+
+// This endpoint exists only for integration unit tests
+func (s *Server) SetUserManagedSecrets(ctx context.Context, request *v1alpha1.SetUserManagedSecretsRequest) (*v1alpha1.SetUserManagedSecretsResponse, error) {
+	log.Infof("+fluxv2 SetUserManagedSecrets [%t]", request.Value)
+	oldVal := s.pluginConfig.UserManagedSecrets
+	s.pluginConfig.UserManagedSecrets = request.Value
+	return &v1alpha1.SetUserManagedSecretsResponse{
+		Value: oldVal,
+	}, nil
 }
 
 // convenience func mostly used by unit tests

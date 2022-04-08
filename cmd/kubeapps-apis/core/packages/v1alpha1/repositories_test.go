@@ -31,6 +31,7 @@ var ignoreUnexportedRepoOpts = cmpopts.IgnoreUnexported(
 	corev1.PackageRepositoryStatus{},
 	corev1.GetPackageRepositorySummariesResponse{},
 	corev1.PackageRepositorySummary{},
+	corev1.UpdatePackageRepositoryResponse{},
 )
 
 func makeDefaultTestRepositoriesPlugin(pluginName string) repoPluginsWithServer {
@@ -280,6 +281,87 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 
 			if tc.statusCode == codes.OK {
 				if got, want := repoSummaries, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedRepoOpts))
+				}
+			}
+		})
+	}
+}
+
+func TestUpdatePackageRepository(t *testing.T) {
+
+	testCases := []struct {
+		name              string
+		configuredPlugins []*plugins.Plugin
+		statusCode        codes.Code
+		request           *corev1.UpdatePackageRepositoryRequest
+		expectedResponse  *corev1.UpdatePackageRepositoryResponse
+	}{
+		{
+			name: "updates the package repository using the correct plugin",
+			configuredPlugins: []*plugins.Plugin{
+				{Name: "plugin-1", Version: "v1alpha1"},
+				{Name: "plugin-1", Version: "v1alpha2"},
+			},
+			statusCode: codes.OK,
+			request: &corev1.UpdatePackageRepositoryRequest{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+					Identifier: "repo-1",
+					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+				},
+			},
+			expectedResponse: &corev1.UpdatePackageRepositoryResponse{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    &corev1.Context{Cluster: "default", Namespace: "my-ns"},
+					Identifier: "repo-1",
+					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+				},
+			},
+		},
+		{
+			name:       "returns invalid argument if plugin not specified in request",
+			statusCode: codes.InvalidArgument,
+			request: &corev1.UpdatePackageRepositoryRequest{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Identifier: "repo-1",
+				},
+			},
+		},
+		{
+			name:       "returns internal error if unable to find the plugin",
+			statusCode: codes.Internal,
+			request: &corev1.UpdatePackageRepositoryRequest{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Identifier: "repo-1",
+					Plugin:     &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			configuredPluginServers := []repoPluginsWithServer{}
+			for _, p := range tc.configuredPlugins {
+				configuredPluginServers = append(configuredPluginServers, repoPluginsWithServer{
+					plugin: p,
+					server: plugin_test.TestRepositoriesPluginServer{Plugin: p},
+				})
+			}
+
+			server := &repositoriesServer{
+				pluginsWithServers: configuredPluginServers,
+			}
+
+			updatedRepoResponse, err := server.UpdatePackageRepository(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				if got, want := updatedRepoResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedRepoOpts))
 				}
 			}

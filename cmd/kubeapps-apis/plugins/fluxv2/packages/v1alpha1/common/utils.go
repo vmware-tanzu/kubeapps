@@ -20,6 +20,7 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/go-redis/redis/v8"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
@@ -48,24 +49,16 @@ var (
 	pluginDetail plugins.Plugin
 	// This version var is updated during the build (see the -ldflags option
 	// in the cmd/kubeapps-apis/Dockerfile)
-	version             = "devel"
-	DefaultPluginConfig FluxPluginConfig
-	repositoriesGvr     schema.GroupVersionResource
-	chartsGvr           schema.GroupVersionResource
-	releasesGvr         schema.GroupVersionResource
+	version         = "devel"
+	repositoriesGvr schema.GroupVersionResource
+	chartsGvr       schema.GroupVersionResource
+	releasesGvr     schema.GroupVersionResource
 )
 
 func init() {
 	pluginDetail = plugins.Plugin{
 		Name:    "fluxv2.packages",
 		Version: "v1alpha1",
-	}
-	// If no config is provided, we default to the existing values for backwards
-	// compatibility.
-	DefaultPluginConfig = FluxPluginConfig{
-		VersionsInSummary:    pkgutils.GetDefaultVersionsInSummary(),
-		TimeoutSeconds:       int32(-1),
-		DefaultUpgradePolicy: pkgutils.UpgradePolicyNone,
 	}
 
 	repositoriesGvr = schema.GroupVersionResource{
@@ -90,6 +83,17 @@ func init() {
 //
 // miscellaneous utility funcs
 //
+func NewDefaultPluginConfig() *FluxPluginConfig {
+	// If no config is provided, we default to the existing values for backwards
+	// compatibility.
+	return &FluxPluginConfig{
+		VersionsInSummary:    pkgutils.GetDefaultVersionsInSummary(),
+		TimeoutSeconds:       int32(-1),
+		DefaultUpgradePolicy: pkgutils.UpgradePolicyNone,
+		UserManagedSecrets:   false,
+	}
+}
+
 func PrettyPrint(o interface{}) string {
 	prettyBytes, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
@@ -335,6 +339,10 @@ type FluxPluginConfig struct {
 	VersionsInSummary    pkgutils.VersionsInSummary
 	TimeoutSeconds       int32
 	DefaultUpgradePolicy pkgutils.UpgradePolicy
+	// whether or not secrets are fully managed by user or kubeapps
+	// see comments in design spec under AddPackageRepository.
+	// false (i.e. kubeapps manages secrets) by default
+	UserManagedSecrets bool
 }
 
 // ParsePluginConfig parses the input plugin configuration json file and return the
@@ -372,19 +380,18 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 		return nil, fmt.Errorf("unable to unmarshal plugin config: %q error: %w", string(pluginConfig), err)
 	}
 
-	var defaultUpgradePolicy pkgutils.UpgradePolicy
-	defaultUpgradePolicy, err = pkgutils.UpgradePolicyFromString(
-		config.Flux.Packages.V1alpha1.DefaultUpgradePolicy)
-	if err != nil {
+	if defaultUpgradePolicy, err := pkgutils.UpgradePolicyFromString(
+		config.Flux.Packages.V1alpha1.DefaultUpgradePolicy); err != nil {
 		return nil, err
+	} else {
+		// return configured value
+		return &FluxPluginConfig{
+			VersionsInSummary:    config.Core.Packages.V1alpha1.VersionsInSummary,
+			TimeoutSeconds:       config.Core.Packages.V1alpha1.TimeoutSeconds,
+			DefaultUpgradePolicy: defaultUpgradePolicy,
+			UserManagedSecrets:   false,
+		}, nil
 	}
-
-	// return configured value
-	return &FluxPluginConfig{
-		VersionsInSummary:    config.Core.Packages.V1alpha1.VersionsInSummary,
-		TimeoutSeconds:       config.Core.Packages.V1alpha1.TimeoutSeconds,
-		DefaultUpgradePolicy: defaultUpgradePolicy,
-	}, nil
 }
 
 func GetRepositoriesGvr() schema.GroupVersionResource {
@@ -397,4 +404,62 @@ func GetChartsGvr() schema.GroupVersionResource {
 
 func GetReleasesGvr() schema.GroupVersionResource {
 	return releasesGvr
+}
+
+func DockerCredentialsToSecretData(dc *corev1.DockerCredentials) []byte {
+	// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+	authStr := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", dc.Username, dc.Password)))
+	configStr := fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
+		dc.Server, dc.Username, dc.Password, dc.Email, authStr)
+	return []byte(base64.StdEncoding.EncodeToString([]byte(configStr)))
+}
+
+func SecretDataToDockerCredentials(configStr string) (*corev1.DockerCredentials, error) {
+	decodedStr, err := base64.StdEncoding.DecodeString(string(configStr))
+	if err != nil {
+		return nil, err
+	}
+	var configMap map[string]interface{}
+	err = json.Unmarshal(decodedStr, &configMap)
+	if err != nil {
+		return nil, err
+	}
+	auths, ok := configMap["auths"]
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
+	}
+	authsMap, ok := auths.(map[string]interface{})
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
+	}
+	server := ""
+	for k := range authsMap {
+		server = k
+		break
+	}
+	if server == "" {
+		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
+	}
+	serverMap, ok := authsMap[server].(map[string]interface{})
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
+	}
+	username, ok := serverMap["username"].(string)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
+	}
+	password, ok := serverMap["password"].(string)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
+	}
+	email, ok := serverMap["email"].(string)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
+	}
+	return &corev1.DockerCredentials{
+		Server:   server,
+		Username: username,
+		Password: password,
+		Email:    email,
+	}, nil
 }

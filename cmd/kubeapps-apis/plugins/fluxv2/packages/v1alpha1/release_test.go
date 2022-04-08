@@ -15,32 +15,19 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	redismock "github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
-	authorizationv1 "k8s.io/api/authorization/v1"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	typfake "k8s.io/client-go/kubernetes/fake"
-	k8stesting "k8s.io/client-go/testing"
 )
 
 type testSpecGetInstalledPackages struct {
@@ -645,7 +632,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
+			s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{*repo})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1257,73 +1244,4 @@ func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, sta
 		helmRelease.Status.ObservedGeneration = int64(1)
 	}
 	return helmRelease
-}
-
-func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) (*Server, redismock.ClientMock, error) {
-	typedClient := typfake.NewSimpleClientset()
-	// Creating an authorized clientGetter
-	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
-		return true, &authorizationv1.SelfSubjectAccessReview{
-			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
-		}, nil
-	})
-
-	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
-	ctrlClient := newCtrlClient(nil, charts, releases)
-	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.
-			NewBuilder().
-			WithApiExt(apiextIfc).
-			WithTyped(typedClient).
-			WithControllerRuntime(&ctrlClient).
-			Build(), nil
-	}
-	return newServer(t, clientGetter, actionConfig, nil, nil)
-}
-
-// newHelmActionConfig returns an action.Configuration with fake clients and memory storage.
-func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub) *action.Configuration {
-	t.Helper()
-
-	memDriver := driver.NewMemory()
-
-	actionConfig := &action.Configuration{
-		Releases:     storage.Init(memDriver),
-		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
-		Capabilities: chartutil.DefaultCapabilities,
-		Log: func(format string, v ...interface{}) {
-			t.Helper()
-			t.Logf(format, v...)
-		},
-	}
-
-	for _, r := range rels {
-		config := map[string]interface{}{}
-		rel := &release.Release{
-			Name:      r.name,
-			Namespace: r.namespace,
-			Info: &release.Info{
-				Status: r.status,
-				Notes:  r.notes,
-			},
-			Chart: &chart.Chart{
-				Metadata: &chart.Metadata{
-					Version:    r.chartVersion,
-					Icon:       "https://example.com/icon.png",
-					AppVersion: "1.2.3",
-				},
-			},
-			Config:   config,
-			Manifest: r.manifest,
-		}
-		err := actionConfig.Releases.Create(rel)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	// It is the namespace of the driver which determines the results. In the prod code,
-	// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
-	memDriver.SetNamespace(namespace)
-
-	return actionConfig
 }

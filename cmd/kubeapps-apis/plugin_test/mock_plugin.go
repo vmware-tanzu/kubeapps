@@ -174,3 +174,16 @@ func (s TestRepositoriesPluginServer) GetPackageRepositorySummaries(ctx context.
 		PackageRepositorySummaries: s.PackageRepositorySummaries,
 	}, nil
 }
+
+func (s TestRepositoriesPluginServer) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context:    request.GetPackageRepoRef().GetContext(),
+			Identifier: request.GetPackageRepoRef().GetIdentifier(),
+			Plugin:     s.Plugin,
+		},
+	}, nil
+}

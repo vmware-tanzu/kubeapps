@@ -181,7 +181,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			defer ts2.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs, false)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -276,7 +276,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil, false)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -342,7 +342,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	// I don't need any repos/charts to test these scenarios
 	for _, tc := range negativeTestCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			s, mock, err := newServerWithRepos(t, nil, nil, nil)
+			s, mock, err := newSimpleServerWithRepos(t, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -447,7 +447,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 			defer ts2.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil, false)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -533,7 +533,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, err := newServerWithRepos(t, nil, nil, nil)
+			s, mock, err := newSimpleServerWithRepos(t, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -626,7 +626,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil, false)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -676,7 +676,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 
 		// start with an empty server that only has an empty repo cache
 		// passing in []testSpecChartWithUrl{} instead of nil will add support for chart cache
-		s, mock, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil)
+		s, mock, err := newServerWithRepos(t, nil, []testSpecChartWithUrl{}, nil, false)
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -899,7 +899,7 @@ func TestChartWithRelativeURL(t *testing.T) {
 				chartUrl:      ts.URL + "/charts/airflow-1.0.0.tgz",
 				repoNamespace: repoNamespace,
 			},
-		}, nil)
+		}, nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
