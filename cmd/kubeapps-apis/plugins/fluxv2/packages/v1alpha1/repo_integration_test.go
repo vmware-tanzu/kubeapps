@@ -72,8 +72,8 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	secretName := "podinfo-basic-auth-secret"
-	repoName := "podinfo-basic-auth"
+	secretName := "podinfo-basic-auth-secret-" + randSeq(4)
+	repoName := "podinfo-basic-auth-" + randSeq(4)
 
 	if err := kubeCreateSecret(t, newBasicAuthSecret(secretName, "default", "foo", "bar")); err != nil {
 		t.Fatalf("%v", err)
@@ -125,7 +125,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 				plugins.Plugin{},
 				corev1.PackageAppVersion{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, available_package_summaries_podinfo_basic_auth; !cmp.Equal(got, want, opt1, opt2) {
+			if got, want := resp, available_package_summaries_podinfo_basic_auth(repoName); !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 			}
 			break
@@ -167,7 +167,10 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	compareActualVsExpectedAvailablePackageDetail(t, resp.AvailablePackageDetail, expected_detail_podinfo_basic_auth.AvailablePackageDetail)
+	compareActualVsExpectedAvailablePackageDetail(
+		t,
+		resp.AvailablePackageDetail,
+		expected_detail_podinfo_basic_auth(repoName).AvailablePackageDetail)
 }
 
 func TestKindClusterAddPackageRepository(t *testing.T) {
@@ -238,7 +241,8 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-add-repo-admin", "default")
+	adminAcctName := "test-add-repo-admin-" + randSeq(4)
+	grpcContext, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -382,12 +386,14 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		},
 	}
 
-	grpcAdmin, err := newGrpcAdminContext(t, "test-get-repo-admin", "default")
+	adminAcctName := "test-get-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-get-repo-loser", "default")
+	loserAcctName := "test-get-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -602,12 +608,14 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 		},
 	}
 
-	grpcAdmin, err := newGrpcAdminContext(t, "test-get-repo-admin", "default")
+	adminAcctName := "test-get-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-get-repo-loser", "default")
+	loserAcctName := "test-get-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}

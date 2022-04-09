@@ -833,35 +833,39 @@ var (
 			"kubectl -n @TARGET_NS@ port-forward deploy/my-podinfo 8080:9898\n",
 	}
 
-	available_package_summaries_podinfo_basic_auth = &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-			{
-				Name:                "podinfo",
-				AvailablePackageRef: availableRef("podinfo-basic-auth/podinfo", "default"),
-				LatestVersion:       &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
-				DisplayName:         "podinfo",
-				ShortDescription:    "Podinfo Helm chart for Kubernetes",
-				Categories:          []string{""},
+	available_package_summaries_podinfo_basic_auth = func(name string) *corev1.GetAvailablePackageSummariesResponse {
+		return &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				{
+					Name:                "podinfo",
+					AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+					LatestVersion:       &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
+					DisplayName:         "podinfo",
+					ShortDescription:    "Podinfo Helm chart for Kubernetes",
+					Categories:          []string{""},
+				},
 			},
-		},
+		}
 	}
 
-	expected_detail_podinfo_basic_auth = &corev1.GetAvailablePackageDetailResponse{
-		AvailablePackageDetail: &corev1.AvailablePackageDetail{
-			AvailablePackageRef: availableRef("podinfo-basic-auth/podinfo", "default"),
-			Name:                "podinfo",
-			Version:             &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
-			RepoUrl:             "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth",
-			HomeUrl:             "https://github.com/stefanprodan/podinfo",
-			DisplayName:         "podinfo",
-			ShortDescription:    "Podinfo Helm chart for Kubernetes",
-			SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
-			Maintainers: []*corev1.Maintainer{
-				{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+	expected_detail_podinfo_basic_auth = func(name string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+				Name:                "podinfo",
+				Version:             &corev1.PackageAppVersion{PkgVersion: "6.0.0", AppVersion: "6.0.0"},
+				RepoUrl:             "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is used by CNCF projects like [Flux](https://github.com/fluxcd/flux2)",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
 			},
-			Readme:        "Podinfo is used by CNCF projects like [Flux](https://github.com/fluxcd/flux2)",
-			DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
-		},
+		}
 	}
 
 	valid_index_charts_spec = []testSpecChartWithFile{
