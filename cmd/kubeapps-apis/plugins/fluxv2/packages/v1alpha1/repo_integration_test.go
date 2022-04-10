@@ -25,7 +25,7 @@ import (
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080, e.g.
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
-// 3) run './kind-cluster-setup.sh deploy' once prior to these tests
+// 3) run './kind-cluster-setup.sh deploy' from testdata dir once prior to these tests
 
 // this test is testing a scenario when a repo that takes a long time to index is added
 // and while the indexing is in progress this repo is deleted by another request.
