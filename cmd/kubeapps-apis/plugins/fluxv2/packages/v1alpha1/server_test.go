@@ -5,11 +5,13 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
@@ -20,9 +22,21 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/storage/names"
+	typfake "k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -137,7 +151,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{tc.repo}, nil, nil)
+			s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{tc.repo})
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -186,6 +200,117 @@ type testSpecChartWithUrl struct {
 	repoNamespace string
 	// this is for a negative test TestTransientHttpFailuresAreRetriedForChartCache
 	numRetries int
+}
+
+func newSimpleServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository) (*Server, redismock.ClientMock, error) {
+	return newServerWithRepos(t, repos, nil, nil)
+}
+
+func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, error) {
+	typedClient := typfake.NewSimpleClientset(secrets...)
+
+	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
+	typedClient.PrependReactor(
+		"create", "*",
+		func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+			ret = action.(k8stesting.CreateAction).GetObject()
+			meta, ok := ret.(metav1.Object)
+			if !ok {
+				return
+			}
+			if meta.GetName() == "" && meta.GetGenerateName() != "" {
+				meta.SetName(names.SimpleNameGenerator.GenerateName(meta.GetGenerateName()))
+			}
+			return
+		})
+
+	// Creating an authorized clientGetter
+	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
+
+	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	ctrlClient := newCtrlClient(repos, nil, nil)
+	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
+		return clientgetter.
+			NewBuilder().
+			WithTyped(typedClient).
+			WithApiExt(apiextIfc).
+			WithControllerRuntime(&ctrlClient).
+			Build(), nil
+	}
+	return newServer(t, clientGetter, nil, repos, charts)
+}
+
+func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) (*Server, redismock.ClientMock, error) {
+	typedClient := typfake.NewSimpleClientset()
+	// Creating an authorized clientGetter
+	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
+
+	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	ctrlClient := newCtrlClient(nil, charts, releases)
+	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
+		return clientgetter.
+			NewBuilder().
+			WithApiExt(apiextIfc).
+			WithTyped(typedClient).
+			WithControllerRuntime(&ctrlClient).
+			Build(), nil
+	}
+	return newServer(t, clientGetter, actionConfig, nil, nil)
+}
+
+// newHelmActionConfig returns an action.Configuration with fake clients and memory storage.
+func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub) *action.Configuration {
+	t.Helper()
+
+	memDriver := driver.NewMemory()
+
+	actionConfig := &action.Configuration{
+		Releases:     storage.Init(memDriver),
+		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		Capabilities: chartutil.DefaultCapabilities,
+		Log: func(format string, v ...interface{}) {
+			t.Helper()
+			t.Logf(format, v...)
+		},
+	}
+
+	for _, r := range rels {
+		config := map[string]interface{}{}
+		rel := &release.Release{
+			Name:      r.name,
+			Namespace: r.namespace,
+			Info: &release.Info{
+				Status: r.status,
+				Notes:  r.notes,
+			},
+			Chart: &chart.Chart{
+				Metadata: &chart.Metadata{
+					Version:    r.chartVersion,
+					Icon:       "https://example.com/icon.png",
+					AppVersion: "1.2.3",
+				},
+			},
+			Config:   config,
+			Manifest: r.manifest,
+		}
+		err := actionConfig.Releases.Create(rel)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	// It is the namespace of the driver which determines the results. In the prod code,
+	// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
+	memDriver.SetNamespace(namespace)
+
+	return actionConfig
 }
 
 // This func does not create a kubernetes dynamic client. It is meant to work in conjunction with
@@ -340,7 +465,7 @@ func newServer(t *testing.T,
 		repoCache:       repoCache,
 		chartCache:      chartCache,
 		kubeappsCluster: KubeappsCluster,
-		pluginConfig:    &common.DefaultPluginConfig,
+		pluginConfig:    common.NewDefaultPluginConfig(),
 	}
 	return s, mock, nil
 }

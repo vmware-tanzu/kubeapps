@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -24,7 +25,7 @@ import (
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080, e.g.
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
-// 3) run './kind-cluster-setup.sh deploy' once prior to these tests
+// 3) run './kind-cluster-setup.sh deploy' from testdata dir once prior to these tests
 
 // this test is testing a scenario when a repo that takes a long time to index is added
 // and while the indexing is in progress this repo is deleted by another request.
@@ -71,8 +72,8 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	secretName := "podinfo-basic-auth-secret"
-	repoName := "podinfo-basic-auth"
+	secretName := "podinfo-basic-auth-secret-" + randSeq(4)
+	repoName := "podinfo-basic-auth-" + randSeq(4)
 
 	if err := kubeCreateSecret(t, newBasicAuthSecret(secretName, "default", "foo", "bar")); err != nil {
 		t.Fatalf("%v", err)
@@ -124,7 +125,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 				plugins.Plugin{},
 				corev1.PackageAppVersion{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, available_package_summaries_podinfo_basic_auth; !cmp.Equal(got, want, opt1, opt2) {
+			if got, want := resp, available_package_summaries_podinfo_basic_auth(repoName); !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 			}
 			break
@@ -166,7 +167,10 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	compareActualVsExpectedAvailablePackageDetail(t, resp.AvailablePackageDetail, expected_detail_podinfo_basic_auth.AvailablePackageDetail)
+	compareActualVsExpectedAvailablePackageDetail(
+		t,
+		resp.AvailablePackageDetail,
+		expected_detail_podinfo_basic_auth(repoName).AvailablePackageDetail)
 }
 
 func TestKindClusterAddPackageRepository(t *testing.T) {
@@ -186,147 +190,59 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		expectedResponse         *corev1.AddPackageRepositoryResponse
 		expectedStatusCode       codes.Code
 		expectedReconcileFailure bool
+		userManagedSecrets       bool
 	}{
 		{
-			testName: "add repo test (simplest case)",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_repo_url,
-			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:           "add repo test (simplest case)",
+			request:            add_repo_req_15,
+			expectedResponse:   add_repo_expected_resp_2,
 			expectedStatusCode: codes.OK,
 		},
 		{
-			testName: "package repository with basic auth",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-2",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_basic_auth_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
-						UsernamePassword: &corev1.UsernamePassword{
-							Username: "foo",
-							Password: "bar",
-						},
-					},
-				},
-			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo-2",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:           "package repository with basic auth",
+			request:            add_repo_req_16,
+			expectedResponse:   add_repo_expected_resp_3,
 			expectedStatusCode: codes.OK,
 		},
 		{
-			testName: "package repository with wrong basic auth fails",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-3",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_basic_auth_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
-						UsernamePassword: &corev1.UsernamePassword{
-							Username: "foo",
-							Password: "bar-2",
-						},
-					},
-				},
-			},
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo-3",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:                 "package repository with wrong basic auth fails",
+			request:                  add_repo_req_17,
+			expectedResponse:         add_repo_expected_resp_4,
 			expectedStatusCode:       codes.OK,
 			expectedReconcileFailure: true,
 		},
 		{
-			testName: "package repository with basic auth and existing secret",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-4",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_basic_auth_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-						SecretRef: &corev1.SecretKeyReference{
-							Name: "secret-1",
-						},
-					},
-				},
-			},
-			existingSecret: newBasicAuthSecret("secret-1", "default", "foo", "bar"),
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo-4",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:           "package repository with basic auth and existing secret",
+			request:            add_repo_req_18,
+			existingSecret:     newBasicAuthSecret("secret-1", "default", "foo", "bar"),
+			expectedResponse:   add_repo_expected_resp_5,
 			expectedStatusCode: codes.OK,
+			userManagedSecrets: true,
 		},
 		{
-			testName: "package repository with TLS",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:    "my-podinfo-4",
-				Context: &corev1.Context{Namespace: "default"},
-				Type:    "helm",
-				Url:     podinfo_tls_repo_url,
-				Auth: &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-						SecretRef: &corev1.SecretKeyReference{
-							Name: "secret-2",
-						},
-					},
-				},
-			},
-			existingSecret: newTlsSecret("secret-2", "default", pub, priv, ca),
-			expectedResponse: &corev1.AddPackageRepositoryResponse{
-				PackageRepoRef: &corev1.PackageRepositoryReference{
-					Context: &corev1.Context{
-						Namespace: "default",
-						Cluster:   KubeappsCluster,
-					},
-					Identifier: "my-podinfo-4",
-					Plugin:     fluxPlugin,
-				},
-			},
+			testName:           "package repository with basic auth and existing secret (kubeapps managed secrets)",
+			request:            add_repo_req_18,
+			existingSecret:     newBasicAuthSecret("secret-1", "default", "foo", "bar"),
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			testName:           "package repository with TLS",
+			request:            add_repo_req_19,
+			existingSecret:     newTlsSecret("secret-2", "default", pub, priv, ca),
+			expectedResponse:   add_repo_expected_resp_6,
 			expectedStatusCode: codes.OK,
+			userManagedSecrets: true,
+		},
+		{
+			testName:           "package repository with TLS (kubeapps managed secrets)",
+			request:            add_repo_req_19,
+			existingSecret:     newTlsSecret("secret-2", "default", pub, priv, ca),
+			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-add-repo-admin", "default")
+	adminAcctName := "test-add-repo-admin-" + randSeq(4)
+	grpcContext, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -346,6 +262,16 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 					}
 				})
 			}
+			oldValue, err := fluxPluginReposClient.SetUserManagedSecrets(
+				ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: tc.userManagedSecrets})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				fluxPluginReposClient.SetUserManagedSecrets(
+					ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
+			})
+
 			resp, err := fluxPluginReposClient.AddPackageRepository(ctx, tc.request)
 			if tc.expectedStatusCode != codes.OK {
 				if status.Code(err) != tc.expectedStatusCode {
@@ -398,6 +324,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		expectedResponse   *corev1.GetPackageRepositoryDetailResponse
 		expectedStatusCode codes.Code
 		existingSecret     *apiv1.Secret
+		userManagedSecrets bool
 	}{
 		{
 			testName:           "gets detail for podinfo package repository",
@@ -431,6 +358,16 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_14,
 			existingSecret:     newBasicAuthSecret("secret-1", "TBD", "foo", "bar"),
+			userManagedSecrets: true,
+		},
+		{
+			testName:           "get detail succeeds for podinfo basic auth package repository with creds (kubeapps managed secrets)",
+			request:            get_repo_detail_req_10,
+			repoName:           "my-podinfo-3",
+			repoUrl:            podinfo_basic_auth_repo_url,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_14a,
+			existingSecret:     newBasicAuthSecret("secret-1", "TBD", "foo", "bar"),
 		},
 		{
 			testName:           "get detail returns NotFound error for wrong repo",
@@ -449,12 +386,14 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		},
 	}
 
-	grpcAdmin, err := newGrpcAdminContext(t, "test-get-repo-admin", "default")
+	adminAcctName := "test-get-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-get-repo-loser", "default")
+	loserAcctName := "test-get-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -510,6 +449,16 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			}
 			defer cancel()
 
+			oldValue, err := fluxPluginReposClient.SetUserManagedSecrets(
+				grpcCtx, &v1alpha1.SetUserManagedSecretsRequest{Value: tc.userManagedSecrets})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				fluxPluginReposClient.SetUserManagedSecrets(
+					grpcCtx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
+			})
+
 			var resp *corev1.GetPackageRepositoryDetailResponse
 			for {
 				resp, err = fluxPluginReposClient.GetPackageRepositoryDetail(grpcCtx, tc.request)
@@ -538,6 +487,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 				corev1.PackageRepositoryAuth{},
 				corev1.PackageRepositoryTlsConfig{},
 				corev1.SecretKeyReference{},
+				corev1.UsernamePassword{},
 			)
 
 			opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
@@ -658,12 +608,14 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 		},
 	}
 
-	grpcAdmin, err := newGrpcAdminContext(t, "test-get-repo-admin", "default")
+	adminAcctName := "test-get-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, "test-get-repo-loser", "default")
+	loserAcctName := "test-get-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}

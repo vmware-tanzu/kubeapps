@@ -118,7 +118,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin"+randSeq(4), "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +225,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin"+randSeq(4), "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -308,7 +308,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 		expectedResourceRefs: expected_resource_refs_auto_update,
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-auto-update", "default")
+	grpcContext, err := newGrpcAdminContext(t, "test-auto-update"+randSeq(4), "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -403,7 +403,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-delete-admin", "default")
+	grpcContext, err := newGrpcAdminContext(t, "test-delete-admin"+randSeq(4), "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -530,24 +530,24 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		}
 	})
 
-	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-release-rbac-admin", "default")
+	adminAcctName := "test-release-rbac-admin-" + randSeq(4)
+	grpcCtxAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	loserAcctName := "test-release-rbac-loser-" + randSeq(4)
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
-		t, "test-release-rbac-loser", "default")
+		t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	out := kubectlCanI(
-		t, "test-release-rbac-admin", "default", "get", "helmcharts", ns1)
+	out := kubectlCanI(t, adminAcctName, "default", "get", "helmcharts", ns1)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
-	out = kubectlCanI(
-		t, "test-release-rbac-loser", "default", "get", "helmcharts", ns1)
+	out = kubectlCanI(t, loserAcctName, "default", "get", "helmcharts", ns1)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
@@ -576,8 +576,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 
 	ns2 := tc.request.TargetContext.Namespace
 
-	out = kubectlCanI(
-		t, "test-release-rbac-admin", "default", "get", fluxHelmReleases, ns2)
+	out = kubectlCanI(t, adminAcctName, "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
@@ -645,8 +644,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		}
 	}
 
-	out = kubectlCanI(
-		t, "test-release-rbac-loser", "default", "get", fluxHelmReleases, ns2)
+	out = kubectlCanI(t, loserAcctName, "default", "get", fluxHelmReleases, ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
@@ -711,24 +709,22 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		},
 	}
 
+	svcAcctName := "test-release-rbac-helmreleases-" + randSeq(4)
 	grpcCtxReadHelmReleases, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-release-rbac-helmreleases", "default", rules)
+		t, svcAcctName, "default", rules)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	out = kubectlCanI(
-		t, "test-release-rbac-helmreleases", "default", "get", fluxHelmRepositories, ns2)
+	out = kubectlCanI(t, svcAcctName, "default", "get", fluxHelmRepositories, ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
-	out = kubectlCanI(
-		t, "test-release-rbac-helmreleases", "default", "get", "helmcharts", ns2)
+	out = kubectlCanI(t, svcAcctName, "default", "get", "helmcharts", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
-	out = kubectlCanI(
-		t, "test-release-rbac-helmreleases", "default", "get", fluxHelmReleases, ns2)
+	out = kubectlCanI(t, svcAcctName, "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
@@ -817,19 +813,18 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		},
 	}
 
+	svcAcctName2 := "test-release-rbac-helmreleases-and-charts-" + randSeq(4)
 	grpcCtxReadHelmReleasesAndCharts, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-release-rbac-helmreleases-and-charts", "default", nsToRules)
+		t, svcAcctName2, "default", nsToRules)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	out = kubectlCanI(
-		t, "test-release-rbac-helmreleases-and-charts", "default", "get", "helmcharts", ns1)
+	out = kubectlCanI(t, svcAcctName2, "default", "get", "helmcharts", ns1)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
-	out = kubectlCanI(
-		t, "test-release-rbac-helmreleases-and-charts", "default", "get", fluxHelmReleases, ns2)
+	out = kubectlCanI(t, svcAcctName2, "default", "get", fluxHelmReleases, ns2)
 	if out != "yes" {
 		t.Errorf("Expected [yes], got [%s]", out)
 	}
@@ -901,8 +896,9 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	loserAcctName := "test-release-rbac-loser-" + randSeq(4)
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
-		t, "test-release-rbac-loser", "default")
+		t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -917,17 +913,17 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 		}
 	})
 
-	out := kubectlCanI(t, "test-release-rbac-loser", "default", "get", "helmcharts", ns2)
+	out := kubectlCanI(t, loserAcctName, "default", "get", "helmcharts", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
 
-	out = kubectlCanI(t, "test-release-rbac-loser", "default", "get", "helmreleases", ns2)
+	out = kubectlCanI(t, loserAcctName, "default", "get", "helmreleases", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
 
-	out = kubectlCanI(t, "test-release-rbac-loser", "default", "create", "helmreleases", ns2)
+	out = kubectlCanI(t, loserAcctName, "default", "create", "helmreleases", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
 	}
@@ -958,8 +954,9 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 		},
 	}
 
+	svcAcctName2 := "test-release-rbac-helmreleases-2-" + randSeq(4)
 	grpcCtx2, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-release-rbac-helmreleases-2", "default", nsToRules)
+		t, svcAcctName2, "default", nsToRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -991,8 +988,9 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 		},
 	}
 
+	svcAcctName3 := "test-release-rbac-helmreleases-3-" + randSeq(4)
 	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-release-rbac-helmreleases-3", "default", nsToRules)
+		t, svcAcctName3, "default", nsToRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1053,7 +1051,8 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 		expectedResourceRefs: expected_resource_refs_basic,
 	}
 
-	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-release-rbac-admin", "default")
+	adminAcctName := "test-release-rbac-admin-" + randSeq(4)
+	grpcCtxAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1062,8 +1061,9 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 
 	ns2 := tc.request.TargetContext.Namespace
 
+	loserAcctName := "test-release-rbac-loser-" + randSeq(4)
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
-		t, "test-release-rbac-loser", "default")
+		t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1095,8 +1095,9 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 		},
 	}
 
+	svcAcctName2 := "test-release-rbac-helmreleases-2-" + randSeq(4)
 	grpcCtx2, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-release-rbac-helmreleases-2", "default", nsToRules)
+		t, svcAcctName2, "default", nsToRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1124,8 +1125,9 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 		},
 	}
 
+	svcAcctName3 := "test-release-rbac-helmreleases-3-" + randSeq(4)
 	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-release-rbac-helmreleases-3", "default", nsToRules)
+		t, svcAcctName3, "default", nsToRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1185,7 +1187,8 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 		expectedResourceRefs: expected_resource_refs_basic,
 	}
 
-	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-release-rbac-admin", "default")
+	adminAcctName := "test-release-rbac-admin-" + randSeq(4)
+	grpcCtxAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1194,8 +1197,9 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 
 	ns2 := tc.request.TargetContext.Namespace
 
+	loserAcctName := "test-release-rbac-loser-" + randSeq(4)
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
-		t, "test-release-rbac-loser", "default")
+		t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1226,8 +1230,9 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 		},
 	}
 
+	svcAcctName := "test-release-rbac-helmreleases-3-" + randSeq(4)
 	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-release-rbac-helmreleases-3", "default", nsToRules)
+		t, svcAcctName, "default", nsToRules)
 	if err != nil {
 		t.Fatal(err)
 	}

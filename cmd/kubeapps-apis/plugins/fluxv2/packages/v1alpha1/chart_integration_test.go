@@ -127,7 +127,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	// one particular code path I'd like to test:
 	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-"+randSeq(4), "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -295,27 +295,29 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		}
 	}
 
-	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-repo-rbac-admin", "default")
+	svcAcctName := "test-repo-rbac-admin-" + randSeq(4)
+	grpcCtxAdmin, err := newGrpcAdminContext(t, svcAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, n := range names {
 		out := kubectlCanI(
-			t, "test-repo-rbac-admin", "default", "get", fluxHelmRepositories, n.Namespace)
+			t, svcAcctName, "default", "get", fluxHelmRepositories, n.Namespace)
 		if out != "yes" {
 			t.Errorf("Expected [yes], got [%s]", out)
 		}
 	}
 
+	svcAcctName2 := "test-repo-rbac-loser-" + randSeq(4)
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
-		t, "test-repo-rbac-loser", "default")
+		t, svcAcctName2, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, n := range names {
 		out := kubectlCanI(
-			t, "test-repo-rbac-loser", "default", "get", fluxHelmRepositories, n.Namespace)
+			t, svcAcctName2, "default", "get", fluxHelmRepositories, n.Namespace)
 		if out != "no" {
 			t.Errorf("Expected [no], got [%s]", out)
 		}
@@ -336,14 +338,14 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		},
 	}
 
+	svcAcctName3 := "test-repo-rbac-limited-" + randSeq(4)
 	grpcCtxLimited, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-repo-rbac-limited", "default", rules)
+		t, svcAcctName3, "default", rules)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i, n := range names {
-		out := kubectlCanI(
-			t, "test-repo-rbac-limited", "default", "get", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanI(t, svcAcctName3, "default", "get", fluxHelmRepositories, n.Namespace)
 		if i == 0 {
 			if out != "no" {
 				t.Errorf("Expected [no], got [%s]", out)

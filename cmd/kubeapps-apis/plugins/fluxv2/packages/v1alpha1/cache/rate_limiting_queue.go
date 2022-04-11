@@ -18,7 +18,7 @@ import (
 )
 
 // Inspired by https://github.com/kubernetes/client-go/blob/master/util/workqueue/queue.go and
-//         by https://github.com/kubernetes/client-go/blob/v0.22.4/util/workqueue/rate_limiting_queue.go
+//  by https://github.com/kubernetes/client-go/blob/master/util/workqueue/rate_limiting_queue.go
 //	but adds a few funcs, like Name(), ExpectAdd(), WaitUntilForgotten() and Reset()
 
 // RateLimitingInterface is an interface that rate limits items being added to the queue.

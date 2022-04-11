@@ -6,7 +6,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/gob"
 	"fmt"
 	"reflect"
@@ -203,94 +202,23 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 	tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
 	if url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
+	} else if tlsConfig != nil && tlsConfig.InsecureSkipVerify {
+		return nil, status.Errorf(codes.InvalidArgument, "TLS flag insecureSkipVerify is not supported")
 	}
 
-	var secret *apiv1.Secret
-	if tlsConfig != nil {
-		if tlsConfig.InsecureSkipVerify {
-			return nil, status.Errorf(codes.Unimplemented, "TLS flag insecureSkipVerify is not supported")
+	var secretRef string
+	var err error
+	if s.pluginConfig.UserManagedSecrets {
+		if secretRef, err = s.validateRepoUserManagedSecrets(ctx, targetName, tlsConfig, auth); err != nil {
+			return nil, err
 		}
-		caCert := tlsConfig.GetCertAuthority()
-		if caCert != "" {
-			secret = common.NewLocalOpaqueSecret(targetName.Name + "-")
-			secret.Data["caFile"] = []byte(caCert)
-		}
-	}
-	if auth != nil && auth.GetSecretRef() == nil {
-		if secret == nil {
-			secret = common.NewLocalOpaqueSecret(targetName.Name + "-")
-		}
-		switch auth.Type {
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-			if unp := auth.GetUsernamePassword(); unp != nil {
-				secret.Data["username"] = []byte(unp.Username)
-				secret.Data["password"] = []byte(unp.Password)
-			} else {
-				return nil, status.Errorf(codes.Internal, "Username/Password configuration is missing")
-			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
-			if ck := auth.GetTlsCertKey(); ck != nil {
-				secret.Data["certFile"] = []byte(ck.Cert)
-				secret.Data["keyFile"] = []byte(ck.Key)
-			} else {
-				return nil, status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
-			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
-			return nil, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			if dc := auth.GetDockerCreds(); dc != nil {
-				secret.Type = apiv1.SecretTypeDockerConfigJson
-				// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-				authStr := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", dc.Username, dc.Password)))
-				configStr := fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
-					dc.Server, dc.Username, dc.Password, dc.Email, authStr)
-				secret.Data[".dockerconfigjson"] = []byte(base64.StdEncoding.EncodeToString([]byte(configStr)))
-			} else {
-				return nil, status.Errorf(codes.Internal, "Docker credentials configuration is missing")
-			}
-		default:
-			return nil, status.Errorf(codes.Internal, "Unexpected package repository authentication type: %q", auth.Type)
+	} else {
+		if secretRef, err = s.setupRepoKubeappsManagedSecrets(ctx, targetName, tlsConfig, auth); err != nil {
+			return nil, err
 		}
 	}
 
 	passCredentials := auth != nil && auth.PassCredentials
-
-	secretRef, checkSecret := "", false
-	if secret != nil {
-		// create a secret first, if applicable
-		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-			return nil, err
-		} else if secret, err = typedClient.CoreV1().Secrets(targetName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
-			return nil, statuserror.FromK8sError("create", "secret", secret.GetName(), err)
-		} else {
-			secretRef = secret.GetName()
-		}
-	} else if tlsConfig != nil && tlsConfig.GetSecretRef().GetName() != "" {
-		// check that the specified secret exists
-		secretRef, checkSecret = tlsConfig.GetSecretRef().GetName(), true
-	} else if auth != nil && auth.GetSecretRef().GetName() != "" {
-		secretRef, checkSecret = auth.GetSecretRef().GetName(), true
-	}
-
-	if secretRef != "" && checkSecret {
-		// check that the specified secret exists
-		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-			return nil, err
-		} else if _, err = typedClient.CoreV1().Secrets(targetName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
-			return nil, statuserror.FromK8sError("get", "secret", secretRef, err)
-		}
-		// TODO (gfichtenholt) also check that the data in the opaque secret corresponds
-		// to specified auth type, e.g. if AuthType is
-		// PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-		// check that the secret has "username" and "password" fields, etc.
-
-		// TODO (gfichtenholt)
-		// ref https://github.com/vmware-tanzu/kubeapps/pull/4353#discussion_r816332595
-		// check whether flux supports typed secrets in addition to opaque secrets
-		// https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
-		// If so, that cause certain validation to be done on the data (ie. ensuring that
-		//	the "username" and "password" fields are present).
-	}
 
 	if fluxRepo, err := s.newFluxHelmRepo(targetName, url, interval, secretRef, passCredentials); err != nil {
 		return nil, err
@@ -355,10 +283,7 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 
 	var tlsConfig *corev1.PackageRepositoryTlsConfig
-	auth := &corev1.PackageRepositoryAuth{
-		Type:            corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-		PassCredentials: repo.Spec.PassCredentials,
-	}
+	var auth *corev1.PackageRepositoryAuth
 	if repo.Spec.SecretRef != nil {
 		secretName := repo.Spec.SecretRef.Name
 		if s == nil || s.clientGetter == nil {
@@ -372,42 +297,22 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		if err != nil {
 			return nil, statuserror.FromK8sError("get", "secret", secretName, err)
 		}
-		if _, ok := secret.Data["caFile"]; ok {
-			tlsConfig = &corev1.PackageRepositoryTlsConfig{
-				// flux plug in doesn't support this option
-				InsecureSkipVerify: false,
-				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
-					SecretRef: &corev1.SecretKeyReference{
-						Name: secretName,
-						Key:  "caFile",
-					},
-				},
-			}
-		}
-		if _, ok := secret.Data["certFile"]; ok {
-			if _, ok = secret.Data["keyFile"]; ok {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS
-				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
-					SecretRef: &corev1.SecretKeyReference{Name: secretName},
-				}
-			}
-		} else if _, ok := secret.Data["username"]; ok {
-			if _, ok = secret.Data["password"]; ok {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
-				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
-					SecretRef: &corev1.SecretKeyReference{Name: secretName},
-				}
-			}
-		} else if _, ok := secret.Data[".dockerconfigjson"]; ok {
-			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
-				SecretRef: &corev1.SecretKeyReference{Name: secretName},
+
+		if s.pluginConfig.UserManagedSecrets {
+			if tlsConfig, auth, err = s.getRepoTlsConfigAndAuthWithUserManagedSecrets(secret); err != nil {
+				return nil, err
 			}
 		} else {
-			log.Warning("Unrecognized type of secret [%s]", secretName)
+			if tlsConfig, auth, err = s.getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		auth = &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
 		}
 	}
-
+	auth.PassCredentials = repo.Spec.PassCredentials
 	return &corev1.PackageRepositoryDetail{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
@@ -475,6 +380,224 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 		summaries = append(summaries, summary)
 	}
 	return summaries, nil
+}
+
+func (s *Server) validateRepoUserManagedSecrets(
+	ctx context.Context,
+	repoName types.NamespacedName,
+	tlsConfig *corev1.PackageRepositoryTlsConfig,
+	auth *corev1.PackageRepositoryAuth) (string, error) {
+	var secretRefTls, secretRefAuth string
+	if tlsConfig != nil {
+		if tlsConfig.GetCertAuthority() != "" {
+			return "", status.Errorf(codes.InvalidArgument, "Secret Ref must be used with user managed secrets")
+		} else if tlsConfig.GetSecretRef().GetName() != "" {
+			secretRefTls = tlsConfig.GetSecretRef().GetName()
+		}
+	}
+
+	if auth != nil {
+		if auth.GetDockerCreds() != nil ||
+			auth.GetHeader() != "" ||
+			auth.GetTlsCertKey() != nil ||
+			auth.GetUsernamePassword() != nil {
+			return "", status.Errorf(codes.InvalidArgument, "Secret Ref must be used with user managed secrets")
+		} else if auth.GetSecretRef().GetName() != "" {
+			secretRefAuth = auth.GetSecretRef().GetName()
+		}
+	}
+
+	var secretRef string
+	if secretRefTls != "" && secretRefAuth != "" && secretRefTls != secretRefAuth {
+		// flux repo spec only allows one secret per HelmRepository CRD
+		return "", status.Errorf(
+			codes.InvalidArgument, "TLS config secret and Auth secret must be the same")
+	} else if secretRefTls != "" {
+		secretRef = secretRefTls
+	} else if secretRefAuth != "" {
+		secretRef = secretRefAuth
+	}
+
+	if secretRef != "" {
+		// check that the specified secret exists
+		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+			return "", err
+		} else if _, err = typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
+			return "", statuserror.FromK8sError("get", "secret", secretRef, err)
+		}
+		// TODO (gfichtenholt) also check that the data in the opaque secret corresponds
+		// to specified auth type, e.g. if AuthType is
+		// PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+		// check that the secret has "username" and "password" fields, etc.
+
+		// TODO (gfichtenholt)
+		// ref https://github.com/vmware-tanzu/kubeapps/pull/4353#discussion_r816332595
+		// check whether flux supports typed secrets in addition to opaque secrets
+		// https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
+		// If so, that cause certain validation to be done on the data (ie. ensuring that
+		//	the "username" and "password" fields are present).
+	}
+	return secretRef, nil
+}
+
+func (s *Server) setupRepoKubeappsManagedSecrets(
+	ctx context.Context,
+	repoName types.NamespacedName,
+	tlsConfig *corev1.PackageRepositoryTlsConfig,
+	auth *corev1.PackageRepositoryAuth) (string, error) {
+	var secret *apiv1.Secret
+	if tlsConfig != nil {
+		if tlsConfig.GetSecretRef() != nil {
+			return "", status.Errorf(codes.InvalidArgument, "SecretRef may not be used with kubeapps managed secrets")
+		}
+		caCert := tlsConfig.GetCertAuthority()
+		if caCert != "" {
+			secret = common.NewLocalOpaqueSecret(repoName.Name + "-")
+			secret.Data["caFile"] = []byte(caCert)
+		}
+	}
+	if auth != nil {
+		if auth.GetSecretRef() != nil {
+			return "", status.Errorf(codes.InvalidArgument, "SecretRef may not be used with kubeapps managed secrets")
+		}
+		if secret == nil {
+			secret = common.NewLocalOpaqueSecret(repoName.Name + "-")
+		}
+		switch auth.Type {
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+			if unp := auth.GetUsernamePassword(); unp != nil {
+				secret.Data["username"] = []byte(unp.Username)
+				secret.Data["password"] = []byte(unp.Password)
+			} else {
+				return "", status.Errorf(codes.Internal, "Username/Password configuration is missing")
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+			if ck := auth.GetTlsCertKey(); ck != nil {
+				secret.Data["certFile"] = []byte(ck.Cert)
+				secret.Data["keyFile"] = []byte(ck.Key)
+			} else {
+				return "", status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
+			return "", status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			if dc := auth.GetDockerCreds(); dc != nil {
+				secret.Type = apiv1.SecretTypeDockerConfigJson
+				secret.Data[".dockerconfigjson"] = common.DockerCredentialsToSecretData(dc)
+			} else {
+				return "", status.Errorf(codes.Internal, "Docker credentials configuration is missing")
+			}
+		default:
+			return "", status.Errorf(codes.Internal, "Unexpected package repository authentication type: %q", auth.Type)
+		}
+	}
+
+	secretRef := ""
+	if secret != nil {
+		// create a secret first, if applicable
+		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+			return "", err
+		} else if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
+			return "", statuserror.FromK8sError("create", "secret", secret.GetName(), err)
+		} else {
+			secretRef = secret.GetName()
+		}
+	}
+	return secretRef, nil
+}
+
+func (s *Server) getRepoTlsConfigAndAuthWithUserManagedSecrets(secret *apiv1.Secret) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
+	var tlsConfig *corev1.PackageRepositoryTlsConfig
+	auth := &corev1.PackageRepositoryAuth{
+		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+	}
+
+	if _, ok := secret.Data["caFile"]; ok {
+		tlsConfig = &corev1.PackageRepositoryTlsConfig{
+			// flux plug in doesn't support this option
+			InsecureSkipVerify: false,
+			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: secret.Name,
+					Key:  "caFile",
+				},
+			},
+		}
+	}
+	if _, ok := secret.Data["certFile"]; ok {
+		if _, ok = secret.Data["keyFile"]; ok {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{Name: secret.Name},
+			}
+		}
+	} else if _, ok := secret.Data["username"]; ok {
+		if _, ok = secret.Data["password"]; ok {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{Name: secret.Name},
+			}
+		}
+	} else if _, ok := secret.Data[".dockerconfigjson"]; ok {
+		auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+		auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+			SecretRef: &corev1.SecretKeyReference{Name: secret.Name},
+		}
+	} else {
+		log.Warning("Unrecognized type of secret [%s]", secret.Name)
+	}
+	return tlsConfig, auth, nil
+}
+
+func (s *Server) getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1.Secret) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
+	var tlsConfig *corev1.PackageRepositoryTlsConfig
+	auth := &corev1.PackageRepositoryAuth{
+		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+	}
+
+	if caFile, ok := secret.Data["caFile"]; ok {
+		tlsConfig = &corev1.PackageRepositoryTlsConfig{
+			// flux plug in doesn't support this option
+			InsecureSkipVerify: false,
+			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_CertAuthority{
+				CertAuthority: string(caFile),
+			},
+		}
+	}
+
+	if certFile, ok := secret.Data["certFile"]; ok {
+		if keyFile, ok := secret.Data["keyFile"]; ok {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_TlsCertKey{
+				TlsCertKey: &corev1.TlsCertKey{
+					Cert: string(certFile),
+					Key:  string(keyFile),
+				},
+			}
+		}
+	} else if username, ok := secret.Data["username"]; ok {
+		if pwd, ok := secret.Data["password"]; ok {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: string(username),
+					Password: string(pwd),
+				},
+			}
+		}
+	} else if configStr, ok := secret.Data[".dockerconfigjson"]; ok {
+		dc, err := common.SecretDataToDockerCredentials(string(configStr))
+		if err != nil {
+			return nil, nil, err
+		}
+		auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+		auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_DockerCreds{
+			DockerCreds: dc,
+		}
+	} else {
+		log.Warning("Unrecognized type of secret [%s]", secret.Name)
+	}
+	return tlsConfig, auth, nil
 }
 
 //

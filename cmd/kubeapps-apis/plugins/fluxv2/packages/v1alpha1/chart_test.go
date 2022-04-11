@@ -342,7 +342,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	// I don't need any repos/charts to test these scenarios
 	for _, tc := range negativeTestCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			s, mock, err := newServerWithRepos(t, nil, nil, nil)
+			s, mock, err := newSimpleServerWithRepos(t, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -533,7 +533,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, err := newServerWithRepos(t, nil, nil, nil)
+			s, mock, err := newSimpleServerWithRepos(t, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
