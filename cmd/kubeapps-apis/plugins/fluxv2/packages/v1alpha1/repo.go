@@ -600,6 +600,74 @@ func (s *Server) getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1
 	return tlsConfig, auth, nil
 }
 
+func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference, url string, interval uint32, tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
+	key := types.NamespacedName{Namespace: repoRef.GetContext().GetNamespace(), Name: repoRef.GetIdentifier()}
+	repo, err := s.getRepoInCluster(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if url == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
+	}
+	repo.Spec.URL = url
+
+	// flux does not grok description yet
+
+	if interval > 0 {
+		repo.Spec.Interval = metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	} else {
+		// interval is a required field
+		repo.Spec.Interval = defaultPollInterval
+	}
+
+	if tlsConfig != nil && tlsConfig.InsecureSkipVerify {
+		return nil, status.Errorf(codes.InvalidArgument, "TLS flag insecureSkipVerify is not supported")
+	}
+
+	var secretRef string
+	if s.pluginConfig.UserManagedSecrets {
+		if secretRef, err = s.validateRepoUserManagedSecrets(ctx, key, tlsConfig, auth); err != nil {
+			return nil, err
+		}
+	} else {
+		// TODO
+	}
+
+	if secretRef != "" {
+		repo.Spec.SecretRef = &fluxmeta.LocalObjectReference{Name: secretRef}
+	} else {
+		repo.Spec.SecretRef = nil
+	}
+
+	repo.Spec.PassCredentials = auth != nil && auth.PassCredentials
+
+	// get rid of the status field, since now there will be a new reconciliation
+	// process and the current status no longer applies. metadata and spec I want
+	// to keep, as they may have had added labels and/or annotations and/or
+	// even other changes made by the user.
+	repo.Status = sourcev1.HelmRepositoryStatus{}
+
+	client, err := s.getClient(ctx, key.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	if err = client.Update(ctx, repo); err != nil {
+		return nil, statuserror.FromK8sError("update", "HelmRepository", key.String(), err)
+	}
+
+	log.V(4).Infof("Updated repository: %s", common.PrettyPrint(repo))
+
+	return &corev1.PackageRepositoryReference{
+		Context: &corev1.Context{
+			Namespace: key.Namespace,
+			Cluster:   s.kubeappsCluster,
+		},
+		Identifier: key.Name,
+		Plugin:     GetPluginDetail(),
+	}, nil
+}
+
 //
 // implements plug-in specific cache-related functionality
 //

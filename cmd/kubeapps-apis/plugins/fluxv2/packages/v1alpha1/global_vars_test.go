@@ -3209,4 +3209,175 @@ var (
 			},
 		}
 	}
+
+	update_repo_req_1 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "http://newurl.com",
+	}
+
+	update_repo_req_2 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url:      "https://example.repo.com/charts",
+		Interval: 345,
+	}
+
+	update_repo_req_3 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+		Auth: &corev1.PackageRepositoryAuth{
+			PassCredentials: true,
+		},
+	}
+
+	update_repo_req_4 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+		TlsConfig: &corev1.PackageRepositoryTlsConfig{
+			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-1",
+					Key:  "caFile",
+				},
+			},
+		},
+	}
+
+	update_repo_req_5 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+	}
+
+	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "repo-1",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	update_repo_detail_1 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "http://newurl.com",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_2 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        345,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_3 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: true,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_4 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			TlsConfig: &corev1.PackageRepositoryTlsConfig{
+				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: "secret-1",
+						Key:  "caFile",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_5 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
 )

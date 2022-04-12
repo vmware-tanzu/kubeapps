@@ -825,6 +825,8 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			expectedRelease:         flux_helm_release_updated_upgrade_patch,
 			defaultUpgradePolicyStr: "patch",
 		},
+		// TODO test case: update installed package that is pending reconciliation
+		// TODO test case: update installed package that has failed reconciliation
 	}
 
 	for _, tc := range testCases {

@@ -1754,6 +1754,169 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 	}
 }
 
+func TestUpdatePackageRepository(t *testing.T) {
+	ca, _, _ := getCertsForTesting(t)
+	testCases := []struct {
+		name               string
+		request            *corev1.UpdatePackageRepositoryRequest
+		repoIndex          string
+		repoName           string
+		repoNamespace      string
+		oldRepoSecret      *apiv1.Secret
+		newRepoSecret      *apiv1.Secret
+		pending            bool
+		failed             bool
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.UpdatePackageRepositoryResponse
+		expectedDetail     *corev1.GetPackageRepositoryDetailResponse
+		userManagedSecrets bool
+	}{
+		{
+			name:               "update repository url",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_1,
+		},
+		{
+			name:               "update repository poll interval",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_2,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_2,
+		},
+		{
+			name:               "update repository pass credentials flag",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_3,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_3,
+		},
+		{
+			name:               "update repository set tls secret",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			newRepoSecret:      newTlsSecret("secret-1", "namespace-1", nil, nil, ca),
+			request:            update_repo_req_4,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_4,
+			userManagedSecrets: true,
+		},
+		{
+			name:               "update repository unset tls secret",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			oldRepoSecret:      newTlsSecret("secret-1", "namespace-1", nil, nil, ca),
+			request:            update_repo_req_5,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_5,
+			userManagedSecrets: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			oldSecretRef := ""
+			secrets := []runtime.Object{}
+			if tc.oldRepoSecret != nil {
+				oldSecretRef = tc.oldRepoSecret.Name
+				secrets = append(secrets, tc.oldRepoSecret)
+			}
+			if tc.newRepoSecret != nil {
+				secrets = append(secrets, tc.newRepoSecret)
+			}
+			var repo *sourcev1.HelmRepository
+			if !tc.pending && !tc.failed {
+				var ts *httptest.Server
+				var err error
+				ts, repo, err = newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				defer ts.Close()
+			} else if tc.pending {
+				t.Fatalf("TODO")
+			} else { // failed
+				t.Fatalf("TODO")
+			}
+
+			// the index.yaml will contain links to charts but for the purposes
+			// of this test they do not matter
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+
+			ctx := context.Background()
+			actualResp, err := s.UpdatePackageRepository(ctx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.expectedStatusCode == codes.OK {
+				if actualResp == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					opt1 := cmpopts.IgnoreUnexported(
+						corev1.Context{},
+						corev1.PackageRepositoryReference{},
+						plugins.Plugin{},
+						corev1.UpdatePackageRepositoryResponse{},
+					)
+					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+					}
+				}
+			} else {
+				// We don't need to check anything else for non-OK codes.
+				return
+			}
+
+			actualDetail, err := s.GetPackageRepositoryDetail(ctx, &corev1.GetPackageRepositoryDetailRequest{
+				PackageRepoRef: actualResp.PackageRepoRef,
+			})
+			if got, want := status.Code(err), codes.OK; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if actualDetail == nil {
+				t.Fatalf("got: nil, want: detail")
+			} else {
+				opt1 := cmpopts.IgnoreUnexported(
+					corev1.Context{},
+					corev1.PackageRepositoryReference{},
+					plugins.Plugin{},
+					corev1.GetPackageRepositoryDetailResponse{},
+					corev1.PackageRepositoryDetail{},
+					corev1.PackageRepositoryStatus{},
+					corev1.PackageRepositoryAuth{},
+					corev1.PackageRepositoryTlsConfig{},
+					corev1.SecretKeyReference{},
+					corev1.TlsCertKey{},
+					corev1.UsernamePassword{},
+				)
+				if got, want := actualDetail, tc.expectedDetail; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				}
+			}
+		})
+	}
+}
+
 func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
 	helmRepository := sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
