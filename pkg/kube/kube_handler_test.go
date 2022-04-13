@@ -1634,9 +1634,9 @@ func TestNewClusterConfig(t *testing.T) {
 			},
 		},
 		{
-			name:      "returns an in-cluster config when no cluster is specified",
+			name:      "returns an in-cluster config when the global packaging cluster token is specified",
 			userToken: "token-1",
-			cluster:   "",
+			cluster:   KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN,
 			clustersConfig: ClustersConfig{
 				KubeappsClusterName: "",
 				Clusters: map[string]ClusterConfig{
@@ -2029,7 +2029,7 @@ func TestParseClusterConfig(t *testing.T) {
 				{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK"}
 			]`,
 			expectedConfig: ClustersConfig{
-				KubeappsClusterName: "",
+				KubeappsClusterName: KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN,
 				Clusters: map[string]ClusterConfig{
 					"cluster-2": {
 						Name:                            "cluster-2",

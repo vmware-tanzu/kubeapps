@@ -145,11 +145,6 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
-			// Don't force clients to send a cluster unless we are sure all use-cases
-			// of kubeapps-api are multicluster.
-			if cluster == "" {
-				cluster = globalPackagingCluster
-			}
 			fn := clientgetter.NewHelmActionConfigGetter(configGetter, cluster)
 			return fn(ctx, pkgContext.GetNamespace())
 		},

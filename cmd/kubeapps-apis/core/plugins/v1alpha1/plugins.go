@@ -323,13 +323,12 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 
 		var config *rest.Config
 
-		// Enable existing plugins to pass an empty cluster name to get the
-		// kubeapps cluster for now, until we support (or otherwise decide)
-		// multicluster configuration of all plugins.
-		if cluster == "" {
-			cluster = clustersConfig.KubeappsClusterName
-		}
-
+		// Plugins are now required to define the complete context for any
+		// package, including the cluster and namespace, though there is one
+		// scenario where the cluster name cannot be specified: when Kubeapps is
+		// configured without the cluster on which Kubeapps is installed in the
+		// cluster configuration. In this case, global charts cannot specify a
+		// name for the cluster.
 		config, err = kube.NewClusterConfig(inClusterConfig, token, cluster, clustersConfig)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get clusterConfig: %w", err)
