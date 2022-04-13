@@ -628,7 +628,10 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 					t.Fatal(err)
 				}
 				// want to wait until all repos reach Ready state
-				kubeWaitUntilHelmRepositoryIsReady(t, name, namespace)
+				err := kubeWaitUntilHelmRepositoryIsReady(t, name, namespace)
+				if err != nil {
+					t.Fatal(err)
+				}
 				t.Cleanup(func() {
 					if err = kubeDeleteHelmRepository(t, name, namespace); err != nil {
 						t.Logf("Failed to delete helm source due to [%v]", err)
@@ -665,6 +668,215 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 
 			if got, want := resp, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts))
+			}
+		})
+	}
+}
+
+func TestKindClusterUpdatePackageRepository(t *testing.T) {
+	_, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		testName           string
+		request            *corev1.UpdatePackageRepositoryRequest
+		repoName           string
+		repoUrl            string
+		unauthorized       bool
+		failed             bool
+		expectedResponse   *corev1.UpdatePackageRepositoryResponse
+		expectedDetail     *corev1.GetPackageRepositoryDetailResponse
+		expectedStatusCode codes.Code
+		existingSecret     *apiv1.Secret
+		userManagedSecrets bool
+	}{
+		{
+			testName:           "update url and auth for podinfo package repository",
+			request:            update_repo_req_11,
+			repoName:           "my-podinfo",
+			repoUrl:            podinfo_repo_url,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_2,
+			expectedDetail:     update_repo_detail_11,
+		},
+		{
+			testName:           "update package repository in a failed state",
+			request:            update_repo_req_12,
+			repoName:           "my-podinfo-2",
+			repoUrl:            podinfo_basic_auth_repo_url,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_3,
+			expectedDetail:     update_repo_detail_12,
+			failed:             true,
+		},
+	}
+
+	adminAcctName := "test-update-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	loserAcctName := "test-update-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			repoNamespace := "test-" + randSeq(4)
+
+			if err := kubeCreateNamespace(t, repoNamespace); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err := kubeDeleteNamespace(t, repoNamespace); err != nil {
+					t.Logf("Failed to delete namespace [%s] due to [%v]", repoNamespace, err)
+				}
+			})
+
+			secretName := ""
+			if tc.existingSecret != nil {
+				tc.existingSecret.Namespace = repoNamespace
+				if err := kubeCreateSecret(t, tc.existingSecret); err != nil {
+					t.Fatalf("%v", err)
+				}
+				secretName = tc.existingSecret.Name
+				t.Cleanup(func() {
+					err := kubeDeleteSecret(t, tc.existingSecret.Namespace, tc.existingSecret.Name)
+					if err != nil {
+						t.Logf("Failed to delete secret due to [%v]", err)
+					}
+				})
+			}
+
+			if err = kubeAddHelmRepository(t, tc.repoName, tc.repoUrl, repoNamespace, secretName, 0); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err = kubeDeleteHelmRepository(t, tc.repoName, repoNamespace); err != nil {
+					t.Logf("Failed to delete helm source due to [%v]", err)
+				}
+			})
+			// wait until this repo reaches 'Ready' state so that long indexation process kicks in
+			err := kubeWaitUntilHelmRepositoryIsReady(t, tc.repoName, repoNamespace)
+			if err != nil {
+				if !tc.failed {
+					t.Fatalf("%v", err)
+				} else {
+					// sanity check : make sure repo is in failed state
+					if err.Error() != "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: failed to fetch http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/index.yaml : 401 Unauthorized" {
+						t.Fatalf("%v", err)
+					}
+					// TODO try and find a better way to wait until repo state stops changing to avoid
+					// rpc error: code = Internal desc = unable to update the HelmRepository
+					// 'test-nsrp/my-podinfo-2' due to 'Operation cannot be fulfilled on
+					// helmrepositories.source.toolkit.fluxcd.io "my-podinfo-2": the object has been modified;
+					// please apply your changes to the latest version and try again
+					t.Logf("Waiting 1s for repository [%s] to come to quiescent state", tc.repoName)
+					time.Sleep(1 * time.Second)
+				}
+			}
+
+			var grpcCtx context.Context
+			var cancel context.CancelFunc
+			if tc.unauthorized {
+				grpcCtx, cancel = context.WithTimeout(grpcLoser, defaultContextTimeout)
+			} else {
+				grpcCtx, cancel = context.WithTimeout(grpcAdmin, defaultContextTimeout)
+			}
+			defer cancel()
+
+			oldValue, err := fluxPluginReposClient.SetUserManagedSecrets(
+				grpcCtx, &v1alpha1.SetUserManagedSecretsRequest{Value: tc.userManagedSecrets})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				fluxPluginReposClient.SetUserManagedSecrets(
+					grpcCtx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
+			})
+
+			tc.request.PackageRepoRef.Context.Namespace = repoNamespace
+			if tc.expectedResponse != nil {
+				tc.expectedResponse.PackageRepoRef.Context.Namespace = repoNamespace
+			}
+			if tc.expectedDetail != nil {
+				tc.expectedDetail.Detail.PackageRepoRef.Context.Namespace = repoNamespace
+			}
+
+			resp, err := fluxPluginReposClient.UpdatePackageRepository(grpcCtx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %v, want: %v", err, want)
+			}
+			if tc.expectedStatusCode != codes.OK {
+				// we are done
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				corev1.PackageRepositoryReference{},
+				plugins.Plugin{},
+				corev1.UpdatePackageRepositoryResponse{},
+			)
+
+			if got, want := resp, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts))
+			}
+
+			var actualDetail *corev1.GetPackageRepositoryDetailResponse
+			for i := 0; i < 10; i++ {
+				actualDetail, err = fluxPluginReposClient.GetPackageRepositoryDetail(
+					grpcCtx,
+					&corev1.GetPackageRepositoryDetailRequest{
+						PackageRepoRef: &corev1.PackageRepositoryReference{
+							Context: &corev1.Context{
+								Namespace: repoNamespace,
+							},
+							Identifier: tc.repoName,
+						},
+					})
+				if got, want := status.Code(err), codes.OK; got != want {
+					t.Fatalf("got: %v, want: %v", err, want)
+				}
+				if actualDetail.Detail.Status.Reason == corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS {
+					break
+				} else {
+					t.Logf("Waiting 2s for repository reconciliation to complete successfully...")
+					time.Sleep(2 * time.Second)
+				}
+			}
+			if actualDetail.Detail.Status.Reason != corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS {
+				t.Fatalf("Timed out waiting for repository [%q] reconcile successfully after the update", tc.repoName)
+			}
+
+			opts1 := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				corev1.PackageRepositoryReference{},
+				plugins.Plugin{},
+				corev1.GetPackageRepositoryDetailResponse{},
+				corev1.PackageRepositoryDetail{},
+				corev1.PackageRepositoryStatus{},
+				corev1.PackageRepositoryAuth{},
+				corev1.PackageRepositoryTlsConfig{},
+				corev1.SecretKeyReference{},
+				corev1.UsernamePassword{},
+			)
+
+			opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
+
+			if got, want := actualDetail, tc.expectedDetail; !cmp.Equal(want, got, opts1, opts2) {
+				t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts1, opts2))
+			}
+
+			if !strings.HasPrefix(actualDetail.GetDetail().Status.UserReason, tc.expectedDetail.Detail.Status.UserReason) {
+				t.Errorf("unexpected response (status.UserReason): (-want +got):\n- %s\n+ %s",
+					tc.expectedDetail.Detail.Status.UserReason,
+					actualDetail.GetDetail().Status.UserReason)
 			}
 		})
 	}

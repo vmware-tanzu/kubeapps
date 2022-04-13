@@ -586,6 +586,7 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 
 // UpdatePackageRepository updates a package repository based on the request.
 func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
+	log.Infof("+fluxv2 UpdatePackageRepository [%v]", request)
 	if request == nil || request.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
 	}
