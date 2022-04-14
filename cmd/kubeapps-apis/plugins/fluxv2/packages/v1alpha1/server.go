@@ -586,8 +586,27 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 
 // UpdatePackageRepository updates a package repository based on the request.
 func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
-	// just a stub for now
-	return nil, nil
+	log.Infof("+fluxv2 UpdatePackageRepository [%v]", request)
+	if request == nil || request.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+	}
+
+	repoRef := request.PackageRepoRef
+	cluster := repoRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.packageRepoRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
+	if responseRef, err := s.updateRepo(ctx, repoRef, request.Url, request.Interval, request.TlsConfig, request.Auth); err != nil {
+		return nil, err
+	} else {
+		return &corev1.UpdatePackageRepositoryResponse{
+			PackageRepoRef: responseRef,
+		}, nil
+	}
 }
 
 // This endpoint exists only for integration unit tests

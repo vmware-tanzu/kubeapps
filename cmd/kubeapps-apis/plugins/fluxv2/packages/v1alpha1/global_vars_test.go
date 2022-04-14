@@ -1110,6 +1110,23 @@ var (
 		},
 	}
 
+	add_repo_5 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:             "http://example.com",
+			Interval:        metav1.Duration{Duration: 10 * time.Minute},
+			PassCredentials: true,
+		},
+	}
+
 	add_repo_req_1 = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
@@ -1355,6 +1372,16 @@ var (
 					Name: "secret-2",
 				},
 			},
+		},
+	}
+
+	add_repo_req_20 = &corev1.AddPackageRepositoryRequest{
+		Name:    "bar",
+		Context: &corev1.Context{Namespace: "foo"},
+		Type:    "helm",
+		Url:     "http://example.com",
+		Auth: &corev1.PackageRepositoryAuth{
+			PassCredentials: true,
 		},
 	}
 
@@ -3208,5 +3235,486 @@ var (
 				UserReason: "Succeeded: stored artifact for revision '2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b'",
 			},
 		}
+	}
+
+	update_repo_req_1 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "http://newurl.com",
+	}
+
+	update_repo_req_2 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url:      "https://example.repo.com/charts",
+		Interval: 345,
+	}
+
+	update_repo_req_3 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+		Auth: &corev1.PackageRepositoryAuth{
+			PassCredentials: true,
+		},
+	}
+
+	update_repo_req_4 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+		TlsConfig: &corev1.PackageRepositoryTlsConfig{
+			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-1",
+					Key:  "caFile",
+				},
+			},
+		},
+	}
+
+	update_repo_req_5 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+	}
+
+	update_repo_req_6 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+		Auth: &corev1.PackageRepositoryAuth{
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-1",
+				},
+			},
+		},
+	}
+
+	update_repo_req_7 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+	}
+
+	update_repo_req_8 = func(pub, priv []byte) *corev1.UpdatePackageRepositoryRequest {
+		return &corev1.UpdatePackageRepositoryRequest{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Namespace: "namespace-1",
+				},
+				Identifier: "repo-1",
+			},
+			Url: "https://example.repo.com/charts",
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
+					TlsCertKey: &corev1.TlsCertKey{
+						Cert: string(pub),
+						Key:  string(priv),
+					},
+				},
+			},
+		}
+	}
+
+	update_repo_req_9 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+	}
+
+	update_repo_req_10 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+			},
+			Identifier: "repo-1",
+		},
+		Url: "https://example.repo.com/charts",
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: "foo",
+					Password: "bar",
+				},
+			},
+		},
+	}
+
+	update_repo_req_11 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "TBD",
+			},
+			Identifier: "my-podinfo",
+		},
+		Url: podinfo_basic_auth_repo_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: "foo",
+					Password: "bar",
+				},
+			},
+		},
+	}
+
+	update_repo_req_12 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "TBD",
+			},
+			Identifier: "my-podinfo-2",
+		},
+		Url: podinfo_basic_auth_repo_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: "foo",
+					Password: "bar",
+				},
+			},
+		},
+	}
+
+	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "namespace-1",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "repo-1",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	update_repo_resp_2 = &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "TBD",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "my-podinfo",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	update_repo_resp_3 = &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: "TBD",
+				Cluster:   KubeappsCluster,
+			},
+			Identifier: "my-podinfo-2",
+			Plugin:     fluxPlugin,
+		},
+	}
+
+	update_repo_detail_1 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "http://newurl.com",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_2 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        345,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_3 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: true,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_4 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			TlsConfig: &corev1.PackageRepositoryTlsConfig{
+				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: "secret-1",
+						Key:  "caFile",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_5 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				PassCredentials: false,
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_6 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: "secret-1",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_7 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth:            &corev1.PackageRepositoryAuth{},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_8 = func(pub, priv []byte) *corev1.GetPackageRepositoryDetailResponse {
+		return &corev1.GetPackageRepositoryDetailResponse{
+			Detail: &corev1.PackageRepositoryDetail{
+				PackageRepoRef:  get_repo_detail_package_resp_ref,
+				Name:            "repo-1",
+				Description:     "",
+				NamespaceScoped: false,
+				Type:            "helm",
+				Url:             "https://example.repo.com/charts",
+				Interval:        600,
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
+						TlsCertKey: &corev1.TlsCertKey{
+							Cert: string(pub),
+							Key:  string(priv),
+						},
+					},
+				},
+				Status: &corev1.PackageRepositoryStatus{
+					Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+				},
+			},
+		}
+	}
+
+	update_repo_detail_9 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth:            &corev1.PackageRepositoryAuth{},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_10 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+					UsernamePassword: &corev1.UsernamePassword{
+						Username: "foo",
+						Password: "bar",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+			},
+		},
+	}
+
+	update_repo_detail_11 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Cluster: KubeappsCluster,
+					// will be set when scenario is run
+					Namespace: "TBD",
+				},
+				Identifier: "my-podinfo",
+				Plugin:     fluxPlugin,
+			},
+			Name:            "my-podinfo",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_basic_auth_repo_url,
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+					UsernamePassword: &corev1.UsernamePassword{
+						Username: "foo",
+						Password: "bar",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "Succeeded: stored artifact for revision '9d3ac1eb708dfaebae14d7c88fd46afce8b1e0f7aace790d91758575dc8ce518'",
+			},
+		},
+	}
+
+	update_repo_detail_12 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Context: &corev1.Context{
+					Cluster: KubeappsCluster,
+					// will be set when scenario is run
+					Namespace: "TBD",
+				},
+				Identifier: "my-podinfo-2",
+				Plugin:     fluxPlugin,
+			},
+			Name:            "my-podinfo-2",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_basic_auth_repo_url,
+			Interval:        600,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+					UsernamePassword: &corev1.UsernamePassword{
+						Username: "foo",
+						Password: "bar",
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "Succeeded: stored artifact for revision '9d3ac1eb708dfaebae14d7c88fd46afce8b1e0f7aace790d91758575dc8ce518'",
+			},
+		},
 	}
 )
