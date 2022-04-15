@@ -284,8 +284,6 @@ export interface UpdatePackageRepositoryRequest {
   url: string;
   /** A user-provided description. */
   description: string;
-  /** Package storage type */
-  type: string;
   /**
    * The interval at which to check the upstream for updates (in seconds)
    * Optional. Defaults to 10m if not specified
@@ -295,6 +293,23 @@ export interface UpdatePackageRepositoryRequest {
   tlsConfig?: PackageRepositoryTlsConfig;
   /** authentication parameters for connecting to a repository. Optional */
   auth?: PackageRepositoryAuth;
+  /**
+   * Custom data added by the plugin
+   * A plugin can define custom details for data which is not yet, or
+   * never will be specified in the core AddPackageRepositoryRequest
+   * fields. The use of an `Any` field means that each plugin can define
+   * the structure of this message as required, while still satisfying the
+   * core interface.
+   * See https://developers.google.com/protocol-buffers/docs/proto3#any
+   * Just for reference, some of the examples that have been chosen not to
+   * be part of the core API but rather plugin-specific details are:
+   *   direct-helm:
+   *      - image pull secrets
+   *      - list of oci repositories
+   *      - filter rules
+   *      - sync job pod template
+   */
+  customDetail?: Any;
 }
 
 /**
@@ -1489,7 +1504,6 @@ export const GetPackageRepositorySummariesRequest = {
 const baseUpdatePackageRepositoryRequest: object = {
   url: "",
   description: "",
-  type: "",
   interval: 0,
 };
 
@@ -1507,17 +1521,17 @@ export const UpdatePackageRepositoryRequest = {
     if (message.description !== "") {
       writer.uint32(26).string(message.description);
     }
-    if (message.type !== "") {
-      writer.uint32(34).string(message.type);
-    }
     if (message.interval !== 0) {
-      writer.uint32(40).uint32(message.interval);
+      writer.uint32(32).uint32(message.interval);
     }
     if (message.tlsConfig !== undefined) {
-      PackageRepositoryTlsConfig.encode(message.tlsConfig, writer.uint32(50).fork()).ldelim();
+      PackageRepositoryTlsConfig.encode(message.tlsConfig, writer.uint32(42).fork()).ldelim();
     }
     if (message.auth !== undefined) {
-      PackageRepositoryAuth.encode(message.auth, writer.uint32(58).fork()).ldelim();
+      PackageRepositoryAuth.encode(message.auth, writer.uint32(50).fork()).ldelim();
+    }
+    if (message.customDetail !== undefined) {
+      Any.encode(message.customDetail, writer.uint32(90).fork()).ldelim();
     }
     return writer;
   },
@@ -1541,16 +1555,16 @@ export const UpdatePackageRepositoryRequest = {
           message.description = reader.string();
           break;
         case 4:
-          message.type = reader.string();
-          break;
-        case 5:
           message.interval = reader.uint32();
           break;
-        case 6:
+        case 5:
           message.tlsConfig = PackageRepositoryTlsConfig.decode(reader, reader.uint32());
           break;
-        case 7:
+        case 6:
           message.auth = PackageRepositoryAuth.decode(reader, reader.uint32());
+          break;
+        case 11:
+          message.customDetail = Any.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -1579,11 +1593,6 @@ export const UpdatePackageRepositoryRequest = {
     } else {
       message.description = "";
     }
-    if (object.type !== undefined && object.type !== null) {
-      message.type = String(object.type);
-    } else {
-      message.type = "";
-    }
     if (object.interval !== undefined && object.interval !== null) {
       message.interval = Number(object.interval);
     } else {
@@ -1599,6 +1608,11 @@ export const UpdatePackageRepositoryRequest = {
     } else {
       message.auth = undefined;
     }
+    if (object.customDetail !== undefined && object.customDetail !== null) {
+      message.customDetail = Any.fromJSON(object.customDetail);
+    } else {
+      message.customDetail = undefined;
+    }
     return message;
   },
 
@@ -1610,7 +1624,6 @@ export const UpdatePackageRepositoryRequest = {
         : undefined);
     message.url !== undefined && (obj.url = message.url);
     message.description !== undefined && (obj.description = message.description);
-    message.type !== undefined && (obj.type = message.type);
     message.interval !== undefined && (obj.interval = message.interval);
     message.tlsConfig !== undefined &&
       (obj.tlsConfig = message.tlsConfig
@@ -1618,6 +1631,8 @@ export const UpdatePackageRepositoryRequest = {
         : undefined);
     message.auth !== undefined &&
       (obj.auth = message.auth ? PackageRepositoryAuth.toJSON(message.auth) : undefined);
+    message.customDetail !== undefined &&
+      (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
     return obj;
   },
 
@@ -1640,11 +1655,6 @@ export const UpdatePackageRepositoryRequest = {
     } else {
       message.description = "";
     }
-    if (object.type !== undefined && object.type !== null) {
-      message.type = object.type;
-    } else {
-      message.type = "";
-    }
     if (object.interval !== undefined && object.interval !== null) {
       message.interval = object.interval;
     } else {
@@ -1659,6 +1669,11 @@ export const UpdatePackageRepositoryRequest = {
       message.auth = PackageRepositoryAuth.fromPartial(object.auth);
     } else {
       message.auth = undefined;
+    }
+    if (object.customDetail !== undefined && object.customDetail !== null) {
+      message.customDetail = Any.fromPartial(object.customDetail);
+    } else {
+      message.customDetail = undefined;
     }
     return message;
   },

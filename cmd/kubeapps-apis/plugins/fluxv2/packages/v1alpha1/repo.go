@@ -483,7 +483,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		return nil, err
 	}
 
-	// (gfichtenholt) per discussion will Michael 4/12/2022
+	// per discussion will Michael 4/12/2022
 	// for now: we disallow updates to pending repos and allow them for non-pending ones
 	// (i.e. success or failed status)
 	complete, _, _ := isHelmRepositoryReady(*repo)

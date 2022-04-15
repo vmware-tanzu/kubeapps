@@ -386,6 +386,14 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		return nil, err
 	}
 
+	// per discussion will Michael 4/12/2022
+	// for now: we disallow updates to pending releases and allow them for non-pending ones
+	// (i.e. success or failed status)
+	_, reason, _ := isHelmReleaseReady(*rel)
+	if reason == corev1.InstalledPackageStatus_STATUS_REASON_PENDING {
+		return nil, status.Errorf(codes.Internal, "updates to helm releases pending reconciliation are not supported")
+	}
+
 	versionExpr := versionRef.GetVersion()
 	if versionExpr != "" {
 		versionExpr, err = pkgutils.VersionConstraintWithUpgradePolicy(

@@ -219,7 +219,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		t.Fatalf("Expected Unauthenticated, got %v", err)
 	}
 
-	grpcContext, cancel := context.WithTimeout(grpcContext, 60*time.Second)
+	grpcContext, cancel := context.WithTimeout(grpcContext, 90*time.Second)
 	defer cancel()
 	resp2, err := fluxPlugin.GetAvailablePackageSummaries(grpcContext, &corev1.GetAvailablePackageSummariesRequest{})
 	if err != nil {

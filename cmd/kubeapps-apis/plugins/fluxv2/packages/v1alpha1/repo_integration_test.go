@@ -679,8 +679,10 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ca, pub, priv := getCertsForTesting(t)
+
 	testCases := []struct {
-		testName           string
+		name               string
 		request            *corev1.UpdatePackageRepositoryRequest
 		repoName           string
 		repoUrl            string
@@ -689,11 +691,12 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 		expectedResponse   *corev1.UpdatePackageRepositoryResponse
 		expectedDetail     *corev1.GetPackageRepositoryDetailResponse
 		expectedStatusCode codes.Code
-		existingSecret     *apiv1.Secret
+		oldSecret          *apiv1.Secret
+		newSecret          *apiv1.Secret
 		userManagedSecrets bool
 	}{
 		{
-			testName:           "update url and auth for podinfo package repository",
+			name:               "update url and auth for podinfo package repository",
 			request:            update_repo_req_11,
 			repoName:           "my-podinfo",
 			repoUrl:            podinfo_repo_url,
@@ -702,7 +705,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			expectedDetail:     update_repo_detail_11,
 		},
 		{
-			testName:           "update package repository in a failed state",
+			name:               "update package repository in a failed state",
 			request:            update_repo_req_12,
 			repoName:           "my-podinfo-2",
 			repoUrl:            podinfo_basic_auth_repo_url,
@@ -710,6 +713,42 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			expectedResponse:   update_repo_resp_3,
 			expectedDetail:     update_repo_detail_12,
 			failed:             true,
+		},
+		{
+			name:               "update package repository errors when unauthorized",
+			request:            update_repo_req_13,
+			repoName:           "my-podinfo-3",
+			repoUrl:            podinfo_repo_url,
+			expectedStatusCode: codes.PermissionDenied,
+			unauthorized:       true,
+		},
+		{
+			name:               "update url and auth for podinfo package repository (user-managed secrets) errors when secret doesnt exist",
+			request:            update_repo_req_14,
+			repoName:           "my-podinfo-4",
+			repoUrl:            podinfo_repo_url,
+			expectedStatusCode: codes.NotFound,
+			userManagedSecrets: true,
+		},
+		{
+			name:               "update url and auth for podinfo package repository (user-managed secrets)",
+			request:            update_repo_req_14,
+			repoName:           "my-podinfo-4",
+			repoUrl:            podinfo_repo_url,
+			newSecret:          newBasicAuthSecret("secret-1", "TBD", "foo", "bar"),
+			expectedResponse:   update_repo_resp_4,
+			expectedDetail:     update_repo_detail_13,
+			userManagedSecrets: true,
+		},
+		{
+			name:               "update repository change from TLS cert/key to basic auth (kubeapps-managed secrets)",
+			request:            update_repo_req_15,
+			repoName:           "my-podinfo-5",
+			repoUrl:            podinfo_tls_repo_url,
+			oldSecret:          newTlsSecret("secret-1", "TBD", pub, priv, ca),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_5,
+			expectedDetail:     update_repo_detail_14,
 		},
 	}
 
@@ -726,7 +765,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.testName, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			repoNamespace := "test-" + randSeq(4)
 
 			if err := kubeCreateNamespace(t, repoNamespace); err != nil {
@@ -738,22 +777,36 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				}
 			})
 
-			secretName := ""
-			if tc.existingSecret != nil {
-				tc.existingSecret.Namespace = repoNamespace
-				if err := kubeCreateSecret(t, tc.existingSecret); err != nil {
+			oldSecretName := ""
+			if tc.oldSecret != nil {
+				tc.oldSecret.Namespace = repoNamespace
+				if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
 					t.Fatalf("%v", err)
 				}
-				secretName = tc.existingSecret.Name
+				oldSecretName = tc.oldSecret.GetName()
+				if tc.userManagedSecrets {
+					t.Cleanup(func() {
+						err := kubeDeleteSecret(t, tc.oldSecret.Namespace, tc.oldSecret.Name)
+						if err != nil {
+							t.Logf("Failed to delete secret [%s] due to [%v]", tc.oldSecret.Name, err)
+						}
+					})
+				}
+			}
+			if tc.newSecret != nil {
+				tc.newSecret.Namespace = repoNamespace
+				if err := kubeCreateSecret(t, tc.newSecret); err != nil {
+					t.Fatalf("%v", err)
+				}
 				t.Cleanup(func() {
-					err := kubeDeleteSecret(t, tc.existingSecret.Namespace, tc.existingSecret.Name)
+					err := kubeDeleteSecret(t, tc.newSecret.Namespace, tc.newSecret.Name)
 					if err != nil {
 						t.Logf("Failed to delete secret due to [%v]", err)
 					}
 				})
 			}
 
-			if err = kubeAddHelmRepository(t, tc.repoName, tc.repoUrl, repoNamespace, secretName, 0); err != nil {
+			if err = kubeAddHelmRepository(t, tc.repoName, tc.repoUrl, repoNamespace, oldSecretName, 0); err != nil {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {

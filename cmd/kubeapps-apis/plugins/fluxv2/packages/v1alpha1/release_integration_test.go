@@ -130,22 +130,20 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 	}
 }
 
-type integrationTestUpdatePackageSpec struct {
-	integrationTestCreatePackageSpec
-	request *corev1.UpdateInstalledPackageRequest
-	// this is expected AFTER the update call completes
-	expectedDetailAfterUpdate *corev1.InstalledPackageDetail
-	expectedRefsAfterUpdate   []*corev1.ResourceRef
-	unauthorized              bool
-}
-
 func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	testCases := []integrationTestUpdatePackageSpec{
+	testCases := []struct {
+		integrationTestCreatePackageSpec
+		request *corev1.UpdateInstalledPackageRequest
+		// this is expected AFTER the update call completes
+		expectedDetailAfterUpdate *corev1.InstalledPackageDetail
+		expectedRefsAfterUpdate   []*corev1.ResourceRef
+		unauthorized              bool
+	}{
 		{
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (simplest case)",
@@ -223,9 +221,21 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			request:      update_request_6,
 			unauthorized: true,
 		},
+		{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
+				testName:             "update installed package in failed state is allowed",
+				repoUrl:              podinfo_repo_url,
+				request:              create_request_podinfo_8,
+				expectedDetail:       expected_detail_podinfo_8,
+				expectInstallFailure: true,
+			},
+			request:                   update_request_7,
+			expectedDetailAfterUpdate: expected_detail_podinfo_9,
+			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_9,
+		},
 	}
 
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin"+randSeq(4), "default")
+	grpcContext, err := newGrpcAdminContext(t, "test-update-admin-"+randSeq(4), "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -366,18 +376,16 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 		})
 }
 
-type integrationTestDeletePackageSpec struct {
-	integrationTestCreatePackageSpec
-	unauthorized bool
-}
-
 func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	testCases := []integrationTestDeletePackageSpec{
+	testCases := []struct {
+		integrationTestCreatePackageSpec
+		unauthorized bool
+	}{
 		{
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "delete test (simplest case)",
@@ -1468,6 +1476,11 @@ func waitUntilInstallCompletes(
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
+	} else {
+		t.Logf("Installed completed with [%s], userReason: [%s]",
+			actualDetailResp.InstalledPackageDetail.Status.Reason,
+			actualDetailResp.InstalledPackageDetail.Status.UserReason,
+		)
 	}
 	return actualDetailResp, actualRefsResp
 }
