@@ -2632,14 +2632,7 @@ var (
 		},
 	}
 
-	get_repo_detail_package_resp_ref = &corev1.PackageRepositoryReference{
-		Context: &corev1.Context{
-			Cluster:   KubeappsCluster,
-			Namespace: "namespace-1",
-		},
-		Identifier: "repo-1",
-		Plugin:     fluxPlugin,
-	}
+	get_repo_detail_package_resp_ref = repoRef("repo-1", "namespace-1")
 
 	get_repo_detail_resp_1 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
@@ -2848,7 +2841,7 @@ var (
 	}
 
 	get_repo_detail_req_6 = &corev1.GetPackageRepositoryDetailRequest{
-		PackageRepoRef: newPackageRepoRef("my-podinfo"),
+		PackageRepoRef: repoRefWithId("my-podinfo"),
 	}
 
 	get_repo_detail_resp_10 = &corev1.GetPackageRepositoryDetailResponse{
@@ -2860,15 +2853,7 @@ var (
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        60,
-			Auth: &corev1.PackageRepositoryAuth{
-				PassCredentials: false,
-				Type:            corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-					SecretRef: &corev1.SecretKeyReference{
-						Name: "secret-1",
-					},
-				},
-			},
+			Auth:            secret_1_auth,
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
@@ -2897,7 +2882,7 @@ var (
 
 	get_repo_detail_resp_11 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-podinfo"),
+			PackageRepoRef:  repoRefWithId("my-podinfo"),
 			Name:            "my-podinfo",
 			Description:     "",
 			NamespaceScoped: false,
@@ -2916,12 +2901,12 @@ var (
 	}
 
 	get_repo_detail_req_7 = &corev1.GetPackageRepositoryDetailRequest{
-		PackageRepoRef: newPackageRepoRef("my-bitnami"),
+		PackageRepoRef: repoRefWithId("my-bitnami"),
 	}
 
 	get_repo_detail_resp_12 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-bitnami"),
+			PackageRepoRef:  repoRefWithId("my-bitnami"),
 			Name:            "my-bitnami",
 			Description:     "",
 			NamespaceScoped: false,
@@ -2941,7 +2926,7 @@ var (
 
 	get_repo_detail_resp_13 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-podinfo-2"),
+			PackageRepoRef:  repoRefWithId("my-podinfo-2"),
 			Name:            "my-podinfo-2",
 			Description:     "",
 			NamespaceScoped: false,
@@ -2961,22 +2946,14 @@ var (
 
 	get_repo_detail_resp_14 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-podinfo-3"),
+			PackageRepoRef:  repoRefWithId("my-podinfo-3"),
 			Name:            "my-podinfo-3",
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        600,
-			Auth: &corev1.PackageRepositoryAuth{
-				PassCredentials: false,
-				Type:            corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-					SecretRef: &corev1.SecretKeyReference{
-						Name: "secret-1",
-					},
-				},
-			},
+			Auth:            secret_1_auth,
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
@@ -2987,7 +2964,7 @@ var (
 
 	get_repo_detail_resp_14a = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-podinfo-3"),
+			PackageRepoRef:  repoRefWithId("my-podinfo-3"),
 			Name:            "my-podinfo-3",
 			Description:     "",
 			NamespaceScoped: false,
@@ -3121,14 +3098,7 @@ var (
 		})
 
 	get_summaries_summary_1 = &corev1.PackageRepositorySummary{
-		PackageRepoRef: &corev1.PackageRepositoryReference{
-			Context: &corev1.Context{
-				Cluster:   KubeappsCluster,
-				Namespace: "foo",
-			},
-			Identifier: "bar",
-			Plugin:     fluxPlugin,
-		},
+		PackageRepoRef:  repoRef("bar", "foo"),
 		Name:            "bar",
 		Description:     "",
 		NamespaceScoped: false,
@@ -3142,14 +3112,7 @@ var (
 	}
 
 	get_summaries_summary_2 = &corev1.PackageRepositorySummary{
-		PackageRepoRef: &corev1.PackageRepositoryReference{
-			Context: &corev1.Context{
-				Cluster:   KubeappsCluster,
-				Namespace: "xyz",
-			},
-			Identifier: "zot",
-			Plugin:     fluxPlugin,
-		},
+		PackageRepoRef:  repoRef("zot", "xyz"),
 		Name:            "zot",
 		Description:     "",
 		NamespaceScoped: false,
@@ -3163,14 +3126,7 @@ var (
 	}
 
 	get_summaries_summary_3 = &corev1.PackageRepositorySummary{
-		PackageRepoRef: &corev1.PackageRepositoryReference{
-			Context: &corev1.Context{
-				Cluster:   KubeappsCluster,
-				Namespace: "xyz",
-			},
-			Identifier: "pending",
-			Plugin:     fluxPlugin,
-		},
+		PackageRepoRef:  repoRef("pending", "xyz"),
 		Name:            "pending",
 		Description:     "",
 		NamespaceScoped: false,
@@ -3184,14 +3140,7 @@ var (
 	}
 
 	get_summaries_summary_4 = &corev1.PackageRepositorySummary{
-		PackageRepoRef: &corev1.PackageRepositoryReference{
-			Context: &corev1.Context{
-				Cluster:   KubeappsCluster,
-				Namespace: "xyz",
-			},
-			Identifier: "failed",
-			Plugin:     fluxPlugin,
-		},
+		PackageRepoRef:  repoRef("failed", "xyz"),
 		Name:            "failed",
 		Description:     "",
 		NamespaceScoped: false,
@@ -3206,14 +3155,7 @@ var (
 
 	get_summaries_summary_5 = func(name, ns string) *corev1.PackageRepositorySummary {
 		return &corev1.PackageRepositorySummary{
-			PackageRepoRef: &corev1.PackageRepositoryReference{
-				Context: &corev1.Context{
-					Cluster:   KubeappsCluster,
-					Namespace: ns,
-				},
-				Identifier: name,
-				Plugin:     fluxPlugin,
-			},
+			PackageRepoRef:  repoRef(name, ns),
 			Name:            name,
 			Description:     "",
 			NamespaceScoped: false,
@@ -3397,15 +3339,8 @@ var (
 			},
 			Identifier: "my-podinfo-4",
 		},
-		Url: podinfo_basic_auth_repo_url,
-		Auth: &corev1.PackageRepositoryAuth{
-			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-				SecretRef: &corev1.SecretKeyReference{
-					Name: "secret-1",
-				},
-			},
-		},
+		Url:  podinfo_basic_auth_repo_url,
+		Auth: secret_1_auth,
 	}
 
 	update_repo_req_15 = &corev1.UpdatePackageRepositoryRequest{
@@ -3420,37 +3355,23 @@ var (
 	}
 
 	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
-		PackageRepoRef: &corev1.PackageRepositoryReference{
-			Context: &corev1.Context{
-				Namespace: "namespace-1",
-				Cluster:   KubeappsCluster,
-			},
-			Identifier: "repo-1",
-			Plugin:     fluxPlugin,
-		},
+		PackageRepoRef: repoRef("repo-1", "namespace-1"),
 	}
 
 	update_repo_resp_2 = &corev1.UpdatePackageRepositoryResponse{
-		PackageRepoRef: newPackageRepoRef("my-podinfo"),
+		PackageRepoRef: repoRefWithId("my-podinfo"),
 	}
 
 	update_repo_resp_3 = &corev1.UpdatePackageRepositoryResponse{
-		PackageRepoRef: newPackageRepoRef("my-podinfo-2"),
+		PackageRepoRef: repoRefWithId("my-podinfo-2"),
 	}
 
 	update_repo_resp_4 = &corev1.UpdatePackageRepositoryResponse{
-		PackageRepoRef: newPackageRepoRef("my-podinfo-4"),
+		PackageRepoRef: repoRefWithId("my-podinfo-4"),
 	}
 
 	update_repo_resp_5 = &corev1.UpdatePackageRepositoryResponse{
-		PackageRepoRef: &corev1.PackageRepositoryReference{
-			Context: &corev1.Context{
-				Namespace: "TBD",
-				Cluster:   KubeappsCluster,
-			},
-			Identifier: "my-podinfo-5",
-			Plugin:     fluxPlugin,
-		},
+		PackageRepoRef: repoRefWithId("my-podinfo-5"),
 	}
 
 	update_repo_detail_1 = &corev1.GetPackageRepositoryDetailResponse{
@@ -3560,14 +3481,7 @@ var (
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        600,
-			Auth: &corev1.PackageRepositoryAuth{
-				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-					SecretRef: &corev1.SecretKeyReference{
-						Name: "secret-1",
-					},
-				},
-			},
+			Auth:            secret_1_auth,
 			Status: &corev1.PackageRepositoryStatus{
 				Reason: corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
 			},
@@ -3650,7 +3564,7 @@ var (
 
 	update_repo_detail_11 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-podinfo"),
+			PackageRepoRef:  repoRefWithId("my-podinfo"),
 			Name:            "my-podinfo",
 			Description:     "",
 			NamespaceScoped: false,
@@ -3668,7 +3582,7 @@ var (
 
 	update_repo_detail_12 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-podinfo-2"),
+			PackageRepoRef:  repoRefWithId("my-podinfo-2"),
 			Name:            "my-podinfo-2",
 			Description:     "",
 			NamespaceScoped: false,
@@ -3686,21 +3600,14 @@ var (
 
 	update_repo_detail_13 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-podinfo-4"),
+			PackageRepoRef:  repoRefWithId("my-podinfo-4"),
 			Name:            "my-podinfo-4",
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        600,
-			Auth: &corev1.PackageRepositoryAuth{
-				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-					SecretRef: &corev1.SecretKeyReference{
-						Name: "secret-1",
-					},
-				},
-			},
+			Auth:            secret_1_auth,
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
@@ -3711,7 +3618,7 @@ var (
 
 	update_repo_detail_14 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
-			PackageRepoRef:  newPackageRepoRef("my-podinfo-5"),
+			PackageRepoRef:  repoRefWithId("my-podinfo-5"),
 			Name:            "my-podinfo-5",
 			Description:     "",
 			NamespaceScoped: false,
@@ -3727,28 +3634,21 @@ var (
 		},
 	}
 
-	newPackageRepoRef = func(id string) *corev1.PackageRepositoryReference {
-		// namespace will be set when scenario is run
-		return newPackageRepoRef2(id, "TBD")
-	}
-
-	newPackageRepoRef2 = func(id, namespace string) *corev1.PackageRepositoryReference {
-		return &corev1.PackageRepositoryReference{
-			Context: &corev1.Context{
-				Cluster:   KubeappsCluster,
-				Namespace: namespace,
-			},
-			Identifier: id,
-			Plugin:     fluxPlugin,
-		}
-	}
-
 	foo_bar_auth = &corev1.PackageRepositoryAuth{
 		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
 			UsernamePassword: &corev1.UsernamePassword{
 				Username: "foo",
 				Password: "bar",
+			},
+		},
+	}
+
+	secret_1_auth = &corev1.PackageRepositoryAuth{
+		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+			SecretRef: &corev1.SecretKeyReference{
+				Name: "secret-1",
 			},
 		},
 	}
