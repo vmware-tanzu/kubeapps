@@ -247,6 +247,15 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
+			// this is to try and avoid intermittent
+			// rpc error: code = Internal desc = unable to update the HelmRelease
+			// 'test-12-i7a4/my-podinfo-12' due to 'Operation cannot be fulfilled on
+			// helmreleases.helm.toolkit.fluxcd.io "my-podinfo-12": the object has been
+			// modified; please apply your changes to the latest version and try again'
+			t.Logf("Waiting 5s for release [%s] to come to quiescent state",
+				tc.integrationTestCreatePackageSpec.request.Name)
+			time.Sleep(5 * time.Second)
+
 			ctx := grpcContext
 			if tc.unauthorized {
 				ctx = context.TODO()
