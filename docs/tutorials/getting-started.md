@@ -135,4 +135,4 @@ Learn more about Kubeapps with the links below:
 - [Deploying Operators](./operators.md)
 - [Kubeapps Dashboard documentation](./dashboard.md)
 - [Project board](https://github.com/orgs/vmware-tanzu/projects/38/views/2)
-- [Roadmap](https://github.com/kubeapps/kubeapps/milestones)
+- [Roadmap](https://github.com/vmware-tanzu/kubeapps/milestones)
