@@ -134,5 +134,5 @@ Learn more about Kubeapps with the links below:
 - [Detailed installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md)
 - [Deploying Operators](./operators.md)
 - [Kubeapps Dashboard documentation](./dashboard.md)
-- [Project board](https://github.com/vmware-tanzu/kubeapps/projects/11)
+- [Project board](https://github.com/orgs/vmware-tanzu/projects/38/views/2)
 - [Roadmap](https://github.com/vmware-tanzu/kubeapps/milestones)

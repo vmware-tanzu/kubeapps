@@ -112,7 +112,7 @@ kubeappsapis:
 
 > **NOTE**: Currently, Kubeapps does not offer any graphical way to manage [Carvel Packages Repositories](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-repository). Therefore, you will need to install the package repository manually.
 
-Since we are actively working on [refactor the Application Repository management in Kubeapps](https://github.com/vmware-tanzu/kubeapps/projects/11?card_filter_query=milestone%3A%22app+repository+refactor%22), [Carvel Packages Repositories](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-repository) cannot be currently managed by Kubeapps.
+Since we are actively working on [refactor the Application Repository management in Kubeapps](https://github.com/vmware-tanzu/kubeapps/milestone/25), [Carvel Packages Repositories](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-repository) cannot be currently managed by Kubeapps.
 This section covers how to manage repositories manually.
 
 First, you need to find a Carvel Package Repository already published. If not, you can always [create your own manually](https://carvel.dev/kapp-controller/docs/latest/packaging-tutorial/#creating-a-package-repository).
@@ -282,4 +282,4 @@ Some additional resources and references include:
 - [Getting Started with kapp](https://tanzu.vmware.com/developer/guides/kapp-gs/)
   - [kapp documentation](https://carvel.dev/kapp/docs/latest)
 
-Finally, we are [currently working](https://github.com/vmware-tanzu/kubeapps/projects/11?card_filter_query=milestone%3A%22pluggable+support+for+carvel%22) on this kapp-controller plugin for managing Carvel Packages, so if you encounter any problems, please [file an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) in the Kubeapps repository.
+Finally, we are [currently working](https://github.com/vmware-tanzu/kubeapps/milestone/19) on this kapp-controller plugin for managing Carvel Packages, so if you encounter any problems, please [file an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) in the Kubeapps repository.
