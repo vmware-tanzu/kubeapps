@@ -77,7 +77,7 @@
     "@formatjs/cli": "^4.8.3",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.4",
-    "@types/enzyme": "^3.10.11",
+    "@types/enzyme": "^3.10.12",
     "@types/jest": "^27.4.1",
     "@types/js-yaml": "^4.0.5",
     "@types/jsonwebtoken": "^8.5.8",
