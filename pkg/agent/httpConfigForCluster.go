@@ -27,7 +27,7 @@ import (
 //
 // TODO(mnelson) The better short-term option is to update pinniped-proxy to support TLS
 // even though it's for internal traffic only, as it will be required in many circumstances.
-// https://github.com/kubeapps/kubeapps/issues/2268
+// https://github.com/vmware-tanzu/kubeapps/issues/2268
 // This implementation can be completely removed once TLS is used by pinniped-proxy.
 type configForCluster struct {
 	config         *rest.Config

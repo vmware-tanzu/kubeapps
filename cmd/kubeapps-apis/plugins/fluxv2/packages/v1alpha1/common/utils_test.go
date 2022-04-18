@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"sigs.k8s.io/yaml"
 )
 
@@ -226,7 +226,7 @@ core:
 flux:
   packages:
     v1alpha1:
-      defaultUpgradePolicy: minor  
+      defaultUpgradePolicy: minor
       `),
 			exp_policy_str: "minor",
 			exp_error_str:  "",

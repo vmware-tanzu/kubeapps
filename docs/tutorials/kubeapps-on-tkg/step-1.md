@@ -79,7 +79,7 @@ spec:
 
 The `name` field specifies the name of the _JWTAuthenticator_ resource, which will be required in the next step.
 
-> **NOTE**: Ignore the `tls` section of the configuration shown above unless the OIDC uses a self-signed certificate. If it does, follow [these additional steps](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/OIDC/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
+> **NOTE**: Ignore the `tls` section of the configuration shown above unless the OIDC uses a self-signed certificate. If it does, follow [these additional steps](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/OIDC/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
 
 > **NOTE**: Just if you are using the Pinniped version provided by TMC (instead of the one already provided by TKG), the line `namespace: pinniped-concierge` must be removed.
 

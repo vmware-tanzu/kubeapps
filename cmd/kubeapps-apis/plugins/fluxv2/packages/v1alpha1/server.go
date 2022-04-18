@@ -9,23 +9,23 @@ import (
 	"reflect"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -72,7 +72,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 	} else if chartCache, err := cache.NewChartCache("chartCache", redisCli, stopCh); err != nil {
 		return nil, err
 	} else {
-		pluginConfig := &common.DefaultPluginConfig
+		pluginConfig := common.NewDefaultPluginConfig()
 		if pluginConfigPath != "" {
 			pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
 			if err != nil {
@@ -185,7 +185,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	// per https://github.com/kubeapps/kubeapps/pull/3686#issue-1038093832
+	// per https://github.com/vmware-tanzu/kubeapps/pull/3686#issue-1038093832
 	for _, summary := range packageSummaries {
 		summary.AvailablePackageRef.Context.Cluster = s.kubeappsCluster
 	}
@@ -582,6 +582,41 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 			PackageRepositorySummaries: summaries,
 		}, nil
 	}
+}
+
+// UpdatePackageRepository updates a package repository based on the request.
+func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
+	log.Infof("+fluxv2 UpdatePackageRepository [%v]", request)
+	if request == nil || request.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+	}
+
+	repoRef := request.PackageRepoRef
+	cluster := repoRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.packageRepoRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
+	if responseRef, err := s.updateRepo(ctx, repoRef, request.Url, request.Interval, request.TlsConfig, request.Auth); err != nil {
+		return nil, err
+	} else {
+		return &corev1.UpdatePackageRepositoryResponse{
+			PackageRepoRef: responseRef,
+		}, nil
+	}
+}
+
+// This endpoint exists only for integration unit tests
+func (s *Server) SetUserManagedSecrets(ctx context.Context, request *v1alpha1.SetUserManagedSecretsRequest) (*v1alpha1.SetUserManagedSecretsResponse, error) {
+	log.Infof("+fluxv2 SetUserManagedSecrets [%t]", request.Value)
+	oldVal := s.pluginConfig.UserManagedSecrets
+	s.pluginConfig.UserManagedSecrets = request.Value
+	return &v1alpha1.SetUserManagedSecretsResponse{
+		Value: oldVal,
+	}, nil
 }
 
 // convenience func mostly used by unit tests

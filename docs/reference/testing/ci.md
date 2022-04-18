@@ -64,7 +64,7 @@ This step is only run once, and it is very unlikely to change. However, it is im
 
 ```bash
 # COPY THIS CONTENT TO GITHUB (with write access):
-## https://github.com/kubeapps/kubeapps/settings/keys
+## https://github.com/vmware-tanzu/kubeapps/settings/keys
 ssh-keygen -t ed25519 -C "tanzu-kubeapps-team@vmware.com" -q -N "" -f circleci-kubeapps-deploymentkey
 echo "Kubeapps deployment key (public)"
 cat circleci-kubeapps-deploymentkey.pub

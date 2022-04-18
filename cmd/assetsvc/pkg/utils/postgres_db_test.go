@@ -14,10 +14,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
-	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest/pgtest"
 	_ "github.com/lib/pq"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/dbutils/dbutilstest"
+	"github.com/vmware-tanzu/kubeapps/pkg/dbutils/dbutilstest/pgtest"
 )
 
 func getInitializedManager(t *testing.T) (*PostgresAssetManager, func()) {

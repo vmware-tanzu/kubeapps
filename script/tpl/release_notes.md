@@ -16,6 +16,6 @@ kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-To get started with Kubeapps, check out this [walkthrough](https://github.com/kubeapps/kubeapps/blob/main/docs/tutorials/getting-started.md).
+To get started with Kubeapps, check out this [walkthrough](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/tutorials/getting-started.md).
 
 <!-- CLICK ON THE "Auto-generate release notes" BUTTON -->

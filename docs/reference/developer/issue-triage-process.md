@@ -2,7 +2,7 @@
 
 ## Kubeapps backlog
 
-Kubeapps keeps a backlog of issues on GitHub submitted both by maintainers and contributors: this backlog comprises bugs, feature requests, and technical debt. If it’s a bug, an idea for a new feature, or something in between, it’s filed as an issue in the [kubeapps issue page](https://github.com/kubeapps/kubeapps/issues) on GitHub.
+Kubeapps keeps a backlog of issues on GitHub submitted both by maintainers and contributors: this backlog comprises bugs, feature requests, and technical debt. If it’s a bug, an idea for a new feature, or something in between, it’s filed as an issue in the [kubeapps issue page](https://github.com/vmware-tanzu/kubeapps/issues) on GitHub.
 There are some special considerations about how the Kubeapps maintainer team manages its backlog on GitHub:
 
 - The issue repository is completely open. The maintainer team, along with the entire Kubeapps community, files all feature enhancements, bugs, and potential future work into the open repository.
@@ -10,7 +10,7 @@ There are some special considerations about how the Kubeapps maintainer team man
 
 ## Kubeapps' triage process
 
-The [kubeapps/kubeapps](https://github.com/kubeapps/kubeapps) issues are triaged by any member of the maintainer team. The triage process is defined with the objective of helping the Kubeapps team during the planning of each iteration so that the selected issues provide the highest added value to the product itself according to the Kubeapps maintainer team capacities.
+The [kubeapps/kubeapps](https://github.com/vmware-tanzu/kubeapps) issues are triaged by any member of the maintainer team. The triage process is defined with the objective of helping the Kubeapps team during the planning of each iteration so that the selected issues provide the highest added value to the product itself according to the Kubeapps maintainer team capacities.
 
 The triage process should be performed manually for any issue in the Inbox column and will consist of:
 

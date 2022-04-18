@@ -4,7 +4,7 @@
 package fake
 
 import (
-	authUtils "github.com/kubeapps/kubeapps/pkg/auth"
+	authUtils "github.com/vmware-tanzu/kubeapps/pkg/auth"
 )
 
 type FakeAuth struct {

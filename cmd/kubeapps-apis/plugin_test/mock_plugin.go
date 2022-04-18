@@ -6,8 +6,8 @@ package plugin_test
 import (
 	"context"
 
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -172,5 +172,18 @@ func (s TestRepositoriesPluginServer) GetPackageRepositorySummaries(ctx context.
 	}
 	return &corev1.GetPackageRepositorySummariesResponse{
 		PackageRepositorySummaries: s.PackageRepositorySummaries,
+	}, nil
+}
+
+func (s TestRepositoriesPluginServer) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context:    request.GetPackageRepoRef().GetContext(),
+			Identifier: request.GetPackageRepoRef().GetIdentifier(),
+			Plugin:     s.Plugin,
+		},
 	}, nil
 }

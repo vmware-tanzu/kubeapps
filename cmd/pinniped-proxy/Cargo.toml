@@ -15,9 +15,9 @@ anyhow = "1.0"
 base64 = "0.13"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
-kube = { version = "0.70.0" }
-kube-derive = { version = "0.70.0"}
-kube-runtime = "0.70.0"
+kube = { version = "0.71.0" }
+kube-derive = { version = "0.71.0"}
+kube-runtime = "0.71.0"
 k8s-openapi = { version = "0.14.0", default-features = false}
 log = "0.4"
 native-tls = "0.2"

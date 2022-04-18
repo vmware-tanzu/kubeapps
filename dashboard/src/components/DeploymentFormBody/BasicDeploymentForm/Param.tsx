@@ -93,7 +93,7 @@ export default function Param({
     if (paramDeploymentEvent == null) {
       let val = getValue(appValues, path);
       // retrieve the value that the property pointed by path should have to be hidden.
-      // https://github.com/kubeapps/kubeapps/issues/1913
+      // https://github.com/vmware-tanzu/kubeapps/issues/1913
       if (val === undefined) {
         const target = getParamMatchingPath(allParams, path);
         val = target?.value;

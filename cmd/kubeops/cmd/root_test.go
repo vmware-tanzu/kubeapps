@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/kubeops/server"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/server"
 )
 
 func TestParseFlagsCorrect(t *testing.T) {
@@ -61,7 +61,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 			setFlags(cmd)
 			cmd.SetArgs(tt.args)
 			cmd.Execute()
-			serveOpts.UserAgent = getUserAgent(version, serveOpts.UserAgentComment)
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

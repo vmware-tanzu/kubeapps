@@ -60,7 +60,7 @@ describe("token login form", () => {
   it("renders a link to the access control documentation", () => {
     const wrapper = mountWrapper(defaultStore, <LoginForm {...defaultProps} />);
     expect(wrapper.find("a").props()).toMatchObject({
-      href: "https://github.com/kubeapps/kubeapps/blob/devel/docs/howto/access-control.md",
+      href: "https://github.com/vmware-tanzu/kubeapps/blob/devel/docs/howto/access-control.md",
       target: "_blank",
     });
   });

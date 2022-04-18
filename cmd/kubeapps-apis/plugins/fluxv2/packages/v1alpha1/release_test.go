@@ -13,33 +13,21 @@ import (
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	redismock "github.com/go-redis/redismock/v8"
+	fluxmeta "github.com/fluxcd/pkg/apis/meta"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
-	authorizationv1 "k8s.io/api/authorization/v1"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	typfake "k8s.io/client-go/kubernetes/fake"
-	k8stesting "k8s.io/client-go/testing"
 )
 
 type testSpecGetInstalledPackages struct {
@@ -176,7 +164,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			},
 		},
 		{
-			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 			// this is testing a configuration where a customer has manually set a
 			// .targetNamespace field of Flux HelmRelease CR
 			name: "returns installed packages when HelmRelease targetNamespace is set",
@@ -450,7 +438,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			expectedDetail:     redis_detail_completed_with_values_and_reconciliation_options,
 		},
 		{
-			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 			// this is testing a configuration where a customer has manually set a
 			// .targetNamespace field of Flux HelmRelease CR
 			name: "returns installed package detail when targetNamespace is set",
@@ -644,7 +632,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
+			s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{*repo})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -746,7 +734,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			expectedStatusCode: codes.NotFound,
 		},
 		{
-			// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+			// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 			// this is testing a configuration where a customer has manually set a
 			// .targetNamespace field of Flux HelmRelease CR
 			name: "updates a package when targetNamespace is set",
@@ -837,6 +825,8 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			expectedRelease:         flux_helm_release_updated_upgrade_patch,
 			defaultUpgradePolicyStr: "patch",
 		},
+		// TODO test case: update installed package that is pending reconciliation
+		// TODO test case: update installed package that has failed reconciliation
 	}
 
 	for _, tc := range testCases {
@@ -1050,14 +1040,14 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		newTestCase(3, true, codes.OK, false),
 		newTestCase(4, false, codes.NotFound, false),
 		newTestCase(5, false, codes.Internal, false),
-		// See https://github.com/kubeapps/kubeapps/issues/632
+		// See https://github.com/vmware-tanzu/kubeapps/issues/632
 		newTestCase(6, true, codes.OK, false),
 		newTestCase(7, true, codes.OK, false),
 		newTestCase(8, true, codes.OK, false),
 		// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
 		newTestCase(9, true, codes.OK, false),
 		newTestCase(10, true, codes.OK, false),
-		// see https://github.com/kubeapps/kubeapps/issues/4189 for discussion
+		// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 		// this is testing a configuration where a customer has manually set a
 		// .targetNamespace field of Flux HelmRelease CR
 		newTestCase(11, true, codes.OK, true),
@@ -1155,18 +1145,13 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		}
 
-		lastTransitionTime, err := time.Parse(time.RFC3339, "2021-08-12T03:25:38Z")
-		if err != nil {
-			t.Fatalf("%v", err)
-		}
-
 		chartStatus := &sourcev1.HelmChartStatus{
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Message:            "Fetched revision: " + existing.chartSpecVersion,
-					Type:               "Ready",
-					Status:             "True",
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					Reason:             sourcev1.ChartPullSucceededReason,
 				},
 			},
@@ -1261,73 +1246,4 @@ func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, sta
 		helmRelease.Status.ObservedGeneration = int64(1)
 	}
 	return helmRelease
-}
-
-func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) (*Server, redismock.ClientMock, error) {
-	typedClient := typfake.NewSimpleClientset()
-	// Creating an authorized clientGetter
-	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
-		return true, &authorizationv1.SelfSubjectAccessReview{
-			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
-		}, nil
-	})
-
-	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
-	ctrlClient := newCtrlClient(nil, charts, releases)
-	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.
-			NewBuilder().
-			WithApiExt(apiextIfc).
-			WithTyped(typedClient).
-			WithControllerRuntime(&ctrlClient).
-			Build(), nil
-	}
-	return newServer(t, clientGetter, actionConfig, nil, nil)
-}
-
-// newHelmActionConfig returns an action.Configuration with fake clients and memory storage.
-func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub) *action.Configuration {
-	t.Helper()
-
-	memDriver := driver.NewMemory()
-
-	actionConfig := &action.Configuration{
-		Releases:     storage.Init(memDriver),
-		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
-		Capabilities: chartutil.DefaultCapabilities,
-		Log: func(format string, v ...interface{}) {
-			t.Helper()
-			t.Logf(format, v...)
-		},
-	}
-
-	for _, r := range rels {
-		config := map[string]interface{}{}
-		rel := &release.Release{
-			Name:      r.name,
-			Namespace: r.namespace,
-			Info: &release.Info{
-				Status: r.status,
-				Notes:  r.notes,
-			},
-			Chart: &chart.Chart{
-				Metadata: &chart.Metadata{
-					Version:    r.chartVersion,
-					Icon:       "https://example.com/icon.png",
-					AppVersion: "1.2.3",
-				},
-			},
-			Config:   config,
-			Manifest: r.manifest,
-		}
-		err := actionConfig.Releases.Create(rel)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	// It is the namespace of the driver which determines the results. In the prod code,
-	// the actionConfigGetter sets this using StorageForSecrets(namespace, clientset).
-	memDriver.SetNamespace(namespace)
-
-	return actionConfig
 }

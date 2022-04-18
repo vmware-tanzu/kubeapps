@@ -27,7 +27,7 @@ const defaultOperator = {
           description: "this is a testing operator",
           annotations: {
             capabilities: "Basic Install",
-            repository: "github.com/kubeapps/kubeapps",
+            repository: "github.com/vmware-tanzu/kubeapps",
             containerImage: "kubeapps/kubeapps",
             createdAt: "one day",
           },

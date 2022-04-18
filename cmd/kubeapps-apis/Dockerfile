@@ -4,7 +4,7 @@
 # syntax = docker/dockerfile:1
 
 FROM bitnami/golang:1.17.6 as builder
-WORKDIR /go/src/github.com/kubeapps/kubeapps
+WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg
 COPY cmd cmd
@@ -26,14 +26,14 @@ RUN /tmp/buf lint ./cmd/kubeapps-apis
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
-    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
+    -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     ./cmd/kubeapps-apis
 
 # Build 'kapp-controller' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
-    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
+    -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/kapp_controller/packages/v1alpha1/*.go
 
@@ -41,7 +41,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
-    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
+    -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/*.go
 
@@ -49,7 +49,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
-    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
+    -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /helm-packages-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/*.go
 
@@ -57,7 +57,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build \
-    -ldflags "-X github.com/kubeapps/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
+    -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /resources-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/resources/v1alpha1/*.go
 
@@ -65,7 +65,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # are loaded using the dynamic linker.
 FROM bitnami/minideb:buster
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /go/src/github.com/kubeapps/kubeapps/kubeapps-apis /kubeapps-apis
+COPY --from=builder /go/src/github.com/vmware-tanzu/kubeapps/kubeapps-apis /kubeapps-apis
 COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/kapp-controller-packages/
 COPY --from=builder /fluxv2-packages-v1alpha1-plugin.so /plugins/fluxv2-packages/
 COPY --from=builder /helm-packages-v1alpha1-plugin.so /plugins/helm-packages/

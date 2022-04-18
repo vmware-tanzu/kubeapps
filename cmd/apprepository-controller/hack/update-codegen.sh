@@ -10,14 +10,14 @@
 # and then run: git submodule update --remote
 # 2. Run the this script from the apprepository-controller directory: ./hack/update-codegen.sh
 # 3. Move the newly generated files over the old ones:
-#    mv github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/zz_generated.deepcopy.go ./pkg/apis/apprepository/v1alpha1/zz_generated.deepcopy.go
-#    rm -rf pkg/client && mv github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client ./pkg
+#    mv github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1/zz_generated.deepcopy.go ./pkg/apis/apprepository/v1alpha1/zz_generated.deepcopy.go
+#    rm -rf pkg/client && mv github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client ./pkg
 #
-# What are the situations when one needs to run update-codegen.sh manually after modifying 
+# What are the situations when one needs to run update-codegen.sh manually after modifying
 # types.go in apprepository-controller?
 # Generally if the generated client will change. This can happen for multiple reasons. If you
 # change to the `AppRepository.Spec` struct the updated struct is imported by the client (so
-# regeneration not needed necessarily) but if your change has a complex type (structs and 
+# regeneration not needed necessarily) but if your change has a complex type (structs and
 # pointers to structs) the generated client will need to be updated as it includes a deep copy
 # function. Another cause of your generated client changing is if you update the version of the
 # client.go library that your project uses.
@@ -35,7 +35,7 @@ SCRIPT_ROOT=$(dirname ${BASH_SOURCE})/..
 CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${SCRIPT_ROOT}; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../../../k8s.io/code-generator)}
 
 bash "${CODEGEN_PKG}"/generate-groups.sh "deepcopy,client,informer,lister" \
-  github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis \
+  github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis \
   apprepository:v1alpha1 \
   --output-base "${SCRIPT_ROOT}" \
   --go-header-file ${SCRIPT_ROOT}/hack/custom-boilerplate.go.txt

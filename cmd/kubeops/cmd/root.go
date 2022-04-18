@@ -6,10 +6,10 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/kubeapps/kubeapps/cmd/kubeops/server"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/server"
 	log "k8s.io/klog/v2"
 )
 
@@ -29,6 +29,7 @@ func newRootCmd() *cobra.Command {
 		Use:   "kubeops",
 		Short: "Kubeops is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources.",
 		PreRun: func(cmd *cobra.Command, args []string) {
+			serveOpts.UserAgent = getUserAgent(version, serveOpts.UserAgentComment)
 			log.Infof("kubeops has been configured with: %#v", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -49,7 +50,6 @@ func init() {
 	rootCmd = newRootCmd()
 	rootCmd.SetVersionTemplate(version)
 	setFlags(rootCmd)
-	serveOpts.UserAgent = getUserAgent(version, serveOpts.UserAgentComment)
 }
 
 func setFlags(c *cobra.Command) {

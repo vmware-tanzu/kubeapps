@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/server"
+	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/server"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -134,9 +134,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 			setFlags(cmd)
 			cmd.SetArgs(tt.args)
 			cmd.Execute()
-			serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
-			serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
-			serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

@@ -90,7 +90,7 @@ describe("kubeapps grpc core plugin service", () => {
   });
 
   // TODO(agamez): try to also mock the messages ussing the new FakeTransportBuilder().withMessages([])
-  // More details: https://github.com/kubeapps/kubeapps/issues/3165#issuecomment-882944035
+  // More details: https://github.com/vmware-tanzu/kubeapps/issues/3165#issuecomment-882944035
 });
 
 describe("kubeapps grpc resources plugin service", () => {

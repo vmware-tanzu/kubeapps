@@ -9,9 +9,9 @@ import (
 
 	. "github.com/ahmetb/go-linq/v3"
 
-	pluginsv1alpha1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
-	packages "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
+	packages "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -147,6 +147,39 @@ func (s repositoriesServer) GetPackageRepositorySummaries(ctx context.Context, r
 	return &packages.GetPackageRepositorySummariesResponse{
 		PackageRepositorySummaries: summaries,
 	}, nil
+}
+
+// UpdatePackageRepository updates a package repository using configured plugins.
+func (s repositoriesServer) UpdatePackageRepository(ctx context.Context, request *packages.UpdatePackageRepositoryRequest) (*packages.UpdatePackageRepositoryResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)",
+		request.GetPackageRepoRef().GetContext().GetCluster(),
+		request.GetPackageRepoRef().GetContext().GetNamespace(),
+		request.GetPackageRepoRef().GetIdentifier())
+	log.Infof("+core UpdatePackageRepository %s", contextMsg)
+
+	if request.GetPackageRepoRef().GetPlugin() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing PackageRepoRef.Plugin)")
+	}
+
+	// Retrieve the plugin with server matching the requested plugin name
+	pluginWithServer := s.getPluginWithServer(request.PackageRepoRef.Plugin)
+	if pluginWithServer == nil {
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.PackageRepoRef.Plugin)
+	}
+
+	// Get the response from the requested plugin
+	response, err := pluginWithServer.server.UpdatePackageRepository(ctx, request)
+	if err != nil {
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to update the package repository %q using the plugin %q: %v",
+			request.PackageRepoRef.Identifier, request.PackageRepoRef.Plugin.Name, err)
+	}
+
+	// Validate the plugin response
+	if response.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.Internal, "Invalid UpdatePackageRepository response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	return response, nil
 }
 
 // getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer

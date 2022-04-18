@@ -102,7 +102,7 @@ This creates the Flux `HelmRepository` in the `default` namespace that will sync
 
 ### Creating a service account
 
-Since the Flux system reconciles a `HelmRelease` in the background, we need to create a service account to use when creating a Helm release via Flux. This service account is created in the namespace where you intend to install the package (specifically, where the HelmRelease object will be created).
+Since the Flux system reconciles a `HelmRelease` in the background, we need to create a service account to use when creating a Helm release via Flux. This service account is created in the namespace where you intend to install the package (specifically, where the `HelmRelease` resource will be created).
 
 ```bash
 cat > kubeapps-user-service-account.yaml << EOF
@@ -125,12 +125,14 @@ subjects:
   namespace: kubeapps-user-namespace
 roleRef:
   kind: ClusterRole
-  name: edit
+  name: admin
   apiGroup: rbac.authorization.k8s.io
 EOF
 
 kubectl apply -f kubeapps-user-service-account.yaml
 ```
+
+Note that this service account will have `admin` access to the namespace only and so will be able to read/write most resources in the namespace, including adding other roles and rolebindings. If your package includes cluster-wide resources such as CRDs or ClusterRoles, you will need to update the above to use a ClusterRoleBinding with a different cluster role, such as cluster-admin. See [Kubernetes user-facing roles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles) for more info about the roles.
 
 ### Installing a Package
 
@@ -150,7 +152,7 @@ Next, select any package you want to install, for example, `Apache`, then click 
 
 A big difference with respect to other packaging formats is that **you must select a `ServiceAccount` to be used for installing the package**. This is because Flux, similar to [Carvel](managing-carvel-packages.md), will carry out the installation as well as upgrades in the background and so cannot rely on doing so as the user. See [Creating a service account](#creating-a-service-account) above.
 
-In Kubeapps, a dropdown will allow you to select which `ServiceAccount` you want to use, as shown in the above screenshot.
+In Kubeapps, a dropdown will allow you to select which `ServiceAccount` you want to use, such as the `flux-reconciler` service account created above.
 
 > **NOTE**: As a consequence, the user logged in Kubeapps will need RBAC permissions to perform a `list` operation on `ServiceAccount` objects.
 
@@ -205,4 +207,4 @@ Some additional resources and references include:
 
 - [Getting Started with Flux](https://fluxcd.io/docs/get-started/)
 
-Finally, we are [currently working](https://github.com/kubeapps/kubeapps/milestone/17) on this Flux plugin for managing Flux Packages, so if you encounter any problems, please [file an issue](https://github.com/kubeapps/kubeapps/issues/new) in the Kubeapps repository.
+Finally, we are [currently working](https://github.com/vmware-tanzu/kubeapps/milestone/17) on this Flux plugin for managing Flux Packages, so if you encounter any problems, please [file an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) in the Kubeapps repository.

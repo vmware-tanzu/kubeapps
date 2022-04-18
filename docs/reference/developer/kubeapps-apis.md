@@ -138,7 +138,7 @@ Note that although we don't support its use in anything other than a demo enviro
 
 ### Caveats
 
-Although the current Kubeapps UI does indeed benefit from this core client and interacts with the packages from different packaging systems in a uniform way, we still have some exceptions to this. For example, Flux and Carvel require selecting a service account to be associated with the installed package. Rather than the plugin providing additional schema or field data for creating a package ([something we plan to add in the future](https://github.com/kubeapps/kubeapps/issues/4365)), we've currently included the service account field based on the plugin name.
+Although the current Kubeapps UI does indeed benefit from this core client and interacts with the packages from different packaging systems in a uniform way, we still have some exceptions to this. For example, Flux and Carvel require selecting a service account to be associated with the installed package. Rather than the plugin providing additional schema or field data for creating a package ([something we plan to add in the future](https://github.com/vmware-tanzu/kubeapps/issues/4365)), we've currently included the service account field based on the plugin name.
 
 It's also worth noting that we tried and were unable to include any streaming gRPC calls on the core packages interface. While two separate packages can define the same interface (with the same methods, return types etc.), `grpc-go` generates package-specific types for streamed responses, which makes it impossible for one packages' implementation of a streaming RPC to match another one, such as the core interface. It is not impossible to work around this, but so far we've used streaming responses on other non-packages plugins, such as the resources plugin for reporting on the Kubernetes resources related to an installed package.
 
@@ -186,7 +186,7 @@ for e := range resourceWatcher.ResultChan() {
 }
 ```
 
-See the [`mergeWatchers` function](https://github.com/kubeapps/kubeapps/blob/v2.4.3/cmd/kubeapps-apis/plugins/resources/v1alpha1/server.go#L298-L335) for details of how the channel results are merged, which is itself inspired by the [fan-in example from the go blog](https://go.dev/blog/pipelines).
+See the [`mergeWatchers` function](https://github.com/vmware-tanzu/kubeapps/blob/v2.4.3/cmd/kubeapps-apis/plugins/resources/v1alpha1/server.go#L298-L335) for details of how the channel results are merged, which is itself inspired by the [fan-in example from the go blog](https://go.dev/blog/pipelines).
 
 The resources plugin doesn't care which packaging system is used behind the scenes, all it needs to know is which packaging plugin is used so that it can verify the Kubernetes references for the installed package. In this way, the Kubeapps dashboard UI can present the Kubernetes resources for an installed package without caring which packaging system is involved.
 

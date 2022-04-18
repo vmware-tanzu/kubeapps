@@ -21,6 +21,7 @@ type RepositoriesServiceClient interface {
 	AddPackageRepository(ctx context.Context, in *AddPackageRepositoryRequest, opts ...grpc.CallOption) (*AddPackageRepositoryResponse, error)
 	GetPackageRepositoryDetail(ctx context.Context, in *GetPackageRepositoryDetailRequest, opts ...grpc.CallOption) (*GetPackageRepositoryDetailResponse, error)
 	GetPackageRepositorySummaries(ctx context.Context, in *GetPackageRepositorySummariesRequest, opts ...grpc.CallOption) (*GetPackageRepositorySummariesResponse, error)
+	UpdatePackageRepository(ctx context.Context, in *UpdatePackageRepositoryRequest, opts ...grpc.CallOption) (*UpdatePackageRepositoryResponse, error)
 }
 
 type repositoriesServiceClient struct {
@@ -58,6 +59,15 @@ func (c *repositoriesServiceClient) GetPackageRepositorySummaries(ctx context.Co
 	return out, nil
 }
 
+func (c *repositoriesServiceClient) UpdatePackageRepository(ctx context.Context, in *UpdatePackageRepositoryRequest, opts ...grpc.CallOption) (*UpdatePackageRepositoryResponse, error) {
+	out := new(UpdatePackageRepositoryResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/UpdatePackageRepository", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RepositoriesServiceServer is the server API for RepositoriesService service.
 // All implementations should embed UnimplementedRepositoriesServiceServer
 // for forward compatibility
@@ -65,6 +75,7 @@ type RepositoriesServiceServer interface {
 	AddPackageRepository(context.Context, *AddPackageRepositoryRequest) (*AddPackageRepositoryResponse, error)
 	GetPackageRepositoryDetail(context.Context, *GetPackageRepositoryDetailRequest) (*GetPackageRepositoryDetailResponse, error)
 	GetPackageRepositorySummaries(context.Context, *GetPackageRepositorySummariesRequest) (*GetPackageRepositorySummariesResponse, error)
+	UpdatePackageRepository(context.Context, *UpdatePackageRepositoryRequest) (*UpdatePackageRepositoryResponse, error)
 }
 
 // UnimplementedRepositoriesServiceServer should be embedded to have forward compatible implementations.
@@ -79,6 +90,9 @@ func (UnimplementedRepositoriesServiceServer) GetPackageRepositoryDetail(context
 }
 func (UnimplementedRepositoriesServiceServer) GetPackageRepositorySummaries(context.Context, *GetPackageRepositorySummariesRequest) (*GetPackageRepositorySummariesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositorySummaries not implemented")
+}
+func (UnimplementedRepositoriesServiceServer) UpdatePackageRepository(context.Context, *UpdatePackageRepositoryRequest) (*UpdatePackageRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePackageRepository not implemented")
 }
 
 // UnsafeRepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -146,6 +160,24 @@ func _RepositoriesService_GetPackageRepositorySummaries_Handler(srv interface{},
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RepositoriesService_UpdatePackageRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePackageRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoriesServiceServer).UpdatePackageRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/UpdatePackageRepository",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoriesServiceServer).UpdatePackageRepository(ctx, req.(*UpdatePackageRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RepositoriesService_ServiceDesc is the grpc.ServiceDesc for RepositoriesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -164,6 +196,10 @@ var RepositoriesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPackageRepositorySummaries",
 			Handler:    _RepositoriesService_GetPackageRepositorySummaries_Handler,
+		},
+		{
+			MethodName: "UpdatePackageRepository",
+			Handler:    _RepositoriesService_UpdatePackageRepository_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

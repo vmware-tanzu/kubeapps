@@ -54,7 +54,7 @@ func VersionConstraintWithUpgradePolicy(pkgVersion string, policy UpgradePolicy)
 		// "Invalid Semantic Version", but .NewConstraint() will work fine
 		if _, err2 := semver.NewConstraint(pkgVersion); err2 == nil {
 			// this is a constraint-based semver expression
-			// per https://github.com/kubeapps/kubeapps/issues/4424#issuecomment-1068776980
+			// per https://github.com/vmware-tanzu/kubeapps/issues/4424#issuecomment-1068776980
 			// return as is, ignoring the upgrade policy
 			return pkgVersion, nil
 		} else {

@@ -56,4 +56,4 @@ If you are ready to jump in and test, add code, or help with documentation, foll
 
 ## Changelog
 
-Take a look at the list of [releases](https://github.com/kubeapps/kubeapps/releases) to stay tuned for the latest features and changes.
+Take a look at the list of [releases](https://github.com/vmware-tanzu/kubeapps/releases) to stay tuned for the latest features and changes.

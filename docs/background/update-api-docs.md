@@ -45,4 +45,4 @@ Finally, after pushing the changes in the desired branch of your fork, it is pos
 ## Versioning policy
 
 Kubeapps API is still in a very initial stage and it likely subject to changes. Wherefore, for the sake of simplicity, we are not publishing new versions in SwaggerHub. Instead, we will keep just the latest version and will overwrite it with upcoming changes.
-Note that the [openapi.yaml](../../main/dashboard/public/openapi.yaml) file corresponding to each Kubeapps version can still be downloaded as part of the normal [Kubeapps releases page](https://github.com/kubeapps/kubeapps/releases).
+Note that the [openapi.yaml](../../main/dashboard/public/openapi.yaml) file corresponding to each Kubeapps version can still be downloaded as part of the normal [Kubeapps releases page](https://github.com/vmware-tanzu/kubeapps/releases).

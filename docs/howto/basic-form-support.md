@@ -9,7 +9,7 @@ Since Kubeapps 1.6.0, it's possible to include a JSON schema with a chart that d
 
 The goal of this feature is to present the user with the most common parameters which are typically modified before deploying a chart (like username and password) in a more user-friendly form.
 
-This document specifies what's needed to be defined in order to present this basic form to the users of a chart. If the basic form components do not fit your needs we also offer the ability for developers to inject their own custom components, the integration docs can be found [here](https://github.com/kubeapps/kubeapps/blob/main/docs/howto/custom-form-component-support.md).
+This document specifies what's needed to be defined in order to present this basic form to the users of a chart. If the basic form components do not fit your needs we also offer the ability for developers to inject their own custom components, the integration docs can be found [here](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/custom-form-component-support.md).
 
 ## Create a values.schema.json
 

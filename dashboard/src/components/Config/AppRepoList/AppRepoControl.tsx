@@ -39,7 +39,7 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
       dispatch(actions.repos.resyncRepo(repoName, repoNamespace));
       // Fake timeout to show progress
       // TODO(andresmgot): Ideally, we should show the progress of the sync but we don't
-      // have that info yet: https://github.com/kubeapps/kubeapps/issues/153
+      // have that info yet: https://github.com/vmware-tanzu/kubeapps/issues/153
       setTimeout(() => setRefreshing(false), 500);
     };
   };

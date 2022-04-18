@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -127,7 +127,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	// one particular code path I'd like to test:
 	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin", "default")
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-"+randSeq(4), "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,7 +263,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 //   a) with 3a) => should work 2 times
 //   b) with 3b) => should fail 2 times with PermissionDenied error
 //   c) with 3c) => should fail once and work once
-// ref https://github.com/kubeapps/kubeapps/issues/4390
+// ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {
@@ -295,27 +295,29 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		}
 	}
 
-	grpcCtxAdmin, err := newGrpcAdminContext(t, "test-repo-rbac-admin", "default")
+	svcAcctName := "test-repo-rbac-admin-" + randSeq(4)
+	grpcCtxAdmin, err := newGrpcAdminContext(t, svcAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, n := range names {
 		out := kubectlCanI(
-			t, "test-repo-rbac-admin", "default", "get", fluxHelmRepositories, n.Namespace)
+			t, svcAcctName, "default", "get", fluxHelmRepositories, n.Namespace)
 		if out != "yes" {
 			t.Errorf("Expected [yes], got [%s]", out)
 		}
 	}
 
+	svcAcctName2 := "test-repo-rbac-loser-" + randSeq(4)
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
-		t, "test-repo-rbac-loser", "default")
+		t, svcAcctName2, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, n := range names {
 		out := kubectlCanI(
-			t, "test-repo-rbac-loser", "default", "get", fluxHelmRepositories, n.Namespace)
+			t, svcAcctName2, "default", "get", fluxHelmRepositories, n.Namespace)
 		if out != "no" {
 			t.Errorf("Expected [no], got [%s]", out)
 		}
@@ -336,14 +338,14 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		},
 	}
 
+	svcAcctName3 := "test-repo-rbac-limited-" + randSeq(4)
 	grpcCtxLimited, err := newGrpcContextForServiceAccountWithRules(
-		t, "test-repo-rbac-limited", "default", rules)
+		t, svcAcctName3, "default", rules)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i, n := range names {
-		out := kubectlCanI(
-			t, "test-repo-rbac-limited", "default", "get", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanI(t, svcAcctName3, "default", "get", fluxHelmRepositories, n.Namespace)
 		if i == 0 {
 			if out != "no" {
 				t.Errorf("Expected [no], got [%s]", out)

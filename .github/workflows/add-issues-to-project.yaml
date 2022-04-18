@@ -1,18 +1,20 @@
-name: Auto Assign to Project(s)
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+# From https://github.com/github/feedback/discussions/5378#discussioncomment-2137318
+name: Project automation
 
 on:
   issues:
-    types: [opened]
-env:
-  MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+    types:
+      - opened
 
 jobs:
-  assign_one_project:
+  add_issue_to_project:
+    name: Add new issues to project board
     runs-on: ubuntu-latest
-    name: Assign to One Project
     steps:
-    - name: Assign NEW issues to project
-      uses: srggrs/assign-one-project-github-action@1.3.1
-      if: github.event.action == 'opened'
-      with:
-        project: 'https://github.com/orgs/kubeapps/projects/4'
+      - run: |
+          gh api graphql -f query='mutation($project:ID!, $issue:ID!) { addProjectNextItem(input: {projectId: $project, contentId: $issue}) { projectNextItem { id }  } }' -f project=${{ secrets.PROJECT_BOARD_ID }} -f issue=${{ github.event.issue.node_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.PROJECT_AUTOMATION_TOKEN }}

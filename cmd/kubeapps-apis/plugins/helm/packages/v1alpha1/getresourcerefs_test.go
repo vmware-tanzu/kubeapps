@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	corev1 "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/kubeapps/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
+	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,7 +68,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		newTestCase(3, "my-apache", true, codes.OK),
 		newTestCase(4, "my-iis", false, codes.NotFound),
 		newTestCase(5, "my-apache", false, codes.Internal),
-		// See https://github.com/kubeapps/kubeapps/issues/632
+		// See https://github.com/vmware-tanzu/kubeapps/issues/632
 		newTestCase(6, "my-apache", true, codes.OK),
 		newTestCase(7, "my-apache", true, codes.OK),
 		newTestCase(8, "my-apache", true, codes.OK),

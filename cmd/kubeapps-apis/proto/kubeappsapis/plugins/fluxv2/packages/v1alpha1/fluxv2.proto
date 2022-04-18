@@ -3,9 +3,10 @@
 
 syntax = "proto3";
 package kubeappsapis.plugins.fluxv2.packages.v1alpha1;
-option go_package = "github.com/kubeapps/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1";
+option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
 import "kubeappsapis/core/packages/v1alpha1/packages.proto";
 import "kubeappsapis/core/packages/v1alpha1/repositories.proto";
 import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
@@ -100,4 +101,23 @@ service FluxV2RepositoriesService {
       get: "/plugins/fluxv2/packages/v1alpha1/repositories"
     };
   }
+
+  rpc UpdatePackageRepository(kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse) {
+    option (google.api.http) = {
+      put: "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+      body: "*"
+     };
+  }
+
+  // this endpoint only exists for the purpose of integration tests
+  rpc SetUserManagedSecrets(SetUserManagedSecretsRequest) returns (SetUserManagedSecretsResponse) {
+  }
+}
+
+message SetUserManagedSecretsRequest {
+  bool value = 1;
+}
+
+message SetUserManagedSecretsResponse {
+  bool value = 1;
 }

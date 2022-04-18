@@ -1,6 +1,6 @@
 ## Description of the problem
 
-Due the problems described here: https://github.com/kubeapps/kubeapps/issues/651 and licensing issues, MongoDB is no longer the best solution for our use case. Apart from that, even though is not the goal of this document, we are evaluating the possible effort needed to support other type of assets in Kubeapps (apart than charts) like operators.
+Due the problems described here: https://github.com/vmware-tanzu/kubeapps/issues/651 and licensing issues, MongoDB is no longer the best solution for our use case. Apart from that, even though is not the goal of this document, we are evaluating the possible effort needed to support other type of assets in Kubeapps (apart than charts) like operators.
 
 The two items above, require a re-design of two micro-services: `chartsvc` and `chart-repo`. While the changes should be kept minimal, at least for the moment, we should plan in advance to support new asset types.
 

@@ -26,13 +26,151 @@ import {
   AddPackageRepositoryRequest,
   GetPackageRepositoryDetailRequest,
   GetPackageRepositorySummariesRequest,
+  UpdatePackageRepositoryRequest,
   AddPackageRepositoryResponse,
   GetPackageRepositoryDetailResponse,
   GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.plugins.fluxv2.packages.v1alpha1";
+
+export interface SetUserManagedSecretsRequest {
+  value: boolean;
+}
+
+export interface SetUserManagedSecretsResponse {
+  value: boolean;
+}
+
+const baseSetUserManagedSecretsRequest: object = { value: false };
+
+export const SetUserManagedSecretsRequest = {
+  encode(
+    message: SetUserManagedSecretsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.value === true) {
+      writer.uint32(8).bool(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseSetUserManagedSecretsRequest,
+    } as SetUserManagedSecretsRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.value = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserManagedSecretsRequest {
+    const message = {
+      ...baseSetUserManagedSecretsRequest,
+    } as SetUserManagedSecretsRequest;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Boolean(object.value);
+    } else {
+      message.value = false;
+    }
+    return message;
+  },
+
+  toJSON(message: SetUserManagedSecretsRequest): unknown {
+    const obj: any = {};
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<SetUserManagedSecretsRequest>): SetUserManagedSecretsRequest {
+    const message = {
+      ...baseSetUserManagedSecretsRequest,
+    } as SetUserManagedSecretsRequest;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = false;
+    }
+    return message;
+  },
+};
+
+const baseSetUserManagedSecretsResponse: object = { value: false };
+
+export const SetUserManagedSecretsResponse = {
+  encode(
+    message: SetUserManagedSecretsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.value === true) {
+      writer.uint32(8).bool(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseSetUserManagedSecretsResponse,
+    } as SetUserManagedSecretsResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.value = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserManagedSecretsResponse {
+    const message = {
+      ...baseSetUserManagedSecretsResponse,
+    } as SetUserManagedSecretsResponse;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Boolean(object.value);
+    } else {
+      message.value = false;
+    }
+    return message;
+  },
+
+  toJSON(message: SetUserManagedSecretsResponse): unknown {
+    const obj: any = {};
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<SetUserManagedSecretsResponse>): SetUserManagedSecretsResponse {
+    const message = {
+      ...baseSetUserManagedSecretsResponse,
+    } as SetUserManagedSecretsResponse;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = false;
+    }
+    return message;
+  },
+};
 
 export interface FluxV2PackagesService {
   /** GetAvailablePackageSummaries returns the available packages managed by the 'fluxv2' plugin */
@@ -420,6 +558,15 @@ export interface FluxV2RepositoriesService {
     request: DeepPartial<GetPackageRepositorySummariesRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetPackageRepositorySummariesResponse>;
+  UpdatePackageRepository(
+    request: DeepPartial<UpdatePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdatePackageRepositoryResponse>;
+  /** this endpoint only exists for the purpose of integration tests */
+  SetUserManagedSecrets(
+    request: DeepPartial<SetUserManagedSecretsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<SetUserManagedSecretsResponse>;
 }
 
 export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesService {
@@ -430,6 +577,8 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     this.AddPackageRepository = this.AddPackageRepository.bind(this);
     this.GetPackageRepositoryDetail = this.GetPackageRepositoryDetail.bind(this);
     this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
+    this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
+    this.SetUserManagedSecrets = this.SetUserManagedSecrets.bind(this);
   }
 
   AddPackageRepository(
@@ -461,6 +610,28 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     return this.rpc.unary(
       FluxV2RepositoriesServiceGetPackageRepositorySummariesDesc,
       GetPackageRepositorySummariesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  UpdatePackageRepository(
+    request: DeepPartial<UpdatePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdatePackageRepositoryResponse> {
+    return this.rpc.unary(
+      FluxV2RepositoriesServiceUpdatePackageRepositoryDesc,
+      UpdatePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  SetUserManagedSecrets(
+    request: DeepPartial<SetUserManagedSecretsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<SetUserManagedSecretsResponse> {
+    return this.rpc.unary(
+      FluxV2RepositoriesServiceSetUserManagedSecretsDesc,
+      SetUserManagedSecretsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -536,6 +707,50 @@ export const FluxV2RepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMe
       },
     } as any,
   };
+
+export const FluxV2RepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "UpdatePackageRepository",
+  service: FluxV2RepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return UpdatePackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...UpdatePackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const FluxV2RepositoriesServiceSetUserManagedSecretsDesc: UnaryMethodDefinitionish = {
+  methodName: "SetUserManagedSecrets",
+  service: FluxV2RepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return SetUserManagedSecretsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...SetUserManagedSecretsResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
 
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;

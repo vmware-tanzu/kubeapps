@@ -10,9 +10,9 @@ import (
 	"math"
 	"strings"
 
-	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	_ "github.com/lib/pq"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 )
 
 // TODO(mnelson): standardise error API for package.

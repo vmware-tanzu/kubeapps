@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	chartUtils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 )

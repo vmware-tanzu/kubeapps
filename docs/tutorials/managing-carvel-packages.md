@@ -120,15 +120,15 @@ In this section, we will use the `Tanzu Community Edition` package repository.
 
 > **TIP**: In [this Carvel website](https://carvel.dev/kapp-controller/docs/latest/oss-packages/) you will find a list of Carvel Packages and Package Repositories that are available to open-source users.
 
-Next, you need to create a `PackageRepository` CR. This is done by running the following command:
+Next, you need to create a `PackageRepository` CR in the global packaging namespace. This is done by running the following command:
 
 ```bash
 cat > repo.yaml << EOF
 ---
 apiVersion: packaging.carvel.dev/v1alpha1
 kind: PackageRepository
-metadata:
   name: tce-repo
+  namespace: kapp-controller-packaging-global
 spec:
   fetch:
     imgpkgBundle:
@@ -145,6 +145,40 @@ kubectl apply --namespace kapp-controller-packaging-global -f repo.yaml
 Under the hood, kapp-controller will create `Package` and `PackageMetadata` CRs for each of the packages in the repository in the global packaging namespace for kapp-controller, enabling those packages to be installed via Kubeapps in any namespace. Note you can instead install the repository in a different namespace if the packages should only be available for install via Kubeapps in a particular namespace.
 
 > **TIP**: Run `kubectl get packagerepository`, `kubectl get packages` and `kubectl get packagemetadatas` to get the created CRs.
+
+### Creating a service account
+
+Since the Carvel system reconciles a `PackageInstall` in the background, we need to create a service account to use when creating `PackageInstall` via Carvel. This service account is created in the namespace where you intend to install the package (specifically, where the `PackageInstall` resource will be created).
+
+```bash
+cat > kubeapps-user-service-account.yaml << EOF
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: carvel-reconciler
+  namespace: kubeapps-user-namespace
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: carvel-reconciler
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: carvel-reconciler
+  namespace: kubeapps-user-namespace
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+kubectl apply -f kubeapps-user-service-account.yaml
+```
+
+Note that this service account will have `admin` access to the namespace only and so will be able to read/write most resources in the namespace, including adding other roles and rolebindings. If your package includes cluster-wide resources such as CRDs or ClusterRoles, you will need to update the above to use a ClusterRoleBinding with a different cluster role, such as cluster-admin. See [Kubernetes user-facing roles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles) for more info about the roles.
 
 ### Installing a Package
 
@@ -167,7 +201,7 @@ The reason why is that kapp-controller forces to explicitly provide needed privi
 
 > **TIP**: Find more information about the kapp-controller security model in [their official documentation](https://carvel.dev/kapp-controller/docs/latest/security-model/).
 
-In Kubeapps, a dropdown will allow you to select which `ServiceAccount` you want to use.
+In Kubeapps, a dropdown will allow you to select which `ServiceAccount` you want to use, such as the `carvel-reconciler` service account created above.
 
 > **NOTE**: As a consequence, the user logged in Kubeapps will need RBAC permissions to perform a `list` operation on `ServiceAccount` objects.
 
