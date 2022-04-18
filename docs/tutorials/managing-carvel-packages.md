@@ -248,4 +248,4 @@ Some additional resources and references include:
 - [Getting Started with kapp](https://tanzu.vmware.com/developer/guides/kapp-gs/)
   - [kapp documentation](https://carvel.dev/kapp/docs/latest)
 
-Finally, we are [currently working](https://github.com/vmware-tanzu/kubeapps/milestone/19) on this kapp-controller plugin for managing Carvel Packages, so if you encounter any problems, please [file an issue](https://github.com/kubeapps/kubeapps/issues/new) in the Kubeapps repository.
+Finally, we are [currently working](https://github.com/vmware-tanzu/kubeapps/milestone/19) on this kapp-controller plugin for managing Carvel Packages, so if you encounter any problems, please [file an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) in the Kubeapps repository.
