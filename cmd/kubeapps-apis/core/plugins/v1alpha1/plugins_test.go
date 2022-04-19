@@ -367,6 +367,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			name:            "it creates the config for the default cluster when passing a valid value for the authorization metadata",
 			contextKey:      "authorization",
 			contextValue:    "Bearer abc",
+			cluster:         kube.KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN,
 			expectedAPIHost: DefaultK8sAPI,
 			expectedErrMsg:  nil,
 		},
