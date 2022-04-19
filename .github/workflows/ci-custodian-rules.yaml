@@ -11,7 +11,7 @@ env:
   CLOUDSDK_CORE_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
 jobs:
   remove-unattached-disks:
-    if: github.repository == 'kubeapps/kubeapps'
+    if: github.repository == 'vmware-tanzu/kubeapps'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
