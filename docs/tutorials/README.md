@@ -11,3 +11,9 @@ We hope our tutorials make as few assumptions as possible and are broadly access
 | [Managing Carvel packages](./managing-carvel-packages.md) | This guide walks you through the process of using Kubeapps for configuring and deploying [Packages](https://carvel.dev/kapp-controller/docs/latest/packaging/#package) and managing [Applications](https://carvel.dev/kapp/docs/latest/apps/). |
 | [Managing Flux packages](./managing-flux-packages.md)     | This guide walks you through the process of using Kubeapps for configuring and deploying [Helm charts](https://helm.sh/) via [Flux](https://fluxcd.io/).                                                                                       |
 | [Kubeapps on TKG](./kubeapps-on-tkg/README.md)            | This guide walks you through the process of configuring, deploying and using Kubeapps on a VMware Tanzu™ Kubernetes Grid™ cluster.                                                                                                             |
+
+Alternatively, if you have a specific goal, but are already familiar with Kubeapps, take a look at our [How-to guides](../howto/README.md). These have more in-depth detail and can be applied to a broader set of features.
+
+Take a look at our [Reference section](../reference/README.md) when you need to know design decisions, what functions the API supports, detailed developer guides, etc.
+
+Finally, for a better understanding of Kubeapps architecture, our [Background section](../background/README.md) enable you to expand your knowledge.
