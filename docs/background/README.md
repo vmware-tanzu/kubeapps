@@ -4,7 +4,7 @@ Big-picture explanations of higher-level Kubeapps concepts. Most useful for buil
 
 | Background                                         | Description                                                                                      |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [Architecture](./architecture.md)                 | Dive into the overall Kubeapps architecture.                                                     |
+| [Architecture](./architecture.md)                  | Dive into the overall Kubeapps architecture.                                                     |
 | [Kubeapps API documentation](./update-api-docs.md) | Information about Kubeapps API and how to contribute to keep Kubeapps API documentation updated. |
 
 Alternatively, our [Tutorials section](../tutorials/README.md) contain step-by-step tutorials to help outline what Kubeapps is capable of while helping you achieve specific aims, such as installing Kubeapps or using an OIDC provider.
