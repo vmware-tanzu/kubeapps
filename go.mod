@@ -47,8 +47,8 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
-	github.com/fluxcd/helm-controller/api v0.18.2
-	github.com/fluxcd/pkg/apis/meta v0.12.1
+	github.com/fluxcd/helm-controller/api v0.20.0
+	github.com/fluxcd/pkg/apis/meta v0.12.2
 	github.com/fluxcd/source-controller/api v0.23.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
@@ -83,15 +83,15 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	helm.sh/helm/v3 v3.8.1
+	helm.sh/helm/v3 v3.8.2
 	k8s.io/api v0.23.5
 	k8s.io/apiextensions-apiserver v0.23.5
 	k8s.io/apimachinery v0.23.5
-	k8s.io/apiserver v0.23.4
-	k8s.io/cli-runtime v0.23.4
+	k8s.io/apiserver v0.23.5
+	k8s.io/cli-runtime v0.23.5
 	k8s.io/client-go v0.23.5
 	k8s.io/klog/v2 v2.60.1
-	k8s.io/kubectl v0.23.4
+	k8s.io/kubectl v0.23.5
 	k8s.io/kubernetes v1.22.8
 	oras.land/oras-go v1.1.1
 	sigs.k8s.io/controller-runtime v0.11.2
@@ -131,7 +131,7 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.0.3 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v0.3.2 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v0.3.3 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
