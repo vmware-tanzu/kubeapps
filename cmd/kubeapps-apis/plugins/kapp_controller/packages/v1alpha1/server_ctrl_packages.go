@@ -307,45 +307,64 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			}
 		}
 
-		// Collect a set of all package names with their corresponding
-		// package metadata and package version data.
+		// Collect a set of all package names with their corresponding package
+		// metadata and package version data.
+		// Complication 1: PackageMetadata and Package resources are not CRs,
+		// but rather aggregated API resources, which means a PackageInstall in
+		// namespace "default" may refer to a Package (and metadata) in the same
+		// "default" namespace, or from the global namespace.
+		// Complication 2: PackageMetadata and Package resources for can be
+		// present in different namespaces with the same name and different
+		// versions etc.
+		// With this in mind, we create a data structure that records the
+		// metadata and versions per package refName per namespace.
+		// TODO(minelson) move this struct initialization out.
 		type pkgMetaAndVersionsData struct {
 			meta     *datapackagingv1alpha1.PackageMetadata
 			versions map[string]*datapackagingv1alpha1.Package
 		}
-		pkgDatas := make(map[string]*pkgMetaAndVersionsData)
+		pkgDatas := make(map[string]map[string]*pkgMetaAndVersionsData)
 		for _, pi := range pkgInstalls {
-			pkgData, ok := pkgDatas[pi.Spec.PackageRef.RefName]
+			pkgDataForNamespaces, ok := pkgDatas[pi.Spec.PackageRef.RefName]
 			if !ok {
-				pkgData = &pkgMetaAndVersionsData{
-					versions: make(map[string]*datapackagingv1alpha1.Package),
-				}
-				pkgDatas[pi.Spec.PackageRef.RefName] = pkgData
+				pkgDataForNamespaces = map[string]*pkgMetaAndVersionsData{}
+				pkgDatas[pi.Spec.PackageRef.RefName] = pkgDataForNamespaces
 			}
-			_, ok = pkgData.versions[pi.Status.Version]
-			if !ok {
-				pkgData.versions[pi.Status.Version] = nil
+			// As each package install could potentially be from a pkg in the same
+			// namespace or a package in the global namespace, we track both.
+			for _, ns := range []string{pi.Namespace, s.globalPackagingNamespace} {
+				pkgData, ok := pkgDataForNamespaces[ns]
+				if !ok {
+					pkgData = &pkgMetaAndVersionsData{
+						versions: make(map[string]*datapackagingv1alpha1.Package),
+					}
+					pkgDataForNamespaces[ns] = pkgData
+				}
+				_, ok = pkgData.versions[pi.Status.Version]
+				if !ok {
+					pkgData.versions[pi.Status.Version] = nil
+				}
 			}
 		}
 
-		// First get all the package metadatas for the namespace and filter
-		// to match the pkgInstalls. While filtering, we populate the
-		// collected package data with the metadata.
+		// First get all the package metadatas for the namespace (or across
+		// namespaces) and filter to match the pkgInstalls. While filtering, we
+		// populate the collected package data with the metadata.
 		pkgMetadatas, err := s.getPkgMetadatas(ctx, cluster, namespace)
 		if err != nil {
 			return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 		}
-		filteredPkgMetadatas := []*datapackagingv1alpha1.PackageMetadata{}
 		for _, pm := range pkgMetadatas {
-			if pkgData, ok := pkgDatas[pm.Name]; ok {
-				filteredPkgMetadatas = append(filteredPkgMetadatas, pm)
-				pkgData.meta = pm
+			if pkgDataForNamespaces, ok := pkgDatas[pm.Name]; ok {
+				if pkgData, ok := pkgDataForNamespaces[pm.Namespace]; ok {
+					pkgData.meta = pm
+				}
 			}
 		}
 
-		// Create a channel to receive all packages available in the namespace.
-		// Using a buffered channel so that we don't block the network request if we
-		// can't process fast enough.
+		// Create a channel to receive all packages available in the namespace
+		// (or across namespaces) Using a buffered channel so that we don't
+		// block the network request if we can't process fast enough.
 		getPkgsChannel := make(chan *datapackagingv1alpha1.Package, PACKAGES_CHANNEL_BUFFER_SIZE)
 		var getPkgsError error
 		go func() {
@@ -356,16 +375,20 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		// package data.
 		pkgsForVersionMap := []*datapackagingv1alpha1.Package{}
 		for pkg := range getPkgsChannel {
-			pkgdata, ok := pkgDatas[pkg.Spec.RefName]
+			pkgDataForNamespaces, ok := pkgDatas[pkg.Spec.RefName]
+			if !ok {
+				continue
+			}
+			pkgData, ok := pkgDataForNamespaces[pkg.Namespace]
 			if !ok {
 				continue
 			}
 			pkgsForVersionMap = append(pkgsForVersionMap, pkg)
-			_, ok = pkgdata.versions[pkg.Spec.Version]
+			_, ok = pkgData.versions[pkg.Spec.Version]
 			if !ok {
 				continue
 			}
-			pkgdata.versions[pkg.Spec.Version] = pkg
+			pkgData.versions[pkg.Spec.Version] = pkg
 		}
 
 		// Verify no error during go routine.
@@ -375,18 +398,23 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 
 		// Calculate the version map for all packages that we're interested
 		// in for this paginated call.
+		// TODO(minelson): Check if getPkgVersionsMap currently handles packages
+		// in different namespaces (suspect not).
 		pkgVersionsMap, err := getPkgVersionsMap(pkgsForVersionMap)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to calculate package versions map: %v", err))
 		}
 
 		// We now have all the data we need to return the result:
-
 		for _, pkgi := range pkgInstalls {
 			pkgName := pkgi.Spec.PackageRef.RefName
-			pkgData := pkgDatas[pkgName]
+			pkgDataForNamespaces := pkgDatas[pkgName]
+			// Check if there was package metadata for the specific namespace.
+			pkgData := pkgDataForNamespaces[pkgi.Namespace]
+			if pkgData.meta == nil {
+				pkgData = pkgDataForNamespaces[s.globalPackagingNamespace]
+			}
 			// generate the installedPackageSummary from the fetched information
-			log.Errorf("pkgDatas: %v", pkgDatas)
 			installedPackageSummary, err := s.buildInstalledPackageSummary(pkgi, pkgData.meta, pkgVersionsMap, cluster)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))

@@ -163,7 +163,7 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 		IconUrl: iconStringBuilder.String(),
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: pkgMetadata.Namespace,
+				Namespace: pkgInstall.Namespace,
 				Cluster:   cluster,
 			},
 			Plugin:     &pluginDetail,
