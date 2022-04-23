@@ -269,18 +269,31 @@ message UpdatePackageRepositoryRequest {
   // A user-provided description.
   string description = 3;
   
-  // Package storage type 
-  string type = 4;
-
   // The interval at which to check the upstream for updates (in seconds)
   // Optional. Defaults to 10m if not specified
-  uint32 interval = 5;
+  uint32 interval = 4;
 
   // TLS-specific parameters for connecting to a repository. Optional 
-  PackageRepositoryTlsConfig tls_config = 6;
+  PackageRepositoryTlsConfig tls_config = 5;
 
   // authentication parameters for connecting to a repository. Optional 
-  PackageRepositoryAuth auth = 7;
+  PackageRepositoryAuth auth = 6;
+
+  // Custom data added by the plugin
+  // A plugin can define custom details for data which is not yet, or
+  // never will be specified in the core AddPackageRepositoryRequest
+  // fields. The use of an `Any` field means that each plugin can define
+  // the structure of this message as required, while still satisfying the
+  // core interface.
+  // See https://developers.google.com/protocol-buffers/docs/proto3#any
+  // Just for reference, some of the examples that have been chosen not to
+  // be part of the core API but rather plugin-specific details are:
+  //   direct-helm:
+  //      - image pull secrets
+  //      - list of oci repositories
+  //      - filter rules
+  //      - sync job pod template
+  google.protobuf.Any custom_detail = 11;
 }
 
 // -- Start definitions of the response messages --

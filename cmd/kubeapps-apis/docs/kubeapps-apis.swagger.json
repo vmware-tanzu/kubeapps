@@ -4532,10 +4532,6 @@
           "type": "string",
           "description": "A user-provided description."
         },
-        "type": {
-          "type": "string",
-          "title": "Package storage type"
-        },
         "interval": {
           "type": "integer",
           "format": "int64",
@@ -4548,6 +4544,10 @@
         "auth": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
           "title": "authentication parameters for connecting to a repository. Optional"
+        },
+        "customDetail": {
+          "$ref": "#/definitions/protobufAny",
+          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
         }
       },
       "description": "Request for UpdatePackageRepository",

@@ -825,8 +825,20 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			expectedRelease:         flux_helm_release_updated_upgrade_patch,
 			defaultUpgradePolicyStr: "patch",
 		},
-		// TODO test case: update installed package that is pending reconciliation
-		// TODO test case: update installed package that has failed reconciliation
+		{
+			name: "update package pending reconciliation errors",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "14.4.0",
+				},
+			},
+			existingK8sObjs:    &redis_existing_spec_pending,
+			expectedStatusCode: codes.Internal,
+		},
+
+		// test case update installed package that has failed reconciliation will be done
+		// in integration test
 	}
 
 	for _, tc := range testCases {

@@ -286,6 +286,22 @@ func installedRef(id, namespace string) *corev1.InstalledPackageReference {
 	}
 }
 
+func repoRefWithId(id string) *corev1.PackageRepositoryReference {
+	// namespace will be set when scenario is run
+	return repoRef(id, "TBD")
+}
+
+func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
+	return &corev1.PackageRepositoryReference{
+		Context: &corev1.Context{
+			Cluster:   KubeappsCluster,
+			Namespace: namespace,
+		},
+		Identifier: id,
+		Plugin:     fluxPlugin,
+	}
+}
+
 func newCtrlClient(repos []sourcev1.HelmRepository, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) withWatchWrapper {
 	// register the flux GitOps Toolkit schema definitions
 	scheme := runtime.NewScheme()
