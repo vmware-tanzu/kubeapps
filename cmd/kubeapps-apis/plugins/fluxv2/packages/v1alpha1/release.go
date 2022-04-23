@@ -386,9 +386,25 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		return nil, err
 	}
 
-	// per discussion will Michael 4/12/2022
-	// for now: we disallow updates to pending releases and allow them for non-pending ones
-	// (i.e. success or failed status)
+	// TODO (gfichtenholt): there is an intermittent issue
+	// rpc error: code = Internal desc = unable to update the HelmRelease
+	// 'test-12-i7a4/my-podinfo-12' due to 'Operation cannot be fulfilled on
+	// helmreleases.helm.toolkit.fluxcd.io "my-podinfo-12": the object has been
+	// modified; please apply your changes to the latest version and try again'
+	// the problem is
+	//  1) we get a CR then
+	//  2) do some modifications of this CR
+	//  3) call Update() with this CR.
+	// Every once in a while there the CR gets updated (by flux) between (1) and (3)
+	// and we get this error.
+	// I think one way to fix it would be to implement a fixed number of retries in
+	// flux plugin with exponential back-off.
+	// Another solution might be to push the decision all the way to the end user to retry
+	// the Update operation
+
+	// As Michael and I agreed 4/12/2022, initially we'll disallow updates to pending releases
+	// to simplify the initial case, though we may implement support later. Updates to
+	// non-pending releases  (i.e. success or failed status) are allowed
 	_, reason, _ := isHelmReleaseReady(*rel)
 	if reason == corev1.InstalledPackageStatus_STATUS_REASON_PENDING {
 		return nil, status.Errorf(codes.Internal, "updates to helm releases pending reconciliation are not supported")

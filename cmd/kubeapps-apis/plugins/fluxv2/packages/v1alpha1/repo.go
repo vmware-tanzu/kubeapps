@@ -483,9 +483,9 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		return nil, err
 	}
 
-	// per discussion will Michael 4/12/2022
-	// for now: we disallow updates to pending repos and allow them for non-pending ones
-	// (i.e. success or failed status)
+	// As Michael and I agreed 4/12/2022, initially we'll disallow updates to repos in
+	// pending state to simplify the initial case, though we may implement support later.
+	// Updates to non-pending repos (i.e. success or failed status) are allowed
 	complete, _, _ := isHelmRepositoryReady(*repo)
 	if !complete {
 		return nil, status.Errorf(codes.Internal, "updates to repositories pending reconciliation are not supported")
