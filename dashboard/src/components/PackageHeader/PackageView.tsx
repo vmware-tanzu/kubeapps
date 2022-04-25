@@ -49,13 +49,15 @@ export default function PackageView() {
   } = ReactRouter.useParams() as IRouteParams;
   const {
     packages: { isFetching, selected: selectedPackage },
-    config: { skipAvailablePackageDetails },
+    config: { skipAvailablePackageDetails, kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
+
+  const packageFetchCluster = packageCluster === "-" ? kubeappsCluster : packageCluster;
   const [packageReference] = useState({
     context: {
-      cluster: packageCluster,
+      cluster: packageFetchCluster,
       namespace: packageNamespace,
     },
     plugin: pluginObj,
@@ -77,13 +79,13 @@ export default function PackageView() {
   useEffect(() => {
     dispatch(
       actions.availablepackages.fetchAvailablePackageVersions({
-        context: { cluster: packageCluster, namespace: packageNamespace },
+        context: { cluster: packageFetchCluster, namespace: packageNamespace },
         plugin: { name: pluginName, version: pluginVersion } as Plugin,
         identifier: packageId,
       } as AvailablePackageReference),
     );
     return () => {};
-  }, [dispatch, packageId, packageNamespace, packageCluster, pluginName, pluginVersion]);
+  }, [dispatch, packageId, packageNamespace, packageFetchCluster, pluginName, pluginVersion]);
 
   // Select version handler
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {

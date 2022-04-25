@@ -54,8 +54,10 @@ export default function DeploymentForm() {
   const {
     packages: { isFetching: packagesIsFetching, selected: selectedPackage },
     apps,
+    config: { kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
+  const packageFetchCluster = packageCluster === "-" ? kubeappsCluster : packageCluster;
   const [isDeploying, setDeploying] = useState(false);
   const [releaseName, setReleaseName] = useState("");
   const [appValues, setAppValues] = useState(selectedPackage.values || "");
@@ -76,7 +78,7 @@ export default function DeploymentForm() {
 
   const [packageReference] = useState({
     context: {
-      cluster: packageCluster,
+      cluster: packageFetchCluster,
       namespace: packageNamespace,
     },
     plugin: pluginObj,
