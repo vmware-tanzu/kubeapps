@@ -42,6 +42,12 @@ service RepositoriesService {
       body: "*"
      };
   }
+
+  rpc DeletePackageRepository(DeletePackageRepositoryRequest) returns (DeletePackageRepositoryResponse) {
+    option (google.api.http) = {
+      delete: "/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+  }
 }
 
 // Standard request and response messages for each required function are defined
@@ -296,6 +302,13 @@ message UpdatePackageRepositoryRequest {
   google.protobuf.Any custom_detail = 11;
 }
 
+// DeletePackageRepositoryRequest
+//
+// Request for DeletePackageRepository
+message DeletePackageRepositoryRequest {
+  PackageRepositoryReference package_repo_ref = 1;
+}
+
 // -- Start definitions of the response messages --
 
 // PackageRepositoryReference
@@ -452,3 +465,10 @@ message GetPackageRepositorySummariesResponse {
 message UpdatePackageRepositoryResponse {
   PackageRepositoryReference package_repo_ref = 1;
 }
+
+// DeletePackageRepositoryResponse
+//
+// Response for DeletePackageRepository
+message DeletePackageRepositoryResponse {
+  // For future extensibility only.
+ }

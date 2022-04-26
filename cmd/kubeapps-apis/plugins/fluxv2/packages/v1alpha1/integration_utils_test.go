@@ -279,6 +279,21 @@ func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 	}
 }
 
+func kubeExistsHelmRepository(t *testing.T, name, namespace string) (bool, error) {
+	t.Logf("+kubeExistsHelmRepository(%s,%s)", name, namespace)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	key := types.NamespacedName{Name: name, Namespace: namespace}
+	var repo sourcev1.HelmRepository
+	if ifc, err := kubeGetCtrlClient(); err != nil {
+		return false, err
+	} else if err = ifc.Get(ctx, key, &repo); err == nil {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
 func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeDeleteHelmRelease(%s,%s)", name, namespace)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)

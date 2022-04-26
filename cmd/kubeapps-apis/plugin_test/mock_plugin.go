@@ -187,3 +187,10 @@ func (s TestRepositoriesPluginServer) UpdatePackageRepository(ctx context.Contex
 		},
 	}, nil
 }
+
+func (s TestRepositoriesPluginServer) DeletePackageRepository(ctx context.Context, request *corev1.DeletePackageRepositoryRequest) (*corev1.DeletePackageRepositoryResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &corev1.DeletePackageRepositoryResponse{}, nil
+}
