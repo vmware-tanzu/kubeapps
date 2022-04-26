@@ -324,15 +324,15 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			versions map[string]*datapackagingv1alpha1.Package
 		}
 		pkgDatas := make(map[string]map[string]*pkgMetaAndVersionsData)
-		for _, pi := range pkgInstalls {
-			pkgDataForNamespaces, ok := pkgDatas[pi.Spec.PackageRef.RefName]
+		for _, pkgInstall := range pkgInstalls {
+			pkgDataForNamespaces, ok := pkgDatas[pkgInstall.Spec.PackageRef.RefName]
 			if !ok {
 				pkgDataForNamespaces = map[string]*pkgMetaAndVersionsData{}
-				pkgDatas[pi.Spec.PackageRef.RefName] = pkgDataForNamespaces
+				pkgDatas[pkgInstall.Spec.PackageRef.RefName] = pkgDataForNamespaces
 			}
 			// As each package install could potentially be from a pkg in the same
 			// namespace or a package in the global namespace, we track both.
-			for _, ns := range []string{pi.Namespace, s.globalPackagingNamespace} {
+			for _, ns := range []string{pkgInstall.Namespace, s.globalPackagingNamespace} {
 				pkgData, ok := pkgDataForNamespaces[ns]
 				if !ok {
 					pkgData = &pkgMetaAndVersionsData{
@@ -340,9 +340,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 					}
 					pkgDataForNamespaces[ns] = pkgData
 				}
-				_, ok = pkgData.versions[pi.Status.Version]
+				_, ok = pkgData.versions[pkgInstall.Status.Version]
 				if !ok {
-					pkgData.versions[pi.Status.Version] = nil
+					pkgData.versions[pkgInstall.Status.Version] = nil
 				}
 			}
 		}
